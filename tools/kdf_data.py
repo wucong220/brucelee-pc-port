@@ -130,8 +130,10 @@ def parse_container(raw: bytes) -> dict:
     }
 
 
-def scalar_occurrences(container: dict, key: str) -> list[dict]:
-    """Return locations and values for observed scalar key/value pairs."""
+def property_occurrences(
+        container: dict, key: str, *,
+        value_markers: set[int] | None = None) -> list[dict]:
+    """Return key/value records, optionally restricted by value type markers."""
     matches = [entry['ordinal'] for entry in container['strings'] if entry['text'] == key]
     if len(matches) != 1:
         raise KdfError(f'expected one string-table key named {key!r}')
@@ -141,13 +143,20 @@ def scalar_occurrences(container: dict, key: str) -> list[dict]:
     for index in range(len(records) - 1):
         if records[index]['first'] == 0x60000000 and records[index]['second'] == ordinal:
             value_record = records[index + 1]
-            if value_record['first'] == 0:
-                occurrences.append({
-                    'key_record': index,
-                    'value_record': index + 1,
-                    'value': value_record['second'],
-                })
+            if value_markers is not None and value_record['first'] not in value_markers:
+                continue
+            occurrences.append({
+                'key_record': index,
+                'value_record': index + 1,
+                'value_marker': value_record['first'],
+                'value': value_record['second'],
+            })
     return occurrences
+
+
+def scalar_occurrences(container: dict, key: str) -> list[dict]:
+    """Return locations and values for observed `(0, value)` scalar pairs."""
+    return property_occurrences(container, key, value_markers={0})
 
 
 def scalar_property(container: dict, key: str) -> int:

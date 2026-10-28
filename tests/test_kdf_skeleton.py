@@ -23,24 +23,27 @@ def skeleton_fixture(nodes=None) -> bytes:
     nodes = NODES if nodes is None else nodes
     strings = [
         'type', 'nodeid', 'parentid', 'treesize', 'offset',
-        'root', 'bone', 'bonepos', 'bonerot',
+        'root', 'object', 'bone', 'bonepos', 'bonerot',
     ]
     records = []
 
-    def scalar(key, value):
+    def value_record(marker, value):
+        records.append((marker, value & 0xffffffff))
+
+    def property_value(key, value, marker=0):
         records.append((0x60000000, strings.index(key)))
-        records.append((0, value & 0xffffffff))
+        value_record(marker, value)
 
     for type_name, nodeid, parentid, treesize, offset in nodes:
-        scalar('type', strings.index(type_name))
-        scalar('nodeid', nodeid)
-        scalar('parentid', parentid)
-        scalar('treesize', treesize)
-        scalar('offset', offset)
-    scalar('bonepos', 0)
-    scalar('bonepos', 1)
-    scalar('bonerot', 0)
-    scalar('bonerot', 1)
+        property_value('type', strings.index(type_name), 0x60000000)
+        property_value('nodeid', nodeid)
+        property_value('parentid', parentid, 0x10000000)
+        property_value('treesize', treesize)
+        property_value('offset', offset, 0x30000000)
+    property_value('bonepos', 0)
+    property_value('bonepos', 1)
+    property_value('bonerot', 0)
+    property_value('bonerot', 1)
 
     raw = bytearray(b'1FDKENONCTX3' + struct.pack('<IIII', len(strings), 1, 0, len(strings)))
     for text in strings:

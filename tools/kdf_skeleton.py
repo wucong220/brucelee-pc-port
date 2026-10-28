@@ -9,16 +9,37 @@ import struct
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kdf_data import KdfError, parse_container, scalar_occurrences
+from kdf_data import KdfError, parse_container, property_occurrences, scalar_occurrences
 
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
-_NODE_KEYS = ('type', 'nodeid', 'parentid', 'treesize', 'offset')
+_NODE_TYPE_MARKER = 0x60000000
+_PROPERTY_MARKERS = {
+    'type': {_NODE_TYPE_MARKER},
+    'nodeid': {0},
+    'parentid': {0x10000000},
+    'treesize': {0},
+    'offset': {0x30000000, 0x30000003},
+}
+
+
+def _string_ordinal(container: dict, value: str) -> int:
+    matches = [entry['ordinal'] for entry in container['strings'] if entry['text'] == value]
+    if len(matches) != 1:
+        raise KdfError(f'expected one Skl string named {value!r}')
+    return matches[0]
 
 
 def inspect_skeleton(raw: bytes) -> dict:
     container = parse_container(raw)
-    occurrences = {key: scalar_occurrences(container, key) for key in _NODE_KEYS}
-    type_starts = [entry['key_record'] for entry in occurrences['type']]
+    occurrences = {
+        key: property_occurrences(container, key, value_markers=markers)
+        for key, markers in _PROPERTY_MARKERS.items()
+    }
+    node_type_ordinals = {_string_ordinal(container, value) for value in ('root', 'object', 'bone')}
+    type_starts = [
+        entry['key_record'] for entry in occurrences['type']
+        if entry['value'] in node_type_ordinals
+    ]
     records_end = container['record_count']
     nodes = []
     for ordinal, start in enumerate(type_starts):
@@ -32,10 +53,10 @@ def inspect_skeleton(raw: bytes) -> dict:
             fields[key] = found[0]['value']
         if not fields:
             continue
-        type_value = occurrences['type'][ordinal]['value']
-        type_name = None
-        if type_value < len(container['strings']):
-            type_name = container['strings'][type_value]['text']
+        type_value = next(
+            entry['value'] for entry in occurrences['type'] if entry['key_record'] == start
+        )
+        type_name = container['strings'][type_value]['text']
         parent_raw = fields['parentid']
         parent = struct.unpack('<i', struct.pack('<I', parent_raw))[0]
         nodes.append({
