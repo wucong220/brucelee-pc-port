@@ -63,13 +63,39 @@ func _add_label(parent: Node, value: String, font_size: int) -> void:
     parent.add_child(label)
 
 func _make_bar(parent: Node) -> ProgressBar:
+    var row: HBoxContainer = HBoxContainer.new()
+    row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_theme_constant_override("separation", 8)
+    parent.add_child(row)
+    var icon: ImageTexture = _try_load_hud_icon()
+    if icon != null:
+        var icon_rect: TextureRect = TextureRect.new()
+        icon_rect.texture = icon
+        icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        icon_rect.custom_minimum_size = Vector2(48.0, 24.0)
+        icon_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+        row.add_child(icon_rect)
     var bar: ProgressBar = ProgressBar.new()
+    bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     bar.custom_minimum_size = Vector2(0.0, 24.0)
     bar.max_value = 100.0
     bar.value = 100.0
     bar.show_percentage = false
-    parent.add_child(bar)
+    row.add_child(bar)
     return bar
+
+func _try_load_hud_icon() -> ImageTexture:
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if local_app_data.is_empty():
+        return null
+    var path: String = local_app_data.path_join(
+        "BruceLee-PC-Port/local-assets/gui/images/hud/bl_hud_round_yellow_left.png"
+    )
+    var image: Image = Image.new()
+    if image.load(path) != OK:
+        return null
+    return ImageTexture.create_from_image(image)
 
 func set_health(player_health: float, enemy_health: float) -> void:
     player_bar.value = player_health

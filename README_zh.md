@@ -1,6 +1,6 @@
 # Bruce Lee: Dragon Warrior → Windows 原生 PC 移植工程
 
-> **阶段：P0 取证 + P1 可玩的独立战斗原型（源码）**<br>
+> **阶段：P0 取证 + P1 可玩的独立战斗原型 + P2 PAK 解析完成 + P3 纹理接入进行中**<br>
 > **当前不是原版游戏的完整移植**。原型使用程序生成的占位人物、擂台和自写战斗规则，不包含原始游戏资产，不包含从 ARM 二进制提取的源码。它能作为逐步接入原版资源和逆向玩法的 PC 工程基础。
 
 > 本机初始化时，压缩包内的四个已解码二进制样本另存到 `%LOCALAPPDATA%\BruceLee-PC-Port\decoded_frames`，不放在同步目录或 Git 仓库中；原始 ZIP 保持不变。`.gitignore` 只控制 Git 跟踪，不控制文件同步软件。
@@ -10,11 +10,11 @@
 ## 已完成工作（基于实际上传文件）
 
 1. APK 中 `lib/armeabi/libdefault.so` 为 **ARM ELF32**，保留 `.symtab` 和大量 C++ 符号。提取并生成 **454 条候选函数符号清单** `evidence/candidate_symbols.csv`（类别：资源、战斗、动画、输入）。
-2. 外部 `data.zpak` 是 ZIP；包含 `Core.pakh`、`Core.pakd000` 和 `metadata.xml`。`Core.pakh` 起始签名为 `8KAP`。另一 ChatGPT 会话报告，偏移 `0x14` 的 2144 是索引条目数；当前 Windows 工作区尚未独立复现原包扫描。
-3. 最初工具确认了 `Core.pakd000` 开头 4 个流，其中一个是可识别的 **RIFF/WAVE PCM mono 32 kHz 16-bit**。另一会话报告：第 5 个流是跨块连续 zlib，原先的“截断”判断有误；原包 2144 个流的起点偏移及长度均可与索引对应。仅用长度匹配时有 258 个歧义，使用偏移后据其报告可消除。当前 Windows 工作区尚未独立复现原包验证，详情见 `docs/PAK_DECODE_FINDINGS.md`。
+2. 外部 `data.zpak` 是 ZIP；包含 `Core.pakh`、`Core.pakd000` 和 `metadata.xml`。实际解析器已在完整原包中验证 2144 条索引、417 个目录节点和 2265 条文件路径，尾部 CRC 为 `0xeee1e38a`。
+3. `Core.pakd000` 的 2144 个跨块连续 zlib 流已全部读取，共解码 325,791,952 字节；物理偏移、存储长度、解码长度和目录标识全部一致。早期“第 5 个流截断”的判断已纠正。详情见 `docs/PAK_DECODE_FINDINGS.md`。
 4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
 5. 提供 PowerShell `build_windows.ps1`，在本机安装 Godot 及 Windows 导出模板后生成原生 Windows EXE，非安卓模拟器。
-6. 本次解包器修改以合成数据在 Windows 隔离环境中通过 25 项 Python 测试（命令、退出码及沙箱临时目录说明见 `docs/PAK_DECODE_FINDINGS.md`），GitHub Actions 的 Python 3.12 测试也通过；另一 ChatGPT 会话已用完整原包直接运行本 PR 的实际解析器，2144 条流、417 个目录节点、2265 条引用和尾部 CRC 全部验证通过。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
+6. 合并后的工具集在 Windows 隔离环境中通过 35 项 Python 测试，GitHub Actions 的 Python 3.12 测试通过；完整原包也已由另一 ChatGPT 会话直接运行实际解析器验证。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
 
 ## 立即运行 Windows PC 原型
 
@@ -68,6 +68,16 @@ py -3.11 tools\pak_probe.py 'D:\BruceLee\data.zpak' --limit 20 --csv evidence\fr
 py -3.12 tools\pak_extract.py 'D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip' --extract-named "$env:LOCALAPPDATA\BruceLee-PC-Port\selected-resources" --select-path 'bl_brucelee' --select-path 'm01_idle'
 ```
 
+对已经解出且符合当前单层 `r8g8b8a8` 格式样本的 `.tex` 流，可转换成本地 PNG：
+
+```powershell
+py -3.12 tools\tex_convert.py 'C:\private\decoded-texture.bin' --output "$env:LOCALAPPDATA\BruceLee-PC-Port\previews\texture.png"
+```
+
+转换器会校验 CTX3 字符串标识、DATA 边界、宽高、像素长度和 MD5 尾部，并强制输出到仓库外且非明显同步目录。当前不支持 mip 链或其他纹理编码；格式证据与限制见 `docs/TEX_FORMAT_FINDINGS.md`。
+
+Godot 原型会尝试从默认位置 `%LOCALAPPDATA%\BruceLee-PC-Port\local-assets\sprites\background.png` 加载本地背景；也可用环境变量 `BRUCELEE_BACKGROUND_PATH` 指定路径。HUD 还会尝试加载同目录结构中转换出的 `gui/images/hud/bl_hud_round_yellow_left.png`。文件不存在时继续使用占位场景和纯程序 HUD。该机制用于本机资源验证，原版图片仍不进入 Git。
+
 如果要在 Linux/WSL2 中筛选原生符号，先从 APK 解压 `lib/armeabi/libdefault.so`，再运行：
 
 ```bash
@@ -87,14 +97,14 @@ BruceLee_PC_Port_Phase1/
 │   ├── export_presets.cfg
 │   ├── scenes/main.tscn
 │   └── scripts/{main,fighter,hud}.gd
-├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs}.py
-├── tests/{test_tools,test_pak_extract}.py
+├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs,kdf_strings,tex_convert}.py
+├── tests/{test_tools,test_pak_extract,test_kdf_strings,test_tex_convert}.py
 ├── evidence/
 │   ├── source_inventory.json
 │   ├── candidate_symbols.csv
 │   ├── pak_frames.csv
 │   └── decoded_frames/   # 忽略目录；本机样本另存位置见上方说明
-└── docs/{PHASES,GHIDRA_PLAN,LEGAL}.md
+└── docs/{PHASES,PAK_DECODE_FINDINGS,KDF_STRING_FINDINGS,TEX_FORMAT_FINDINGS,NATIVE_ANIMATION_EVIDENCE,GHIDRA_PLAN,LEGAL}.md
 ```
 
 ## 需要避免的错误
@@ -106,4 +116,4 @@ BruceLee_PC_Port_Phase1/
 
 ## 下一步
 
-请参看 `docs/PHASES.md`。首要阻塞项是还原 `CPakDFilesManager` 的帧布局、索引→数据范围映射，以及 `mesh` / `anm` / `skl` 的私有格式。优先使用 **Linux/WSL2 + Ghidra** 静态检查 ARM ELF32，避免将 Windows REA/Ghidra 当前针对 PE 的支持误认为可直接处理 ARM ELF。
+请参看 `docs/PHASES.md`。PAK 索引、路径和解压范围已恢复；当前首要阻塞项是 `mesh` / `anm` / `skl` 私有载荷格式，以及把真实 Bruce Lee 模型、骨骼和 idle/punch/kick 动画转换为 Godot 可读资源。优先结合真实样本字节、`CAnimRes` / `CAnimationDescr` 函数入口和 **Linux/WSL2 + Ghidra** 做交叉验证。
