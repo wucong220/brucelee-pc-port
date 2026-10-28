@@ -141,7 +141,10 @@ element_stride = (descriptor & 0x0fff0000) >> 21
 | `version` | 7 | 7 | 7 |
 | `pose` | 1 | 1 | 1 |
 
-未证明 `duration` 的单位一定是帧，因此工具保留原始整数，不擅自给出秒数。idle、punch、kick 的三维样本数量分别等于 110、69、86；这与 `duration` 数值一致，但压缩通道内容仍未解码。
+idle、punch、kick 的三维样本数量分别为 110、69、86，与 `duration` 数值一致。
+后续原生指令也表明 decoder 将 `duration` 用作样本数；其与时间及
+`framerate` 的关系仍需验证，因此这里不擅自给出秒数。五条 wavelet 轨道
+的逐帧候选解码见下文。
 
 | 动画 | 第一组 | 第二组 | 第三组 |
 |---|---|---|---|
@@ -219,28 +222,100 @@ left_aligned_prefix, bit_length, code_count, huffcode_start
 ```
 
 已验证所有 `huffcode_start` 连续累加，`code_count` 之和等于
-`huffcode` 元素数，生成的前缀彼此不构成前缀。位置轨道 huffcode 为 4 字节
-符号，旋转轨道为 2 字节符号；符号的有符号解释仍未由原生读取函数确认。
+`huffcode` 元素数，生成的前缀彼此不构成前缀。位置轨道 huffcode 为有符号
+4 字节整数，旋转轨道为有符号 2 字节整数；分别对应下述 int/float 和
+short/float 原生读取路径。
 
 压缩 `data` 首字分别为 idle 4、punch 3、kick 3，与
-`numaproximations` 一致。后续字看起来是 approximation 边界，但在
-`CWaveletDecoder<int,float>::UpdateToFrame` 和
-`CWaveletDecoder<short,float>::UpdateToFrame` 的位流规则解出前，不把
-整个 data section 假定为一条无边界 bitstream。
+`numaproximations` 一致；这些字也指向各自的 approximation 起点，不能把
+整个 data section 当成一条无边界 bitstream。
+
+### Wavelet 位流与逐帧候选值（2026-10-29）
+
+基于上表三条资源和 `libdefault.so` SHA-256
+`1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70`，
+本机静态追踪了以下函数，另一个 ChatGPT 会话独立核对了指令和真实数据：
+
+| ELF 符号值 | 内容 |
+|---|---|
+| `0x0041932c` / `0x0041b32c` | int/float、short/float decoder 构造器 |
+| `0x00418aa0` / `0x0041a914` | 两种 decoder 的 `UpdateToFrame` |
+| `0x00416950` | 动画资源 `duration` 写入 native 对象的样本数字段 |
+
+`UpdateToFrame` 先把请求帧对齐为偶数帧，依据 `duration`、帧位和
+`numaproximations` 选择数据区。每个区前面是一项/通道的初始整数，后续
+按帧位遍历节点；每个节点有两个下级位置，节点后面有独立 Huffman
+位流。数据字按小端读取，每字按最高有效位优先消费。
+
+节点为每个活跃通道读取 Huffman 符号：非零时只消耗码字，零符号后还
+消耗一个控制位；控制位为 1 时该通道提前结束。终端码流与提前结束
+路径根据两个整数状态的差值和量化系数生成一对浮点槽。位置的原生
+HuffCode 是 `int32`，旋转的原生 HuffCode 是 `int16`；两种整数状态的
+更新均使用 32 位整数运算。五条样本的 `quantizedradix` 均为 12，缩放
+系数为 `1/4096`。
+
+以 punch bonepos 为例，DATA section 0 位于文件偏移 1473，
+frame 0 从 word 33 的最高位读取首个 Huffman 码；其码长为 12、
+HuffCode 索引 537。frame 0 的四个中间节点和终端节点分别消耗
+233、214、227、243 和 213 bit。frame 68 在零子节点处仍会先消费当前
+节点位流，再对剩余通道走差值回退。末尾不足两个帧时，工具只输出
+`duration` 内的槽位。
+
+本机工具和独立临时实验对五条真实 wavelet 轨道逐值比较：
+
+| 轨道 | 帧数 | 标量数 | 逐值差异 | 已观察码流尾部非零填充 |
+|---|---:|---:|---:|---:|
+| idle bonerot | 110 | 18,480 | 0 | 0 |
+| punch bonepos | 69 | 1,863 | 0 | 0 |
+| punch bonerot | 69 | 12,972 | 0 | 0 |
+| kick bonepos | 86 | 2,322 | 0 | 0 |
+| kick bonerot | 86 | 16,168 | 0 | 0 |
+
+合计 **51,805 个标量**。另一个 ChatGPT 会话独立报告相同的码流规则、
+位消费及输出公式；三条旋转轨道的最大四元数范数误差约
+0.00110–0.00117。原生代码构造窗口时会预读下一字；工具限制真正消费
+的码字留在相应区间，对区间外仅作零扩展，不声称原生预读本身有边界保护。
+零填充是此批样本的观察，工具只报告非零尾部，不把它作为通用拒绝条件。
+
+这些是静态指令和样本数值的交叉验证。`+8/+12` 槽与最终调用方帧顺序、
+骨骼绑定、坐标系、旋转分量顺序以及与原版实际播放结果的逐帧一致性
+仍待验证。独立分析发现 punch/kick 个别相邻候选旋转变化较快，尚不能
+仅凭码流合法或范数接近 1 判定动作连续性正确。
+
+使用本机已有资源进行候选解码：
+
+```powershell
+python -B -X utf8 tools\kdf_animation.py 'C:\private\m01_pnch_low_01.anm' --decode-wavelet --values
+```
+
+`--decode-wavelet` 显式启用受限格式解码，`--values` 才展开全部候选值。
+输出包含由原版资源导出的数据，只能保存在本机、仓库和同步目录之外；
+不要将输出或原始资源提交 Git。当前实现要求已观察的版本 7、
+`quantizedbits=32`、`firsthuffmanlevel=0`、根表/节点布局和受限大小；
+32-bit 零码的原生控制位行为不同，当前候选解码器明确不支持。未知
+配置报错不等于其他版本或布局已损坏。文件级还有轨道、数据字、码表
+符号和解码标量的合计上限。
 
 ## 当前阻塞
 
 - 当前 Skl 样本的 74 条名称指针已恢复；其他版本仍需独立验证名称表前边界与指针标记。
-- `duration` 的单位、局部/世界坐标和四元数分量约定尚未确认。
-- Wavelet 的表结构和通道数已恢复，但 approximation 边界、初始值、位序和逐通道状态重置规则仍未恢复。
-- `.obj` 对外部网格、纹理和 shader 资源的引用解析尚未完成。
+- `duration` 在 native decoder 中作为样本数使用；其与外部时间、framerate 的关系仍需验证。局部/世界坐标和四元数分量约定尚未确认。
+- Wavelet 五条目标轨道已有逐帧候选值；仍需原生运行时对照、调用方槽位顺序与 Godot 视觉验收。
+- `.obj` 已提取外部网格、纹理和 shader 引用；场景树及材质到网格子集的最终绑定仍未验证。
 
 在坐标空间、四元数分量顺序和动画轨道语义得到验证之前，不把当前静态数组直接当作 Godot 变换，也不宣称模型已可导入。
 
 ## 当前工具
 
 - `tools/kdf_data.py`：解析 CTX3 字符串表、DATA 计数、分组偏移、属性记录和数据区。
-- `tools/kdf_animation.py`：提取已验证的 header、轨道组、采样对象、offset、Huffman 元数据和 raw-fixed Q12/Q14 值；wavelet 明确标为 `unresolved-wavelet`。默认只输出小预览，`--values` 才展开全部固定点样本和符号。
+- `tools/kdf_animation.py` / `tools/kdf_wavelet.py`：提取 header、轨道组、offset、Huffman 元数据和 raw-fixed Q12/Q14 值。默认不解码 wavelet；显式使用 `--decode-wavelet` 时解码观察到的格式，并标为 `decoded-wavelet-candidate`。默认只输出预览，`--values` 才展开全部候选样本和符号。
 - `tools/kdf_skeleton.py`：按真实字段标记读取 `type → nodeid → parentid → treesize → offset`，通过相对指针表恢复节点名称，验证唯一根、父节点存在、无环和子树规模；关联每个 bone 的 `scales/bonepos/bonerot` 索引并读取静态变换候选。
 
-这些工具只读取本机解码资源。Wavelet/Huffman 解码和坐标约定仍必须用完整原包继续验证。
+这些工具只读取本机解码资源。当前 wavelet 输出是候选数值，不证明原生运行时、骨骼绑定或 Godot 播放一致。
+
+本次代码改动的检查命令及退出码：
+
+```powershell
+python -B -X utf8 -m unittest discover -s tests -p "test*.py" -v
+# exit 0
+```
