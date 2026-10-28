@@ -14,7 +14,7 @@
 3. 最初工具确认了 `Core.pakd000` 开头 4 个流，其中一个是可识别的 **RIFF/WAVE PCM mono 32 kHz 16-bit**。另一会话报告：第 5 个流是跨块连续 zlib，原先的“截断”判断有误；原包 2144 个流的起点偏移及长度均可与索引对应。仅用长度匹配时有 258 个歧义，使用偏移后据其报告可消除。当前 Windows 工作区尚未独立复现原包验证，详情见 `docs/PAK_DECODE_FINDINGS.md`。
 4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
 5. 提供 PowerShell `build_windows.ps1`，在本机安装 Godot 及 Windows 导出模板后生成原生 Windows EXE，非安卓模拟器。
-6. 本次解包器修改以合成数据在 Windows 隔离环境中通过 25 项 Python 测试（命令、退出码及沙箱临时目录说明见 `docs/PAK_DECODE_FINDINGS.md`）。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
+6. 本次解包器修改以合成数据在 Windows 隔离环境中通过 25 项 Python 测试（命令、退出码及沙箱临时目录说明见 `docs/PAK_DECODE_FINDINGS.md`），GitHub Actions 的 Python 3.12 测试也通过；另一 ChatGPT 会话已用完整原包直接运行本 PR 的实际解析器，2144 条流、417 个目录节点、2265 条引用和尾部 CRC 全部验证通过。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
 
 ## 立即运行 Windows PC 原型
 
