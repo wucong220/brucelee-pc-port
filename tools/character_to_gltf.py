@@ -64,6 +64,29 @@ def _quaternion_matrix(value: Iterable[float]) -> tuple[tuple[float, ...], ...]:
     )
 
 
+def _inverse_bind_math_matrix(
+        rotation: Iterable[float],
+        translation: Iterable[float]) -> list[list[float]]:
+    """Return the row-major mathematical inverse bind matrix."""
+    bind_rotation = _quaternion_matrix(rotation)
+    tx, ty, tz = translation
+    return [
+        [
+            bind_rotation[0][0], bind_rotation[1][0],
+            bind_rotation[2][0], tx,
+        ],
+        [
+            bind_rotation[0][1], bind_rotation[1][1],
+            bind_rotation[2][1], ty,
+        ],
+        [
+            bind_rotation[0][2], bind_rotation[1][2],
+            bind_rotation[2][2], tz,
+        ],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+
+
 def _local_matrix(transform: dict) -> list[list[float]]:
     rotation = _quaternion_matrix(transform['rotation_xyzw_unverified'])
     scale = transform['scale']
@@ -124,6 +147,15 @@ def _compose_skeleton(skeleton: dict) -> tuple[dict[int, list[list[float]]], dic
 def _validate_rest_pose(mesh: dict, skl_by_name: dict[str, dict]) -> dict:
     max_position_error = 0.0
     max_rotation_error = 0.0
+    max_skin_rotation_error = 0.0
+    max_skin_translation_error = 0.0
+    worst_skin_translation_joint = None
+    identity = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
     for index, name in enumerate(mesh['skeleton']['names']):
         if name not in skl_by_name:
             raise GltfExportError(f'Mesh bone {name!r} is missing from Skl')
@@ -139,13 +171,42 @@ def _validate_rest_pose(mesh: dict, skl_by_name: dict[str, dict]) -> dict:
         )
         max_position_error = max(max_position_error, position_error)
         max_rotation_error = max(max_rotation_error, rotation_error)
+        inverse_bind = _inverse_bind_math_matrix(
+            mesh['skeleton']['rotations_xyzw'][index],
+            mesh['skeleton']['bind_translations'][index],
+        )
+        skin_matrix = _matrix_multiply(matrix, inverse_bind)
+        skin_rotation_error = max(
+            abs(skin_matrix[row][column] - identity[row][column])
+            for row in range(3) for column in range(3)
+        )
+        skin_translation_error = max(
+            abs(skin_matrix[row][3] - identity[row][3])
+            for row in range(3)
+        )
+        max_skin_rotation_error = max(
+            max_skin_rotation_error, skin_rotation_error)
+        if skin_translation_error > max_skin_translation_error:
+            max_skin_translation_error = skin_translation_error
+            worst_skin_translation_joint = name
     if max_position_error > 2e-3 or max_rotation_error > 2e-3:
         raise GltfExportError(
             f'Mesh/Skl rest pose mismatch: position={max_position_error}, '
             f'rotation={max_rotation_error}')
+    model_span = max(
+        upper - lower
+        for lower, upper in zip(
+            mesh['position_min'], mesh['position_max'], strict=True)
+    )
     return {
         'position_max_error': max_position_error,
         'rotation_max_error': max_rotation_error,
+        'skin_matrix_rotation_max_error': max_skin_rotation_error,
+        'skin_matrix_translation_max_error': max_skin_translation_error,
+        'skin_matrix_translation_max_error_relative_to_model_span': (
+            max_skin_translation_error / model_span if model_span else None),
+        'worst_skin_translation_joint': worst_skin_translation_joint,
+        'model_span': model_span,
     }
 
 

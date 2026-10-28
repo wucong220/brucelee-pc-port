@@ -81,3 +81,5 @@ body skinned 有 1 个退化三角形，其余网格没有退化三角形；所�
 `tools/character_to_gltf.py` 在给定独立 `.Skl` 时可生成仓库外的静态 GLB：按骨骼名称建立 Mesh skeleton 到 Skl 层级的两阶段映射，写入 Skl 局部 TRS、Mesh 逆绑定矩阵、四权重和 subset primitives。场景根节点把原版 Z-up 转到 glTF Y-up，但不包含动画，因此只用于蒙皮静态姿态和 Godot/glTF 导入验证。
 
 本机实际生成的 body GLB 为 142,792 字节，SHA-256 为 `c55f6d76a848f3caee79ca116c9172543ab688d2d2cbe8e0a52bd054851bf70f`。文件包含 76 个节点、67 个 skin joints、3 个 subset primitive。Mesh 与 Skl 静态姿态对照的最大位置误差为 `0.000605`、最大旋转矩阵误差为 `0.000422`。该 GLB 已在内置浏览器的标准 glTF 查看器中完整显示，面部、手指、衣物和双脚均正常；Godot 实机导入仍需单独验证。
+
+独立验收还计算了完整的 `Skl 全局矩阵 × Mesh 逆绑定矩阵`。67 个 joint 的最大旋转误差仍为 `0.000422`，最大平移误差为 `0.068762`；后者是前述微小旋转差乘上约 160 个单位的头部坐标后的结果。以网格最大边长 `166.336` 归一化后为 `0.000413`，最差 joint 为 `r eyelid down`。导出器保留原版 Mesh 自带的逆绑定矩阵，不拿 Skl 静态姿态反算矩阵覆盖原数据；因此不能把该检查描述为所有 joint 都严格等于单位矩阵。完整指标现在随 `rest_pose_validation` 的 `skin_matrix_*` 和 `relative_to_model_span` 字段输出。

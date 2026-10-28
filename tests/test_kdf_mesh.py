@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 import struct
 import subprocess
@@ -11,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from kdf_data import KdfError
 from kdf_mesh import inspect_mesh
 from mesh_to_obj import convert_file
+from character_to_gltf import _validate_rest_pose
 from character_to_gltf import convert_file as convert_glb
 from test_kdf_skeleton import skeleton_fixture
 
@@ -211,6 +213,45 @@ class TestKdfMesh(unittest.TestCase):
             matrices = struct.unpack_from('<32f', binary, start)
             self.assertEqual(matrices[12:16], (0.0, 0.0, 0.0, 1.0))
             self.assertEqual(matrices[28:32], (-1.0, 0.0, 0.0, 1.0))
+
+    def test_rest_pose_validation_reports_complete_skin_matrix_error(self):
+        angle = 1e-3
+        cosine = math.cos(angle)
+        sine = math.sin(angle)
+        mesh = {
+            'skeleton': {
+                'names': ['joint'],
+                'positions': [[100.0, 0.0, 0.0]],
+                'rotations_xyzw': [[0.0, 0.0, 0.0, 1.0]],
+                'bind_translations': [[-100.0, 0.0, 0.0]],
+            },
+            'position_min': [-100.0, -1.0, -1.0],
+            'position_max': [100.0, 1.0, 1.0],
+        }
+        skeleton = {
+            'joint': {
+                'matrix': [
+                    [cosine, -sine, 0.0, 100.0],
+                    [sine, cosine, 0.0, 0.0],
+                    [0.0, 0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0],
+                ],
+            },
+        }
+        result = _validate_rest_pose(mesh, skeleton)
+        self.assertEqual(result['position_max_error'], 0.0)
+        self.assertAlmostEqual(result['rotation_max_error'], 1e-3, places=7)
+        self.assertAlmostEqual(
+            result['skin_matrix_rotation_max_error'], 1e-3, places=7)
+        self.assertAlmostEqual(
+            result['skin_matrix_translation_max_error'], 0.1, places=7)
+        self.assertAlmostEqual(
+            result[
+                'skin_matrix_translation_max_error_relative_to_model_span'],
+            5e-4,
+            places=7,
+        )
+        self.assertEqual(result['worst_skin_translation_joint'], 'joint')
 
 
 if __name__ == '__main__':
