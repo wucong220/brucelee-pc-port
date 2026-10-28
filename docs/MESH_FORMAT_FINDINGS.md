@@ -77,3 +77,7 @@ body skinned 有 1 个退化三角形，其余网格没有退化三角形；所�
 `--vertices` 和 `--indices` 仅在明确需要时输出完整数组。下一步是把已验证的位置、UV、索引、权重和骨骼映射转换为仓库外的 glTF/OBJ 中间文件，并核对坐标轴与矩阵布局。
 
 `tools/mesh_to_obj.py` 提供受限 OBJ 中间导出，仅写位置、UV、subset 和三角面；它强制输出到仓库外且非明显同步目录，并在结果中明确 `skin_data_included=false`。OBJ 不保存四权重、绑定矩阵或动画，因此不会替代后续 glTF/Godot 蒙皮转换。
+
+`tools/character_to_gltf.py` 在给定独立 `.Skl` 时可生成仓库外的静态 GLB：按骨骼名称建立 Mesh skeleton 到 Skl 层级的两阶段映射，写入 Skl 局部 TRS、Mesh 逆绑定矩阵、四权重和 subset primitives。场景根节点把原版 Z-up 转到 glTF Y-up，但不包含动画，因此只用于蒙皮静态姿态和 Godot/glTF 导入验证。
+
+本机实际生成的 body GLB 为 142,792 字节，SHA-256 为 `c55f6d76a848f3caee79ca116c9172543ab688d2d2cbe8e0a52bd054851bf70f`。文件包含 76 个节点、67 个 skin joints、3 个 subset primitive。Mesh 与 Skl 静态姿态对照的最大位置误差为 `0.000605`、最大旋转矩阵误差为 `0.000422`。该 GLB 已在内置浏览器的标准 glTF 查看器中完整显示，面部、手指、衣物和双脚均正常；Godot 实机导入仍需单独验证。

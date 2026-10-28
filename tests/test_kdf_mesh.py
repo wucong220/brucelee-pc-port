@@ -11,6 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from kdf_data import KdfError
 from kdf_mesh import inspect_mesh
 from mesh_to_obj import convert_file
+from character_to_gltf import convert_file as convert_glb
+from test_kdf_skeleton import skeleton_fixture
 
 
 def descriptor(count: int, stride: int) -> int:
@@ -178,6 +180,37 @@ class TestKdfMesh(unittest.TestCase):
             self.assertEqual(sum(line.startswith('v ') for line in text.splitlines()), 3)
             self.assertEqual(sum(line.startswith('vt ') for line in text.splitlines()), 3)
             self.assertEqual(sum(line.startswith('f ') for line in text.splitlines()), 1)
+
+    def test_static_pose_glb_contains_skin(self):
+        with tempfile.TemporaryDirectory() as temp:
+            mesh_source = Path(temp) / 'test.mesh'
+            skeleton_source = Path(temp) / 'test.skl'
+            output = Path(temp) / 'test.glb'
+            mesh_source.write_bytes(mesh_fixture())
+            skeleton_source.write_bytes(skeleton_fixture())
+            result = convert_glb(
+                mesh_source, output, skeleton_source=skeleton_source,
+                validate_rest_pose=False)
+            payload = output.read_bytes()
+            self.assertEqual(payload[:4], b'glTF')
+            self.assertEqual(result['skin_joint_count'], 2)
+            json_length = struct.unpack_from('<I', payload, 12)[0]
+            gltf = json.loads(payload[20:20 + json_length].decode('utf-8'))
+            self.assertEqual(gltf['asset']['version'], '2.0')
+            self.assertEqual(len(gltf['skins'][0]['joints']), 2)
+            attributes = gltf['meshes'][0]['primitives'][0]['attributes']
+            self.assertIn('JOINTS_0', attributes)
+            self.assertIn('WEIGHTS_0', attributes)
+            binary_length = struct.unpack_from('<I', payload, 20 + json_length)[0]
+            binary_start = 28 + json_length
+            binary = payload[binary_start:binary_start + binary_length]
+            inverse_accessor = gltf['accessors'][
+                gltf['skins'][0]['inverseBindMatrices']]
+            view = gltf['bufferViews'][inverse_accessor['bufferView']]
+            start = view.get('byteOffset', 0) + inverse_accessor.get('byteOffset', 0)
+            matrices = struct.unpack_from('<32f', binary, start)
+            self.assertEqual(matrices[12:16], (0.0, 0.0, 0.0, 1.0))
+            self.assertEqual(matrices[28:32], (-1.0, 0.0, 0.0, 1.0))
 
 
 if __name__ == '__main__':
