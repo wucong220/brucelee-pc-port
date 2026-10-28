@@ -80,6 +80,17 @@ def _resolve_node_names(container: dict, node_starts: list[int]) -> dict[int, st
     return names
 
 
+def _node_region_end(container: dict, node_starts: list[int]) -> int:
+    if not any(entry['text'] == 'rawfloatsample' for entry in container['strings']):
+        return container['record_count']
+    trailing_samples = property_occurrences(container, 'rawfloatsample')
+    candidates = [
+        entry['key_record'] for entry in trailing_samples
+        if entry['key_record'] > node_starts[-1]
+    ]
+    return min(candidates) if candidates else container['record_count']
+
+
 def _section_start(container: dict, section_index: int) -> int:
     section = container['sections'][section_index]
     return container['payload_offset'] + section['start_relative']
@@ -183,7 +194,7 @@ def inspect_skeleton(raw: bytes) -> dict:
         entry['key_record'] for entry in occurrences['type']
         if entry['value'] in node_type_ordinals
     ]
-    records_end = container['record_count']
+    records_end = _node_region_end(container, type_starts)
     nodes = []
     for ordinal, start in enumerate(type_starts):
         end = type_starts[ordinal + 1] if ordinal + 1 < len(type_starts) else records_end

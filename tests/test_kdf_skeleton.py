@@ -21,12 +21,13 @@ NODES = [
 
 def skeleton_fixture(
         nodes=None, *, rotations=None, position_indices=None,
-        name_pointer_delta=0) -> bytes:
+        name_pointer_delta=0, append_trailing_sample=False) -> bytes:
     nodes = NODES if nodes is None else nodes
     strings = [
         'type', 'nodeid', 'parentid', 'treesize', 'offset',
         'root', 'object', 'bone', 'scales', 'bonepos', 'bonerot',
         'root_node', 'object_node', 'bone_a', 'bone_b',
+        'rawfloatsample',
     ]
     node_records = []
 
@@ -73,6 +74,11 @@ def skeleton_fixture(
         records.append((0x60000000, string_ordinal))
         records.append((0x30000005, relative & 0xffffffff))
     records.extend(node_records)
+    if append_trailing_sample:
+        records.extend([
+            (0x60000000, strings.index('rawfloatsample')),
+            (0x41800002, 0),
+        ])
 
     raw = bytearray(b'1FDKENONCTX3' + struct.pack('<IIII', len(strings), 1, 0, len(strings)))
     for text in strings:
@@ -121,6 +127,7 @@ class TestKdfSkeleton(unittest.TestCase):
         self.assertEqual(result['static_transforms'][0]['position'], [1.0, 2.0, 3.0])
         self.assertEqual(result['static_transforms'][1]['scale'], [2.0, 2.0, 2.0])
         self.assertEqual(result['transform_coordinate_space'], 'unverified')
+        self.assertEqual(result['nodes'][-1]['record_end'], len(result['nodes']) * 2 + 42)
 
     def test_missing_parent_and_bad_subtree_size_are_rejected(self):
         missing_parent = [
@@ -136,6 +143,11 @@ class TestKdfSkeleton(unittest.TestCase):
     def test_name_pointer_must_target_node_start(self):
         with self.assertRaisesRegex(KdfError, 'does not target its node'):
             inspect_skeleton(skeleton_fixture(name_pointer_delta=1))
+
+    def test_last_node_stops_before_trailing_sample_records(self):
+        result = inspect_skeleton(skeleton_fixture(append_trailing_sample=True))
+        self.assertEqual(result['nodes'][-1]['record_start'], 32)
+        self.assertEqual(result['nodes'][-1]['record_end'], 48)
 
     def test_static_transform_sections_are_validated(self):
         with self.assertRaisesRegex(KdfError, 'position index section'):
