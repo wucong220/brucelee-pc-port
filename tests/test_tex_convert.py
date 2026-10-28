@@ -123,6 +123,8 @@ class TestTextureConversion(unittest.TestCase):
             script = checkout / 'tools' / 'tex_convert.py'
             script.parent.mkdir(parents=True)
             shutil.copy2(Path(__file__).resolve().parents[1] / 'tools' / 'tex_convert.py', script)
+            shutil.copy2(Path(__file__).resolve().parents[1] / 'tools' / 'kdf_data.py',
+                         script.parent / 'kdf_data.py')
             run = subprocess.run(
                 [sys.executable, '-X', 'utf8', str(script), str(source),
                  '--output', str(output)],
