@@ -1,14 +1,16 @@
 # Core.pakh / Core.pakd000 实测解析进展（2026-10-28）
 
-本报告根据用户提供的 `Bruce Lee Dragon Warrior v1.15.26.zip` 中 `data.zpak` 进行**只读实测**，不包含原版资源、模型、动画或音频数据，也不意味着这些资源可公开分发。
+本报告记录另一个 ChatGPT 会话对用户提供的 `Bruce Lee Dragon Warrior v1.15.26.zip` 中 `data.zpak` 所报告的只读扫描结果，不包含原版资源、模型、动画或音频数据，也不意味着这些资源可公开分发。当前 Windows Codex 工作区未取得该原始 ZIP，尚不能独立复现下面的原包扫描；合成数据测试也不能代替原包验证。
 
-## 完整验证过的发现
+2026-10-28，对方会话报告重新读取并计算原包校验值：外层 ZIP 长度 **109,010,523** 字节，SHA-256 为 `429c9c7af3a36d21742c2de60d23c5ecaab5642b9d817564174efc0c5b3b6342`；内层 `data.zpak` 长度 **110,018,180** 字节，SHA-256 为 `364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c`。这些值来自对方会话的报告，并非当前工作区独立读取的结果。
+
+## 另一会话报告的原包扫描结果
 
 - `Core.pakh` 头签名 `8KAP`；偏移 `0x10` 是 `DTRS`，偏移 `0x14` 是资源条目数 **2144**。
 - 偏移 `0x18` 开始为 **2144 × 36 字节**的表，至文件偏移 **77208**；紧接着有值为 1 的 32 位字段，之后出现资源目录字符串。
 - 36 字节记录的已观察字段布局：`<I16sIIII`，即升序唯一的 32 位 key、16 字节尚未解释的字段、恒为 0 的 32 位字段、解码长度、物理存储长度及暂未确定语义的 flag。**不要把 16 字节未知字段解释为 MD5 或目录哈希。**
 - 2144 条记录的存储长度之和 **109,641,135 字节**，与 `Core.pakd000` 文件大小逐字节一致。
-- `Core.pakd000` 中每个资源以 `uint32(262144) + uint32(首块压缩长度)` 开头，后续块只有 `uint32(压缩长度)`。整个资源是**跨压缩块连续的 zlib 流**，直到 zlib EOF 为止。不能像旧版 `pak_probe.py` 那样要求每块都有独立的 zlib EOF。
+- `Core.pakd000` 中每个资源以 `uint32(262144) + uint32(首块压缩长度)` 开头，后续块只有 `uint32(压缩长度)`。整个资源是**跨压缩块连续的 zlib 流**，直到 zlib EOF 为止。不能像旧版 `pak_probe.py` 那样要求每块都有独立的 zlib EOF。首个数值 `262144` 的具体语义及其是否限制每块解码大小，仍需进一步证据。
 - 实际顺序处理全部 **2144 个数据流**并解压到 zlib EOF，累计 **325,791,952 字节**；最终位置恰好为 `109,641,135`。每条解压/存储长度组合的多重集合与索引 2144 条记录**完全一致**。
 - **1886** 个数据流可凭唯一的 `(解压大小,存储大小)` 二元组找到唯一索引；另外 **258** 个因两个字段相同，必须等待目录哈希/其他字段解析才能判定具体索引。
 - 实测第 5 条物理资源存储 **313405** 字节，4 个连续压缩块，解码 **787024** 字节，在索引中唯一对应 ordinal **157**。过去将其称作“截断 zlib”是误判。
@@ -16,20 +18,34 @@
 
 ## 可复现命令
 
-Windows PowerShell（在仓库根目录）：
+Windows PowerShell（在仓库根目录；请将示例路径换成实际原始 ZIP 路径）：
 
 ```powershell
 py -3.12 -m unittest discover -s tests -v
-py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip" --report "$env:LOCALAPPDATA\BruceLee-PC-Port\pak-verification.json"
+py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip" --expected-zpak-sha256 364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c --report "$env:LOCALAPPDATA\BruceLee-PC-Port\pak-verification.json"
 ```
 
-如需导出解压后的原始资源，仅写到**仓库外的本机目录**：
+如需导出解压后的原始资源，仅写到**仓库外、未被同步软件同步的本机目录**；先确认下列目录没有被重定向或同步：
 
 ```powershell
-py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip" --extract "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded-resources"
+py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip" --expected-zpak-sha256 364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c --extract "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded-resources"
 ```
 
 输出 `.bin` 为原始解码数据，文件名中 `disk_NNNN` 表示数据流物理顺序；`key_...` 仅表示长度唯一匹配时的索引 key，**不是游戏资源名称**；`ambiguous` 表示存在多个候选。命令只读取原始 ZIP，不覆盖已有导出文件；如遇异常，可能保留此前已写出的部分文件，应在人工检查后清理。
+
+报告中的 `source_sha256`、`data_zpak_sha256`、`pakh_sha256` 和 `pakd_sha256` 分别对应输入 ZIP、内层 ZPAK、索引及数据文件的字节；直接输入 ZPAK 时前两项相同。`--expected-zpak-sha256` 在导出前核对内层哈希，避免将不同来源的结果混为一谈。
+
+默认累计解码上限为 **1 GiB**，可用 `--max-total-decoded-bytes` 明确调整；每条资源仍限制在 16 MiB，工具只支持当前观察到的格式。导出前会检查预估空间并拒绝当前仓库和部分可识别的同步目录，但无法识别所有同步软件及自定义同步目录，使用者仍需确认目标为本地非同步目录。
+
+## 本次修改的测试记录
+
+2026-10-28，在 Windows Python 3.12.10 的 MXC 隔离工作区内，使用合成数据执行下列命令，**16 项通过，退出码 0**；隔离环境额外验证禁止读取工作区外测试文件和连接本地监听端口。
+
+```powershell
+python -X utf8 -I -B -c "import pathlib,tempfile,unittest;tempfile.tempdir=str(pathlib.Path.cwd()/'.t');unittest.main(module=None,argv=['unittest','discover','-s','tests','-p','test*.py','-v'])"
+```
+
+`.t` 是隔离工作区中预先创建的临时目录。之前在同一隔离策略下直接使用 `python -X utf8 -I -B -m unittest discover -s tests -p test*.py -v` 返回退出码 **1**，原因是沙箱将临时目录重定向到禁止访问的位置；改用上述工作区内临时目录后通过。测试不包含原版资源，不能证明原包解析结果。
 
 ## 下一步（真正关系到 PC 游戏移植）
 
@@ -37,4 +53,4 @@ py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip
 2. 对解出的 `m01_`、`m02_`、`BL_BruceLee_` 资源识别私有动画、网格和骨骼编码；开发本地转换器。
 3. 在 Godot PC 原型中先导入一个真实李小龙模型以及 idle/punch/kick 三套实际动画，再进入攻击帧和判定规则复原。
 
-本次真实扫描已通过；Godot 实机运行和 Windows EXE 导出仍未验证。
+原包扫描由另一个 ChatGPT 会话报告通过，当前 Windows 工作区尚未独立复现；Godot 实机运行和 Windows EXE 导出仍未验证。

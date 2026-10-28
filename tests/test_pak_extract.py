@@ -1,22 +1,30 @@
 import io
+import hashlib
+import json
+import os
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+import warnings
 import zipfile
 import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
+import pak_extract
 from pak_extract import PakError, parse_index, scan_archive
 
 
-def archive_fixture(path: Path, originals: list[bytes]) -> None:
+def archive_fixture(path: Path, originals: list[bytes], level: int = zlib.Z_DEFAULT_COMPRESSION) -> None:
     rows = []
     disk_data = bytearray()
     for idx, payload in enumerate(originals):
         # One zlib stream across chunks, with a sync-flush before each continuation.
-        compressor = zlib.compressobj()
+        compressor = zlib.compressobj(level)
         blocks = []
         for start in range(0, len(payload), 262144):
             is_final = start + 262144 >= len(payload)
@@ -75,6 +83,154 @@ class TestPakIndex(unittest.TestCase):
                 archive.writestr('Core.pakd000', stream)
             with self.assertRaises(PakError):
                 scan_archive(data)
+
+    def test_valid_resource_at_decoded_limit_can_have_larger_stored_size(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / 'data.zpak'
+            payload = bytes(range(256)) * 65536
+            archive_fixture(data, [payload], level=0)
+            out = scan_archive(data)
+            self.assertEqual(out['total_decoded_bytes'], len(payload))
+            self.assertGreater(out['resources'][0]['stored_bytes'], len(payload))
+            self.assertEqual(out['resources'][0]['sha256'], hashlib.sha256(payload).hexdigest())
+
+    def test_direct_and_nested_source_hashes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            inner = root / 'data.zpak'
+            archive_fixture(inner, [b'example' * 100])
+            inner_sha = hashlib.sha256(inner.read_bytes()).hexdigest()
+            with zipfile.ZipFile(inner) as archive:
+                pakh_sha = hashlib.sha256(archive.read('Core.pakh')).hexdigest()
+                pakd_sha = hashlib.sha256(archive.read('Core.pakd000')).hexdigest()
+            direct = scan_archive(inner, expected_zpak_sha256=inner_sha.upper())
+            self.assertEqual(direct['source_sha256'], inner_sha)
+            self.assertEqual(direct['data_zpak_sha256'], inner_sha)
+            self.assertEqual(direct['pakh_sha256'], pakh_sha)
+            self.assertEqual(direct['pakd_sha256'], pakd_sha)
+            outer = root / 'outer.zip'
+            with zipfile.ZipFile(outer, 'w') as archive:
+                archive.write(inner, 'fixture/data.zpak')
+            nested = scan_archive(outer, expected_zpak_sha256=inner_sha)
+            self.assertEqual(nested['source_sha256'], hashlib.sha256(outer.read_bytes()).hexdigest())
+            self.assertEqual(nested['data_zpak_sha256'], inner_sha)
+            self.assertEqual(nested['pakd_sha256'], pakd_sha)
+            self.assertEqual(nested['resources'][0]['sha256'], direct['resources'][0]['sha256'])
+
+    def test_wrong_or_malformed_expected_hash_stops_before_extract(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            data = root / 'data.zpak'
+            archive_fixture(data, [b'example'])
+            target = root / 'output'
+            with patch.object(pak_extract, '_PROJECT_ROOT', root / 'project'):
+                for expected in ('0' * 64, 'not-a-hash'):
+                    with self.subTest(expected=expected), self.assertRaises(PakError):
+                        scan_archive(data, target, expected_zpak_sha256=expected)
+                self.assertFalse(target.exists())
+
+    def test_total_limit_is_checked_before_extract(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            data = root / 'data.zpak'
+            archive_fixture(data, [b'A' * 400, b'B' * 500])
+            target = root / 'output'
+            with patch.object(pak_extract, '_PROJECT_ROOT', root / 'project'):
+                with self.assertRaises(PakError):
+                    scan_archive(data, target, max_total_decoded_bytes=899)
+                self.assertFalse(target.exists())
+                self.assertEqual(scan_archive(data, max_total_decoded_bytes=900)['total_decoded_bytes'], 900)
+                with self.assertRaises(PakError):
+                    scan_archive(data, max_total_decoded_bytes=0)
+
+    def test_extract_rejects_project_and_known_sync_directories(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            data = root / 'data.zpak'
+            archive_fixture(data, [b'example'])
+            project = root / 'project'
+            with patch.object(pak_extract, '_PROJECT_ROOT', project):
+                for target in (project / 'out', root / 'BaiduSyncdisk' / 'out'):
+                    with self.subTest(target=target), self.assertRaises(PakError):
+                        scan_archive(data, target)
+                    self.assertFalse(target.exists())
+                with patch.dict(os.environ, {'BAIDU_SYNC_ROOT': str(root / 'custom-sync')}):
+                    with self.assertRaises(PakError):
+                        scan_archive(data, root / 'custom-sync' / 'out')
+
+    def test_safe_extract_and_low_space_guard(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            data = root / 'data.zpak'
+            payload = b'example' * 100
+            archive_fixture(data, [payload])
+            target = root / 'output'
+            with patch.object(pak_extract, '_PROJECT_ROOT', root / 'project'):
+                with patch.object(pak_extract.shutil, 'disk_usage', return_value=SimpleNamespace(free=0)):
+                    with self.assertRaises(PakError):
+                        scan_archive(data, target)
+                    self.assertFalse(target.exists())
+                out = scan_archive(data, target)
+                extracted = list(target.glob('*.bin'))
+                self.assertEqual(len(extracted), 1)
+                self.assertEqual(hashlib.sha256(extracted[0].read_bytes()).hexdigest(), out['resources'][0]['sha256'])
+                with self.assertRaises(FileExistsError):
+                    scan_archive(data, target)
+                self.assertEqual(extracted[0].read_bytes(), payload)
+
+    def test_source_mutation_is_reported(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / 'data.zpak'
+            archive_fixture(data, [b'example'])
+            with patch.object(pak_extract, '_sha256_stream', side_effect=['0' * 64, '1' * 64]):
+                with self.assertRaisesRegex(PakError, 'changed during'):
+                    scan_archive(data)
+
+    def test_duplicate_pak_or_nested_container_names_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp, warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            root = Path(temp)
+            direct = root / 'duplicate.zpak'
+            with zipfile.ZipFile(direct, 'w') as archive:
+                archive.writestr('Core.pakh', b'first')
+                archive.writestr('Core.pakh', b'second')
+                archive.writestr('Core.pakd000', b'data')
+            with self.assertRaisesRegex(PakError, 'duplicate PAK'):
+                scan_archive(direct)
+            nested_outer = root / 'nested-duplicate.zip'
+            with zipfile.ZipFile(nested_outer, 'w') as archive:
+                archive.write(direct, 'fixture/data.zpak')
+            with self.assertRaisesRegex(PakError, 'duplicate PAK'):
+                scan_archive(nested_outer)
+            outer = root / 'outer.zip'
+            with zipfile.ZipFile(outer, 'w') as archive:
+                archive.writestr('data.zpak', b'first')
+                archive.writestr('data.zpak', b'second')
+            with self.assertRaisesRegex(PakError, 'single bounded'):
+                scan_archive(outer)
+
+    def test_cli_writes_hashes_for_nested_archive(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            inner = root / 'data.zpak'
+            archive_fixture(inner, [b'A' * 400, b'B' * 500])
+            inner_sha = hashlib.sha256(inner.read_bytes()).hexdigest()
+            outer = root / 'outer.zip'
+            with zipfile.ZipFile(outer, 'w') as archive:
+                archive.write(inner, 'fixture/data.zpak')
+            report = root / 'report.json'
+            script = Path(__file__).resolve().parents[1] / 'tools' / 'pak_extract.py'
+            run = subprocess.run(
+                [sys.executable, '-X', 'utf8', str(script), str(outer),
+                 '--report', str(report), '--expected-zpak-sha256', inner_sha,
+                 '--max-total-decoded-bytes', '900'],
+                capture_output=True, text=True, encoding='utf-8', check=False,
+            )
+            self.assertEqual(run.returncode, 0, run.stderr)
+            result = json.loads(report.read_text(encoding='utf-8'))
+            self.assertEqual(result['source_sha256'], hashlib.sha256(outer.read_bytes()).hexdigest())
+            self.assertEqual(result['data_zpak_sha256'], inner_sha)
+            self.assertEqual(result['total_decoded_bytes'], 900)
 
 
 if __name__ == '__main__':
