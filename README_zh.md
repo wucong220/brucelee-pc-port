@@ -62,6 +62,14 @@ py -3.11 tools\extract_inputs.py 'D:\BruceLee\data.zpak' --out 'D:\BruceLee\unpa
 
 这些工具**不执行 APK 代码，也不解密、绕过 DRM 或下载游戏内容**。`pak_probe.py` 目前只提取确认完整的流，不能恢复所有独立资源的文件名和容器映射关系。某个输出为 `RIFF`，只证明这是有效 WAV，不证明对应具体游戏事件。
 
+对已经解出且符合当前单层 `r8g8b8a8` 格式样本的 `.tex` 流，可转换成本地 PNG：
+
+```powershell
+py -3.12 tools\tex_convert.py 'C:\private\decoded-texture.bin' --output "$env:LOCALAPPDATA\BruceLee-PC-Port\previews\texture.png"
+```
+
+转换器会校验 CTX3 字符串标识、DATA 边界、宽高、像素长度和 MD5 尾部，并强制输出到仓库外且非明显同步目录。当前不支持 mip 链或其他纹理编码；格式证据与限制见 `docs/TEX_FORMAT_FINDINGS.md`。
+
 如果要在 Linux/WSL2 中筛选原生符号，先从 APK 解压 `lib/armeabi/libdefault.so`，再运行：
 
 ```bash

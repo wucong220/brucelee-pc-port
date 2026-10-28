@@ -14,7 +14,7 @@
 
 另一个 ChatGPT 会话随后报告对原包的只读扫描：2144 条物理资源中，1942 条以 `1FDKENONCTX3` 开头，其字符串表共 63377 条记录，全部符合上述公式；另外 202 条以 `RIFF` 开头。该会话还报告，用此公式计算 2265 条 PAKH 目录完整路径时，结果与对应资源 key 直接匹配数为 0。**这些全包统计来自对方会话报告，当前 Windows 工作区没有原包，尚未独立复现。**本工具即使遇到规则不匹配也会报告反例，不把规则硬编码为所有版本的格式要求。
 
-字符串表中出现 `texture2d` 和 `datasourcepath/...`；后者是文件内部字符串，不能直接当成 PAK 目录中的文件名，或作为角色、骨骼和动画之间绑定关系的证明。对方会话报告，本包 356 条 `datasourcepath` 去掉前缀和扩展名并忽略大小写后，与对应 `.tex` 路径主体匹配；这仍不足以证明纹理转换算法。表结束后的 `DATA` 及其内部结构尚未解析。
+字符串表中出现 `texture2d` 和 `datasourcepath/...`；后者是文件内部字符串，不能直接当成 PAK 目录中的文件名，或作为角色、骨骼和动画之间绑定关系的证明。对方会话报告，本包 356 条 `datasourcepath` 去掉前缀和扩展名并忽略大小写后，与对应 `.tex` 路径主体匹配。三个本机样本的纹理 `DATA` 基础层已进一步验证并可由 `tools/tex_convert.py` 转为 PNG；边界与限制见 `docs/TEX_FORMAT_FINDINGS.md`。
 
 | 物理流序号 | 本机样本 SHA-256 | 解码字节数 | 表项 / 规则匹配 |
 |---:|---|---:|---:|
@@ -32,7 +32,7 @@
 python -X utf8 -I -B tools/kdf_strings.py "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded_frames\frame_0000_0000000000.bin" "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded_frames\frame_0002_0000063745.bin" "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded_frames\frame_0003_0000124002.bin"
 ```
 
-同日，在隔离工作区用合成夹具及基线 Python 测试执行下列命令：**8 项通过，退出码 0**。`.t` 是沙箱工作区内预建临时目录。
+同日，在隔离工作区用合成夹具、纹理转换器和基线 Python 测试执行下列命令：**13 项通过，退出码 0**。`.t` 是沙箱工作区内预建临时目录。
 
 ```powershell
 python -X utf8 -I -B -c "import pathlib,tempfile,unittest;tempfile.tempdir=str(pathlib.Path.cwd()/'.t');unittest.main(module=None,argv=['unittest','discover','-s','tests','-p','test*.py','-v'])"
