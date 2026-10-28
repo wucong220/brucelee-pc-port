@@ -2,15 +2,15 @@
 """Read-only metadata verification of Bruce Lee: Dragon Warrior's PAK container.
 
 Recover data-stream boundaries and match assets to sorted index entries by
-observed (uncompressed_size, stored_size). Exact original filenames and ambiguous
-index identities are *not* recovered by this utility.
+the observed PAKD offset plus uncompressed and stored lengths. Exact original
+filenames are *not* recovered by this utility.
 
 All original archives are opened read-only. Exporting decoded bytes is opt-in.
 """
 from __future__ import annotations
 
 import argparse
-from collections import Counter, defaultdict
+from collections import Counter
 from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
@@ -45,6 +45,8 @@ class IndexRecord:
     index_ordinal: int
     key: int
     unknown_16_hex: str
+    resource_id_hex: str
+    pakd_offset: int
     reserved: int
     decoded_bytes: int
     stored_bytes: int
@@ -73,7 +75,13 @@ def parse_index(raw: bytes) -> list[IndexRecord]:
         if key <= last_key or reserved != 0 or not (0 < decoded_bytes <= _MAX_RESOURCE_BYTES) or not (0 < stored_bytes <= _MAX_DATA_BYTES):
             raise PakError(f'index row {ordinal} fails observed index constraints')
         last_key = key
-        records.append(IndexRecord(ordinal, key, unknown_16.hex(), reserved, decoded_bytes, stored_bytes, flags))
+        # Another read-only scan of the original package found that the last
+        # four bytes of the formerly unknown 16-byte region equal the PAKD
+        # stream offset. Validate that observation against every decoded stream.
+        resource_id = struct.pack('<I', key) + unknown_16[:12]
+        pakd_offset = struct.unpack_from('<I', unknown_16, 12)[0]
+        records.append(IndexRecord(ordinal, key, unknown_16.hex(), resource_id.hex(),
+                                   pakd_offset, reserved, decoded_bytes, stored_bytes, flags))
     return records
 
 
@@ -253,9 +261,13 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
         expected_pairs = Counter((r.decoded_bytes, r.stored_bytes) for r in records)
         if sum(r.stored_bytes for r in records) != members['Core.pakd000'].file_size:
             raise PakError('index stored-size sum differs from actual PAKD length')
-        index_by_pair = defaultdict(list)
+        index_by_offset = {}
         for r in records:
-            index_by_pair[(r.decoded_bytes, r.stored_bytes)].append(r)
+            if r.pakd_offset in index_by_offset:
+                raise PakError(f'duplicate PAKD offset {r.pakd_offset} in index')
+            if r.pakd_offset + r.stored_bytes > members['Core.pakd000'].file_size:
+                raise PakError(f'index row {r.index_ordinal} exceeds PAKD length')
+            index_by_offset[r.pakd_offset] = r
         observed_pairs = Counter()
         results = []
         with archive.open('Core.pakd000') as raw_stream:
@@ -265,12 +277,15 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
                 observed_pairs[pair] += 1
                 if observed_pairs[pair] > expected_pairs[pair]:
                     raise PakError(f'data record {row["disk_ordinal"]} not present in index length multiset')
-                candidates = index_by_pair[pair]
-                row['index_candidates'] = [item.index_ordinal for item in candidates]
-                row['key'] = (f'{candidates[0].key:08x}' if len(candidates) == 1 else None)
+                record = index_by_offset.get(row['pakd_offset'])
+                if record is None or pair != (record.decoded_bytes, record.stored_bytes):
+                    raise PakError(f'data record {row["disk_ordinal"]} fails index offset/length match')
+                row['index_candidates'] = [record.index_ordinal]
+                row['key'] = f'{record.key:08x}'
+                row['resource_id_hex'] = record.resource_id_hex
                 if extract_dir is not None:
                     extract_dir.mkdir(parents=True, exist_ok=True)
-                    suffix = f'key_{candidates[0].key:08x}' if len(candidates) == 1 else 'ambiguous'
+                    suffix = f'key_{record.key:08x}'
                     destination = extract_dir / f'disk_{row["disk_ordinal"]:04d}_{suffix}.bin'
                     # No overwrite of earlier work or original assets.
                     with destination.open('xb') as output:
@@ -281,7 +296,8 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
             pakd_hash = stream.digest.hexdigest()
         if observed_pairs != expected_pairs:
             raise PakError('full decoded-size/stored-size multiset does not match PAKH index')
-        unique_count = sum(r['key'] is not None for r in results)
+        unique_count = len(results)
+        length_only_unique_count = sum(count for count in expected_pairs.values() if count == 1)
         return {
             'source': str(path),
             'source_sha256': source_hash,
@@ -291,8 +307,11 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
             'index_count': len(records),
             'pakd_bytes': members['Core.pakd000'].file_size,
             'total_decoded_bytes': sum(r['decoded_bytes'] for r in results),
+            'matching_method': 'pakd_offset_and_lengths',
             'uniquely_matched': unique_count,
             'ambiguous': len(results) - unique_count,
+            'length_only_uniquely_matched': length_only_unique_count,
+            'length_only_ambiguous': len(results) - length_only_unique_count,
             'multiset_verified': True,
             'resources': results,
         }

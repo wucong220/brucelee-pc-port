@@ -35,8 +35,10 @@ def archive_fixture(path: Path, originals: list[bytes], level: int = zlib.Z_DEFA
         stored = bytearray(struct.pack('<II', 262144, len(blocks[0]))) + blocks[0]
         for block in blocks[1:]:
             stored += struct.pack('<I', len(block)) + block
+        pakd_offset = len(disk_data)
         disk_data.extend(stored)
-        rows.append((100 + idx * 100, b'example-value!!!'[:16], 0, len(payload), len(stored), 1))
+        index_extra = b'example-value!!!'[:12] + struct.pack('<I', pakd_offset)
+        rows.append((100 + idx * 100, index_extra, 0, len(payload), len(stored), 1))
     pakh = b'8KAP' + b'\x00' * 12 + b'DTRS' + struct.pack('<I', len(rows))
     for row in rows:
         pakh += struct.pack('<I16sIIII', *row)
@@ -58,13 +60,49 @@ class TestPakIndex(unittest.TestCase):
             self.assertEqual(out['resources'][1]['zlib_chunks'], 3)
             self.assertEqual(out['resources'][1]['decoded_bytes'], 524411)
 
-    def test_duplicate_sizes_remain_ambiguous(self):
+    def test_duplicate_sizes_match_by_offset(self):
         with tempfile.TemporaryDirectory() as temp:
             data = Path(temp) / 'data.zpak'
             archive_fixture(data, [b'test' * 100, b'test' * 100])
             out = scan_archive(data)
-            self.assertEqual(out['ambiguous'], 2)
-            self.assertTrue(all(r['key'] is None for r in out['resources']))
+            self.assertEqual(out['length_only_ambiguous'], 2)
+            self.assertEqual(out['ambiguous'], 0)
+            self.assertEqual([r['index_candidates'] for r in out['resources']], [[0], [1]])
+            self.assertEqual([r['key'] for r in out['resources']], ['00000064', '000000c8'])
+            self.assertTrue(all(len(r['resource_id_hex']) == 32 for r in out['resources']))
+
+    def test_offset_matching_does_not_assume_index_and_disk_order_match(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / 'data.zpak'
+            archive_fixture(data, [b'A' * 400, b'B' * 500])
+            with zipfile.ZipFile(data) as archive:
+                pakh = bytearray(archive.read('Core.pakh'))
+                pakd = archive.read('Core.pakd000')
+            row0, row1 = pakh[28:60], pakh[64:96]
+            pakh[28:60], pakh[64:96] = row1, row0
+            with zipfile.ZipFile(data, 'w') as archive:
+                archive.writestr('Core.pakh', pakh)
+                archive.writestr('Core.pakd000', pakd)
+            out = scan_archive(data)
+            self.assertEqual([r['index_candidates'] for r in out['resources']], [[1], [0]])
+            self.assertEqual([r['key'] for r in out['resources']], ['000000c8', '00000064'])
+
+    def test_duplicate_or_incorrect_index_offsets_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / 'data.zpak'
+            archive_fixture(data, [b'A' * 400, b'B' * 500])
+            with zipfile.ZipFile(data) as archive:
+                original_pakh = archive.read('Core.pakh')
+                pakd = archive.read('Core.pakd000')
+            for field_offset, replacement, message in ((24 + 36 + 16, 0, 'duplicate PAKD offset'),
+                                                        (24 + 16, 1, 'offset/length match')):
+                pakh = bytearray(original_pakh)
+                struct.pack_into('<I', pakh, field_offset, replacement)
+                with zipfile.ZipFile(data, 'w') as archive:
+                    archive.writestr('Core.pakh', pakh)
+                    archive.writestr('Core.pakd000', pakd)
+                with self.subTest(replacement=replacement), self.assertRaisesRegex(PakError, message):
+                    scan_archive(data)
 
     def test_reject_invalid_index_count(self):
         with self.assertRaises(PakError):
