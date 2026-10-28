@@ -95,9 +95,17 @@
 
 ## 当前阻塞
 
-- Skl 节点名称引用与属性序列的完整通用解析器尚未实现。
+- 数值骨架层级扫描器已能恢复 nodeid、parentid、treesize 和子树关系；节点名称引用的完整通用编码尚未实现。
 - `duration` 的单位、局部/世界坐标和四元数分量约定尚未确认。
 - `quantizedbits/radix`、Huffman 码表和压缩通道的编码尚未恢复。
 - `.obj` 对外部网格、纹理和 shader 资源的引用解析尚未完成。
 
 在获得可验证的骨骼父子层级和至少一组姿态变换之前，不编写 glTF/Godot 动画导出器，也不宣称模型已可导入。
+
+## 当前工具
+
+- `tools/kdf_data.py`：解析 CTX3 字符串表、DATA 计数、分组偏移、属性记录和数据区。
+- `tools/kdf_animation.py`：提取已验证的 `firstframe/duration/framerate/version/pose` 和分组区间；不解码压缩通道。
+- `tools/kdf_skeleton.py`：按 `type → nodeid → parentid → treesize → offset` 扫描 Skl 节点，验证唯一根、父节点存在、无环和子树规模。
+
+这些工具只读取本机解码资源。Skl 名称引用和 Wavelet/Huffman 解码仍必须用完整原包继续验证。

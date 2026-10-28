@@ -130,19 +130,29 @@ def parse_container(raw: bytes) -> dict:
     }
 
 
-def scalar_property(container: dict, key: str) -> int:
-    """Read an observed `0x60000000/key, 0/value` scalar property."""
+def scalar_occurrences(container: dict, key: str) -> list[dict]:
+    """Return locations and values for observed scalar key/value pairs."""
     matches = [entry['ordinal'] for entry in container['strings'] if entry['text'] == key]
     if len(matches) != 1:
         raise KdfError(f'expected one string-table key named {key!r}')
     ordinal = matches[0]
     records = container['records']
-    values = []
+    occurrences = []
     for index in range(len(records) - 1):
         if records[index]['first'] == 0x60000000 and records[index]['second'] == ordinal:
             value_record = records[index + 1]
             if value_record['first'] == 0:
-                values.append(value_record['second'])
+                occurrences.append({
+                    'key_record': index,
+                    'value_record': index + 1,
+                    'value': value_record['second'],
+                })
+    return occurrences
+
+
+def scalar_property(container: dict, key: str) -> int:
+    """Read one observed `0x60000000/key, 0/value` scalar property."""
+    values = [entry['value'] for entry in scalar_occurrences(container, key)]
     if len(values) != 1:
         raise KdfError(f'expected one scalar value for {key!r}')
     return values[0]

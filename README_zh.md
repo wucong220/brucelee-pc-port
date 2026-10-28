@@ -14,7 +14,7 @@
 3. `Core.pakd000` 的 2144 个跨块连续 zlib 流已全部读取，共解码 325,791,952 字节；物理偏移、存储长度、解码长度和目录标识全部一致。早期“第 5 个流截断”的判断已纠正。详情见 `docs/PAK_DECODE_FINDINGS.md`。
 4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
 5. 提供 PowerShell `build_windows.ps1`，在本机安装 Godot 及 Windows 导出模板后生成原生 Windows EXE，非安卓模拟器。
-6. 当前工具集在 Windows 隔离环境中通过 41 项 Python 测试，GitHub Actions 的 Python 3.12 测试通过；完整原包也已由另一 ChatGPT 会话直接运行实际解析器验证。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
+6. 当前工具集在 Windows 隔离环境中通过 44 项 Python 测试，GitHub Actions 的 Python 3.12 测试通过；完整原包也已由另一 ChatGPT 会话直接运行实际解析器验证。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
 
 ## 立即运行 Windows PC 原型
 
@@ -97,8 +97,8 @@ BruceLee_PC_Port_Phase1/
 │   ├── export_presets.cfg
 │   ├── scenes/main.tscn
 │   └── scripts/{main,fighter,hud}.gd
-├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs,kdf_strings,kdf_data,kdf_animation,tex_convert}.py
-├── tests/{test_tools,test_pak_extract,test_kdf_strings,test_kdf_data,test_kdf_animation,test_tex_convert}.py
+├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs,kdf_strings,kdf_data,kdf_animation,kdf_skeleton,tex_convert}.py
+├── tests/{test_tools,test_pak_extract,test_kdf_strings,test_kdf_data,test_kdf_animation,test_kdf_skeleton,test_tex_convert}.py
 ├── evidence/
 │   ├── source_inventory.json
 │   ├── candidate_symbols.csv
