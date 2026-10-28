@@ -16,12 +16,10 @@ import struct
 import sys
 import zlib
 
-_SIGNATURE = b'1FDKENONCTX3'
-_DATA_SIGNATURE = b'DATA'
-_DATA_HEADER_BYTES = 236
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from kdf_data import KdfError as KdfContainerError, parse_container
+
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
-_MAX_STRINGS = 20_000
-_MAX_STRING_BYTES = 1024 * 1024
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -29,68 +27,39 @@ class TextureError(ValueError):
     """Resource does not match the observed texture format profile."""
 
 
-def _read_strings(raw: bytes) -> tuple[list[str], int]:
-    if len(raw) < 0x1c or not raw.startswith(_SIGNATURE):
-        raise TextureError('unsupported CTX3 signature')
-    count = struct.unpack_from('<I', raw, 0x18)[0]
-    if count > _MAX_STRINGS:
-        raise TextureError('CTX3 string count exceeds limit')
-    position = 0x1c
-    strings = []
-    for ordinal in range(count):
-        if position + 8 > len(raw):
-            raise TextureError(f'truncated CTX3 string record {ordinal}')
-        identifier, length = struct.unpack_from('<II', raw, position)
-        position += 8
-        if length > _MAX_STRING_BYTES or position + length >= len(raw):
-            raise TextureError(f'invalid CTX3 string length at record {ordinal}')
-        value = raw[position:position + length]
-        position += length
-        if raw[position] != 0:
-            raise TextureError(f'missing CTX3 string terminator at record {ordinal}')
-        position += 1
-        expected = (zlib.crc32(value) + length) & 0xffffffff
-        if identifier != expected:
-            raise TextureError(f'CTX3 string identifier mismatch at record {ordinal}')
-        try:
-            strings.append(value.decode('utf-8'))
-        except UnicodeDecodeError as exc:
-            raise TextureError(f'CTX3 string {ordinal} is not UTF-8') from exc
-    return strings, position
-
-
-def _find_data_section(raw: bytes, search_from: int) -> int:
-    position = search_from
-    for _ in range(32):
-        position = raw.find(_DATA_SIGNATURE, position)
-        if position < 0:
-            break
-        if position + _DATA_HEADER_BYTES + 16 <= len(raw):
-            payload_size = struct.unpack_from('<I', raw, position + 0x10)[0]
-            payload_end = position + _DATA_HEADER_BYTES + payload_size
-            if 0 < payload_size <= _MAX_RESOURCE_BYTES and payload_end + 16 == len(raw):
-                return position
-        position += 1
-    raise TextureError('could not locate a bounded texture DATA section')
+def _property_u32(raw: bytes, record_start: int, record_count: int, ordinal: int) -> int:
+    """Read a string-keyed value encoded in the low 24 bits of record words."""
+    for index in range(record_count - 1):
+        key_record = struct.unpack_from('<II', raw, record_start + index * 8)
+        value_record = struct.unpack_from('<II', raw, record_start + (index + 1) * 8)
+        if key_record == (0x60000000, ordinal) and value_record[0] == 0:
+            return value_record[1] & 0xffffff
+    raise TextureError(f'texture metadata property {ordinal} was not found')
 
 
 def parse_texture(raw: bytes) -> dict:
     """Return validated metadata and the bottom-up RGBA base-level pixels."""
     if len(raw) > _MAX_RESOURCE_BYTES:
         raise TextureError('decoded texture exceeds inspection size limit')
-    strings, table_end = _read_strings(raw)
+    try:
+        container = parse_container(raw)
+    except KdfContainerError as exc:
+        raise TextureError(str(exc)) from exc
+    strings = [entry['text'] for entry in container['strings']]
     required = {'format', 'type', 'sizex', 'sizey'}
     if not required <= set(strings):
         raise TextureError('texture metadata strings are missing')
     if 'r8g8b8a8' not in strings or 'texture2d' not in strings:
         raise TextureError('unsupported texture format or type')
 
-    data_offset = _find_data_section(raw, table_end)
-    payload_size = struct.unpack_from('<I', raw, data_offset + 0x10)[0]
-    # These observed offsets are metadata values associated with sizex/sizey
-    # in the 26-entry DATA descriptor used by the inspected v1.15.26 samples.
-    width = struct.unpack_from('<I', raw, data_offset + 0x90)[0]
-    height = struct.unpack_from('<I', raw, data_offset + 0xA0)[0]
+    data_offset = container['data_offset']
+    record_count = container['record_count']
+    offset_count = container['offset_count']
+    payload_size = container['payload_bytes']
+    record_start = data_offset + 20 + (offset_count + 1) * 4
+    header_size = container['header_bytes']
+    width = _property_u32(raw, record_start, record_count, strings.index('sizex'))
+    height = _property_u32(raw, record_start, record_count, strings.index('sizey'))
     if not (0 < width <= 4096 and 0 < height <= 4096):
         raise TextureError('texture dimensions are out of bounds')
     expected_bytes = width * height * 4
@@ -100,7 +69,7 @@ def parse_texture(raw: bytes) -> dict:
             'this converter currently accepts one uncompressed RGBA level'
         )
 
-    payload_offset = data_offset + _DATA_HEADER_BYTES
+    payload_offset = container['payload_offset']
     payload_end = payload_offset + payload_size
     footer = raw[payload_end:]
     if len(footer) != 16 or hashlib.md5(raw[:payload_end]).digest() != footer:
@@ -110,6 +79,9 @@ def parse_texture(raw: bytes) -> dict:
         'decoded_bytes': len(raw),
         'string_count': len(strings),
         'data_offset': data_offset,
+        'data_record_count': record_count,
+        'data_offset_count': offset_count,
+        'data_header_bytes': header_size,
         'payload_offset': payload_offset,
         'payload_bytes': payload_size,
         'width': width,

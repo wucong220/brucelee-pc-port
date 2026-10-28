@@ -46,12 +46,101 @@
 
 这些整数可复现，但语义尚未由二进制结构证明。不能把 `DATA+4` 直接称为帧数或骨骼数。
 
+四个已逐项验证的资源都符合同一布局：`DATA+4` 是 8 字节属性记录数量 `M`，`DATA+8` 是二进制分组数量 `N`，`DATA+16` 是数据区长度 `L`；`DATA+20` 起有 `N+1` 个分组偏移，随后是 `M×8` 属性表、`L` 字节数据区和末尾 16 字节资源标识。DATA 头长为 `24 + 8M + 4N`。两个计数的结构含义已被四条资源闭合验证，但不能据此把具体属性记录直接命名为帧数或骨骼数。
+
+## Skl 层级与绑定数据
+
+属性表中重复出现 `type → nodeid → parentid → treesize → offset` 序列，共形成 74 个节点：
+
+- 1 个 root、3 个 object、70 个 bone；
+- `nodeid` 为 0、2、4……146，全部唯一；
+- 除根节点外，`parentid` 均指向已有节点；根节点 `parentid = -2`；
+- 74 个节点的 `treesize` 与前序遍历的子树规模全部一致；
+- 70 个 `bonepos` 和 70 个 `bonerot` 索引分别完整覆盖 0～69。
+
+节点字段不是统一的标量编码。实际验证的 8 字节键值记录为：
+
+| 字段 | 键记录 | 值记录标记 | 值 |
+|---|---|---|---|
+| `type` | `(0x60000000, string_ordinal)` | `0x60000000` | 再按字符串序号解释为 `root/object/bone` |
+| `nodeid` | `(0x60000000, string_ordinal)` | `0x00000000` | `uint32` |
+| `parentid` | `(0x60000000, string_ordinal)` | `0x10000000` | `int32` |
+| `treesize` | `(0x60000000, string_ordinal)` | `0x00000000` | `uint32` |
+| `offset` | `(0x60000000, string_ordinal)` | `0x30000000` 或 `0x30000003` | 语义仍未确认 |
+| `bonepos` / `bonerot` | `(0x60000000, string_ordinal)` | `0x00000000` | 数据索引 |
+
+因此，校验必须同时匹配键名序号和值记录标记；只接受 `(0, value)` 的通用标量扫描器会漏掉全部 `type`、`parentid` 和 `offset` 字段。
+
+节点名称由节点区前部的 74 组引用表给出，每组占两条 8 字节记录：
+
+```text
+(0x60000000, string_ordinal)
+(0x30000005 | 0x30000006, relative_record_offset)
+
+node_start = pointer_record_ordinal + relative_record_offset
+```
+
+74/74 组名称引用都唯一命中节点起点。该表的显式名称也纠正了仅看邻近字符串得到的候选：`nodeid=2` 是 `character`，`nodeid=4` 是 `skeleton`；`male_01` 与 `skeletonbase` 是节点内部引用，不是节点名称。
+
+骨骼数据区包含 70 组位置、70 组旋转和缩放候选：位置按 `float32[3]`、旋转按 `float32[4]` 读取时，数值有限且 70 个四元数模长与 1 的最大误差约 `1.18e-7`；索引组也各含 70 个 `uint16`。这支持位置/旋转数据与骨骼节点的对应，但本地/世界坐标系及四元数分量约定仍未知。
+
+| 分组 | 区间 `[起,止)` | 已验证布局 |
+|---:|---|---|
+| 0 | `0x335a–0x36a2` | 70 × `float32[3]` 位置候选 |
+| 1 | `0x36a2–0x372e` | 70 × `uint16` 索引 |
+| 2 | `0x372e–0x3752` | 3 × `float32[3]` 对象位置候选 |
+| 3 | `0x3752–0x375a` | 3 × `uint16` 索引 + 填充 |
+| 4 | `0x375a–0x3bba` | 70 × `float32[4]` 旋转候选 |
+| 5 | `0x3bba–0x3c46` | 70 × `uint16` 索引 |
+| 6 | `0x3c46–0x3c76` | 3 × `float32[4]` 对象旋转候选 |
+| 7 | `0x3c76–0x3c7e` | 3 × `uint16` 索引 + 填充 |
+| 8 | `0x3c7e–0x3fea` | 73 × `float32[3]` 缩放候选 |
+| 9 | `0x3fea–0x407e` | 73 × `uint16` 索引 + 填充 |
+
+骨架工具在验证每个 bone 记录内的索引后，会关联并输出 70 组静态位置、四元数和缩放数值。输出字段 `transform_coordinate_space=unverified` 与 `transform_quaternion_component_order=unverified` 是格式边界，避免把原始浮点数组误当成已经可用于 Godot 的局部变换。
+
+共享 DATA 解析器还识别已验证的数组描述符：
+
+```text
+element_count  = descriptor & 0xffff
+element_stride = (descriptor & 0x0fff0000) >> 21
+```
+
+当描述符高半字节为 `0x4`、元素数量和宽度均非零且段索引有效时，段长度必须等于 `count × stride`，最多允许 3 字节尾部填充。该规则在 Skl、idle、punch、kick 中共 50 组引用上闭合。
+
+## 动画 scalar header 与采样区
+
+三项基本数值直接来自属性表中的严格键值对：
+
+| 字段 | idle | punch | kick |
+|---|---:|---:|---:|
+| `firstframe` | 0 | 0 | 0 |
+| `duration` | 110 | 69 | 86 |
+| `framerate` | 30 | 30 | 30 |
+| `version` | 7 | 7 | 7 |
+| `pose` | 1 | 1 | 1 |
+
+未证明 `duration` 的单位一定是帧，因此工具保留原始整数，不擅自给出秒数。idle、punch、kick 的三维样本数量分别等于 110、69、86；这与 `duration` 数值一致，但压缩通道内容仍未解码。
+
+| 动画 | 第一组 | 第二组 | 第三组 |
+|---|---|---|---|
+| idle | `rawfixedsample`；110×12B | `waveletsample`；2006×4B | — |
+| punch | `waveletsample`；487×4B | `rawfixedsample`；69×12B | `waveletsample`；3268×4B |
+| kick | `waveletsample`；566×4B | `rawfixedsample`；86×12B | `waveletsample`；3914×4B |
+
 ## 当前阻塞
 
-- `nodeid`、`parentid`、`treesize` 和 `offset` 在 DATA 属性序列表中的实际布局未知。
-- `firstframe`、`duration`、`framerate` 的实际类型、单位和位置未知。
-- 尚不知道三套动作具体使用 `RawFloatSample`、`RawFixedSample` 或 `WaveletSample`。
+- 当前 Skl 样本的 74 条名称指针已恢复；其他版本仍需独立验证名称表前边界与指针标记。
+- `duration` 的单位、局部/世界坐标和四元数分量约定尚未确认。
 - `quantizedbits/radix`、Huffman 码表和压缩通道的编码尚未恢复。
 - `.obj` 对外部网格、纹理和 shader 资源的引用解析尚未完成。
 
-在获得可验证的骨骼父子层级和至少一组姿态变换之前，不编写 glTF/Godot 动画导出器，也不宣称模型已可导入。
+在坐标空间、四元数分量顺序和动画轨道语义得到验证之前，不把当前静态数组直接当作 Godot 变换，也不宣称模型已可导入。
+
+## 当前工具
+
+- `tools/kdf_data.py`：解析 CTX3 字符串表、DATA 计数、分组偏移、属性记录和数据区。
+- `tools/kdf_animation.py`：提取已验证的 `firstframe/duration/framerate/version/pose` 和分组区间；不解码压缩通道。
+- `tools/kdf_skeleton.py`：按真实字段标记读取 `type → nodeid → parentid → treesize → offset`，通过相对指针表恢复节点名称，验证唯一根、父节点存在、无环和子树规模；关联每个 bone 的 `scales/bonepos/bonerot` 索引并读取静态变换候选。
+
+这些工具只读取本机解码资源。Wavelet/Huffman 解码和坐标约定仍必须用完整原包继续验证。
