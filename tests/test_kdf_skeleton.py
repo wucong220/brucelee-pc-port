@@ -76,6 +76,7 @@ def skeleton_fixture(
     records.extend(node_records)
     if append_trailing_sample:
         records.extend([
+            (0x60000000, strings.index('type')),
             (0x60000000, strings.index('rawfloatsample')),
             (0x41800002, 0),
         ])

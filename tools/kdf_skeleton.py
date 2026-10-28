@@ -88,7 +88,18 @@ def _node_region_end(container: dict, node_starts: list[int]) -> int:
         entry['key_record'] for entry in trailing_samples
         if entry['key_record'] > node_starts[-1]
     ]
-    return min(candidates) if candidates else container['record_count']
+    if not candidates:
+        return container['record_count']
+    first_sample = min(candidates)
+    type_ordinal = _string_ordinal(container, 'type')
+    records = container['records']
+    if (
+        first_sample > 0
+        and records[first_sample - 1]['first'] == 0x60000000
+        and records[first_sample - 1]['second'] == type_ordinal
+    ):
+        first_sample -= 1
+    return first_sample
 
 
 def _section_start(container: dict, section_index: int) -> int:
