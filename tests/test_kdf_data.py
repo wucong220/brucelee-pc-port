@@ -59,6 +59,32 @@ class TestKdfData(unittest.TestCase):
         with self.assertRaisesRegex(KdfError, 'payload bounds'):
             parse_container(kdf_container()[:-1])
 
+    def test_tagged_array_descriptors_are_linked_to_sections(self):
+        descriptor = 0x40000000 | (12 << 21) | 2
+        raw = kdf_container(
+            nodes=((descriptor, 0),), group_count=1, offsets=(0, 0),
+            payload=b'\0' * 24,
+        )
+        result = parse_container(raw)
+        self.assertEqual(result['array_references'], [{
+            'record_ordinal': 0,
+            'descriptor': 0x41800002,
+            'element_count': 2,
+            'element_stride': 12,
+            'section_index': 0,
+            'required_bytes': 24,
+            'section_bytes': 24,
+        }])
+        with self.assertRaisesRegex(KdfError, 'expects 24 bytes'):
+            parse_container(kdf_container(
+                nodes=((descriptor, 0),), group_count=1, offsets=(0, 0),
+                payload=b'\0' * 23,
+            ))
+
+    def test_non_array_tagged_records_are_ignored(self):
+        result = parse_container(kdf_container(nodes=((0x40000094, 25),)))
+        self.assertEqual(result['array_references'], [])
+
     def test_cli_can_omit_or_include_tables(self):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / 'sample.bin'

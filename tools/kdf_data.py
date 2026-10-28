@@ -109,6 +109,34 @@ def parse_container(raw: bytes) -> dict:
             'end_relative': end_relative,
             'bytes': end_relative - start_relative,
         })
+    array_references = []
+    for record_ordinal, record in enumerate(records):
+        descriptor = record['first']
+        if descriptor >> 28 != 4:
+            continue
+        element_count = descriptor & 0xffff
+        element_stride = (descriptor & 0x0fff0000) >> 21
+        section_index = record['second']
+        if not element_count or not element_stride:
+            continue
+        if section_index >= len(sections):
+            continue
+        required = element_count * element_stride
+        actual = sections[section_index]['bytes']
+        if actual < required or actual - required > 3:
+            raise KdfError(
+                f'CTX3 array descriptor {record_ordinal} expects {required} bytes '
+                f'from section {section_index}, found {actual}'
+            )
+        array_references.append({
+            'record_ordinal': record_ordinal,
+            'descriptor': descriptor,
+            'element_count': element_count,
+            'element_stride': element_stride,
+            'section_index': section_index,
+            'required_bytes': required,
+            'section_bytes': actual,
+        })
     return {
         'sha256': hashlib.sha256(raw).hexdigest(),
         'decoded_bytes': len(raw),
@@ -123,6 +151,7 @@ def parse_container(raw: bytes) -> dict:
         'offsets': offsets,
         'records': records,
         'sections': sections,
+        'array_references': array_references,
         'header_bytes': header_size,
         'payload_offset': payload_offset,
         'payload_bytes': payload_size,

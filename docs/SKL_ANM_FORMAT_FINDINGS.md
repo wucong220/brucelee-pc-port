@@ -99,6 +99,15 @@ node_start = pointer_record_ordinal + relative_record_offset
 
 骨架工具在验证每个 bone 记录内的索引后，会关联并输出 70 组静态位置、四元数和缩放数值。输出字段 `transform_coordinate_space=unverified` 与 `transform_quaternion_component_order=unverified` 是格式边界，避免把原始浮点数组误当成已经可用于 Godot 的局部变换。
 
+共享 DATA 解析器还识别已验证的数组描述符：
+
+```text
+element_count  = descriptor & 0xffff
+element_stride = (descriptor & 0x0fff0000) >> 21
+```
+
+当描述符高半字节为 `0x4`、元素数量和宽度均非零且段索引有效时，段长度必须等于 `count × stride`，最多允许 3 字节尾部填充。该规则在 Skl、idle、punch、kick 中共 50 组引用上闭合。
+
 ## 动画 scalar header 与采样区
 
 三项基本数值直接来自属性表中的严格键值对：
