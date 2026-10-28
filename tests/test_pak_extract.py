@@ -48,6 +48,11 @@ def archive_fixture(path: Path, originals: list[bytes], level: int = zlib.Z_DEFA
         archive.writestr('Core.pakd000', disk_data)
 
 
+def directory_string(value: str) -> bytes:
+    raw = value.encode('utf-8')
+    return struct.pack('<I', len(raw)) + raw + b'\0' * (4 - len(raw) % 4)
+
+
 class TestPakIndex(unittest.TestCase):
     def test_multi_block_resource_and_report(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -103,6 +108,44 @@ class TestPakIndex(unittest.TestCase):
                     archive.writestr('Core.pakd000', pakd)
                 with self.subTest(replacement=replacement), self.assertRaisesRegex(PakError, message):
                     scan_archive(data)
+
+    def test_directory_string_padding_requires_nul_even_for_aligned_length(self):
+        data = directory_string('ABCD')
+        self.assertEqual(pak_extract._read_directory_string(data, 0), ('ABCD', 12))
+        with self.assertRaises(PakError):
+            pak_extract._read_directory_string(data[:-1], 0)
+        with self.assertRaises(PakError):
+            pak_extract._read_directory_string(data[:-1] + b'X', 0)
+
+    def test_directory_candidates_use_full_identity_and_keep_aliases(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / 'data.zpak'
+            archive_fixture(data, [b'A' * 400, b'B' * 500])
+            with zipfile.ZipFile(data) as archive:
+                pakh = bytearray(archive.read('Core.pakh'))
+                pakd = archive.read('Core.pakd000')
+            pakh += b'\0' * (-len(pakh) % 4)
+            identity = bytes(pakh[24:40])
+            def ref(folder, name, ext, resource_id):
+                return directory_string(folder) + directory_string(name) + directory_string(ext) + resource_id
+            first_offset = len(pakh)
+            pakh += ref('adreno_200/ui/', 'ABCD', 'tex', identity)
+            pakh += ref('adreno_200/other/', 'alias', 'tex', identity)
+            pakh += ref('adreno_200/other/', 'wrong', 'tex', b'\xff' * 16)
+            malformed = bytearray(ref('adreno_200/bad/', 'broken', 'tex', identity))
+            malformed[len(directory_string('adreno_200/bad/')) - 1] = 1
+            pakh += malformed
+            with zipfile.ZipFile(data, 'w') as archive:
+                archive.writestr('Core.pakh', pakh)
+                archive.writestr('Core.pakd000', pakd)
+            result = scan_archive(data)
+            self.assertEqual(result['directory_candidates'], 2)
+            self.assertEqual(result['directory_identities_covered'], 1)
+            paths = result['resources'][0]['path_candidates']
+            self.assertEqual([item['path'] for item in paths],
+                             ['adreno_200/ui/ABCD.tex', 'adreno_200/other/alias.tex'])
+            self.assertEqual(paths[0]['pakh_offset'], first_offset)
+            self.assertEqual(result['resources'][1]['path_candidates'], [])
 
     def test_reject_invalid_index_count(self):
         with self.assertRaises(PakError):

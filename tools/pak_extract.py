@@ -2,8 +2,9 @@
 """Read-only metadata verification of Bruce Lee: Dragon Warrior's PAK container.
 
 Recover data-stream boundaries and match assets to sorted index entries by
-the observed PAKD offset plus uncompressed and stored lengths. Exact original
-filenames are *not* recovered by this utility.
+the observed PAKD offset plus uncompressed and stored lengths. A bounded
+candidate scan can link observed path records to 16-byte index identifiers;
+it is not a complete parser of the PAKH directory tree.
 
 All original archives are opened read-only. Exporting decoded bytes is opt-in.
 """
@@ -32,6 +33,8 @@ _MAX_DATA_BYTES = 1_000_000_000
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
 _MAX_CHUNK_BYTES = 2 * 1024 * 1024
 _MAX_CHUNKS = 512
+_MAX_DIRECTORY_STRING_BYTES = 1024
+_MAX_DIRECTORY_CANDIDATES = 100_000
 _DEFAULT_MAX_TOTAL_DECODED_BYTES = 1024 * 1024 * 1024
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -83,6 +86,70 @@ def parse_index(raw: bytes) -> list[IndexRecord]:
         records.append(IndexRecord(ordinal, key, unknown_16.hex(), resource_id.hex(),
                                    pakd_offset, reserved, decoded_bytes, stored_bytes, flags))
     return records
+
+
+def _read_directory_string(raw: bytes, position: int) -> tuple[str, int]:
+    if position < 0 or position + 4 > len(raw):
+        raise PakError('truncated directory string length')
+    length = struct.unpack_from('<I', raw, position)[0]
+    if length > _MAX_DIRECTORY_STRING_BYTES:
+        raise PakError('directory string exceeds size limit')
+    start = position + 4
+    end = start + length
+    # Observed PAKH strings include at least one NUL, then NUL padding.
+    padding = 4 - (length % 4)
+    if end + padding > len(raw) or raw[end:end + padding] != b'\0' * padding:
+        raise PakError('truncated or invalid directory string padding')
+    data = raw[start:end]
+    if b'\0' in data:
+        raise PakError('directory string contains an embedded NUL')
+    try:
+        return data.decode('utf-8'), end + padding
+    except UnicodeDecodeError as exc:
+        raise PakError('directory string is not UTF-8') from exc
+
+
+def scan_directory_candidates(raw: bytes, records: list[IndexRecord]) -> list[dict]:
+    """Find observed adreno_200 file references without assuming tree layout."""
+    table_end = 24 + len(records) * _RECORD.size
+    by_identity = {record.resource_id_hex: record for record in records}
+    prefix = b'adreno_200/'
+    candidates = []
+    search_from = table_end + 4
+    seen_prefixes = 0
+    while True:
+        found = raw.find(prefix, search_from)
+        if found < 0:
+            break
+        search_from = found + 1
+        seen_prefixes += 1
+        if seen_prefixes > _MAX_DIRECTORY_CANDIDATES:
+            raise PakError('directory candidate count exceeds limit')
+        record_offset = found - 4
+        if record_offset < table_end + 4:
+            continue
+        try:
+            folder, position = _read_directory_string(raw, record_offset)
+            name, position = _read_directory_string(raw, position)
+            extension, position = _read_directory_string(raw, position)
+        except PakError:
+            continue
+        if (not folder.startswith('adreno_200/') or not folder.endswith('/')
+                or not name or not extension or any(c in name + extension for c in '/\\')
+                or not all(part.isprintable() for part in (folder, name, extension))):
+            continue
+        if position + 16 > len(raw):
+            continue
+        identity = raw[position:position + 16].hex()
+        if identity not in by_identity:
+            continue
+        candidates.append({
+            'pakh_offset': record_offset,
+            'identity_offset': position,
+            'resource_id_hex': identity,
+            'path': folder + name + '.' + extension,
+        })
+    return candidates
 
 
 def _sha256_stream(source) -> str:
@@ -253,6 +320,14 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
             raise PakError('PAK member exceeds size limit')
         pakh = archive.read('Core.pakh')
         records = parse_index(pakh)
+        directory_candidates = scan_directory_candidates(pakh, records)
+        paths_by_identity = {}
+        for candidate in directory_candidates:
+            paths_by_identity.setdefault(candidate['resource_id_hex'], []).append({
+                'pakh_offset': candidate['pakh_offset'],
+                'identity_offset': candidate['identity_offset'],
+                'path': candidate['path'],
+            })
         expected_decoded = sum(r.decoded_bytes for r in records)
         if expected_decoded > max_total_decoded_bytes:
             raise PakError(f'total decoded bytes {expected_decoded} exceed configured limit {max_total_decoded_bytes}')
@@ -283,6 +358,7 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
                 row['index_candidates'] = [record.index_ordinal]
                 row['key'] = f'{record.key:08x}'
                 row['resource_id_hex'] = record.resource_id_hex
+                row['path_candidates'] = paths_by_identity.get(record.resource_id_hex, [])
                 if extract_dir is not None:
                     extract_dir.mkdir(parents=True, exist_ok=True)
                     suffix = f'key_{record.key:08x}'
@@ -312,6 +388,9 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
             'ambiguous': len(results) - unique_count,
             'length_only_uniquely_matched': length_only_unique_count,
             'length_only_ambiguous': len(results) - length_only_unique_count,
+            'directory_scan_method': 'adreno_200_candidates_by_16_byte_identity',
+            'directory_candidates': len(directory_candidates),
+            'directory_identities_covered': len(paths_by_identity),
             'multiset_verified': True,
             'resources': results,
         }

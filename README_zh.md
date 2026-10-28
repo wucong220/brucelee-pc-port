@@ -14,7 +14,7 @@
 3. 最初工具确认了 `Core.pakd000` 开头 4 个流，其中一个是可识别的 **RIFF/WAVE PCM mono 32 kHz 16-bit**。另一会话报告：第 5 个流是跨块连续 zlib，原先的“截断”判断有误；原包 2144 个流的起点偏移及长度均可与索引对应。仅用长度匹配时有 258 个歧义，使用偏移后据其报告可消除。当前 Windows 工作区尚未独立复现原包验证，详情见 `docs/PAK_DECODE_FINDINGS.md`。
 4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
 5. 提供 PowerShell `build_windows.ps1`，在本机安装 Godot 及 Windows 导出模板后生成原生 Windows EXE，非安卓模拟器。
-6. 本次解包器修改以合成数据在 Windows 隔离环境中通过 18 项 Python 测试（命令、退出码及沙箱临时目录说明见 `docs/PAK_DECODE_FINDINGS.md`）。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
+6. 本次解包器修改以合成数据在 Windows 隔离环境中通过 20 项 Python 测试（命令、退出码及沙箱临时目录说明见 `docs/PAK_DECODE_FINDINGS.md`）。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
 
 ## 立即运行 Windows PC 原型
 
@@ -60,7 +60,7 @@ py -3.11 tools\pak_extract.py 'D:\BruceLee\data.zpak' --expected-zpak-sha256 364
 py -3.11 tools\pak_probe.py 'D:\BruceLee\data.zpak' --limit 20 --csv evidence\frames_local.csv --extract-verified "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded-frames"
 ```
 
-这些工具**不执行 APK 代码，也不解密、绕过 DRM 或下载游戏内容**。`pak_extract.py` 支持验证跨块流及按需导出；`pak_probe.py` 是先前针对独立流的探测工具，不应把它对多块流的停止当作原包截断。当前工具都不能恢复所有独立资源的文件名和容器映射关系。某个输出为 `RIFF`，只证明这是有效 WAV，不证明对应具体游戏事件。
+这些工具**不执行 APK 代码，也不解密、绕过 DRM 或下载游戏内容**。`pak_extract.py` 支持验证跨块流及按需导出，并扫描与索引标识吻合的 `adreno_200/` 路径候选；它尚未完整解析目录树，候选覆盖率应以实际报告为准。`pak_probe.py` 是先前针对独立流的探测工具，不应把它对多块流的停止当作原包截断。某个输出为 `RIFF`，只证明这是有效 WAV，不证明对应具体游戏事件。
 
 如果要在 Linux/WSL2 中筛选原生符号，先从 APK 解压 `lib/armeabi/libdefault.so`，再运行：
 
