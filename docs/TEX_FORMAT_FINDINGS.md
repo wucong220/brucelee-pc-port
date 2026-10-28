@@ -35,7 +35,7 @@ python -X utf8 tools/tex_convert.py "C:\path\to\decoded\texture.bin" --output "$
 
 输出必须是新文件，并位于仓库外和可识别的同步目录之外。工具不会修改输入的 CTX3 数据，只读取并在写 PNG 前验证字符串标识、DATA 边界、尺寸、payload 长度和 MD5 尾部。
 
-2026-10-28，本机三个真实样本分别在 MXC 沙箱内完成解析和 PNG 编码，均返回成功；该过程未把原版像素提交到 Git。完整 Python 测试集共 38 项通过，覆盖 CTX3 标识、通用 DATA 头边界、MD5、尺寸、PNG 行翻转、覆盖保护、项目目录保护和 CLI 报告。
+2026-10-28，本机三个真实样本分别在 MXC 沙箱内完成解析和 PNG 编码，均返回成功；该过程未把原版像素提交到 Git。完整 Python 测试集共 41 项通过，覆盖 CTX3 标识、通用 DATA 头边界、MD5、尺寸、PNG 行翻转、覆盖保护、项目目录保护和 CLI 报告。
 
 ## 尚未解决
 

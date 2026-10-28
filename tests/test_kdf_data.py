@@ -8,12 +8,12 @@ import unittest
 import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from kdf_data import KdfError, parse_container
+from kdf_data import KdfError, parse_container, scalar_property
 
 
-def kdf_container(nodes=((0, 0x60000000),), group_count=1, offsets=(0, 0),
+def kdf_container(nodes=((0x60000000, 2), (0, 123)), group_count=1, offsets=(0, 0),
                   payload=b'payload', tail=b'0123456789abcdef') -> bytes:
-    strings = ['key', 'Data']
+    strings = ['key', 'Data', 'duration']
     raw = bytearray(b'1FDKENONCTX3' + struct.pack('<IIII', len(strings), 1, 0, len(strings)))
     for text in strings:
         encoded = text.encode()
@@ -34,11 +34,15 @@ def kdf_container(nodes=((0, 0x60000000),), group_count=1, offsets=(0, 0),
 class TestKdfData(unittest.TestCase):
     def test_counts_records_and_identity_tail(self):
         result = parse_container(kdf_container())
-        self.assertEqual(result['string_count'], 2)
-        self.assertEqual(result['record_count'], 1)
+        self.assertEqual(result['string_count'], 3)
+        self.assertEqual(result['record_count'], 2)
         self.assertEqual(result['offset_count'], 1)
         self.assertEqual(result['offsets'], [0, 0])
-        self.assertEqual(result['records'], [{'ordinal': 0, 'first': 0, 'second': 0x60000000}])
+        self.assertEqual(result['records'][0], {'ordinal': 0, 'first': 0x60000000, 'second': 2})
+        self.assertEqual(scalar_property(result, 'duration'), 123)
+        self.assertEqual(result['sections'], [{
+            'ordinal': 0, 'start_relative': 0, 'end_relative': 7, 'bytes': 7,
+        }])
         self.assertEqual(result['payload_bytes'], len(b'payload'))
         self.assertEqual(result['tail_identity_hex'], b'0123456789abcdef'.hex())
         self.assertEqual(result['data_offset'], result['string_table_end'] + 1)
@@ -74,7 +78,7 @@ class TestKdfData(unittest.TestCase):
             self.assertEqual(run.returncode, 0, run.stderr)
             report = json.loads(run.stdout)
             self.assertEqual(report['strings'][0]['text'], 'key')
-            self.assertEqual(report['records'][0]['second'], 0x60000000)
+            self.assertEqual(report['records'][0]['second'], 2)
 
 
 if __name__ == '__main__':

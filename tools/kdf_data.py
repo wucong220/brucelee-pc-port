@@ -97,6 +97,18 @@ def parse_container(raw: bytes) -> dict:
     for record_ordinal in range(record_count):
         first, second = struct.unpack_from('<II', raw, record_start + record_ordinal * 8)
         records.append({'ordinal': record_ordinal, 'first': first, 'second': second})
+    sections = []
+    for index in range(offset_count):
+        start_relative = offsets[index + 1]
+        end_relative = offsets[index + 2] if index + 2 < len(offsets) else payload_size
+        if start_relative > end_relative:
+            raise KdfError('CTX3 DATA section range is inverted')
+        sections.append({
+            'ordinal': index,
+            'start_relative': start_relative,
+            'end_relative': end_relative,
+            'bytes': end_relative - start_relative,
+        })
     return {
         'sha256': hashlib.sha256(raw).hexdigest(),
         'decoded_bytes': len(raw),
@@ -110,11 +122,30 @@ def parse_container(raw: bytes) -> dict:
         'offset_count': offset_count,
         'offsets': offsets,
         'records': records,
+        'sections': sections,
         'header_bytes': header_size,
         'payload_offset': payload_offset,
         'payload_bytes': payload_size,
         'tail_identity_hex': raw[payload_end:].hex(),
     }
+
+
+def scalar_property(container: dict, key: str) -> int:
+    """Read an observed `0x60000000/key, 0/value` scalar property."""
+    matches = [entry['ordinal'] for entry in container['strings'] if entry['text'] == key]
+    if len(matches) != 1:
+        raise KdfError(f'expected one string-table key named {key!r}')
+    ordinal = matches[0]
+    records = container['records']
+    values = []
+    for index in range(len(records) - 1):
+        if records[index]['first'] == 0x60000000 and records[index]['second'] == ordinal:
+            value_record = records[index + 1]
+            if value_record['first'] == 0:
+                values.append(value_record['second'])
+    if len(values) != 1:
+        raise KdfError(f'expected one scalar value for {key!r}')
+    return values[0]
 
 
 def inspect_file(path: Path, *, include_records: bool = False,

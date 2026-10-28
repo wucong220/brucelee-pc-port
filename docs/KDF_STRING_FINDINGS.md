@@ -32,7 +32,7 @@
 python -X utf8 -I -B tools/kdf_strings.py "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded_frames\frame_0000_0000000000.bin" "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded_frames\frame_0002_0000063745.bin" "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded_frames\frame_0003_0000124002.bin"
 ```
 
-加入通用 CTX3 DATA 头解析后，在隔离工作区用合成夹具、纹理转换器和完整 Python 测试执行下列命令：**38 项通过，退出码 0**。`.t` 是沙箱工作区内预建临时目录。
+加入通用 CTX3 DATA 头及动画 header 解析后，在隔离工作区用合成夹具、纹理转换器和完整 Python 测试执行下列命令：**41 项通过，退出码 0**。`.t` 是沙箱工作区内预建临时目录。
 
 ```powershell
 python -X utf8 -I -B -c "import pathlib,tempfile,unittest;tempfile.tempdir=str(pathlib.Path.cwd()/'.t');unittest.main(module=None,argv=['unittest','discover','-s','tests','-p','test*.py','-v'])"

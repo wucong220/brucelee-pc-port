@@ -48,11 +48,55 @@
 
 四个已逐项验证的资源都符合同一布局：`DATA+4` 是 8 字节属性记录数量 `M`，`DATA+8` 是二进制分组数量 `N`，`DATA+16` 是数据区长度 `L`；`DATA+20` 起有 `N+1` 个分组偏移，随后是 `M×8` 属性表、`L` 字节数据区和末尾 16 字节资源标识。DATA 头长为 `24 + 8M + 4N`。两个计数的结构含义已被四条资源闭合验证，但不能据此把具体属性记录直接命名为帧数或骨骼数。
 
+## Skl 层级与绑定数据
+
+属性表中重复出现 `type → nodeid → parentid → treesize → offset` 序列，共形成 74 个节点：
+
+- 1 个 root、3 个 object、70 个 bone；
+- `nodeid` 为 0、2、4……146，全部唯一；
+- 除根节点外，`parentid` 均指向已有节点；根节点 `parentid = -2`；
+- 74 个节点的 `treesize` 与前序遍历的子树规模全部一致；
+- 70 个 `bonepos` 和 70 个 `bonerot` 索引分别完整覆盖 0～69。
+
+骨骼数据区包含 70 组位置、70 组旋转和缩放候选：位置按 `float32[3]`、旋转按 `float32[4]` 读取时，数值有限且 70 个四元数模长与 1 的最大误差约 `1.18e-7`；索引组也各含 70 个 `uint16`。这支持位置/旋转数据与骨骼节点的对应，但本地/世界坐标系及四元数分量约定仍未知。
+
+| 分组 | 区间 `[起,止)` | 已验证布局 |
+|---:|---|---|
+| 0 | `0x335a–0x36a2` | 70 × `float32[3]` 位置候选 |
+| 1 | `0x36a2–0x372e` | 70 × `uint16` 索引 |
+| 2 | `0x372e–0x3752` | 3 × `float32[3]` 对象位置候选 |
+| 3 | `0x3752–0x375a` | 3 × `uint16` 索引 + 填充 |
+| 4 | `0x375a–0x3bba` | 70 × `float32[4]` 旋转候选 |
+| 5 | `0x3bba–0x3c46` | 70 × `uint16` 索引 |
+| 6 | `0x3c46–0x3c76` | 3 × `float32[4]` 对象旋转候选 |
+| 7 | `0x3c76–0x3c7e` | 3 × `uint16` 索引 + 填充 |
+| 8 | `0x3c7e–0x3fea` | 73 × `float32[3]` 缩放候选 |
+| 9 | `0x3fea–0x407e` | 73 × `uint16` 索引 + 填充 |
+
+## 动画 scalar header 与采样区
+
+三项基本数值直接来自属性表中的严格键值对：
+
+| 字段 | idle | punch | kick |
+|---|---:|---:|---:|
+| `firstframe` | 0 | 0 | 0 |
+| `duration` | 110 | 69 | 86 |
+| `framerate` | 30 | 30 | 30 |
+| `version` | 7 | 7 | 7 |
+| `pose` | 1 | 1 | 1 |
+
+未证明 `duration` 的单位一定是帧，因此工具保留原始整数，不擅自给出秒数。idle、punch、kick 的三维样本数量分别等于 110、69、86；这与 `duration` 数值一致，但压缩通道内容仍未解码。
+
+| 动画 | 第一组 | 第二组 | 第三组 |
+|---|---|---|---|
+| idle | `rawfixedsample`；110×12B | `waveletsample`；2006×4B | — |
+| punch | `waveletsample`；487×4B | `rawfixedsample`；69×12B | `waveletsample`；3268×4B |
+| kick | `waveletsample`；566×4B | `rawfixedsample`；86×12B | `waveletsample`；3914×4B |
+
 ## 当前阻塞
 
-- `nodeid`、`parentid`、`treesize` 和 `offset` 在 DATA 属性序列表中的实际布局未知。
-- `firstframe`、`duration`、`framerate` 的实际类型、单位和位置未知。
-- 尚不知道三套动作具体使用 `RawFloatSample`、`RawFixedSample` 或 `WaveletSample`。
+- Skl 节点名称引用与属性序列的完整通用解析器尚未实现。
+- `duration` 的单位、局部/世界坐标和四元数分量约定尚未确认。
 - `quantizedbits/radix`、Huffman 码表和压缩通道的编码尚未恢复。
 - `.obj` 对外部网格、纹理和 shader 资源的引用解析尚未完成。
 
