@@ -70,6 +70,8 @@ py -3.12 tools\tex_convert.py 'C:\private\decoded-texture.bin' --output "$env:LO
 
 转换器会校验 CTX3 字符串标识、DATA 边界、宽高、像素长度和 MD5 尾部，并强制输出到仓库外且非明显同步目录。当前不支持 mip 链或其他纹理编码；格式证据与限制见 `docs/TEX_FORMAT_FINDINGS.md`。
 
+Godot 原型会尝试从默认位置 `%LOCALAPPDATA%\BruceLee-PC-Port\local-assets\sprites\background.png` 加载本地背景；也可用环境变量 `BRUCELEE_BACKGROUND_PATH` 指定路径。文件不存在时继续使用占位场景。该机制用于本机资源验证，原版图片仍不进入 Git。
+
 如果要在 Linux/WSL2 中筛选原生符号，先从 APK 解压 `lib/armeabi/libdefault.so`，再运行：
 
 ```bash
