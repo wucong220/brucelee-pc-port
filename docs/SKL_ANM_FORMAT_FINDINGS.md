@@ -86,6 +86,8 @@
 | 8 | `0x3c7e–0x3fea` | 73 × `float32[3]` 缩放候选 |
 | 9 | `0x3fea–0x407e` | 73 × `uint16` 索引 + 填充 |
 
+骨架工具在验证每个 bone 记录内的索引后，会关联并输出 70 组静态位置、四元数和缩放数值。输出字段 `transform_coordinate_space=unverified` 与 `transform_quaternion_component_order=unverified` 是格式边界，避免把原始浮点数组误当成已经可用于 Godot 的局部变换。
+
 ## 动画 scalar header 与采样区
 
 三项基本数值直接来自属性表中的严格键值对：
@@ -119,6 +121,6 @@
 
 - `tools/kdf_data.py`：解析 CTX3 字符串表、DATA 计数、分组偏移、属性记录和数据区。
 - `tools/kdf_animation.py`：提取已验证的 `firstframe/duration/framerate/version/pose` 和分组区间；不解码压缩通道。
-- `tools/kdf_skeleton.py`：按 `type → nodeid → parentid → treesize → offset` 扫描 Skl 节点，验证唯一根、父节点存在、无环和子树规模。
+- `tools/kdf_skeleton.py`：按真实字段标记读取 `type → nodeid → parentid → treesize → offset`，验证唯一根、父节点存在、无环和子树规模；关联每个 bone 的 `scales/bonepos/bonerot` 索引并读取静态变换候选。
 
 这些工具只读取本机解码资源。Skl 名称引用和 Wavelet/Huffman 解码仍必须用完整原包继续验证。

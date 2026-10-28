@@ -19,11 +19,12 @@ NODES = [
 ]
 
 
-def skeleton_fixture(nodes=None) -> bytes:
+def skeleton_fixture(
+        nodes=None, *, rotations=None, position_indices=None) -> bytes:
     nodes = NODES if nodes is None else nodes
     strings = [
         'type', 'nodeid', 'parentid', 'treesize', 'offset',
-        'root', 'object', 'bone', 'bonepos', 'bonerot',
+        'root', 'object', 'bone', 'scales', 'bonepos', 'bonerot',
     ]
     records = []
 
@@ -34,16 +35,18 @@ def skeleton_fixture(nodes=None) -> bytes:
         records.append((0x60000000, strings.index(key)))
         value_record(marker, value)
 
+    bone_index = 0
     for type_name, nodeid, parentid, treesize, offset in nodes:
         property_value('type', strings.index(type_name), 0x60000000)
         property_value('nodeid', nodeid)
         property_value('parentid', parentid, 0x10000000)
         property_value('treesize', treesize)
         property_value('offset', offset, 0x30000000)
-    property_value('bonepos', 0)
-    property_value('bonepos', 1)
-    property_value('bonerot', 0)
-    property_value('bonerot', 1)
+        if type_name == 'bone':
+            property_value('scales', bone_index)
+            property_value('bonepos', bone_index)
+            property_value('bonerot', bone_index)
+            bone_index += 1
 
     raw = bytearray(b'1FDKENONCTX3' + struct.pack('<IIII', len(strings), 1, 0, len(strings)))
     for text in strings:
@@ -51,12 +54,27 @@ def skeleton_fixture(nodes=None) -> bytes:
         identifier = (zlib.crc32(encoded) + len(encoded)) & 0xffffffff
         raw += struct.pack('<II', identifier, len(encoded)) + encoded + b'\0'
     raw += b'\0'
+
+    positions = struct.pack('<6f', 1, 2, 3, 4, 5, 6)
+    position_indices = position_indices or struct.pack('<2H', 0, 1)
+    rotations = rotations or struct.pack('<8f', 0, 0, 0, 1, 0, 0, 0, 1)
+    rotation_indices = struct.pack('<2H', 0, 1)
+    scales = struct.pack('<6f', 1, 1, 1, 2, 2, 2)
+    scale_indices = struct.pack('<2H', 0, 1)
+    groups = (
+        positions, position_indices, b'', b'', rotations, rotation_indices,
+        b'', b'', scales, scale_indices,
+    )
+    offsets = [0, 0]
+    for group in groups[:-1]:
+        offsets.append(offsets[-1] + len(group))
+    payload = b''.join(groups)
     raw += b'DATA'
-    raw += struct.pack('<IIII', len(records), 1, 0, 1)
-    raw += struct.pack('<II', 0, 0)
+    raw += struct.pack('<IIII', len(records), len(groups), 0, len(payload))
+    raw += struct.pack(f'<{len(offsets)}I', *offsets)
     for record in records:
         raw += struct.pack('<II', *record)
-    raw += b'x' + b'skeleton-ident!!'
+    raw += payload + b'skeleton-ident!!'
     return bytes(raw)
 
 
@@ -70,6 +88,10 @@ class TestKdfSkeleton(unittest.TestCase):
         self.assertEqual(result['nodes'][1]['children'], [4])
         self.assertEqual(result['bone_position_indices'], [0, 1])
         self.assertEqual(result['bone_rotation_indices'], [0, 1])
+        self.assertEqual(result['scale_indices'], [0, 1])
+        self.assertEqual(result['static_transforms'][0]['position'], [1.0, 2.0, 3.0])
+        self.assertEqual(result['static_transforms'][1]['scale'], [2.0, 2.0, 2.0])
+        self.assertEqual(result['transform_coordinate_space'], 'unverified')
 
     def test_missing_parent_and_bad_subtree_size_are_rejected(self):
         missing_parent = [
@@ -81,6 +103,13 @@ class TestKdfSkeleton(unittest.TestCase):
         bad_size = [NODES[0], ('bone', 2, 0, 5, 1)]
         with self.assertRaisesRegex(KdfError, 'treesize'):
             inspect_skeleton(skeleton_fixture(bad_size))
+
+    def test_static_transform_sections_are_validated(self):
+        with self.assertRaisesRegex(KdfError, 'position index section'):
+            inspect_skeleton(skeleton_fixture(position_indices=struct.pack('<2H', 1, 0)))
+        with self.assertRaisesRegex(KdfError, 'rotation norm'):
+            inspect_skeleton(skeleton_fixture(
+                rotations=struct.pack('<8f', 0, 0, 0, 2, 0, 0, 0, 1)))
 
     def test_cli_outputs_hierarchy_json(self):
         with tempfile.TemporaryDirectory() as temp:
