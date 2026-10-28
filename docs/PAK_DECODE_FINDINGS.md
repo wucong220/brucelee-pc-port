@@ -1,0 +1,105 @@
+# Core.pakh / Core.pakd000 实测解析进展（2026-10-28）
+
+本报告记录另一个 ChatGPT 会话对用户提供的 `Bruce Lee Dragon Warrior v1.15.26.zip` 中 `data.zpak` 所执行的只读扫描，不包含原版资源、模型、动画或音频数据，也不意味着这些资源可公开分发。当前 Windows Codex 工作区没有该原始 ZIP，但另一会话已直接下载并运行本仓库提交 `d3e56bc` 的 `tools/pak_extract.py`，对完整原包交叉验证通过；Git blob SHA-1 为 `f004129975442343a42c0fd913864cead96cd3c3`。
+
+2026-10-28，对方会话报告重新读取并计算原包校验值：外层 ZIP 长度 **109,010,523** 字节，SHA-256 为 `429c9c7af3a36d21742c2de60d23c5ecaab5642b9d817564174efc0c5b3b6342`；内层 `data.zpak` 长度 **110,018,180** 字节，SHA-256 为 `364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c`。这些值来自对方会话的报告，并非当前工作区独立读取的结果。
+
+## 另一会话报告的原包扫描结果
+
+- `Core.pakh` 头签名 `8KAP`；偏移 `0x10` 是 `DTRS`，偏移 `0x14` 是资源条目数 **2144**。
+- 偏移 `0x18` 开始为 **2144 × 36 字节**的表，至文件偏移 **77208**；紧接着是根命名空间数量 1 和根名 `adreno_200`，随后扁平存储 **417** 个目录节点。目录区最后 4 字节是此前全部 PAKH 数据的 CRC32，报告值为 `0xeee1e38a`。
+- 36 字节记录按 `<I16sIIII` 读取。另一会话进一步报告：以记录起点为基准，`+0x00` 为升序唯一的 32 位 key，`+0x04` 的 12 字节语义未知，`+0x10` 的 4 字节为该资源在 `Core.pakd000` 中的起点；其后依次是包内恒为 0 的 32 位字段、解码长度、存储长度和暂未确定语义的 flag。记录前 16 字节可视为资源标识，**不要将尚不明含义的字段解释为 MD5 或已证实的目录哈希**。
+- 2144 条记录的存储长度之和 **109,641,135 字节**，与 `Core.pakd000` 文件大小逐字节一致。
+- `Core.pakd000` 中每个资源以 `uint32(262144) + uint32(首块压缩长度)` 开头，后续块只有 `uint32(压缩长度)`。整个资源是**跨压缩块连续的 zlib 流**，直到 zlib EOF 为止。不能像旧版 `pak_probe.py` 那样要求每块都有独立的 zlib EOF。首个数值 `262144` 的具体语义及其是否限制每块解码大小，仍需进一步证据。
+- 实际顺序处理全部 **2144 个数据流**并解压到 zlib EOF，累计 **325,791,952 字节**；最终位置恰好为 `109,641,135`。每条解压/存储长度组合的多重集合与索引 2144 条记录**完全一致**。
+- 仅凭 `(解压大小,存储大小)` 二元组时，**1886** 个数据流有唯一候选，另外 **258** 个有重复候选。实际实现按索引偏移及两种长度检查后，全部 **2144/2144** 对应，因此可确定本包每条流的索引。
+- 实测第 5 条物理资源存储 **313405** 字节，4 个连续压缩块，解码 **787024** 字节，在索引中唯一对应 ordinal **157**。过去将其称作“截断 zlib”是误判。
+- 对方还报告，按完整目录节点格式读取并重建父目录、子目录关系后，得到 **417 个目录节点**和 **2265 条文件引用**，覆盖全部 2144 个索引标识；其中 98 个索引对应多个引用，多出 121 条。路径可作为已校验映射使用，多路径共享的具体业务语义仍未知；暂未验证 `mesh`/`skl`/`anm` 文件格式，也未将原版角色导入 Godot。
+
+工具解析根命名空间和扁平目录节点，读取每个节点的完整路径、父路径、文件引用及子目录名称，再通过父子关系重建树，并要求没有缺失、循环、重复或孤立节点。文件引用包含 `type_word`、`tag`、目录、主名、扩展名和 16 字节资源标识；标识必须命中索引，且全部索引都必须至少被一个路径引用。最后校验 PAKH 尾部 CRC32。报告将已校验路径放在 `path_candidates`，同时给出目录节点数、文件引用数、多引用标识数、额外引用数和 CRC。
+
+目录节点采用 `LP4` 字符串：`uint32` 字节长度、相应 UTF-8 数据，以及 `4 - (length % 4)` 个零字节；即使长度整除 4，也至少有一个零字节。节点先扁平存储，不能按文件顺序直接当作目录递归顺序。`type_word` 的低 24 位在当前包中为零，`tag` 观察到 `0x3ed94a35` 或 `0x3ed94a36`，其业务含义尚未确定。
+
+### 对方报告的路径与偏移样例
+
+下列内容来自另一 ChatGPT 会话的原包只读扫描报告；该会话报告 `Core.pakh` 的 SHA-256 为 `a883009cce2dba4a68568edce222fce3d5fed02cb5151cd4d614e91c3e7516c7`，`Core.pakd000` 的 SHA-256 为 `fabb60055b5c9fdb238a19fde45b39c76f8f82898dde625625a25fb91222fd92`。当前工作区尚未独立复现这些原包记录。
+
+第五条流（物理序号 4）起点为 `124494`（`0x1e64e`），存储 313405 字节、解码 787024 字节，共 4 块；对方报告其数据 SHA-256 为 `273efbf7475cf802710a12e5202dc0cb7a5fcf872cc3beffd8316e7c03340ceb`。索引序号 157 的记录起点为 `0x162c`，前 16 字节为 `2a885513161d1221e998d8ae69c7dd04`，key 为 `0x1355882a`，记录中的 PAKD 偏移与流起点相同。对方在目录字符串起点 `0x1ccd0` 及资源标识偏移 `0x1cd20` 观察到相同 16 字节标识，报告对应路径为 `adreno_200/gui/images/background/BL_GUI_backgrond_mainmenu.tex`；其中 `backgrond` 为报告的原始拼写。
+
+对方还报告以下路径、索引序号和 PAKD 起点的一致性；这些是定位线索，不等于文件格式已解析，亦不能单凭 `m01` 名称证明动画绑定到李小龙：
+
+| 路径（均以 `adreno_200/` 开头） | 索引序号 | key | PAKD 偏移 | 解码字节数 |
+|---|---:|---|---:|---:|
+| `objects/bl_brucelee_01_High.obj` | 1097 | `0x8106f197` | 15363195 | 15481 |
+| `skeletons/bl_brucelee_01_High.Skl` | 713 | `0x5225dd79` | 9982844 | 16526 |
+| `animation/m01_idle_01.anm` | 653 | `0x4a21cbb3` | 17145342 | 11669 |
+| `animation/m01_pnch_low_01.anm` | 1973 | `0xeb7a9358` | 91694440 | 22669 |
+| `animation/m01_kick_low_01.anm` | 809 | `0x5e4f6e9f` | 93740967 | 26221 |
+
+对方的分块统计报告：3135 块中，991 个非终止块均解码为 262144 字节，2144 个最终块的最大解码长度为 243244 字节。这支持该包使用 256 KiB 分块容量，但不能单凭数据证明原版解码器会强制拒绝超限分块。
+
+## 可复现命令
+
+Windows PowerShell（在仓库根目录；请将示例路径换成实际原始 ZIP 路径）：
+
+```powershell
+py -3.12 -m unittest discover -s tests -v
+py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip" --expected-zpak-sha256 364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c --report "$env:LOCALAPPDATA\BruceLee-PC-Port\pak-verification.json"
+```
+
+如需导出解压后的原始资源，仅写到**仓库外、未被同步软件同步的本机目录**；先确认下列目录没有被重定向或同步：
+
+```powershell
+py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip" --expected-zpak-sha256 364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c --extract "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded-resources"
+```
+
+输出 `.bin` 为原始解码数据，文件名中 `disk_NNNN` 表示数据流物理顺序；`key_...` 表示按起点偏移和两种长度核验得到的索引 key，**不是游戏资源名称**。若偏移或长度不吻合，工具停止而不猜测映射。命令只读取原始 ZIP，不覆盖已有导出文件；如遇异常，可能保留此前已写出的部分文件，应在人工检查后清理。
+
+也可按已校验的 PAKH 目录路径只导出匹配资源。下列选项区分大小写不敏感的子串筛选，并会保留目录结构：
+
+```powershell
+py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip" --extract-named "$env:LOCALAPPDATA\BruceLee-PC-Port\selected-resources" --select-path "bl_brucelee" --select-path "m01_idle"
+```
+
+`--extract-named` 在解压前验证完整目录树、资源标识覆盖、目标重名、路径穿越、Windows 保留名和已有文件。一个资源有多个已验证别名时会保留多个路径；输出根目录仍须位于仓库外及可识别的同步目录之外。未使用 `--select-path` 时会导出目录树引用的全部资源，可能占用数百 MiB。
+
+报告中的 `source_sha256`、`data_zpak_sha256`、`pakh_sha256` 和 `pakd_sha256` 分别对应输入 ZIP、内层 ZPAK、索引及数据文件的字节；直接输入 ZPAK 时前两项相同。`--expected-zpak-sha256` 在导出前核对内层哈希，避免将不同来源的结果混为一谈。
+
+默认累计解码上限为 **1 GiB**，可用 `--max-total-decoded-bytes` 明确调整；每条资源仍限制在 16 MiB，工具只支持当前观察到的格式。导出前会检查预估空间并拒绝当前仓库和部分可识别的同步目录，但无法识别所有同步软件及自定义同步目录，使用者仍需确认目标为本地非同步目录。
+
+## 本次修改的测试记录
+
+2026-10-28，在 Windows Python 3.12.10 的 MXC 隔离工作区内，使用合成数据执行下列命令，**25 项通过，退出码 0**；隔离环境额外验证禁止读取工作区外测试文件和连接本地监听端口。测试覆盖扁平节点逆序存储、父子关系重建、多路径引用、路径筛选、路径穿越和重名拒绝、缺失覆盖、错误标识、错误尾部 CRC、重复/越界偏移、截断和解压异常。
+
+```powershell
+python -X utf8 -I -B -c "import pathlib,tempfile,unittest;tempfile.tempdir=str(pathlib.Path.cwd()/'.t');unittest.main(module=None,argv=['unittest','discover','-s','tests','-p','test*.py','-v'])"
+```
+
+`.t` 是隔离工作区中预先创建的临时目录。之前在同一隔离策略下直接使用 `python -X utf8 -I -B -m unittest discover -s tests -p test*.py -v` 返回退出码 **1**，原因是沙箱将临时目录重定向到禁止访问的位置；改用上述工作区内临时目录后通过。测试不包含原版资源，不能证明原包解析结果。
+
+完整原包交叉验证由另一 ChatGPT 会话执行同一提交中的实际代码，而不是临时替代实现：
+
+```text
+exit code: 0
+index_count: 2144
+pakd_bytes: 109641135
+total_decoded_bytes: 325791952
+directory_nodes: 417
+directory_files: 2265
+directory_identities_covered: 2144
+multi_reference_identities: 98
+extra_references: 121
+pakh_footer_crc32: eee1e38a
+pakh_sha256: a883009cce2dba4a68568edce222fce3d5fed02cb5151cd4d614e91c3e7516c7
+pakd_sha256: fabb60055b5c9fdb238a19fde45b39c76f8f82898dde625625a25fb91222fd92
+```
+
+GitHub Actions 也会在每次 PR 中运行完整 Python 测试集；`.github/workflows/tests.yml` 只请求仓库读取权限。
+
+## 下一步（真正关系到 PC 游戏移植）
+
+1. 用完整原包执行当前工具，复现 417 个目录节点、2265 条引用及尾部 CRC，并研究多路径共享和 `type_word`/`tag` 的业务语义。
+2. 对解出的 `m01_`、`m02_`、`BL_BruceLee_` 资源识别私有动画、网格和骨骼编码；开发本地转换器。
+3. 在 Godot PC 原型中先导入一个真实李小龙模型以及 idle/punch/kick 三套实际动画，再进入攻击帧和判定规则复原。
+
+同一提交中的实际解析器已由另一会话用完整原包验证通过。当前 Windows 工作区仍未直接在本地运行完整原包；Godot 实机运行和 Windows EXE 导出仍未验证。

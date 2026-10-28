@@ -10,11 +10,11 @@
 ## 已完成工作（基于实际上传文件）
 
 1. APK 中 `lib/armeabi/libdefault.so` 为 **ARM ELF32**，保留 `.symtab` 和大量 C++ 符号。提取并生成 **454 条候选函数符号清单** `evidence/candidate_symbols.csv`（类别：资源、战斗、动画、输入）。
-2. 外部 `data.zpak` 是 ZIP；包含 `Core.pakh`、`Core.pakd000` 和 `metadata.xml`。`Core.pakh` 起始签名为 `8KAP`，偏移 `0x14` 是 2144，但其语义未验证。
-3. `Core.pakd000` 开头 4 个封装数据流能严格完成 zlib 解码；其中一个音频数据是可识别的 **RIFF/WAVE PCM mono 32 kHz 16-bit**。第 5 个封装数据流的 zlib 结束标记不完整，工具谨慎停止、不推断资源边界。
+2. 外部 `data.zpak` 是 ZIP；包含 `Core.pakh`、`Core.pakd000` 和 `metadata.xml`。`Core.pakh` 起始签名为 `8KAP`。另一 ChatGPT 会话报告，偏移 `0x14` 的 2144 是索引条目数；当前 Windows 工作区尚未独立复现原包扫描。
+3. 最初工具确认了 `Core.pakd000` 开头 4 个流，其中一个是可识别的 **RIFF/WAVE PCM mono 32 kHz 16-bit**。另一会话报告：第 5 个流是跨块连续 zlib，原先的“截断”判断有误；原包 2144 个流的起点偏移及长度均可与索引对应。仅用长度匹配时有 258 个歧义，使用偏移后据其报告可消除。当前 Windows 工作区尚未独立复现原包验证，详情见 `docs/PAK_DECODE_FINDINGS.md`。
 4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
 5. 提供 PowerShell `build_windows.ps1`，在本机安装 Godot 及 Windows 导出模板后生成原生 Windows EXE，非安卓模拟器。
-6. 运行 `python -m unittest discover -s tests -v`：3 个工具测试通过。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
+6. 本次解包器修改以合成数据在 Windows 隔离环境中通过 25 项 Python 测试（命令、退出码及沙箱临时目录说明见 `docs/PAK_DECODE_FINDINGS.md`），GitHub Actions 的 Python 3.12 测试也通过；另一 ChatGPT 会话已用完整原包直接运行本 PR 的实际解析器，2144 条流、417 个目录节点、2265 条引用和尾部 CRC 全部验证通过。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
 
 ## 立即运行 Windows PC 原型
 
@@ -52,15 +52,21 @@
 
 ## 本地取证与提取
 
-把用户自己的 APK 和 `data.zpak` 放在本地，例如 `D:\BruceLee\`，执行：
+把用户自己的 APK 和 `data.zpak` 放在本地，例如 `D:\BruceLee\`。导出原始或解码资源前，确认目标目录位于仓库之外且不受同步软件同步；下例中的 `%LOCALAPPDATA%` 也需要先确认没有被重定向或同步。
 
 ```powershell
 py -3.11 tools\inventory.py --apk 'D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.apk' --zpak 'D:\BruceLee\data.zpak' --out evidence\inventory_local.json
-py -3.11 tools\pak_probe.py 'D:\BruceLee\data.zpak' --limit 20 --csv evidence\frames_local.csv --extract-verified evidence\decoded_frames_local
-py -3.11 tools\extract_inputs.py 'D:\BruceLee\data.zpak' --out 'D:\BruceLee\unpacked'
+py -3.11 tools\pak_extract.py 'D:\BruceLee\data.zpak' --expected-zpak-sha256 364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c --report "$env:LOCALAPPDATA\BruceLee-PC-Port\pak-verification.json"
+py -3.11 tools\pak_probe.py 'D:\BruceLee\data.zpak' --limit 20 --csv evidence\frames_local.csv --extract-verified "$env:LOCALAPPDATA\BruceLee-PC-Port\decoded-frames"
 ```
 
-这些工具**不执行 APK 代码，也不解密、绕过 DRM 或下载游戏内容**。`pak_probe.py` 目前只提取确认完整的流，不能恢复所有独立资源的文件名和容器映射关系。某个输出为 `RIFF`，只证明这是有效 WAV，不证明对应具体游戏事件。
+这些工具**不执行 APK 代码，也不解密、绕过 DRM 或下载游戏内容**。`pak_extract.py` 支持验证跨块流及按需导出，并从 PAKH 的扁平目录节点重建父目录/子目录关系、校验资源标识覆盖和尾部 CRC；已解析路径保存在 `path_candidates` 中。多路径共享及文件记录 `type_word`/`tag` 的业务语义仍未知。`pak_probe.py` 是先前针对独立流的探测工具，不应把它对多块流的停止当作原包截断。某个输出为 `RIFF`，只证明这是有效 WAV，不证明对应具体游戏事件。
+
+只提取特定角色、骨骼或动作资源时，使用已校验的目录路径筛选并输出到仓库外：
+
+```powershell
+py -3.12 tools\pak_extract.py 'D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip' --extract-named "$env:LOCALAPPDATA\BruceLee-PC-Port\selected-resources" --select-path 'bl_brucelee' --select-path 'm01_idle'
+```
 
 如果要在 Linux/WSL2 中筛选原生符号，先从 APK 解压 `lib/armeabi/libdefault.so`，再运行：
 
@@ -81,8 +87,8 @@ BruceLee_PC_Port_Phase1/
 │   ├── export_presets.cfg
 │   ├── scenes/main.tscn
 │   └── scripts/{main,fighter,hud}.gd
-├── tools/{inventory,pak_probe,native_symbols,extract_inputs}.py
-├── tests/test_tools.py
+├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs}.py
+├── tests/{test_tools,test_pak_extract}.py
 ├── evidence/
 │   ├── source_inventory.json
 │   ├── candidate_symbols.csv
