@@ -81,13 +81,15 @@ def inspect_skeleton(raw: bytes) -> dict:
                 f'Skl node {node["nodeid"]} treesize {node["treesize"]} != {calculated}'
             )
         node['children'] = children[node['nodeid']]
-    bone_positions = occurrences.get(
-        'bonepos',
-        [entry['value'] for entry in scalar_occurrences(container, 'bonepos')],
-    ) if 'bonepos' in {entry['text'] for entry in container['strings']} else []
-    bone_rotations = [
-        entry['value'] for entry in scalar_occurrences(container, 'bonerot')
-    ] if 'bonerot' in {entry['text'] for entry in container['strings']} else []
+    names = {entry['text'] for entry in container['strings']}
+    bone_positions = (
+        [entry['value'] for entry in scalar_occurrences(container, 'bonepos')]
+        if 'bonepos' in names else []
+    )
+    bone_rotations = (
+        [entry['value'] for entry in scalar_occurrences(container, 'bonerot')]
+        if 'bonerot' in names else []
+    )
     return {
         'sha256': container['sha256'],
         'decoded_bytes': container['decoded_bytes'],
