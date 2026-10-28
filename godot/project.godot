@@ -1,0 +1,21 @@
+; Bruce Lee PC preservation research project - prototype logic is ORIGINAL, not decompiled source.
+; Requires Godot 4.7.x (GDScript, not C#).
+config_version=5
+
+[application]
+config/name="Dragon Warrior PC - Combat Prototype"
+run/main_scene="res://scenes/main.tscn"
+config/description="Research prototype - procedural stand-ins, no original assets included"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+
+[physics]
+3d/default_gravity=12.0

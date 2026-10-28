@@ -1,0 +1,161 @@
+{
+  "schema": 1,
+  "input": {
+    "apk": {
+      "path": "/mnt/data/Bruce Lee Dragon Warrior v1.15.26.apk",
+      "bytes": 6960646,
+      "sha256": "ce5e5dc8f93849a7098eefb819edd6dc4b512e40d80ee15f6a2e45fbb531037a"
+    },
+    "content": {
+      "path": "/mnt/data/brucelee_data.zpak",
+      "bytes": 110018180,
+      "sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c"
+    }
+  },
+  "android": {
+    "members": [
+      {
+        "name": "META-INF/MANIFEST.MF",
+        "uncompressed": 971,
+        "compressed": 522,
+        "crc32": "7f981023"
+      },
+      {
+        "name": "META-INF/CERT.SF",
+        "uncompressed": 1024,
+        "compressed": 551,
+        "crc32": "e0322bf6"
+      },
+      {
+        "name": "META-INF/CERT.RSA",
+        "uncompressed": 1714,
+        "compressed": 1154,
+        "crc32": "e044c4d4"
+      },
+      {
+        "name": "assets/AndroidManifest.xml",
+        "uncompressed": 4529,
+        "compressed": 1154,
+        "crc32": "0b6cf2b1"
+      },
+      {
+        "name": "AndroidManifest.xml",
+        "uncompressed": 8304,
+        "compressed": 2152,
+        "crc32": "c635108b"
+      },
+      {
+        "name": "res/drawable/splash.png",
+        "uncompressed": 286896,
+        "compressed": 286896,
+        "crc32": "e0dabccb"
+      },
+      {
+        "name": "lib/armeabi/libjava-activity.so",
+        "uncompressed": 19605,
+        "compressed": 7389,
+        "crc32": "4fb6c326"
+      },
+      {
+        "name": "res/drawable/screen_splash.xml",
+        "uncompressed": 652,
+        "compressed": 284,
+        "crc32": "02239214"
+      },
+      {
+        "name": "resources.arsc",
+        "uncompressed": 2092,
+        "compressed": 2092,
+        "crc32": "4284d50b"
+      },
+      {
+        "name": "lib/armeabi/libzplatform.so",
+        "uncompressed": 3310213,
+        "compressed": 1459038,
+        "crc32": "295fb7b1"
+      },
+      {
+        "name": "classes.dex",
+        "uncompressed": 85536,
+        "compressed": 38135,
+        "crc32": "0e794a40"
+      },
+      {
+        "name": "res/drawable/icon.jpg",
+        "uncompressed": 17979,
+        "compressed": 17979,
+        "crc32": "cd9a0c4e"
+      },
+      {
+        "name": "assets/BruceLee.zpak",
+        "uncompressed": 1915748,
+        "compressed": 1915748,
+        "crc32": "b58c8ffa"
+      },
+      {
+        "name": "lib/armeabi/libStormGLOFT.so",
+        "uncompressed": 821720,
+        "compressed": 372905,
+        "crc32": "7af8ee36"
+      },
+      {
+        "name": "lib/armeabi/libdefault.so",
+        "uncompressed": 7802651,
+        "compressed": 2852645,
+        "crc32": "01040e6f"
+      }
+    ],
+    "native_libraries": [
+      {
+        "path": "lib/armeabi/libjava-activity.so",
+        "elf_machine": 40,
+        "elf_bits": 32
+      },
+      {
+        "path": "lib/armeabi/libzplatform.so",
+        "elf_machine": 40,
+        "elf_bits": 32
+      },
+      {
+        "path": "lib/armeabi/libStormGLOFT.so",
+        "elf_machine": 40,
+        "elf_bits": 32
+      },
+      {
+        "path": "lib/armeabi/libdefault.so",
+        "elf_machine": 40,
+        "elf_bits": 32
+      }
+    ]
+  },
+  "content": {
+    "kind": "zpak",
+    "members": [
+      {
+        "name": "Core.pakd000",
+        "uncompressed": 109641135,
+        "compressed": 109641135,
+        "crc32": "49d4020c"
+      },
+      {
+        "name": "Core.pakh",
+        "uncompressed": 376216,
+        "compressed": 376216,
+        "crc32": "2144df1c"
+      },
+      {
+        "name": "metadata.xml",
+        "uncompressed": 513,
+        "compressed": 513,
+        "crc32": "c977fd64"
+      }
+    ],
+    "pakh_signature": "8KAP",
+    "pakh_bytes": 376216,
+    "pakh_u32_at_0x14": 2144
+  },
+  "unknowns": [
+    "The pakh 0x14 integer is not yet independently verified as an asset count",
+    "Core.pakd000 resource mapping and its internal file format are not reconstructed"
+  ]
+}

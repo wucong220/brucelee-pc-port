@@ -1,0 +1,85 @@
+# Do not accidentally publish copyrighted original game assets or APKs.
+*.apk
+*.zpak
+*.pakd000
+*.pakh
+*.so
+*.wav
+*.ogg
+*.mesh
+*.anm
+*.skl
+# Godot generated
+.godot/
+dist/
+godot/.godot/
+# local inventories and caches
+__pycache__/
+*.pyc
+assets_original/
+assets_converted/
+
+# Original extracted media and packages: never push to GitHub
+evidence/decoded_frames/
+*.pakd*
+*.zpak
+*.apk
+*.obb
+*.zip
+*.7z
+*.rar
+*.bin
+*.png.orig
+_original/
+original/
+private_assets/
+# Locally saved reverse engineering sessions
+*.gpr
+*.rep
+*.idb
+*.i64
+
+# Media and model formats are excluded by default so original assets cannot be
+# accidentally staged. Review and add explicit exceptions for original work.
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tga
+*.tif
+*.tiff
+*.webp
+*.dds
+*.ktx
+*.ktx2
+*.mp3
+*.flac
+*.aac
+*.m4a
+*.mp4
+*.webm
+*.mov
+*.avi
+*.fbx
+*.obj
+*.gltf
+*.glb
+*.dae
+*.pak
+*.obb
+*.aab
+*.so.*
+*.dll
+*.exe
+*.pck
+godot/assets/
+evidence/decoded_frames*/
+evidence/*_local.*
+
+# Local secrets and configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
