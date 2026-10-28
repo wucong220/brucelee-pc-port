@@ -11,8 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from kdf_data import KdfError, parse_container
 
 
-def kdf_container(nodes=((0, 0x60000000),), roots=(0,), payload=b'payload',
-                  terminator=0, tail=b'0123456789abcdef') -> bytes:
+def kdf_container(nodes=((0, 0x60000000),), group_count=1, offsets=(0, 0),
+                  payload=b'payload', tail=b'0123456789abcdef') -> bytes:
     strings = ['key', 'Data']
     raw = bytearray(b'1FDKENONCTX3' + struct.pack('<IIII', len(strings), 1, 0, len(strings)))
     for text in strings:
@@ -21,11 +21,12 @@ def kdf_container(nodes=((0, 0x60000000),), roots=(0,), payload=b'payload',
         raw += struct.pack('<II', identifier, len(encoded)) + encoded + b'\0'
     raw += b'\0'
     raw += b'DATA'
-    raw += struct.pack('<IIII', len(nodes), len(roots), 0, len(payload))
-    raw += struct.pack(f'<{len(roots)}I', *roots)
+    if len(offsets) != group_count + 1:
+        raise ValueError('offsets must contain group_count + 1 entries')
+    raw += struct.pack('<IIII', len(nodes), group_count, 0, len(payload))
+    raw += struct.pack(f'<{len(offsets)}I', *offsets)
     for first, second in nodes:
         raw += struct.pack('<II', first, second)
-    raw += struct.pack('<I', terminator)
     raw += payload + tail
     return bytes(raw)
 
@@ -35,17 +36,18 @@ class TestKdfData(unittest.TestCase):
         result = parse_container(kdf_container())
         self.assertEqual(result['string_count'], 2)
         self.assertEqual(result['record_count'], 1)
-        self.assertEqual(result['index_count'], 1)
-        self.assertEqual(result['indices'], [0])
+        self.assertEqual(result['offset_count'], 1)
+        self.assertEqual(result['offsets'], [0, 0])
         self.assertEqual(result['records'], [{'ordinal': 0, 'first': 0, 'second': 0x60000000}])
         self.assertEqual(result['payload_bytes'], len(b'payload'))
         self.assertEqual(result['tail_identity_hex'], b'0123456789abcdef'.hex())
         self.assertEqual(result['data_offset'], result['string_table_end'] + 1)
 
-    def test_lengths_roots_and_terminator_are_validated(self):
+    def test_lengths_and_group_offsets_are_validated(self):
         cases = [
-            (kdf_container(roots=(1,)), 'entry index out of bounds'),
-            (kdf_container(terminator=1), 'terminator is not zero'),
+            (kdf_container(offsets=(0, 1)), 'section offsets are invalid'),
+            (kdf_container(nodes=((0, 0), (0, 0)), group_count=2,
+                           offsets=(0, 0, 8)), 'section offset exceeds payload'),
         ]
         for raw, message in cases:
             with self.subTest(message=message), self.assertRaisesRegex(KdfError, message):

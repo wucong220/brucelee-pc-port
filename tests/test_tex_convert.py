@@ -30,20 +30,19 @@ def kdf_texture(width: int, height: int, pixels: bytes) -> bytes:
         raw += struct.pack('<II', identifier, len(encoded)) + encoded + b'\0'
     raw += b'\0' * (-len(raw) % 4)
     data_offset = len(raw)
-    node_count, root_count = 26, 1
-    records = [(0, 0)] * node_count
+    record_count, group_count = 26, 1
+    records = [(0, 0)] * record_count
     sx = STRINGS.index('sizex')
     sy = STRINGS.index('sizey')
-    records[14] = (sx, 0)
-    records[15] = (width, 0x60000000)
-    records[16] = (sy, 0)
-    records[17] = (height, 0x60000000)
+    records[13] = (0x60000000, sx)
+    records[14] = (0, width)
+    records[15] = (0x60000000, sy)
+    records[16] = (0, height)
     raw += b'DATA'
-    raw += struct.pack('<IIII', node_count, root_count, 0, len(pixels))
-    raw += struct.pack('<I', 0)
+    raw += struct.pack('<IIII', record_count, group_count, 0, len(pixels))
+    raw += struct.pack('<II', 0, 0)
     for record in records:
         raw += struct.pack('<II', *record)
-    raw += struct.pack('<I', 0)
     raw += pixels
     raw += hashlib.md5(raw).digest()
     return bytes(raw)
@@ -73,7 +72,7 @@ class TestTextureConversion(unittest.TestCase):
         self.assertEqual(result['sha256'], hashlib.sha256(raw).hexdigest())
         self.assertEqual(result['string_count'], len(STRINGS))
         self.assertEqual(result['data_record_count'], 26)
-        self.assertEqual(result['data_index_count'], 1)
+        self.assertEqual(result['data_offset_count'], 1)
         self.assertEqual(result['data_header_bytes'], 236)
 
     def test_png_rows_are_flipped(self):

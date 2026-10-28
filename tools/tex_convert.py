@@ -28,13 +28,12 @@ class TextureError(ValueError):
 
 
 def _property_u32(raw: bytes, record_start: int, record_count: int, ordinal: int) -> int:
-    """Read a key/value pair encoded as two consecutive 8-byte records."""
+    """Read a string-keyed value encoded in the low 24 bits of record words."""
     for index in range(record_count - 1):
-        key, reserved = struct.unpack_from('<II', raw, record_start + index * 8)
-        if key == ordinal and reserved == 0:
-            value, value_type = struct.unpack_from('<II', raw, record_start + (index + 1) * 8)
-            if value_type == 0x60000000:
-                return value
+        key_record = struct.unpack_from('<II', raw, record_start + index * 8)
+        value_record = struct.unpack_from('<II', raw, record_start + (index + 1) * 8)
+        if key_record == (0x60000000, ordinal) and value_record[0] == 0:
+            return value_record[1] & 0xffffff
     raise TextureError(f'texture metadata property {ordinal} was not found')
 
 
@@ -55,9 +54,9 @@ def parse_texture(raw: bytes) -> dict:
 
     data_offset = container['data_offset']
     record_count = container['record_count']
-    index_count = container['index_count']
+    offset_count = container['offset_count']
     payload_size = container['payload_bytes']
-    record_start = data_offset + 20 + index_count * 4
+    record_start = data_offset + 20 + (offset_count + 1) * 4
     header_size = container['header_bytes']
     width = _property_u32(raw, record_start, record_count, strings.index('sizex'))
     height = _property_u32(raw, record_start, record_count, strings.index('sizey'))
@@ -81,7 +80,7 @@ def parse_texture(raw: bytes) -> dict:
         'string_count': len(strings),
         'data_offset': data_offset,
         'data_record_count': record_count,
-        'data_index_count': index_count,
+        'data_offset_count': offset_count,
         'data_header_bytes': header_size,
         'payload_offset': payload_offset,
         'payload_bytes': payload_size,
