@@ -64,26 +64,28 @@ def _quaternion_matrix(value: Iterable[float]) -> tuple[tuple[float, ...], ...]:
     )
 
 
-def _inverse_bind_math_matrix(
-        rotation: Iterable[float],
-        translation: Iterable[float]) -> list[list[float]]:
-    """Return the row-major mathematical inverse bind matrix."""
-    bind_rotation = _quaternion_matrix(rotation)
-    tx, ty, tz = translation
+def _mesh_inverse_bind_math_matrix(values: Iterable[float]) -> list[list[float]]:
+    """Decode the Mesh 12-float layout as a row-major mathematical matrix."""
+    value = list(values)
+    if len(value) != 12:
+        raise GltfExportError('Mesh inverse bind matrix must contain 12 floats')
+    rows = (value[0:4], value[4:8], value[8:12])
     return [
-        [
-            bind_rotation[0][0], bind_rotation[1][0],
-            bind_rotation[2][0], tx,
-        ],
-        [
-            bind_rotation[0][1], bind_rotation[1][1],
-            bind_rotation[2][1], ty,
-        ],
-        [
-            bind_rotation[0][2], bind_rotation[1][2],
-            bind_rotation[2][2], tz,
-        ],
+        list(rows[0]),
+        list(rows[1]),
+        list(rows[2]),
         [0.0, 0.0, 0.0, 1.0],
+    ]
+
+
+def _mesh_inverse_bind_buffer(values: Iterable[float]) -> list[float]:
+    """Preserve the original Mesh inverse bind matrix in glTF column order."""
+    matrix = _mesh_inverse_bind_math_matrix(values)
+    return [
+        matrix[0][0], matrix[1][0], matrix[2][0], 0.0,
+        matrix[0][1], matrix[1][1], matrix[2][1], 0.0,
+        matrix[0][2], matrix[1][2], matrix[2][2], 0.0,
+        matrix[0][3], matrix[1][3], matrix[2][3], 1.0,
     ]
 
 
@@ -150,6 +152,7 @@ def _validate_rest_pose(mesh: dict, skl_by_name: dict[str, dict]) -> dict:
     max_skin_rotation_error = 0.0
     max_skin_translation_error = 0.0
     worst_skin_translation_joint = None
+    skin_matrices = []
     identity = [
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
@@ -171,11 +174,10 @@ def _validate_rest_pose(mesh: dict, skl_by_name: dict[str, dict]) -> dict:
         )
         max_position_error = max(max_position_error, position_error)
         max_rotation_error = max(max_rotation_error, rotation_error)
-        inverse_bind = _inverse_bind_math_matrix(
-            mesh['skeleton']['rotations_xyzw'][index],
-            mesh['skeleton']['bind_translations'][index],
-        )
+        inverse_bind = _mesh_inverse_bind_math_matrix(
+            mesh['skeleton']['bind_matrices'][index])
         skin_matrix = _matrix_multiply(matrix, inverse_bind)
+        skin_matrices.append(skin_matrix)
         skin_rotation_error = max(
             abs(skin_matrix[row][column] - identity[row][column])
             for row in range(3) for column in range(3)
@@ -198,6 +200,30 @@ def _validate_rest_pose(mesh: dict, skl_by_name: dict[str, dict]) -> dict:
         for lower, upper in zip(
             mesh['position_min'], mesh['position_max'], strict=True)
     )
+    max_skin_vertex_displacement = 0.0
+    worst_skin_vertex = None
+    for vertex_index, vertex in enumerate(mesh.get('vertices', [])):
+        position = vertex['position']
+        transformed = [0.0, 0.0, 0.0]
+        for joint_index, weight in zip(
+                vertex['bone_indices_global'], vertex['weights'], strict=True):
+            if weight == 0.0:
+                continue
+            skin_matrix = skin_matrices[joint_index]
+            for row in range(3):
+                transformed[row] += weight * (
+                    sum(
+                        skin_matrix[row][column] * position[column]
+                        for column in range(3)
+                    ) + skin_matrix[row][3]
+                )
+        displacement = math.sqrt(sum(
+            (transformed[axis] - position[axis]) ** 2
+            for axis in range(3)
+        ))
+        if displacement > max_skin_vertex_displacement:
+            max_skin_vertex_displacement = displacement
+            worst_skin_vertex = vertex_index
     return {
         'position_max_error': max_position_error,
         'rotation_max_error': max_rotation_error,
@@ -206,20 +232,12 @@ def _validate_rest_pose(mesh: dict, skl_by_name: dict[str, dict]) -> dict:
         'skin_matrix_translation_max_error_relative_to_model_span': (
             max_skin_translation_error / model_span if model_span else None),
         'worst_skin_translation_joint': worst_skin_translation_joint,
+        'skin_vertex_max_displacement': max_skin_vertex_displacement,
+        'skin_vertex_max_displacement_relative_to_model_span': (
+            max_skin_vertex_displacement / model_span if model_span else None),
+        'worst_skin_vertex': worst_skin_vertex,
         'model_span': model_span,
     }
-
-
-def _inverse_bind_matrix(rotation: Iterable[float],
-                         translation: Iterable[float]) -> list[float]:
-    matrix = _quaternion_matrix(rotation)
-    tx, ty, tz = translation
-    return [
-        matrix[0][0], matrix[0][1], matrix[0][2], 0.0,
-        matrix[1][0], matrix[1][1], matrix[1][2], 0.0,
-        matrix[2][0], matrix[2][1], matrix[2][2], 0.0,
-        tx, ty, tz, 1.0,
-    ]
 
 
 def _lowest_common_ancestor(node_ids: list[int], nodes_by_id: dict[int, dict]) -> int:
@@ -319,10 +337,8 @@ def convert_file(mesh_source: Path, destination: Path, *,
     view_inverse_bind = None
     inverse_bind_values = []
     if mesh['skeleton'] is not None:
-        for rotation, translation in zip(
-                mesh['skeleton']['rotations_xyzw'],
-                mesh['skeleton']['bind_translations'], strict=True):
-            inverse_bind_values.extend(_inverse_bind_matrix(rotation, translation))
+        for matrix in mesh['skeleton']['bind_matrices']:
+            inverse_bind_values.extend(_mesh_inverse_bind_buffer(matrix))
         view_inverse_bind = builder.add(_pack_floats(inverse_bind_values))
 
     accessors = [
@@ -463,6 +479,7 @@ def convert_file(mesh_source: Path, destination: Path, *,
                 'skeletonSha256': None if skeleton is None else skeleton['sha256'],
                 'geometryAxes': mesh['geometry_axes'],
                 'originalRotationComponentOrder': 'xyzw',
+                'inverseBindSource': 'mesh-original-float32',
                 'inverseBindMatrixSemantics': 'candidate',
                 'restPoseValidation': rest_pose_validation,
                 'animationsIncluded': False,

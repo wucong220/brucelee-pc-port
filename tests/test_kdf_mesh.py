@@ -143,6 +143,12 @@ class TestKdfMesh(unittest.TestCase):
             result['skeleton']['matrix_layout'],
             'transposed-rotation-rows-with-translation-tail',
         )
+        self.assertEqual(len(result['skeleton']['bind_matrices']), 2)
+        self.assertEqual(
+            result['skeleton']['bind_matrices'][1],
+            [1.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0, 0.0,
+             0.0, 0.0, 1.0, 0.0],
+        )
         self.assertEqual(result['skeleton']['bind_position_residual_max'], 0.0)
         self.assertEqual(
             result['skeleton']['matrix_transform_semantics'],
@@ -224,9 +230,19 @@ class TestKdfMesh(unittest.TestCase):
                 'positions': [[100.0, 0.0, 0.0]],
                 'rotations_xyzw': [[0.0, 0.0, 0.0, 1.0]],
                 'bind_translations': [[-100.0, 0.0, 0.0]],
+                'bind_matrices': [[
+                    1.0, 0.0, 0.0, -100.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                ]],
             },
             'position_min': [-100.0, -1.0, -1.0],
             'position_max': [100.0, 1.0, 1.0],
+            'vertices': [{
+                'position': [0.0, 0.0, 0.0],
+                'bone_indices_global': [0, 0, 0, 0],
+                'weights': [1.0, 0.0, 0.0, 0.0],
+            }],
         }
         skeleton = {
             'joint': {
@@ -251,6 +267,14 @@ class TestKdfMesh(unittest.TestCase):
             5e-4,
             places=7,
         )
+        self.assertAlmostEqual(
+            result['skin_vertex_max_displacement'], 0.1, places=7)
+        self.assertAlmostEqual(
+            result['skin_vertex_max_displacement_relative_to_model_span'],
+            5e-4,
+            places=7,
+        )
+        self.assertEqual(result['worst_skin_vertex'], 0)
         self.assertEqual(result['worst_skin_translation_joint'], 'joint')
 
 

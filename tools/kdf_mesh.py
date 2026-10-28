@@ -371,6 +371,7 @@ def _parse_skeleton(raw: bytes, container: dict) -> dict | None:
         'names': names,
         'positions': [list(value) for value in positions],
         'rotations_xyzw': [list(value) for value in rotations],
+        'bind_matrices': [list(value) for value in matrices],
         'bind_translations': translations,
         'rotation_norm_max_error': max_norm_error,
         'quaternion_component_order': 'xyzw-verified-relative-to-matrix',
