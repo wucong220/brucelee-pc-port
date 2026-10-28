@@ -14,7 +14,7 @@
 3. `Core.pakd000` 的 2144 个跨块连续 zlib 流已全部读取，共解码 325,791,952 字节；物理偏移、存储长度、解码长度和目录标识全部一致。早期“第 5 个流截断”的判断已纠正。详情见 `docs/PAK_DECODE_FINDINGS.md`。
 4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
 5. 提供 PowerShell `build_windows.ps1`，在本机安装 Godot 及 Windows 导出模板后生成原生 Windows EXE，非安卓模拟器。
-6. 当前工具集在 Windows 隔离环境中通过 71 项 Python 测试，GitHub Actions 的 Python 3.12 测试通过；三条真实 ANM 的轨道声明指针、轨道组、raw-fixed Q12/Q14 与 wavelet 元数据已由实际资源复核。**Godot 场景仍需在装有 Godot 的机器上打开、编译并运行验证**。
+6. 三条真实 ANM 的轨道声明指针、轨道组、raw-fixed Q12/Q14 和五条 wavelet 轨道的逐帧候选值已由实际资源与静态原生指令交叉核对。候选值尚未经过原生运行时对照或 Godot 动画播放验证。测试命令和退出码见 `docs/SKL_ANM_FORMAT_FINDINGS.md`。
 
 ## 立即运行 Windows PC 原型
 
@@ -78,6 +78,16 @@ py -3.12 tools\tex_convert.py 'C:\private\decoded-texture.bin' --output "$env:LO
 
 Godot 原型会尝试从默认位置 `%LOCALAPPDATA%\BruceLee-PC-Port\local-assets\sprites\background.png` 加载本地背景；也可用环境变量 `BRUCELEE_BACKGROUND_PATH` 指定路径。HUD 还会尝试加载同目录结构中转换出的 `gui/images/hud/bl_hud_round_yellow_left.png`。文件不存在时继续使用占位场景和纯程序 HUD。该机制用于本机资源验证，原版图片仍不进入 Git。
 
+对符合已观察格式的本机 `.anm`，可显式查看 wavelet 逐帧候选值：
+
+```powershell
+python -B -X utf8 tools\kdf_animation.py 'C:\private\m01_pnch_low_01.anm' --decode-wavelet --values
+```
+
+输出包含由原版资源导出的数据，仅限本机使用，不能放入仓库或同步目录。
+候选数值不代表动画绑定或实机播放已经通过；格式边界、验证结果与局限
+见 `docs/SKL_ANM_FORMAT_FINDINGS.md`。
+
 如果要在 Linux/WSL2 中筛选原生符号，先从 APK 解压 `lib/armeabi/libdefault.so`，再运行：
 
 ```bash
@@ -97,8 +107,8 @@ BruceLee_PC_Port_Phase1/
 │   ├── export_presets.cfg
 │   ├── scenes/main.tscn
 │   └── scripts/{main,fighter,hud}.gd
-├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs,kdf_strings,kdf_data,kdf_animation,kdf_skeleton,kdf_object,kdf_mesh,mesh_to_obj,character_to_gltf,tex_convert}.py
-├── tests/{test_tools,test_pak_extract,test_kdf_strings,test_kdf_data,test_kdf_animation,test_kdf_skeleton,test_kdf_object,test_kdf_mesh,test_tex_convert}.py
+├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs,kdf_strings,kdf_data,kdf_animation,kdf_wavelet,kdf_skeleton,kdf_object,kdf_mesh,mesh_to_obj,character_to_gltf,tex_convert}.py
+├── tests/{test_tools,test_pak_extract,test_kdf_strings,test_kdf_data,test_kdf_animation,test_kdf_wavelet,test_kdf_skeleton,test_kdf_object,test_kdf_mesh,test_tex_convert}.py
 ├── evidence/
 │   ├── source_inventory.json
 │   ├── candidate_symbols.csv

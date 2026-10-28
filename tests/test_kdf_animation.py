@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
@@ -30,8 +31,11 @@ def animation_fixture(
         values=None, *, compresschannels=None,
         track_pointer_targets=None, track_pointer_markers=None,
         reverse_first_declarations=False,
-        wavelet_properties_pointer=1) -> bytes:
+        wavelet_properties_pointer=1, wavelet_words=None,
+        numaproximations=3, first_huffman_level=0, quantizedbits=32,
+        duplicate_wavelets=0) -> bytes:
     values = HEADER_VALUES if values is None else values
+    wavelet_words = [3, 0, 1, 2] if wavelet_words is None else wavelet_words
     strings = list(values) + [
         'bonepos', 'bonerot', 'scales', 'positions',
         'type', 'rawfixedsample', 'data', 'offset',
@@ -66,19 +70,19 @@ def animation_fixture(
         (0x60000000, strings.index('type')),
         (0x60000000, strings.index('waveletsample')),
         (0x60000000, strings.index('data')),
-        (0x40800004, 2),
+        (0x40800000 | len(wavelet_words), 2),
         (0x60000000, strings.index('offset')),
         (0x40400002, 3),
         (0x60000000, strings.index('properties')),
         (0x30000007, wavelet_properties_pointer),
         (0x60000000, strings.index('quantizedbits')),
-        (0, 32),
+        (0, quantizedbits),
         (0x60000000, strings.index('quantizedradix')),
         (0, 12),
         (0x60000000, strings.index('firsthuffmanlevel')),
-        (0, 0),
+        (0, first_huffman_level),
         (0x60000000, strings.index('numaproximations')),
-        (0, 3),
+        (0, numaproximations),
         (0x60000000, strings.index('huffsize')),
         (0x42000001, 4),
         (0x60000000, strings.index('huffcode')),
@@ -137,10 +141,17 @@ def animation_fixture(
         records[pointer_ordinal] = (
             pointer_markers[name], sample_targets[name] - pointer_ordinal)
 
+    for _ in range(duplicate_wavelets):
+        records.extend((
+            (0x60000000, strings.index('bonerot')),
+            (0x30000004, 1),
+        ))
+        records.extend(records[first_bonerot_sample:second_track_start])
+
     sections = (
         struct.pack('<3i3i', 4096, -8192, 4095, -4096, 8192, -4095),
         struct.pack('<HH', 0, 0),
-        struct.pack('<4I', 3, 0, 1, 2),
+        struct.pack(f'<{len(wavelet_words)}I', *wavelet_words),
         struct.pack('<2H', 0, 1),
         struct.pack('<4I', 0, 2, 2, 0),
         struct.pack('<2h', -1, 1),
@@ -265,6 +276,57 @@ class TestKdfAnimation(unittest.TestCase):
             'skl-bone-rotation-index-verified',
         )
 
+    def test_opt_in_wavelet_decode_through_animation_inspector(self):
+        # Eight invented int16 channels; all intermediate symbols are +1,
+        # followed by -1 in each terminal stream.
+        words = [
+            1, 6, 0, 0, 0, 0, 9, 10, 0x55550000, 0, 0,
+        ]
+        raw = animation_fixture(
+            dict(HEADER_VALUES, duration=4), wavelet_words=words,
+            numaproximations=1,
+        )
+        result = inspect_animation(
+            raw, include_values=True, decode_wavelet_values=True)
+        sample = result['track_groups'][0]['tracks'][1]['sample']
+        self.assertEqual(sample['decode_status'], 'decoded-wavelet-candidate')
+        decoded = sample['wavelet']['decoded']
+        self.assertEqual(decoded['sample_count'], 4)
+        self.assertEqual(decoded['native_runtime_comparison'], 'unverified')
+        self.assertEqual(decoded['values'], [
+            [[0.0] * 4, [0.0] * 4],
+            [[-2.0 / 4096] * 4, [-2.0 / 4096] * 4],
+            [[2.0 / 4096] * 4, [2.0 / 4096] * 4],
+            [[0.0] * 4, [0.0] * 4],
+        ])
+
+    def test_wavelet_decode_rejects_unobserved_version_and_properties(self):
+        words = [1, 6, 0, 0, 0, 0, 9, 10, 0x55550000, 0, 0]
+        for arguments, message in (
+                ({'values': dict(HEADER_VALUES, duration=4, version=8)},
+                 'version'),
+                ({'values': dict(HEADER_VALUES, duration=4), 'quantizedbits': 0},
+                 'quantizedbits'),
+                ({'values': dict(HEADER_VALUES, duration=4), 'first_huffman_level': 1},
+                 'firsthuffmanlevel')):
+            with self.subTest(message=message):
+                raw = animation_fixture(
+                    wavelet_words=words, numaproximations=1, **arguments)
+                # Metadata inspection remains possible without candidate decoding.
+                inspect_animation(raw)
+                with self.assertRaisesRegex(KdfError, message):
+                    inspect_animation(raw, decode_wavelet_values=True)
+
+    def test_wavelet_decode_applies_a_file_level_budget_across_tracks(self):
+        words = [1, 6, 0, 0, 0, 0, 9, 10, 0x55550000, 0, 0]
+        raw = animation_fixture(
+            dict(HEADER_VALUES, duration=4), wavelet_words=words,
+            numaproximations=1, duplicate_wavelets=1,
+        )
+        with mock.patch('kdf_animation._MAX_WAVELET_SCALARS', 48):
+            with self.assertRaisesRegex(KdfError, 'aggregate work limit'):
+                inspect_animation(raw, decode_wavelet_values=True)
+
     def test_second_track_group_decodes_q14_rotation_and_scale(self):
         result = inspect_animation(animation_fixture(), include_values=True)
         self.assertEqual(len(result['track_groups']), 2)
@@ -310,6 +372,10 @@ class TestKdfAnimation(unittest.TestCase):
         self.assertTrue(_prefixes_are_prefix_free([
             (0x00000000, 2, 2, 0),
             (0x80000000, 2, 2, 2),
+        ]))
+        # A large contiguous range must not be expanded into billions of codes.
+        self.assertTrue(_prefixes_are_prefix_free([
+            (0x00000000, 32, 0x80000000, 0),
         ]))
 
     def test_wavelet_compresschannels_must_match_track_width(self):

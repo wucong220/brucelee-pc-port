@@ -10,8 +10,13 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kdf_data import KdfError, parse_container, scalar_property
+from kdf_wavelet import decode_wavelet
 
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
+_MAX_WAVELET_TRACKS = 512
+_MAX_WAVELET_WORDS = 2_000_000
+_MAX_WAVELET_SYMBOLS = 2_000_000
+_MAX_WAVELET_SCALARS = 2_000_000
 _HEADER_KEYS = ('firstframe', 'duration', 'framerate', 'version', 'pose')
 _CODEC_KEYS = (
     'rawfloatsample', 'rawfixedsample', 'waveletsample',
@@ -181,22 +186,18 @@ def _parse_wavelet_properties(
 
 
 def _prefixes_are_prefix_free(entries: list[tuple[int, int, int, int]]) -> bool:
-    codes = []
+    ranges = []
     for prefix, bit_length, code_count, _ in entries:
         if bit_length <= 0 or bit_length > 32 or code_count <= 0:
             return False
         base = prefix >> (32 - bit_length)
-        if base + code_count > 1 << bit_length:
+        if base < 0 or base + code_count > 1 << bit_length:
             return False
-        codes.extend(
-            ((base + offset) << (32 - bit_length), bit_length)
-            for offset in range(code_count)
-        )
-    codes.sort()
-    for (left, left_bits), (right, right_bits) in zip(
-            codes, codes[1:], strict=False):
-        shared_bits = min(left_bits, right_bits)
-        if left >> (32 - shared_bits) == right >> (32 - shared_bits):
+        shift = 32 - bit_length
+        ranges.append((base << shift, (base + code_count) << shift))
+    ranges.sort()
+    for (_, left_end), (right_start, _) in zip(ranges, ranges[1:], strict=False):
+        if left_end > right_start:
             return False
     return True
 
@@ -244,7 +245,8 @@ def _offset_semantics(track: str) -> str:
 def _decode_wavelet(
         raw: bytes, container: dict, track: str, data_reference: dict,
         offset_reference: dict, properties_start: int,
-        include_values: bool) -> tuple[dict, dict, int]:
+        include_values: bool, sample_count: int,
+        decode_wavelet_values: bool, budget: dict[str, int]) -> tuple[dict, dict, int]:
     if data_reference['element_stride'] != 4:
         raise KdfError('wavelet data is not a uint32 word array')
     offsets = _array_u16(raw, container, offset_reference, 'offset')
@@ -253,6 +255,16 @@ def _decode_wavelet(
 
     huffsize_reference = arrays['huffsize']
     huffcode_reference = arrays['huffcode']
+    budget['tracks'] += 1
+    budget['words'] += data_reference['element_count']
+    budget['symbols'] += huffcode_reference['element_count']
+    if decode_wavelet_values:
+        budget['scalars'] += sample_count * scalar['compresschannels']
+    if (budget['tracks'] > _MAX_WAVELET_TRACKS
+            or budget['words'] > _MAX_WAVELET_WORDS
+            or budget['symbols'] > _MAX_WAVELET_SYMBOLS
+            or budget['scalars'] > _MAX_WAVELET_SCALARS):
+        raise KdfError('animation wavelet file exceeds the aggregate work limit')
     if huffsize_reference['element_stride'] != 16:
         raise KdfError('wavelet huffsize entries are not four uint32 words')
     expected_symbol_stride = 4 if _TRACK_CHANNELS[track] == 3 else 2
@@ -327,6 +339,22 @@ def _decode_wavelet(
     }
     if include_values:
         wavelet['huffcodes'] = huffcodes
+    decode_status = 'unresolved-wavelet'
+    if decode_wavelet_values:
+        if scalar['quantizedbits'] != 32:
+            raise KdfError('wavelet quantizedbits is outside the observed profile')
+        if scalar['firsthuffmanlevel'] != 0:
+            raise KdfError('wavelet firsthuffmanlevel is outside the observed profile')
+        wavelet['decoded'] = decode_wavelet(
+            data, sample_count=sample_count,
+            channels=scalar['compresschannels'], components=_TRACK_CHANNELS[track],
+            element_bytes=expected_symbol_stride,
+            approximations=scalar['numaproximations'],
+            radix=scalar['quantizedradix'], huffman_entries=huffsize,
+            huffman_symbols=huffcodes, include_values=include_values,
+        )
+        wavelet['bitstream_decoding'] = 'decoded-observed-profile'
+        decode_status = 'decoded-wavelet-candidate'
     return {
         'codec': 'waveletsample',
         'data': _array_descriptor(container, data_reference),
@@ -336,13 +364,14 @@ def _decode_wavelet(
             'semantics': _offset_semantics(track),
         },
         'wavelet': wavelet,
-        'decode_status': 'unresolved-wavelet',
+        'decode_status': decode_status,
     }, {}, next_record
 
 
 def _parse_sample(
         raw: bytes, container: dict, start: int, track: str,
-        include_values: bool) -> tuple[dict, int]:
+        include_values: bool, sample_count: int,
+        decode_wavelet_values: bool, budget: dict[str, int]) -> tuple[dict, int]:
     if start + 5 >= len(container['records']):
         raise KdfError(f'animation sample at record {start} is truncated')
     _expect_key(container, start, 'type')
@@ -375,7 +404,7 @@ def _parse_sample(
     if codec == 'waveletsample':
         sample, _, next_record = _decode_wavelet(
             raw, container, track, data_reference, offset_reference,
-            start + 6, include_values)
+            start + 6, include_values, sample_count, decode_wavelet_values, budget)
         return sample, next_record
     return {
         'codec': codec,
@@ -389,11 +418,14 @@ def _parse_sample(
     }, start + 6
 
 
-def _parse_tracks(raw: bytes, container: dict, include_values: bool) -> list[dict]:
+def _parse_tracks(
+        raw: bytes, container: dict, include_values: bool, sample_count: int,
+        decode_wavelet_values: bool) -> list[dict]:
     records = container['records']
     blocks = []
     active_tracks = []
     active_block = None
+    budget = {'tracks': 0, 'words': 0, 'symbols': 0, 'scalars': 0}
     ordinal = 0
     while ordinal < len(records):
         if _is_track_declaration(container, ordinal):
@@ -450,7 +482,8 @@ def _parse_tracks(raw: bytes, container: dict, include_values: bool) -> list[dic
                 )
             track = active_tracks.pop(track_index)
             sample, ordinal = _parse_sample(
-                raw, container, ordinal, track['name'], include_values)
+                raw, container, ordinal, track['name'], include_values,
+                sample_count, decode_wavelet_values, budget)
             active_block['tracks'].append({**track, 'sample': sample})
             continue
         ordinal += 1
@@ -461,14 +494,19 @@ def _parse_tracks(raw: bytes, container: dict, include_values: bool) -> list[dic
     return blocks
 
 
-def inspect_animation(raw: bytes, *, include_values: bool = False) -> dict:
+def inspect_animation(
+        raw: bytes, *, include_values: bool = False,
+        decode_wavelet_values: bool = False) -> dict:
     container = parse_container(raw)
     names = {entry['text'] for entry in container['strings']}
     missing = [key for key in _HEADER_KEYS if key not in names]
     if missing:
         raise KdfError(f'animation header keys missing: {", ".join(missing)}')
     headers = {key: scalar_property(container, key) for key in _HEADER_KEYS}
-    track_groups = _parse_tracks(raw, container, include_values)
+    if decode_wavelet_values and headers['version'] != 7:
+        raise KdfError('animation version is outside the observed wavelet profile')
+    track_groups = _parse_tracks(
+        raw, container, include_values, headers['duration'], decode_wavelet_values)
     codecs = [
         {
             'track_group': group['ordinal'],
@@ -496,12 +534,16 @@ def inspect_animation(raw: bytes, *, include_values: bool = False) -> dict:
     }
 
 
-def inspect_file(path: Path, *, include_values: bool = False) -> dict:
+def inspect_file(
+        path: Path, *, include_values: bool = False,
+        decode_wavelet_values: bool = False) -> dict:
     with path.open('rb') as file:
         raw = file.read(_MAX_RESOURCE_BYTES + 1)
     if len(raw) > _MAX_RESOURCE_BYTES:
         raise KdfError('decoded animation exceeds inspection size limit')
-    result = inspect_animation(raw, include_values=include_values)
+    result = inspect_animation(
+        raw, include_values=include_values,
+        decode_wavelet_values=decode_wavelet_values)
     result['source'] = str(path)
     return result
 
@@ -511,10 +553,15 @@ def main() -> int:
     parser.add_argument('source', type=Path, help='decoded 1FDKENONCTX3 animation resource')
     parser.add_argument(
         '--values', action='store_true',
-        help='include every decoded fixed-point sample and Huffman symbol')
+        help='include every decoded sample and Huffman symbol')
+    parser.add_argument(
+        '--decode-wavelet', action='store_true',
+        help='decode the observed wavelet profile; output remains a candidate')
     args = parser.parse_args()
     try:
-        result = inspect_file(args.source, include_values=args.values)
+        result = inspect_file(
+            args.source, include_values=args.values,
+            decode_wavelet_values=args.decode_wavelet)
     except (OSError, KdfError) as exc:
         print(f'error: {exc}', file=sys.stderr)
         return 1

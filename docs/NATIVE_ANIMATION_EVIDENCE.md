@@ -59,7 +59,11 @@
 
 着色器字符串还明确出现 `g_vBones`、`g_vWeights`、`g_mSkinPal` 以及每顶点四个骨骼索引和四个权重。这证明模型蒙皮路径存在，但不能据此推断具体 `.obj` 文件的字节布局。
 
-## 边界
+## 当时的边界
+
+以下是 2026-10-28 的初始符号取证边界。后续已在三份 ANM 中确认实际
+codec，并追踪五条 wavelet 轨道的逐帧候选解码；现状及未验证事项以
+`docs/SKL_ANM_FORMAT_FINDINGS.md` 的 2026-10-29 记录为准。
 
 - 这些是符号、函数入口和格式键名，不是已反编译成功的算法。
 - 目前不知道三个 `m01_*.anm` 分别使用 `RawFloatSample`、`RawFixedSample` 还是 `WaveletSample`。
