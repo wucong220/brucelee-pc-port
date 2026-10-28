@@ -52,6 +52,34 @@ def _validate_dense_indices(values: list[int], label: str) -> None:
         raise KdfError(f'Skl {label} indices do not densely cover 0..{len(values) - 1}')
 
 
+def _resolve_node_names(container: dict, node_starts: list[int]) -> dict[int, str]:
+    count = len(node_starts)
+    first_node = node_starts[0]
+    table_start = first_node - count * 2
+    if table_start < 0:
+        raise KdfError('Skl name-reference table starts before DATA records')
+    records = container['records']
+    strings = container['strings']
+    names = {}
+    for table_index, target in enumerate(node_starts):
+        key_record = table_start + table_index * 2
+        pointer_record = key_record + 1
+        key = records[key_record]
+        pointer = records[pointer_record]
+        if key['first'] != 0x60000000:
+            raise KdfError(f'Skl name reference {table_index} has invalid key marker')
+        if key['second'] >= len(strings):
+            raise KdfError(f'Skl name reference {table_index} has invalid string ordinal')
+        if pointer['first'] not in (0x30000005, 0x30000006):
+            raise KdfError(f'Skl name reference {table_index} has invalid pointer marker')
+        if pointer_record + pointer['second'] != target:
+            raise KdfError(f'Skl name reference {table_index} does not target its node')
+        names[target] = strings[key['second']]['text']
+    if set(names) != set(node_starts) or len(names) != count:
+        raise KdfError('Skl name references do not uniquely cover every node')
+    return names
+
+
 def _section_start(container: dict, section_index: int) -> int:
     section = container['sections'][section_index]
     return container['payload_offset'] + section['start_relative']
@@ -202,6 +230,9 @@ def inspect_skeleton(raw: bytes) -> dict:
             children[node['parentid']].append(node['nodeid'])
     if len(roots) != 1:
         raise KdfError('Skl must contain exactly one root node')
+    node_names = _resolve_node_names(container, type_starts)
+    for node in nodes:
+        node['name'] = node_names[node['record_start']]
 
     def subtree_size(node_id: int, active: set[int]) -> int:
         if node_id in active:
@@ -262,6 +293,8 @@ def inspect_skeleton(raw: bytes) -> dict:
         'node_count': len(nodes),
         'roots': roots,
         'nodes': nodes,
+        'name_reference_count': len(node_names),
+        'name_reference_source': 'validated-relative-pointer-table',
         'bone_position_indices': bone_positions,
         'bone_rotation_indices': bone_rotations,
         'scale_indices': scale_indices,

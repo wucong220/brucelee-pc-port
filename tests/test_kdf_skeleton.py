@@ -20,19 +20,21 @@ NODES = [
 
 
 def skeleton_fixture(
-        nodes=None, *, rotations=None, position_indices=None) -> bytes:
+        nodes=None, *, rotations=None, position_indices=None,
+        name_pointer_delta=0) -> bytes:
     nodes = NODES if nodes is None else nodes
     strings = [
         'type', 'nodeid', 'parentid', 'treesize', 'offset',
         'root', 'object', 'bone', 'scales', 'bonepos', 'bonerot',
+        'root_node', 'object_node', 'bone_a', 'bone_b',
     ]
-    records = []
+    node_records = []
 
     def value_record(marker, value):
-        records.append((marker, value & 0xffffffff))
+        node_records.append((marker, value & 0xffffffff))
 
     def property_value(key, value, marker=0):
-        records.append((0x60000000, strings.index(key)))
+        node_records.append((0x60000000, strings.index(key)))
         value_record(marker, value)
 
     bone_index = 0
@@ -47,6 +49,30 @@ def skeleton_fixture(
             property_value('bonepos', bone_index)
             property_value('bonerot', bone_index)
             bone_index += 1
+
+    node_starts = []
+    cursor = len(nodes) * 2
+    for type_name, *_ in nodes:
+        node_starts.append(cursor)
+        length = 16 if type_name == 'bone' else 10
+        cursor += length
+    name_ordinals = []
+    bone_name_index = 0
+    for type_name, *_ in nodes:
+        if type_name == 'bone':
+            name = 'bone_a' if bone_name_index == 0 else 'bone_b'
+            bone_name_index += 1
+        else:
+            name = 'root_node' if type_name == 'root' else 'object_node'
+        name_ordinals.append(strings.index(name))
+    records = []
+    for table_index, (target, string_ordinal) in enumerate(
+            zip(node_starts, name_ordinals, strict=True)):
+        pointer_record = table_index * 2 + 1
+        relative = target - pointer_record + name_pointer_delta
+        records.append((0x60000000, string_ordinal))
+        records.append((0x30000005, relative & 0xffffffff))
+    records.extend(node_records)
 
     raw = bytearray(b'1FDKENONCTX3' + struct.pack('<IIII', len(strings), 1, 0, len(strings)))
     for text in strings:
@@ -83,6 +109,9 @@ class TestKdfSkeleton(unittest.TestCase):
         result = inspect_skeleton(skeleton_fixture())
         self.assertEqual(result['node_count'], 3)
         self.assertEqual(result['roots'], [0])
+        self.assertEqual([node['name'] for node in result['nodes']], [
+            'root_node', 'bone_a', 'bone_b',
+        ])
         self.assertEqual([node['type'] for node in result['nodes']], ['root', 'bone', 'bone'])
         self.assertEqual(result['nodes'][0]['children'], [2])
         self.assertEqual(result['nodes'][1]['children'], [4])
@@ -103,6 +132,10 @@ class TestKdfSkeleton(unittest.TestCase):
         bad_size = [NODES[0], ('bone', 2, 0, 5, 1)]
         with self.assertRaisesRegex(KdfError, 'treesize'):
             inspect_skeleton(skeleton_fixture(bad_size))
+
+    def test_name_pointer_must_target_node_start(self):
+        with self.assertRaisesRegex(KdfError, 'does not target its node'):
+            inspect_skeleton(skeleton_fixture(name_pointer_delta=1))
 
     def test_static_transform_sections_are_validated(self):
         with self.assertRaisesRegex(KdfError, 'position index section'):

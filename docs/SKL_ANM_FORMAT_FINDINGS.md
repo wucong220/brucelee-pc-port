@@ -71,6 +71,17 @@
 
 因此，校验必须同时匹配键名序号和值记录标记；只接受 `(0, value)` 的通用标量扫描器会漏掉全部 `type`、`parentid` 和 `offset` 字段。
 
+节点名称由节点区前部的 74 组引用表给出，每组占两条 8 字节记录：
+
+```text
+(0x60000000, string_ordinal)
+(0x30000005 | 0x30000006, relative_record_offset)
+
+node_start = pointer_record_ordinal + relative_record_offset
+```
+
+74/74 组名称引用都唯一命中节点起点。该表的显式名称也纠正了仅看邻近字符串得到的候选：`nodeid=2` 是 `character`，`nodeid=4` 是 `skeleton`；`male_01` 与 `skeletonbase` 是节点内部引用，不是节点名称。
+
 骨骼数据区包含 70 组位置、70 组旋转和缩放候选：位置按 `float32[3]`、旋转按 `float32[4]` 读取时，数值有限且 70 个四元数模长与 1 的最大误差约 `1.18e-7`；索引组也各含 70 个 `uint16`。这支持位置/旋转数据与骨骼节点的对应，但本地/世界坐标系及四元数分量约定仍未知。
 
 | 分组 | 区间 `[起,止)` | 已验证布局 |
@@ -110,17 +121,17 @@
 
 ## 当前阻塞
 
-- 数值骨架层级扫描器已能恢复 nodeid、parentid、treesize 和子树关系；节点名称引用的完整通用编码尚未实现。
+- 当前 Skl 样本的 74 条名称指针已恢复；其他版本仍需独立验证名称表前边界与指针标记。
 - `duration` 的单位、局部/世界坐标和四元数分量约定尚未确认。
 - `quantizedbits/radix`、Huffman 码表和压缩通道的编码尚未恢复。
 - `.obj` 对外部网格、纹理和 shader 资源的引用解析尚未完成。
 
-在获得可验证的骨骼父子层级和至少一组姿态变换之前，不编写 glTF/Godot 动画导出器，也不宣称模型已可导入。
+在坐标空间、四元数分量顺序和动画轨道语义得到验证之前，不把当前静态数组直接当作 Godot 变换，也不宣称模型已可导入。
 
 ## 当前工具
 
 - `tools/kdf_data.py`：解析 CTX3 字符串表、DATA 计数、分组偏移、属性记录和数据区。
 - `tools/kdf_animation.py`：提取已验证的 `firstframe/duration/framerate/version/pose` 和分组区间；不解码压缩通道。
-- `tools/kdf_skeleton.py`：按真实字段标记读取 `type → nodeid → parentid → treesize → offset`，验证唯一根、父节点存在、无环和子树规模；关联每个 bone 的 `scales/bonepos/bonerot` 索引并读取静态变换候选。
+- `tools/kdf_skeleton.py`：按真实字段标记读取 `type → nodeid → parentid → treesize → offset`，通过相对指针表恢复节点名称，验证唯一根、父节点存在、无环和子树规模；关联每个 bone 的 `scales/bonepos/bonerot` 索引并读取静态变换候选。
 
-这些工具只读取本机解码资源。Skl 名称引用和 Wavelet/Huffman 解码仍必须用完整原包继续验证。
+这些工具只读取本机解码资源。Wavelet/Huffman 解码和坐标约定仍必须用完整原包继续验证。
