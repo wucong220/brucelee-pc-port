@@ -82,7 +82,11 @@ def mesh_fixture(*, skinned=True, bad_index=False) -> bytes:
             b'\x00\x01',
             struct.pack('<6f', 0, 0, 0, 1, 0, 0),
             struct.pack('<8f', 0, 0, 0, 1, 0, 0, 0, 1),
-            struct.pack('<24f', *([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0] * 2)),
+            struct.pack(
+                '<24f',
+                1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+                1, 0, 0, -1, 0, 1, 0, 0, 0, 0, 1, 0,
+            ),
         ])
 
     offsets = [0, 0]
@@ -126,6 +130,21 @@ class TestKdfMesh(unittest.TestCase):
         self.assertEqual(
             result['vertices'][0]['bone_indices_global'], [0, 1, 0, 0])
         self.assertEqual(result['skeleton']['rotation_norm_max_error'], 0.0)
+        self.assertEqual(
+            result['skeleton']['quaternion_component_order'],
+            'xyzw-verified-relative-to-matrix',
+        )
+        self.assertEqual(
+            result['skeleton']['matrix_layout'],
+            'transposed-rotation-rows-with-translation-tail',
+        )
+        self.assertEqual(result['skeleton']['bind_position_residual_max'], 0.0)
+        self.assertEqual(
+            result['skeleton']['matrix_transform_semantics'],
+            'inverse-bind-candidate',
+        )
+        self.assertEqual(result['geometry_axes'], 'x-horizontal-y-depth-z-up-observed')
+        self.assertEqual(result['godot_axis_mapping'], 'unverified')
 
     def test_out_of_range_index_is_rejected(self):
         with self.assertRaisesRegex(KdfError, 'index exceeds vertex count'):

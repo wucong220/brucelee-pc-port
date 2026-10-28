@@ -83,6 +83,15 @@ def _read_vectors(raw: bytes, container: dict, section_index: int, count: int,
     ]
 
 
+def _quaternion_matrix(value: tuple[float, ...]) -> tuple[tuple[float, ...], ...]:
+    x, y, z, w = value
+    return (
+        (1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)),
+        (2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)),
+        (2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)),
+    )
+
+
 def _read_geometry(raw: bytes, container: dict) -> dict:
     arrays = _array_map(container)
     format_key = _one_key_record(container, 'format')
@@ -225,6 +234,7 @@ def _parse_subsets(raw: bytes, container: dict) -> list[dict]:
             'record_start': ordinal,
             'index_range': list(index_range),
             'vertex_range': list(vertex_range),
+            'triangle_count': (index_range[1] - index_range[0]) // 3,
             'material': strings[material_ordinal_value]['text'],
             'local_to_global_bone_indices': local_map,
         })
@@ -242,6 +252,9 @@ def _parse_subsets(raw: bytes, container: dict) -> list[dict]:
             raise KdfError('mesh index ranges are not contiguous')
         if left['vertex_range'][1] != right['vertex_range'][0]:
             raise KdfError('mesh vertex ranges are not contiguous')
+    for subset in subsets:
+        if (subset['index_range'][1] - subset['index_range'][0]) % 3:
+            raise KdfError('mesh subset index range is not a triangle multiple')
     return subsets
 
 
@@ -308,20 +321,63 @@ def _parse_skeleton(raw: bytes, container: dict) -> dict | None:
     if len(set(names)) != len(names):
         raise KdfError('mesh skeleton bone names are not unique')
     max_norm_error = 0.0
+    max_matrix_error = 0.0
+    max_bind_position_residual = 0.0
+    translations = []
     for index, rotation in enumerate(rotations):
         norm = math.sqrt(sum(value * value for value in rotation))
         max_norm_error = max(max_norm_error, abs(norm - 1.0))
         if max_norm_error > 1e-5:
             raise KdfError(f'mesh skeleton rotation {index} is not normalized')
+        matrix = matrices[index]
+        expected = _quaternion_matrix(rotation)
+        stored_columns = (
+            tuple(matrix[0:3]),
+            tuple(matrix[4:7]),
+            tuple(matrix[8:11]),
+        )
+        expected_columns = (
+            tuple(expected[row][0] for row in range(3)),
+            tuple(expected[row][1] for row in range(3)),
+            tuple(expected[row][2] for row in range(3)),
+        )
+        error = max(
+            abs(actual - wanted)
+            for actual_column, wanted_column in zip(
+                stored_columns, expected_columns, strict=True)
+            for actual, wanted in zip(
+                actual_column, wanted_column, strict=True)
+        )
+        max_matrix_error = max(max_matrix_error, error)
+        if max_matrix_error > 1e-5:
+            raise KdfError(
+                f'mesh skeleton matrix {index} does not match its quaternion')
+        translation = [matrix[3], matrix[7], matrix[11]]
+        position = positions[index]
+        residual = [
+            sum(stored_columns[column][row] * position[row] for row in range(3))
+            + translation[column]
+            for column in range(3)
+        ]
+        error = max(abs(value) for value in residual)
+        max_bind_position_residual = max(max_bind_position_residual, error)
+        if error > 2e-5:
+            raise KdfError(
+                f'mesh skeleton inverse bind matrix {index} misses its position')
+        translations.append(translation)
     return {
         'record_start': target,
         'bone_count': bone_count,
         'names': names,
         'positions': [list(value) for value in positions],
-        'rotations_xyzw_unverified': [list(value) for value in rotations],
-        'bind_matrices_unverified': [list(value) for value in matrices],
+        'rotations_xyzw': [list(value) for value in rotations],
+        'bind_translations': translations,
         'rotation_norm_max_error': max_norm_error,
-        'matrix_layout': 'unverified',
+        'quaternion_component_order': 'xyzw-verified-relative-to-matrix',
+        'matrix_layout': 'transposed-rotation-rows-with-translation-tail',
+        'rotation_matrix_max_error': max_matrix_error,
+        'bind_position_residual_max': max_bind_position_residual,
+        'matrix_transform_semantics': 'inverse-bind-candidate',
     }
 
 
@@ -369,6 +425,12 @@ def inspect_mesh(raw: bytes, *, include_vertices: bool = False,
     if (subsets[-1]['index_range'][1] != geometry['index_count']
             or subsets[-1]['vertex_range'][1] != geometry['vertex_count']):
         raise KdfError('mesh subset ranges do not cover all geometry')
+    for subset in subsets:
+        index_start, index_end = subset['index_range']
+        vertex_start, vertex_end = subset['vertex_range']
+        if any(index < vertex_start or index >= vertex_end
+               for index in geometry['indices'][index_start:index_end]):
+            raise KdfError('mesh subset triangle references vertices outside its range')
     vertices = geometry['vertices']
     result = {
         'sha256': hashlib.sha256(raw).hexdigest(),
@@ -380,6 +442,7 @@ def inspect_mesh(raw: bytes, *, include_vertices: bool = False,
         'vertex_format': geometry['vertex_format'],
         'vertex_stride': geometry['vertex_stride'],
         'index_count': geometry['index_count'],
+        'index_max': max(geometry['indices']),
         'vertex_count': geometry['vertex_count'],
         'triangle_count': geometry['triangle_count'],
         'degenerate_triangles': geometry['degenerate_triangles'],
@@ -389,8 +452,9 @@ def inspect_mesh(raw: bytes, *, include_vertices: bool = False,
         'subset_count': len(subsets),
         'subsets': subsets,
         'skeleton': skeleton,
-        'coordinate_space': 'unverified',
-        'quaternion_component_order': 'unverified',
+        'geometry_axes': 'x-horizontal-y-depth-z-up-observed',
+        'godot_axis_mapping': 'unverified',
+        'matrix_transform_semantics': 'inverse-bind-candidate',
         'tail_identity_hex': container['tail_identity_hex'],
     }
     if include_vertices:
