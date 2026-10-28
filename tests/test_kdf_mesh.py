@@ -10,6 +10,7 @@ import zlib
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from kdf_data import KdfError
 from kdf_mesh import inspect_mesh
+from mesh_to_obj import convert_file
 
 
 def descriptor(count: int, stride: int) -> int:
@@ -164,6 +165,19 @@ class TestKdfMesh(unittest.TestCase):
             self.assertEqual(report['triangle_count'], 1)
             self.assertNotIn('vertices', report)
             self.assertNotIn('indices', report)
+
+    def test_obj_export_contains_geometry_only(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / 'test.mesh'
+            output = Path(temp) / 'test.obj'
+            source.write_bytes(mesh_fixture())
+            result = convert_file(source, output)
+            self.assertEqual(result['triangle_count'], 1)
+            self.assertFalse(result['skin_data_included'])
+            text = output.read_text(encoding='utf-8')
+            self.assertEqual(sum(line.startswith('v ') for line in text.splitlines()), 3)
+            self.assertEqual(sum(line.startswith('vt ') for line in text.splitlines()), 3)
+            self.assertEqual(sum(line.startswith('f ') for line in text.splitlines()), 1)
 
 
 if __name__ == '__main__':

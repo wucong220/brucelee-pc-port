@@ -97,7 +97,7 @@ BruceLee_PC_Port_Phase1/
 │   ├── export_presets.cfg
 │   ├── scenes/main.tscn
 │   └── scripts/{main,fighter,hud}.gd
-├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs,kdf_strings,kdf_data,kdf_animation,kdf_skeleton,kdf_object,kdf_mesh,tex_convert}.py
+├── tools/{inventory,pak_probe,pak_extract,native_symbols,extract_inputs,kdf_strings,kdf_data,kdf_animation,kdf_skeleton,kdf_object,kdf_mesh,mesh_to_obj,tex_convert}.py
 ├── tests/{test_tools,test_pak_extract,test_kdf_strings,test_kdf_data,test_kdf_animation,test_kdf_skeleton,test_kdf_object,test_kdf_mesh,test_tex_convert}.py
 ├── evidence/
 │   ├── source_inventory.json

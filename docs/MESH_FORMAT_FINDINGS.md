@@ -75,3 +75,5 @@ body skinned 有 1 个退化三角形，其余网格没有退化三角形；所�
 - 前三个顶点预览和所有未验证坐标边界。
 
 `--vertices` 和 `--indices` 仅在明确需要时输出完整数组。下一步是把已验证的位置、UV、索引、权重和骨骼映射转换为仓库外的 glTF/OBJ 中间文件，并核对坐标轴与矩阵布局。
+
+`tools/mesh_to_obj.py` 提供受限 OBJ 中间导出，仅写位置、UV、subset 和三角面；它强制输出到仓库外且非明显同步目录，并在结果中明确 `skin_data_included=false`。OBJ 不保存四权重、绑定矩阵或动画，因此不会替代后续 glTF/Godot 蒙皮转换。
