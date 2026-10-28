@@ -26,7 +26,11 @@ HEADER_VALUES = {
 }
 
 
-def animation_fixture(values=None, *, compresschannels=None) -> bytes:
+def animation_fixture(
+        values=None, *, compresschannels=None,
+        track_pointer_targets=None, track_pointer_markers=None,
+        reverse_first_declarations=False,
+        wavelet_properties_pointer=1) -> bytes:
     values = HEADER_VALUES if values is None else values
     strings = list(values) + [
         'bonepos', 'bonerot', 'scales', 'positions',
@@ -39,12 +43,16 @@ def animation_fixture(values=None, *, compresschannels=None) -> bytes:
     for key, value in values.items():
         records.extend(((0x60000000, strings.index(key)), (0, value)))
 
-    records.extend((
-        (0x60000000, strings.index('bonepos')),
-        (0x30000003, 0),
-        (0x60000000, strings.index('bonerot')),
-        (0x30000004, 1),
-    ))
+    first_declarations = [
+        ('bonepos', 'bonepos_raw', 'bonepos_raw', 0x30000003),
+        ('bonerot', 'bonerot_wavelet', 'bonerot_wavelet', 0x30000004),
+    ]
+    if reverse_first_declarations:
+        first_declarations.reverse()
+    first_track_start = len(records)
+    for name, _, _, marker in first_declarations:
+        records.extend(((0x60000000, strings.index(name)), (marker, 0)))
+    first_bonepos_sample = len(records)
     records.extend((
         (0x60000000, strings.index('type')),
         (0x60000000, strings.index('rawfixedsample')),
@@ -53,6 +61,7 @@ def animation_fixture(values=None, *, compresschannels=None) -> bytes:
         (0x60000000, strings.index('offset')),
         (0x40400001, 1),
     ))
+    first_bonerot_sample = len(records)
     records.extend((
         (0x60000000, strings.index('type')),
         (0x60000000, strings.index('waveletsample')),
@@ -61,7 +70,7 @@ def animation_fixture(values=None, *, compresschannels=None) -> bytes:
         (0x60000000, strings.index('offset')),
         (0x40400002, 3),
         (0x60000000, strings.index('properties')),
-        (0x30000007, 1),
+        (0x30000007, wavelet_properties_pointer),
         (0x60000000, strings.index('quantizedbits')),
         (0, 32),
         (0x60000000, strings.index('quantizedradix')),
@@ -77,17 +86,24 @@ def animation_fixture(values=None, *, compresschannels=None) -> bytes:
         (0x60000000, strings.index('compresschannels')),
         (0, 8 if compresschannels is None else compresschannels),
     ))
+    second_track_start = len(records)
     records.extend((
         (0x60000000, strings.index('bonerot')),
-        (0x30000003, 3),
+        (0x30000003, 0),
         (0x60000000, strings.index('scales')),
-        (0x30000003, 7),
+        (0x30000003, 0),
+    ))
+    second_bonerot_sample = len(records)
+    records.extend((
         (0x60000000, strings.index('type')),
         (0x60000000, strings.index('rawfixedsample')),
         (0x60000000, strings.index('data')),
         (0x41000002, 6),
         (0x60000000, strings.index('offset')),
         (0x40400001, 7),
+    ))
+    second_scales_sample = len(records)
+    records.extend((
         (0x60000000, strings.index('type')),
         (0x60000000, strings.index('rawfixedsample')),
         (0x60000000, strings.index('data')),
@@ -95,6 +111,31 @@ def animation_fixture(values=None, *, compresschannels=None) -> bytes:
         (0x60000000, strings.index('offset')),
         (0x40400002, 9),
     ))
+    sample_targets = {
+        'bonepos_raw': first_bonepos_sample,
+        'bonerot_wavelet': first_bonerot_sample,
+        'bonerot_raw': second_bonerot_sample,
+        'scales_raw': second_scales_sample,
+    }
+    sample_targets.update(track_pointer_targets or {})
+    pointer_records = {
+        slot_name: first_track_start + index * 2 + 1
+        for index, (_, slot_name, _, _) in enumerate(first_declarations)
+    }
+    pointer_records.update({
+        'bonerot_raw': second_track_start + 1,
+        'scales_raw': second_track_start + 3,
+    })
+    pointer_markers = {
+        'bonepos_raw': 0x30000003,
+        'bonerot_wavelet': 0x30000004,
+        'bonerot_raw': 0x30000003,
+        'scales_raw': 0x30000003,
+    }
+    pointer_markers.update(track_pointer_markers or {})
+    for name, pointer_ordinal in pointer_records.items():
+        records[pointer_ordinal] = (
+            pointer_markers[name], sample_targets[name] - pointer_ordinal)
 
     sections = (
         struct.pack('<3i3i', 4096, -8192, 4095, -4096, 8192, -4095),
@@ -149,6 +190,14 @@ class TestKdfAnimation(unittest.TestCase):
                     ],
                 )
                 self.assertEqual(len(result['track_groups']), 2)
+                self.assertEqual(
+                    [
+                        track['sample_ordinal']
+                        for group in result['track_groups']
+                        for track in group['tracks']
+                    ],
+                    [14, 20, 46, 52],
+                )
                 self.assertTrue(all(
                     section['bytes'] > 0 for section in result['sections']))
 
@@ -266,6 +315,45 @@ class TestKdfAnimation(unittest.TestCase):
     def test_wavelet_compresschannels_must_match_track_width(self):
         with self.assertRaisesRegex(KdfError, 'compresschannels'):
             inspect_animation(animation_fixture(compresschannels=9))
+
+    def test_track_pointer_must_reference_sample_start(self):
+        with self.assertRaisesRegex(
+                KdfError, r'points to record 15, which is not a sample start'):
+            inspect_animation(animation_fixture(
+                track_pointer_targets={'bonepos_raw': 15}))
+
+    def test_track_binding_uses_target_not_declaration_order(self):
+        result = inspect_animation(animation_fixture(
+            reverse_first_declarations=True))
+        first_group = {
+            track['name']: track for track in result['track_groups'][0]['tracks']
+        }
+        self.assertEqual(
+            first_group['bonepos']['sample']['codec'], 'rawfixedsample')
+        self.assertEqual(first_group['bonepos']['sample_ordinal'], 14)
+        self.assertEqual(
+            first_group['bonerot']['sample']['codec'], 'waveletsample')
+        self.assertEqual(first_group['bonerot']['sample_ordinal'], 20)
+
+    def test_track_pointer_targets_must_be_unique(self):
+        with self.assertRaisesRegex(KdfError, 'share sample record 14'):
+            inspect_animation(animation_fixture(
+                track_pointer_targets={'bonerot_wavelet': 14},
+                track_pointer_markers={'bonerot_wavelet': 0x30000003},
+            ))
+
+    def test_track_pointer_marker_must_match_sample_codec(self):
+        with self.assertRaisesRegex(
+                KdfError, r'pointer marker 0x30000004 does not match '
+                r"'rawfixedsample'"):
+            inspect_animation(animation_fixture(
+                track_pointer_markers={'bonepos_raw': 0x30000004}))
+
+    def test_wavelet_properties_pointer_must_target_first_property(self):
+        with self.assertRaisesRegex(
+                KdfError, r'wavelet properties pointer.*expected 28'):
+            inspect_animation(animation_fixture(
+                wavelet_properties_pointer=2))
 
     def test_missing_header_key_is_rejected(self):
         values = dict(HEADER_VALUES)

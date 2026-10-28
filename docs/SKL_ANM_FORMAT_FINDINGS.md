@@ -71,6 +71,27 @@
 
 因此，校验必须同时匹配键名序号和值记录标记；只接受 `(0, value)` 的通用标量扫描器会漏掉全部 `type`、`parentid` 和 `offset` 字段。
 
+ANM 轨道声明使用同类显式相对指针。`bonepos`、`bonerot`、`scales` 和
+`positions` 键后的值记录标记高四位为 `3`，其第二个 `uint32` 是从指针记录
+到采样块 `type` 起点的相对记录数；指针记录自身的低 28 位是其他标志，不能
+当作目标偏移：
+
+```text
+sample_start = pointer_record_ordinal + relative_record_offset
+```
+
+idle、punch、kick 三份真实 ANM 共 15 条轨道声明均使用该公式指向
+`type`/codec 对，15/15 命中。将任一真实指针改动一个记录后，15/15 异常
+路径均被解析器拒绝。解析器现在要求显式引用目标为实际采样块，
+并按该目标绑定轨道，而不是只依赖声明与采样块的相邻顺序。
+
+指针的 first 字段也在三份真实 ANM 中稳定区分采样类型：
+`0x30000003` 对应 `rawfixedsample`（10/10），`0x30000004` 对应
+`waveletsample`（5/5）。解析器对这两类已知 codec 同时校验目标记录和标签；
+`rawfloatsample` 尚无真实 ANM 样本，不据此猜测其标签。每个 wavelet
+`properties` 指针的第二个 `uint32` 在当前真实样本中均指向紧随其后的首个
+属性记录，解析器也会拒绝其他目标。
+
 节点名称由节点区前部的 74 组引用表给出，每组占两条 8 字节记录：
 
 ```text

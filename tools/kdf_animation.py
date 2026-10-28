@@ -19,6 +19,10 @@ _CODEC_KEYS = (
     'compresschannels',
 )
 _SAMPLE_CODECS = {'rawfixedsample', 'rawfloatsample', 'waveletsample'}
+_TRACK_POINTER_MARKERS = {
+    'rawfixedsample': 0x30000003,
+    'waveletsample': 0x30000004,
+}
 _TRACK_CHANNELS = {
     'bonepos': 3,
     'positions': 3,
@@ -124,9 +128,16 @@ def _parse_wavelet_properties(
     if start + 1 >= len(container['records']):
         raise KdfError('animation wavelet properties marker is truncated')
     _expect_key(container, start, 'properties')
-    marker = container['records'][start + 1]['first']
+    marker_record = container['records'][start + 1]
+    marker = marker_record['first']
     if marker >> 28 != 3:
         raise KdfError('animation wavelet properties marker is not a pointer')
+    properties_ordinal = start + 1 + marker_record['second']
+    if properties_ordinal != start + 2:
+        raise KdfError(
+            f'animation wavelet properties pointer at record {start + 1} '
+            f'targets {properties_ordinal}, expected {start + 2}'
+        )
     scalar = {}
     arrays = {}
     position = start + 2
@@ -393,10 +404,30 @@ def _parse_tracks(raw: bytes, container: dict, include_values: bool) -> list[dic
             while _is_track_declaration(container, ordinal):
                 name = _record_text(container, ordinal)
                 binding = records[ordinal + 1]
+                sample_ordinal = ordinal + 1 + binding['second']
+                if not _is_sample_start(container, sample_ordinal):
+                    raise KdfError(
+                        f'animation track {name!r} at record {ordinal} points to '
+                        f'record {sample_ordinal}, which is not a sample start'
+                    )
+                codec = _record_text(container, sample_ordinal + 1)
+                expected_marker = _TRACK_POINTER_MARKERS.get(codec)
+                if expected_marker is not None and binding['first'] != expected_marker:
+                    raise KdfError(
+                        f'animation track {name!r} pointer marker '
+                        f'0x{binding["first"]:08x} does not match {codec!r}'
+                    )
+                if any(
+                        track['sample_ordinal'] == sample_ordinal
+                        for track in active_tracks):
+                    raise KdfError(
+                        f'animation tracks share sample record {sample_ordinal}'
+                    )
                 active_tracks.append({
                     'name': name,
                     'binding_marker': f'{binding["first"]:08x}',
                     'binding_value': binding['second'],
+                    'sample_ordinal': sample_ordinal,
                 })
                 ordinal += 2
             continue
@@ -405,7 +436,19 @@ def _parse_tracks(raw: bytes, container: dict, include_values: bool) -> list[dic
                 raise KdfError(
                     f'animation sample at record {ordinal} has no track declaration'
                 )
-            track = active_tracks.pop(0)
+            track_index = next(
+                (index for index, track in enumerate(active_tracks)
+                 if track['sample_ordinal'] == ordinal),
+                None,
+            )
+            if track_index is None:
+                expected = ', '.join(
+                    str(track['sample_ordinal']) for track in active_tracks)
+                raise KdfError(
+                    f'animation sample at record {ordinal} does not match '
+                    f'active track targets: {expected}'
+                )
+            track = active_tracks.pop(track_index)
             sample, ordinal = _parse_sample(
                 raw, container, ordinal, track['name'], include_values)
             active_block['tracks'].append({**track, 'sample': sample})
