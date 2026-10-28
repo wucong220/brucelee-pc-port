@@ -2,9 +2,8 @@
 """Read-only metadata verification of Bruce Lee: Dragon Warrior's PAK container.
 
 Recover data-stream boundaries and match assets to sorted index entries by
-the observed PAKD offset plus uncompressed and stored lengths. A bounded
-candidate scan can link observed path records to 16-byte index identifiers;
-it is not a complete parser of the PAKH directory tree.
+the observed PAKD offset plus uncompressed and stored lengths. Parse the
+PAKH directory nodes, reconstruct their tree, and validate the footer CRC.
 
 All original archives are opened read-only. Exporting decoded bytes is opt-in.
 """
@@ -34,7 +33,9 @@ _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
 _MAX_CHUNK_BYTES = 2 * 1024 * 1024
 _MAX_CHUNKS = 512
 _MAX_DIRECTORY_STRING_BYTES = 1024
-_MAX_DIRECTORY_CANDIDATES = 100_000
+_MAX_DIRECTORY_ROOTS = 32
+_MAX_DIRECTORY_NODES = 20_000
+_MAX_DIRECTORY_FILES = 100_000
 _DEFAULT_MAX_TOTAL_DECODED_BYTES = 1024 * 1024 * 1024
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -109,47 +110,158 @@ def _read_directory_string(raw: bytes, position: int) -> tuple[str, int]:
         raise PakError('directory string is not UTF-8') from exc
 
 
-def scan_directory_candidates(raw: bytes, records: list[IndexRecord]) -> list[dict]:
-    """Find observed adreno_200 file references without assuming tree layout."""
+def parse_directory(raw: bytes, records: list[IndexRecord]) -> dict:
+    """Parse the observed flat PAKH directory-node table and validate its tree."""
     table_end = 24 + len(records) * _RECORD.size
     by_identity = {record.resource_id_hex: record for record in records}
-    prefix = b'adreno_200/'
-    candidates = []
-    search_from = table_end + 4
-    seen_prefixes = 0
-    while True:
-        found = raw.find(prefix, search_from)
-        if found < 0:
-            break
-        search_from = found + 1
-        seen_prefixes += 1
-        if seen_prefixes > _MAX_DIRECTORY_CANDIDATES:
-            raise PakError('directory candidate count exceeds limit')
-        record_offset = found - 4
-        if record_offset < table_end + 4:
-            continue
-        try:
-            folder, position = _read_directory_string(raw, record_offset)
-            name, position = _read_directory_string(raw, position)
-            extension, position = _read_directory_string(raw, position)
-        except PakError:
-            continue
-        if (not folder.startswith('adreno_200/') or not folder.endswith('/')
-                or not name or not extension or any(c in name + extension for c in '/\\')
-                or not all(part.isprintable() for part in (folder, name, extension))):
-            continue
-        if position + 16 > len(raw):
-            continue
-        identity = raw[position:position + 16].hex()
-        if identity not in by_identity:
-            continue
-        candidates.append({
-            'pakh_offset': record_offset,
-            'identity_offset': position,
-            'resource_id_hex': identity,
-            'path': folder + name + '.' + extension,
-        })
-    return candidates
+    if len(by_identity) != len(records):
+        raise PakError('duplicate 16-byte resource identity in index')
+
+    def u32(position: int) -> int:
+        if position < 0 or position + 4 > len(raw):
+            raise PakError('truncated PAKH directory field')
+        return struct.unpack_from('<I', raw, position)[0]
+
+    def take(position: int, size: int) -> tuple[bytes, int]:
+        if size < 0 or position < 0 or position + size > len(raw):
+            raise PakError('truncated PAKH directory data')
+        return raw[position:position + size], position + size
+
+    position = table_end
+    root_count = u32(position)
+    position += 4
+    if not 0 < root_count <= _MAX_DIRECTORY_ROOTS:
+        raise PakError('PAKH root namespace count out of bounds')
+
+    roots = []
+    nodes = {}
+    files = []
+    for _ in range(root_count):
+        root_name, position = _read_directory_string(raw, position)
+        if not root_name or '/' in root_name or '\\' in root_name:
+            raise PakError('invalid PAKH root namespace')
+        node_count = u32(position)
+        position += 4
+        if not 0 < node_count <= _MAX_DIRECTORY_NODES or len(nodes) + node_count > _MAX_DIRECTORY_NODES:
+            raise PakError('PAKH directory node count out of bounds')
+        roots.append({'name': root_name, 'node_count': node_count})
+
+        for _ in range(node_count):
+            node_offset = position
+            path, position = _read_directory_string(raw, position)
+            parent, position = _read_directory_string(raw, position)
+            if (path and not path.endswith('/')) or (parent and not parent.endswith('/')):
+                raise PakError('PAKH directory paths must end with a slash')
+            normalized_path = path.casefold()
+            if normalized_path in nodes:
+                raise PakError(f'duplicate PAKH directory path: {path!r}')
+            file_count = u32(position)
+            position += 4
+            if file_count > _MAX_DIRECTORY_FILES or len(files) + file_count > _MAX_DIRECTORY_FILES:
+                raise PakError('PAKH file-reference count out of bounds')
+            node_files = []
+            for _ in range(file_count):
+                record_offset = position
+                record_header, position = take(position, 8)
+                type_word, tag = struct.unpack('<II', record_header)
+                if type_word & 0xFFFFFF:
+                    raise PakError('unrecognized PAKH file type bits')
+                folder, position = _read_directory_string(raw, position)
+                name, position = _read_directory_string(raw, position)
+                extension, position = _read_directory_string(raw, position)
+                identity_offset = position
+                identity_raw, position = take(position, 16)
+                identity = identity_raw.hex()
+                if folder != path or not name or any(char in name + extension for char in '/\\'):
+                    raise PakError(f'invalid PAKH file reference at {record_offset}')
+                record = by_identity.get(identity)
+                if record is None:
+                    raise PakError(f'unmatched PAKH file identity at {identity_offset}')
+                full_path = folder + name + ('.' + extension if extension else '')
+                file_info = {
+                    'path': full_path,
+                    'index_ordinal': record.index_ordinal,
+                    'resource_id_hex': identity,
+                    'pakh_offset': record_offset,
+                    'identity_offset': identity_offset,
+                    'type_word': type_word,
+                    'tag': tag,
+                }
+                node_files.append(file_info)
+                files.append(file_info)
+
+            child_count = u32(position)
+            position += 4
+            if child_count > _MAX_DIRECTORY_NODES:
+                raise PakError('PAKH child-directory count out of bounds')
+            children = []
+            for _ in range(child_count):
+                child, position = _read_directory_string(raw, position)
+                if not child or '/' in child or '\\' in child:
+                    raise PakError('invalid PAKH child-directory name')
+                children.append(child)
+            if len({child.casefold() for child in children}) != len(children):
+                raise PakError('duplicate PAKH child-directory name')
+            nodes[normalized_path] = {
+                'path': path,
+                'parent': parent,
+                'children': children,
+                'files': node_files,
+                'offset': node_offset,
+            }
+
+    if position + 4 != len(raw):
+        raise PakError('unparsed or missing PAKH directory footer')
+    expected_crc = u32(position)
+    actual_crc = zlib.crc32(raw[:position]) & 0xffffffff
+    if expected_crc != actual_crc:
+        raise PakError('PAKH directory footer CRC32 mismatch')
+
+    def walk(path: str, seen: set[str], active: set[str]) -> None:
+        key = path.casefold()
+        if key not in nodes or key in active or key in seen:
+            raise PakError('missing, cyclic, or duplicate PAKH directory node')
+        seen.add(key)
+        active.add(key)
+        node = nodes[key]
+        for child in node['children']:
+            child_path = path + child + '/'
+            child_key = child_path.casefold()
+            child_node = nodes.get(child_key)
+            if child_node is None or child_node['parent'].casefold() != key:
+                raise PakError('PAKH child directory does not match its parent')
+            walk(child_node['path'], seen, active)
+        active.remove(key)
+
+    seen: set[str] = set()
+    virtual_root = nodes.get('')
+    if virtual_root is None:
+        raise PakError('missing PAKH virtual root node')
+    walk('', seen, set())
+    if len(seen) != len(nodes):
+        raise PakError('orphaned PAKH directory nodes')
+    if len(nodes) != sum(root['node_count'] for root in roots):
+        raise PakError('PAKH root node counts do not match parsed nodes')
+
+    root_keys = {root['name'].casefold() for root in roots}
+    virtual_children = {child.casefold() for child in virtual_root['children']}
+    if virtual_children != root_keys:
+        raise PakError('PAKH virtual root does not contain every root namespace')
+    for root in roots:
+        root_path = root['name'] + '/'
+        root_node = nodes.get(root_path.casefold())
+        if root_node is None or root_node['parent'] != '':
+            raise PakError('PAKH root namespace does not match a directory node')
+
+    covered = {entry['index_ordinal'] for entry in files}
+    if covered != set(range(len(records))):
+        raise PakError('PAKH directory references do not cover every index entry')
+    return {
+        'roots': roots,
+        'nodes': nodes,
+        'files': files,
+        'footer_crc32': f'{actual_crc:08x}',
+    }
 
 
 def _sha256_stream(source) -> str:
@@ -320,13 +432,15 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
             raise PakError('PAK member exceeds size limit')
         pakh = archive.read('Core.pakh')
         records = parse_index(pakh)
-        directory_candidates = scan_directory_candidates(pakh, records)
+        directory = parse_directory(pakh, records)
         paths_by_identity = {}
-        for candidate in directory_candidates:
-            paths_by_identity.setdefault(candidate['resource_id_hex'], []).append({
-                'pakh_offset': candidate['pakh_offset'],
-                'identity_offset': candidate['identity_offset'],
-                'path': candidate['path'],
+        for entry in directory['files']:
+            paths_by_identity.setdefault(entry['resource_id_hex'], []).append({
+                'pakh_offset': entry['pakh_offset'],
+                'identity_offset': entry['identity_offset'],
+                'path': entry['path'],
+                'type_word': entry['type_word'],
+                'tag': entry['tag'],
             })
         expected_decoded = sum(r.decoded_bytes for r in records)
         if expected_decoded > max_total_decoded_bytes:
@@ -388,9 +502,14 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
             'ambiguous': len(results) - unique_count,
             'length_only_uniquely_matched': length_only_unique_count,
             'length_only_ambiguous': len(results) - length_only_unique_count,
-            'directory_scan_method': 'adreno_200_candidates_by_16_byte_identity',
-            'directory_candidates': len(directory_candidates),
+            'directory_parse_method': 'flat_nodes_reconstructed_by_parent_and_children',
+            'directory_roots': directory['roots'],
+            'directory_nodes': len(directory['nodes']),
+            'directory_files': len(directory['files']),
             'directory_identities_covered': len(paths_by_identity),
+            'multi_reference_identities': sum(len(paths) > 1 for paths in paths_by_identity.values()),
+            'extra_references': len(directory['files']) - len(paths_by_identity),
+            'pakh_footer_crc32': directory['footer_crc32'],
             'multiset_verified': True,
             'resources': results,
         }

@@ -19,7 +19,8 @@ import pak_extract
 from pak_extract import PakError, parse_index, scan_archive
 
 
-def archive_fixture(path: Path, originals: list[bytes], level: int = zlib.Z_DEFAULT_COMPRESSION) -> None:
+def archive_fixture(path: Path, originals: list[bytes], level: int = zlib.Z_DEFAULT_COMPRESSION,
+                    references: list[tuple[int, str]] | None = None) -> None:
     rows = []
     disk_data = bytearray()
     for idx, payload in enumerate(originals):
@@ -39,10 +40,9 @@ def archive_fixture(path: Path, originals: list[bytes], level: int = zlib.Z_DEFA
         disk_data.extend(stored)
         index_extra = b'example-value!!!'[:12] + struct.pack('<I', pakd_offset)
         rows.append((100 + idx * 100, index_extra, 0, len(payload), len(stored), 1))
-    pakh = b'8KAP' + b'\x00' * 12 + b'DTRS' + struct.pack('<I', len(rows))
-    for row in rows:
-        pakh += struct.pack('<I16sIIII', *row)
-    pakh += struct.pack('<I', 1) + b'\x01\x00\x00\x00x'
+    if references is None:
+        references = [(idx, f'adreno_200/objects/file{idx}.bin') for idx in range(len(rows))]
+    pakh = build_pakh(rows, references)
     with zipfile.ZipFile(path, 'w', compression=zipfile.ZIP_STORED) as archive:
         archive.writestr('Core.pakh', pakh)
         archive.writestr('Core.pakd000', disk_data)
@@ -51,6 +51,53 @@ def archive_fixture(path: Path, originals: list[bytes], level: int = zlib.Z_DEFA
 def directory_string(value: str) -> bytes:
     raw = value.encode('utf-8')
     return struct.pack('<I', len(raw)) + raw + b'\0' * (4 - len(raw) % 4)
+
+
+def update_pakh_crc(pakh: bytearray) -> None:
+    struct.pack_into('<I', pakh, len(pakh) - 4, zlib.crc32(pakh[:-4]) & 0xffffffff)
+
+
+def build_pakh(rows: list[tuple], references: list[tuple[int, str]]) -> bytes:
+    root_name = 'adreno_200'
+    nodes = {
+        '': {'path': '', 'parent': '', 'children': {root_name}, 'files': []},
+        root_name + '/': {'path': root_name + '/', 'parent': '', 'children': set(), 'files': []},
+    }
+    for index, full_path in references:
+        folder, name_with_extension = full_path.rsplit('/', 1)
+        folder += '/'
+        if name_with_extension.count('.') != 1:
+            raise ValueError('fixture paths need one extension')
+        name, extension = name_with_extension.rsplit('.', 1)
+        parts = folder.rstrip('/').split('/')
+        for depth in range(2, len(parts) + 1):
+            path = '/'.join(parts[:depth]) + '/'
+            parent = '/'.join(parts[:depth - 1]) + '/'
+            nodes.setdefault(path, {'path': path, 'parent': parent, 'children': set(), 'files': []})
+            nodes[parent]['children'].add(parts[depth - 1])
+        nodes[folder]['files'].append((index, folder, name, extension))
+
+    pakh = bytearray(b'8KAP' + b'\x00' * 12 + b'DTRS' + struct.pack('<I', len(rows)))
+    for row in rows:
+        pakh += struct.pack('<I16sIIII', *row)
+    pakh += struct.pack('<I', 1) + directory_string(root_name) + struct.pack('<I', len(nodes))
+    for path in sorted(nodes, reverse=True):
+        node = nodes[path]
+        pakh += directory_string(node['path']) + directory_string(node['parent'])
+        node_files = sorted(node['files'])
+        pakh += struct.pack('<I', len(node_files))
+        for index, folder, name, extension in node_files:
+            key, extra, *_ = rows[index]
+            identity = struct.pack('<I', key) + extra[:12]
+            pakh += struct.pack('<II', 0, 0x3ED94A35)
+            pakh += directory_string(folder) + directory_string(name) + directory_string(extension)
+            pakh += identity
+        children = sorted(node['children'])
+        pakh += struct.pack('<I', len(children))
+        for child in children:
+            pakh += directory_string(child)
+    pakh += struct.pack('<I', zlib.crc32(pakh) & 0xffffffff)
+    return bytes(pakh)
 
 
 class TestPakIndex(unittest.TestCase):
@@ -85,6 +132,7 @@ class TestPakIndex(unittest.TestCase):
                 pakd = archive.read('Core.pakd000')
             row0, row1 = pakh[28:60], pakh[64:96]
             pakh[28:60], pakh[64:96] = row1, row0
+            update_pakh_crc(pakh)
             with zipfile.ZipFile(data, 'w') as archive:
                 archive.writestr('Core.pakh', pakh)
                 archive.writestr('Core.pakd000', pakd)
@@ -103,6 +151,7 @@ class TestPakIndex(unittest.TestCase):
                                                         (24 + 16, 1, 'offset/length match')):
                 pakh = bytearray(original_pakh)
                 struct.pack_into('<I', pakh, field_offset, replacement)
+                update_pakh_crc(pakh)
                 with zipfile.ZipFile(data, 'w') as archive:
                     archive.writestr('Core.pakh', pakh)
                     archive.writestr('Core.pakd000', pakd)
@@ -117,35 +166,82 @@ class TestPakIndex(unittest.TestCase):
         with self.assertRaises(PakError):
             pak_extract._read_directory_string(data[:-1] + b'X', 0)
 
-    def test_directory_candidates_use_full_identity_and_keep_aliases(self):
+    def test_directory_tree_uses_identity_and_keeps_aliases(self):
         with tempfile.TemporaryDirectory() as temp:
             data = Path(temp) / 'data.zpak'
-            archive_fixture(data, [b'A' * 400, b'B' * 500])
-            with zipfile.ZipFile(data) as archive:
-                pakh = bytearray(archive.read('Core.pakh'))
-                pakd = archive.read('Core.pakd000')
-            pakh += b'\0' * (-len(pakh) % 4)
-            identity = bytes(pakh[24:40])
-            def ref(folder, name, ext, resource_id):
-                return directory_string(folder) + directory_string(name) + directory_string(ext) + resource_id
-            first_offset = len(pakh)
-            pakh += ref('adreno_200/ui/', 'ABCD', 'tex', identity)
-            pakh += ref('adreno_200/other/', 'alias', 'tex', identity)
-            pakh += ref('adreno_200/other/', 'wrong', 'tex', b'\xff' * 16)
-            malformed = bytearray(ref('adreno_200/bad/', 'broken', 'tex', identity))
-            malformed[len(directory_string('adreno_200/bad/')) - 1] = 1
-            pakh += malformed
-            with zipfile.ZipFile(data, 'w') as archive:
-                archive.writestr('Core.pakh', pakh)
-                archive.writestr('Core.pakd000', pakd)
+            archive_fixture(data, [b'A' * 400, b'B' * 500], references=[
+                (0, 'adreno_200/ui/ABCD.tex'),
+                (0, 'adreno_200/other/alias.tex'),
+                (1, 'adreno_200/otherwise/solo.bin'),
+            ])
             result = scan_archive(data)
-            self.assertEqual(result['directory_candidates'], 2)
-            self.assertEqual(result['directory_identities_covered'], 1)
+            self.assertEqual(result['directory_roots'], [{'name': 'adreno_200', 'node_count': 5}])
+            self.assertEqual(result['directory_nodes'], 5)
+            self.assertEqual(result['directory_files'], 3)
+            self.assertEqual(result['directory_identities_covered'], 2)
+            self.assertEqual(result['multi_reference_identities'], 1)
+            self.assertEqual(result['extra_references'], 1)
+            self.assertRegex(result['pakh_footer_crc32'], r'^[0-9a-f]{8}$')
             paths = result['resources'][0]['path_candidates']
             self.assertEqual([item['path'] for item in paths],
                              ['adreno_200/ui/ABCD.tex', 'adreno_200/other/alias.tex'])
-            self.assertEqual(paths[0]['pakh_offset'], first_offset)
-            self.assertEqual(result['resources'][1]['path_candidates'], [])
+            self.assertTrue(all(item['type_word'] == 0 and item['tag'] == 0x3ED94A35 for item in paths))
+            self.assertEqual([item['path'] for item in result['resources'][1]['path_candidates']],
+                             ['adreno_200/otherwise/solo.bin'])
+
+    def test_directory_footer_crc_and_identity_are_validated(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            data = root / 'data.zpak'
+            archive_fixture(data, [b'payload'])
+            with zipfile.ZipFile(data) as archive:
+                original_pakh = archive.read('Core.pakh')
+                pakd = archive.read('Core.pakd000')
+            cases = []
+            bad_crc = bytearray(original_pakh)
+            bad_crc[-1] ^= 0xFF
+            cases.append((bad_crc, 'CRC32 mismatch'))
+            bad_identity = bytearray(original_pakh)
+            identity = original_pakh[24:40]
+            table_end = 24 + 36
+            identity_offset = bad_identity.find(identity, table_end)
+            self.assertGreater(identity_offset, table_end)
+            bad_identity[identity_offset] ^= 0xFF
+            cases.append((bad_identity, 'unmatched PAKH file identity'))
+            for pakh, message in cases:
+                with zipfile.ZipFile(data, 'w') as archive:
+                    archive.writestr('Core.pakh', pakh)
+                    archive.writestr('Core.pakd000', pakd)
+                with self.subTest(message=message), self.assertRaisesRegex(PakError, message):
+                    scan_archive(data)
+
+    def test_every_index_entry_requires_a_directory_reference(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / 'data.zpak'
+            archive_fixture(data, [b'first', b'second'], references=[
+                (0, 'adreno_200/objects/first.bin'),
+            ])
+            with self.assertRaisesRegex(PakError, 'cover every index entry'):
+                scan_archive(data)
+
+    def test_directory_child_reference_must_resolve(self):
+        with tempfile.TemporaryDirectory() as temp:
+            data = Path(temp) / 'data.zpak'
+            archive_fixture(data, [b'payload'])
+            with zipfile.ZipFile(data) as archive:
+                pakh = bytearray(archive.read('Core.pakh'))
+                pakd = archive.read('Core.pakd000')
+            table_end = 24 + 36
+            child_entry = directory_string('objects')
+            child_offset = pakh.find(child_entry, table_end)
+            self.assertGreater(child_offset, table_end)
+            pakh[child_offset + 4] = ord('X')
+            update_pakh_crc(pakh)
+            with zipfile.ZipFile(data, 'w') as archive:
+                archive.writestr('Core.pakh', pakh)
+                archive.writestr('Core.pakd000', pakd)
+            with self.assertRaisesRegex(PakError, 'child directory does not match'):
+                scan_archive(data)
 
     def test_reject_invalid_index_count(self):
         with self.assertRaises(PakError):
