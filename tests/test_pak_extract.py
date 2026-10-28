@@ -355,6 +355,46 @@ class TestPakIndex(unittest.TestCase):
                     scan_archive(data, target)
                 self.assertEqual(extracted[0].read_bytes(), payload)
 
+    def test_named_extraction_uses_validated_paths_and_selection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            data = root / 'data.zpak'
+            payload = b'example' * 100
+            archive_fixture(data, [payload], references=[
+                (0, 'adreno_200/objects/first.bin'),
+                (0, 'adreno_200/animation/alias.anm'),
+            ])
+            target = root / 'named-output'
+            with patch.object(pak_extract, '_PROJECT_ROOT', root / 'project'):
+                result = scan_archive(data, extract_named_dir=target, select_paths=['ANIMATION'])
+                output = target / 'adreno_200' / 'animation' / 'alias.anm'
+                self.assertEqual(output.read_bytes(), payload)
+                self.assertFalse((target / 'adreno_200' / 'objects' / 'first.bin').exists())
+                self.assertEqual(result['named_extractions'], 1)
+                with self.assertRaisesRegex(PakError, 'no resources matched'):
+                    scan_archive(data, extract_named_dir=root / 'other', select_paths=['missing'])
+                self.assertFalse((root / 'other').exists())
+
+    def test_named_extraction_rejects_traversal_and_collisions(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            project = root / 'project'
+            traversal = root / 'traversal.zpak'
+            archive_fixture(traversal, [b'payload'], references=[
+                (0, 'adreno_200/../escape.bin'),
+            ])
+            collision = root / 'collision.zpak'
+            archive_fixture(collision, [b'first', b'second'], references=[
+                (0, 'adreno_200/objects/same.bin'),
+                (1, 'adreno_200/objects/same.bin'),
+            ])
+            with patch.object(pak_extract, '_PROJECT_ROOT', project):
+                with self.assertRaisesRegex(PakError, 'unsafe PAKH resource path'):
+                    scan_archive(traversal, extract_named_dir=root / 'unsafe-output')
+                with self.assertRaisesRegex(PakError, 'duplicate named extraction target'):
+                    scan_archive(collision, extract_named_dir=root / 'collision-output')
+            self.assertFalse((root / 'escape.bin').exists())
+
     def test_source_mutation_is_reported(self):
         with tempfile.TemporaryDirectory() as temp:
             data = Path(temp) / 'data.zpak'

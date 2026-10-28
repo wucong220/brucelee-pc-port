@@ -18,6 +18,7 @@ import io
 import json
 import os
 from pathlib import Path
+from pathlib import PurePosixPath
 import re
 import shutil
 import struct
@@ -38,6 +39,11 @@ _MAX_DIRECTORY_NODES = 20_000
 _MAX_DIRECTORY_FILES = 100_000
 _DEFAULT_MAX_TOTAL_DECODED_BYTES = 1024 * 1024 * 1024
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_WINDOWS_RESERVED_NAMES = {
+    'con', 'prn', 'aux', 'nul',
+    *(f'com{number}' for number in range(1, 10)),
+    *(f'lpt{number}' for number in range(1, 10)),
+}
 
 
 class PakError(ValueError):
@@ -361,6 +367,21 @@ def _check_free_space(path: Path, required: int) -> None:
         raise PakError('not enough free space for the decoded resources')
 
 
+def _named_resource_path(root: Path, relative: str) -> Path:
+    """Map a validated PAKH path to a safe, non-overwriting filesystem path."""
+    pure = PurePosixPath(relative)
+    if pure.is_absolute() or not pure.parts or any(part in {'', '.', '..'} for part in pure.parts):
+        raise PakError(f'unsafe PAKH resource path: {relative!r}')
+    for part in pure.parts:
+        if (any(ord(char) < 32 for char in part) or any(char in '\\/:*?"<>|' for char in part)
+                or part.endswith((' ', '.')) or part.split('.')[0].casefold() in _WINDOWS_RESERVED_NAMES):
+            raise PakError(f'unsafe PAKH resource path component: {part!r}')
+    target = root.joinpath(*pure.parts).resolve()
+    if target == root or not target.is_relative_to(root):
+        raise PakError(f'PAKH resource path escapes output root: {relative!r}')
+    return target
+
+
 def _read_exact(stream, size: int) -> bytes:
     raw = stream.read(size)
     if len(raw) != size:
@@ -415,13 +436,20 @@ def iter_resources(stream, resource_count: int, *, collect_data: bool = False):
 
 def scan_archive(path: Path, extract_dir: Path | None = None, *,
                  max_total_decoded_bytes: int = _DEFAULT_MAX_TOTAL_DECODED_BYTES,
-                 expected_zpak_sha256: str | None = None) -> dict:
+                 expected_zpak_sha256: str | None = None,
+                 extract_named_dir: Path | None = None,
+                 select_paths: list[str] | None = None) -> dict:
     if max_total_decoded_bytes <= 0:
         raise PakError('maximum total decoded bytes must be positive')
     if expected_zpak_sha256 is not None and not re.fullmatch(r'[0-9a-fA-F]{64}', expected_zpak_sha256):
         raise PakError('expected ZPAK SHA-256 must be 64 hexadecimal characters')
     if extract_dir is not None:
         extract_dir = _safe_extract_dir(extract_dir)
+    if extract_named_dir is not None:
+        extract_named_dir = _safe_extract_dir(extract_named_dir)
+    select_paths = [value.casefold() for value in select_paths or []]
+    if any(not value for value in select_paths):
+        raise PakError('path selector must not be empty')
     with _open_zpak_info(path) as (archive, source_hash, zpak_hash):
         if expected_zpak_sha256 is not None and zpak_hash != expected_zpak_sha256.lower():
             raise PakError('data.zpak SHA-256 does not match the expected input')
@@ -447,6 +475,32 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
             raise PakError(f'total decoded bytes {expected_decoded} exceed configured limit {max_total_decoded_bytes}')
         if extract_dir is not None:
             _check_free_space(extract_dir, expected_decoded)
+        if extract_named_dir is not None:
+            _check_free_space(extract_named_dir, expected_decoded)
+        named_destinations = {}
+        selected_references = 0
+        if extract_named_dir is not None:
+            seen_targets = set()
+            for identity, candidates in paths_by_identity.items():
+                selected = [entry for entry in candidates
+                            if not select_paths
+                            or any(selector in entry['path'].casefold() for selector in select_paths)]
+                if not selected:
+                    continue
+                targets = []
+                for entry in selected:
+                    target = _named_resource_path(extract_named_dir, entry['path'])
+                    target_key = str(target).casefold()
+                    if target_key in seen_targets:
+                        raise PakError(f'duplicate named extraction target: {entry["path"]}')
+                    if target.exists():
+                        raise FileExistsError(f'named extraction target already exists: {target}')
+                    seen_targets.add(target_key)
+                    targets.append((target, entry['path']))
+                    selected_references += 1
+                named_destinations[identity] = targets
+            if select_paths and selected_references == 0:
+                raise PakError('no resources matched the path selectors')
         expected_pairs = Counter((r.decoded_bytes, r.stored_bytes) for r in records)
         if sum(r.stored_bytes for r in records) != members['Core.pakd000'].file_size:
             raise PakError('index stored-size sum differs from actual PAKD length')
@@ -461,7 +515,9 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
         results = []
         with archive.open('Core.pakd000') as raw_stream:
             stream = _HashingReader(raw_stream)
-            for row, payload in iter_resources(stream, len(records), collect_data=extract_dir is not None):
+            for row, payload in iter_resources(
+                    stream, len(records),
+                    collect_data=extract_dir is not None or extract_named_dir is not None):
                 pair = (row['decoded_bytes'], row['stored_bytes'])
                 observed_pairs[pair] += 1
                 if observed_pairs[pair] > expected_pairs[pair]:
@@ -478,6 +534,10 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
                     suffix = f'key_{record.key:08x}'
                     destination = extract_dir / f'disk_{row["disk_ordinal"]:04d}_{suffix}.bin'
                     # No overwrite of earlier work or original assets.
+                    with destination.open('xb') as output:
+                        output.write(payload)
+                for destination, relative in named_destinations.get(record.resource_id_hex, []):
+                    destination.parent.mkdir(parents=True, exist_ok=True)
                     with destination.open('xb') as output:
                         output.write(payload)
                 results.append(row)
@@ -510,6 +570,7 @@ def scan_archive(path: Path, extract_dir: Path | None = None, *,
             'multi_reference_identities': sum(len(paths) > 1 for paths in paths_by_identity.values()),
             'extra_references': len(directory['files']) - len(paths_by_identity),
             'pakh_footer_crc32': directory['footer_crc32'],
+            'named_extractions': selected_references,
             'multiset_verified': True,
             'resources': results,
         }
@@ -520,13 +581,21 @@ def main() -> None:
     parser.add_argument('archive', type=Path, help='data.zpak or its containing outer ZIP')
     parser.add_argument('--report', type=Path, help='JSON report path; file must not exist')
     parser.add_argument('--extract', type=Path, help='opt-in local-only decoded .bin output directory')
+    parser.add_argument('--extract-named', type=Path,
+                        help='write resources under validated original paths in this local-only directory')
+    parser.add_argument('--select-path', action='append', default=[],
+                        help='case-insensitive path substring to include with --extract-named; repeatable')
     parser.add_argument('--max-total-decoded-bytes', type=int, default=_DEFAULT_MAX_TOTAL_DECODED_BYTES,
                         help='maximum decoded bytes (default: 1073741824); raise explicitly if needed')
     parser.add_argument('--expected-zpak-sha256', help='require this SHA-256 for the inner data.zpak')
     args = parser.parse_args()
+    if args.select_path and args.extract_named is None:
+        parser.error('--select-path requires --extract-named')
     report = scan_archive(args.archive, args.extract,
                           max_total_decoded_bytes=args.max_total_decoded_bytes,
-                          expected_zpak_sha256=args.expected_zpak_sha256)
+                          expected_zpak_sha256=args.expected_zpak_sha256,
+                          extract_named_dir=args.extract_named,
+                          select_paths=args.select_path)
     print(f"Verified {report['index_count']} resources, {report['pakd_bytes']} stored bytes, "
           f"{report['total_decoded_bytes']} decoded bytes, {report['uniquely_matched']} uniquely matched, "
           f"{report['ambiguous']} ambiguous.")

@@ -55,13 +55,21 @@ py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip
 
 输出 `.bin` 为原始解码数据，文件名中 `disk_NNNN` 表示数据流物理顺序；`key_...` 表示按起点偏移和两种长度核验得到的索引 key，**不是游戏资源名称**。若偏移或长度不吻合，工具停止而不猜测映射。命令只读取原始 ZIP，不覆盖已有导出文件；如遇异常，可能保留此前已写出的部分文件，应在人工检查后清理。
 
+也可按已校验的 PAKH 目录路径只导出匹配资源。下列选项区分大小写不敏感的子串筛选，并会保留目录结构：
+
+```powershell
+py -3.12 tools/pak_extract.py "D:\BruceLee\Bruce Lee Dragon Warrior v1.15.26.zip" --extract-named "$env:LOCALAPPDATA\BruceLee-PC-Port\selected-resources" --select-path "bl_brucelee" --select-path "m01_idle"
+```
+
+`--extract-named` 在解压前验证完整目录树、资源标识覆盖、目标重名、路径穿越、Windows 保留名和已有文件。一个资源有多个已验证别名时会保留多个路径；输出根目录仍须位于仓库外及可识别的同步目录之外。未使用 `--select-path` 时会导出目录树引用的全部资源，可能占用数百 MiB。
+
 报告中的 `source_sha256`、`data_zpak_sha256`、`pakh_sha256` 和 `pakd_sha256` 分别对应输入 ZIP、内层 ZPAK、索引及数据文件的字节；直接输入 ZPAK 时前两项相同。`--expected-zpak-sha256` 在导出前核对内层哈希，避免将不同来源的结果混为一谈。
 
 默认累计解码上限为 **1 GiB**，可用 `--max-total-decoded-bytes` 明确调整；每条资源仍限制在 16 MiB，工具只支持当前观察到的格式。导出前会检查预估空间并拒绝当前仓库和部分可识别的同步目录，但无法识别所有同步软件及自定义同步目录，使用者仍需确认目标为本地非同步目录。
 
 ## 本次修改的测试记录
 
-2026-10-28，在 Windows Python 3.12.10 的 MXC 隔离工作区内，使用合成数据执行下列命令，**23 项通过，退出码 0**；隔离环境额外验证禁止读取工作区外测试文件和连接本地监听端口。测试覆盖扁平节点逆序存储、父子关系重建、多路径引用、缺失覆盖、错误标识、错误尾部 CRC、重复/越界偏移、截断和解压异常。
+2026-10-28，在 Windows Python 3.12.10 的 MXC 隔离工作区内，使用合成数据执行下列命令，**25 项通过，退出码 0**；隔离环境额外验证禁止读取工作区外测试文件和连接本地监听端口。测试覆盖扁平节点逆序存储、父子关系重建、多路径引用、路径筛选、路径穿越和重名拒绝、缺失覆盖、错误标识、错误尾部 CRC、重复/越界偏移、截断和解压异常。
 
 ```powershell
 python -X utf8 -I -B -c "import pathlib,tempfile,unittest;tempfile.tempdir=str(pathlib.Path.cwd()/'.t');unittest.main(module=None,argv=['unittest','discover','-s','tests','-p','test*.py','-v'])"
