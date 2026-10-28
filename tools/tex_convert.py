@@ -27,9 +27,9 @@ class TextureError(ValueError):
     """Resource does not match the observed texture format profile."""
 
 
-def _property_u32(raw: bytes, record_start: int, node_count: int, ordinal: int) -> int:
+def _property_u32(raw: bytes, record_start: int, record_count: int, ordinal: int) -> int:
     """Read a key/value pair encoded as two consecutive 8-byte records."""
-    for index in range(node_count - 1):
+    for index in range(record_count - 1):
         key, reserved = struct.unpack_from('<II', raw, record_start + index * 8)
         if key == ordinal and reserved == 0:
             value, value_type = struct.unpack_from('<II', raw, record_start + (index + 1) * 8)
@@ -54,13 +54,13 @@ def parse_texture(raw: bytes) -> dict:
         raise TextureError('unsupported texture format or type')
 
     data_offset = container['data_offset']
-    node_count = container['node_count']
-    root_count = container['root_count']
+    record_count = container['record_count']
+    index_count = container['index_count']
     payload_size = container['payload_bytes']
-    record_start = data_offset + 20 + root_count * 4
+    record_start = data_offset + 20 + index_count * 4
     header_size = container['header_bytes']
-    width = _property_u32(raw, record_start, node_count, strings.index('sizex'))
-    height = _property_u32(raw, record_start, node_count, strings.index('sizey'))
+    width = _property_u32(raw, record_start, record_count, strings.index('sizex'))
+    height = _property_u32(raw, record_start, record_count, strings.index('sizey'))
     if not (0 < width <= 4096 and 0 < height <= 4096):
         raise TextureError('texture dimensions are out of bounds')
     expected_bytes = width * height * 4
@@ -80,8 +80,8 @@ def parse_texture(raw: bytes) -> dict:
         'decoded_bytes': len(raw),
         'string_count': len(strings),
         'data_offset': data_offset,
-        'data_node_count': node_count,
-        'data_root_count': root_count,
+        'data_record_count': record_count,
+        'data_index_count': index_count,
         'data_header_bytes': header_size,
         'payload_offset': payload_offset,
         'payload_bytes': payload_size,

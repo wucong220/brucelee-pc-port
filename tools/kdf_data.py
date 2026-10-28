@@ -73,27 +73,27 @@ def parse_container(raw: bytes) -> dict:
         raise KdfError('CTX3 DATA marker was not found')
     if data_offset - table_end > _MAX_METADATA_GAP:
         raise KdfError('CTX3 metadata gap exceeds limit')
-    node_count, root_count, reserved, payload_size = struct.unpack_from(
+    record_count, index_count, reserved, payload_size = struct.unpack_from(
         '<IIII', raw, data_offset + 4)
-    if not 0 < node_count <= _MAX_NODES:
-        raise KdfError('CTX3 DATA node count out of bounds')
-    if not 0 < root_count <= node_count:
-        raise KdfError('CTX3 DATA root count out of bounds')
+    if not 0 < record_count <= _MAX_NODES:
+        raise KdfError('CTX3 DATA record count out of bounds')
+    if not 0 < index_count <= record_count:
+        raise KdfError('CTX3 DATA index count out of bounds')
     if reserved != 0:
         raise KdfError('CTX3 DATA reserved word is not zero')
-    header_size = 20 + root_count * 4 + node_count * 8 + 4
+    header_size = 20 + index_count * 4 + record_count * 8 + 4
     payload_offset = data_offset + header_size
     payload_end = payload_offset + payload_size
     if payload_size <= 0 or payload_end + 16 != len(raw):
         raise KdfError('CTX3 DATA payload bounds do not match resource length')
-    roots = list(struct.unpack_from(f'<{root_count}I', raw, data_offset + 20))
-    if any(root >= node_count for root in roots):
-        raise KdfError('CTX3 DATA root index out of bounds')
-    record_start = data_offset + 20 + root_count * 4
+    indices = list(struct.unpack_from(f'<{index_count}I', raw, data_offset + 20))
+    if any(index >= record_count for index in indices):
+        raise KdfError('CTX3 DATA entry index out of bounds')
+    record_start = data_offset + 20 + index_count * 4
     records = []
-    for index in range(node_count):
-        first, second = struct.unpack_from('<II', raw, record_start + index * 8)
-        records.append({'ordinal': index, 'first': first, 'second': second})
+    for record_ordinal in range(record_count):
+        first, second = struct.unpack_from('<II', raw, record_start + record_ordinal * 8)
+        records.append({'ordinal': record_ordinal, 'first': first, 'second': second})
     terminator = struct.unpack_from('<I', raw, payload_end - payload_size - 4)[0]
     if terminator != 0:
         raise KdfError('CTX3 DATA terminator is not zero')
@@ -106,9 +106,9 @@ def parse_container(raw: bytes) -> dict:
         'string_table_end': table_end,
         'metadata_gap': data_offset - table_end,
         'data_offset': data_offset,
-        'node_count': node_count,
-        'root_count': root_count,
-        'roots': roots,
+        'record_count': record_count,
+        'index_count': index_count,
+        'indices': indices,
         'records': records,
         'header_bytes': header_size,
         'payload_offset': payload_offset,

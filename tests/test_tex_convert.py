@@ -72,8 +72,8 @@ class TestTextureConversion(unittest.TestCase):
         self.assertEqual(result['pixels'], pixels)
         self.assertEqual(result['sha256'], hashlib.sha256(raw).hexdigest())
         self.assertEqual(result['string_count'], len(STRINGS))
-        self.assertEqual(result['data_node_count'], 26)
-        self.assertEqual(result['data_root_count'], 1)
+        self.assertEqual(result['data_record_count'], 26)
+        self.assertEqual(result['data_index_count'], 1)
         self.assertEqual(result['data_header_bytes'], 236)
 
     def test_png_rows_are_flipped(self):

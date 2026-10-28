@@ -34,9 +34,9 @@ class TestKdfData(unittest.TestCase):
     def test_counts_records_and_identity_tail(self):
         result = parse_container(kdf_container())
         self.assertEqual(result['string_count'], 2)
-        self.assertEqual(result['node_count'], 1)
-        self.assertEqual(result['root_count'], 1)
-        self.assertEqual(result['roots'], [0])
+        self.assertEqual(result['record_count'], 1)
+        self.assertEqual(result['index_count'], 1)
+        self.assertEqual(result['indices'], [0])
         self.assertEqual(result['records'], [{'ordinal': 0, 'first': 0, 'second': 0x60000000}])
         self.assertEqual(result['payload_bytes'], len(b'payload'))
         self.assertEqual(result['tail_identity_hex'], b'0123456789abcdef'.hex())
@@ -44,7 +44,7 @@ class TestKdfData(unittest.TestCase):
 
     def test_lengths_roots_and_terminator_are_validated(self):
         cases = [
-            (kdf_container(roots=(1,)), 'root index out of bounds'),
+            (kdf_container(roots=(1,)), 'entry index out of bounds'),
             (kdf_container(terminator=1), 'terminator is not zero'),
         ]
         for raw, message in cases:
