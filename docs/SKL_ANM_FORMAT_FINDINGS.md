@@ -71,6 +71,27 @@
 
 因此，校验必须同时匹配键名序号和值记录标记；只接受 `(0, value)` 的通用标量扫描器会漏掉全部 `type`、`parentid` 和 `offset` 字段。
 
+ANM 轨道声明使用同类显式相对指针。`bonepos`、`bonerot`、`scales` 和
+`positions` 键后的值记录标记高四位为 `3`，其第二个 `uint32` 是从指针记录
+到采样块 `type` 起点的相对记录数；指针记录自身的低 28 位是其他标志，不能
+当作目标偏移：
+
+```text
+sample_start = pointer_record_ordinal + relative_record_offset
+```
+
+idle、punch、kick 三份真实 ANM 共 15 条轨道声明均使用该公式指向
+`type`/codec 对，15/15 命中。将任一真实指针改动一个记录后，15/15 异常
+路径均被解析器拒绝。解析器现在要求显式引用目标为实际采样块，
+并按该目标绑定轨道，而不是只依赖声明与采样块的相邻顺序。
+
+指针的 first 字段也在三份真实 ANM 中稳定区分采样类型：
+`0x30000003` 对应 `rawfixedsample`（10/10），`0x30000004` 对应
+`waveletsample`（5/5）。解析器对这两类已知 codec 同时校验目标记录和标签；
+`rawfloatsample` 尚无真实 ANM 样本，不据此猜测其标签。每个 wavelet
+`properties` 指针的第二个 `uint32` 在当前真实样本中均指向紧随其后的首个
+属性记录，解析器也会拒绝其他目标。
+
 节点名称由节点区前部的 74 组引用表给出，每组占两条 8 字节记录：
 
 ```text
@@ -128,11 +149,90 @@ element_stride = (descriptor & 0x0fff0000) >> 21
 | punch | `waveletsample`；487×4B | `rawfixedsample`；69×12B | `waveletsample`；3268×4B |
 | kick | `waveletsample`；566×4B | `rawfixedsample`；86×12B | `waveletsample`；3914×4B |
 
+### 轨道组与采样对象
+
+三条动画都把连续出现的轨道声明和随后的采样对象按同序配对。轨道声明使用
+`轨道名 → 0x3xxxxxxx 指针`，采样对象使用
+`type → 编解码器名 → data/offset → 数组描述符`。已闭合的组为：
+
+| 动画 | 组 | 轨道声明顺序 | 对应采样 |
+|---|---:|---|---|
+| idle | 0 | `bonepos`, `bonerot` | 110×12B raw-fixed；2006×4B wavelet |
+| idle | 1 | `bonepos`, `bonerot`, `scales` | 9×12B raw-fixed；10×8B raw-fixed；2×12B raw-fixed |
+| punch | 0 | `bonepos`, `positions`, `bonerot` | 487×4B wavelet；69×12B raw-fixed；3268×4B wavelet |
+| punch | 1 | `bonerot`, `scales` | 2×8B raw-fixed；2×12B raw-fixed |
+| kick | 0 | `bonepos`, `positions`, `bonerot` | 566×4B wavelet；86×12B raw-fixed；3914×4B wavelet |
+| kick | 1 | `bonerot`, `scales` | 2×8B raw-fixed；2×12B raw-fixed |
+
+这里的“组”是记录顺序和采样数量闭合后的轨道组，不把
+`0x3xxxxxxx` 指针值擅自解释成对象 ID。指针标记和值原样保存在 JSON 中，供后续原生加载逻辑复核。
+
+### Raw-fixed 固定点解码
+
+已验证的两类 raw-fixed 元素为：
+
+- `bonepos`、`positions`、`scales`：3 个 little-endian `int32`，按
+  `value / 4096.0` 解码为三维向量，即 `FixedPoint<12,int>`。
+- `bonerot`：4 个 little-endian `int16`，按
+  `value / 16384.0` 解码为四元数，即 `FixedPoint<14,short>`。
+
+真实数据的数值也支持该解释：idle 首个 `bonepos` 向量的 Z 约为
+`-19.9214`，第二组 `scales` 的解码值接近 `1.0`。punch 和 kick 的
+`positions` 首帧为 `(0,0,0)`，随后以可连续累加的位移增长。没有把
+`quantizedradix=12` 与 raw-fixed 的 Q12 混为一谈。
+
+固定点四元数的分量顺序、左右手性以及最终是否需要归一化仍标为
+`unverified`，当前只输出数值，不宣称已经可以直接生成 Godot 旋转轨道。
+按 Q14 直接展开后，idle 四元数的最大模长误差约为 `6.07e-5`，
+punch/kick 约为 `2.18e-6`；这属于源码整数量化误差，不能据此确定原生读取器一定会归一化。
+
+### Wavelet 元数据
+
+Wavelet 的 `offset` 是 `uint16` 索引表，但索引域随轨道不同：
+
+| ANM 轨道 | Skl 索引域 |
+|---|---|
+| `bonepos` | `bone_position_indices` |
+| `bonerot` | `bone_rotation_indices` |
+| `scales` | `scale_indices` |
+| `positions` | 尚未确认，工具明确标记为 `unverified` |
+
+真实 idle 的 `scales` offset 为 `[0,1]`，若误按位置索引消费会错误绑定到
+骨骼节点；因此转换器必须同时检查轨道名和 `offsets.semantics`，不能仅按整数范围判断。
+
+真实样本的 offset 数量、离散通道数和压缩数据分别为：
+
+| 轨道 | 动画 | offset 数 | `compresschannels` | 数据字数 | huffsize | huffcode |
+|---|---:|---:|---:|---:|---:|---:|
+| `bonerot` | idle | 42 | 168 | 2006 | 12 | 226 |
+| `bonepos` | punch | 9 | 27 | 487 | 7 | 541 |
+| `bonerot` | punch | 47 | 188 | 3268 | 10 | 1363 |
+| `bonepos` | kick | 9 | 27 | 566 | 9 | 494 |
+| `bonerot` | kick | 47 | 188 | 3914 | 11 | 1657 |
+
+`compresschannels = offset_count × 3`（位置）或
+`offset_count × 4`（旋转）。每个 16 字节 `huffsize` 项按四个 little-endian
+`uint32` 读取为：
+
+```text
+left_aligned_prefix, bit_length, code_count, huffcode_start
+```
+
+已验证所有 `huffcode_start` 连续累加，`code_count` 之和等于
+`huffcode` 元素数，生成的前缀彼此不构成前缀。位置轨道 huffcode 为 4 字节
+符号，旋转轨道为 2 字节符号；符号的有符号解释仍未由原生读取函数确认。
+
+压缩 `data` 首字分别为 idle 4、punch 3、kick 3，与
+`numaproximations` 一致。后续字看起来是 approximation 边界，但在
+`CWaveletDecoder<int,float>::UpdateToFrame` 和
+`CWaveletDecoder<short,float>::UpdateToFrame` 的位流规则解出前，不把
+整个 data section 假定为一条无边界 bitstream。
+
 ## 当前阻塞
 
 - 当前 Skl 样本的 74 条名称指针已恢复；其他版本仍需独立验证名称表前边界与指针标记。
 - `duration` 的单位、局部/世界坐标和四元数分量约定尚未确认。
-- `quantizedbits/radix`、Huffman 码表和压缩通道的编码尚未恢复。
+- Wavelet 的表结构和通道数已恢复，但 approximation 边界、初始值、位序和逐通道状态重置规则仍未恢复。
 - `.obj` 对外部网格、纹理和 shader 资源的引用解析尚未完成。
 
 在坐标空间、四元数分量顺序和动画轨道语义得到验证之前，不把当前静态数组直接当作 Godot 变换，也不宣称模型已可导入。
@@ -140,7 +240,7 @@ element_stride = (descriptor & 0x0fff0000) >> 21
 ## 当前工具
 
 - `tools/kdf_data.py`：解析 CTX3 字符串表、DATA 计数、分组偏移、属性记录和数据区。
-- `tools/kdf_animation.py`：提取已验证的 `firstframe/duration/framerate/version/pose` 和分组区间；不解码压缩通道。
+- `tools/kdf_animation.py`：提取已验证的 header、轨道组、采样对象、offset、Huffman 元数据和 raw-fixed Q12/Q14 值；wavelet 明确标为 `unresolved-wavelet`。默认只输出小预览，`--values` 才展开全部固定点样本和符号。
 - `tools/kdf_skeleton.py`：按真实字段标记读取 `type → nodeid → parentid → treesize → offset`，通过相对指针表恢复节点名称，验证唯一根、父节点存在、无环和子树规模；关联每个 bone 的 `scales/bonepos/bonerot` 索引并读取静态变换候选。
 
 这些工具只读取本机解码资源。Wavelet/Huffman 解码和坐标约定仍必须用完整原包继续验证。
