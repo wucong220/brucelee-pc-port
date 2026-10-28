@@ -18,7 +18,6 @@ import zlib
 
 _SIGNATURE = b'1FDKENONCTX3'
 _DATA_SIGNATURE = b'DATA'
-_DATA_HEADER_BYTES = 236
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
 _MAX_STRINGS = 20_000
 _MAX_STRING_BYTES = 1024 * 1024
@@ -65,13 +64,32 @@ def _find_data_section(raw: bytes, search_from: int) -> int:
         position = raw.find(_DATA_SIGNATURE, position)
         if position < 0:
             break
-        if position + _DATA_HEADER_BYTES + 16 <= len(raw):
+        if position + 20 + 4 <= len(raw):
+            node_count = struct.unpack_from('<I', raw, position + 4)[0]
+            root_count = struct.unpack_from('<I', raw, position + 8)[0]
+            reserved = struct.unpack_from('<I', raw, position + 12)[0]
             payload_size = struct.unpack_from('<I', raw, position + 0x10)[0]
-            payload_end = position + _DATA_HEADER_BYTES + payload_size
-            if 0 < payload_size <= _MAX_RESOURCE_BYTES and payload_end + 16 == len(raw):
-                return position
+            header_size = 20 + root_count * 4 + node_count * 8 + 4
+            payload_end = position + header_size + payload_size
+            if (root_count <= node_count <= 100_000 and reserved == 0
+                    and 0 < payload_size <= _MAX_RESOURCE_BYTES
+                    and payload_end + 16 == len(raw)):
+                terminator = struct.unpack_from('<I', raw, position + header_size - 4)[0]
+                if terminator == 0:
+                    return position
         position += 1
     raise TextureError('could not locate a bounded texture DATA section')
+
+
+def _property_u32(raw: bytes, record_start: int, node_count: int, ordinal: int) -> int:
+    """Read a key/value pair encoded as two consecutive 8-byte records."""
+    for index in range(node_count - 1):
+        key, reserved = struct.unpack_from('<II', raw, record_start + index * 8)
+        if key == ordinal and reserved == 0:
+            value, value_type = struct.unpack_from('<II', raw, record_start + (index + 1) * 8)
+            if value_type == 0x60000000:
+                return value
+    raise TextureError(f'texture metadata property {ordinal} was not found')
 
 
 def parse_texture(raw: bytes) -> dict:
@@ -86,11 +104,12 @@ def parse_texture(raw: bytes) -> dict:
         raise TextureError('unsupported texture format or type')
 
     data_offset = _find_data_section(raw, table_end)
-    payload_size = struct.unpack_from('<I', raw, data_offset + 0x10)[0]
-    # These observed offsets are metadata values associated with sizex/sizey
-    # in the 26-entry DATA descriptor used by the inspected v1.15.26 samples.
-    width = struct.unpack_from('<I', raw, data_offset + 0x90)[0]
-    height = struct.unpack_from('<I', raw, data_offset + 0xA0)[0]
+    node_count, root_count, _reserved, payload_size = struct.unpack_from(
+        '<IIII', raw, data_offset + 4)
+    record_start = data_offset + 20 + root_count * 4
+    header_size = 20 + root_count * 4 + node_count * 8 + 4
+    width = _property_u32(raw, record_start, node_count, strings.index('sizex'))
+    height = _property_u32(raw, record_start, node_count, strings.index('sizey'))
     if not (0 < width <= 4096 and 0 < height <= 4096):
         raise TextureError('texture dimensions are out of bounds')
     expected_bytes = width * height * 4
@@ -100,7 +119,7 @@ def parse_texture(raw: bytes) -> dict:
             'this converter currently accepts one uncompressed RGBA level'
         )
 
-    payload_offset = data_offset + _DATA_HEADER_BYTES
+    payload_offset = data_offset + header_size
     payload_end = payload_offset + payload_size
     footer = raw[payload_end:]
     if len(footer) != 16 or hashlib.md5(raw[:payload_end]).digest() != footer:
@@ -110,6 +129,9 @@ def parse_texture(raw: bytes) -> dict:
         'decoded_bytes': len(raw),
         'string_count': len(strings),
         'data_offset': data_offset,
+        'data_node_count': node_count,
+        'data_root_count': root_count,
+        'data_header_bytes': header_size,
         'payload_offset': payload_offset,
         'payload_bytes': payload_size,
         'width': width,
