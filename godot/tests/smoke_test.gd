@@ -41,48 +41,90 @@ func _attack_hits_after_frames(player: PortFighter, opponent: PortFighter, kind:
     return opponent.health < PortFighter.MAX_HEALTH
 
 
-func _raw_attack_entry(action: String) -> Dictionary:
-    var is_punch: bool = action == "punch"
-    return {
-        "source_action": "lowpunch1" if is_punch else "lowkick1",
-        "animation": "m01_pnch_low_01" if is_punch else "m01_kick_low_01",
-        "animation_frame_count": 69 if is_punch else 86,
-        "startup_frames": 5 if is_punch else 7,
-        "active_frames": 4,
-        "recovery_frames": 60 if is_punch else 75,
-        "damage": 5.0,
-        "prototype_push": 0.2 if is_punch else 0.35,
-        "source_impact": {
-            "attack_radius": 70.0,
-            "body_part": "larm" if is_punch else "lleg",
-            "height": "medium" if is_punch else "low",
-            "strength": "normal",
-            "direction": "frontal",
-        },
-    }
+func _reaction_contact_check(
+        player: PortFighter,
+        opponent: PortFighter,
+        kind: String,
+        blocked: bool,
+        expected_action: String,
+        expected_animation: String,
+        expected_exit_frame: int
+) -> bool:
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    opponent.guard_held = blocked
+    if not player.request_attack(kind):
+        push_error("Could not start %s reaction test" % kind)
+        return false
+    player._advance_timed_states(float(player.ATTACKS[kind]["startup"]))
+    player._try_attack_contact()
+    var expected_state: String = "blockstun" if blocked else "hitstun"
+    var expected_time: float = float(expected_exit_frame) / PortFighter.SOURCE_FRAME_RATE
+    if (opponent.state != expected_state
+            or opponent.last_reaction_source_action != expected_action
+            or opponent.last_reaction_animation != expected_animation
+            or opponent.last_reaction_exit_frame != expected_exit_frame
+            or opponent.current_source_animation() != expected_animation
+            or absf(opponent.source_radius_for_current_animation() - 40.0) > 0.001
+            or absf(opponent.state_time - expected_time) > 0.0001):
+        push_error("Recovered reaction profile was not applied: "
+                + JSON.stringify({
+                    "kind": kind,
+                    "blocked": blocked,
+                    "state": opponent.state,
+                    "source_action": opponent.last_reaction_source_action,
+                    "animation": opponent.last_reaction_animation,
+                    "exit_frame": opponent.last_reaction_exit_frame,
+                    "state_time": opponent.state_time,
+                }))
+        return false
+    opponent._advance_timed_states(maxf(expected_time - 0.001, 0.0))
+    if opponent.state != expected_state:
+        push_error("Reaction ended before its recovered exit frame")
+        return false
+    opponent._advance_timed_states(0.002)
+    if opponent.state != "idle":
+        push_error("Reaction did not return to idle after its recovered exit frame")
+        return false
+    return true
+
+
+func _reaction_profiles_match(actual: Dictionary, expected: Dictionary) -> bool:
+    for group: String in ["hit", "block"]:
+        if not actual.has(group) or not actual[group] is Dictionary:
+            return false
+        for height: String in ["low", "medium", "high"]:
+            if (not actual[group].has(height)
+                    or not actual[group][height] is Dictionary):
+                return false
+            var actual_profile: Dictionary = actual[group][height]
+            var expected_profile: Dictionary = expected[group][height]
+            if (String(actual_profile.get("source_action", ""))
+                    != String(expected_profile["source_action"])
+                    or String(actual_profile.get("animation", ""))
+                    != String(expected_profile["animation"])):
+                return false
+            for key: String in [
+                    "exit_start_frame", "animation_duration_frames", "linking_frame"]:
+                if (not actual_profile.has(key)
+                        or absf(
+                            float(actual_profile[key])
+                            - float(expected_profile[key])
+                        ) > 0.001):
+                    return false
+    return true
 
 
 func _raw_attack_config() -> Dictionary:
-    return {
-        "schema_version": 2,
-        "source_archive": "brucelee.set",
-        "frame_rate": 30.0,
-        "source_geometry": {
-            "source_height": 173.415954589844,
-            "world_height": 1.8,
-            "radius_scale": 1.0,
-            "idle_source_archive": "Default.set",
-            "animation_radii": {
-                "m01_idle_01": 25.0,
-                "m01_pnch_low_01": 40.0,
-                "m01_kick_low_01": 50.0,
-            },
-        },
-        "attacks": {
-            "punch": _raw_attack_entry("punch"),
-            "kick": _raw_attack_entry("kick"),
-        },
-    }
+    var file: FileAccess = FileAccess.open(PortFighter.ATTACK_CONFIG_PATH, FileAccess.READ)
+    if file == null:
+        push_error("Could not read the fighting-set fixture")
+        return {}
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        push_error("Fighting-set fixture is not an object")
+        return {}
+    return parsed.duplicate(true)
 
 
 func _config_negative_check(player: PortFighter) -> bool:
@@ -91,6 +133,7 @@ func _config_negative_check(player: PortFighter) -> bool:
     var baseline_units_to_world: float = player.source_units_to_world
     var baseline_radii: Dictionary = player.source_animation_radii.duplicate(true)
     var baseline_attacks: Dictionary = player.ATTACKS.duplicate(true)
+    var baseline_reactions: Dictionary = player.REACTION_PROFILES.duplicate(true)
     var wrong_rate: Dictionary = _raw_attack_config()
     wrong_rate["frame_rate"] = 29.0
     cases.append(wrong_rate)
@@ -100,6 +143,9 @@ func _config_negative_check(player: PortFighter) -> bool:
     var invalid_enum: Dictionary = _raw_attack_config()
     invalid_enum["attacks"]["punch"]["source_impact"]["body_part"] = "tail"
     cases.append(invalid_enum)
+    var wrong_reaction_impact: Dictionary = _raw_attack_config()
+    wrong_reaction_impact["attacks"]["punch"]["source_impact"]["height"] = "low"
+    cases.append(wrong_reaction_impact)
     var wrong_total: Dictionary = _raw_attack_config()
     wrong_total["attacks"]["punch"]["recovery_frames"] = 59
     cases.append(wrong_total)
@@ -124,6 +170,15 @@ func _config_negative_check(player: PortFighter) -> bool:
     var missing_geometry: Dictionary = _raw_attack_config()
     missing_geometry.erase("source_geometry")
     cases.append(missing_geometry)
+    var wrong_reaction_frame: Dictionary = _raw_attack_config()
+    wrong_reaction_frame["reaction_profiles"]["hit"]["medium"]["exit_start_frame"] = 15
+    cases.append(wrong_reaction_frame)
+    var wrong_reaction_duration: Dictionary = _raw_attack_config()
+    wrong_reaction_duration["reaction_profiles"]["block"]["low"]["animation_duration_frames"] = 22
+    cases.append(wrong_reaction_duration)
+    var missing_reaction_group: Dictionary = _raw_attack_config()
+    missing_reaction_group["reaction_profiles"].erase("block")
+    cases.append(missing_reaction_group)
     for index in range(cases.size()):
         if not player._parse_attack_config(cases[index]).is_empty():
             push_error("Invalid fighting-set config case was accepted: %d" % index)
@@ -131,7 +186,8 @@ func _config_negative_check(player: PortFighter) -> bool:
         if (player.radius_scale != baseline_radius_scale
                 or player.source_units_to_world != baseline_units_to_world
                 or player.source_animation_radii != baseline_radii
-                or player.ATTACKS != baseline_attacks):
+                or player.ATTACKS != baseline_attacks
+                or player.REACTION_PROFILES != baseline_reactions):
             push_error("Invalid fighting-set config partially changed loaded state: %d" % index)
             return false
     return true
@@ -309,13 +365,19 @@ func _run_check() -> void:
         return
     if (absf(player.radius_scale - 1.0) > 0.001
             or absf(player.source_units_to_world
-                    - PortFighter.CANDIDATE_HEIGHT / PortFighter.CANDIDATE_SOURCE_HEIGHT) > 0.000001
-            or player.source_animation_radii != {
-                "m01_idle_01": 25.0,
-                "m01_pnch_low_01": 40.0,
-                "m01_kick_low_01": 50.0,
-            }):
+                    - PortFighter.CANDIDATE_HEIGHT / PortFighter.CANDIDATE_SOURCE_HEIGHT) > 0.000001):
         push_error("Source geometry scaling does not match the recovered model")
+        quit(1)
+        return
+    if player.source_animation_radii != PortFighter.SOURCE_ANIMATION_RADII_DATA:
+        push_error("Source animation radii changed: "
+                + JSON.stringify(player.source_animation_radii))
+        quit(1)
+        return
+    if not _reaction_profiles_match(
+            player.REACTION_PROFILES, PortFighter.REACTION_PROFILE_DATA):
+        push_error("Reaction profiles changed: "
+                + JSON.stringify(player.REACTION_PROFILES))
         quit(1)
         return
     var expected_idle_reach: float = (
@@ -332,6 +394,26 @@ func _run_check() -> void:
         quit(1)
         return
     if not _config_negative_check(player):
+        quit(1)
+        return
+    if not _reaction_contact_check(
+            player, opponent, "punch", false,
+            "impactlightfrontmid", "all_impct_light_frnt_mid", 14):
+        quit(1)
+        return
+    if not _reaction_contact_check(
+            player, opponent, "kick", false,
+            "impactlightfrontlow", "all_impct_light_frnt_low", 13):
+        quit(1)
+        return
+    if not _reaction_contact_check(
+            player, opponent, "punch", true,
+            "midblock", "all_block_mid", 12):
+        quit(1)
+        return
+    if not _reaction_contact_check(
+            player, opponent, "kick", true,
+            "lowblock", "all_block_low", 12):
         quit(1)
         return
 
@@ -580,6 +662,15 @@ func _run_check() -> void:
     print("PROTOTYPE_VALIDATION=" + JSON.stringify({
         "punch_target_health": punch_health,
         "blocked_kick_target_health": blocked_health,
+        "punch_hitstun_frames": int(
+            player.REACTION_PROFILES["hit"]["medium"]["exit_start_frame"]
+        ),
+        "kick_hitstun_frames": int(
+            player.REACTION_PROFILES["hit"]["low"]["exit_start_frame"]
+        ),
+        "blockstun_frames": int(
+            player.REACTION_PROFILES["block"]["low"]["exit_start_frame"]
+        ),
         "ko_and_restart": true,
     }))
     quit(0)

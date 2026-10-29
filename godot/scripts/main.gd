@@ -89,6 +89,11 @@ func _run_export_self_test() -> void:
         push_error("EXPORT_SELF_TEST: punch target health is %.3f" % computer.health)
         get_tree().quit(1)
         return
+    if (computer.last_reaction_source_action != "impactlightfrontmid"
+            or computer.last_reaction_exit_frame != 14):
+        push_error("EXPORT_SELF_TEST: recovered punch reaction was not applied")
+        get_tree().quit(1)
+        return
     if player.candidate_animation_clip != "m01_pnch_low_01":
         push_error("EXPORT_SELF_TEST: punch clip was not selected")
         get_tree().quit(1)
@@ -99,6 +104,7 @@ func _run_export_self_test() -> void:
         "candidate_textures_loaded": player.candidate_textures_loaded,
         "internal_path_rejected": true,
         "punch_target_health": computer.health,
+        "punch_hitstun_frames": computer.last_reaction_exit_frame,
     }))
     get_tree().quit(0)
 

@@ -119,6 +119,11 @@ func _run_check() -> void:
         push_error("Integrated candidate punch did not apply 5 damage: %.3f" % opponent.health)
         quit(1)
         return
+    if (opponent.last_reaction_source_action != "impactlightfrontmid"
+            or opponent.last_reaction_exit_frame != 14):
+        push_error("Integrated candidate punch did not apply the source reaction profile")
+        quit(1)
+        return
     print("COMBAT_CANDIDATE_VALIDATION=" + JSON.stringify({
         "candidate_loaded": true,
         "candidate_textures_loaded": player.candidate_textures_loaded,
@@ -128,5 +133,6 @@ func _run_check() -> void:
         "idle_clip": "m01_idle_01",
         "punch_clip": player.candidate_animation_clip,
         "punch_target_health": opponent.health,
+        "punch_hitstun_frames": opponent.last_reaction_exit_frame,
     }))
     quit(0)
