@@ -86,6 +86,9 @@ func _config_negative_check(player: PortFighter) -> bool:
     var invalid_enum: Dictionary = _raw_attack_config()
     invalid_enum["attacks"]["punch"]["source_impact"]["body_part"] = "tail"
     cases.append(invalid_enum)
+    var wrong_total: Dictionary = _raw_attack_config()
+    wrong_total["attacks"]["punch"]["recovery_frames"] = 59
+    cases.append(wrong_total)
     var wrong_source: Dictionary = _raw_attack_config()
     wrong_source["attacks"]["kick"]["source_action"] = "other"
     cases.append(wrong_source)

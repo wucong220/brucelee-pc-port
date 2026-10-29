@@ -161,6 +161,8 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
                 or frame_count <= 0
                 or startup_frames + active_frames + recovery_frames <= 0):
             return _reject_attack_config(action + " has invalid frame counts")
+        if startup_frames + active_frames + recovery_frames != frame_count:
+            return _reject_attack_config(action + " phase frames do not sum to animation_frame_count")
         if (float(entry["startup_frames"]) != float(startup_frames)
                 or float(entry["active_frames"]) != float(active_frames)
                 or float(entry["recovery_frames"]) != float(recovery_frames)
