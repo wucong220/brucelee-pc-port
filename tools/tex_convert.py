@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Convert supported decoded Bruce Lee .tex CTX3 files to local RGBA PNGs.
 
-The current format profile is based on three observed v1.15.26 samples. It only
-supports a single bottom-up r8g8b8a8 texture level and validates its MD5 footer.
-Input archives and binary resources remain read-only.
+The supported profile extracts the base level from observed r8g8b8a8 and
+standard ATC RGB mip-packed payloads. Input archives and binary resources remain
+read-only.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import struct
 import sys
+import tempfile
 import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -21,6 +22,10 @@ from kdf_data import KdfError as KdfContainerError, parse_container
 
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
+_PIXEL_FORMATS = {
+    'r8g8b8a8': {'kind': 'direct', 'stride': 4},
+    'atc_rgb': {'kind': 'atc_rgb', 'stride': 8},
+}
 
 
 class TextureError(ValueError):
@@ -37,8 +42,227 @@ def _property_u32(raw: bytes, record_start: int, record_count: int, ordinal: int
     raise TextureError(f'texture metadata property {ordinal} was not found')
 
 
+def _property_matches(container: dict, strings: list[str], name: str) -> list[int]:
+    if strings.count(name) != 1:
+        raise TextureError(f'texture metadata key {name!r} is missing or ambiguous')
+    ordinal = strings.index(name)
+    return [
+        index for index, record in enumerate(container['records'][:-1])
+        if record['first'] == 0x60000000 and record['second'] == ordinal
+    ]
+
+
+def _property_record(container: dict, strings: list[str], name: str) -> tuple[int, dict]:
+    """Return the unique value record paired with a string-table key."""
+    matches = _property_matches(container, strings, name)
+    if len(matches) != 1:
+        raise TextureError(f'texture metadata property {name!r} is missing or repeated')
+    value_index = matches[0] + 1
+    return value_index, container['records'][value_index]
+
+
+def _declared_format(container: dict, strings: list[str]) -> str:
+    """Resolve the format key to its string-table value."""
+    value_index, value = _property_record(container, strings, 'format')
+    if value['first'] != 0x60000000 or value['second'] >= len(strings):
+        raise TextureError('texture format declaration is malformed')
+    return strings[value['second']]
+
+
+def _mip_dimensions(width: int, height: int, level: int) -> tuple[int, int]:
+    return max(1, width >> level), max(1, height >> level)
+
+
+def _mip_elements(width: int, height: int, level: int, pixel_format: str) -> int:
+    level_width, level_height = _mip_dimensions(width, height, level)
+    if pixel_format == 'atc_rgb':
+        return ((level_width + 3) // 4) * ((level_height + 3) // 4)
+    return level_width * level_height
+
+
+def _validate_mip_layout(
+        container: dict, strings: list[str], width: int, height: int,
+        pixel_format: str,
+) -> dict:
+    """Validate the observed mips key and its ordered section descriptors."""
+    sections = container['sections']
+    group_count = container['offset_count']
+    expected_levels = max(width, height).bit_length()
+    spec = _PIXEL_FORMATS[pixel_format]
+
+    mip_matches = _property_matches(container, strings, 'mips')
+    if not mip_matches:
+        if group_count != 1:
+            raise TextureError('multi-section texture is missing mips metadata')
+        mip_count = 1
+        descriptor_records = None
+    else:
+        if len(mip_matches) != 1:
+            raise TextureError("texture metadata property 'mips' is missing or repeated")
+        value_index, mips_value = _property_record(container, strings, 'mips')
+        descriptor = mips_value['first']
+        if descriptor >> 28 != 4:
+            raise TextureError('texture mips metadata is not an array descriptor')
+        mip_count = descriptor & 0xffff
+        if not 1 <= mip_count <= expected_levels:
+            raise TextureError('texture mips metadata level count is out of bounds')
+        if mips_value['second'] != 1:
+            raise TextureError('texture mips metadata profile word is unsupported')
+        if mip_count != expected_levels:
+            raise TextureError(
+                f'texture mips metadata declares {mip_count} levels; '
+                f'{width}x{height} requires {expected_levels}'
+            )
+        if group_count != mip_count:
+            raise TextureError(
+                f'texture DATA declares {group_count} sections; '
+                f'mips metadata declares {mip_count}'
+            )
+        end = value_index + 1 + mip_count
+        if end > len(container['records']):
+            raise TextureError('texture mips descriptor array is truncated')
+        descriptor_records = container['records'][value_index + 1:end]
+
+    if group_count != mip_count:
+        raise TextureError(
+            f'texture DATA declares {group_count} sections; expected {mip_count}'
+        )
+
+    levels = []
+    total_bytes = 0
+    for level in range(mip_count):
+        level_width, level_height = _mip_dimensions(width, height, level)
+        elements = _mip_elements(width, height, level, pixel_format)
+        expected_bytes = elements * spec['stride']
+        actual_bytes = sections[level]['bytes']
+        if actual_bytes != expected_bytes:
+            raise TextureError(
+                f'texture mip level {level} is {actual_bytes} bytes; '
+                f'expected {expected_bytes} for {level_width}x{level_height} {pixel_format}'
+            )
+        if descriptor_records is not None:
+            record = descriptor_records[level]
+            descriptor = record['first']
+            if descriptor >> 28 != 4:
+                raise TextureError(f'texture mip descriptor {level} has an invalid tag')
+            stride = (descriptor & 0x0fff0000) >> 21
+            if stride != spec['stride']:
+                raise TextureError(
+                    f'texture mip descriptor {level} stride is {stride}; '
+                    f'expected {spec["stride"]}'
+                )
+            encoded_elements = descriptor & 0xffff
+            if elements <= 0xffff:
+                elements_valid = encoded_elements == elements
+            else:
+                # Both observed 65536- and 1048576-element base arrays store
+                # zero in the descriptor's low 16-bit element-count field.
+                elements_valid = encoded_elements == 0
+            if not elements_valid:
+                raise TextureError(
+                    f'texture mip descriptor {level} element count '
+                    f'{encoded_elements} does not match {elements}'
+                )
+            if record['second'] != level:
+                raise TextureError(
+                    f'texture mip descriptor {level} references section '
+                    f'{record["second"]}'
+                )
+        total_bytes += actual_bytes
+        levels.append({
+            'level': level,
+            'width': level_width,
+            'height': level_height,
+            'elements': elements,
+            'bytes': actual_bytes,
+        })
+
+    if total_bytes != container['payload_bytes']:
+        raise TextureError('texture mip level sizes do not match the payload')
+    return {
+        'mip_count': mip_count,
+        'mip_levels': levels,
+        'base_level_bytes': levels[0]['bytes'],
+    }
+
+
+def _expand_5(value: int) -> int:
+    expanded = value << 3
+    return expanded | (value >> 2)
+
+
+def _expand_6(value: int) -> int:
+    expanded = value << 2
+    return expanded | (value >> 4)
+
+
+def _atc_rgb_palette(block: bytes) -> tuple[tuple[int, int, int], ...]:
+    """Return standard ATC RGB's four colors for one 8-byte block."""
+    if len(block) != 8:
+        raise TextureError('ATC RGB block must be exactly 8 bytes')
+    color0, color1 = struct.unpack_from('<HH', block)
+    endpoint0 = (
+        _expand_5((color0 >> 10) & 0x1f),
+        _expand_5((color0 >> 5) & 0x1f),
+        _expand_5(color0 & 0x1f),
+    )
+    endpoint1 = (
+        _expand_5((color1 >> 11) & 0x1f),
+        _expand_6((color1 >> 5) & 0x3f),
+        _expand_5(color1 & 0x1f),
+    )
+    if color0 & 0x8000:
+        return (
+            (0, 0, 0),
+            tuple(max(0, endpoint0[index] - endpoint1[index] // 4)
+                  for index in range(3)),
+            endpoint0,
+            endpoint1,
+        )
+    return (
+        endpoint0,
+        tuple((5 * endpoint0[index] + 3 * endpoint1[index]) // 8
+              for index in range(3)),
+        tuple((3 * endpoint0[index] + 5 * endpoint1[index]) // 8
+              for index in range(3)),
+        endpoint1,
+    )
+
+
+def _decode_atc_rgb(encoded: bytes, width: int, height: int) -> bytes:
+    """Decode a standard ATC RGB base level and clip partial edge blocks."""
+    blocks_wide = (width + 3) // 4
+    blocks_high = (height + 3) // 4
+    expected_bytes = blocks_wide * blocks_high * 8
+    if len(encoded) != expected_bytes:
+        raise TextureError(
+            f'ATC RGB base-level payload is {len(encoded)} bytes; '
+            f'expected {expected_bytes} for {width}x{height}'
+        )
+    pixels = bytearray(width * height * 4)
+    source = 0
+    for block_y in range(blocks_high):
+        for block_x in range(blocks_wide):
+            palette = _atc_rgb_palette(encoded[source:source + 8])
+            color_indexes = int.from_bytes(encoded[source + 4:source + 8], 'little')
+            source += 8
+            for local_y in range(4):
+                target_y = block_y * 4 + local_y
+                if target_y >= height:
+                    break
+                for local_x in range(4):
+                    target_x = block_x * 4 + local_x
+                    if target_x >= width:
+                        break
+                    pixel_index = local_y * 4 + local_x
+                    target = (target_y * width + target_x) * 4
+                    red, green, blue = palette[(color_indexes >> (pixel_index * 2)) & 3]
+                    pixels[target:target + 4] = bytes((red, green, blue, 255))
+    return bytes(pixels)
+
+
 def parse_texture(raw: bytes) -> dict:
-    """Return validated metadata and the bottom-up RGBA base-level pixels."""
+    """Return validated metadata and decoded bottom-up RGBA base-level pixels."""
     if len(raw) > _MAX_RESOURCE_BYTES:
         raise TextureError('decoded texture exceeds inspection size limit')
     try:
@@ -49,8 +273,11 @@ def parse_texture(raw: bytes) -> dict:
     required = {'format', 'type', 'sizex', 'sizey'}
     if not required <= set(strings):
         raise TextureError('texture metadata strings are missing')
-    if 'r8g8b8a8' not in strings or 'texture2d' not in strings:
-        raise TextureError('unsupported texture format or type')
+    if 'texture2d' not in strings:
+        raise TextureError('unsupported texture type')
+    pixel_format = _declared_format(container, strings)
+    if pixel_format not in _PIXEL_FORMATS:
+        raise TextureError(f'unsupported texture format {pixel_format!r}')
 
     data_offset = container['data_offset']
     record_count = container['record_count']
@@ -62,18 +289,23 @@ def parse_texture(raw: bytes) -> dict:
     height = _property_u32(raw, record_start, record_count, strings.index('sizey'))
     if not (0 < width <= 4096 and 0 < height <= 4096):
         raise TextureError('texture dimensions are out of bounds')
-    expected_bytes = width * height * 4
-    if payload_size != expected_bytes:
-        raise TextureError(
-            f'unsupported texture payload: {payload_size} bytes for {width}x{height}; '
-            'this converter currently accepts one uncompressed RGBA level'
-        )
+    mip_layout = _validate_mip_layout(
+        container, strings, width, height, pixel_format)
 
     payload_offset = container['payload_offset']
     payload_end = payload_offset + payload_size
     footer = raw[payload_end:]
     if len(footer) != 16 or hashlib.md5(raw[:payload_end]).digest() != footer:
         raise TextureError('texture MD5 footer mismatch')
+
+    base_payload_end = payload_offset + mip_layout['base_level_bytes']
+    base_payload = raw[payload_offset:base_payload_end]
+    if pixel_format == 'atc_rgb':
+        pixels = _decode_atc_rgb(base_payload, width, height)
+        pixel_decoding = 'block_decoded'
+    else:
+        pixels = base_payload
+        pixel_decoding = 'direct'
     return {
         'sha256': hashlib.sha256(raw).hexdigest(),
         'decoded_bytes': len(raw),
@@ -86,9 +318,12 @@ def parse_texture(raw: bytes) -> dict:
         'payload_bytes': payload_size,
         'width': width,
         'height': height,
-        'pixel_format': 'r8g8b8a8',
+        'pixel_format': pixel_format,
+        'output_pixel_format': 'r8g8b8a8',
+        'pixel_decoding': pixel_decoding,
+        **mip_layout,
         'orientation': 'bottom_up',
-        'pixels': raw[payload_offset:payload_end],
+        'pixels': pixels,
     }
 
 
@@ -134,6 +369,24 @@ def _safe_output_path(path: Path) -> Path:
     return target
 
 
+def _write_atomic_exclusive(target: Path, data: bytes) -> None:
+    """Publish a complete file atomically without replacing an existing path."""
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f'.{target.name}.', suffix='.tmp', dir=target.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, 'wb') as file:
+            file.write(data)
+            file.flush()
+            os.fsync(file.fileno())
+        os.link(temporary, target)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
 def convert_file(source: Path, destination: Path, *, flip_vertical: bool = True) -> dict:
     with source.open('rb') as file:
         raw = file.read(_MAX_RESOURCE_BYTES + 1)
@@ -143,8 +396,7 @@ def convert_file(source: Path, destination: Path, *, flip_vertical: bool = True)
     png = encode_png_rgba(texture['width'], texture['height'], texture['pixels'],
                           flip_vertical=flip_vertical)
     target = _safe_output_path(destination)
-    with target.open('xb') as file:
-        file.write(png)
+    _write_atomic_exclusive(target, png)
     return {
         key: value for key, value in texture.items() if key != 'pixels'
     } | {
