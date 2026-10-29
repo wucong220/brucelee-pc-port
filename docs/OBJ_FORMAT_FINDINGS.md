@@ -135,7 +135,11 @@ py -3.12 tools\native_draw_path.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\
 
 `CScnObj::Commit` 的外层按 `0x30` 字节遍历视觉项（`0x36E260`、`0x36E4E4`），内层读取当前视觉项的 `+0x14` 数量与 `+0x18` 数组，在 `0x36E1D8`、`0x36E45C` 逐个取出 subset 索引。每次索引通过 `CRenderTargetBase::Commit` 加入批处理，所以静态提交单位是“视觉项 × 通过 pass 过滤的 subset”。
 
-pass 过滤位于 `0x36E1B0`、`0x36E434`：取视觉项 `+0x20` 指向对象的 `+0x50` 位图，并测试 `1 << pass`。位未置位时不提交该视觉项。两个结构相同的循环分别覆盖两条提交分支。
+pass 过滤位于 `0x36E1B0`、`0x36E434`：取视觉项 `+0x20` 指向的 `CShaderInstance` 的 `+0x50` 位图，并测试 `1 << pass`。位未置位时不提交该视觉项。两个结构相同的循环分别覆盖两条提交分支。
+
+`CShaderInstance::Init` 在 `0x2FD124` 把 `+0x50` 清零。`CShaderInstance::_Update` 在 `0x2FC5D4` 再次清零，随后循环 32 个 variation 槽位，在 `0x2FC6FC` 调用 `CShader::GetVariation`；有效槽位通过 `0x2FC72C` 的 `1 << slot` 置位，并在 `0x2FC730` 写回 `+0x50`。
+
+`CVisual::Update` 在 `0x37297C`、`0x3729C0` 读取各实例的 `+0x50`，在 `0x372984`、`0x3729C4` 与视觉对象的累计值 OR，并在 `0x372988`、`0x3729C8` 写回 `+0x24`。因此 `CShaderInstance+0x50` 是具体 variation 位图，`CVisual+0x24` 是该视觉对象所有实例位图的并集；`CScnObj::Commit` 仍按单个实例位图决定是否提交。
 
 按已解析的资源和 mesh 数据，`male_01` 的 Body 阴影视觉项有 1 个 subset、Body 主蒙皮视觉项有 3 个 subset；如果两个视觉项都通过同一 pass，最多形成 4 个 primitive 提交。Hair 主网格和 Hair 阴影各为独立 object 视觉项，各有 1 个 subset，分别最多形成 1 个 primitive 提交。
 
@@ -145,6 +149,12 @@ pass 过滤位于 `0x36E1B0`、`0x36E434`：取视觉项 `+0x20` 指向对象的
 
 ```powershell
 py -3.12 tools\native_visual_commits.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
+```
+
+可用下面的命令复核 pass 位构造与过滤，不把原 SO 写入仓库：
+
+```powershell
+py -3.12 tools\native_pass_mask.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
 ```
 
 下一步应继续解析批处理键和材质状态，确定哪些 primitive 会合并为同一次 OpenGL draw。
