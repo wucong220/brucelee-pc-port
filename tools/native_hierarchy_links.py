@@ -42,8 +42,43 @@ _WORDS = {
     0x0035BF70: 0xEBF70D74,
     0x0035B420: 0xEBF73F52,
     0x0035C2E4: 0xEBF73853,
+    0x00378210: 0xE1530009,
+    0x003782A0: 0xE1550003,
+    0x003782B4: 0xE1550003,
+    0x003782C8: 0xE1550003,
+    0x003782DC: 0xE1550003,
+    0x003782F0: 0xE1550003,
+    0x00378304: 0xE1550003,
+    0x00378324: 0xEBF69F87,
+    0x00378408: 0xEBF6B3C7,
+    0x0037842C: 0xEBF6B03D,
+    0x00378450: 0xEBF69DE9,
+    0x00378474: 0xEBF6B6C1,
+    0x00378498: 0xEBF6A3DA,
+    0x00374AA8: 0xEBF6B65E,
+    0x00374A14: 0xEBF6C5BC,
+    0x00377E1C: 0xEBF6CADB,
+    0x00377C24: 0xEBF69EF8,
+    0x00377004: 0xEBF6C0F9,
+    0x00377A28: 0xEBF69E4E,
+    0x0036A580: 0xEBF702FA,
+    0x00355AC0: 0xEBF755AA,
+    0x00350C50: 0xEBF76946,
+    0x00363E24: 0xEBF71CD1,
+    0x0035F20C: 0xEBF72FD7,
+    0x00371098: 0xEBF6E834,
 }
-_CHILD_RELOCATION = (0x00603548, "gid_Childs")
+_RELOCATIONS = (
+    (0x00603548, "gid_Childs"),
+    (0x00604434, "gid_Type"),
+    (0x00604074, "gid_Animatable"),
+    (0x006047B0, "gid_Object"),
+    (0x006030B8, "gid_Camera"),
+    (0x006035C0, "gid_Light"),
+    (0x00603908, "gid_Group"),
+    (0x006025A4, "gid_Reflector"),
+    (0x00602D60, "gid_Primitive"),
+)
 
 
 class HierarchyLinkError(ValueError):
@@ -93,24 +128,24 @@ def _section(elf: bytes, name: bytes) -> tuple[int, int, int, int, int]:
     return found[4], found[5], found[6], found[9], name_base
 
 
-def verify_child_relocation(elf: bytes) -> None:
-    address, expected = _CHILD_RELOCATION
+def verify_relocations(elf: bytes) -> None:
     rel_off, rel_size, _link, _entsize, _names = _section(elf, b".rel.dyn")
     dynsym_off, _size, dynsym_link, dynsym_entsize, _names = _section(elf, b".dynsym")
     dynstr_off = _section(elf, b".dynstr")[0]
     if dynsym_entsize < 16 or rel_size % 8:
         raise HierarchyLinkError("unexpected dynamic symbol or relocation layout")
+    found = {}
     for index in range(rel_size // 8):
         rel_address, info = struct.unpack_from("<II", elf, rel_off + index * 8)
-        if rel_address != address:
-            continue
         name_off = struct.unpack_from("<I", elf, dynsym_off + (info >> 8) * dynsym_entsize)[0]
         end = elf.index(b"\x00", dynstr_off + name_off)
-        symbol = elf[dynstr_off + name_off:end].decode("ascii", "replace")
+        found[rel_address] = elf[dynstr_off + name_off:end].decode("ascii", "replace")
+    for address, expected in _RELOCATIONS:
+        symbol = found.get(address)
+        if symbol is None:
+            raise HierarchyLinkError(f"relocation 0x{address:08x} was not found")
         if expected not in symbol:
             raise HierarchyLinkError(f"relocation 0x{address:08x} targets {symbol}")
-        return
-    raise HierarchyLinkError(f"relocation 0x{address:08x} was not found")
 
 def verify_bytes(elf: bytes) -> None:
     digest = hashlib.sha256(elf).hexdigest()
@@ -125,7 +160,7 @@ def verify_bytes(elf: bytes) -> None:
             raise HierarchyLinkError(
                 f"instruction 0x{address:08x} is 0x{actual:08x}, expected 0x{expected:08x}"
             )
-    verify_child_relocation(elf)
+    verify_relocations(elf)
 
 
 def main() -> int:
@@ -137,7 +172,7 @@ def main() -> int:
     except (OSError, HierarchyLinkError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    print(f"verified {len(_WORDS)} hierarchy instruction words and gid_Childs")
+    print(f"verified {len(_WORDS)} hierarchy instruction words and {len(_RELOCATIONS)} relocations")
     return 0
 
 

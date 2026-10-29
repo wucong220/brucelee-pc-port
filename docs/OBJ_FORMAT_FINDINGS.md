@@ -92,12 +92,27 @@ Hair/Body 主网格、subset 材质和六个纹理资源的静态绑定已经单
 
 `CScnFrame::Init` 在 `0x35C2E4` 调用 `CreateChilds`。`CreateChilds` 先扫描资源里的 `0x60000000` 键，只有解析出的字符串对象等于 `krm::gfx::gid_Childs`（`.rel.dyn` `0x603548`）才继续。它随后用 `DictKey/DictVal` 遍历这个值。对每个条目先调用 `CWorld::CreateEntity`；返回空时，`0x35BF70` 调用 `CScnFrame::AddChild`，`AddChild` 在 `0x35B420` 调用 `Link`，然后递归调用 `CreateChilds`。
 
-因此，资源 `childs` 键到帧节点 `Link` 的静态调用链已经接上。`CreateEntity` 成功的对象类型没有在这次追踪中逐个接到 `Link`，所以还不能说全部 78 个节点都走这条帧回退路径。draw call 仍未绑定。
+因此，资源 `childs` 键到帧节点 `Link` 的空返回回退链已经接上。`CreateEntity` 成功时还有另一条分发。
 
-可用下面的命令复核指令字和 `gid_Childs` 重定位，不把原 SO 写入仓库：
+`CreateEntity` 在 `0x378210` 只接受键对象等于 `gid_Type`（`.rel.dyn` `0x604434`）的记录，再把类型值与六个全局对象比较：
+
+| 类型全局对象 | 重定位 | 调用 |
+|---|---:|---|
+| `gid_Object` | `0x6047B0` | `CreateObject` → `CScnObj::Init` |
+| `gid_Camera` | `0x6030B8` | `CreateCamera` → `CScnCam::Init` |
+| `gid_Light` | `0x6035C0` | `CreateLight` → `CScnLight::Init` |
+| `gid_Group` | `0x603908` | `CreateGroup` → `CScnGrp::Init` |
+| `gid_Reflector` | `0x6025A4` | `CreateReflector` → `CScnReflector::Init` |
+| `gid_Primitive` | `0x602D60` | `CreateDummy` → `CScnDummy::Init` |
+
+这六个 `Init` 都有直接调用 `Link` 的指令，地址分别是 `0x36A580`、`0x350C50`、`0x363E24`、`0x35F20C`、`0x371098` 和 `0x355AC0`。对象路径在分配结果为空时不会进入 `Init`。另外，键对象等于 `gid_Animatable`（`0x604074`）时会提前调用同一个 `CreateObject` 并返回。类型不匹配则返回空，回到上面的 `AddChild` 帧回退。
+
+这些是静态调用点，不是 78 个资源节点的运行时逐个证明，也还没有 draw call 绑定。
+
+可用下面的命令复核指令字和九个全局重定位，不把原 SO 写入仓库：
 
 ```powershell
 py -3.12 tools\native_hierarchy_links.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
 ```
 
-下一步应区分 `CreateEntity` 成功时各对象类型是否调用 `Link`，并继续最终 draw call 绑定。
+下一步应继续最终 draw call 绑定。
