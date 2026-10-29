@@ -268,6 +268,24 @@ func _check_input_boundaries_and_isolation(
         return false
     if not _press_sequence(player, ["a", "a", "a"]):
         return false
+    if not _enter_faceup_idle(player, opponent, 20.0):
+        return false
+    if player.record_virtual_press("a"):
+        return false
+    player._time += (
+        PortFighter.GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS + 0.01
+    )
+    if (player.record_virtual_press("a")
+            or player._ground_attack_input_history.size() != 1
+            or String(player.get("_ground_attack_input_owner")) != "faceupidle"):
+        push_error("Face-up input history lost ownership after timeout")
+        return false
+    if not _press_sequence(player, ["a", "a"]):
+        push_error("Face-up sequence failed after the previous history expired")
+        return false
+    if not _faceup_attack_is(player):
+        push_error("Face-up timeout re-entry did not enter faceupattack")
+        return false
     return (
         player._ground_attack_input_history.is_empty()
         and String(player.get("_ground_attack_input_owner")).is_empty()

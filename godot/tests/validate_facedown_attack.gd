@@ -42,6 +42,9 @@ func _run() -> void:
     if not _check_sequence_window_expiry(player, opponent):
         quit(1)
         return
+    if not _check_sequence_timeout_reentry(player, opponent):
+        quit(1)
+        return
     if not _check_reset_clears_input_history(player, opponent):
         quit(1)
         return
@@ -181,6 +184,34 @@ func _check_sequence_window_expiry(player: PortFighter, opponent: PortFighter) -
         return false
     if player._ground_attack_input_history.size() != 1:
         push_error("expired input vector was not cleared before the next press")
+        return false
+    return true
+
+
+func _check_sequence_timeout_reentry(
+        player: PortFighter, opponent: PortFighter
+) -> bool:
+    if not _enter_facedown(player, opponent):
+        return false
+    if player.record_virtual_press("a"):
+        return false
+    player._time += (
+        PortFighter.GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS + 0.01
+    )
+    if (player.record_virtual_press("a")
+            or player._ground_attack_input_history.size() != 1
+            or String(player.get("_ground_attack_input_owner")) != "facedownidle"):
+        push_error("Facedown input history lost ownership after timeout")
+        return false
+    if (player.record_virtual_press("a")
+            or not player.record_virtual_press("a")):
+        push_error("Facedown sequence failed after the previous history expired")
+        return false
+    if not String(player.get("_ground_attack_input_owner")).is_empty():
+        push_error("Facedown input ownership was not cleared on attack entry")
+        return false
+    if player.state != "facedownattack":
+        push_error("facedown timeout re-entry did not enter facedownattack")
         return false
     return true
 

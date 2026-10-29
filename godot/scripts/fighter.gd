@@ -1656,15 +1656,15 @@ func record_virtual_press(virtual_key: String) -> bool:
         return false
     if virtual_key not in ["a", "b", "c", "d"]:
         return false
-    if _ground_attack_input_owner != state:
-        _clear_ground_attack_input_history()
-        _ground_attack_input_owner = state
     if state == "faceupidle":
         var source_frame: float = state_time * SOURCE_FRAME_RATE
         if source_frame < -0.0001 or source_frame > 45.0001:
             _clear_ground_attack_input_history()
             return false
     _prune_ground_attack_input_history()
+    if _ground_attack_input_owner != state:
+        _clear_ground_attack_input_history()
+        _ground_attack_input_owner = state
     _ground_attack_input_history.append({"key": virtual_key, "time": _time})
     if not _matches_ground_attack_sequence():
         return false
