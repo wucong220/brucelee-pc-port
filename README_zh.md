@@ -3,6 +3,9 @@
 > **阶段：P0 取证 + P1 可玩的独立战斗原型 + P2 PAK 解析完成 + P3 资源格式恢复进行中**<br>
 > **当前不是原版游戏的完整移植**。原型使用程序生成的占位人物、擂台和自写战斗规则，不包含原始游戏资产，不包含从 ARM 二进制提取的源码。它能作为逐步接入原版资源和逆向玩法的 PC 工程基础。
 
+真实候选模型、纹理、动画和战斗状态的本地集成方式、测试命令与边界见
+[`docs/CANDIDATE_INTEGRATION.md`](docs/CANDIDATE_INTEGRATION.md)。
+
 > 本机初始化时，压缩包内的四个已解码二进制样本另存到 `%LOCALAPPDATA%\BruceLee-PC-Port\decoded_frames`，不放在同步目录或 Git 仓库中；原始 ZIP 保持不变。`.gitignore` 只控制 Git 跟踪，不控制文件同步软件。
 
 > `evidence/candidate_symbols.csv` 是从原版二进制中筛选出的函数符号文本清单，`evidence/source_inventory.json` 记录原文件名、哈希和容器元数据；两者不含原始二进制内容。`docs/INIT_GITHUB_AND_CODEX.md` 保留了初始化包最初建议私有仓库的方案，仓库实际可见性由所有者选择。

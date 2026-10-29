@@ -146,16 +146,20 @@ func _physics_process(delta: float) -> void:
 func _think_ai(delta: float) -> void:
     var separation: float = player.position.x - computer.position.x
     var range_x: float = absf(separation)
+    var separation_z: float = player.position.z - computer.position.z
     computer.move_axis = Vector2.ZERO
     if range_x > 1.9:
         computer.move_axis.x = signf(separation)
     elif range_x < 1.2:
         computer.move_axis.x = -signf(separation) * 0.35
-    computer.guard_held = player.state == "startup" and range_x < 2.1 and rng.randf() < 0.25
+    if absf(separation_z) > 0.6:
+        computer.move_axis.y = signf(separation_z)
+    var aligned: bool = absf(separation_z) <= 0.95
+    computer.guard_held = aligned and player.state == "startup" and range_x < 2.1 and rng.randf() < 0.25
     ai_timer -= delta
     if ai_timer <= 0.0:
         ai_timer = rng.randf_range(0.45, 0.95)
-        if range_x < 2.15:
+        if aligned and range_x < 2.15:
             var moves: Array[String] = ["punch", "kick", "heavy"]
             computer.request_attack(moves[rng.randi_range(0, moves.size() - 1)])
 
@@ -164,6 +168,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
         return
     var key_event: InputEventKey = event as InputEventKey
     if not key_event.pressed or key_event.echo:
+        return
+    if done and key_event.keycode != KEY_R:
         return
     match key_event.keycode:
         KEY_J:
@@ -176,6 +182,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
             _reset_match()
 
 func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damage: float, blocked: bool) -> void:
+    if done:
+        return
     if blocked:
         hud.show_message("BLOCK!")
     elif attacker == player:
