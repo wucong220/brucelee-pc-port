@@ -163,10 +163,18 @@ py -3.12 tools\native_pass_mask.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\
 
 组开始前 `0x32D6FC` 只调用一次 `CRenderPrimitive::Bind`，组内的 `_DrawBatch` 调用可复用该绑定状态。字段的业务语义尚未从调用方全部确认，因此这里把它们记为三元键 `(j, TBatchID[0], TBatchID[1])`，不擅自命名为材质、纹理或 shader。
 
+`CRenderTargetBase::Commit` 的 TBatchID 来源在 `0x307168–0x307184`：读取当前 render-target 槽位 `+0xCC`，以 8 字节 stride 访问 `+0xD4` 表，复制两个字到传给 `CGeometryBatcher::Add` 的临时 TBatchID。`j` 来自 `Commit` 的最后一个参数 `0x307174` 和 `0x307190`。这是一条 render-target 槽位到批处理键的来源链，不代表两个键字分别等于材质或纹理。
+
 可用下面的命令复核三元键比较指令，不把原 SO 写入仓库：
 
 ```powershell
 py -3.12 tools\native_batch_key.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
 ```
 
-下一步应追踪 `TBatchID` 两个字段的调用方来源，并继续关联材质/纹理状态。
+可用下面的命令复核 TBatchID 来源，不把原 SO 写入仓库：
+
+```powershell
+py -3.12 tools\native_batch_id_source.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
+```
+
+下一步应继续追踪 `CRenderTargetBase+0xD4` 两个字段的设置位置，并关联材质/纹理状态。
