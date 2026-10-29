@@ -53,8 +53,14 @@
 | J | 快拳 |
 | K | 踢击 |
 | L | 重击 |
+| U | 原型虚拟键 d |
 | Shift（按住） | 格挡 |
 | R | 重新开始对战 |
+
+在 `facedownidle` 状态下，原型把 `J/K/L/U` 依次映射为抽象
+`pressa/pressb/pressc/pressd`。测得的四条序列
+`aaa`、`abb`、`bcc`、`bdd` 可输入 `facedownattack`；这是为了测试原版
+链接而采用的 PC 映射，尚未证明原版 Android 的物理键位。
 
 ### 导出 EXE
 

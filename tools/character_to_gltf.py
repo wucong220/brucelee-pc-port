@@ -27,7 +27,9 @@ _FLOAT = 5126
 _UNSIGNED_BYTE = 5121
 _UNSIGNED_SHORT = 5123
 _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
-_MAX_ANIMATION_FILES = 16
+# The current verified Bruce candidate uses 17 clips after adding the facedown
+# attack. Keep the limit explicit so an accidental unbounded import is rejected.
+_MAX_ANIMATION_FILES = 17
 _MAX_RIGID_ATTACHMENTS = 16
 
 
