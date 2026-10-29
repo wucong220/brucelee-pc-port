@@ -69,10 +69,31 @@ Hair/Body 主网格、subset 材质和六个纹理资源的静态绑定已经单
 
 ## 场景层级
 
-实际角色对象的记录 0 是 `0x30000000` 相对字典，根键只有 `scene`。`childs` 的值也是这种字典，键名就是子节点名。这与招式记录使用的相对字典编码一致，但这里只证明资源记录布局，不证明 `CHierarchyNode` 的运行时父指针。
+实际角色对象的记录 0 是 `0x30000000` 相对字典，根键只有 `scene`。`childs` 的值也是这种字典，键名就是子节点名。这与招式记录使用的相对字典编码一致。它证明资源里的子节点名单，本身还不证明这些名字已经写入原生节点指针。
 
 该文件得到 78 个唯一节点，深度最大 13。类型为 `frame` 75 个、`object` 3 个。每个节点都有一组 `position/rotation/scale`，其 section 集合与上面 78 组姿态完全相同，但树的前序不等于 section 文件顺序。
 
 直接子节点是 `male_01`、`male_01 l clavicle dummy` 和 `male_01 r clavicle dummy`。`male_01` 的 visuals 指向 Body 阴影网格和 Body 主蒙皮网格。Hair 主网格与 Hair 阴影网格分别是深度 9 的 object 节点。`visuals` 下的 `mesh` 值是 `0x70000000` 外部引用，basename 必须与 visual 名一致：Hair 主网格为引用 0，Hair 阴影为引用 5，Body 阴影和 Body 主网格为引用 6 和 7。
 
-下一步应继续恢复原生父子指针和最终运行时 draw call 绑定。
+## 原生 Link 字段
+
+同一份 `libdefault.so`（SHA-256 `1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70`）里，`CHierarchyNode` 构造函数 `0x3C0E2C`、`Link` `0x3C15C4` 和 `UnLink` `0x3C1D78` 使用同一组字段：
+
+| 偏移 | 构造时 | `Link` | `UnLink` |
+|---:|---|---|---|
+| `+0xB4` | 0 | 保存父节点 | 作为父节点读取后清零 |
+| `+0xB8` | 0 | 原最后一个子节点为空时保存新子节点 | 前驱为空时改成后继 |
+| `+0xBC` | 0 | 总是改成新子节点 | 后继为空时改成前驱 |
+| `+0xC0` | 0 | 旧尾的后继改为新节点，新节点后继为 0 | 与前驱互相摘链 |
+| `+0xC4` | 0 | 新节点前驱改为旧尾 | 与后继互相摘链 |
+| `+0xC8` | 构造参数中的 hierarchy root | 一条路径把父节点的值复制给子节点 | 一条路径清零 |
+
+这是双向兄弟链表：`+0xB4` 是父节点，`+0xB8/+0xBC` 是第一个和最后一个子节点，`+0xC0/+0xC4` 是后继和前驱。`.text` 中没有找到直接跳到这两个函数入口的 ARM `B/BL` 立即数，但 `.rel.plt` 在 `0x6018AC` 和 `0x600188` 引用它们。资源 `childs` 字典还没有追踪到 `Link` 调用，因此不能说 78 个资源节点已经按这个链表建立。
+
+可用下面的命令复核指令字，不把原 SO 写入仓库：
+
+```powershell
+py -3.12 tools\native_hierarchy_links.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
+```
+
+下一步应把资源 `childs` 追踪到创建节点和 `Link` 的调用点，并继续最终 draw call 绑定。
