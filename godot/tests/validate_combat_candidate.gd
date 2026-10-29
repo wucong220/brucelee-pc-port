@@ -99,8 +99,8 @@ func _run_check() -> void:
         )
         quit(1)
         return
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.25, 1.2, 0.0))
     opponent.guard_held = false
     if not player.request_attack("punch"):
         push_error("Integrated candidate player could not start a punch")

@@ -18,6 +18,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "kick": "m01_kick_low_01",
 }
 const SOURCE_FRAME_RATE: float = 30.0
+const SOURCE_CHARACTER_HEIGHT: float = CANDIDATE_SOURCE_HEIGHT
+const WORLD_CHARACTER_HEIGHT: float = CANDIDATE_HEIGHT
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 const HEAVY_ATTACK: Dictionary = {
@@ -28,6 +30,13 @@ const HEAVY_ATTACK: Dictionary = {
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
 var ATTACKS: Dictionary = {}
 var attack_config_error: String = ""
+var radius_scale: float = 1.0
+var source_units_to_world: float = WORLD_CHARACTER_HEIGHT / SOURCE_CHARACTER_HEIGHT
+var source_animation_radii: Dictionary = {
+    "m01_idle_01": 25.0,
+    "m01_pnch_low_01": 40.0,
+    "m01_kick_low_01": 50.0,
+}
 
 
 var character_name: String = "Fighter"
@@ -94,6 +103,13 @@ func _ready() -> void:
 func _load_attack_definitions() -> bool:
     ATTACKS = {}
     attack_config_error = ""
+    radius_scale = 1.0
+    source_units_to_world = WORLD_CHARACTER_HEIGHT / SOURCE_CHARACTER_HEIGHT
+    source_animation_radii = {
+        "m01_idle_01": 25.0,
+        "m01_pnch_low_01": 40.0,
+        "m01_kick_low_01": 50.0,
+    }
     if not FileAccess.file_exists(ATTACK_CONFIG_PATH):
         attack_config_error = "missing " + ATTACK_CONFIG_PATH
         return false
@@ -124,13 +140,55 @@ func _is_number(value: Variant) -> bool:
 
 func _parse_attack_config(config: Dictionary) -> Dictionary:
     var schema_value: Variant = config.get("schema_version")
-    if not _is_number(schema_value) or int(schema_value) != 1:
+    if not _is_number(schema_value) or float(schema_value) != 2.0:
         return _reject_attack_config("unsupported schema version")
     if typeof(config.get("source_archive")) != TYPE_STRING or String(config.get("source_archive")) != "brucelee.set":
         return _reject_attack_config("unexpected source archive")
     var frame_rate_value: Variant = config.get("frame_rate")
     if not _is_number(frame_rate_value) or absf(float(frame_rate_value) - SOURCE_FRAME_RATE) > 0.001:
         return _reject_attack_config("frame rate does not match the source")
+    var geometry_value: Variant = config.get("source_geometry")
+    if not geometry_value is Dictionary:
+        return _reject_attack_config("source_geometry is not an object")
+    var geometry: Dictionary = geometry_value
+    for key: String in [
+            "source_height", "world_height", "radius_scale",
+            "idle_source_archive", "animation_radii"]:
+        if not geometry.has(key):
+            return _reject_attack_config("source_geometry lacks " + key)
+    if (not _is_number(geometry["source_height"])
+            or not _is_number(geometry["world_height"])
+            or not _is_number(geometry["radius_scale"])):
+        return _reject_attack_config("source_geometry contains non-numeric scale values")
+    var source_height: float = float(geometry["source_height"])
+    var world_height: float = float(geometry["world_height"])
+    var loaded_radius_scale: float = float(geometry["radius_scale"])
+    if (typeof(geometry["idle_source_archive"]) != TYPE_STRING
+            or String(geometry["idle_source_archive"]) != "Default.set"):
+        return _reject_attack_config("unexpected idle source archive")
+    if (source_height <= 0.0
+            or absf(source_height - SOURCE_CHARACTER_HEIGHT) > 0.001
+            or world_height <= 0.0
+            or absf(world_height - WORLD_CHARACTER_HEIGHT) > 0.001
+            or loaded_radius_scale <= 0.0
+            or absf(loaded_radius_scale - 1.0) > 0.001):
+        return _reject_attack_config("source_geometry has invalid or unexpected scale values")
+    var radii_value: Variant = geometry["animation_radii"]
+    if not radii_value is Dictionary:
+        return _reject_attack_config("animation_radii is not an object")
+    var radii: Dictionary = radii_value
+    var loaded_radii: Dictionary = {}
+    for animation: String in ["m01_idle_01", "m01_pnch_low_01", "m01_kick_low_01"]:
+        if not radii.has(animation) or not _is_number(radii[animation]):
+            return _reject_attack_config("animation_radii." + animation + " is missing or non-numeric")
+        var radius: float = float(radii[animation])
+        if radius <= 0.0:
+            return _reject_attack_config("animation_radii." + animation + " is invalid")
+        loaded_radii[animation] = radius
+    if (absf(float(loaded_radii["m01_idle_01"]) - 25.0) > 0.001
+            or absf(float(loaded_radii["m01_pnch_low_01"]) - 40.0) > 0.001
+            or absf(float(loaded_radii["m01_kick_low_01"]) - 50.0) > 0.001):
+        return _reject_attack_config("animation_radii do not match the source animations")
     var configured_attacks: Variant = config.get("attacks")
     if not configured_attacks is Dictionary:
         return _reject_attack_config("attacks is not an object")
@@ -143,13 +201,12 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         for key: String in [
                 "source_action", "animation", "animation_frame_count",
                 "startup_frames", "active_frames", "recovery_frames",
-                "prototype_range", "damage", "prototype_push", "source_impact"]:
+                "damage", "prototype_push", "source_impact"]:
             if not entry.has(key):
                 return _reject_attack_config(action + " lacks " + key)
         if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
                 or not _is_number(entry["recovery_frames"])
                 or not _is_number(entry["animation_frame_count"])
-                or not _is_number(entry["prototype_range"])
                 or not _is_number(entry["damage"])
                 or not _is_number(entry["prototype_push"])):
             return _reject_attack_config(action + " contains non-numeric values")
@@ -179,10 +236,9 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             return _reject_attack_config(action + " animation is not " + expected_animation)
         if frame_count != expected_frame_count:
             return _reject_attack_config(action + " animation frame count is not " + str(expected_frame_count))
-        var attack_range: float = float(entry["prototype_range"])
         var damage: float = float(entry["damage"])
         var push: float = float(entry["prototype_push"])
-        if attack_range <= 0.0 or damage < 0.0 or push < 0.0:
+        if damage < 0.0 or push < 0.0:
             return _reject_attack_config(action + " has invalid numeric values")
         var impact_value: Variant = entry["source_impact"]
         if not impact_value is Dictionary:
@@ -208,7 +264,6 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             "startup": float(startup_frames) / SOURCE_FRAME_RATE,
             "active": float(active_frames) / SOURCE_FRAME_RATE,
             "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
-            "range": attack_range,
             "damage": damage,
             "push": push,
             "source_action": String(entry["source_action"]),
@@ -216,6 +271,10 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             "animation_frame_count": frame_count,
             "source_impact": impact.duplicate(true),
         }
+    # Commit instance geometry only after every attack has validated.
+    radius_scale = loaded_radius_scale
+    source_units_to_world = world_height / source_height
+    source_animation_radii = loaded_radii
     return result
 
 
@@ -451,7 +510,8 @@ func _try_attack_contact() -> void:
     var details: Dictionary = ATTACKS[attack_kind]
     var dx: float = opponent.global_position.x - global_position.x
     var dz: float = opponent.global_position.z - global_position.z
-    if absf(dx) > float(details["range"]) or absf(dz) > 0.95:
+    var distance: float = Vector2(dx, dz).length()
+    if distance > attack_reach_world(attack_kind, opponent):
         return
     if dx * facing < -0.1:
         return
@@ -462,6 +522,34 @@ func _try_attack_contact() -> void:
     opponent.receive_hit(damage, blocked, float(details["push"]), facing)
     combo_hits += 1
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
+
+
+func current_source_animation() -> String:
+    if state in ["startup", "active", "recovery"] and attack_kind in ["punch", "kick"]:
+        return String(ATTACKS[attack_kind]["animation"])
+    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
+        return CANDIDATE_CLIPS["kick"]
+    return CANDIDATE_CLIPS["idle"]
+
+
+func source_radius_for_current_animation() -> float:
+    var animation: String = current_source_animation()
+    if not source_animation_radii.has(animation):
+        animation = CANDIDATE_CLIPS["idle"]
+    return float(source_animation_radii[animation]) * radius_scale
+
+
+func attack_reach_world(kind: String, target: PortFighter = null) -> float:
+    if not ATTACKS.has(kind):
+        return 0.0
+    var details: Dictionary = ATTACKS[kind]
+    if not details.has("source_impact"):
+        return float(details.get("range", 0.0))
+    var impact: Dictionary = details["source_impact"]
+    var source_reach: float = float(impact["attack_radius"]) * radius_scale
+    if target != null:
+        source_reach += target.source_radius_for_current_animation()
+    return source_reach * source_units_to_world
 
 func receive_hit(amount: float, blocked: bool, push: float, direction: float) -> void:
     if state == "ko":

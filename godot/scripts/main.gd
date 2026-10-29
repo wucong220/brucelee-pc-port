@@ -78,8 +78,8 @@ func _run_export_self_test() -> void:
     set_physics_process(false)
     player.set_physics_process(false)
     computer.set_physics_process(false)
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    computer.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
+    computer.reset_fighter(Vector3(0.25, 1.2, 0.0))
     if not player.request_attack("punch"):
         push_error("EXPORT_SELF_TEST: could not start punch")
         get_tree().quit(1)
@@ -228,23 +228,36 @@ func _physics_process(delta: float) -> void:
 
 func _think_ai(delta: float) -> void:
     var separation: float = player.position.x - computer.position.x
-    var range_x: float = absf(separation)
     var separation_z: float = player.position.z - computer.position.z
+    var distance: float = Vector2(separation, separation_z).length()
+    var source_reach: float = maxf(
+        computer.attack_reach_world("punch", player),
+        computer.attack_reach_world("kick", player)
+    )
     computer.move_axis = Vector2.ZERO
-    if range_x > 1.9:
+    if distance > source_reach:
         computer.move_axis.x = signf(separation)
-    elif range_x < 1.2:
-        computer.move_axis.x = -signf(separation) * 0.35
-    if absf(separation_z) > 0.6:
         computer.move_axis.y = signf(separation_z)
-    var aligned: bool = absf(separation_z) <= 0.95
-    computer.guard_held = aligned and player.state == "startup" and range_x < 2.1 and rng.randf() < 0.25
+    elif distance < source_reach * 0.65:
+        computer.move_axis.x = -signf(separation) * 0.35
+        computer.move_axis.y = -signf(separation_z) * 0.35
+    var in_attack_reach: bool = distance <= source_reach
+    computer.guard_held = (
+        in_attack_reach
+        and player.state == "startup"
+        and rng.randf() < 0.25
+    )
     ai_timer -= delta
     if ai_timer <= 0.0:
         ai_timer = rng.randf_range(0.45, 0.95)
-        if aligned and range_x < 2.15:
+        if in_attack_reach:
             var moves: Array[String] = ["punch", "kick", "heavy"]
-            computer.request_attack(moves[rng.randi_range(0, moves.size() - 1)])
+            var available: Array[String] = []
+            for move: String in moves:
+                if computer.attack_reach_world(move, player) >= distance:
+                    available.append(move)
+            if not available.is_empty():
+                computer.request_attack(available[rng.randi_range(0, available.size() - 1)])
 
 func _unhandled_key_input(event: InputEvent) -> void:
     if not (event is InputEventKey):

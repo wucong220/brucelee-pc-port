@@ -36,7 +36,7 @@ func _attack_hits_after_frames(player: PortFighter, opponent: PortFighter, kind:
         player._physics_process((startup_frames + 0.001) / PortFighter.SOURCE_FRAME_RATE)
         player._physics_process((before_frame - startup_frames - 0.001)
                 / PortFighter.SOURCE_FRAME_RATE)
-    opponent.position.x = -0.3
+    opponent.position.x = -0.6
     player._physics_process(advance_frames / PortFighter.SOURCE_FRAME_RATE)
     return opponent.health < PortFighter.MAX_HEALTH
 
@@ -50,7 +50,6 @@ func _raw_attack_entry(action: String) -> Dictionary:
         "startup_frames": 5 if is_punch else 7,
         "active_frames": 4,
         "recovery_frames": 60 if is_punch else 75,
-        "prototype_range": 1.65 if is_punch else 2.2,
         "damage": 5.0,
         "prototype_push": 0.2 if is_punch else 0.35,
         "source_impact": {
@@ -65,9 +64,20 @@ func _raw_attack_entry(action: String) -> Dictionary:
 
 func _raw_attack_config() -> Dictionary:
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "source_archive": "brucelee.set",
         "frame_rate": 30.0,
+        "source_geometry": {
+            "source_height": 173.415954589844,
+            "world_height": 1.8,
+            "radius_scale": 1.0,
+            "idle_source_archive": "Default.set",
+            "animation_radii": {
+                "m01_idle_01": 25.0,
+                "m01_pnch_low_01": 40.0,
+                "m01_kick_low_01": 50.0,
+            },
+        },
         "attacks": {
             "punch": _raw_attack_entry("punch"),
             "kick": _raw_attack_entry("kick"),
@@ -77,6 +87,10 @@ func _raw_attack_config() -> Dictionary:
 
 func _config_negative_check(player: PortFighter) -> bool:
     var cases: Array[Dictionary] = []
+    var baseline_radius_scale: float = player.radius_scale
+    var baseline_units_to_world: float = player.source_units_to_world
+    var baseline_radii: Dictionary = player.source_animation_radii.duplicate(true)
+    var baseline_attacks: Dictionary = player.ATTACKS.duplicate(true)
     var wrong_rate: Dictionary = _raw_attack_config()
     wrong_rate["frame_rate"] = 29.0
     cases.append(wrong_rate)
@@ -92,9 +106,33 @@ func _config_negative_check(player: PortFighter) -> bool:
     var wrong_source: Dictionary = _raw_attack_config()
     wrong_source["attacks"]["kick"]["source_action"] = "other"
     cases.append(wrong_source)
+    var fractional_schema: Dictionary = _raw_attack_config()
+    fractional_schema["schema_version"] = 1.5
+    cases.append(fractional_schema)
+    var wrong_radius: Dictionary = _raw_attack_config()
+    wrong_radius["source_geometry"]["animation_radii"]["m01_pnch_low_01"] = 41.0
+    cases.append(wrong_radius)
+    var wrong_scale: Dictionary = _raw_attack_config()
+    wrong_scale["source_geometry"]["radius_scale"] = 0.75
+    cases.append(wrong_scale)
+    var wrong_height: Dictionary = _raw_attack_config()
+    wrong_height["source_geometry"]["source_height"] = 170.0
+    cases.append(wrong_height)
+    var missing_idle_radius: Dictionary = _raw_attack_config()
+    missing_idle_radius["source_geometry"]["animation_radii"].erase("m01_idle_01")
+    cases.append(missing_idle_radius)
+    var missing_geometry: Dictionary = _raw_attack_config()
+    missing_geometry.erase("source_geometry")
+    cases.append(missing_geometry)
     for index in range(cases.size()):
         if not player._parse_attack_config(cases[index]).is_empty():
             push_error("Invalid fighting-set config case was accepted: %d" % index)
+            return false
+        if (player.radius_scale != baseline_radius_scale
+                or player.source_units_to_world != baseline_units_to_world
+                or player.source_animation_radii != baseline_radii
+                or player.ATTACKS != baseline_attacks):
+            push_error("Invalid fighting-set config partially changed loaded state: %d" % index)
             return false
     return true
 
@@ -269,6 +307,26 @@ func _run_check() -> void:
         push_error("Fighting-set config source identity changed")
         quit(1)
         return
+    if (absf(player.radius_scale - 1.0) > 0.001
+            or absf(player.source_units_to_world
+                    - PortFighter.CANDIDATE_HEIGHT / PortFighter.CANDIDATE_SOURCE_HEIGHT) > 0.000001
+            or player.source_animation_radii != {
+                "m01_idle_01": 25.0,
+                "m01_pnch_low_01": 40.0,
+                "m01_kick_low_01": 50.0,
+            }):
+        push_error("Source geometry scaling does not match the recovered model")
+        quit(1)
+        return
+    var expected_idle_reach: float = (
+        (70.0 + 25.0)
+        * PortFighter.CANDIDATE_HEIGHT
+        / PortFighter.CANDIDATE_SOURCE_HEIGHT
+    )
+    if absf(player.attack_reach_world("punch", opponent) - expected_idle_reach) > 0.0001:
+        push_error("Recovered source reach does not match attack radius plus target radius")
+        quit(1)
+        return
     if not player._parse_attack_config({}).is_empty():
         push_error("Invalid fighting-set config was accepted")
         quit(1)
@@ -292,7 +350,7 @@ func _run_check() -> void:
         push_error("AI did not close the lateral gap")
         quit(1)
         return
-    opponent.position.z = player.position.z
+    opponent.position = Vector3(player.position.x - 0.8, 1.2, player.position.z)
     scene.set("ai_timer", 0.0)
     scene.call("_think_ai", 0.016)
     if opponent.state != "startup":
@@ -336,6 +394,55 @@ func _run_check() -> void:
                 + JSON.stringify(kick_boundaries))
         quit(1)
         return
+    var source_reach: float = expected_idle_reach
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(source_reach + 0.02, 1.2, 0.0))
+    player.request_attack("punch")
+    player._advance_timed_states(punch_startup + 0.001)
+    player._try_attack_contact()
+    if opponent.health != PortFighter.MAX_HEALTH:
+        push_error("Target outside the recovered source radius was hit")
+        quit(1)
+        return
+    opponent.position.x = source_reach
+    player._try_attack_contact()
+    if absf(opponent.health - 95.0) > 0.001:
+        push_error("Target exactly on the recovered source radius was not hit")
+        quit(1)
+        return
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.8, 1.2, 0.8))
+    player.request_attack("punch")
+    player._advance_timed_states(punch_startup + 0.001)
+    player._try_attack_contact()
+    if opponent.health < PortFighter.MAX_HEALTH:
+        push_error("Target outside the recovered Euclidean source radius was hit")
+        quit(1)
+        return
+    opponent.position = Vector3(0.65, 1.2, 0.65)
+    player._try_attack_contact()
+    if absf(opponent.health - 95.0) > 0.001:
+        push_error("Target inside the recovered Euclidean source radius was not hit")
+        quit(1)
+        return
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(1.2, 1.2, 0.0))
+    opponent.state = "startup"
+    opponent.attack_kind = "punch"
+    opponent.state_time = punch_startup
+    player.request_attack("punch")
+    player._advance_timed_states(punch_startup + 0.001)
+    player._try_attack_contact()
+    if opponent.health != PortFighter.MAX_HEALTH:
+        push_error("Target radius did not change with the defender's source animation")
+        quit(1)
+        return
+    opponent.position.x = 1.10
+    player._try_attack_contact()
+    if absf(opponent.health - 95.0) > 0.001:
+        push_error("Target inside the defender punch radius was not hit")
+        quit(1)
+        return
     player.reset_fighter(Vector3(-1.5, 1.2, 0.0))
     opponent.reset_fighter(Vector3(1.5, 1.2, 0.0))
     if not player.request_attack("punch"):
@@ -347,7 +454,7 @@ func _run_check() -> void:
         push_error("Out-of-range target was hit at the start of the active window")
         quit(1)
         return
-    opponent.position.x = -0.3
+    opponent.position.x = -0.6
     player._physics_process(0.016)
     player._physics_process(0.016)
     player._physics_process(0.016)
@@ -357,7 +464,7 @@ func _run_check() -> void:
         return
     player._physics_process(punch_active + 0.01)
     player._physics_process(punch_recovery + 0.01)
-    opponent.reset_fighter(Vector3(-0.3, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(-0.6, 1.2, 0.0))
     if not player.request_attack("punch"):
         push_error("Could not start a second attack")
         quit(1)
@@ -374,7 +481,7 @@ func _run_check() -> void:
     player.request_attack("punch")
     player._physics_process(punch_startup + 0.001)
     player.receive_hit(1.0, false, 0.0, -1.0)
-    opponent.position.x = -0.3
+    opponent.position.x = -0.6
     player._physics_process(0.016)
     if opponent.health != 100.0:
         push_error("Interrupted attack registered a contact")
@@ -385,7 +492,7 @@ func _run_check() -> void:
     player.request_attack("punch")
     player._physics_process(punch_startup + 0.001)
     player.receive_hit(1000.0, false, 0.0, -1.0)
-    opponent.position.x = -0.3
+    opponent.position.x = -0.6
     player._physics_process(0.016)
     if player.state != "ko" or opponent.health != 100.0:
         push_error("KO did not stop the active attack")
@@ -395,8 +502,8 @@ func _run_check() -> void:
     player.set_physics_process(true)
     opponent.set_physics_process(true)
 
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.25, 1.2, 0.0))
     _press_key(KEY_J)
     await process_frame
     if player.state != "startup" or player.attack_kind != "punch":
@@ -407,12 +514,20 @@ func _run_check() -> void:
         await physics_frame
     var punch_health: float = opponent.health
     if absf(punch_health - 95.0) > 0.001:
-        push_error("Punch did not apply the recovered fighting-set damage")
+        push_error("Punch did not apply the recovered fighting-set damage: "
+                + JSON.stringify({
+                    "health": punch_health,
+                    "reach": player.attack_reach_world("punch", opponent),
+                    "player": player.global_position,
+                    "opponent": opponent.global_position,
+                    "player_state": player.state,
+                    "opponent_state": opponent.state,
+                }))
         quit(1)
         return
 
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.25, 1.2, 0.0))
     opponent.guard_held = true
     _press_key(KEY_K)
     await process_frame
@@ -430,8 +545,8 @@ func _run_check() -> void:
 
     player.set_physics_process(false)
     opponent.set_physics_process(false)
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.25, 1.2, 0.0))
     opponent.health = 5.0
     player.request_attack("punch")
     player._physics_process(punch_startup + 0.001)
@@ -453,8 +568,8 @@ func _run_check() -> void:
         push_error("R did not restart the round")
         quit(1)
         return
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.25, 1.2, 0.0))
     player.health = 5.0
     opponent.request_attack("punch")
     opponent._physics_process(kick_startup + 0.001)

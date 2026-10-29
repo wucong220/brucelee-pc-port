@@ -18,7 +18,7 @@
 | P1 原生运行框架 | Godot 项目、场景、动作输入、AI、血条 | Godot 本机运行，战斗无脚本错误，Windows 导出为 EXE | 已完成：开发、PCK 和仓库外 release EXE 自检通过 |
 | P2 PAK 解包器 | `Core.pakh` 全目录、`Core.pakd000` 完整读取 | 至少 10 个命名文件的字节范围与解压值可证实；全包无越界 | 完成：完整原包实际验证 2144 条流、417 个目录节点、2265 条路径和尾部 CRC |
 | P3 资产转换 | 网格、材质、骨骼、动画、场景、声音批量转换 | 至少一套 Bruce Lee 角色模型骨骼及 idle/punch/kick 动画可在 Godot 播放 | 进行中：纹理、Skl/Object、四个 Mesh 及真实 Mesh IBM 已解析；Hair/Body 的 subset → material → diffuse/normal/material 静态绑定和 78 节点场景层级、Link 字段、六类实体创建和 OpenGL 绘制批处理路径和视觉项 subset 提交粒度与 pass 位图来源和批处理三元键和 TBatchID 槽位来源已核对；候选 GLB 的 69 根骨骼和 idle/punch/kick 已在 Godot、PCK 与独立 Windows EXE 中运行。尚缺完整角色/场景资产批量转换、原版逐帧视觉与 GPU 材质对照 |
-| P4 原版战斗还原 | 招式/输入/命中箱/攻击帧/硬直/伤害/连段 | 同一场景下与原版逐帧录像对照，误差记录 | 进行中：lowpunch1/lowkick1 的帧、伤害、距离门控和半径分离已静态闭合，并由 Godot 配置驱动；prototype range/push 仍非原版结论，尚缺原版逐帧录像对照 |
+| P4 原版战斗还原 | 招式/输入/命中箱/攻击帧/硬直/伤害/连段 | 同一场景下与原版逐帧录像对照，误差记录 | 进行中：lowpunch1/lowkick1 的帧、伤害、攻击半径、角色半径倍率和防守方动画半径已静态闭合，并由 Godot 配置驱动；候选单位换算仍是 provisional，prototype push、硬直和逐帧录像对照尚未完成 |
 | P5 体验还原 | 镜头、UI、声音、场景/关卡、菜单、存档 | 选角、连续对战、胜负、重开、存档均可操作 | 未开始 |
 | P6 稳定性与发行准备 | EXE 构建、手柄、缩放、异常恢复 | 目标 Windows PC 实测；资源来源及发行授权清晰 | 未开始 |
 
