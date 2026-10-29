@@ -171,10 +171,116 @@ def _inspect_pose_transforms(raw: bytes, container: dict) -> list[dict]:
     return transforms
 
 
+def _dictionary_fields(records: list[dict], strings: list[dict], index: int) -> dict[str, int]:
+    """Read one observed `0x30000000` dictionary of key/value record pairs."""
+    first, relative = records[index]["first"], records[index]["second"]
+    if first & 0xffff0000 != 0x30000000:
+        raise KdfError(f"object record {index} is not a relative dictionary")
+    count = first & 0xffff
+    if count == 0:
+        return {}
+    start = index + relative
+    if start <= index or start + count * 2 > len(records):
+        raise KdfError(f"object dictionary {index} has an invalid child range")
+    fields = {}
+    for item in range(count):
+        key_index = start + item * 2
+        key = records[key_index]
+        if key["first"] != 0x60000000 or key["second"] >= len(strings):
+            raise KdfError(f"object dictionary key {key_index} is invalid")
+        name = strings[key["second"]]["text"]
+        if name in fields:
+            raise KdfError(f"object dictionary {index} repeats {name!r}")
+        fields[name] = key_index + 1
+    return fields
+
+
+def _string_value(records: list[dict], strings: list[dict], index: int) -> str:
+    record = records[index]
+    if record["first"] != 0x60000000 or record["second"] >= len(strings):
+        raise KdfError(f"object record {index} is not a string value")
+    return strings[record["second"]]["text"]
+
+
+def _section_value(records: list[dict], index: int) -> int:
+    record = records[index]
+    if record["first"] >> 28 != 4:
+        raise KdfError(f"object record {index} is not an array descriptor")
+    return record["second"]
+
+
+def _parse_scene_tree(records: list[dict], strings: list[dict], transforms: list[dict]) -> dict:
+    """Parse the observed relative scene dictionary, or leave it unresolved.
+
+    The native parent-pointer representation and runtime draw-call order are
+    not inferred from this resource encoding.
+    """
+    if not records or records[0]["first"] & 0xffff0000 != 0x30000000:
+        return {"scene_tree_status": "unresolved", "scene_node_count": 0, "scene_nodes": []}
+    root = _dictionary_fields(records, strings, 0)
+    if set(root) != {"scene"}:
+        raise KdfError("object relative dictionary root is not the scene")
+    nodes = []
+    seen = set()
+
+    def walk(dict_index: int, name: str, parent: str | None, depth: int) -> None:
+        if name in seen:
+            raise KdfError(f"object scene node {name!r} is duplicated")
+        seen.add(name)
+        fields = _dictionary_fields(records, strings, dict_index)
+        if "type" not in fields or "properties" not in fields:
+            raise KdfError(f"object scene node {name!r} lacks type or properties")
+        properties = _dictionary_fields(records, strings, fields["properties"])
+        for key in ("position", "rotation", "scale"):
+            if key not in properties:
+                raise KdfError(f"object scene node {name!r} lacks {key}")
+        children = []
+        child_fields = {}
+        if "childs" in fields:
+            child_fields = _dictionary_fields(records, strings, fields["childs"])
+            children = list(child_fields)
+        visuals = []
+        if "visuals" in fields:
+            visuals = list(_dictionary_fields(records, strings, fields["visuals"]))
+        nodes.append({
+            "name": name,
+            "type": _string_value(records, strings, fields["type"]),
+            "parent": parent,
+            "depth": depth,
+            "children": children,
+            "visuals": visuals,
+            "position_section": _section_value(records, properties["position"]),
+            "rotation_section": _section_value(records, properties["rotation"]),
+            "scale_section": _section_value(records, properties["scale"]),
+        })
+        for child_name in children:
+            walk(child_fields[child_name], child_name, name, depth + 1)
+
+    walk(root["scene"], "scene", None, 0)
+    linked = [
+        (node["position_section"], node["rotation_section"], node["scale_section"])
+        for node in nodes
+    ]
+    if len(set(linked)) != len(linked):
+        raise KdfError("object scene nodes repeat a pose transform")
+    pose = {
+        (item["position_section"], item["rotation_section"], item["scale_section"])
+        for item in transforms
+    }
+    if set(linked) != pose:
+        raise KdfError("object scene nodes do not match pose transform sections")
+    return {
+        "scene_tree_status": "relative-dictionary",
+        "scene_node_count": len(nodes),
+        "scene_nodes": nodes,
+    }
+
+
 def inspect_object(raw: bytes) -> dict:
     container = parse_container(raw)
     external = _inspect_external_references(raw, container)
     transforms = _inspect_pose_transforms(raw, container)
+    scene = _parse_scene_tree(container["records"], container["strings"], transforms)
     return {
         'sha256': hashlib.sha256(raw).hexdigest(),
         'decoded_bytes': len(raw),
@@ -187,7 +293,7 @@ def inspect_object(raw: bytes) -> dict:
         'external_reference_uses': external['uses'],
         'pose_transform_count': len(transforms),
         'pose_transforms': transforms,
-        'scene_tree_status': 'unresolved',
+        **scene,
         'mesh_payload_status': 'external-resource',
         'transform_coordinate_space': 'unverified',
         'transform_quaternion_component_order': 'unverified',
