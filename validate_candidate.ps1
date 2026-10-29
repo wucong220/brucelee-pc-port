@@ -10,12 +10,22 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
 $godotProject = Join-Path $repoRoot "godot"
+$pathResolver = Join-Path $repoRoot "tools\resolve_candidate_path.ps1"
+
+function Resolve-CanonicalPath([string]$Value) {
+    $resolved = & $pathResolver -LiteralPath $Value
+    if (-not $?) {
+        throw "Could not resolve path: $Value"
+    }
+    return ([string]$resolved).Trim()
+}
 
 function Resolve-ExternalPath([string]$Value, [string]$Label) {
     $resolved = [IO.Path]::GetFullPath($Value)
     if (-not (Test-Path -LiteralPath $resolved)) {
         throw "$Label does not exist: $resolved"
     }
+    $resolved = Resolve-CanonicalPath $resolved
     $prefix = $repoRoot.TrimEnd('\') + '\'
     if ($resolved.Equals($repoRoot, [StringComparison]::OrdinalIgnoreCase) -or
             $resolved.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
@@ -32,6 +42,9 @@ function Invoke-Checked([string]$Label, [scriptblock]$Command) {
     }
 }
 
+$repoRoot = Resolve-CanonicalPath $repoRoot
+$godotProject = Join-Path $repoRoot "godot"
+$pathResolver = Join-Path $repoRoot "tools\resolve_candidate_path.ps1"
 $CandidateGlb = Resolve-ExternalPath $CandidateGlb "Candidate GLB"
 $TextureRoot = Resolve-ExternalPath $TextureRoot "Texture root"
 $GodotExe = (Resolve-Path -LiteralPath $GodotExe).Path

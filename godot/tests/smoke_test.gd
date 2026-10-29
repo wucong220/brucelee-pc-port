@@ -41,16 +41,47 @@ func _attack_hits_after_frames(player: PortFighter, opponent: PortFighter, kind:
     return opponent.health < PortFighter.MAX_HEALTH
 
 
-func _run_check() -> void:
+func _path_guard_check() -> bool:
     var repository_root: String = CandidatePathGuard.repository_root()
-    var outside_path: String = repository_root.get_base_dir().path_join(
-        "candidate-outside-fixture.glb"
+    var token: String = str(Time.get_ticks_usec())
+    var temp_root: String = OS.get_temp_dir().path_join(
+        "brucelee-path-guard-" + token
     )
-    if not CandidatePathGuard.external_path_error(
-            outside_path, "candidate path").is_empty():
+    var external_file: String = temp_root.path_join("candidate-outside-fixture.glb")
+    var repository_fixture: String = repository_root.path_join(
+        ".path-guard-fixture-" + token
+    )
+    var repository_file: String = repository_fixture.path_join("candidate.glb")
+    var junction_path: String = temp_root.path_join("repository-junction")
+    var passed: bool = true
+
+    if DirAccess.make_dir_absolute(temp_root) != OK:
+        push_error("Could not create candidate path guard temp directory")
+        return false
+    if DirAccess.make_dir_absolute(repository_fixture) != OK:
+        push_error("Could not create candidate path guard repository fixture")
+        DirAccess.remove_absolute(temp_root)
+        return false
+    var external_handle: FileAccess = FileAccess.open(external_file, FileAccess.WRITE)
+    var repository_handle: FileAccess = FileAccess.open(repository_file, FileAccess.WRITE)
+    if external_handle == null or repository_handle == null:
+        push_error("Could not create candidate path guard fixture files")
+        if external_handle != null:
+            external_handle.close()
+        if repository_handle != null:
+            repository_handle.close()
+        passed = false
+    else:
+        external_handle.store_string("external fixture")
+        external_handle.close()
+        repository_handle.store_string("repository fixture")
+        repository_handle.close()
+
+    if passed and not CandidatePathGuard.external_path_error(
+            external_file, "candidate path").is_empty():
         push_error("Candidate path guard rejected an external fixture path")
-        quit(1)
-        return
+        passed = false
+
     for repository_path: String in [
             repository_root,
             repository_root.path_join("candidate.glb"),
@@ -58,12 +89,64 @@ func _run_check() -> void:
         if CandidatePathGuard.external_path_error(
                 repository_path, "candidate path").is_empty():
             push_error("Candidate path guard accepted a repository path")
-            quit(1)
-            return
+            passed = false
+
+    var junction_output: Array = []
+    var junction_command: String = "mklink /J \"%s\" \"%s\"" % [
+        junction_path.replace("/", "\\"),
+        repository_fixture.replace("/", "\\"),
+    ]
+    var junction_exit: int = OS.execute(
+        "cmd.exe",
+        PackedStringArray(["/d", "/s", "/c", junction_command]),
+        junction_output,
+        true,
+        false,
+    )
+    if junction_exit != 0:
+        push_error("Could not create candidate path guard junction: "
+                + "\n".join(PackedStringArray(junction_output)))
+        passed = false
+    elif CandidatePathGuard.external_path_error(
+            junction_path.path_join("candidate.glb"), "candidate path").is_empty():
+        push_error("Candidate path guard accepted an external junction into the repository")
+        passed = false
+
+    if junction_exit == 0:
+        var remove_output: Array = []
+        var remove_command: String = "rmdir \"%s\"" % junction_path.replace("/", "\\")
+        var remove_exit: int = OS.execute(
+            "cmd.exe",
+            PackedStringArray(["/d", "/s", "/c", remove_command]),
+            remove_output,
+            true,
+            false,
+        )
+        if remove_exit != 0:
+            push_error("Could not remove candidate path guard junction: "
+                    + "\n".join(PackedStringArray(remove_output)))
+            passed = false
+
+    if FileAccess.file_exists(repository_file):
+        DirAccess.remove_absolute(repository_file)
+    if FileAccess.file_exists(external_file):
+        DirAccess.remove_absolute(external_file)
+    if DirAccess.dir_exists_absolute(repository_fixture):
+        DirAccess.remove_absolute(repository_fixture)
+    if DirAccess.dir_exists_absolute(temp_root):
+        DirAccess.remove_absolute(temp_root)
+    return passed
+
+
+func _run_check() -> void:
+    if not _path_guard_check():
+        quit(1)
+        return
 
     var previous_preview_glb: String = OS.get_environment("BRUCELEE_CANDIDATE_GLB")
     OS.set_environment(
-        "BRUCELEE_CANDIDATE_GLB", repository_root.path_join("candidate.glb")
+        "BRUCELEE_CANDIDATE_GLB",
+        CandidatePathGuard.repository_root().path_join("candidate.glb"),
     )
     var preview: Node3D = load("res://scripts/candidate_preview.gd").new()
     root.add_child(preview)
