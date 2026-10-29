@@ -68,6 +68,44 @@ DATA 头为 `(37870, 0, 0, 0)`，唯一 offset word 为 0，记录从 DATA+24
 `SEMANTICS_UNVERIFIED`。尚未找到它直接选择碰撞骨骼、受击区域或反馈动画的
 完整消费链，不能只凭 `larm/lleg` 名称推断命中效果。
 
+`CBeatEmUpGame::CollisionChecker`（`0x179328`，大小 `0x4F4`）进一步闭合了
+`CheckConditions` 所读 fighter `+0x80` 的写入来源。函数前半段分别对两个内嵌
+场景对象调用 `gfxScnObj::GetFrame` 和 `gfxScnFrame::GetPos`，把两组三维位置
+写到 `sp+0x34..0x3C` 与 `sp+0x28..0x30`。`0x179448–0x17947C` 的 VFP
+路径读取这两个向量的三个分量并累加平方，`0x179484` 调用
+`zlibm_sqrt`，`0x17948C` 将结果转换到 `s17`。因此可还原为：
+
+```text
+D = sqrt(
+    (p0.x - p1.x)^2
+  + (p0.y - p1.y)^2
+  + (p0.z - p1.z)^2
+)
+```
+
+`0x17969C`、`0x1796A0` 随后把同一个 `s17` 写入 `r11+0x80` 和
+`r10+0x80`。`r11`、`r10` 分别由 `0x1793F8`、`0x179418` 设置为 game
+`+0x24`、`+0x1DC`，并在 `0x179718`、`0x179724` 作为 `CFighter::GetRadius`
+的 `this`；在这两个地址范围内的 `s17` 未观察到重新赋值。据此，
+`fighter+0x80` 的当前最佳解释是“该次碰撞检查开始时取得的两点三维欧氏距离
+的同一个缓存值”，而不是攻击半径，也不是单独的命中布尔值。
+
+`0x17972C–0x179738` 还把 `GetRadius(r11) + GetRadius(r10)` 与 `D` 比较：
+半径和小于等于距离时跳到 `0x1794B4`，否则进入 `0x17973C` 以后的位置修正
+路径。位于 `0x1794C0` 的 `500.0f` 和 `0x1795B4/0x1795CC` 附近的 `400.0f`
+参与位置及边界门控；它们的具体世界坐标含义仍未闭合。
+
+证据边界：
+
+- `STATIC_VERIFIED`：两组 `GetPos` 输出进入三维分量差、第一次
+  `zlibm_sqrt` 的结果进入 `s17`，`s17` 写入两个 fighter 的 `+0x80`；
+  `GetRadius` 两者之和与同一 `D` 比较。
+- `STATIC_SUPPORTED`：`r10/r11` 是两个内嵌 `CFighter`；半径和与距离的关系
+  控制一条位置修正路径。该结论与该函数名及后续 VFP 位置更新一致。
+- `UNVERIFIED`：两组坐标是否已经位于最终世界坐标系；`+0x80` 是否等于全部
+  位置修正后的最终中心距；`attack_radius/body_part` 如何与该距离组合成最终
+  命中、受击部位或推力。不能仅凭这条碰撞缓存链替换 Godot 的占位规则。
+
 `CAnimationDescr::ParseFromKDF` 的静态路径将 `damage_time` 两项及
 `damage_amount` 写入 `TAttackImpact` 的 `+4/+8/+0xC`。`CFighter::BasicUpdate`
 在 `0x1A8478–0x1A84A0` 比较 `fighter+0x34` 与前两项，值位于包含两个端点的
