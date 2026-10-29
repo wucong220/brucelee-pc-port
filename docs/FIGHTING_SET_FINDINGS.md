@@ -127,6 +127,35 @@ else:
 `impact_byte + 1` 写回 attacker `+0x16C`，但该字节究竟是命中去重、
 连击序号还是其他状态仍不能仅凭局部指令命名。
 
+继续追踪 `fighter+0x16C` 的全部 CFighter 字节访问后，可以确定其更新时序：
+
+- `CFighter::SetAnimation` 在 `0x1A6F2C–0x1A6F30` 先令 `r3=0`，再执行
+  `STRB r3,[this,#0x16C]`。因此每次设置动画都会把该字节清零。
+- `CFighter::DamageReceiveCheck` 在命中结算后把 `impact+0 + 1` 写回同一
+  字节。
+- `CFighter::CheckConditions` 在 `0x1A438C` 读取该字节，并与当前
+  `impact+0` 比较。
+- fighter copy-constructor `0x17EF38/0x17EF6C` 只复制该字节；未发现其他
+  CFighter 函数直接写入它。
+
+因此该字段当前最佳解释是“本次动画已处理的 impact 高水位”：
+
+```text
+SetAnimation:                 marker = 0
+impact id x accepted:         marker = x + 1
+later check of id y:          y < marker 表示 y 已处理
+```
+
+这支持第二道字节门控用于阻止同一动画中较早 impact 的重复结算，并允许后续
+impact 按序号推进。证据等级：
+
+- `STATIC_VERIFIED`：SetAnimation 清零、DamageReceiveCheck 写
+  `impact+0+1`、CheckConditions 比较，以及 copy-constructor 仅复制。
+- `STATIC_SUPPORTED`：`impact+0` 是配置内 impact 的顺序标识，
+  `fighter+0x16C` 是本次动画的 processed-impact 高水位。
+- `UNVERIFIED`：字段的正式源码名称、全部多 impact 动画是否严格按该顺序
+  结算，以及 `0x1A4328/0x1A439C` 两个分支的全部后续行为。
+
 证据等级：
 
 - `STATIC_VERIFIED`：`IsAttacking` 前置分支；reach 公式的两个乘数、加法
