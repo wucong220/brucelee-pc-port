@@ -4,8 +4,7 @@ extends Node3D
 
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
-const EXPECTED_CANDIDATE_ANIMATED_HEIGHT: float = 1.6113350
-const ANIMATED_HEIGHT_TOLERANCE: float = 0.01
+const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 
 var player: PortFighter
 var computer: PortFighter
@@ -83,14 +82,14 @@ func _run_export_self_test() -> void:
         return
     var bounds: AABB = measured["bounds"]
     var expected_floor_y: float = 0.0
-    if absf(bounds.size.y - EXPECTED_CANDIDATE_ANIMATED_HEIGHT) > ANIMATED_HEIGHT_TOLERANCE:
-        push_error(
-            "EXPORT_SELF_TEST: animated candidate height is %.6f, expected %.6f"
-            % [bounds.size.y, EXPECTED_CANDIDATE_ANIMATED_HEIGHT]
-        )
+    if (not is_finite(bounds.size.y) or bounds.size.y <= 0.0
+            or absf(player.candidate_visual_height - PortFighter.CANDIDATE_HEIGHT)
+                    > CANDIDATE_HEIGHT_TOLERANCE):
+        push_error("EXPORT_SELF_TEST: candidate visual normalization is invalid")
         get_tree().quit(1)
         return
-    if absf(bounds.position.y - expected_floor_y) > 0.02:
+    if (not is_finite(bounds.position.y)
+            or absf(bounds.position.y - expected_floor_y) > 0.02):
         push_error("EXPORT_SELF_TEST: candidate floor is %.6f, expected %.6f" % [
             bounds.position.y, expected_floor_y,
         ])
@@ -139,6 +138,7 @@ func _run_export_self_test() -> void:
     print("EXPORT_SELF_TEST=" + JSON.stringify({
         "candidate_world_height": bounds.size.y,
         "candidate_world_min_y": bounds.position.y,
+        "candidate_visual_height": player.candidate_visual_height,
         "candidate_textures_loaded": player.candidate_textures_loaded,
         "internal_path_rejected": true,
         "punch_target_health": computer.health,

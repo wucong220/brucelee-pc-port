@@ -95,12 +95,24 @@ func _run_check() -> void:
         push_error(atomic_failure_error)
         quit(8)
         return
+    var invalid_profile_root: Node = Node.new()
+    var invalid_profile_result: Dictionary = CandidateMaterialLoader.new().apply_to(
+        invalid_profile_root, "", "invalid-profile"
+    )
+    invalid_profile_root.free()
+    if not String(invalid_profile_result["error"]).contains(
+            "unknown candidate material profile"
+    ):
+        push_error("An invalid material profile was hidden by an empty texture root")
+        quit(9)
+        return
     print("CANDIDATE_TEXTURE_VALIDATION=" + JSON.stringify({
         "body_loaded": true,
         "hair_loaded": true,
         "body_shader": body_material.shader.resource_path.get_file(),
         "hair_shader": hair_material.shader.resource_path.get_file(),
         "failed_profile_remained_unapplied": true,
+        "invalid_empty_profile_rejected": true,
     }))
     scene.queue_free()
     await process_frame

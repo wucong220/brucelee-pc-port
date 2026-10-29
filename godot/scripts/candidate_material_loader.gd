@@ -35,11 +35,11 @@ func apply_to(root: Node, texture_root: String, profile: String = "body_hair") -
         "reason": "",
         "error": "",
     }
-    if texture_root.is_empty():
-        result["reason"] = "candidate texture root is not configured"
-        return result
     if not PROFILES.has(profile):
         result["error"] = "unknown candidate material profile: " + profile
+        return result
+    if texture_root.is_empty():
+        result["reason"] = "candidate texture root is not configured"
         return result
     var path_error: String = CandidatePathGuard.external_path_error(
         texture_root, "candidate texture root"

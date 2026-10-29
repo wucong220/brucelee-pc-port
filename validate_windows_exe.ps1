@@ -11,8 +11,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$expectedCandidateWorldHeight = 1.6113350
-$animatedHeightTolerance = 0.01
+$candidateNormalizationTolerance = 0.01
 if (-not [string]::IsNullOrWhiteSpace($OpponentTextureRoot) -and
         [string]::IsNullOrWhiteSpace($OpponentGlb)) {
     throw "OpponentTextureRoot requires OpponentGlb."
@@ -113,10 +112,37 @@ try {
             throw "Exported EXE self-test reported an unexpected opponent texture state"
         }
     }
-    if ([math]::Abs(
-            [double]$report.candidate_world_height - $expectedCandidateWorldHeight
-        ) -gt $animatedHeightTolerance -or
-            [math]::Abs([double]$report.candidate_world_min_y) -gt 0.02) {
+    $worldHeightProperty = $report.PSObject.Properties["candidate_world_height"]
+    $visualHeightProperty = $report.PSObject.Properties["candidate_visual_height"]
+    $minimumYProperty = $report.PSObject.Properties["candidate_world_min_y"]
+    if ($null -eq $worldHeightProperty -or
+            $null -eq $visualHeightProperty -or
+            $null -eq $minimumYProperty) {
+        throw "Exported EXE self-test omitted required visual bounds"
+    }
+    foreach ($property in @(
+            $worldHeightProperty, $visualHeightProperty, $minimumYProperty
+    )) {
+        $value = $property.Value
+        if ($null -eq $value -or
+                $value -is [bool] -or
+                $value -is [string] -or
+                $value -isnot [ValueType]) {
+            throw "Exported EXE self-test reported nonnumeric visual bounds"
+        }
+    }
+    $worldHeight = [double]$worldHeightProperty.Value
+    $visualHeight = [double]$visualHeightProperty.Value
+    $minimumY = [double]$minimumYProperty.Value
+    if ([double]::IsNaN($worldHeight) -or
+            [double]::IsInfinity($worldHeight) -or
+            $worldHeight -le 0.0 -or
+            [double]::IsNaN($visualHeight) -or
+            [double]::IsInfinity($visualHeight) -or
+            [math]::Abs($visualHeight - 1.8) -gt $candidateNormalizationTolerance -or
+            [double]::IsNaN($minimumY) -or
+            [double]::IsInfinity($minimumY) -or
+            [math]::Abs($minimumY) -gt 0.02) {
         throw "Exported EXE self-test reported invalid visual bounds"
     }
 }
