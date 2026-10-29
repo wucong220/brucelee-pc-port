@@ -163,7 +163,7 @@ py -3.12 tools\native_pass_mask.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\
 
 组开始前 `0x32D6FC` 只调用一次 `CRenderPrimitive::Bind`，组内的 `_DrawBatch` 调用可复用该绑定状态。字段的业务语义尚未从调用方全部确认，因此这里把它们记为三元键 `(j, TBatchID[0], TBatchID[1])`，不擅自命名为材质、纹理或 shader。
 
-`CShaderInstance::Init` 在 `0x2FD13C–0x2FD148` 把 `+0xD4` 开始的 0x80 字节填成 `0xFF`，这与 16 个 8 字节槽位一致；它不是 `CRenderTargetBase` 的字段。
+`CShaderInstance` 的两个构造函数 `0x2FC888`、`0x2FC9E8` 都在 `0x2FC944/0x2FCAA4` 取 `+0xD4` 起始地址，并在 `0x2FC95C/0x2FCABC` 用 `MemorySet` 把 0x80 字节填成 `0xFF`。这支持 16 个 8 字节槽位，但槽位业务语义仍未命名；它不是 `CRenderTargetBase` 的字段。
 
 `CRenderTargetBase::Commit` 的 TBatchID 来源在 `0x3070B8–0x307184`：`r4` 先保存参数中的 `CShaderInstance` 指针，`r5` 保存 `CRenderTargetBase`。读取 `CRenderTargetBase+0xCC` 的当前 render-target 槽位，再以 8 字节 stride 访问 `CShaderInstance+0xD4` 表，复制两个字到传给 `CGeometryBatcher::Add` 的临时 TBatchID。`j` 来自 `Commit` 的最后一个参数 `0x307174` 和 `0x307190`。这是 shader-instance per-target 表到批处理键的来源链，不代表两个键字分别等于材质或纹理。
 
