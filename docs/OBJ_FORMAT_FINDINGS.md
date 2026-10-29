@@ -157,4 +157,16 @@ py -3.12 tools\native_visual_commits.py "$env:LOCALAPPDATA\BruceLee-PC-Port\bina
 py -3.12 tools\native_pass_mask.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
 ```
 
-下一步应继续解析批处理键和材质状态，确定哪些 primitive 会合并为同一次 OpenGL draw。
+## 批处理三元键
+
+`CGeometryBatcher::Add` 在 `0x32CDD0` 把调用参数 `j` 写到批次记录 `+0`，并把 `TBatchID` 的两个 32 位字段写到记录 `+4/+8`。`CGeometryBatcher::Commit` 在 `0x32D6D4/0x32D6E4` 比较相邻记录的 `+0`，在 `0x32D7D0–0x32D7E8` 比较 `+4/+8`，只有三个字段都相同才把记录归入同一个 `_DrawBatch` 组。
+
+组开始前 `0x32D6FC` 只调用一次 `CRenderPrimitive::Bind`，组内的 `_DrawBatch` 调用可复用该绑定状态。字段的业务语义尚未从调用方全部确认，因此这里把它们记为三元键 `(j, TBatchID[0], TBatchID[1])`，不擅自命名为材质、纹理或 shader。
+
+可用下面的命令复核三元键比较指令，不把原 SO 写入仓库：
+
+```powershell
+py -3.12 tools\native_batch_key.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
+```
+
+下一步应追踪 `TBatchID` 两个字段的调用方来源，并继续关联材质/纹理状态。
