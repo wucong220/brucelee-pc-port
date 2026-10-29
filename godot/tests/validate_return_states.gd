@@ -45,6 +45,9 @@ func _run() -> void:
     if not _loader_rejects_clip_implemented_true(player):
         quit(1)
         return
+    if not _check_missing_hard_clip_returns_idle(player, opponent):
+        quit(1)
+        return
     print("RETURN_STATE_CANDIDATE_VALIDATION=" + JSON.stringify({
         "idle2": "m01_idle_02",
         "facedownidle": "all_idle_face_down",
@@ -282,6 +285,81 @@ func _enter_facedown(player: PortFighter, opponent: PortFighter) -> bool:
         push_error("impacthardrightlow did not enter looping facedownidle")
         return false
     return true
+
+
+func _check_missing_hard_clip_returns_idle(player: PortFighter, opponent: PortFighter) -> bool:
+    var paths: Dictionary = player._candidate_clip_paths
+    var idle2_returns: Array[String] = ["m01_idle_02"]
+    if not _drop_hard_clip_keep_returns(paths, "all_block_high_hard", idle2_returns):
+        return false
+    if not _contact(player, opponent, "punch", true):
+        return false
+    if not _stun_without_hard_clip(player, "blockstun", "highblockhard", "all_block_high_hard", 11):
+        push_error("highblockhard did not run after all_block_high_hard was removed")
+        return false
+    player._advance_timed_states(player.state_time + 0.001)
+    player._animate_candidate()
+    if not _normal_idle_not(player, "idle2", "m01_idle_02"):
+        push_error("highblockhard entered idle2 without all_block_high_hard")
+        return false
+    var facedown_returns: Array[String] = ["all_idle_face_down", "all_getup_facedwn"]
+    if not _drop_hard_clip_keep_returns(paths, "all_impct_hard_rht_low", facedown_returns):
+        return false
+    if not _contact(player, opponent, "kick", false):
+        return false
+    if not _stun_without_hard_clip(player, "hitstun", "impacthardrightlow", "all_impct_hard_rht_low", 23):
+        push_error("impacthardrightlow did not run after all_impct_hard_rht_low was removed")
+        return false
+    player._advance_timed_states(player.state_time + 0.001)
+    player._animate_candidate()
+    if not _normal_idle_not(player, "facedownidle", "all_idle_face_down"):
+        push_error("impacthardrightlow entered facedownidle without all_impct_hard_rht_low")
+        return false
+    return true
+
+
+func _drop_hard_clip_keep_returns(paths: Dictionary, hard_clip: String, return_clips: Array[String]) -> bool:
+    if not paths.has(hard_clip):
+        push_error("Hard reaction clip was not registered before removal: " + hard_clip)
+        return false
+    for return_clip: String in return_clips:
+        if not paths.has(return_clip):
+            push_error("Return clip missing before removal: " + return_clip)
+            return false
+    paths.erase(hard_clip)
+    if paths.has(hard_clip):
+        push_error("Hard reaction clip stayed registered: " + hard_clip)
+        return false
+    for return_clip: String in return_clips:
+        if not paths.has(return_clip):
+            push_error("Return clip was removed with the hard reaction: " + return_clip)
+            return false
+    return true
+
+
+func _stun_without_hard_clip(player: PortFighter, expected_state: String, action: String, animation_name: String, exit_frame: int) -> bool:
+    return (
+        player.state == expected_state
+        and player.last_reaction_source_action == action
+        and player.last_reaction_animation == animation_name
+        and player.last_reaction_exit_frame == exit_frame
+        and not player.last_reaction_clip_implemented
+        and not player._candidate_clip_paths.has(animation_name)
+    )
+
+
+func _normal_idle_not(player: PortFighter, rejected_state: String, rejected_clip: String) -> bool:
+    return (
+        player.state == "idle"
+        and player.state != rejected_state
+        and _clip_is(player.candidate_animation_clip, "m01_idle_01")
+        and not _clip_is(player.candidate_animation_clip, rejected_clip)
+        and absf(player.source_radius_for_current_animation() - 25.0) <= 0.001
+        and not bool(player.EXACT_REACTIONS["block"][0]["return_implemented"])
+        and not bool(player.EXACT_REACTIONS["hit"][1]["return_implemented"])
+        and not bool(player.EXACT_REACTIONS["block"][0]["clip_implemented"])
+        and not bool(player.EXACT_REACTIONS["hit"][1]["clip_implemented"])
+    )
 
 
 func _loader_rejects_clip_implemented_true(player: PortFighter) -> bool:

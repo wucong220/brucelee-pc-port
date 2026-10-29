@@ -1294,9 +1294,18 @@ func _enter_locomotion_state(next_state: String) -> void:
 func _verified_post_hit_return_state() -> String:
     var profile: Dictionary = _profile_for_animation(last_reaction_animation)
     var return_action: String = String(profile.get("return_action", ""))
-    if return_action == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
+    # The return clip alone must not start a post-hit state. The hard reaction
+    # that links to it has to be registered and marked implemented.
+    var reaction_clip_ready: bool = (
+        last_reaction_clip_implemented
+        and _candidate_clip_paths.has(last_reaction_animation)
+    )
+    if (reaction_clip_ready
+            and return_action == "idle2"
+            and _candidate_clip_paths.has(IDLE2_CLIP)):
         return "idle2"
-    if (return_action == "facedownidle"
+    if (reaction_clip_ready
+            and return_action == "facedownidle"
             and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)
             and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP)):
         return "facedownidle"
