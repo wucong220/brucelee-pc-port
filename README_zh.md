@@ -30,7 +30,7 @@
 14. `lowpunch1/lowkick1` 的帧数、伤害、半径和 impact 字段已从本地 fighting-set 元数据加载到 Godot 配置。命中距离现在按原生公式
     `attackRadius × attackerRadiusScale + defenderAnimationRadius` 计算，并以候选模型
     `173.416 → 1.8` 的高度比例转换到 Godot 世界；该换算属于 `CANDIDATE`，仍未证明原版场景另有全局缩放或位置修正。`prototype_push` 仍为原型值。
-15. `brucelee.set` 的 396 条战斗 links、normal 正面受击映射、格挡映射、反应动作返回窗口及对应 ANM 时长已只读导出到 `reports/reaction_action_inventory.json`。Godot 的 `hitstun/blockstun/push` 尚未替换，仍使用原型规则。
+15. `brucelee.set` 的 396 条战斗 links、normal 正面受击映射、格挡映射、反应动作返回窗口及对应 ANM 时长已只读导出到 `reports/reaction_action_inventory.json`。Godot 的 `hitstun/blockstun` 已按 reaction return frame 配置驱动，并保留 `CANDIDATE` 边界；`push` 仍使用原型规则。
 
 ## 立即运行 Windows PC 原型
 

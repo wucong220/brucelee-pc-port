@@ -69,6 +69,13 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 - `prototype_push` 仍是原型值。帧边界、不同防守动画半径、二维欧氏距离临界值、
   `distance == reach` 的闭区间边界、大步长跨阶段不丢时以及单次命中去重由
   Godot 回归测试覆盖。无效 schema 或几何数据不会部分改写已加载的战斗参数。
+- 原生命中 link 在 normal/medium/frontal 时选择 `impactlightfrontmid`，返回
+  idle 窗口从帧 14 开始；normal/low/frontal 选择 `impactlightfrontlow`，返回
+  窗口从帧 13 开始。Godot 现在把这两个 return frame 除以 30 作为候选 hitstun
+  时长；对应格挡动作使用帧 12，因此候选 blockstun 为 `12/30` 秒。
+- 空 keysequence、keystatus 和 conditions 的原生 size 检查均返回成功，因此这些
+  自动 reaction links 只需命中 `TimeWindowCheck`。Godot 实现仍把帧到状态的映射
+  标为 `CANDIDATE`，因为原版逐帧执行顺序、blending 和位置修正尚未完整实测。
 - `--export-pack` 生成的 PCK 包含路径解析器；用 Godot runtime 从该 PCK 运行
   smoke、真实动画、合成/真实纹理和端到端战斗均成功。
 - 使用 Godot 4.7.2 stable Windows Export Templates 生成 release EXE/PCK；
@@ -78,10 +85,10 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 本地验证输出：
 
 ```text
-PROTOTYPE_VALIDATION={"blocked_kick_target_health":99.4,"ko_and_restart":true,"punch_target_health":95.0}
-COMBAT_CANDIDATE_VALIDATION={"candidate_loaded":true,"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.7999997,"candidate_world_min_y":0.0,"idle_clip":"m01_idle_01","punch_clip":"m01_pnch_low_01","punch_target_health":95.0}
+PROTOTYPE_VALIDATION={"blocked_kick_target_health":99.4,"blockstun_frames":12,"kick_hitstun_frames":13,"ko_and_restart":true,"punch_hitstun_frames":14,"punch_target_health":95.0}
+COMBAT_CANDIDATE_VALIDATION={"candidate_loaded":true,"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.7999997,"candidate_world_min_y":0.0,"idle_clip":"m01_idle_01","punch_clip":"m01_pnch_low_01","punch_hitstun_frames":14,"punch_target_health":95.0}
 CANDIDATE_VALIDATION=PASS
-EXPORT_SELF_TEST={"candidate_textures_loaded":true,"candidate_world_height":1.60938,"candidate_world_min_y":-0.00467,"internal_path_rejected":true,"punch_target_health":95.0}
+EXPORT_SELF_TEST={"candidate_textures_loaded":true,"candidate_world_height":1.60952,"candidate_world_min_y":-0.00477,"internal_path_rejected":true,"punch_hitstun_frames":14,"punch_target_health":95.0}
 WINDOWS_EXE_VALIDATION=PASS
 ```
 
@@ -101,8 +108,8 @@ WINDOWS_EXE_VALIDATION=PASS
 - 战斗配置已静态闭合攻击半径、角色半径倍率、防守动画半径和距离比较；源单位到
   Godot 世界单位的换算、可能存在的原版位置修正、推力和受击方向仍未与原版逐帧录像对齐。
 - 格挡减伤、推力和 `heavy` 仍使用原型规则；`heavy` 仍走占位距离，不套用已恢复公式。
-- `body_part/height/strength/direction` 已作为候选元数据保存，但其受击动作和反馈选择
-  映射尚未闭合。
+- `height/strength/direction` 已映射到 normal reaction actions；`body_part` 到命中
+  部位、受击反馈和推力的运行时映射尚未闭合。
 - Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
   这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。

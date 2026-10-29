@@ -14,6 +14,25 @@ from native_hierarchy_links import HierarchyLinkError, file_offset
 
 _SHA256 = "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70"
 _WORDS = {
+    0x001A0184: 0xE5915008,  # ldr r5,[keysequence,#8] size
+    0x001A0188: 0xE3A03001,  # mov r3,#1
+    0x001A018C: 0xE3A00000,  # mov r0,#0
+    0x001A0194: 0xE1500005,  # cmp r0,r5
+    0x001A019C: 0x3A000004,  # blo non-empty path
+    0x001A01A0: 0xE1550000,  # cmp r5,r0
+    0x001A01A4: 0x83A00000,  # movhi r0,#0
+    0x001A01A8: 0x93A00001,  # movls r0,#1 (empty sequence passes)
+    0x001A0210: 0xE591B008,  # ldr fp,[keystatus,#8] size
+    0x001A0218: 0xE35B0000,  # cmp fp,#0
+    0x001A021C: 0xDA000026,  # ble empty-status path
+    0x001A02BC: 0xE3A00001,  # mov r0,#1 (empty status passes)
+    0x001A3928: 0xE591B008,  # ldr fp,[conditions,#8] size
+    0x001A3934: 0xE35B0000,  # cmp fp,#0
+    0x001A3940: 0xD3A02001,  # movle r2,#1
+    0x001A3948: 0xD58D2004,  # strle r2,[sp,#4]
+    0x001A394C: 0xDA0000B2,  # ble common return
+    0x001A3C1C: 0xE59D0004,  # ldr r0,[sp,#4]
+    0x001A3C20: 0xE28DD034,  # add sp,sp,#0x34
     0x001A8A34: 0xEBFE0E32,  # bl CFighter::TimeWindowCheck
     0x001A8A54: 0xEBFE0C08,  # bl CFighter::InputSequenceCheck
     0x001A8A74: 0xEBFDFDBD,  # bl CFighter::InputStatusCheck

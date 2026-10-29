@@ -501,7 +501,10 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 `TimeWindowCheck`、`InputSequenceCheck`、`InputStatusCheck`、`CheckConditions`，
 四项均通过才调用 `FollowLink`。`TimeWindowCheck` 在
 `0x1A1FA8–0x1A1FBC` 对当前动画帧执行包含端点的闭区间比较，因此配置中的
-`time=[start,end]` 可限定为候选帧窗口。反应动作的返回 links 为：
+`time=[start,end]` 可限定为候选帧窗口。空向量路径也已闭合：
+`InputSequenceCheck`、`InputStatusCheck` 和 `CheckConditions` 在 size 小于等于
+0 时均返回成功。因此带空 keysequence/keystatus/conditions 的返回 link，只需
+`TimeWindowCheck` 命中即可进入 `FollowLink`。反应动作的返回 links 为：
 
 | 反应动作 | 返回 `idle` 窗口 | ANM 总时长 |
 |---|---:|---:|
@@ -515,9 +518,20 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 这说明 ANM 总时长不能直接当硬直时长。以当前两招为例，`lowpunch1` 的
 normal/medium impact 选择 `impactlightfrontmid`，其返回窗口从帧 14 开始；
 `lowkick1` 的 normal/low impact 选择 `impactlightfrontlow`，返回窗口从帧 13
-开始。格挡路径的返回窗口均从帧 12 开始。由于动画速度、blending、输入取消和
-原版运行时位置修正尚未逐项复核，这些值当前只到 `STATIC_SUPPORTED`，
-Godot 仍保留原型 `hitstun=0.30s`、`blockstun=0.14s`。
+开始。格挡路径的返回窗口均从帧 12 开始。
+
+Godot 现在使用 `exit_start_frame / 30` 作为候选状态时间：
+
+| 路径 | 反应动作 | Godot 帧数 | 候选秒数 |
+|---|---|---:|---:|
+| punch hit | `impactlightfrontmid` | 14 | 0.4667 |
+| kick hit | `impactlightfrontlow` | 13 | 0.4333 |
+| 两招格挡 | `midblock` / `lowblock` | 12 | 0.4000 |
+
+该映射仍标为 `CANDIDATE`：自动 link 的输入/条件路径和 return window 已静态
+闭合，但帧更新顺序、blending 及原版运行时位置修正尚未逐帧实测。Godot 的
+视觉 clip 仍只有候选 idle/punch/kick，因此状态时长和源动画半径已接入，
+反应动画图像本身尚未转换。
 
 推力目前不能由 link 时间直接推出。反应动作自身带有 ANM 根位移候选，后续需要
 沿 `UpdatePositionWithRootDisplacement` 和反应 ANM 的 `positions`/`bonepos`
@@ -545,7 +559,7 @@ py -3.12 tools\native_reaction_links.py `
   'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
 ```
 
-结果为 `verified 26 native reaction-link instructions`，退出码 0。
+结果为 `verified 45 native reaction-link instructions`，退出码 0。
 
 ## 全量 impact 聚合
 
