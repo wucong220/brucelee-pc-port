@@ -84,9 +84,7 @@ func _run_check() -> void:
         quit(1)
         return
     var final_bounds: AABB = measured["bounds"]
-    var expected_floor_y: float = (
-        player.global_position.y - PortFighter.PLAYER_ORIGIN_HEIGHT
-    )
+    var expected_floor_y: float = PortFighter.CANDIDATE_FLOOR_Y
     if absf(final_bounds.size.y - PortFighter.CANDIDATE_HEIGHT) > 0.02:
         push_error(
             "Integrated candidate final height is %.6f, expected %.6f"

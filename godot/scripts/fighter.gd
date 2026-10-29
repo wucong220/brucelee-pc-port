@@ -10,6 +10,7 @@ const MAX_HEALTH: float = 100.0
 const CANDIDATE_SOURCE_MIN_Y: float = -0.09393310546875
 const CANDIDATE_SOURCE_HEIGHT: float = 173.415954589844
 const CANDIDATE_HEIGHT: float = 1.8
+const CANDIDATE_FLOOR_Y: float = 0.0
 const PLAYER_ORIGIN_HEIGHT: float = 1.2
 const CANDIDATE_CLIPS: Dictionary = {
     "idle": "m01_idle_01",
@@ -388,6 +389,10 @@ func _animate_visuals() -> void:
 func _animate_candidate() -> void:
     if not candidate_loaded:
         return
+    _candidate_root.global_position.y = (
+        CANDIDATE_FLOOR_Y
+        - CANDIDATE_SOURCE_MIN_Y * (CANDIDATE_HEIGHT / CANDIDATE_SOURCE_HEIGHT)
+    )
     var requested: String = "idle"
     if state in ["startup", "active", "recovery"]:
         if attack_kind == "punch":

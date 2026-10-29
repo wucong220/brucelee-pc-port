@@ -2,6 +2,9 @@ extends Node3D
 ## Gameplay demonstrator: intentionally original, with placeholder meshes.
 ## Original character models/animations and exact rules remain unported.
 
+const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
+const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
+
 var player: PortFighter
 var computer: PortFighter
 var hud: PortHUD
@@ -18,6 +21,86 @@ func _ready() -> void:
     hud = PortHUD.new()
     add_child(hud)
     _reset_match()
+    if OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1":
+        call_deferred("_run_export_self_test")
+
+
+func _run_export_self_test() -> void:
+    await get_tree().process_frame
+    await get_tree().process_frame
+    for _frame: int in 120:
+        await get_tree().physics_frame
+    if not player.candidate_loaded:
+        push_error("EXPORT_SELF_TEST: candidate GLB was not loaded: "
+                + player.candidate_load_error)
+        get_tree().quit(1)
+        return
+    if not player.candidate_textures_loaded:
+        push_error("EXPORT_SELF_TEST: candidate textures were not loaded: "
+                + player.candidate_texture_error)
+        get_tree().quit(1)
+        return
+    if player.candidate_animation_clip != "m01_idle_01":
+        push_error("EXPORT_SELF_TEST: candidate did not start in idle")
+        get_tree().quit(1)
+        return
+    var candidate_root: Node3D = player.get("_candidate_root")
+    if candidate_root == null:
+        push_error("EXPORT_SELF_TEST: candidate root is unavailable")
+        get_tree().quit(1)
+        return
+    var measured: Dictionary = CandidateBounds.scene_bounds(candidate_root)
+    if not measured["error"].is_empty():
+        push_error("EXPORT_SELF_TEST: candidate bounds failed: " + measured["error"])
+        get_tree().quit(1)
+        return
+    var bounds: AABB = measured["bounds"]
+    var expected_floor_y: float = 0.0
+    if bounds.size.y < 1.5 or bounds.size.y > 1.9:
+        push_error("EXPORT_SELF_TEST: animated candidate height is %.6f" % bounds.size.y)
+        get_tree().quit(1)
+        return
+    if absf(bounds.position.y - expected_floor_y) > 0.02:
+        push_error("EXPORT_SELF_TEST: candidate floor is %.6f, expected %.6f" % [
+            bounds.position.y, expected_floor_y,
+        ])
+        get_tree().quit(1)
+        return
+    var internal_path: String = (
+        CandidatePathGuard.repository_root().path_join("internal-candidate.glb")
+    )
+    if CandidatePathGuard.external_path_error(
+            internal_path, "candidate path").is_empty():
+        push_error("EXPORT_SELF_TEST: application-internal candidate path was accepted")
+        get_tree().quit(1)
+        return
+
+    set_physics_process(false)
+    player.set_physics_process(false)
+    computer.set_physics_process(false)
+    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
+    computer.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    if not player.request_attack("punch"):
+        push_error("EXPORT_SELF_TEST: could not start punch")
+        get_tree().quit(1)
+        return
+    player._physics_process(0.2)
+    if absf(computer.health - 95.0) > 0.001:
+        push_error("EXPORT_SELF_TEST: punch target health is %.3f" % computer.health)
+        get_tree().quit(1)
+        return
+    if player.candidate_animation_clip != "m01_pnch_low_01":
+        push_error("EXPORT_SELF_TEST: punch clip was not selected")
+        get_tree().quit(1)
+        return
+    print("EXPORT_SELF_TEST=" + JSON.stringify({
+        "candidate_world_height": bounds.size.y,
+        "candidate_world_min_y": bounds.position.y,
+        "candidate_textures_loaded": player.candidate_textures_loaded,
+        "internal_path_rejected": true,
+        "punch_target_health": computer.health,
+    }))
+    get_tree().quit(0)
 
 func _build_environment() -> void:
     var environment: WorldEnvironment = WorldEnvironment.new()

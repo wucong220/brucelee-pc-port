@@ -40,7 +40,8 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 - 69 根骨骼、idle/punch/kick 三段动画。
 - 动画验证固定检查 69 根骨骼、关键骨骼索引/名称以及三段动画时长。
 - 候选实际包围盒的最低点为 `Y=-0.093933`；Body 高 `166.336`，含头发总高
-  `173.416`。战斗与预览按总高缩放到 `1.8`，并补偿最低点锚定脚底。
+  `173.416`。战斗与预览按总高缩放到 `1.8`；运行时每帧把候选可视根固定到
+  `Y=0` 地面，脚底不再随物理体沉降到地面以下。
 - CPU 包围盒验证只支持当前观察到的单位 Mesh 变换 glTF 绑定布局；战斗集成
   还会独立断言缩放后的世界高度和脚底最低点，不使用实现侧常量作为唯一证据。
 - 头发作为 head 下的无蒙皮附件随头部移动。
@@ -51,6 +52,9 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 - 帧边界、大步长跨阶段不丢时以及单次命中去重由 Godot 回归测试覆盖。
 - `--export-pack` 生成的 PCK 包含路径解析器；用 Godot runtime 从该 PCK 运行
   smoke、真实动画、合成/真实纹理和端到端战斗均成功。
+- 使用 Godot 4.7.2 stable Windows Export Templates 生成 release EXE/PCK；
+  复制到仓库外独立目录后，EXE 内置自检成功加载外部 GLB 和六张纹理，拒绝
+  应用目录内路径，并完成动画、世界边界和出拳伤害验证。
 
 本地验证输出：
 
@@ -58,6 +62,17 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 PROTOTYPE_VALIDATION={"blocked_kick_target_health":99.4,"ko_and_restart":true,"punch_target_health":95.0}
 COMBAT_CANDIDATE_VALIDATION={"candidate_loaded":true,"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.7999997,"candidate_world_min_y":0.0,"idle_clip":"m01_idle_01","punch_clip":"m01_pnch_low_01","punch_target_health":95.0}
 CANDIDATE_VALIDATION=PASS
+EXPORT_SELF_TEST={"candidate_textures_loaded":true,"candidate_world_height":1.60938,"candidate_world_min_y":-0.00467,"internal_path_rejected":true,"punch_target_health":95.0}
+WINDOWS_EXE_VALIDATION=PASS
+```
+
+独立 EXE 复核命令：
+
+```powershell
+.\validate_windows_exe.ps1 `
+  -CandidateGlb 'C:\private\body_hair_idle_punch_kick_candidate.glb' `
+  -TextureRoot 'C:\private\candidate-textures' `
+  -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64_console.exe'
 ```
 
 ## 边界
@@ -66,6 +81,6 @@ CANDIDATE_VALIDATION=PASS
 - 格挡减伤、攻击距离、推力和 `heavy` 仍使用原型规则。
 - `attack_radius/body_part/height/strength/direction` 已作为候选元数据保存，
   但其运行时碰撞和受击反馈映射尚未闭合。
-- PCK 资源包验证已完成；尚未安装匹配的 Windows Export Templates，因此
-  独立 EXE 在无源码目录中的启动与外部资源加载仍待验证。
+- Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
+  这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。
