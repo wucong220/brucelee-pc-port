@@ -9,7 +9,7 @@ import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from kdf_data import KdfError
-from kdf_object import inspect_object
+from kdf_object import _visual_bindings, inspect_object
 
 
 def object_fixture(*, bad_reference=False) -> bytes:
@@ -157,6 +157,25 @@ class TestKdfObject(unittest.TestCase):
             [("scene", None, "frame"), ("pelvis", "scene", "object")],
         )
         self.assertEqual(result["scene_nodes"][1]["position_section"], 3)
+
+
+
+    def test_visual_binding_checks_mesh_reference(self):
+        strings = [{"text": name} for name in ("body", "mesh")]
+        records = [
+            {"ordinal": 0, "first": 0x30000001, "second": 1},
+            {"ordinal": 1, "first": 0x60000000, "second": 0},
+            {"ordinal": 2, "first": 0x30000001, "second": 1},
+            {"ordinal": 3, "first": 0x60000000, "second": 1},
+            {"ordinal": 4, "first": 0x70000000, "second": 0},
+        ]
+        references = [{"path": "objects/body.mesh"}]
+        self.assertEqual(
+            _visual_bindings(records, strings, 0, references),
+            [{"name": "body", "reference_id": 0, "path": "objects/body.mesh"}],
+        )
+        with self.assertRaisesRegex(KdfError, "does not match"):
+            _visual_bindings(records, strings, 0, [{"path": "objects/other.mesh"}])
 
 
 if __name__ == '__main__':

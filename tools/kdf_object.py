@@ -6,7 +6,7 @@ import argparse
 import hashlib
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import struct
 import sys
 
@@ -209,7 +209,29 @@ def _section_value(records: list[dict], index: int) -> int:
     return record["second"]
 
 
-def _parse_scene_tree(records: list[dict], strings: list[dict], transforms: list[dict]) -> dict:
+def _visual_bindings(records: list[dict], strings: list[dict], index: int,
+                     references: list[dict]) -> list[dict]:
+    bindings = []
+    for name, value_index in _dictionary_fields(records, strings, index).items():
+        fields = _dictionary_fields(records, strings, value_index)
+        if "mesh" not in fields:
+            raise KdfError(f"object visual {name!r} has no mesh reference")
+        mesh = records[fields["mesh"]]
+        if mesh["first"] != 0x70000000 or mesh["second"] >= len(references):
+            raise KdfError(f"object visual {name!r} has an invalid mesh reference")
+        path = references[mesh["second"]]["path"]
+        if PurePosixPath(path).stem != name:
+            raise KdfError(f"object visual {name!r} does not match mesh {path!r}")
+        bindings.append({
+            "name": name,
+            "reference_id": mesh["second"],
+            "path": path,
+        })
+    return bindings
+
+
+def _parse_scene_tree(records: list[dict], strings: list[dict], transforms: list[dict],
+                      references: list[dict]) -> dict:
     """Parse the observed relative scene dictionary, or leave it unresolved.
 
     The native parent-pointer representation and runtime draw-call order are
@@ -241,7 +263,7 @@ def _parse_scene_tree(records: list[dict], strings: list[dict], transforms: list
             children = list(child_fields)
         visuals = []
         if "visuals" in fields:
-            visuals = list(_dictionary_fields(records, strings, fields["visuals"]))
+            visuals = _visual_bindings(records, strings, fields["visuals"], references)
         nodes.append({
             "name": name,
             "type": _string_value(records, strings, fields["type"]),
@@ -280,7 +302,7 @@ def inspect_object(raw: bytes) -> dict:
     container = parse_container(raw)
     external = _inspect_external_references(raw, container)
     transforms = _inspect_pose_transforms(raw, container)
-    scene = _parse_scene_tree(container["records"], container["strings"], transforms)
+    scene = _parse_scene_tree(container["records"], container["strings"], transforms, external["references"])
     return {
         'sha256': hashlib.sha256(raw).hexdigest(),
         'decoded_bytes': len(raw),

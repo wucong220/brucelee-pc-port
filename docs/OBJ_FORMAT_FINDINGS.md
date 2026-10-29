@@ -73,6 +73,6 @@ Hair/Body 主网格、subset 材质和六个纹理资源的静态绑定已经单
 
 该文件得到 78 个唯一节点，深度最大 13。类型为 `frame` 75 个、`object` 3 个。每个节点都有一组 `position/rotation/scale`，其 section 集合与上面 78 组姿态完全相同，但树的前序不等于 section 文件顺序。
 
-直接子节点是 `male_01`、`male_01 l clavicle dummy` 和 `male_01 r clavicle dummy`。`male_01` 的 visuals 指向 Body 阴影网格和 Body 主蒙皮网格。Hair 主网格与 Hair 阴影网格分别是深度 9 的 object 节点，visuals 指向同名网格。
+直接子节点是 `male_01`、`male_01 l clavicle dummy` 和 `male_01 r clavicle dummy`。`male_01` 的 visuals 指向 Body 阴影网格和 Body 主蒙皮网格。Hair 主网格与 Hair 阴影网格分别是深度 9 的 object 节点。`visuals` 下的 `mesh` 值是 `0x70000000` 外部引用，basename 必须与 visual 名一致：Hair 主网格为引用 0，Hair 阴影为引用 5，Body 阴影和 Body 主网格为引用 6 和 7。
 
 下一步应继续恢复原生父子指针和最终运行时 draw call 绑定。
