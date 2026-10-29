@@ -22,6 +22,19 @@ _WORDS = {
     0x001A01A0: 0xE1550000,  # cmp r5,r0
     0x001A01A4: 0x83A00000,  # movhi r0,#0
     0x001A01A8: 0x93A00001,  # movls r0,#1 (empty sequence passes)
+    0x001A01B4: 0xE5924008,  # event vector size
+    0x001A01B8: 0xE0607008,  # reverse index into requested sequence
+    0x001A01C4: 0xE06CC006,  # reverse index into event vector
+    0x001A01E4: 0xE79A6007,  # requested string item
+    0x001A01E8: 0xE59C4008,  # event string item at +8
+    0x001A01EC: 0xE1560004,  # compare interned items
+    0x001A01F0: 0x12833001,  # skip nonmatching event
+    0x001A01F4: 0x1AFFFFE6,  # retry with the preceding event
+    0x001A01F8: 0xE5DCC010,  # event byte at +0x10
+    0x001A01FC: 0xE2833001,  # advance event scan
+    0x001A0200: 0xE35C0000,  # check byte
+    0x001A0204: 0x02800001,  # zero byte advances requested match
+    0x001A0208: 0xEAFFFFE1,  # continue reverse scan
     0x001A0210: 0xE591B008,  # ldr fp,[keystatus,#8] size
     0x001A0218: 0xE35B0000,  # cmp fp,#0
     0x001A021C: 0xDA000026,  # ble empty-status path
