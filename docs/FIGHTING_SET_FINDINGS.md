@@ -31,9 +31,9 @@ DATA 头为 `(37870, 0, 0, 0)`，唯一 offset word 为 0，记录从 DATA+24
 | `lowkick1` | 70.0 | `lleg` | `low` | `normal` | `frontal` |
 
 `attack_radius` 的标签为 `0x20000000`，其中 32 位值为单精度浮点；
-其余四项为字符串引用。武器部位、命中高度、强度和方向已有原版枚举值，但它们
-到碰撞体、距离和推力的具体运行时换算尚未闭合，因此候选 Godot 仍保留占位
-range/push。
+其余四项为字符串引用。`body_part` 原始枚举值、高度、强度和方向已经读取，
+但 `body_part` 的运行时语义以及这些字段到碰撞体、距离和推力的换算尚未闭合，
+因此候选 Godot 仍保留占位 range/push。
 
 `TAttackImpact::createcopy`（`0x1A0618`）进一步确认二进制字段布局：
 `+0x10` 通过单精度 VFP 指令复制 `attack_radius`，`+0x14` 复制 `body_part`，
