@@ -127,6 +127,10 @@ var _candidate_root: Node3D
 var _candidate_animation: AnimationPlayer
 var _candidate_clip_paths: Dictionary = {}
 var _candidate_action: String = ""
+var _candidate_character: Node3D
+var _candidate_character_rest_position: Vector3
+var _candidate_skeleton: Skeleton3D
+var _candidate_skeleton_parent: Node
 
 func configure(display_name: String, human: bool, tint: Color) -> void:
     character_name = display_name
@@ -499,6 +503,25 @@ func _try_load_candidate_visual() -> void:
         candidate_load_error = "GLB is missing candidate clips: " + ", ".join(missing)
         push_warning("Player candidate GLB disabled: " + candidate_load_error)
         return
+    # This local candidate has a named character root. Its reaction translation
+    # is not yet mapped to gameplay movement and must not move the visual alone.
+    var character_nodes: Array[Node] = generated.find_children("character", "Node3D", true, false)
+    if character_nodes.size() == 1:
+        _candidate_character = character_nodes[0] as Node3D
+        _candidate_character_rest_position = _candidate_character.position
+        var skeleton_nodes: Array[Node] = _candidate_character.find_children("*", "Skeleton3D", true, false)
+        if skeleton_nodes.size() == 1:
+            _candidate_skeleton = skeleton_nodes[0] as Skeleton3D
+            _candidate_skeleton_parent = _candidate_skeleton.get_parent()
+    # Reaction clips are optional so earlier three-clip local assets still work.
+    for group: String in REACTION_PROFILE_DATA:
+        for height: String in REACTION_PROFILE_DATA[group]:
+            var reaction_name: String = REACTION_PROFILE_DATA[group][height]["animation"]
+            var matched: String = _find_animation_clip(_candidate_animation, reaction_name)
+            if not matched.is_empty() and _candidate_skeleton != null:
+                var clip: Animation = _candidate_animation.get_animation(matched)
+                if _prepare_candidate_reaction(clip):
+                    _candidate_clip_paths[reaction_name] = matched
     var idle: Animation = _candidate_animation.get_animation(_candidate_clip_paths["idle"])
     idle.loop_mode = Animation.LOOP_LINEAR
     var material_result: Dictionary = CandidateMaterialLoader.new().apply_to(
@@ -575,6 +598,34 @@ func _find_animation_clip(player: AnimationPlayer, expected: String) -> String:
         if name == expected or name.ends_with("/" + expected):
             return name
     return ""
+
+
+func _prepare_candidate_reaction(clip: Animation) -> bool:
+    var animation_root: Node = _candidate_animation.get_node_or_null(_candidate_animation.root_node)
+    if animation_root == null:
+        return false
+    var character_position_tracks: Array[int] = []
+    for track: int in clip.get_track_count():
+        var kind: int = clip.track_get_type(track)
+        if kind not in [Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D, Animation.TYPE_SCALE_3D]:
+            return false
+        var track_path: NodePath = clip.track_get_path(track)
+        var target: Node = animation_root.get_node_or_null(track_path)
+        if track_path.get_subname_count() > 0:
+            if target != _candidate_skeleton:
+                return false
+            continue # Skeleton bone tracks.
+        if target == _candidate_character:
+            if kind != Animation.TYPE_POSITION_3D:
+                return false
+            character_position_tracks.append(track)
+        # The candidate exporter places the animated skeleton under this parent;
+        # retain its pose transforms as unverified visual motion, not gameplay push.
+        elif target != _candidate_skeleton_parent:
+            return false
+    for track: int in character_position_tracks:
+        clip.track_set_enabled(track, false)
+    return true
 
 
 func _play_candidate_action(action: String) -> void:
@@ -755,6 +806,10 @@ func receive_hit(
     if health <= 0.0:
         state = "ko"
         combat_ko.emit(self)
+    elif _candidate_animation != null and _candidate_clip_paths.has(last_reaction_animation):
+        # A second hit of the same type must start the reaction again.
+        _candidate_animation.stop()
+        _candidate_action = ""
 
 func reset_fighter(start_position: Vector3) -> void:
     global_position = start_position
@@ -808,4 +863,8 @@ func _animate_candidate() -> void:
             requested = "punch"
         elif attack_kind in ["kick", "heavy"]:
             requested = "kick"
+    elif state in ["hitstun", "blockstun"] and _candidate_clip_paths.has(last_reaction_animation):
+        requested = last_reaction_animation
+        if _candidate_action != requested and _candidate_character != null:
+            _candidate_character.position = _candidate_character_rest_position
     _play_candidate_action(requested)
