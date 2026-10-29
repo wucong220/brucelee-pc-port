@@ -68,6 +68,54 @@ DATA 头为 `(37870, 0, 0, 0)`，唯一 offset word 为 0，记录从 DATA+24
 `SEMANTICS_UNVERIFIED`。尚未找到它直接选择碰撞骨骼、受击区域或反馈动画的
 完整消费链，不能只凭 `larm/lleg` 名称推断命中效果。
 
+`CFighter::CheckConditions` 在 `0x1A42E4–0x1A4324` 对关联 fighter 的
+`IsAttacking()` 前置条件完成后，执行以下单精度公式：
+
+```text
+attacker  = [defender_or_other + 0x7C]
+impact    = [attacker + 0x164]
+D         = float[other + 0x80]
+
+reach = float[impact + 0x10] * float[attacker + 0x15C]
+      + GetRadius(other)
+
+if D <= reach:
+    enter 0x1A4384
+```
+
+`0x1A42FC–0x1A430C` 读取 `attacker+0x15C` 和 impact `+0x10` 后做乘法，
+`0x1A4310` 调用 `CFighter::GetRadius`，`0x1A4318` 将两项相加，
+`0x1A431C–0x1A4324` 与 `other+0x80` 比较。结合前文，
+`other+0x80` 是 `CollisionChecker` 写入双方的三维距离缓存，因此该式已经
+证明 `attack_radius` 进入一条距离范围门控。
+
+进入 `0x1A4384` 后还有第二道门控：
+
+```text
+impact_byte = byte[attacker.current_impact + 0]
+state_byte  = byte[attacker + 0x16C]
+
+if impact_byte < state_byte:
+    branch to 0x1A4328
+else:
+    continue at 0x1A439C
+```
+
+`DamageReceiveCheck` 在 `0x1A5614–0x1A562C` 会把
+`impact_byte + 1` 写回 attacker `+0x16C`，但该字节究竟是命中去重、
+连击序号还是其他状态仍不能仅凭局部指令命名。
+
+证据等级：
+
+- `STATIC_VERIFIED`：`IsAttacking` 前置分支；reach 公式的两个乘数、加法
+  与 `other+0x80` 比较；`impact+0` 和 attacker `+0x16C` 的字节比较。
+- `STATIC_SUPPORTED`：`r5+0x7C` 的关联 fighter 是当前攻击者，
+  `GetRadius(r5)` 提供另一方的碰撞半径；该组合控制攻击距离门控。
+- `UNVERIFIED`：比较通过后最终是否命中、`attack_radius` 的物理单位、
+  第二道字节门控的正式业务名称，以及如何映射到 Godot 的世界尺度和
+  `range`。候选原型继续保留占位 range，不能直接把原始 70.0 当成 Godot
+  米制距离。
+
 `CBeatEmUpGame::CollisionChecker`（`0x179328`，大小 `0x4F4`）进一步闭合了
 `CheckConditions` 所读 fighter `+0x80` 的写入来源。函数前半段分别对两个内嵌
 场景对象调用 `gfxScnObj::GetFrame` 和 `gfxScnFrame::GetPos`，把两组三维位置
