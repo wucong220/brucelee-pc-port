@@ -419,3 +419,48 @@ Godot 进程联动，但尚未完成原版逐帧视觉对照、最终 GPU 材质
 退出码 0；`git diff --check` 退出码 0。下一步确认 state 6 的正式枚举名称，
 以及 `attack_radius/body_part/height/strength/direction` 到碰撞和推力的
 运行时换算。
+
+## 全量 impact 聚合
+
+使用完整外层 ZIP 和 `--inventory` 模式重新只读解析后，200 个动作、108 个
+攻击动作和 131 条 impact 的聚合结果如下。原始包与 `data.zpak` 的身份仍以
+SHA-256 约束：
+
+- 外层 ZIP：
+  `429c9c7af3a36d21742c2de60d23c5ecaab5642b9d817564174efc0c5b3b6342`
+- `data.zpak`：
+  `364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c`
+- `brucelee.set` CTX3：
+  `860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c`
+
+复核命令：
+
+```powershell
+py -3.12 tools\kdf_fighting_set.py `
+  --archive 'D:\private\Bruce Lee Dragon Warrior v1.15.26.zip' `
+  --inventory
+```
+
+完整聚合 JSON 见
+[`reports/fighting_set_inventory.json`](../reports/fighting_set_inventory.json)。
+该报告只含哈希、计数、枚举值和帧窗口，不含原版资源字节。
+
+字段分布：
+
+| 字段 | 分布 |
+|---|---|
+| impact/动作 | 1 条 91、2 条 11、3 条 6 |
+| `body_part` | `larm` 79、`rleg` 21、`lleg` 18、`rarm` 13 |
+| `height` | `high` 90、`low` 27、`medium` 14 |
+| `strength` | `hard` 75、`normal` 48、`brutal` 8 |
+| `direction` | `frontal` 101、`fromleft` 23、`fromright` 6、`fromabove` 1 |
+
+`attack_radius` 的 131 条中，`45.0` 有 60 条、`75.0` 有 33 条、
+`70.0` 有 10 条、`80.0` 有 10 条，其余值分布在 `55.0–135.0`。
+`damage_amount` 覆盖 0–20；其中 0 有 32 条，5 有 16 条，6 有 17 条。
+伤害帧窗口覆盖 `0..0` 到 `121..122`，完整逐窗口和逐帧计数保留在聚合 JSON。
+17 个多 impact 动作形成 14 种不同字段/伤害/帧序列，其中一种三 impact
+序列重复 3 次。
+
+这些数值仍是配置层原始数据。攻击半径、部位、高度、强度、方向和帧窗口
+如何进入运行时碰撞、受击和表现系统，仍按前文证据等级判断。
