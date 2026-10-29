@@ -68,6 +68,28 @@ DATA 头为 `(37870, 0, 0, 0)`，唯一 offset word 为 0，记录从 DATA+24
 `SEMANTICS_UNVERIFIED`。尚未找到它直接选择碰撞骨骼、受击区域或反馈动画的
 完整消费链，不能只凭 `larm/lleg` 名称推断命中效果。
 
+对全部 `.text` 中直接读取 fighter `+0x164` current-impact 指针的指令做函数
+归属和局部数据流检查后，当前已分析路径如下：
+
+| 函数/位置 | current impact 的直接字段访问 | 证据 |
+|---|---|---|
+| `CFighter::IsAttacking` `0x1A02C4` | 仅检查指针是否为空 | `+0x14` 未读取 |
+| `CFighter::AttackDamage` `0x1A0358` | `+0xC` 伤害值 | `+0x14` 未读取 |
+| `CFighter::CheckConditions` `0x1A3DB0–0x1A4388` | `+0`、`+0x10`、`+0x18`、`+0x1C`、`+0x20` | `+0x14` 未读取 |
+| `CFighter::DamageReceiveCheck` `0x1A55A0–0x1A562C` | `+0` 字节 | `+0x14` 未读取 |
+| `CBeatEmUpGame::DrawDebugInfo` `0x17B85C`、`0x17B984` | `+0x10` 半径用于调试显示 | `+0x14` 未读取 |
+
+`TAttackImpact::createcopy` `0x1A0618` 会复制 `+0x14` 的引用，
+`TAttackImpact` 销毁路径 `0x1A3870/0x1A38AC` 会处理该引用；这是复制和
+生命周期管理，尚不能构成碰撞或受击语义证据。fighter copy-constructor 在
+`0x17EF10–0x17EF48` 只复制 current-impact 指针本身。
+
+因此当前负证据等级为 `SCAN_SUPPORTED`：在上述直接使用点和函数内数据流中
+没有找到 `body_part+0x14` 到碰撞、扣血、受击部位或表现决策的消费者。
+它仍不是全程序不可消费的证明；未覆盖的形态包括跨基本块指针算术、保存到
+栈后作为 `r0–r3` 传给未知函数、对象复制后的别名以及通过间接调用返回的
+指针。由于这些路径尚未闭合，运行时语义继续保持 `SEMANTICS_UNVERIFIED`。
+
 `CFighter::CheckConditions` 在 `0x1A42E4–0x1A4324` 对关联 fighter 的
 `IsAttacking()` 前置条件完成后，执行以下单精度公式：
 
