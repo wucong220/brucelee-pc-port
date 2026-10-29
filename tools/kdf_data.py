@@ -14,8 +14,7 @@ import zlib
 _SIGNATURE = b'1FDKENONCTX3'
 _DATA_SIGNATURE = b'DATA'
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
-_MAX_STRINGS = 20_000
-_MAX_CONTEXT_STRINGS = 100_000
+_MAX_STRINGS = 100_000
 _MAX_CONTEXT_REFERENCES = 100_000
 _MAX_STRING_BYTES = 1024 * 1024
 _MAX_NODES = 100_000
@@ -64,7 +63,7 @@ def _read_strings(raw: bytes, *, max_strings: int) -> tuple[list[dict], int]:
 
 
 def read_strings(raw: bytes) -> tuple[list[dict], int]:
-    """Read strings with the legacy inspection limit."""
+    """Read strings with the bounded inspection limit."""
     return _read_strings(raw, max_strings=_MAX_STRINGS)
 
 
@@ -87,7 +86,7 @@ def parse_context(raw: bytes) -> dict:
         raise KdfError('CTX3 reference count exceeds limit')
     if retained_count > total_count:
         raise KdfError('CTX3 retained string count exceeds total (unsupported profile)')
-    strings, table_end = _read_strings(raw, max_strings=_MAX_CONTEXT_STRINGS)
+    strings, table_end = _read_strings(raw, max_strings=_MAX_STRINGS)
     padding_length = (table_end - 0x1c) & 3
     reference_start = table_end + padding_length
     if reference_start > len(raw):

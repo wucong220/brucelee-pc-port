@@ -8,7 +8,7 @@ import unittest
 import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from kdf_data import KdfError, parse_container, scalar_property
+from kdf_data import KdfError, parse_container, parse_context, scalar_property
 
 
 def kdf_container(nodes=((0x60000000, 2), (0, 123)), group_count=1, offsets=(0, 0),
@@ -31,7 +31,60 @@ def kdf_container(nodes=((0x60000000, 2), (0, 123)), group_count=1, offsets=(0, 
     return bytes(raw)
 
 
+def kdf_context(text: str, padding_length: int) -> tuple[bytes, int]:
+    encoded = text.encode()
+    raw = bytearray(
+        b'1FDKENONCTX3'
+        + struct.pack('<IIII', 1, 0, 0, 1)
+        + struct.pack(
+            '<II',
+            (zlib.crc32(encoded) + len(encoded)) & 0xffffffff,
+            len(encoded),
+        )
+        + encoded
+        + b'\0'
+    )
+    table_end = len(raw)
+    raw += b'\0' * padding_length
+    raw += b'DATA' + struct.pack('<IIII', 1, 0, 0, 0)
+    return bytes(raw), table_end
+
+
 class TestKdfData(unittest.TestCase):
+    def test_context_string_padding_boundaries(self):
+        cases = [
+            ('aaa', 0),
+            ('bbbb', 1),
+            ('ccccc', 2),
+            ('dddddd', 3),
+        ]
+        for text, expected_padding in cases:
+            raw, table_end = kdf_context(text, expected_padding)
+            with self.subTest(text=text, padding=expected_padding):
+                result = parse_context(raw)
+                self.assertEqual(result['string_table_end'], table_end)
+                self.assertEqual(result['padding_length'], expected_padding)
+                self.assertEqual(result['padding_offset'], table_end)
+                self.assertEqual(result['padding_hex'], '00' * expected_padding)
+                self.assertEqual(result['reference_start'], table_end + expected_padding)
+                self.assertEqual(result['data_offset'], table_end + expected_padding)
+
+                malformed = bytearray(raw)
+                malformed[result['reference_start']:result['reference_start'] + 4] = b'FAIL'
+                with self.assertRaisesRegex(KdfError, 'DATA marker'):
+                    parse_context(bytes(malformed))
+
+    def test_context_and_container_share_string_count_limit(self):
+        over_limit = (
+            b'1FDKENONCTX3'
+            + struct.pack('<IIII', 0, 0, 0, 100_001)
+            + b'\0' * 16
+        )
+        for parser in (parse_context, parse_container):
+            with self.subTest(parser=parser.__name__), self.assertRaisesRegex(
+                    KdfError, 'string count exceeds limit'):
+                parser(over_limit)
+
     def test_record_only_profile_and_invalid_boundaries(self):
         raw = kdf_container(group_count=0, offsets=(0,), payload=b'')
         result = parse_container(raw)

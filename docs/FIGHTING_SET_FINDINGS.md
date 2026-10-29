@@ -1,5 +1,25 @@
 # 李小龙候选战斗配置证据
 
+## 分析基线
+
+本记录对应的原生静态分析对象是完整原包内
+`lib/armeabi/libdefault.so`：ELF32、小端、`ET_DYN`、`EM_ARM`（machine 40），
+SHA-256 为
+`1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70`。
+该 ELF 没有可解析的 `SHT_NOTE`/`.note.gnu.build-id`，因此 Build ID 不可用；
+样本身份以完整 SHA-256 为准。
+
+下文函数地址是 ELF 符号值/虚拟地址，不是进程加载后的绝对地址。`ET_DYN`
+加载时还可能存在 load bias；本文件内的 `.text`、`.rodata` 和 `.plt` 段恰有
+相同的虚拟地址与文件偏移，而 `.data` 的虚拟地址比文件偏移高 `0x1000`。
+因此按某一段读取原始指令或数据时使用
+`file_offset = sh_offset + (va - sh_addr)`，不能把任意地址直接当成文件偏移。
+文中的资源偏移（例如 `0x4B3A`、`0x140ADF6`）属于资源文件或归档流，不是
+ELF 地址。
+
+CTX3 解析器对字符串总数使用同一个 `100,000` 项上限；
+`parse_context` 与 `parse_container` 不再采用不同的字符串上限。
+
 本记录不包含原始资源。完整原包内的 `adreno_200/set/brucelee.set` 位于
 PAKH 索引 1235，PAKD 偏移 `0x140ADF6`，压缩长度 45,581 字节，解码长度
 322,258 字节；解码 SHA-256 为
