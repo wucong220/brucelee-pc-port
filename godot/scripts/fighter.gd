@@ -1145,7 +1145,11 @@ func _disable_candidate_character_position_tracks(clip: Animation) -> void:
         return
     for track: int in clip.get_track_count():
         var kind: int = clip.track_get_type(track)
-        if kind not in [Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D]:
+        if kind not in [
+            Animation.TYPE_POSITION_3D,
+            Animation.TYPE_ROTATION_3D,
+            Animation.TYPE_SCALE_3D,
+        ]:
             continue
         var target: Node = animation_root.get_node_or_null(clip.track_get_path(track))
         if target == _candidate_character:
@@ -1192,12 +1196,10 @@ func _prepare_candidate_reaction(clip: Animation) -> bool:
                 return false
             continue # Skeleton bone tracks.
         if target == _candidate_character:
-            if kind in [Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D]:
-                # Object translation is not gameplay push. Object rotation is not
-                # fighter facing; bone tracks still play as the candidate clip.
-                character_position_tracks.append(track)
-            elif kind != Animation.TYPE_SCALE_3D:
-                return false
+            # Object translation is not gameplay push. Object rotation is not
+            # fighter facing. Object scale must not resize the mesh while the
+            # hit capsule stays fixed. Bone tracks still play.
+            character_position_tracks.append(track)
         # The candidate exporter places the animated skeleton under this parent;
         # retain its pose transforms as unverified visual motion, not gameplay push.
         elif target != _candidate_skeleton_parent:

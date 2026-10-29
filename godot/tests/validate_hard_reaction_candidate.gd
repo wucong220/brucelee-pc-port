@@ -111,7 +111,8 @@ func _check_case(player: PortFighter, opponent: PortFighter, spec: Dictionary) -
             or entry.is_empty()
             or String(entry["return_action"]) != String(spec["return_action"])
             or bool(entry["return_implemented"]) != bool(spec["return_implemented"])
-            or bool(entry["clip_implemented"])):
+            or bool(entry["clip_implemented"])
+            or not _character_object_motion_disabled(player, animation, played)):
         push_error("Hard reaction clip was not played: " + JSON.stringify({
             "expected": expected_animation,
             "state": player.state,
@@ -133,6 +134,42 @@ func _check_case(player: PortFighter, opponent: PortFighter, spec: Dictionary) -
         push_error("Hard reaction did not return explicitly to idle: " + expected_animation)
         return false
     return true
+
+
+
+func _character_object_motion_disabled(player: PortFighter, animation: AnimationPlayer, clip_name: String) -> bool:
+    var clip: Animation = animation.get_animation(clip_name)
+    var animation_root: Node = animation.get_node_or_null(animation.root_node)
+    if clip == null or animation_root == null:
+        return false
+    var character_path: NodePath = NodePath()
+    var found_character_path: bool = false
+    for track: int in clip.get_track_count():
+        var kind: int = clip.track_get_type(track)
+        if kind not in [
+            Animation.TYPE_POSITION_3D,
+            Animation.TYPE_ROTATION_3D,
+            Animation.TYPE_SCALE_3D,
+        ]:
+            return false
+        var track_path: NodePath = clip.track_get_path(track)
+        var target: Node = animation_root.get_node_or_null(track_path)
+        if target == null or String(target.name) != "character":
+            continue
+        if clip.track_is_enabled(track):
+            return false
+        if not found_character_path:
+            character_path = track_path
+            found_character_path = true
+    if not found_character_path:
+        return false
+    var synthetic: Animation = Animation.new()
+    var scale_track: int = synthetic.add_track(Animation.TYPE_SCALE_3D)
+    synthetic.track_set_path(scale_track, character_path)
+    synthetic.scale_track_insert_key(scale_track, 0.0, Vector3(2.0, 3.0, 4.0))
+    if not player._prepare_candidate_reaction(synthetic):
+        return false
+    return not synthetic.track_is_enabled(scale_track)
 
 
 func _exact_entry(player: PortFighter, animation_name: String) -> Dictionary:

@@ -197,6 +197,6 @@ WINDOWS_EXE_VALIDATION=PASS
 
 仓库外 `bruce_candidate_hard_reactions.glb` 在原有九段上增加三条已核对的 Bruce 防守 clip：`all_impct_crotch`、`all_impct_hard_rht_low`、`all_block_high_hard`。GLB JSON 只有这 12 个动画名。`all_impct_crotch` 的 SHA-256 与 `reports/reaction_action_inventory.json` 一致。另外两条的 SHA-256、resource id 和 PAKD offset 与 `reports/brick_thai_low_attack_evidence.json` 的 `bruce_defender_exact_reactions` 一致，并由同一次只读 `read_archive_resource` 复核。原始 ANM 和 GLB 仍留在仓库外。
 
-`all_impct_hard_rht_low` 含一条 raw-fixed `rotations` 轨道。采样为 25 帧 `int16[4]`，按已验证的 `bonerot` Q14 解码后首帧是单位四元数，模长误差与该轨道同一量级。offset 为 0，对应骨架 object `character` 的 `object_rotation_index`。四元数分量顺序，以及对象旋转如何作用到朝向，仍未验证。运行时关闭 character 节点的平移和这条旋转，避免把未验证的对象运动当成 fighter push 或朝向；骨骼轨道仍播放。
+`all_impct_hard_rht_low` 含一条 raw-fixed `rotations` 轨道。采样为 25 帧 `int16[4]`，按已验证的 `bonerot` Q14 解码后首帧是单位四元数，模长误差与该轨道同一量级。offset 为 0，对应骨架 object `character` 的 `object_rotation_index`。四元数分量顺序，以及对象旋转如何作用到朝向，仍未验证。运行时关闭 character 节点的平移、旋转和缩放，避免把未验证的对象运动当成 fighter push、朝向或体型变化；当前样本的 scale 虽是恒等缩放，代码也不保留这条轨道。骨骼轨道仍播放。
 
 没有加载这些 clip 的旧 GLB 仍可使用。缺失硬击 clip 时不改播轻击正面反应。`return_implemented` 不因本轮改为 true。
