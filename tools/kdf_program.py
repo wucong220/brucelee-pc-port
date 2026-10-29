@@ -35,6 +35,8 @@ def inspect_program_bytes(raw: bytes) -> dict:
     """
     if len(raw) > _MAX_RESOURCE_BYTES:
         raise KdfError('decoded resource exceeds inspection size limit')
+    if len(raw) < 0x1C:
+        raise KdfError('truncated program header')
     if not raw.startswith(_SIGNATURE):
         raise KdfError('unsupported program signature')
 
@@ -74,10 +76,15 @@ def inspect_program_bytes(raw: bytes) -> dict:
         )
 
     offset_values = offset_count + 1
+    offset_end = data_offset + 20 + offset_values * 4
+    if offset_end > len(raw):
+        raise KdfError('truncated program offset table')
     offsets = list(struct.unpack_from(
         f'<{offset_values}I', raw, data_offset + 20))
-    record_start = data_offset + 20 + offset_values * 4
+    record_start = offset_end
     record_end = record_start + record_count * 8
+    if record_end > len(raw):
+        raise KdfError('truncated program record table')
     payload_offset = record_end
     payload_end = payload_offset + payload_size
     if payload_end > len(raw):
@@ -95,7 +102,7 @@ def inspect_program_bytes(raw: bytes) -> dict:
         })
 
     sampler_names = []
-    for match in _SAMPLER_RE.finditer(raw):
+    for match in _SAMPLER_RE.finditer(raw, payload_end):
         suffix = match.group(1).decode('ascii')
         sampler_names.append({
             'uniform': f'g_s{suffix}',

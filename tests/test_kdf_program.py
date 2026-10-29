@@ -29,8 +29,9 @@ def program_fixture(*, texture_names=('diffuse', 'normal', 'material')) -> bytes
         raw += struct.pack('<II', identifier, len(encoded)) + encoded + b'\0'
     padding_length = (len(raw) - 0x1C) & 3
     raw += b'\0' * padding_length
+    payload = b'uniform sampler2D g_sFakeMetadataName;\n'
     raw += b'DATA'
-    raw += struct.pack('<IIII', len(records), 3, 15, 0)
+    raw += struct.pack('<IIII', len(records), 3, 15, len(payload))
     raw += struct.pack('<4I', 0, 0, 0, 0)
     for record in records:
         raw += struct.pack('<II', *record)
@@ -38,7 +39,7 @@ def program_fixture(*, texture_names=('diffuse', 'normal', 'material')) -> bytes
         f'uniform sampler2D g_s{name.capitalize()};\n'
         for name in texture_names
     ).encode()
-    raw += b'program-metadata' + sampler_source
+    raw += payload + sampler_source
     return bytes(raw)
 
 
@@ -55,6 +56,10 @@ class TestKdfProgram(unittest.TestCase):
         )
         self.assertEqual(result['shader_source_status'], 'present-but-not-returned')
         self.assertNotIn('uniform sampler2D', json.dumps(result))
+        self.assertNotIn(
+            'fake_metadata_name',
+            [entry['name'] for entry in result['texture_constants']],
+        )
 
     def test_rejects_missing_constant_record_and_sampler_uniform(self):
         raw = bytearray(program_fixture())
@@ -72,6 +77,15 @@ class TestKdfProgram(unittest.TestCase):
         struct.pack_into('<I', raw, data_offset + 12, 16)
         with self.assertRaisesRegex(KdfError, 'unsupported program profile word'):
             inspect_program_bytes(bytes(raw))
+
+    def test_truncation_always_raises_kdf_error(self):
+        raw = program_fixture()
+        data_offset = raw.find(b'DATA')
+        record_start = data_offset + 20 + 4 * 4
+        for cut in (0x1B, data_offset + 19, data_offset + 20,
+                    record_start + 3):
+            with self.subTest(cut=cut), self.assertRaises(KdfError):
+                inspect_program_bytes(raw[:cut])
 
     def test_cli_outputs_program_metadata(self):
         with tempfile.TemporaryDirectory() as temp:

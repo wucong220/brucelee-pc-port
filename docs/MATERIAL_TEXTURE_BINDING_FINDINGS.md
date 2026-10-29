@@ -38,7 +38,8 @@ profile word `15`、44 字节 payload；着色器源码位于其后，工具只�
 | 21 | `normal` |
 | 23 | `material` |
 
-工具从内嵌源码中的 `uniform sampler2D g_s…` 声明取得属性名提示，再要求字符串表和
+工具从 DATA payload 之后的内嵌源码区中扫描 `uniform sampler2D g_s…` 声明，
+取得属性名提示，再要求字符串表和
 `(string_ordinal, 0x40000004)` 常量记录各自唯一。当前三条记录的第二字均为
 `0x40000004`，第一字分别为 `diffuse/normal/material` 的字符串序号。
 未知 profile word、缺失或重复的采样器/名称/记录会失败关闭。
