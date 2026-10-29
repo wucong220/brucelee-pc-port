@@ -213,7 +213,7 @@ WINDOWS_EXE_VALIDATION=PASS
 
 `facedowngetup` 播放 `all_getup_facedwn`，动画半径 25，并在第 16 帧回到普通 idle 的第 0 帧。档案窗口是 `[16, 19]`，linking frame 为 0。不继续进入 `facedownattack`。这不是完整 knockdown。
 
-`facedownko`、`impactfacedown` 和 `facedownattack` 已用只读的 `read_archive_resource`、`_parse_set` 和 `_animation_metadata` 从 `adreno_200/set/brucelee.set` 核对，字段见 [`bruce_facedown_followups.json`](../reports/bruce_facedown_followups.json)。`facedownko` 使用已经加载的 `all_idle_face_down`，半径 100，循环 45 帧，不接受起身，也不应用这次致命攻击的原型 push。缺这条倒地 clip 时仍走站立 `ko`。`impactfacedown` 在仓库外 16 段 `bruce_candidate_facedown_impact.glb` 通过现有轨道检查后播放：动画 `all_impct_facedwn`，半径 80，不循环，第 11 帧回到 `facedownidle` 第 0 帧。触发限于 `facedownidle` 的 `impact` + `oppattackheightlow`，且本次伤害不会把血量降到 0；血量降到 0 仍走现有 `ko`。中高度攻击没有这条链接，仍走原来的站立反应。这段不应用原型 push。GLB SHA-256 是 `1952340a02fa64f779ace554a0d15647ea679ee9e6599dc115c3ccfa3a107705`。原始 ANM 和 GLB 留在仓库外。`facedownko` 使用 `all_idle_face_down.anm`，半径 100，45 帧，30 fps；`defeated` 和 `receivedamage` 的窗口都是 `[0, 45]`，第 45 帧连回自身。`impactfacedown` 是档案里的倒地受击动作名，使用 `all_impct_facedwn.anm`，半径 80，11 帧，30 fps；`receivedamage` 窗口是 `[0, 11]`，第 11 帧进入 `facedownidle`。`facedownattack` 使用 `all_getup_facedwn_attack.anm`，半径 45，35 帧，30 fps；候选运行时从 `facedownidle` 播放，攻击参数为第 6 到 9 帧一次 6 点伤害、半径 120、`rarm/medium/hard/frontal`，第 32 帧回到 `idle`。这只是候选 clip 播放和已恢复字段接入，尚缺原版逐帧录像验收、完整命中盒、受击窗口与物理键位。同 set 里的 `impactfaceup`、`impacttofloor`、`attacktofloor`、`faceupko`、`faceupattack`、`faceupidle` 和 `faceupgetup` 已用同一只读路径核对，字段见 [`bruce_faceup_fields.json`](../reports/bruce_faceup_fields.json)。其中 `impacttofloor`、`faceupidle` 和受限的 `faceupgetup` 已在下面 PC 候选路径接入；其余四个仍是证据记录。
+`facedownko`、`impactfacedown` 和 `facedownattack` 已用只读的 `read_archive_resource`、`_parse_set` 和 `_animation_metadata` 从 `adreno_200/set/brucelee.set` 核对，字段见 [`bruce_facedown_followups.json`](../reports/bruce_facedown_followups.json)。`facedownko` 使用已经加载的 `all_idle_face_down`，半径 100，循环 45 帧，不接受起身，也不应用这次致命攻击的原型 push。缺这条倒地 clip 时仍走站立 `ko`。`impactfacedown` 在仓库外 16 段 `bruce_candidate_facedown_impact.glb` 通过现有轨道检查后播放：动画 `all_impct_facedwn`，半径 80，不循环，第 11 帧回到 `facedownidle` 第 0 帧。触发限于 `facedownidle` 的 `impact` + `oppattackheightlow`，且本次伤害不会把血量降到 0；血量降到 0 仍走现有 `ko`。中高度攻击没有这条链接，仍走原来的站立反应。这段不应用原型 push。GLB SHA-256 是 `1952340a02fa64f779ace554a0d15647ea679ee9e6599dc115c3ccfa3a107705`。原始 ANM 和 GLB 留在仓库外。`facedownko` 使用 `all_idle_face_down.anm`，半径 100，45 帧，30 fps；`defeated` 和 `receivedamage` 的窗口都是 `[0, 45]`，第 45 帧连回自身。`impactfacedown` 是档案里的倒地受击动作名，使用 `all_impct_facedwn.anm`，半径 80，11 帧，30 fps；`receivedamage` 窗口是 `[0, 11]`，第 11 帧进入 `facedownidle`。`facedownattack` 使用 `all_getup_facedwn_attack.anm`，半径 45，35 帧，30 fps；候选运行时从 `facedownidle` 播放，攻击参数为第 6 到 9 帧一次 6 点伤害、半径 120、`rarm/medium/hard/frontal`，第 32 帧回到 `idle`。这只是候选 clip 播放和已恢复字段接入，尚缺原版逐帧录像验收、完整命中盒、受击窗口与物理键位。同 set 里的 `impactfaceup`、`impacttofloor`、`attacktofloor`、`faceupko`、`faceupattack`、`faceupidle` 和 `faceupgetup` 已用同一只读路径核对，字段见 [`bruce_faceup_fields.json`](../reports/bruce_faceup_fields.json)。其中 `impacttofloor`、`faceupidle`、受限的 `faceupgetup` 和受限的 `faceupattack` 已在下面 PC 候选路径接入；`impactfaceup`、`attacktofloor` 和 `faceupko` 仍是证据记录。
 
 character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨道仍播放。12 段硬受击 GLB 不含这三条返回 clip，因此仍在退出帧之后回到普通 idle。
 
@@ -246,13 +246,14 @@ character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨�
 非格挡且伤害后血量大于 0 时进入 `impacttofloor`。`all_stunned_fall`
 从源动画第 21 帧起播，播放到第 48 帧后进入循环的
 `all_idle_face_up`。致命命中保持现有 `ko` 优先级；缺少任一所需 clip
-时不进入该链。`faceupidle` 只在水平输入链接受受限的 `faceupgetup` 出边，
-攻击、受击和 KO 出边仍未接入。
+时不进入该链。单独加载 19 或 20 段候选时，`faceupidle` 只接受受限的
+`faceupgetup` 出边；21 段候选另外接受受限的 `faceupattack` 出边，详见下节。
+普通受击和 KO 出边仍未接入。
 在 `impactfaceup` 和 `faceupko` 尚未接入时，该候选状态的普通、格挡和
 致命命中都被明确忽略，角色保持循环；这是候选降级行为，不是原版受击规则。
 
 这没有解释原版 incoming link 的 `time=[0,0]` 或完整分组优先级，也没有
-接入 `faceupattack`、`impactfaceup`、`faceupko` 或 `attacktofloor`。
+接入 `impactfaceup`、`faceupko` 或 `attacktofloor`。
 `validate_faceup_impact.gd` 验证上述候选条件、第 21/48
 帧边界、循环、半径、缺失 clip、致命命中的降级路径，以及普通和致命攻击
 进入 `faceupidle` 时不会改走通用受击或 KO；它不证明原版逐帧视觉、完整
@@ -280,3 +281,42 @@ character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨�
 帧边界、左右和无效输入、缺 clip 循环、clip 时长/半径/循环标志、第
 19.999/20 帧转换，以及上述攻击路径保持关闭；它不证明原版逐帧视觉、输入
 物理键位或真实转换帧。
+
+## `faceupidle -> faceupattack -> idle` 候选状态链
+
+仓库外
+`C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\faceup-attack-candidate-20261030\bruce_candidate_faceup_attack.glb`
+在上述 20 段候选上增加 `all_getup_faceup_attack`，GLB JSON 恰好 21 个动画名，
+不包含尚未接入的 `m01_attack_to_floor`。文件 SHA-256 是
+`1febe0b41f0b0c616565f4d6b2a67eb9810362d211baaad9b7ef80e8b9c31b86`，
+大小 1,034,624 字节；来源 ANM 的 SHA-256 是
+`c3da3339b7ee5cadfae8a0d0a0723241f104fa1c4189a60c3001b783b1ec0982`。
+原始 ANM 和 GLB 都留在仓库外，不进入 Git。
+
+`faceupidle` 在源帧 `[0,45]` 接受 `aaa`、`abb`、`bcc`、`bdd` 四条三维
+`keysequence`。原型继续用 `J/K/L/U → a/b/c/d` 提供抽象输入，不把这一映射
+冒充原版 Android 物理键位。输入历史记录所属地面 idle 状态，进入 getup、
+attack、其他状态或 reset 时清空，避免 face-down 与 face-up 的残留输入串线。
+如果完整攻击序列与水平 getup 同时成立，输入的第三键会立即进入 attack，
+后续物理更新不会再把同一 `faceupidle` 切到 getup；这确定为 PC 候选处理顺序，
+不是原版 link 优先级证据。
+
+进入后播放 38 帧、30 fps、半径 45 的非循环 `all_getup_faceup_attack`。
+第 `[9,14]` 帧至多造成一次 6 点伤害，攻击半径 90，属性为
+`larm/low/hard/frontal`。档案给出到 `idle` 的 `[37,38]` 直接链接；
+运行时选择第 37 帧切换，只是确定性候选选择。缺少该 clip 时，四条序列均
+保持循环的 `faceupidle`。
+
+`impactablefromground [24,31]` 只接通已经验证的 `impacttofloor` 条件：
+低段、非格挡、伤害后血量仍大于 0。`canblock [27,38]` 只作为该状态的
+保护性格挡门控，因此第 27 到 31 帧的格挡低段不会误走 `impacttofloor`。
+完整格挡反应、其他普通或致命命中路径仍由候选层忽略，不代表原版攻击
+无法打断该动作。
+
+`validate_faceup_attack.gd` 验证 21 段 clip 集合、时长/半径/循环标志、四条序列
+和逆向跳过、输入窗口与状态隔离、攻击优先于 getup、第 9 帧前无伤害、
+第 9 到 14 帧一次伤害、攻击半径与朝向、rear target、格挡和 AI 格挡、
+第 36.999/37 帧返回边界、`impactablefromground` 四个边界及 blocked/
+medium/lethal 负例、缺 clip 回退和 character transform tracks 禁用。
+它不证明三维序列的原版匹配、链接优先级、物理键位、逐帧视觉、完整命中盒，
+也未接入 `impactfaceup`、`faceupko` 或 `attacktofloor`。

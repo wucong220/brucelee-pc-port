@@ -27,12 +27,12 @@ _FLOAT = 5126
 _UNSIGNED_BYTE = 5121
 _UNSIGNED_SHORT = 5123
 _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
-# This face-up slice adds all_stunned_fall and all_idle_face_up to the existing
-# 17-clip Bruce candidate. Keep the limit at the exact number needed by this
-# prototype path; all_getup_faceup is also part of the face-up chain, while
-# all_impct_faceup and the remaining face-up actions are not.
+# This face-up slice adds all_stunned_fall, all_idle_face_up,
+# all_getup_faceup, and all_getup_faceup_attack to the existing 17-clip Bruce
+# candidate. Keep the limit at the exact number needed by this prototype path;
+# all_impct_faceup and the remaining face-up actions are not included.
 # Keep the limit explicit so an accidental unbounded import is rejected.
-_MAX_ANIMATION_FILES = 20
+_MAX_ANIMATION_FILES = 21
 _MAX_RIGID_ATTACHMENTS = 16
 
 
