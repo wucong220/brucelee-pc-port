@@ -143,15 +143,21 @@ if D <= reach:
 
 读取实际 `characters.list` 后，四个 Bruce Lee 条目均省略 `radiusscale`，所以
 其有效值为 `1.0`。`brucelee.set` 中两招的 `attack_radius` 均为 `70.0`；
-`lowpunch1`、`lowkick1` 的动画半径分别为 `40.0`、`50.0`。游戏默认 `idle`
-动作半径是 `50.0`。按静态公式，Bruce 以这两招攻击 idle 防守者时，源距离上限为
-`70 + 50 = 120` 源单位；攻击正在执行 `lowpunch1` 的防守者时上限为 `110`。
+`lowpunch1`、`lowkick1` 的动画半径分别为 `40.0`、`50.0`。
+
+候选 GLB 当前使用的 idle clip 是 `m01_idle_01`；它实际属于 `Default.set`，
+该条目的动画半径为 `25.0`。`brucelee.set` 另有逻辑动作 `idle`，指向
+`m01_idle_04`、半径 `50.0`，但当前候选没有使用该 clip。为避免把另一个动画的
+半径错误套到候选 idle 上，配置按实际 clip 名保留 `25/40/50` 三个值。
+当前候选以这两招攻击 idle 防守者时，源距离上限为 `70 + 25 = 95` 源单位；
+攻击正在执行 `lowpunch1`、`lowkick1` 的防守者时分别为 `110`、`120`。
 
 候选 GLB 的源高度为 `173.415954589844`，Godot 中按目标高度 `1.8` 缩放。
 因此候选运行时暂把上述距离乘以 `1.8 / 173.415954589844`，得到约
-`1.24556` 和 `1.14176` 世界单位。这一步是 `CANDIDATE`：它证明原生公式及
-源配置值，但尚未证明原版场景没有额外全局缩放或位置修正。Godot 现在使用同一
-缩放后的二维欧氏距离，不再使用 `prototype_range` 或独立的固定 z 阈值。
+`0.98607`、`1.14176` 和 `1.24556` 世界单位。这一步是 `CANDIDATE`：
+它证明原生公式及源配置值，但尚未证明原版场景没有额外全局缩放或位置修正。
+Godot 现在使用同一缩放后的二维欧氏距离，不再使用 `prototype_range` 或独立的
+固定 z 阈值。
 
 SO 指令可重复校验：
 
@@ -439,10 +445,23 @@ opaque shader、Hair 使用 blend shader，三项纹理参数均已赋值。
 Godot 进程联动，但尚未完成原版逐帧视觉对照、最终 GPU 材质对照或 Windows
 发布包验收。
 
-复核方式：`py -3.12 tools/kdf_fighting_set.py --archive <本机原包路径> --action lowpunch1 --action lowkick1`。
+复核方式：
+
+```powershell
+py -3.12 tools\kdf_fighting_set.py `
+  --archive <本机原包路径> `
+  --action lowpunch1 --action lowkick1
+py -3.12 tools\kdf_fighting_set.py `
+  --archive <本机原包路径> `
+  --set-path adreno_200\set\Default.set `
+  --action idle
+```
+
+第二条命令输出 `animation_file=m01_idle_01` 和 `animation_radius=25.0`。
 
 Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的帧数、
-伤害、impact 字段、角色半径倍率和源动画半径。该文件只含元数据，不含原版资源。
+伤害、impact 字段、角色半径倍率和当前 clip 的源动画半径。该文件只含元数据，
+不含原版资源。
 命中距离按原生公式计算，再以候选模型高度比例换算；`prototype_push` 仍是候选值，
 `heavy` 仍是原型动作。加载器会拒绝错误 schema、帧率、动作、字段类型、半径值、
 缩放比例和 impact 枚举。
@@ -457,7 +476,8 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 3 条 6 个。当前未发现重复动作名称。全量测试
 `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q` 通过，
 退出码 0；`git diff --check` 退出码 0。`kdf_fighting_set.py` 的选中动作输出
-现在同时包含 `animation_radius`。下一步确认 state 6 的正式枚举名称，以及
+现在同时包含 `animation_radius`，并可用 `--set-path` 读取 `Default.set`
+等同类集。下一步确认 state 6 的正式枚举名称，以及
 `body_part/height/strength/direction` 到受击动作、推力和其他反馈的运行时映射。
 
 ## 全量 impact 聚合

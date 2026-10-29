@@ -78,8 +78,8 @@ func _run_export_self_test() -> void:
     set_physics_process(false)
     player.set_physics_process(false)
     computer.set_physics_process(false)
-    player.reset_fighter(Vector3(-0.45, 1.2, 0.0))
-    computer.reset_fighter(Vector3(0.45, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
+    computer.reset_fighter(Vector3(0.25, 1.2, 0.0))
     if not player.request_attack("punch"):
         push_error("EXPORT_SELF_TEST: could not start punch")
         get_tree().quit(1)

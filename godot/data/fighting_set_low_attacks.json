@@ -6,10 +6,11 @@
     "source_height": 173.415954589844,
     "world_height": 1.8,
     "radius_scale": 1.0,
-    "action_radii": {
-      "idle": 50.0,
-      "punch": 40.0,
-      "kick": 50.0
+    "idle_source_archive": "Default.set",
+    "animation_radii": {
+      "m01_idle_01": 25.0,
+      "m01_pnch_low_01": 40.0,
+      "m01_kick_low_01": 50.0
     }
   },
   "attacks": {

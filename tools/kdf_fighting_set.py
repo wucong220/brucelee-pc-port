@@ -139,31 +139,32 @@ def inspect_bytes(raw: bytes, actions: list[str] | None = None, *, list_actions:
             continue
         if name in found:
             raise KdfError(f'duplicate requested action {name!r}')
-        if 'binary' not in animation or 'attack' not in animation:
-            raise KdfError(f'action {name!r} lacks binary or attack')
-        attack = reader.dictionary(animation['attack'])
-        if 'impacts' not in attack:
-            raise KdfError(f'action {name!r} lacks impacts')
+        if 'binary' not in animation:
+            raise KdfError(f'action {name!r} lacks binary')
         impacts = []
-        for impact_index in reader.array(attack['impacts']):
-            fields = reader.dictionary(impact_index)
-            if 'damage_time' not in fields or 'damage_amount' not in fields:
-                raise KdfError(f'impact {impact_index} lacks damage fields')
-            time_nodes = reader.array(fields['damage_time'])
-            if len(time_nodes) != 2:
-                raise KdfError(f'impact {impact_index} damage_time must have two values')
-            impacts.append({
-                'record': impact_index,
-                'raw_fields': {key: reader.raw(value) for key, value in fields.items()},
-                'decoded_fields': {
-                    key: ({"type": 'integer_array', "values": [reader.scalar(i) for i in time_nodes]}
-                          if key == 'damage_time' else reader.decoded_value(value))
-                    for key, value in fields.items()
-                },
-                'damage_time_raw': [reader.scalar(i) for i in time_nodes],
-                'damage_time_records': [reader.raw(i) for i in time_nodes],
-                'damage_amount_raw': reader.scalar(fields['damage_amount']),
-            })
+        if 'attack' in animation:
+            attack = reader.dictionary(animation['attack'])
+            if 'impacts' not in attack:
+                raise KdfError(f'action {name!r} lacks impacts')
+            for impact_index in reader.array(attack['impacts']):
+                fields = reader.dictionary(impact_index)
+                if 'damage_time' not in fields or 'damage_amount' not in fields:
+                    raise KdfError(f'impact {impact_index} lacks damage fields')
+                time_nodes = reader.array(fields['damage_time'])
+                if len(time_nodes) != 2:
+                    raise KdfError(f'impact {impact_index} damage_time must have two values')
+                impacts.append({
+                    'record': impact_index,
+                    'raw_fields': {key: reader.raw(value) for key, value in fields.items()},
+                    'decoded_fields': {
+                        key: ({"type": 'integer_array', "values": [reader.scalar(i) for i in time_nodes]}
+                              if key == 'damage_time' else reader.decoded_value(value))
+                        for key, value in fields.items()
+                    },
+                    'damage_time_raw': [reader.scalar(i) for i in time_nodes],
+                    'damage_time_records': [reader.raw(i) for i in time_nodes],
+                    'damage_amount_raw': reader.scalar(fields['damage_amount']),
+                })
         found[name] = {
             'name': name,
             'record': index,
@@ -205,8 +206,13 @@ def inspect_bytes(raw: bytes, actions: list[str] | None = None, *, list_actions:
     return report
 
 
-def _read_archive_set(path: Path) -> tuple[bytes, dict]:
-    """Read the identified set from an outer ZIP or data.zpak without exporting it."""
+def _read_archive_set(path: Path, set_path: str = _SET_PATH) -> tuple[bytes, dict]:
+    """Read one named set from an outer ZIP or data.zpak without exporting it."""
+    normalized_path = set_path.replace('\\', '/')
+    if (not normalized_path.startswith('adreno_200/set/')
+            or not normalized_path.lower().endswith('.set')
+            or '..' in normalized_path.split('/')):
+        raise PakError(f'invalid set path: {set_path!r}')
     with _open_zpak_info(path) as (archive, source_hash, zpak_hash):
         members = {item.filename: item for item in archive.infolist() if not item.is_dir()}
         if 'Core.pakh' not in members or 'Core.pakd000' not in members:
@@ -217,9 +223,14 @@ def _read_archive_set(path: Path) -> tuple[bytes, dict]:
         index_bytes = archive.read('Core.pakh')
         records = parse_index(index_bytes)
         directory = parse_directory(index_bytes, records)
-        entries = [item for item in directory['files'] if item['path'].casefold() == _SET_PATH]
+        entries = [
+            item for item in directory['files']
+            if item['path'].casefold() == normalized_path.casefold()
+        ]
         if len(entries) != 1:
-            raise PakError('expected exactly one brucelee.set path')
+            raise PakError(
+                f'expected exactly one {Path(normalized_path).name} path in {normalized_path}'
+            )
         matches = [r for r in records if r.resource_id_hex == entries[0]['resource_id_hex']]
         if len(matches) != 1:
             raise PakError('set resource identity is ambiguous or missing')
@@ -244,9 +255,9 @@ def _read_archive_set(path: Path) -> tuple[bytes, dict]:
 
 
 def inspect_archive(path: Path, actions: list[str] | None = None, *, list_actions: bool = False,
-                    summary: bool = False) -> dict:
+                    summary: bool = False, set_path: str = _SET_PATH) -> dict:
     """Read selected records or list actions without exporting archive contents."""
-    payload, archive = _read_archive_set(path)
+    payload, archive = _read_archive_set(path, set_path)
     report = inspect_bytes(payload, actions, list_actions=list_actions, summary=summary)
     if report['tail_identity_hex'] != archive['resource_id']:
         raise PakError('set CTX3 tail identity differs from the PAKH resource ID')
@@ -351,9 +362,9 @@ def inspect_inventory_bytes(raw: bytes) -> dict:
     }
 
 
-def inspect_archive_inventory(path: Path) -> dict:
+def inspect_archive_inventory(path: Path, set_path: str = _SET_PATH) -> dict:
     """Aggregate all attack impacts from an outer ZIP or data.zpak."""
-    payload, archive = _read_archive_set(path)
+    payload, archive = _read_archive_set(path, set_path)
     report = inspect_inventory_bytes(payload)
     if report['tail_identity_hex'] != archive['resource_id']:
         raise PakError('set CTX3 tail identity differs from the PAKH resource ID')
@@ -370,6 +381,11 @@ def main() -> int:
     selection.add_argument('--list-actions', action='store_true', help='list action names and available animation references')
     selection.add_argument('--inventory', action='store_true', help='aggregate all attack impact fields')
     parser.add_argument('--summary', action='store_true', help='with --list-actions, emit names and counts only')
+    parser.add_argument(
+        '--set-path',
+        default=_SET_PATH,
+        help=f'archive set path for --archive (default: {_SET_PATH})',
+    )
     args = parser.parse_args()
     if (args.source is None) == (args.archive is None):
         parser.error('provide exactly one decoded source path or --archive')
@@ -377,14 +393,14 @@ def main() -> int:
         parser.error('--summary requires --list-actions')
     try:
         if args.inventory and args.archive is not None:
-            result = inspect_archive_inventory(args.archive)
+            result = inspect_archive_inventory(args.archive, args.set_path)
         elif args.inventory:
             with args.source.open('rb') as stream:
                 raw = stream.read(16 * 1024 * 1024 + 1)
             result = inspect_inventory_bytes(raw)
         elif args.archive is not None:
             result = inspect_archive(args.archive, args.action, list_actions=args.list_actions,
-                                     summary=args.summary)
+                                     summary=args.summary, set_path=args.set_path)
         else:
             with args.source.open('rb') as stream:
                 raw = stream.read(16 * 1024 * 1024 + 1)

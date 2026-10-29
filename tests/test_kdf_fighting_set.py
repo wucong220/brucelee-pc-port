@@ -125,6 +125,13 @@ class TestFightingSet(unittest.TestCase):
         with self.assertRaisesRegex(KdfError, 'invalid file reference'):
             inspect_bytes(bytes(bad), list_actions=True)
 
+    def test_selected_action_without_attack_returns_animation_metadata(self):
+        raw, _ = fixture(missing_attack=True)
+        result = inspect_bytes(raw, ['lowkick1'])
+        action = result['actions'][0]
+        self.assertEqual(action['impacts'], [])
+        self.assertEqual(action['animation_radius'], {'type': 'float', 'value': 50.0})
+
     def test_two_actions_and_multiple_impacts(self):
         raw, _ = fixture()
         result = inspect_bytes(raw, ['lowkick1', 'lowpunch1'])
@@ -254,6 +261,15 @@ class TestFightingSet(unittest.TestCase):
             archive_fixture(other, [raw], references=[(0, 'adreno_200/set/other.set')])
             with self.assertRaisesRegex(ValueError, 'exactly one brucelee.set'):
                 inspect_archive(other, ['lowpunch1'])
+            selected = inspect_archive(
+                other,
+                ['lowpunch1'],
+                set_path='adreno_200/set/other.set',
+            )
+            self.assertEqual(
+                selected['archive']['resource_path'],
+                'adreno_200/set/other.set',
+            )
             bad = root / 'wrong-identity.zpak'
             mismatched = raw[:-16] + b'not-the-right-id'
             archive_fixture(bad, [mismatched], references=[(0, 'adreno_200/set/brucelee.set')])

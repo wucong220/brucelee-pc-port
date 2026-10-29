@@ -59,12 +59,16 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
   中校验配置，不再把两招帧、伤害或已恢复的距离公式写死在脚本常量里。
 - 原生距离链为 `attackRadius × fighter+0x15C + defender.GetRadius()`；
   `fighter+0x15C` 来自 character list 的 `radiusscale`，Bruce 缺省值为 `1.0`。
-  两招的 `attackRadius=70`，idle/punch/kick 的源动画半径为 `50/40/50`。
+  两招的 `attackRadius=70`；当前候选 clip 的源半径为
+  `m01_idle_01=25`（`Default.set`）、`m01_pnch_low_01=40`、
+  `m01_kick_low_01=50`（后两者来自 `brucelee.set`）。
 - Godot 用候选模型 `173.416 → 1.8` 的比例把源单位转换为世界单位，因此对手
-  idle 时两招的候选距离上限为约 `1.24556`。源单位是否与原版场景全局单位完全
-  相同仍为 `CANDIDATE`，不能把该换算写成原版运行时已实测。
+  idle 时两招的候选距离上限为约 `0.98607`；对手执行低拳或低踢时分别约为
+  `1.14176`、`1.24556`。源单位是否与原版场景全局单位完全相同仍为
+  `CANDIDATE`，不能把该换算写成原版运行时已实测。
 - `prototype_push` 仍是原型值。帧边界、不同防守动画半径、二维欧氏距离临界值、
-  大步长跨阶段不丢时以及单次命中去重由 Godot 回归测试覆盖。
+  `distance == reach` 的闭区间边界、大步长跨阶段不丢时以及单次命中去重由
+  Godot 回归测试覆盖。无效 schema 或几何数据不会部分改写已加载的战斗参数。
 - `--export-pack` 生成的 PCK 包含路径解析器；用 Godot runtime 从该 PCK 运行
   smoke、真实动画、合成/真实纹理和端到端战斗均成功。
 - 使用 Godot 4.7.2 stable Windows Export Templates 生成 release EXE/PCK；

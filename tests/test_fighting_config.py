@@ -15,10 +15,11 @@ class TestFightingConfig(unittest.TestCase):
             "source_height": 173.415954589844,
             "world_height": 1.8,
             "radius_scale": 1.0,
-            "action_radii": {
-                "idle": 50.0,
-                "punch": 40.0,
-                "kick": 50.0,
+            "idle_source_archive": "Default.set",
+            "animation_radii": {
+                "m01_idle_01": 25.0,
+                "m01_pnch_low_01": 40.0,
+                "m01_kick_low_01": 50.0,
             },
         })
         attacks = data["attacks"]
@@ -56,8 +57,8 @@ class TestFightingConfig(unittest.TestCase):
         self.assertTrue(math.isclose(
             (attacks["punch"]["source_impact"]["attack_radius"]
              * geometry["radius_scale"]
-             + geometry["action_radii"]["idle"]) * world_scale,
-            1.2455601360951705,
+             + geometry["animation_radii"]["m01_idle_01"]) * world_scale,
+            0.9860684410753432,
             rel_tol=0.0,
             abs_tol=1e-12,
         ))
