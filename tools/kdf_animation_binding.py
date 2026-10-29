@@ -19,6 +19,8 @@ _TRACKS = {
     'scales': ('scale_index', 'scale', None, 3, 'skl-scale-index-verified'),
     'positions': ('object_position_index', 'translation', 'object', 3,
                   'unverified'),
+    'rotations': ('object_rotation_index', 'rotation', 'object', 4,
+                  'skl-object-rotation-index-verified'),
 }
 _SECTIONS = {'anmdata', 'anmstatic'}
 
@@ -94,6 +96,7 @@ def _domains(skeleton: dict) -> dict[str, dict[int, dict]]:
         'bone_rotation_index': {},
         'scale_index': {},
         'object_position_index': {},
+        'object_rotation_index': {},
     }
     for node in nodes:
         if not isinstance(node, dict):
@@ -117,7 +120,8 @@ def _domains(skeleton: dict) -> dict[str, dict[int, dict]]:
                 continue
             allowed = (
                 ('bone',) if field.startswith('bone_')
-                else ('object',) if field == 'object_position_index'
+                else ('object',) if field in (
+                    'object_position_index', 'object_rotation_index')
                 else ('bone', 'object')
             )
             value = node[field]
@@ -307,7 +311,9 @@ def bind_animation(
                     'values': [frame[offset_ordinal] for frame in frames],
                     'application_semantics': (
                         'root-motion-application-unverified'
-                        if name == 'positions' else 'unverified'),
+                        if name == 'positions'
+                        else 'object-rotation-application-unverified'
+                        if name == 'rotations' else 'unverified'),
                 })
     if not bindings:
         raise KdfError('animation contains no bound tracks')

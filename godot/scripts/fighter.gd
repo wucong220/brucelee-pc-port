@@ -956,6 +956,25 @@ func _try_load_candidate_visual() -> void:
                 var clip: Animation = _candidate_animation.get_animation(matched)
                 if _prepare_candidate_reaction(clip):
                     _candidate_clip_paths[reaction_name] = matched
+    # Exact hard reactions stay clip_implemented false in JSON. A loaded GLB
+    # can still play one after its tracks pass the same candidate check.
+    for exact_group: String in EXACT_REACTIONS:
+        var exact_entries: Variant = EXACT_REACTIONS[exact_group]
+        if not exact_entries is Array or _candidate_skeleton == null:
+            continue
+        for exact_value: Variant in exact_entries:
+            if not exact_value is Dictionary:
+                continue
+            var exact_entry: Dictionary = exact_value
+            var exact_name: String = String(exact_entry.get("animation", ""))
+            if exact_name.is_empty():
+                continue
+            var matched_exact: String = _find_animation_clip(_candidate_animation, exact_name)
+            if matched_exact.is_empty():
+                continue
+            var exact_clip: Animation = _candidate_animation.get_animation(matched_exact)
+            if _prepare_candidate_reaction(exact_clip):
+                _candidate_clip_paths[exact_name] = matched_exact
     var idle: Animation = _candidate_animation.get_animation(_candidate_clip_paths["idle"])
     idle.loop_mode = Animation.LOOP_LINEAR
     if _candidate_clip_paths.has("move"):
@@ -1125,7 +1144,12 @@ func _disable_candidate_character_position_tracks(clip: Animation) -> void:
     if animation_root == null:
         return
     for track: int in clip.get_track_count():
-        if clip.track_get_type(track) != Animation.TYPE_POSITION_3D:
+        var kind: int = clip.track_get_type(track)
+        if kind not in [
+            Animation.TYPE_POSITION_3D,
+            Animation.TYPE_ROTATION_3D,
+            Animation.TYPE_SCALE_3D,
+        ]:
             continue
         var target: Node = animation_root.get_node_or_null(clip.track_get_path(track))
         if target == _candidate_character:
@@ -1172,8 +1196,9 @@ func _prepare_candidate_reaction(clip: Animation) -> bool:
                 return false
             continue # Skeleton bone tracks.
         if target == _candidate_character:
-            if kind != Animation.TYPE_POSITION_3D:
-                return false
+            # Object translation is not gameplay push. Object rotation is not
+            # fighter facing. Object scale must not resize the mesh while the
+            # hit capsule stays fixed. Bone tracks still play.
             character_position_tracks.append(track)
         # The candidate exporter places the animated skeleton under this parent;
         # retain its pose transforms as unverified visual motion, not gameplay push.
@@ -1441,7 +1466,9 @@ func receive_hit(
         last_reaction_source_action = String(reaction["source_action"])
         last_reaction_animation = String(reaction["animation"])
         last_reaction_exit_frame = int(reaction["exit_start_frame"])
-        last_reaction_clip_implemented = reaction.get("clip_implemented", true) == true
+        var configured_clip: bool = reaction.get("clip_implemented", true) == true
+        var prepared_clip: bool = _candidate_clip_paths.has(last_reaction_animation)
+        last_reaction_clip_implemented = configured_clip or prepared_clip
         state_time = float(last_reaction_exit_frame) / SOURCE_FRAME_RATE
     else:
         last_reaction_source_action = ""
