@@ -54,6 +54,10 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
   尚未观察原版 GPU 的最终 draw call 状态。
 - 真实 GLB、纹理、idle/punch 动画和战斗状态可在同一场景联动。
 - `lowpunch1` 使用帧 5–8、`lowkick1` 使用帧 7–10，基础伤害均为 5。
+- 两招的帧数、伤害、半径和 impact 字段由
+  `godot/data/fighting_set_low_attacks.json` 加载；Godot `PortFighter` 在 `_ready`
+  中校验配置，不再把两招帧和伤害写死在脚本常量里。`prototype_range` 与
+  `prototype_push` 仍是原型值，不是原版碰撞或物理结论。
 - 帧边界、大步长跨阶段不丢时以及单次命中去重由 Godot 回归测试覆盖。
 - `--export-pack` 生成的 PCK 包含路径解析器；用 Godot runtime 从该 PCK 运行
   smoke、真实动画、合成/真实纹理和端到端战斗均成功。
@@ -84,6 +88,8 @@ WINDOWS_EXE_VALIDATION=PASS
 
 - 尚未与原版 Adreno 画面逐帧、逐像素对照；当前只验证了候选材质装配和静态绑定，
   未取得原版运行时 `GetTexture` 返回值或 GPU 最终像素。
+- 战斗配置只证明静态字段和 Godot 候选执行；距离单位换算、碰撞几何、推力和受击方向
+  仍未与原版逐帧录像对齐。
 - 格挡减伤、攻击距离、推力和 `heavy` 仍使用原型规则。
 - `attack_radius/body_part/height/strength/direction` 已作为候选元数据保存，
   但其运行时碰撞和受击反馈映射尚未闭合。

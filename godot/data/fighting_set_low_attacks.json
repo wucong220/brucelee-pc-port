@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "source_archive": "brucelee.set",
+  "frame_rate": 30.0,
+  "attacks": {
+    "punch": {
+      "source_action": "lowpunch1",
+      "animation": "m01_pnch_low_01",
+      "animation_frame_count": 69,
+      "startup_frames": 5,
+      "active_frames": 4,
+      "recovery_frames": 60,
+      "prototype_range": 1.65,
+      "damage": 5.0,
+      "prototype_push": 0.2,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "kick": {
+      "source_action": "lowkick1",
+      "animation": "m01_kick_low_01",
+      "animation_frame_count": 86,
+      "startup_frames": 7,
+      "active_frames": 4,
+      "recovery_frames": 75,
+      "prototype_range": 2.2,
+      "damage": 5.0,
+      "prototype_push": 0.35,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    }
+  }
+}

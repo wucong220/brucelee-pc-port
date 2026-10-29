@@ -27,6 +27,7 @@
 11. `CShaderInstance+0x50` 的 variation pass 位图、`CVisual+0x24` 的实例并集和 `CScnObj::Commit` 的 `1 << pass` 过滤已静态核对；材质/批处理键仍未闭合。
 12. `CGeometryBatcher` 已确认按 `(j, TBatchID[0], TBatchID[1])` 三元键合并相邻 primitive；字段业务语义仍需从调用方追踪。
 13. `CRenderTargetBase::Commit` 已确认以 `CRenderTargetBase+0xCC` 槽位索引 `CShaderInstance+0xD4` 表并复制 TBatchID 两个字；构造函数初始化 0x80 字节，但 `_Update` 有 32 次 8 字节写入，完整表边界和字段业务语义仍未闭合。
+14. `lowpunch1/lowkick1` 的帧数、伤害、半径和 impact 字段已从本地 fighting-set 元数据加载到 Godot 配置，不再把两招时序和伤害写死在 `fighter.gd` 常量中；`prototype_range/prototype_push` 仍为原型值。
 
 ## 立即运行 Windows PC 原型
 

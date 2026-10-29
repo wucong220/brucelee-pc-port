@@ -406,6 +406,11 @@ Godot 进程联动，但尚未完成原版逐帧视觉对照、最终 GPU 材质
 发布包验收。
 
 复核方式：`py -3.12 tools/kdf_fighting_set.py --archive <本机原包路径> --action lowpunch1 --action lowkick1`。
+
+Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的帧数、伤害、
+半径和 impact 字段。该文件只含元数据，不含原版资源；`prototype_range` 和
+`prototype_push` 仍是候选值。加载器会拒绝错误 schema、帧率、动作、字段类型和
+impact 枚举。
 该工具只读选中的原包资源，在内存解析并校验索引、长度和尾部资源 ID；也可
 接受本机已解码的 CTX3 文件。它只支持本文件所观察到的无数据段、直接向前
 相对记录布局，不支持间接项；输出保留原始值。实际原包检查退出码 0；合成
