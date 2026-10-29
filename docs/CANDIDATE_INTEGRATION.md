@@ -153,7 +153,7 @@ WINDOWS_EXE_VALIDATION=PASS
   `prototype_push` 未替换；block ANM 没有 `positions` 轨道也不能证明格挡没有位移。
 - Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
   这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
-- 对手 Brick 已加载 `thai.set` 中与当前四条 clip 对应的低段攻击和动画半径，并关闭 Bruce 时序缩放。硬受击和 `highblockhard` 记在 Bruce 防守配置上；这些 clip、`facedownidle` 和 `idle2` 都还没有实现。ATC 纹理、完整 Thai set、AI 和 knockdown 仍未恢复。
+- 对手 Brick 已加载 `thai.set` 中与当前四条 clip 对应的低段攻击和动画半径，并关闭 Bruce 时序缩放。硬受击和 `highblockhard` 记在 Bruce 防守配置上。JSON 的 `clip_implemented` 仍是 false；加载的 GLB 实际含有对应动画且候选轨道检查通过时，hitstun/blockstun 播放该 clip，不再改播轻击正面反应。`facedownidle` 和 `idle2` 仍未实现，退出帧之后显式回到 idle。这不是原版逐帧视觉验收，也不是 knockdown 或完整 Thai set。ATC 纹理、完整 Thai set、AI 和 knockdown 仍未恢复。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。
 
 ## 候选受击与格挡视觉
@@ -192,3 +192,11 @@ WINDOWS_EXE_VALIDATION=PASS
 选中 `all_impct_light_frnt_mid`。受击期间检查骨架父节点相对首帧的世界位置
 变化不超过 0.5 米，并检查返回 idle 后恢复位置；这个阈值仅用于捕捉明显跳变，
 不是原版距离或视觉准确性的证据。尚无原版逐帧对照或可见窗口人工验收。
+
+## 硬受击候选 clip
+
+仓库外 `bruce_candidate_hard_reactions.glb` 在原有九段上增加三条已核对的 Bruce 防守 clip：`all_impct_crotch`、`all_impct_hard_rht_low`、`all_block_high_hard`。GLB JSON 只有这 12 个动画名。`all_impct_crotch` 的 SHA-256 与 `reports/reaction_action_inventory.json` 一致。另外两条的 SHA-256、resource id 和 PAKD offset 与 `reports/brick_thai_low_attack_evidence.json` 的 `bruce_defender_exact_reactions` 一致，并由同一次只读 `read_archive_resource` 复核。原始 ANM 和 GLB 仍留在仓库外。
+
+`all_impct_hard_rht_low` 含一条 raw-fixed `rotations` 轨道。采样为 25 帧 `int16[4]`，按已验证的 `bonerot` Q14 解码后首帧是单位四元数，模长误差与该轨道同一量级。offset 为 0，对应骨架 object `character` 的 `object_rotation_index`。四元数分量顺序，以及对象旋转如何作用到朝向，仍未验证。运行时关闭 character 节点的平移和这条旋转，避免把未验证的对象运动当成 fighter push 或朝向；骨骼轨道仍播放。
+
+没有加载这些 clip 的旧 GLB 仍可使用。缺失硬击 clip 时不改播轻击正面反应。`return_implemented` 不因本轮改为 true。

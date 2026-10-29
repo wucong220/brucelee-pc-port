@@ -21,6 +21,7 @@ _TRACKS = {
     'bonepos': ('bone_position_index', 'translation', ('bone',), 3),
     'positions': ('object_position_index', 'translation', ('object',), 3),
     'bonerot': ('bone_rotation_index', 'rotation', ('bone',), 4),
+    'rotations': ('object_rotation_index', 'rotation', ('object',), 4),
     'scales': ('scale_index', 'scale', ('bone', 'object'), 3),
 }
 _SHA256 = re.compile(r'[0-9a-f]{64}\Z')

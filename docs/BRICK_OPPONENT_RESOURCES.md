@@ -40,7 +40,7 @@ Object 的 `diffuse/normal/material` 引用与以上三条路径静态一致，�
 | `m03_kck_low_01` | 41 | 30 |
 | `m03_movefwd` | 21 | 30 |
 
-这四条动画现已按 Brick Davis 的 `adreno_200/set/thai.set` 映射到 `idle`、`lowpunch3`、`lowkick3` 和 `movefwd`。角色条目没有 `radiusscale`，缺省倍率是 `1.0`。动画半径是 `43/40/50/50`。`lowpunch3` 为 8/4/26、伤害 7、攻击半径 80，`larm/medium/hard/frontal`。`lowkick3` 为 9/3/29、伤害 7、攻击半径 70，`lleg/low/hard/fromright`。电脑不再把 Bruce 低段时序缩放到这些 clip 上。这只是当前四条 clip 的规则，不是完整 Thai set、AI 或 knockdown。同名动作的半径和返回帧以各自 set 为准。防守方使用自己的 reaction。Bruce 被这两招打中时使用 `impacthardfrontmid`、`impacthardrightlow` 和 `highblockhard`；对应 clip 以及 `facedownidle`、`idle2` 都还没有进入候选。硬击 clip 缺失时不会改播轻击正面反应。
+这四条动画现已按 Brick Davis 的 `adreno_200/set/thai.set` 映射到 `idle`、`lowpunch3`、`lowkick3` 和 `movefwd`。角色条目没有 `radiusscale`，缺省倍率是 `1.0`。动画半径是 `43/40/50/50`。`lowpunch3` 为 8/4/26、伤害 7、攻击半径 80，`larm/medium/hard/frontal`。`lowkick3` 为 9/3/29、伤害 7、攻击半径 70，`lleg/low/hard/fromright`。电脑不再把 Bruce 低段时序缩放到这些 clip 上。这只是当前四条 clip 的规则，不是完整 Thai set、AI 或 knockdown。同名动作的半径和返回帧以各自 set 为准。防守方使用自己的 reaction。Bruce 被这两招打中时使用 `impacthardfrontmid`、`impacthardrightlow` 和 `highblockhard`；对应三条 clip 可在仓库外的 12 段候选中播放；`facedownidle`、`idle2` 仍未进入候选。硬击 clip 缺失时不会改播轻击正面反应。
 
 ## 本地候选导出
 

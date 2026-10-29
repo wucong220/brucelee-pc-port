@@ -32,6 +32,7 @@ _TRACK_CHANNELS = {
     'bonepos': 3,
     'positions': 3,
     'bonerot': 4,
+    'rotations': 4,
     'scales': 3,
 }
 _OFFSET_SEMANTICS = {
@@ -39,6 +40,7 @@ _OFFSET_SEMANTICS = {
     'bonerot': 'skl-bone-rotation-index-verified',
     'scales': 'skl-scale-index-verified',
     'positions': 'unverified',
+    'rotations': 'skl-object-rotation-index-verified',
 }
 _WAVELET_SCALAR_PROPERTIES = (
     'quantizedbits',
@@ -208,9 +210,9 @@ def _decode_raw_fixed(
     data = _array_bytes(raw, container, reference)
     count = reference['element_count']
     stride = reference['element_stride']
-    if track == 'bonerot':
+    if track in ('bonerot', 'rotations'):
         if stride != 8:
-            raise KdfError('raw-fixed bone rotation samples are not int16[4]')
+            raise KdfError(f'raw-fixed {track} samples are not int16[4]')
         values = [
             tuple(value / 16384.0 for value in struct.unpack_from('<4h', data, index * 8))
             for index in range(count)

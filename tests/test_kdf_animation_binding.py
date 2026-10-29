@@ -19,7 +19,8 @@ def animation_fixture(
         *, reference_id=0, reference_marker=0x70000000, extension='skl',
         duplicate_header=False, section_delta=0, sample_delta=0,
         duplicate_target=False, header_overrides=None,
-        bone_only=False, data_marker_in_references=False) -> bytes:
+        bone_only=False, data_marker_in_references=False,
+        include_object_rotation=False) -> bytes:
     headers = {
         'firstframe': 0, 'duration': 3, 'framerate': 30, 'version': 7, 'pose': 1,
     }
@@ -29,6 +30,8 @@ def animation_fixture(
         'scales', 'type', 'rawfixedsample', 'data', 'offset',
         'skeletons/', 'hero', extension,
     ]
+    if include_object_rotation:
+        strings.insert(strings.index('positions') + 1, 'rotations')
     if data_marker_in_references:
         parts = ('skeletons/', 'hero', extension)
         other_strings = [value for value in strings if value not in parts]
@@ -69,6 +72,12 @@ def animation_fixture(
                         (2048, 2048, 2048)], [2, 1, 0]),
         ]),
     ]
+    if include_object_rotation:
+        groups[0][1].append((
+            'rotations',
+            [(0, 0, 0, 16384), (0, 0, 8192, 14189), (0, 0, 0, 16384)],
+            [0],
+        ))
     if bone_only:
         groups[0][1][:] = [track for track in groups[0][1] if track[0] != 'positions']
         groups[1][1][:] = [
@@ -100,9 +109,10 @@ def animation_fixture(
                 0x30000003, sample_start - pointer
                 + (sample_delta if name == 'positions' else 0),
             )
-            width = 4 if name == 'bonerot' else 3
-            code = 'h' if name == 'bonerot' else 'i'
-            stride = width * (2 if name == 'bonerot' else 4)
+            quaternion = name in ('bonerot', 'rotations')
+            width = 4 if quaternion else 3
+            code = 'h' if quaternion else 'i'
+            stride = width * (2 if quaternion else 4)
             flat = [component for value in values for component in value]
             data_section = len(sections)
             sections.append(struct.pack(f'<{len(flat)}{code}', *flat))
@@ -202,6 +212,24 @@ class TestAnimationBinding(unittest.TestCase):
         self.assertEqual(tracks[(42, 'bonerot')]['values'], [[0.0, 0.0, 0.0, 1.0]])
         self.assertEqual(tracks[(42, 'bonerot')]['layout'], 'constant')
         self.assertEqual(result['semantics']['transform_composition'], 'unverified')
+
+    def test_object_rotation_track_uses_the_skeleton_object_index(self):
+        result = bind_animation(
+            animation_fixture(include_object_rotation=True), self.skeleton_raw)
+        tracks = {(item['nodeid'], item['track']): item for item in result['bindings']}
+        rotation = tracks[(17, 'rotations')]
+        self.assertEqual(rotation['index_field'], 'object_rotation_index')
+        self.assertEqual(rotation['offset'], 0)
+        self.assertEqual(rotation['node_type'], 'object')
+        self.assertEqual(rotation['target'], 'rotation')
+        self.assertEqual(rotation['layout'], 'per-frame')
+        self.assertEqual(rotation['decode_status'], 'decoded-fixed-point')
+        self.assertEqual(rotation['values'][0], [0.0, 0.0, 0.0, 1.0])
+        self.assertEqual(rotation['values'][1][2], 0.5)
+        self.assertEqual(
+            rotation['application_semantics'],
+            'object-rotation-application-unverified')
+        self.assertNotIn((90, 'rotations'), tracks)
 
     def test_provided_reference_and_full_hash_are_both_required(self):
         result = bind_animation(
