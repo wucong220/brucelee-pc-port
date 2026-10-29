@@ -24,6 +24,7 @@
 8. Bruce Lee 对象的 `scene/childs` 相对字典已解析为 78 个唯一节点，并与 78 组姿态 section 一一对应。`gid_Type` 的对象、摄像机、灯光、分组、反射体和 primitive 六条创建路径都含有到 `Link` 的直接调用；类型不匹配仍回退到 `AddChild`。详情见 `docs/OBJ_FORMAT_FINDINGS.md`。
 9. `CScnObj::Commit` 到 `CRenderTargetBase::Commit`、`CGeometryBatcher::Commit`、`CRenderPrimitive::Draw` 和 `CProgram::Draw` 的静态批处理路径已核对，最终入口是 `glDrawElements/glDrawArrays`；具体对象的 draw-call 次数和 GPU 像素仍未验证。
 10. `CScnObj::Commit` 按视觉项和 pass 过滤逐个提交 subset。Body 两个视觉项最多形成 4 个 primitive 入批，Hair 两个独立视觉项各最多 1 个；这些入批上限不等于最终 OpenGL draw-call 次数。
+11. `CShaderInstance+0x50` 的 variation pass 位图、`CVisual+0x24` 的实例并集和 `CScnObj::Commit` 的 `1 << pass` 过滤已静态核对；材质/批处理键仍未闭合。
 
 ## 立即运行 Windows PC 原型
 
