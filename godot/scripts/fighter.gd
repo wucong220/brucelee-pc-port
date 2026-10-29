@@ -27,6 +27,7 @@ const HEAVY_ATTACK: Dictionary = {
 }
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
 var ATTACKS: Dictionary = {}
+var attack_config_error: String = ""
 
 
 var character_name: String = "Fighter"
@@ -64,7 +65,8 @@ func configure(display_name: String, human: bool, tint: Color) -> void:
     _color = tint
 
 func _ready() -> void:
-    _load_attack_definitions()
+    if not _load_attack_definitions():
+        push_error("Fighting-set attack config failed closed: " + attack_config_error)
     collision_layer = 2
     collision_mask = 1 | 2
     var capsule: CapsuleShape3D = CapsuleShape3D.new()
@@ -89,37 +91,45 @@ func _ready() -> void:
     _add_mesh(foot, Vector3(0.20, -0.86, 0.0), Color(0.16, 0.16, 0.16))
     _try_load_candidate_visual()
 
-func _load_attack_definitions() -> void:
-    ATTACKS = {"heavy": HEAVY_ATTACK}
+func _load_attack_definitions() -> bool:
+    ATTACKS = {}
+    attack_config_error = ""
     if not FileAccess.file_exists(ATTACK_CONFIG_PATH):
-        push_warning("Fighting-set attack config is missing: " + ATTACK_CONFIG_PATH)
-        return
+        attack_config_error = "missing " + ATTACK_CONFIG_PATH
+        return false
     var file: FileAccess = FileAccess.open(ATTACK_CONFIG_PATH, FileAccess.READ)
     if file == null:
-        push_warning("Fighting-set attack config could not be opened")
-        return
+        attack_config_error = "could not open " + ATTACK_CONFIG_PATH
+        return false
     var parser: JSON = JSON.new()
     var parse_error: Error = parser.parse(file.get_as_text())
     if parse_error != OK:
-        push_warning("Fighting-set attack config JSON is invalid: " + parser.get_error_message())
-        return
+        attack_config_error = "invalid JSON: " + parser.get_error_message()
+        return false
     var parsed: Variant = parser.data
     if not parsed is Dictionary:
-        push_warning("Fighting-set attack config root is not an object")
-        return
+        attack_config_error = "root is not an object"
+        return false
     var loaded: Dictionary = _parse_attack_config(parsed)
     if loaded.is_empty():
-        return
-    for action: String in loaded:
-        ATTACKS[action] = loaded[action]
+        return false
+    loaded["heavy"] = HEAVY_ATTACK
+    ATTACKS = loaded
+    return true
+
+
+func _is_number(value: Variant) -> bool:
+    return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 
 
 func _parse_attack_config(config: Dictionary) -> Dictionary:
-    if int(config.get("schema_version", -1)) != 1:
+    var schema_value: Variant = config.get("schema_version")
+    if not _is_number(schema_value) or int(schema_value) != 1:
         return _reject_attack_config("unsupported schema version")
-    if String(config.get("source_archive", "")) != "brucelee.set":
+    if typeof(config.get("source_archive")) != TYPE_STRING or String(config.get("source_archive")) != "brucelee.set":
         return _reject_attack_config("unexpected source archive")
-    if absf(float(config.get("frame_rate", 0.0)) - SOURCE_FRAME_RATE) > 0.001:
+    var frame_rate_value: Variant = config.get("frame_rate")
+    if not _is_number(frame_rate_value) or absf(float(frame_rate_value) - SOURCE_FRAME_RATE) > 0.001:
         return _reject_attack_config("frame rate does not match the source")
     var configured_attacks: Variant = config.get("attacks")
     if not configured_attacks is Dictionary:
@@ -136,6 +146,13 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
                 "prototype_range", "damage", "prototype_push", "source_impact"]:
             if not entry.has(key):
                 return _reject_attack_config(action + " lacks " + key)
+        if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
+                or not _is_number(entry["recovery_frames"])
+                or not _is_number(entry["animation_frame_count"])
+                or not _is_number(entry["prototype_range"])
+                or not _is_number(entry["damage"])
+                or not _is_number(entry["prototype_push"])):
+            return _reject_attack_config(action + " contains non-numeric values")
         var startup_frames: int = int(entry["startup_frames"])
         var active_frames: int = int(entry["active_frames"])
         var recovery_frames: int = int(entry["recovery_frames"])
@@ -149,8 +166,17 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
                 or float(entry["recovery_frames"]) != float(recovery_frames)
                 or float(entry["animation_frame_count"]) != float(frame_count)):
             return _reject_attack_config(action + " frame counts are not integers")
-        if String(entry["source_action"]).is_empty() or String(entry["animation"]).is_empty():
-            return _reject_attack_config(action + " source identifiers are empty")
+        if typeof(entry["source_action"]) != TYPE_STRING or typeof(entry["animation"]) != TYPE_STRING:
+            return _reject_attack_config(action + " source identifiers are not strings")
+        var expected_source: String = "lowpunch1" if action == "punch" else "lowkick1"
+        var expected_animation: String = "m01_pnch_low_01" if action == "punch" else "m01_kick_low_01"
+        var expected_frame_count: int = 69 if action == "punch" else 86
+        if String(entry["source_action"]) != expected_source:
+            return _reject_attack_config(action + " source action is not " + expected_source)
+        if String(entry["animation"]) != expected_animation:
+            return _reject_attack_config(action + " animation is not " + expected_animation)
+        if frame_count != expected_frame_count:
+            return _reject_attack_config(action + " animation frame count is not " + str(expected_frame_count))
         var attack_range: float = float(entry["prototype_range"])
         var damage: float = float(entry["damage"])
         var push: float = float(entry["prototype_push"])
@@ -163,8 +189,11 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         for key: String in ["attack_radius", "body_part", "height", "strength", "direction"]:
             if not impact.has(key):
                 return _reject_attack_config(action + " impact lacks " + key)
-        if float(impact["attack_radius"]) <= 0.0:
+        if not _is_number(impact["attack_radius"]) or float(impact["attack_radius"]) <= 0.0:
             return _reject_attack_config(action + " impact radius is invalid")
+        for key: String in ["body_part", "height", "strength", "direction"]:
+            if typeof(impact[key]) != TYPE_STRING:
+                return _reject_attack_config(action + " impact enum " + key + " is not a string")
         if String(impact["body_part"]) not in ["larm", "rarm", "lleg", "rleg"]:
             return _reject_attack_config(action + " body part is invalid")
         if String(impact["height"]) not in ["high", "medium", "low"]:
@@ -189,7 +218,7 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
 
 
 func _reject_attack_config(message: String) -> Dictionary:
-    push_warning("Fighting-set attack config disabled: " + message)
+    attack_config_error = message
     return {}
 
 

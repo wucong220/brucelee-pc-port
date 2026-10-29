@@ -41,6 +41,61 @@ func _attack_hits_after_frames(player: PortFighter, opponent: PortFighter, kind:
     return opponent.health < PortFighter.MAX_HEALTH
 
 
+func _raw_attack_entry(action: String) -> Dictionary:
+    var is_punch: bool = action == "punch"
+    return {
+        "source_action": "lowpunch1" if is_punch else "lowkick1",
+        "animation": "m01_pnch_low_01" if is_punch else "m01_kick_low_01",
+        "animation_frame_count": 69 if is_punch else 86,
+        "startup_frames": 5 if is_punch else 7,
+        "active_frames": 4,
+        "recovery_frames": 60 if is_punch else 75,
+        "prototype_range": 1.65 if is_punch else 2.2,
+        "damage": 5.0,
+        "prototype_push": 0.2 if is_punch else 0.35,
+        "source_impact": {
+            "attack_radius": 70.0,
+            "body_part": "larm" if is_punch else "lleg",
+            "height": "medium" if is_punch else "low",
+            "strength": "normal",
+            "direction": "frontal",
+        },
+    }
+
+
+func _raw_attack_config() -> Dictionary:
+    return {
+        "schema_version": 1,
+        "source_archive": "brucelee.set",
+        "frame_rate": 30.0,
+        "attacks": {
+            "punch": _raw_attack_entry("punch"),
+            "kick": _raw_attack_entry("kick"),
+        },
+    }
+
+
+func _config_negative_check(player: PortFighter) -> bool:
+    var cases: Array[Dictionary] = []
+    var wrong_rate: Dictionary = _raw_attack_config()
+    wrong_rate["frame_rate"] = 29.0
+    cases.append(wrong_rate)
+    var fractional: Dictionary = _raw_attack_config()
+    fractional["attacks"]["punch"]["startup_frames"] = 5.5
+    cases.append(fractional)
+    var invalid_enum: Dictionary = _raw_attack_config()
+    invalid_enum["attacks"]["punch"]["source_impact"]["body_part"] = "tail"
+    cases.append(invalid_enum)
+    var wrong_source: Dictionary = _raw_attack_config()
+    wrong_source["attacks"]["kick"]["source_action"] = "other"
+    cases.append(wrong_source)
+    for index in range(cases.size()):
+        if not player._parse_attack_config(cases[index]).is_empty():
+            push_error("Invalid fighting-set config case was accepted: %d" % index)
+            return false
+    return true
+
+
 func _path_guard_check() -> bool:
     var repository_root: String = CandidatePathGuard.repository_root()
     var token: String = str(Time.get_ticks_usec())
@@ -213,6 +268,9 @@ func _run_check() -> void:
         return
     if not player._parse_attack_config({}).is_empty():
         push_error("Invalid fighting-set config was accepted")
+        quit(1)
+        return
+    if not _config_negative_check(player):
         quit(1)
         return
 
