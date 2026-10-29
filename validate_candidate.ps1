@@ -120,6 +120,10 @@ try {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_candidate_animation.gd -- $CandidateGlb --expect-hair
     }
+    Invoke-Checked "Candidate bounds and scale" {
+        & $GodotExe --headless --path $godotProject `
+            --script res://tests/validate_candidate_bounds.gd -- $CandidateGlb
+    }
     Invoke-Checked "Synthetic texture material binding" {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_candidate_textures.gd -- $CandidateGlb
@@ -148,6 +152,10 @@ try {
             & $GodotExe --headless --main-pack $packPath `
                 --script res://tests/validate_candidate_animation.gd `
                 -- $CandidateGlb --expect-hair
+        }
+        Invoke-Checked "Packed candidate bounds and scale" {
+            & $GodotExe --headless --main-pack $packPath `
+                --script res://tests/validate_candidate_bounds.gd -- $CandidateGlb
         }
         Invoke-Checked "Packed synthetic texture material binding" {
             & $GodotExe --headless --main-pack $packPath `

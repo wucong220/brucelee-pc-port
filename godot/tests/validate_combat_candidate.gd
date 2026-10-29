@@ -56,12 +56,19 @@ func _run_check() -> void:
         push_error("Integrated candidate root is unavailable")
         quit(1)
         return
-    var expected_scale: float = 1.8 / 166.0
+    var expected_scale: float = (
+        PortFighter.CANDIDATE_HEIGHT / PortFighter.CANDIDATE_SOURCE_HEIGHT
+    )
     if not candidate_root.scale.is_equal_approx(Vector3.ONE * expected_scale):
         push_error("Integrated candidate scale is incorrect: %s" % candidate_root.scale)
         quit(1)
         return
-    if not candidate_root.position.is_equal_approx(Vector3(0.0, -1.2, 0.0)):
+    var expected_anchor_y: float = (
+        -PortFighter.PLAYER_ORIGIN_HEIGHT
+        - PortFighter.CANDIDATE_SOURCE_MIN_Y * expected_scale
+    )
+    if not candidate_root.position.is_equal_approx(
+            Vector3(0.0, expected_anchor_y, 0.0)):
         push_error(
             "Integrated candidate is not anchored at the fighter origin: %s"
             % candidate_root.position

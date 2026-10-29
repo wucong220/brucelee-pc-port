@@ -7,7 +7,8 @@ signal combat_ko(fighter: PortFighter)
 
 const BASE_SPEED: float = 3.6
 const MAX_HEALTH: float = 100.0
-const CANDIDATE_SOURCE_HEIGHT: float = 166.0
+const CANDIDATE_SOURCE_MIN_Y: float = -0.09393310546875
+const CANDIDATE_SOURCE_HEIGHT: float = 173.415954589844
 const CANDIDATE_HEIGHT: float = 1.8
 const PLAYER_ORIGIN_HEIGHT: float = 1.2
 const CANDIDATE_CLIPS: Dictionary = {
@@ -185,11 +186,13 @@ func _fit_candidate_visual() -> bool:
     if CANDIDATE_SOURCE_HEIGHT <= 0.0:
         return false
     # The local candidate converter preserves the source Z-up height and places
-    # the model origin at the character's feet. Its source bounds are therefore
-    # known even before Godot has flushed the newly attached skeleton transforms.
+    # the model origin near the feet. The measured bounds include the rigid hair
+    # attachment and place the lowest body vertex slightly below source y=0.
     var factor: float = CANDIDATE_HEIGHT / CANDIDATE_SOURCE_HEIGHT
     _candidate_root.scale = Vector3.ONE * factor
-    _candidate_root.position = Vector3(0.0, -PLAYER_ORIGIN_HEIGHT, 0.0)
+    _candidate_root.position = Vector3(
+        0.0, -PLAYER_ORIGIN_HEIGHT - CANDIDATE_SOURCE_MIN_Y * factor, 0.0
+    )
     candidate_visual_height = CANDIDATE_SOURCE_HEIGHT * factor
     return true
 

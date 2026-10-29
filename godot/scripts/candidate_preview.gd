@@ -1,7 +1,8 @@
 extends Node3D
 ## Local candidate animation preview; the original game's behavior is unverified.
 
-const SOURCE_HEIGHT: float = 166.0
+const SOURCE_MIN_Y: float = -0.09393310546875
+const SOURCE_HEIGHT: float = 173.415954589844
 const PREVIEW_HEIGHT: float = 1.8
 const CLIP_NAMES: Dictionary = {
     "idle": "m01_idle_01",
@@ -199,7 +200,9 @@ func _build_environment() -> void:
     add_child(floor)
     model_container = Node3D.new()
     model_container.name = "CandidateModelScale"
-    model_container.scale = Vector3.ONE * (PREVIEW_HEIGHT / SOURCE_HEIGHT)
+    var factor: float = PREVIEW_HEIGHT / SOURCE_HEIGHT
+    model_container.scale = Vector3.ONE * factor
+    model_container.position.y = -SOURCE_MIN_Y * factor
     add_child(model_container)
 
 
