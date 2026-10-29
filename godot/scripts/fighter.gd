@@ -71,6 +71,13 @@ const FACEUP_IMPACT_TO_FLOOR_DURATION_FRAMES: int = 79
 const FACEUP_IMPACT_TO_FLOOR_ENTRY_FRAME: int = 21
 const FACEUP_IMPACT_TO_FLOOR_EXIT_FRAME: int = 48
 const FACEUP_IDLE_DURATION_FRAMES: int = 45
+const FACEUP_GETUP_CLIP: String = "all_getup_faceup"
+const FACEUP_GETUP_DURATION_FRAMES: int = 24
+const FACEUP_GETUP_WINDOW_START: int = 10
+const FACEUP_GETUP_WINDOW_END: int = 45
+# The source links to idle over [20,24]. Switching at source frame 20 is a
+# deterministic candidate choice, not proof of the original transition frame.
+const FACEUP_GETUP_EXIT_FRAME: int = 20
 # UserControlUpdate expires a whole input vector based on the last event's
 # +500 clock value. The clock unit is not proven, so this is an explicit PC
 # prototype lifetime and must not be presented as the original timing.
@@ -96,6 +103,7 @@ const RETURN_ANIMATION_RADII: Dictionary = {
     "all_getup_facedwn_attack": 45.0,
     "all_stunned_fall": 75.0,
     "all_idle_face_up": 75.0,
+    "all_getup_faceup": 40.0,
 }
 const REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -1033,6 +1041,7 @@ func _try_load_candidate_visual() -> void:
             IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
             FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
             FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP,
+            FACEUP_GETUP_CLIP,
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
@@ -1078,6 +1087,11 @@ func _try_load_candidate_visual() -> void:
             _candidate_clip_paths[FACEUP_IMPACT_TO_FLOOR_CLIP]
         )
         faceup_impact_clip.loop_mode = Animation.LOOP_NONE
+    if _candidate_clip_paths.has(FACEUP_GETUP_CLIP):
+        var faceup_getup_clip: Animation = _candidate_animation.get_animation(
+            _candidate_clip_paths[FACEUP_GETUP_CLIP]
+        )
+        faceup_getup_clip.loop_mode = Animation.LOOP_NONE
     for action: String in _candidate_clip_paths:
         _disable_candidate_character_position_tracks(
             _candidate_animation.get_animation(_candidate_clip_paths[action])
@@ -1424,11 +1438,18 @@ func _advance_return_state(delta: float) -> void:
             _enter_locomotion_state("faceupidle")
         return
     if state == "faceupidle":
+        var before: float = state_time
         state_time += maxf(delta, 0.0)
-        var duration: float = float(FACEUP_IDLE_DURATION_FRAMES) / SOURCE_FRAME_RATE
-        if duration > 0.0:
-            while state_time >= duration:
-                state_time -= duration
+        if _faceup_getup_requested(before, state_time):
+            _begin_faceup_getup()
+            return
+        _wrap_return_loop(FACEUP_IDLE_DURATION_FRAMES)
+        return
+    if state == "faceupgetup":
+        state_time += maxf(delta, 0.0)
+        if _reached_source_frame(state_time, FACEUP_GETUP_EXIT_FRAME):
+            _enter_locomotion_state("idle")
+        return
 
 
 func _wrap_return_loop(duration_frames: int) -> void:
@@ -1468,11 +1489,34 @@ func _facedown_getup_requested(before: float, after: float) -> bool:
     )
 
 
+func _faceup_getup_requested(before: float, after: float) -> bool:
+    # brucelee.set uses keystatus left/right. This prototype only has
+    # move_axis, so negative x stands in for left and positive x for right.
+    # This is a candidate PC mapping, not a verified Android input binding.
+    if absf(move_axis.x) <= 0.001 or not _candidate_clip_paths.has(FACEUP_GETUP_CLIP):
+        return false
+    var start_frame: float = minf(before, after) * SOURCE_FRAME_RATE
+    var end_frame: float = maxf(before, after) * SOURCE_FRAME_RATE
+    return (
+        end_frame + 0.0001 >= float(FACEUP_GETUP_WINDOW_START)
+        and start_frame <= float(FACEUP_GETUP_WINDOW_END) + 0.0001
+    )
+
+
 func _begin_facedown_getup() -> void:
     state = "facedowngetup"
     state_time = 0.0
     attack_kind = ""
     _facedown_input_history.clear()
+    _restart_candidate_action()
+
+
+func _begin_faceup_getup() -> void:
+    state = "faceupgetup"
+    state_time = 0.0
+    attack_kind = ""
+    _facedown_input_history.clear()
+    _clear_reaction_tracking()
     _restart_candidate_action()
 
 
@@ -1644,6 +1688,7 @@ func _advance_timed_states(delta: float) -> void:
     if state in [
         "idle2", "facedownidle", "facedownko", "facedowngetup",
         "impactfacedown", "facedownattack", "impacttofloor", "faceupidle",
+        "faceupgetup",
     ]:
         _advance_return_state(delta)
         return
@@ -1675,7 +1720,9 @@ func _advance_state() -> void:
 
 func _try_facedown_attack_contact() -> void:
     if (opponent == null or not is_instance_valid(opponent)
-            or opponent.state in ["ko", "facedownko", "faceupidle"]):
+            or opponent.state in [
+                "ko", "facedownko", "faceupidle", "faceupgetup",
+            ]):
         return
     var dx: float = opponent.global_position.x - global_position.x
     var dz: float = opponent.global_position.z - global_position.z
@@ -1700,7 +1747,9 @@ func _try_facedown_attack_contact() -> void:
 
 func _try_attack_contact() -> void:
     if (opponent == null or not is_instance_valid(opponent)
-            or opponent.state in ["ko", "facedownko", "faceupidle"]):
+            or opponent.state in [
+                "ko", "facedownko", "faceupidle", "faceupgetup",
+            ]):
         return
     var details: Dictionary = ATTACKS[attack_kind]
     var dx: float = opponent.global_position.x - global_position.x
@@ -1757,6 +1806,8 @@ func current_source_animation() -> String:
         return FACEUP_IMPACT_TO_FLOOR_CLIP
     if state == "faceupidle":
         return FACEUP_IDLE_CLIP
+    if state == "faceupgetup":
+        return FACEUP_GETUP_CLIP
     return _owner_idle_animation()
 
 
@@ -1890,7 +1941,7 @@ func receive_hit(
     # impactfaceup and faceupko are not implemented. Keep every incoming hit
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
-    if state in ["ko", "facedownko", "faceupidle"]:
+    if state in ["ko", "facedownko", "faceupidle", "faceupgetup"]:
         return
     var state_before: String = state
     var position_before: float = position.x
@@ -2026,6 +2077,8 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "faceupidle" and _candidate_clip_paths.has(FACEUP_IDLE_CLIP):
         requested = FACEUP_IDLE_CLIP
+    elif state == "faceupgetup" and _candidate_clip_paths.has(FACEUP_GETUP_CLIP):
+        requested = FACEUP_GETUP_CLIP
     elif state == "idle" and _candidate_clip_paths.has("move") and (
             absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001
     ):
