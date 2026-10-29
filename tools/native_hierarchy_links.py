@@ -37,7 +37,13 @@ _WORDS = {
     0x003C1DC8: 0xE58570C4,
     0x003C1DCC: 0xE58570B4,
     0x003C1DD0: 0x058230BC,
+    0x0035BA10: 0xE3530206,
+    0x0035BA60: 0xE153000A,
+    0x0035BF70: 0xEBF70D74,
+    0x0035B420: 0xEBF73F52,
+    0x0035C2E4: 0xEBF73853,
 }
+_CHILD_RELOCATION = (0x00603548, "gid_Childs")
 
 
 class HierarchyLinkError(ValueError):
@@ -59,6 +65,53 @@ def file_offset(elf: bytes, address: int) -> int:
     raise HierarchyLinkError(f"address 0x{address:08x} is outside loadable file bytes")
 
 
+
+def _section(elf: bytes, name: bytes) -> tuple[int, int, int, int, int]:
+    e_shoff = struct.unpack_from("<I", elf, 32)[0]
+    e_shentsize, e_shnum, e_shstrndx = struct.unpack_from("<HHH", elf, 46)
+    if e_shentsize < 40 or e_shoff + e_shnum * e_shentsize > len(elf):
+        raise HierarchyLinkError("ELF section headers are truncated")
+
+    def header(index: int) -> tuple[int, ...]:
+        return struct.unpack_from("<IIIIIIIIII", elf, e_shoff + index * e_shentsize)
+
+    names = header(e_shstrndx)
+    name_base = names[4]
+
+    def section_name(offset: int) -> bytes:
+        end = elf.index(b"\x00", name_base + offset)
+        return elf[name_base + offset:end]
+
+    found = None
+    for index in range(e_shnum):
+        item = header(index)
+        if section_name(item[0]) == name:
+            found = item
+            break
+    if found is None:
+        raise HierarchyLinkError(f"ELF section {name.decode()} is missing")
+    return found[4], found[5], found[6], found[9], name_base
+
+
+def verify_child_relocation(elf: bytes) -> None:
+    address, expected = _CHILD_RELOCATION
+    rel_off, rel_size, _link, _entsize, _names = _section(elf, b".rel.dyn")
+    dynsym_off, _size, dynsym_link, dynsym_entsize, _names = _section(elf, b".dynsym")
+    dynstr_off = _section(elf, b".dynstr")[0]
+    if dynsym_entsize < 16 or rel_size % 8:
+        raise HierarchyLinkError("unexpected dynamic symbol or relocation layout")
+    for index in range(rel_size // 8):
+        rel_address, info = struct.unpack_from("<II", elf, rel_off + index * 8)
+        if rel_address != address:
+            continue
+        name_off = struct.unpack_from("<I", elf, dynsym_off + (info >> 8) * dynsym_entsize)[0]
+        end = elf.index(b"\x00", dynstr_off + name_off)
+        symbol = elf[dynstr_off + name_off:end].decode("ascii", "replace")
+        if expected not in symbol:
+            raise HierarchyLinkError(f"relocation 0x{address:08x} targets {symbol}")
+        return
+    raise HierarchyLinkError(f"relocation 0x{address:08x} was not found")
+
 def verify_bytes(elf: bytes) -> None:
     digest = hashlib.sha256(elf).hexdigest()
     if digest != _SHA256:
@@ -72,6 +125,7 @@ def verify_bytes(elf: bytes) -> None:
             raise HierarchyLinkError(
                 f"instruction 0x{address:08x} is 0x{actual:08x}, expected 0x{expected:08x}"
             )
+    verify_child_relocation(elf)
 
 
 def main() -> int:
@@ -83,7 +137,7 @@ def main() -> int:
     except (OSError, HierarchyLinkError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    print(f"verified {len(_WORDS)} hierarchy instruction words")
+    print(f"verified {len(_WORDS)} hierarchy instruction words and gid_Childs")
     return 0
 
 
