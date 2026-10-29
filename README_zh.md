@@ -26,6 +26,7 @@
 10. `CScnObj::Commit` 按视觉项和 pass 过滤逐个提交 subset。Body 两个视觉项最多形成 4 个 primitive 入批，Hair 两个独立视觉项各最多 1 个；这些入批上限不等于最终 OpenGL draw-call 次数。
 11. `CShaderInstance+0x50` 的 variation pass 位图、`CVisual+0x24` 的实例并集和 `CScnObj::Commit` 的 `1 << pass` 过滤已静态核对；材质/批处理键仍未闭合。
 12. `CGeometryBatcher` 已确认按 `(j, TBatchID[0], TBatchID[1])` 三元键合并相邻 primitive；字段业务语义仍需从调用方追踪。
+13. `CRenderTargetBase::Commit` 已确认从当前 render-target 槽位的 `+0xCC/+0xD4` 表复制 TBatchID 两个字，`j` 来自 Commit 参数；字段业务语义仍未命名。
 
 ## 立即运行 Windows PC 原型
 
