@@ -156,5 +156,16 @@ class TestMaterialBindingReport(unittest.TestCase):
                 parse_mesh_specs(invalid)
 
 
+    def test_mesh_reports_are_required(self):
+        with self.assertRaises(TypeError):
+            build_report(object_report(), program_report())
+        with self.assertRaisesRegex(KdfError, 'exactly hair and body'):
+            build_report(
+                object_report(),
+                program_report(),
+                {'hair': mesh_report('hair')},
+            )
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -106,7 +106,7 @@ def _attach_subsets(binding: dict, mesh_report: dict) -> None:
 
 
 def build_report(object_report: dict, program_report: dict,
-                 mesh_reports: dict[str, dict] | None = None) -> dict:
+                 mesh_reports: dict[str, dict]) -> dict:
     declared = [entry['name'] for entry in program_report['texture_constants']]
     if set(declared) != set(_TEXTURE_PROPERTIES):
         raise KdfError(
@@ -116,11 +116,10 @@ def build_report(object_report: dict, program_report: dict,
         'hair': _single_binding(object_report, 'hair'),
         'body': _single_binding(object_report, 'body'),
     }
-    if mesh_reports is not None:
-        if set(mesh_reports) != {'hair', 'body'}:
-            raise KdfError('mesh reports must contain exactly hair and body')
-        for kind in ('hair', 'body'):
-            _attach_subsets(bindings[kind], mesh_reports[kind])
+    if set(mesh_reports) != {'hair', 'body'}:
+        raise KdfError('mesh reports must contain exactly hair and body')
+    for kind in ('hair', 'body'):
+        _attach_subsets(bindings[kind], mesh_reports[kind])
     return {
         'schema_version': 2,
         'evidence_level': 'STATIC_VERIFIED',
