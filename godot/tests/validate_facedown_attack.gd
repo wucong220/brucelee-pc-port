@@ -72,7 +72,7 @@ func _run() -> void:
         "attack_radius": PortFighter.FACEDOWN_ATTACK_RADIUS,
         "prototype_sequences": ["aaa", "abb", "bcc", "bdd"],
         "prototype_input_window_seconds": (
-            PortFighter.FACEDOWN_INPUT_PROTOTYPE_WINDOW_SECONDS
+            PortFighter.GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS
         ),
         "physical_mapping": "prototype-only J/K/L/U",
         "missing_clip_fallback": "facedownidle",
@@ -175,11 +175,11 @@ func _check_sequence_window_expiry(player: PortFighter, opponent: PortFighter) -
     if player.record_virtual_press("a") or player.record_virtual_press("b"):
         push_error("abb started before its final b")
         return false
-    player._time += PortFighter.FACEDOWN_INPUT_PROTOTYPE_WINDOW_SECONDS + 0.01
+    player._time += PortFighter.GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS + 0.01
     if player.record_virtual_press("b"):
         push_error("expired abbreviated input matched abb")
         return false
-    if player._facedown_input_history.size() != 1:
+    if player._ground_attack_input_history.size() != 1:
         push_error("expired input vector was not cleared before the next press")
         return false
     return true
@@ -191,11 +191,11 @@ func _check_reset_clears_input_history(
     if not _enter_facedown(player, opponent):
         return false
     if (player.record_virtual_press("a")
-            or player._facedown_input_history.size() != 1):
+            or player._ground_attack_input_history.size() != 1):
         push_error("Facedown input history did not record a partial sequence")
         return false
     player.reset_fighter(Vector3(0.6, 1.2, 0.0))
-    if not player._facedown_input_history.is_empty():
+    if not player._ground_attack_input_history.is_empty():
         push_error("Fighter reset did not clear facedown input history")
         return false
     return true

@@ -338,13 +338,17 @@ func _think_ai(delta: float) -> void:
 func _player_attack_poses_guard_threat() -> bool:
     if player.state in ["startup", "active"]:
         return true
-    if player.state != "facedownattack":
+    if player.state not in ["facedownattack", "faceupattack"]:
         return false
     var source_frame: float = player.state_time * PortFighter.SOURCE_FRAME_RATE
-    # This prototype exposes the recovery attack directly from facedownidle,
-    # so frames 0-5 act as the AI-visible startup before contact starts at 6.
-    # Damage is still limited to the recovered 6-9 window in fighter.gd.
-    return source_frame <= float(PortFighter.FACEDOWN_ATTACK_DAMAGE_END_FRAME) + 0.0001
+    var damage_end_frame: int = (
+        PortFighter.FACEDOWN_ATTACK_DAMAGE_END_FRAME
+        if player.state == "facedownattack"
+        else PortFighter.FACEUP_ATTACK_DAMAGE_END_FRAME
+    )
+    # These prototype inputs enter the recovery attacks directly, so the
+    # AI-visible startup extends until the recovered damage window ends.
+    return source_frame <= float(damage_end_frame) + 0.0001
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

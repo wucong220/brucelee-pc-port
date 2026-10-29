@@ -19,7 +19,7 @@ class TestGltfPublication(unittest.TestCase):
                     root / 'missing.mesh',
                     root / 'candidate.glb',
                     animation_sources=[
-                        root / f'animation-{index}.anm' for index in range(21)
+                        root / f'animation-{index}.anm' for index in range(22)
                     ],
                 )
             self.assertFalse((root / 'candidate.glb').exists())
