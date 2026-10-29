@@ -1,4 +1,6 @@
 extends SceneTree
+
+var _ko_hit_count: int = 0
 ## Play the verified facedown low-impact reaction from the 16-clip candidate.
 
 
@@ -156,6 +158,17 @@ func _check_lethal_facedown_ko(player: PortFighter, opponent: PortFighter) -> bo
     if player.state != "facedownko" or _clip_is(player.candidate_animation_clip, "all_getup_facedwn"):
         push_error("facedownko accepted a getup")
         return false
+    _ko_hit_count = 0
+    if not opponent.combat_hit.is_connected(_count_ko_hit):
+        opponent.combat_hit.connect(_count_ko_hit)
+    if not _follow_up(player, opponent, "kick"):
+        return false
+    if _ko_hit_count != 0 or opponent.combo_hits != 0 or opponent._attack_connected:
+        push_error("facedownko still recorded a new hit")
+        return false
+    if player.state != "facedownko" or player.health > 0.0:
+        push_error("A later attack changed facedownko")
+        return false
     if not _enter_facedown(player, opponent):
         return false
     player.health = float(opponent.ATTACKS["punch"]["damage"])
@@ -296,3 +309,13 @@ func _find_clip(animation: AnimationPlayer, expected: String) -> String:
 
 func _clip_is(actual: String, expected: String) -> bool:
     return actual == expected or actual.ends_with("/" + expected)
+
+
+func _count_ko_hit(
+        _attacker: PortFighter,
+        _defender: PortFighter,
+        _action: String,
+        _damage: float,
+        _blocked: bool
+) -> void:
+    _ko_hit_count += 1

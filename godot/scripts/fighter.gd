@@ -1487,7 +1487,7 @@ func _advance_state() -> void:
             _enter_locomotion_state(next_state)
 
 func _try_attack_contact() -> void:
-    if opponent == null or not is_instance_valid(opponent) or opponent.state == "ko":
+    if opponent == null or not is_instance_valid(opponent) or opponent.state == "ko" or opponent.state == "facedownko":
         return
     var details: Dictionary = ATTACKS[attack_kind]
     var dx: float = opponent.global_position.x - global_position.x
