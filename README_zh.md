@@ -20,6 +20,7 @@
    Godot 4.7.2 Windows Export Templates 生成并在仓库外验证原生 Windows
    EXE/PCK，非安卓模拟器。
 6. 三条真实 ANM 的轨道声明指针、轨道组、raw-fixed Q12/Q14 和五条 wavelet 轨道的逐帧候选值已由实际资源与静态原生指令交叉核对。候选值尚未经过原生运行时对照或 Godot 动画播放验证。测试命令和退出码见 `docs/SKL_ANM_FORMAT_FINDINGS.md`。
+7. Hair/Body 的 `diffuse`、`normal`、`material` 外部纹理引用、`Diffuse.program` 纹理常量以及原生 `CMaterial::Init` → `CManager::GetTexture` 数据流已静态闭合；运行时 GPU 最终像素仍未对照。详情见 `docs/MATERIAL_TEXTURE_BINDING_FINDINGS.md`。
 
 ## 立即运行 Windows PC 原型
 
@@ -119,7 +120,7 @@ BruceLee_PC_Port_Phase1/
 │   ├── candidate_symbols.csv
 │   ├── pak_frames.csv
 │   └── decoded_frames/   # 忽略目录；本机样本另存位置见上方说明
-└── docs/{PHASES,PAK_DECODE_FINDINGS,KDF_STRING_FINDINGS,TEX_FORMAT_FINDINGS,NATIVE_ANIMATION_EVIDENCE,SKL_ANM_FORMAT_FINDINGS,OBJ_FORMAT_FINDINGS,MESH_FORMAT_FINDINGS,GHIDRA_PLAN,LEGAL}.md
+└── docs/{PHASES,PAK_DECODE_FINDINGS,KDF_STRING_FINDINGS,TEX_FORMAT_FINDINGS,NATIVE_ANIMATION_EVIDENCE,SKL_ANM_FORMAT_FINDINGS,OBJ_FORMAT_FINDINGS,MATERIAL_TEXTURE_BINDING_FINDINGS,MESH_FORMAT_FINDINGS,GHIDRA_PLAN,LEGAL}.md
 ```
 
 ## 需要避免的错误

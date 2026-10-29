@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "evidence_level": "STATIC_VERIFIED",
+  "object_sha256": "d97f09cb4b4f5c05fd3ddd0f3fa73d8d03440f113baa598ecc5891599e3e2a65",
+  "object_decoded_bytes": 15481,
+  "program_sha256": "124523adf6639e65f02e925a8f507b4911005639efabf5a8b1be1e9002bd6908",
+  "program_decoded_bytes": 6630,
+  "program_texture_constants": [
+    "diffuse",
+    "normal",
+    "material"
+  ],
+  "bindings": {
+    "hair": {
+      "mesh": "objects/hw/bl_brucelee_01_high/meshes/bl_brucelee_01_hair_hw_skhigh.mesh",
+      "textures": {
+        "diffuse": {
+          "reference_id": 2,
+          "path": "objects/hw/bl_brucelee_01_high/textures/64185f0f4548bb1fa3a1ebc12b320f106f085b34.tex"
+        },
+        "normal": {
+          "reference_id": 3,
+          "path": "objects/hw/bl_brucelee_01_high/textures/fca1fb7b78bbd0c27c67bafeafa0aba16284b52d.tex"
+        },
+        "material": {
+          "reference_id": 4,
+          "path": "objects/hw/bl_brucelee_01_high/textures/63641d8746445ad3ded8a3b271e9862bcba325fa.tex"
+        }
+      }
+    },
+    "body": {
+      "mesh": "objects/hw/bl_brucelee_01_high/meshes/bl_brucelee_01_body_hw_skhigh.mesh",
+      "textures": {
+        "diffuse": {
+          "reference_id": 8,
+          "path": "objects/hw/bl_brucelee_01_high/textures/53240d6f00f3e53b33ded2b75bcfe74324761382.tex"
+        },
+        "normal": {
+          "reference_id": 9,
+          "path": "objects/hw/bl_brucelee_01_high/textures/826f86b41751ab6f8e92c1c0faa6b732672a082f.tex"
+        },
+        "material": {
+          "reference_id": 10,
+          "path": "objects/hw/bl_brucelee_01_high/textures/fb505d6373c4e948bcba183368bf14c8e6356aed.tex"
+        }
+      }
+    }
+  },
+  "boundaries": [
+    "Static resource references and shader-constant declarations are resolved.",
+    "Runtime texture loading success is not inferred from static references.",
+    "Original Adreno lighting, blending, mip, and pixel output remain unverified.",
+    "No original texture, mesh, shader source, or decoded binary payload is included."
+  ]
+}
