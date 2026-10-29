@@ -485,16 +485,17 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 `brucelee.set` 根字典还有 396 条 `links`。其中 normal、frontal 的命中/格挡选择
 已从配置直接恢复：
 
-| 输入 impact | `impactable` 命中动作 | `canblock` 格挡动作 |
-|---|---|---|
-| `normal/low/frontal` | `impactlightfrontlow` | `lowblock` |
-| `normal/medium/frontal` | `impactlightfrontmid` | `midblock` |
-| `normal/high/frontal` | `impactlightfronthigh` | `highblock` |
+| 命中输入（必须 frontal） | `impactable` 命中动作 | 格挡输入（方向未限定） | `canblock` 格挡动作 |
+|---|---|---|---|
+| `normal/low/frontal` | `impactlightfrontlow` | `normal/low` | `lowblock` |
+| `normal/medium/frontal` | `impactlightfrontmid` | `normal/medium` | `midblock` |
+| `normal/high/frontal` | `impactlightfronthigh` | `normal/high` | `highblock` |
 
 例如命中 link 的 conditions 为
 `impact + oppattackstrengthnormal + oppattackheightmed + oppattackdirfrontal`，
 目标为 `impactlightfrontmid`。格挡 link 使用同一高度和强度条件，目标为
-`midblock`；其 key status 还包含尚未映射回具体物理按键的输入条件。
+`midblock`，但 conditions 中没有 `oppattackdirfrontal`，因此报告不会把格挡
+方向限定为 frontal；其 key status 还包含尚未映射回具体物理按键的输入条件。
 
 原生 `CFighter::UserControlUpdate` 对每个 link 依次调用
 `TimeWindowCheck`、`InputSequenceCheck`、`InputStatusCheck`、`CheckConditions`，
