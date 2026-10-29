@@ -3,6 +3,7 @@ param(
     [string]$CandidateGlb,
     [Parameter(Mandatory = $true)]
     [string]$TextureRoot,
+    [string]$OpponentGlb,
     [string]$GodotExe = "C:\Tools\Godot_v4.7.2-stable_win64_console.exe",
     [string]$Python = "py -3.12",
     [switch]$ExpectReactionClips,
@@ -102,6 +103,9 @@ $pathResolver = Join-Path $repoRoot "godot\tools\resolve_candidate_path.ps1"
 Test-CandidatePathBoundary
 $CandidateGlb = Resolve-ExternalPath $CandidateGlb "Candidate GLB"
 $TextureRoot = Resolve-ExternalPath $TextureRoot "Texture root"
+if (-not [string]::IsNullOrWhiteSpace($OpponentGlb)) {
+    $OpponentGlb = Resolve-ExternalPath $OpponentGlb "Opponent GLB"
+}
 $GodotExe = (Resolve-Path -LiteralPath $GodotExe).Path
 
 Push-Location $repoRoot
@@ -128,6 +132,12 @@ try {
     Invoke-Checked "Candidate animation" {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_candidate_animation.gd -- $CandidateGlb --expect-hair
+    }
+    if (-not [string]::IsNullOrWhiteSpace($OpponentGlb)) {
+        Invoke-Checked "Opponent candidate animation" {
+            & $GodotExe --headless --path $godotProject `
+                --script res://tests/validate_opponent_candidate.gd -- $OpponentGlb
+        }
     }
     Invoke-Checked "Candidate bounds and scale" {
         & $GodotExe --headless --path $godotProject `
@@ -171,6 +181,12 @@ try {
             & $GodotExe --headless --main-pack $packPath `
                 --script res://tests/validate_candidate_animation.gd `
                 -- $CandidateGlb --expect-hair
+        }
+        if (-not [string]::IsNullOrWhiteSpace($OpponentGlb)) {
+            Invoke-Checked "Packed opponent candidate animation" {
+                & $GodotExe --headless --main-pack $packPath `
+                    --script res://tests/validate_opponent_candidate.gd -- $OpponentGlb
+            }
         }
         Invoke-Checked "Packed candidate bounds and scale" {
             & $GodotExe --headless --main-pack $packPath `

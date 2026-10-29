@@ -1,0 +1,249 @@
+{
+  "animations": {
+    "m03_idle_01": {
+      "decoded_bytes": 19423,
+      "headers": {
+        "duration": 120,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 73637028,
+      "path": "adreno_200/animation/m03_idle_01.anm",
+      "resource_id": "d214ac8da6011b19d8ffb14210824aef",
+      "sha256": "2dad47c95be1bdaaec994b0e20e604acea000b7ea7caf9d4d432d50d262e098b",
+      "skeleton_reference": "skeletons/bl_brick_davis_01_high.skl",
+      "tracks": [
+        "bonepos",
+        "bonerot",
+        "scales"
+      ]
+    },
+    "m03_kck_low_01": {
+      "decoded_bytes": 10975,
+      "headers": {
+        "duration": 41,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 78625088,
+      "path": "adreno_200/animation/m03_kck_low_01.anm",
+      "resource_id": "b3451ca524a81b1afc5e21b9fe74d456",
+      "sha256": "e769523bbdebc205749268836abd610bb758319ef64997b50342798b0633f7ce",
+      "skeleton_reference": "skeletons/bl_brick_davis_01_high.skl",
+      "tracks": [
+        "bonepos",
+        "bonerot",
+        "positions",
+        "scales"
+      ]
+    },
+    "m03_movefwd": {
+      "decoded_bytes": 6463,
+      "headers": {
+        "duration": 21,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 46877295,
+      "path": "adreno_200/animation/m03_movefwd.anm",
+      "resource_id": "63321fd4a0fd8dc0c35309ca9f1c69b3",
+      "sha256": "5ee315d27844ed9f296a128383c41ae963d29cb012c19410998d606e86c94ba9",
+      "skeleton_reference": "skeletons/bl_brick_davis_01_high.skl",
+      "tracks": [
+        "bonepos",
+        "bonerot",
+        "positions",
+        "scales"
+      ]
+    },
+    "m03_pnch_low_01": {
+      "decoded_bytes": 10047,
+      "headers": {
+        "duration": 38,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 87011417,
+      "path": "adreno_200/animation/m03_pnch_low_01.anm",
+      "resource_id": "cb146cbf3a19bd3bd5e5503296cc5f38",
+      "sha256": "0b40c03c1b6e127f70c5597f0b4b292077a41bede5377bf6d64a4b7792a1ca8e",
+      "skeleton_reference": "skeletons/bl_brick_davis_01_high.skl",
+      "tracks": [
+        "bonepos",
+        "bonerot",
+        "positions",
+        "scales"
+      ]
+    }
+  },
+  "boundaries": [
+    "The object's empty external-reference slot is treated as a sentinel whose runtime reference indices are shifted by one.",
+    "Texture properties are static object references; GPU sampling and final pixel output are not verified. ATC texture payloads are not decoded here.",
+    "The listed m03 animations target the Brick skeleton, but their runtime combination, blending and original combat use remain to be verified.",
+    "No original resource bytes or decoded binary payloads are included."
+  ],
+  "evidence": {
+    "animation_skeleton_reference": "STATIC_VERIFIED",
+    "godot_opponent_integration": "UNVERIFIED",
+    "object_texture_properties": "STATIC_VERIFIED",
+    "opponent_combat_configuration": "UNVERIFIED",
+    "paths_and_hashes": "STATIC_VERIFIED",
+    "visual_runtime_parity": "UNVERIFIED"
+  },
+  "mesh_details": {
+    "body": {
+      "position_max": [
+        45.1599235534668,
+        15.162227630615234,
+        184.73263549804688
+      ],
+      "position_min": [
+        -45.1599235534668,
+        -16.490745544433594,
+        -1.0198993682861328
+      ],
+      "skin_bone_count": 67,
+      "subset_count": 3,
+      "subsets": [
+        {
+          "material": "bl_brick_davis_01_body_hw",
+          "triangle_count": 1183
+        },
+        {
+          "material": "bl_brick_davis_01_body_hw",
+          "triangle_count": 1956
+        },
+        {
+          "material": "bl_brick_davis_01_body_hw",
+          "triangle_count": 518
+        }
+      ],
+      "triangle_count": 3657,
+      "vertex_count": 2495
+    },
+    "shadows": {
+      "position_max": [
+        44.3672981262207,
+        16.283599853515625,
+        184.74761962890625
+      ],
+      "position_min": [
+        -44.3672981262207,
+        -17.073200225830078,
+        -1.454319953918457
+      ],
+      "skin_bone_count": 30,
+      "subset_count": 1,
+      "subsets": [
+        {
+          "material": "bl_brick_davis_bl_brick_davis_01_body_hw_shadows",
+          "triangle_count": 1027
+        }
+      ],
+      "triangle_count": 1027,
+      "vertex_count": 708
+    }
+  },
+  "meshes": {
+    "body": {
+      "decoded_bytes": 137280,
+      "pakd_offset": 66423450,
+      "path": "adreno_200/objects/hw/bl_brick_davis_01_high/meshes/bl_brick_davis_01_body_hw_kinetic.Mesh",
+      "resource_id": "52bbfa8e99cd0d74d14098bd43d49552",
+      "sha256": "dec0159508f03060f89ba49d70a65aa0c4af59d74e57141444e873fd96ef092a"
+    },
+    "shadows": {
+      "decoded_bytes": 41698,
+      "pakd_offset": 66493904,
+      "path": "adreno_200/objects/hw/bl_brick_davis_01_high/meshes/bl_brick_davis_01_body_hw_shadows.Mesh",
+      "resource_id": "351a876d6df801bcf05c7234bdef6d41",
+      "sha256": "b9d6ea2e058c6bd9338f96e95231a4e88bc8a924bb14ef4375dde7748eb0cf96"
+    }
+  },
+  "object": {
+    "decoded_bytes": 14464,
+    "external_references": [
+      "adreno_200/objects/hw/bl_brick_davis_01_high/meshes/bl_brick_davis_01_body_hw_kinetic.mesh",
+      "adreno_200/objects/hw/bl_brick_davis_01_high/meshes/bl_brick_davis_01_body_hw_shadows.mesh",
+      "adreno_200/objects/hw/bl_brick_davis_01_high/textures/00b10ae060e9dc141268c2fc23f46a7e69403a5e.tex",
+      "adreno_200/objects/hw/bl_brick_davis_01_high/textures/19820ad048bfb97f17e3d9bd4118004252bf273f.tex",
+      "adreno_200/objects/hw/bl_brick_davis_01_high/textures/5c4dc7f7333f7fc62ae1229fbcdc0f58e877fb1d.tex",
+      "adreno_200/shaders/character.shd"
+    ],
+    "pakd_offset": 17241938,
+    "path": "adreno_200/objects/BL_Brick_Davis_01_High.obj",
+    "resource_id": "1c9c512b03cb8f3e3d7e22b2dbe2f372",
+    "scene_node_count": 76,
+    "sha256": "83cc19e85fb150cd4c1927989760dc01ab2d4abead623a5c1f139ceb6c3e72d7",
+    "texture_properties": {
+      "diffuse": "adreno_200/objects/hw/bl_brick_davis_01_high/textures/19820ad048bfb97f17e3d9bd4118004252bf273f.tex",
+      "material": "adreno_200/objects/hw/bl_brick_davis_01_high/textures/5c4dc7f7333f7fc62ae1229fbcdc0f58e877fb1d.tex",
+      "normal": "adreno_200/objects/hw/bl_brick_davis_01_high/textures/00b10ae060e9dc141268c2fc23f46a7e69403a5e.tex"
+    }
+  },
+  "schema_version": 1,
+  "skeleton": {
+    "bone_count": 70,
+    "decoded_bytes": 16538,
+    "node_count": 74,
+    "object_count": 3,
+    "pakd_offset": 9977561,
+    "path": "adreno_200/skeletons/BL_Brick_Davis_01_High.Skl",
+    "resource_id": "2c87fd06464419bd5681550dbbd6a412",
+    "sha256": "61fd6723c532499fb94071b0f3ba809feeab623995531ccf31eac00ac57db942"
+  },
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "sha256": "429c9c7af3a36d21742c2de60d23c5ecaab5642b9d817564174efc0c5b3b6342"
+  },
+  "target": "bl_brick_davis_01",
+  "textures": {
+    "diffuse": {
+      "decoded_bytes": 699818,
+      "depth": 0,
+      "format": "atc_rgb",
+      "has_alpha": false,
+      "height": 1024,
+      "pakd_offset": 66514888,
+      "path": "adreno_200/objects/hw/bl_brick_davis_01_high/textures/19820ad048bfb97f17e3d9bd4118004252bf273f.tex",
+      "payload_bytes": 699064,
+      "resource_id": "eccb800afe3bb6a6085a1a9df303458f",
+      "sha256": "cb7bfb483e8f86ca5b701a348fd65fadb4153cbd3fc49e667596aa9943874167",
+      "width": 1024
+    },
+    "material": {
+      "decoded_bytes": 5593162,
+      "depth": 0,
+      "format": "r8g8b8a8",
+      "has_alpha": true,
+      "height": 1024,
+      "pakd_offset": 92031634,
+      "path": "adreno_200/objects/hw/bl_brick_davis_01_high/textures/5c4dc7f7333f7fc62ae1229fbcdc0f58e877fb1d.tex",
+      "payload_bytes": 5592404,
+      "resource_id": "95b7a90835f5a9c0b8c064c01b67ce8c",
+      "sha256": "286491e44117f7e02f667178b445e2f47d9411be19d5fb8f555e62b3201736c3",
+      "width": 1024
+    },
+    "normal": {
+      "decoded_bytes": 699818,
+      "depth": 0,
+      "format": "atc_rgb",
+      "has_alpha": false,
+      "height": 1024,
+      "pakd_offset": 66964070,
+      "path": "adreno_200/objects/hw/bl_brick_davis_01_high/textures/00b10ae060e9dc141268c2fc23f46a7e69403a5e.tex",
+      "payload_bytes": 699064,
+      "resource_id": "213f77c5d2edf270b382ee7908a397a9",
+      "sha256": "fbc7cd21bc66f73e3b9086ff66e52df7d1bef32061b90f5386e55174c7c89324",
+      "width": 1024
+    }
+  }
+}

@@ -80,6 +80,23 @@ class TestKdfObject(unittest.TestCase):
         with self.assertRaisesRegex(KdfError, 'external reference table'):
             inspect_object(bytes(raw))
 
+    def test_leading_empty_external_reference_is_a_sentinel(self):
+        raw = bytearray(object_fixture())
+        string_table_end = raw.index(b'DATA')
+        references = bytes(raw[string_table_end - 6:string_table_end])
+        raw[string_table_end - 6:string_table_end] = b'\0\0\0' + references
+        result = inspect_object(bytes(raw))
+        self.assertEqual(result['external_reference_count'], 3)
+        self.assertTrue(result['external_references'][0]['sentinel'])
+        self.assertEqual(
+            [entry['path'] for entry in result['external_references'][1:]],
+            ['objects/body.mesh', 'shaders/character.shd'],
+        )
+        self.assertEqual(
+            [entry['reference_id'] for entry in result['external_reference_uses']],
+            [1, 2],
+        )
+
     def test_cli_outputs_object_json(self):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / 'test.obj'
@@ -173,6 +190,14 @@ class TestKdfObject(unittest.TestCase):
         self.assertEqual(
             _visual_bindings(records, strings, 0, references),
             [{"name": "body", "reference_id": 0, "path": "objects/body.mesh"}],
+        )
+        sentinel_references = [
+            {"ordinal": 0, "sentinel": True, "path": None},
+            {"ordinal": 1, "path": "objects/body.mesh"},
+        ]
+        self.assertEqual(
+            _visual_bindings(records, strings, 0, sentinel_references),
+            [{"name": "body", "reference_id": 1, "path": "objects/body.mesh"}],
         )
         with self.assertRaisesRegex(KdfError, "does not match"):
             _visual_bindings(records, strings, 0, [{"path": "objects/other.mesh"}])
