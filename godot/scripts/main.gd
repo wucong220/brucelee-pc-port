@@ -341,10 +341,10 @@ func _player_attack_poses_guard_threat() -> bool:
     if player.state != "facedownattack":
         return false
     var source_frame: float = player.state_time * PortFighter.SOURCE_FRAME_RATE
-    return (
-        source_frame + 0.0001 >= float(PortFighter.FACEDOWN_ATTACK_DAMAGE_START_FRAME)
-        and source_frame <= float(PortFighter.FACEDOWN_ATTACK_DAMAGE_END_FRAME) + 0.0001
-    )
+    # This prototype exposes the recovery attack directly from facedownidle,
+    # so frames 0-5 act as the AI-visible startup before contact starts at 6.
+    # Damage is still limited to the recovered 6-9 window in fighter.gd.
+    return source_frame <= float(PortFighter.FACEDOWN_ATTACK_DAMAGE_END_FRAME) + 0.0001
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

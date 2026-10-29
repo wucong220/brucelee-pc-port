@@ -1862,6 +1862,7 @@ func reset_fighter(start_position: Vector3) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
+    _facedown_input_history.clear()
     last_reaction_group = ""
     last_reaction_source_action = ""
     last_reaction_animation = ""

@@ -42,6 +42,9 @@ func _run() -> void:
     if not _check_sequence_window_expiry(player, opponent):
         quit(1)
         return
+    if not _check_reset_clears_input_history(player, opponent):
+        quit(1)
+        return
     if not _check_wrong_sequence(player, opponent):
         quit(1)
         return
@@ -182,6 +185,22 @@ func _check_sequence_window_expiry(player: PortFighter, opponent: PortFighter) -
     return true
 
 
+func _check_reset_clears_input_history(
+        player: PortFighter, opponent: PortFighter
+) -> bool:
+    if not _enter_facedown(player, opponent):
+        return false
+    if (player.record_virtual_press("a")
+            or player._facedown_input_history.size() != 1):
+        push_error("Facedown input history did not record a partial sequence")
+        return false
+    player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    if not player._facedown_input_history.is_empty():
+        push_error("Fighter reset did not clear facedown input history")
+        return false
+    return true
+
+
 func _check_wrong_sequence(player: PortFighter, opponent: PortFighter) -> bool:
     if not _enter_facedown(player, opponent):
         return false
@@ -248,10 +267,8 @@ func _check_attack_timing_and_return(player: PortFighter, opponent: PortFighter)
 func _check_attack_radius_boundary(
         player: PortFighter, opponent: PortFighter
 ) -> bool:
-    if not _enter_facedown(player, opponent) or not _start_attack(player):
+    if not _enter_facedown(player, opponent):
         return false
-    player.facing = 1.0
-    opponent.guard_held = false
     var reach: float = player.attack_reach_world("facedownattack", opponent)
     var expected_reach: float = (
         120.0 * player.radius_scale
@@ -260,21 +277,72 @@ func _check_attack_radius_boundary(
     if absf(reach - expected_reach) > 0.001:
         push_error("facedownattack reach does not contain the recovered 120 radius")
         return false
-    var health_before: float = opponent.health
-    opponent.global_position = player.global_position \
-            + Vector3(expected_reach + 0.01, 0.0, 0.0)
-    player._try_facedown_attack_contact()
-    if (absf(opponent.health - health_before) > 0.001
-            or player._attack_connected):
-        push_error("facedownattack hit outside its 120-radius reach")
+    var hit_events: Array[String] = []
+    var on_hit: Callable = func(
+        _attacker: PortFighter,
+        _defender: PortFighter,
+        action: String,
+        _damage: float,
+        _blocked: bool,
+    ) -> void:
+        hit_events.append(action)
+    player.combat_hit.connect(on_hit)
+    var cases: Array = [
+        [1.0, expected_reach + 0.01, false, "front outside reach"],
+        [1.0, expected_reach - 0.01, true, "front inside reach"],
+        [1.0, -0.5, false, "front attack against rear target"],
+        [-1.0, -expected_reach + 0.01, true, "left inside reach while facing left"],
+        [-1.0, 0.5, false, "left-facing attack against rear target"],
+    ]
+    for case_data: Variant in cases:
+        var case_values: Array = case_data
+        if not _check_facedown_attack_direction_case(
+            player,
+            opponent,
+            float(case_values[0]),
+            float(case_values[1]),
+            bool(case_values[2]),
+            String(case_values[3]),
+            hit_events,
+        ):
+            player.combat_hit.disconnect(on_hit)
+            return false
+    player.combat_hit.disconnect(on_hit)
+    return true
+
+
+func _check_facedown_attack_direction_case(
+        player: PortFighter,
+        opponent: PortFighter,
+        facing: float,
+        offset: float,
+        expected_hit: bool,
+        label: String,
+        hit_events: Array[String],
+) -> bool:
+    if not _enter_facedown(player, opponent) or not _start_attack(player):
         return false
-    opponent.global_position = player.global_position \
-            + Vector3(expected_reach - 0.01, 0.0, 0.0)
+    player.facing = facing
+    opponent.guard_held = false
+    opponent.global_position = player.global_position + Vector3(offset, 0.0, 0.0)
+    var health_before: float = opponent.health
+    hit_events.clear()
     player._try_facedown_attack_contact()
-    if (absf((health_before - opponent.health)
-            - PortFighter.FACEDOWN_ATTACK_DAMAGE) > 0.001
-            or not player._attack_connected):
-        push_error("facedownattack did not hit just inside its 120-radius reach")
+    var took_damage: bool = absf(
+        health_before - opponent.health - PortFighter.FACEDOWN_ATTACK_DAMAGE
+    ) <= 0.001
+    if took_damage != expected_hit:
+        push_error("facedownattack health result was wrong for " + label)
+        return false
+    if player._attack_connected != expected_hit:
+        push_error("facedownattack connection flag was wrong for " + label)
+        return false
+    var expected_events: int = 1 if expected_hit else 0
+    if hit_events.size() != expected_events:
+        push_error("facedownattack combat_hit count was wrong for " + label)
+        return false
+    if expected_hit and hit_events[0] != "facedownattack":
+        push_error("facedownattack emitted the wrong combat action for " + label)
         return false
     return true
 
@@ -282,19 +350,52 @@ func _check_attack_radius_boundary(
 func _check_ai_guard_threat(
         scene: Node, player: PortFighter, opponent: PortFighter
 ) -> bool:
-    player.reset_fighter(Vector3(0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
     player.state = "facedownattack"
-    player.state_time = float(PortFighter.FACEDOWN_ATTACK_DAMAGE_START_FRAME) \
-            / PortFighter.SOURCE_FRAME_RATE
+    player.state_time = 0.0
     player.attack_kind = "facedownattack"
     player.attack_sequence = 77
+    player.facing = 1.0
+    var rng: RandomNumberGenerator = scene.get("rng")
+    var guard_seed: int = -1
+    for seed_value: int in range(1000):
+        rng.seed = seed_value
+        if rng.randf() < 0.25:
+            guard_seed = seed_value
+            break
+    if guard_seed < 0:
+        push_error("Unable to find deterministic facedownattack guard seed")
+        return false
+    rng.seed = guard_seed
     scene.set("ai_timer", 10.0)
-    scene.set("ai_guard_sequence", 77)
-    scene.set("ai_guard_decision", true)
+    scene.set("ai_guard_sequence", -1)
+    scene.set("ai_guard_decision", false)
     scene.call("_think_ai", 0.0)
     if not opponent.guard_held:
-        push_error("AI ignored the facedownattack active threat window")
+        push_error("AI did not guard during facedownattack startup")
+        return false
+    player._advance_timed_states(
+        (float(PortFighter.FACEDOWN_ATTACK_DAMAGE_START_FRAME) + 0.001)
+        / PortFighter.SOURCE_FRAME_RATE
+    )
+    if opponent.state != "blockstun" or not player._attack_connected:
+        push_error("AI guard was not applied to the first facedownattack contact: "
+                + JSON.stringify({
+                    "opponent_state": opponent.state,
+                    "opponent_guard": opponent.guard_held,
+                    "health": opponent.health,
+                    "connected": player._attack_connected,
+                    "state": player.state,
+                    "state_frame": player.state_time * PortFighter.SOURCE_FRAME_RATE,
+                    "opponent_linked": player.opponent == opponent,
+                    "facing": player.facing,
+                    "distance": Vector2(
+                        opponent.global_position.x - player.global_position.x,
+                        opponent.global_position.z - player.global_position.z,
+                    ).length(),
+                    "reach": player.attack_reach_world("facedownattack", opponent),
+                }))
         return false
     player.state_time = (
         float(PortFighter.FACEDOWN_ATTACK_DAMAGE_END_FRAME + 1)
