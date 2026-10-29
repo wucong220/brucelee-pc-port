@@ -111,8 +111,8 @@ func _check_entry_windows(
     player.move_axis = Vector2(0.0, 1.0)
     player._advance_timed_states(0.0)
     player._animate_candidate()
-    if player.state != "faceupidle":
-        push_error("Vertical input started faceupgetup")
+    if not _faceup_idle_is(player, 20.0):
+        push_error("Vertical input did not preserve faceupidle and its source frame")
         return false
     if player._faceup_getup_requested(46.0 / PortFighter.SOURCE_FRAME_RATE,
             46.0 / PortFighter.SOURCE_FRAME_RATE):
@@ -239,7 +239,41 @@ func _entry_is(
     player.move_axis = Vector2(axis_x, 0.0)
     player._advance_timed_states(0.0)
     player._animate_candidate()
-    return (player.state == "faceupgetup") == expected
+    if expected:
+        var animation: AnimationPlayer = player.get("_candidate_animation")
+        return (
+            player.state == "faceupgetup"
+            and _clip_is(
+                player.candidate_animation_clip,
+                PortFighter.FACEUP_GETUP_CLIP,
+            )
+            and animation != null
+            and _clip_is(
+                String(animation.current_animation),
+                PortFighter.FACEUP_GETUP_CLIP,
+            )
+            and animation.is_playing()
+            and absf(player.state_time) <= 0.001
+        )
+    return _faceup_idle_is(player, frame)
+
+
+func _faceup_idle_is(player: PortFighter, frame: float) -> bool:
+    var animation: AnimationPlayer = player.get("_candidate_animation")
+    return (
+        player.state == "faceupidle"
+        and _clip_is(player.candidate_animation_clip, PortFighter.FACEUP_IDLE_CLIP)
+        and animation != null
+        and _clip_is(
+            String(animation.current_animation),
+            PortFighter.FACEUP_IDLE_CLIP,
+        )
+        and animation.is_playing()
+        and absf(
+            player.state_time
+            - frame / PortFighter.SOURCE_FRAME_RATE
+        ) <= 0.001
+    )
 
 
 func _prepare_faceup_idle(

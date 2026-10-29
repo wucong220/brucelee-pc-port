@@ -72,25 +72,22 @@ func _run() -> void:
 func _check_clips(player: PortFighter) -> bool:
     var animation: AnimationPlayer = player.get("_candidate_animation")
     var clip_count: int = animation.get_animation_list().size() if animation != null else 0
-    if clip_count not in [19, 22]:
-        push_error("Face-up GLB does not expose the 19-clip base or 22-clip extension")
+    if clip_count not in [19, 20]:
+        push_error("Face-up GLB does not expose the 19-clip base or 20-clip extension")
         return false
-    if clip_count == 22:
-        for extension_name: String in [
-            PortFighter.FACEUP_GETUP_CLIP,
-            "all_getup_faceup_attack",
-            "m01_attack_to_floor",
-        ]:
-            if animation.get_animation_list().has(extension_name):
-                continue
-            var found: bool = false
-            for clip_name: StringName in animation.get_animation_list():
-                if String(clip_name).ends_with("/" + extension_name):
-                    found = true
-                    break
-            if not found:
-                push_error("22-clip face-up extension is missing " + extension_name)
-                return false
+    if clip_count == 20 and not _has_clip(
+        animation, PortFighter.FACEUP_GETUP_CLIP
+    ):
+        push_error("20-clip face-up extension is missing "
+            + PortFighter.FACEUP_GETUP_CLIP)
+        return false
+    for excluded_name: String in [
+        "all_getup_faceup_attack",
+        "m01_attack_to_floor",
+    ]:
+        if _has_clip(animation, excluded_name):
+            push_error("Face-up candidate must not include " + excluded_name)
+            return false
     if not _check_clip(
         player,
         PortFighter.FACEUP_IMPACT_TO_FLOOR_CLIP,
@@ -104,6 +101,14 @@ func _check_clips(player: PortFighter) -> bool:
         PortFighter.FACEUP_IDLE_DURATION_FRAMES,
         Animation.LOOP_LINEAR,
     )
+
+
+func _has_clip(animation: AnimationPlayer, clip_name: String) -> bool:
+    for candidate: StringName in animation.get_animation_list():
+        var candidate_name: String = String(candidate)
+        if candidate_name == clip_name or candidate_name.ends_with("/" + clip_name):
+            return true
+    return false
 
 
 func _check_clip(

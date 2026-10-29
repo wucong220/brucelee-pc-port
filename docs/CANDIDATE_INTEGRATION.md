@@ -261,11 +261,11 @@ character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨�
 ## `faceupidle -> faceupgetup -> idle` 候选状态链
 
 仓库外
-`C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\faceup-candidate-20261030\bruce_candidate_faceup_states.glb`
-在 19 段候选的基础上增加 `all_getup_faceup`、`all_getup_faceup_attack`
-和 `m01_attack_to_floor`，GLB JSON 共 22 个动画名。GLB SHA-256 是
-`33f4ba99dc69db7f06ca94969f14b9f434e806bad57ab0f2b7c93b68edb28b77`。
-当前运行时只接入 `all_getup_faceup`；另外两段仍是仓库外候选数据。
+`C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\faceup-getup-candidate-20261030\bruce_candidate_faceup_getup.glb`
+在 19 段候选的基础上只增加 `all_getup_faceup`，GLB JSON 恰好 20 个
+动画名，不包含尚未接入的 `all_getup_faceup_attack` 和
+`m01_attack_to_floor`。GLB SHA-256 是
+`5ecd8f2d94eb137f379434d4b18c7b76d73a5e63112086c55b214967d194ffd8`。
 
 `faceupidle` 在 `all_idle_face_up` 的源帧 `[10,45]` 接受水平
 `move_axis.x`。负值代表档案里的 left，正值代表 right；这是 PC 候选映射，
