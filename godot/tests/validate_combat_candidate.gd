@@ -3,6 +3,9 @@ extends SceneTree
 ## in the real combat scene without changing the gameplay state machine.
 
 
+const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
+
+
 func _initialize() -> void:
     call_deferred("_run_check")
 
@@ -75,6 +78,29 @@ func _run_check() -> void:
         )
         quit(1)
         return
+    var measured: Dictionary = CandidateBounds.scene_bounds(candidate_root)
+    if not measured["error"].is_empty():
+        push_error("Integrated candidate bounds failed: " + measured["error"])
+        quit(1)
+        return
+    var final_bounds: AABB = measured["bounds"]
+    var expected_floor_y: float = (
+        player.global_position.y - PortFighter.PLAYER_ORIGIN_HEIGHT
+    )
+    if absf(final_bounds.size.y - PortFighter.CANDIDATE_HEIGHT) > 0.02:
+        push_error(
+            "Integrated candidate final height is %.6f, expected %.6f"
+            % [final_bounds.size.y, PortFighter.CANDIDATE_HEIGHT]
+        )
+        quit(1)
+        return
+    if absf(final_bounds.position.y - expected_floor_y) > 0.02:
+        push_error(
+            "Integrated candidate floor is %.6f, expected %.6f"
+            % [final_bounds.position.y, expected_floor_y]
+        )
+        quit(1)
+        return
     player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
     opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
     opponent.guard_held = false
@@ -99,6 +125,8 @@ func _run_check() -> void:
         "candidate_loaded": true,
         "candidate_textures_loaded": player.candidate_textures_loaded,
         "candidate_visual_height": player.candidate_visual_height,
+        "candidate_world_min_y": final_bounds.position.y,
+        "candidate_world_height": final_bounds.size.y,
         "idle_clip": "m01_idle_01",
         "punch_clip": player.candidate_animation_clip,
         "punch_target_health": opponent.health,
