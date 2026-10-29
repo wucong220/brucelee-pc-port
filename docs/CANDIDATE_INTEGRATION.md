@@ -130,9 +130,9 @@ WINDOWS_EXE_VALIDATION=PASS
 这不证明角色视觉位置、穿地、朝向或原版效果已经验收。动作从第 0 帧播放，
 `lowblock` 的 linking frame、融合与原版执行顺序仍未闭合。
 
-生成九段 GLB 使用旧本地工作树的候选转换器；当前 main 尚不包含完整动画
-绑定和导出工具，因此其他机器目前不能仅凭 main 重建该文件。所有原版资源及
-生成的 GLB 仍位于仓库外。
+生成九段 GLB 可使用仓库中的候选转换器；输入准备、命令和复现结果见
+[`ANIMATION_CONVERTER_MIGRATION.md`](ANIMATION_CONVERTER_MIGRATION.md)。
+所有原版资源及生成的 GLB 仍位于仓库外。
 
 验证命令及结果（本机 Godot 4.7.2）：
 
