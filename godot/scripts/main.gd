@@ -264,6 +264,9 @@ func _think_ai(delta: float) -> void:
     # Prototype AI makes one decision per attack when the attack first poses
     # a nearby threat, and holds it through the active window.
     var player_threat: bool = player.state in ["startup", "active"]
+    if not player_threat:
+        ai_guard_sequence = -1
+        ai_guard_decision = false
     if (player_threat and player.attack_sequence != ai_guard_sequence
             and distance <= player.attack_reach_world(player.attack_kind, computer)):
         ai_guard_sequence = player.attack_sequence
