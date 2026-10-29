@@ -82,6 +82,11 @@ static func external_path_error(path: String, label: String) -> String:
             or normalized_path.begins_with("//")
             or normalized_path.contains("://")):
         return label + " must be an absolute local path"
+    var lexical_root: String = repository_root().to_lower()
+    var lexical_path: String = normalized_path.to_lower()
+    if (lexical_path == lexical_root
+            or lexical_path.begins_with(lexical_root + "/")):
+        return label + " must remain outside the repository"
     var root_result: Dictionary = canonical_path(repository_root())
     if not root_result["error"].is_empty():
         return label + " repository root could not be resolved: " + root_result["error"]
