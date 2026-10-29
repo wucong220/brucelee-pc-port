@@ -6,7 +6,7 @@
   "set_resource_id": "f3d1549105ba342bc17b86a33b3834a0",
   "set_pakd_offset": 21016054,
   "method": "Read-only kdf_fighting_set.read_archive_resource and kdf_combat_reactions._parse_set plus _animation_metadata. This report stores no original bytes.",
-  "status": "证据记录，尚未实现",
+  "status": "证据记录。impactfacedown 已接入候选运行时，原版逐帧行为尚未验收。facedownko 和 facedownattack 尚未实现。",
   "actions": {
     "facedownko": {
       "animation": "adreno_200/animation/all_idle_face_down.anm",
@@ -518,9 +518,11 @@
     "impacttofloor"
   ],
   "explicit_names_seen_not_closed_note": "Only the action names were read. Animation path, radius, frame count, frame rate, resource id, PAKD offset, SHA-256, group windows, and direct links were not read for these names, so none is closed.",
+  "runtime_candidate": {
+    "impactfacedown": "候选运行时已接入，不是原版逐帧验收。加载含 all_impct_facedwn 且轨道检查通过的 GLB 时，facedownidle 上的非格挡低高度 impact 在伤害后血量仍大于 0 时播放，半径 80，不循环，第 11 帧回 facedownidle。不应用原型 push。"
+  },
   "not_implemented": [
     "facedownko",
-    "impactfacedown",
     "facedownattack"
   ]
 }
