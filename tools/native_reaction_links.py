@@ -14,6 +14,17 @@ from native_hierarchy_links import HierarchyLinkError, file_offset
 
 _SHA256 = "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70"
 _WORDS = {
+    0x00218E3C: 0xE59FBFF0,  # GIDs initializer loads its rodata base
+    0x00218E44: 0xE08FB00B,  # resolve GIDs rodata base
+    0x00218EA0: 0xE28B3D0A,  # first GID-literal table address
+    0x00218EA8: 0xE58D3008,  # save GID-literal table address
+    0x0021B120: 0xE59D3008,  # gid_Press init loads literal-table base
+    0x0021B12C: 0xE283CE31,  # gid_Press literal = table + 0x310
+    0x0021B130: 0xE59F3F48,  # gid_Press init loads GOT offset
+    0x0021B13C: 0xE7943003,  # load gid_Press object from GOT
+    0x0021B14C: 0xE583E038,  # store previous-link field
+    0x0021B150: 0xE583C034,  # store "Press" literal object
+    0x0021B15C: 0xEBFC1F21,  # initialize gid_Press from stored fields
     0x0017F860: 0xE3A02000,  # new event flag value
     0x0017F864: 0xE5CD206C,  # event +0x10 = 0 on stack
     0x0017F868: 0xE58D3068,  # event +0x0c = caller argument
@@ -100,7 +111,11 @@ _WORDS = {
     0x001A5600: 0xEBFE023A,  # bl CFighter::AttackDamage
     0x001A5610: 0xEBFE08C3,  # bl CFighter::ModifyHealth
 }
-_RECEIVE_DAMAGE_STRING = 0x005BAB9C
+_STRINGS = {
+    0x005BAB9C: b"ReceiveDamage\x00",
+    0x005BD2D8: b"Press\x00",
+    0x005BD2E0: b"Pressed\x00",
+}
 
 
 def verify_bytes(elf: bytes) -> None:
@@ -113,11 +128,14 @@ def verify_bytes(elf: bytes) -> None:
                 f"instruction 0x{address:08x} is 0x{actual:08x}, "
                 f"expected 0x{expected:08x}"
             )
-    string_offset = file_offset(elf, _RECEIVE_DAMAGE_STRING)
-    if elf[string_offset:string_offset + 14] != b"ReceiveDamage\x00":
-        raise HierarchyLinkError(
-            f"literal at 0x{_RECEIVE_DAMAGE_STRING:08x} is not ReceiveDamage"
-        )
+    for address, expected in _STRINGS.items():
+        string_offset = file_offset(elf, address)
+        actual = elf[string_offset:string_offset + len(expected)]
+        if actual != expected:
+            raise HierarchyLinkError(
+                f"literal at 0x{address:08x} is {actual!r}, "
+                f"expected {expected!r}"
+            )
 
 
 def main() -> int:

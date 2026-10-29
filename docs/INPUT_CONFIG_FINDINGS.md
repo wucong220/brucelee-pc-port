@@ -99,13 +99,27 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
   状态向量参数。其他控制路径和设备配置选择还需核实。
 
 这些写入及 `InputSequenceCheck` 对零值的要求支持该字节是输入消费标记，
-但并不证明完整的原版输入行为。还需核对 `gid_Press` 初始化字符串、
-`.set` 的字符串加载、时钟单位及活动配置。`facedownattack` 仍未实现。
+但并不证明完整的原版输入行为。
+
+## `gid_Press` 初始化
+
+- `_GLOBAL__I_GIDs.cpp` 在 `0x218e28` 开始初始化输入 GID。其
+  `0x218e3c–0x218e44` 从 PC 相对字面量得到同一常量区的基址，经
+  `0x218ea0–0x218ea8` 保存首个 GID 字面量表地址。按已核验的字面量计算，
+  该表基址为 `0x5bcfc8`。
+- `gid_Press` 的初始化路径在 `0x21b120–0x21b150` 以字面量表
+  `+0x310` 计算源对象，即 `0x5bd2d8`；随后从 GOT 槽 `0x604148`
+  取得 `gid_Press` 对象，保存源和链接字段，并在 `0x21b15c` 调用初始化。
+- `0x5bd2d8` 处的 NUL 结尾字符串是 `"Press"`。紧邻的
+  `0x5bd2e0` 是 `"Pressed"`，与后一条 GID 初始化对应。
+- 这闭合了 `gid_Press` 的初始化内容，但仍未证明哪个
+  `input.config` 项或虚拟键在运行时产生该事件；`.set` 字符串到事件、
+  时钟单位、活动配置及原始手感仍未闭合。`facedownattack` 仍未实现。
 
 ## 本次验证
 
 - `py -3.12 -X utf8 -B tools/native_reaction_links.py <本机 libdefault.so>`：
-  退出码 0，核验 85 条原生指令。
+  退出码 0，核验 96 条原生指令和两个初始化字符串。
 - `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`：
   退出码 0，运行 190 项，其中 1 项跳过。
 - `git diff --check`：退出码 0。
