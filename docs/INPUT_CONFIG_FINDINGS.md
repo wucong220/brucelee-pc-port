@@ -45,8 +45,8 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
    字符串参数调用 `SPrintf`，格式字符串是 `0x5b9514` 的 `%s%s`；
    `0x17f7d4–0x17f7e0` 将结果交给 `CHStrMgr::GetItem`。
    这为 `Press` 与虚拟键 `a/b/c/d` 组合成战斗输入符号提供了静态线索。
-   哈希字符串大小写规则、该结果与 `.set` 中 `pressa/b/c/d` 的实际匹配，
-   以及输入序列的时间与消费规则仍需核对，暂不作为已闭合的运行时映射。
+   字符串管理器的静态大小写路径和序列检查见下节；该结果与 `.set` 的
+   完整传递路径以及输入事件的时间与消费规则仍需核对。
 4. `GameClass::OnInputEvent` 在 `0x12ece4` 经 PLT 调用
    `TranslateKeyCode`。后者 `0x130788–0x1307a0` 对输入 `0..13` 查
    `0x5b6294` 的 14 项表，输出依次为
@@ -54,12 +54,34 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
    尚未确认调用方输入值与具体 Android 设备事件的对应关系，因此不能
    从该表推导 Windows 物理键。
 
-后续应核对 `gid_Press` 初始化字符串和 `CHStrMgrNSE` 的大小写语义，
-追踪 `VirtualKeyEvent` 的输出到战斗 `keysequence` 比较，并确认实际配置选择。
+## 大小写及序列检查
+
+以下为同一 ELF 的静态控制流，未在原版运行时观测：
+
+- `VirtualKeyEvent` 在 `0x17f7dc` 将 0 作为第三参数交给
+  `CHStrMgr::GetItem`（`0x17f7e0`）。`GetItem` 在 `0x140244` 调用
+  `ComputeCRC32NSE`，其在 `0x13fab8` 经重定位为
+  `ComputeCRC32Lower` 的 PLT 跳转；`GetItemCommon` 的零参数路径
+  `0x140108–0x140114` 调用 `SearchNoSensitive`，后者在 `0x13fa58–0x13fa5c`
+  调用 `StrCaseCompare`。这是该查找路径对大小写不敏感的静态证据；
+  不单独证明 `gid_Press` 的初始化内容或 `.set` 的完整加载路径。
+- `CFighter::UserControlUpdate` 在 `0x1a8a40–0x1a8a54` 经
+  `CLinkDescr::GetKeySequence` 取得当前 link 的序列，并把调用者传入的
+  事件向量传给 `InputSequenceCheck`。检查函数 `0x1a0180–0x1a0208`
+  从序列和事件向量的末尾向前扫描：事件项 `+8` 的字符串项不匹配时
+  跳过该事件；匹配且事件项 `+0x10` 字节为零时才前进一个待匹配项。
+  因此检查允许跳过不匹配事件，也跳过对应字节非零的匹配事件。
+  字节的实际含义、事件向量的生成、寿命及消费时机仍待核实；函数内
+  未据此证明输入时间间隔或最终招式触发。
+
+`tools/native_reaction_links.py` 校验这段序列检查的指令字和 ELF SHA-256。
+后续应核对 `gid_Press` 初始化字符串、事件向量到角色的传递和实际配置选择。
 在这些链路及连续输入规则闭合之前，`facedownattack` 仍未实现。
 
 ## 本次验证
 
+- `py -3.12 -X utf8 -B tools/native_reaction_links.py <本机 libdefault.so>`：
+  退出码 0，核验 58 条原生指令。
 - `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`：
-  退出码 0，190 项通过，其中 1 项跳过。
+  退出码 0，运行 190 项，其中 1 项跳过。
 - `git diff --check`：退出码 0。
