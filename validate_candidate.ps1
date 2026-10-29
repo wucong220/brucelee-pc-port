@@ -4,7 +4,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$TextureRoot,
     [string]$GodotExe = "C:\Tools\Godot_v4.7.2-stable_win64_console.exe",
-    [string]$Python = "py -3.12"
+    [string]$Python = "py -3.12",
+    [switch]$ExpectReactionClips
 )
 
 $ErrorActionPreference = "Stop"
@@ -132,6 +133,12 @@ try {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_combat_candidate.gd -- $CandidateGlb $TextureRoot
     }
+    if ($ExpectReactionClips) {
+        Invoke-Checked "Candidate reactions" {
+            & $GodotExe --headless --path $godotProject `
+                --script res://tests/validate_reaction_candidate.gd -- $CandidateGlb with-reactions
+        }
+    }
 
     $packPath = Join-Path ([IO.Path]::GetTempPath()) (
         "brucelee-candidate-$PID-$([Guid]::NewGuid().ToString('N')).pck"
@@ -164,6 +171,12 @@ try {
         Invoke-Checked "Packed real texture and combat candidate" {
             & $GodotExe --headless --main-pack $packPath `
                 --script res://tests/validate_combat_candidate.gd -- $CandidateGlb $TextureRoot
+        }
+        if ($ExpectReactionClips) {
+            Invoke-Checked "Packed candidate reactions" {
+                & $GodotExe --headless --main-pack $packPath `
+                    --script res://tests/validate_reaction_candidate.gd -- $CandidateGlb with-reactions
+            }
         }
     }
     finally {

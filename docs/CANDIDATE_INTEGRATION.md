@@ -116,3 +116,36 @@ WINDOWS_EXE_VALIDATION=PASS
 - Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
   这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。
+
+## 候选受击与格挡视觉
+
+本机九段动画的候选 GLB 包含原有 idle/punch/kick，以及正面轻受击和
+格挡各 low/mid/high 三段。战斗状态机按已有 reaction profile 选择可用的
+视觉动画；同一种反应被再次触发时从头播放，硬直结束时回到 idle。
+旧三段动画 GLB 仍可加载，缺少反应 clip 时使用原有 idle 回退。
+
+反应动画的候选 `character` 平移轨道未证明可用于游戏位置，运行时解析轨道
+实际目标后关闭该轨道，并在开始反应时将该节点位置恢复到加载时的值；未知
+节点或轨道布局回退到 idle。骨骼和骨架父节点的候选动画仍会改变模型姿态，
+这不证明角色视觉位置、穿地、朝向或原版效果已经验收。动作从第 0 帧播放，
+`lowblock` 的 linking frame、融合与原版执行顺序仍未闭合。
+
+生成九段 GLB 使用旧本地工作树的候选转换器；当前 main 尚不包含完整动画
+绑定和导出工具，因此其他机器目前不能仅凭 main 重建该文件。所有原版资源及
+生成的 GLB 仍位于仓库外。
+
+验证命令及结果（本机 Godot 4.7.2）：
+
+```powershell
+.\validate_candidate.ps1 -CandidateGlb 'C:\private\reaction_candidate.glb' `
+  -TextureRoot 'C:\private\textures' -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64_console.exe' `
+  -ExpectReactionClips
+.\validate_windows_exe.ps1 -CandidateGlb 'C:\private\reaction_candidate.glb' `
+  -TextureRoot 'C:\private\textures' -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64_console.exe' `
+  -ExpectReactionClips
+```
+
+两条命令退出码均为 0；前者包含 126 项 Python 测试、开发版与 PCK 下六个
+反应选择、骨骼变化、重入、返回和未知目标回退，后者的独立 EXE 自检确认
+选中 `all_impct_light_frnt_mid`。旧三段 GLB 的 reaction fallback 测试退出码
+也为 0；尚无原版逐帧对照或可见窗口人工验收。
