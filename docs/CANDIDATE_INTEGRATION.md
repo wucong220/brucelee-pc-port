@@ -26,7 +26,8 @@
 ```
 
 脚本先执行 Python 测试，再运行一次无界面 Godot 导入，随后验证普通战斗 smoke、
-真实动画、真实纹理和端到端战斗。
+真实动画、真实纹理和端到端战斗；最后执行 `--export-pack`，再从生成的 PCK
+重跑 smoke、动画、材质和战斗，确保路径解析器与运行时代码实际入包。
 
 `validate_candidate_textures.gd` 使用程序生成的 4×4 PNG 验证材质装配和 shader
 选择；真实纹理文件由 `validate_combat_candidate.gd` 加载。两者都不等于原版

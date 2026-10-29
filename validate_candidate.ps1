@@ -128,6 +128,41 @@ try {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_combat_candidate.gd -- $CandidateGlb $TextureRoot
     }
+
+    $packPath = Join-Path ([IO.Path]::GetTempPath()) (
+        "brucelee-candidate-$PID-$([Guid]::NewGuid().ToString('N')).pck"
+    )
+    try {
+        Invoke-Checked "PCK export" {
+            & $GodotExe --headless --path $godotProject `
+                --export-pack "Windows Desktop" $packPath
+        }
+        if (-not (Test-Path -LiteralPath $packPath)) {
+            throw "Godot did not produce the packed candidate validation resource: $packPath"
+        }
+        Invoke-Checked "Packed prototype smoke" {
+            & $GodotExe --headless --main-pack $packPath `
+                --script res://tests/smoke_test.gd
+        }
+        Invoke-Checked "Packed candidate animation" {
+            & $GodotExe --headless --main-pack $packPath `
+                --script res://tests/validate_candidate_animation.gd `
+                -- $CandidateGlb --expect-hair
+        }
+        Invoke-Checked "Packed synthetic texture material binding" {
+            & $GodotExe --headless --main-pack $packPath `
+                --script res://tests/validate_candidate_textures.gd -- $CandidateGlb
+        }
+        Invoke-Checked "Packed real texture and combat candidate" {
+            & $GodotExe --headless --main-pack $packPath `
+                --script res://tests/validate_combat_candidate.gd -- $CandidateGlb $TextureRoot
+        }
+    }
+    finally {
+        if (Test-Path -LiteralPath $packPath) {
+            Remove-Item -LiteralPath $packPath -Force
+        }
+    }
 }
 finally {
     Pop-Location
