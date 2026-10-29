@@ -1,5 +1,5 @@
 extends SceneTree
-## Validate the limited impacttofloor -> faceupidle candidate chain.
+## Validate face-up ground state reactions and their limited incoming links.
 
 
 func _initialize() -> void:
@@ -42,7 +42,13 @@ func _run() -> void:
     if not _check_hit_routing(player, opponent):
         quit(1)
         return
-    if not _check_faceup_idle_ignores_unverified_hits(player, opponent):
+    if not _check_faceup_ko(player, opponent):
+        quit(1)
+        return
+    if not _check_reaction_states_ignore_repeated_hits(player, opponent):
+        quit(1)
+        return
+    if not _check_faceup_idle_keeps_unverified_hits_closed(player, opponent):
         quit(1)
         return
     if not _check_entry_and_return(player):
@@ -52,7 +58,8 @@ func _run() -> void:
         quit(1)
         return
     print("FACEUP_IMPACT_VALIDATION=" + JSON.stringify({
-        "impact_clip": PortFighter.FACEUP_IMPACT_TO_FLOOR_CLIP,
+        "impact_to_floor_clip": PortFighter.FACEUP_IMPACT_TO_FLOOR_CLIP,
+        "impact_faceup_clip": PortFighter.FACEUP_IMPACT_CLIP,
         "entry_frame": PortFighter.FACEUP_IMPACT_TO_FLOOR_ENTRY_FRAME,
         "exit_frame": PortFighter.FACEUP_IMPACT_TO_FLOOR_EXIT_FRAME,
         "idle_clip": PortFighter.FACEUP_IDLE_CLIP,
@@ -60,10 +67,11 @@ func _run() -> void:
         "source_windows": {
             "facedowngetup": [5, 11],
             "facedownattack": [24, 31],
+            "faceupidle": [0, 45],
         },
         "candidate_scope": (
-            "low impact only; faceupidle incoming hits are ignored; "
-            + "lethal and missing-clip paths fall back"
+            "limited low impactfaceup and lethal faceupko; medium, blocked, "
+            + "and missing-clip face-up paths stay closed"
         ),
     }))
     quit(0)
@@ -72,8 +80,8 @@ func _run() -> void:
 func _check_clips(player: PortFighter) -> bool:
     var animation: AnimationPlayer = player.get("_candidate_animation")
     var clip_count: int = animation.get_animation_list().size() if animation != null else 0
-    if clip_count not in [19, 20, 21]:
-        push_error("Face-up GLB must expose 19, 20, or 21 candidate clips")
+    if clip_count not in [19, 20, 21, 22]:
+        push_error("Face-up GLB must expose 19, 20, 21, or 22 candidate clips")
         return false
     if clip_count >= 20 and not _has_clip(
         animation, PortFighter.FACEUP_GETUP_CLIP
@@ -81,11 +89,17 @@ func _check_clips(player: PortFighter) -> bool:
         push_error("Face-up extension is missing "
             + PortFighter.FACEUP_GETUP_CLIP)
         return false
-    if clip_count == 21 and not _has_clip(
+    if clip_count >= 21 and not _has_clip(
         animation, PortFighter.FACEUP_ATTACK_CLIP
     ):
-        push_error("21-clip face-up extension is missing "
+        push_error("21-or-later face-up extension is missing "
             + PortFighter.FACEUP_ATTACK_CLIP)
+        return false
+    if clip_count >= 22 and not _has_clip(
+        animation, PortFighter.FACEUP_IMPACT_CLIP
+    ):
+        push_error("22-clip face-up extension is missing "
+            + PortFighter.FACEUP_IMPACT_CLIP)
         return false
     for excluded_name: String in [
         "m01_attack_to_floor",
@@ -100,12 +114,21 @@ func _check_clips(player: PortFighter) -> bool:
         Animation.LOOP_NONE,
     ):
         return false
-    return _check_clip(
+    if not _check_clip(
         player,
         PortFighter.FACEUP_IDLE_CLIP,
         PortFighter.FACEUP_IDLE_DURATION_FRAMES,
         Animation.LOOP_LINEAR,
-    )
+    ):
+        return false
+    if clip_count == 22:
+        return _check_clip(
+            player,
+            PortFighter.FACEUP_IMPACT_CLIP,
+            PortFighter.FACEUP_IMPACT_DURATION_FRAMES,
+            Animation.LOOP_NONE,
+        )
+    return true
 
 
 func _has_clip(animation: AnimationPlayer, clip_name: String) -> bool:
@@ -189,6 +212,53 @@ func _check_missing_clips(player: PortFighter) -> bool:
         if accepted:
             push_error("Missing clip still allowed impacttofloor: " + clip_name)
             return false
+    if player._candidate_clip_paths.has(PortFighter.FACEUP_IMPACT_CLIP):
+        player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+        player.state = "faceupidle"
+        player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
+        var saved_faceup_impact: String = String(
+            player._candidate_clip_paths[PortFighter.FACEUP_IMPACT_CLIP]
+        )
+        player._candidate_clip_paths.erase(PortFighter.FACEUP_IMPACT_CLIP)
+        var accepted_faceup_impact: bool = player._accepts_faceup_low_impact(
+            "low", false, 6.0
+        )
+        player._candidate_clip_paths[PortFighter.FACEUP_IMPACT_CLIP] = (
+            saved_faceup_impact
+        )
+        if accepted_faceup_impact:
+            push_error("Missing all_impct_faceup still allowed impactfaceup")
+            return false
+    if player._candidate_clip_paths.has(PortFighter.FACEUP_IDLE_CLIP):
+        player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+        player.state = "faceupidle"
+        player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
+        var saved_faceup_return_idle: String = String(
+            player._candidate_clip_paths[PortFighter.FACEUP_IDLE_CLIP]
+        )
+        player._candidate_clip_paths.erase(PortFighter.FACEUP_IDLE_CLIP)
+        var accepted_without_faceup_return: bool = (
+            player._accepts_faceup_low_impact("low", false, 6.0)
+        )
+        player._candidate_clip_paths[PortFighter.FACEUP_IDLE_CLIP] = (
+            saved_faceup_return_idle
+        )
+        if accepted_without_faceup_return:
+            push_error("Missing all_idle_face_up still allowed impactfaceup")
+            return false
+    if player._candidate_clip_paths.has(PortFighter.FACEUP_IDLE_CLIP):
+        player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+        player.state = "faceupidle"
+        player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
+        var saved_faceup_idle: String = String(
+            player._candidate_clip_paths[PortFighter.FACEUP_IDLE_CLIP]
+        )
+        player._candidate_clip_paths.erase(PortFighter.FACEUP_IDLE_CLIP)
+        var accepted_faceup_ko: bool = player._accepts_faceup_ko(100.0, false)
+        player._candidate_clip_paths[PortFighter.FACEUP_IDLE_CLIP] = saved_faceup_idle
+        if accepted_faceup_ko:
+            push_error("Missing all_idle_face_up still allowed faceupko")
+            return false
     return true
 
 
@@ -223,6 +293,39 @@ func _check_hit_routing(player: PortFighter, opponent: PortFighter) -> bool:
     if player.state != "ko":
         push_error("A lethal qualifying hit bypassed KO priority")
         return false
+    if player._candidate_clip_paths.has(PortFighter.FACEUP_IMPACT_CLIP):
+        if not _prepare_faceup_idle_hit(player, opponent):
+            return false
+        health_before = player.health
+        _connect_attacker(opponent)
+        if player.state != "impactfaceup":
+            push_error("A low hit in faceupidle did not enter impactfaceup")
+            return false
+        if absf(health_before - player.health - _attacker_damage(opponent)) > 0.001:
+            push_error("impactfaceup did not apply the incoming attack damage once")
+            return false
+        player._animate_candidate()
+        if (not _clip_is(player.candidate_animation_clip, PortFighter.FACEUP_IMPACT_CLIP)
+                or absf(player.source_radius_for_current_animation() - 80.0) > 0.001):
+            push_error("impactfaceup did not play all_impct_faceup at radius 80")
+            return false
+        player._advance_timed_states(
+            (float(PortFighter.FACEUP_IMPACT_EXIT_FRAME) - 0.001)
+                / PortFighter.SOURCE_FRAME_RATE
+        )
+        player._animate_candidate()
+        if player.state != "impactfaceup":
+            push_error("impactfaceup exited before frame 11")
+            return false
+        player._advance_timed_states(0.002)
+        player._animate_candidate()
+        if (player.state != "faceupidle"
+                or not _clip_is(
+                    player.candidate_animation_clip, PortFighter.FACEUP_IDLE_CLIP
+                )
+                or absf(player.source_radius_for_current_animation() - 75.0) > 0.001):
+            push_error("impactfaceup did not return to faceupidle at frame 11")
+            return false
     return true
 
 
@@ -261,54 +364,140 @@ func _attacker_damage(opponent: PortFighter) -> float:
     return float(opponent.ATTACKS["kick"]["damage"])
 
 
-func _check_faceup_idle_ignores_unverified_hits(
+func _check_faceup_ko(
         player: PortFighter,
         opponent: PortFighter,
 ) -> bool:
-    var cases: Array[Array] = [
-        ["ordinary", player.MAX_HEALTH],
-        ["lethal", _attacker_damage(opponent) - 1.0],
-    ]
-    for case_value: Array in cases:
-        _prepare_faceup_idle_hit(player, opponent)
-        player.health = float(case_value[1])
+    if not _prepare_faceup_idle_hit(player, opponent):
+        return false
+    player.health = _attacker_damage(opponent) - 1.0
+    if player._accepts_faceup_ko(_attacker_damage(opponent), true):
+        push_error("A blocked lethal hit bypassed the face-up KO guard")
+        return false
+    _connect_attacker(opponent)
+    player._animate_candidate()
+    if (player.state != "faceupko"
+            or absf(player.health) > 0.001
+            or not _clip_is(player.candidate_animation_clip, PortFighter.FACEUP_IDLE_CLIP)
+            or absf(player.source_radius_for_current_animation() - 100.0) > 0.001):
+        push_error("A lethal faceupidle hit did not enter the radius-100 faceupko")
+        return false
+    player.state_time = 44.0 / PortFighter.SOURCE_FRAME_RATE
+    player.move_axis = Vector2(1.0, 0.0)
+    player._advance_timed_states(2.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._animate_candidate()
+    if (player.state != "faceupko"
+            or player.state_time
+                >= float(PortFighter.FACEUP_IDLE_DURATION_FRAMES)
+                    / PortFighter.SOURCE_FRAME_RATE
+            or player.record_virtual_press("a")):
+        push_error("faceupko did not loop without getup or input exits")
+        return false
+    return true
+
+
+func _check_reaction_states_ignore_repeated_hits(
+        player: PortFighter,
+        opponent: PortFighter,
+) -> bool:
+    for reaction_state: String in ["impactfaceup", "faceupko"]:
+        if not _prepare_faceup_idle_hit(player, opponent):
+            return false
+        if reaction_state == "impactfaceup":
+            player.begin_faceup_impact(1.0)
+        else:
+            player._begin_faceup_ko(player.health)
+        if player.state != reaction_state:
+            push_error("Could not prepare repeated-hit state " + reaction_state)
+            return false
+        if not opponent.request_attack("punch"):
+            push_error("Could not start the repeated Brick hit for " + reaction_state)
+            return false
+        opponent.state = "active"
+        opponent.state_time = float(opponent.ATTACKS["punch"]["active"])
+        opponent._attack_connected = false
+        opponent.combo_hits = 0
+        var state_time_before: float = player.state_time
         var health_before: float = player.health
-        var opponent_hits_before: int = opponent.combo_hits
-        _connect_attacker(opponent)
-        if player.state != "faceupidle":
-            push_error("An unverified hit exited faceupidle: " + String(case_value[0]))
+        var hit_events: Array[String] = []
+        var ko_events: Array[String] = []
+        var on_hit: Callable = func(
+            _attacker: PortFighter,
+            _defender: PortFighter,
+            action: String,
+            _damage: float,
+            _blocked: bool,
+        ) -> void:
+            hit_events.append(action)
+        var on_ko: Callable = func(_fighter: PortFighter) -> void:
+            ko_events.append(reaction_state)
+        opponent.combat_hit.connect(on_hit)
+        player.combat_ko.connect(on_ko)
+        opponent._try_attack_contact()
+        opponent.combat_hit.disconnect(on_hit)
+        player.combat_ko.disconnect(on_ko)
+        if (player.state != reaction_state
+                or absf(player.state_time - state_time_before) > 0.001
+                or absf(player.health - health_before) > 0.001
+                or opponent._attack_connected
+                or opponent.combo_hits != 0
+                or not hit_events.is_empty()
+                or not ko_events.is_empty()):
+            push_error("A repeated hit was counted during " + reaction_state)
             return false
-        if absf(player.health - health_before) > 0.001:
-            push_error("An unverified hit changed faceupidle health: "
-                + String(case_value[0]))
-            return false
-        if opponent.combo_hits != opponent_hits_before:
-            push_error("An ignored faceupidle hit counted as a combo hit: "
-                + String(case_value[0]))
-            return false
-        if opponent._attack_connected:
-            push_error("An ignored faceupidle hit marked attack contact: "
-                + String(case_value[0]))
-            return false
-    _prepare_faceup_idle_hit(player, opponent)
+    return true
+
+
+func _check_faceup_idle_keeps_unverified_hits_closed(
+        player: PortFighter,
+        opponent: PortFighter,
+) -> bool:
+    if not _prepare_faceup_idle_hit(player, opponent):
+        return false
     var health_before: float = player.health
+    if not opponent.request_attack("punch"):
+        return false
+    opponent.state = "active"
+    opponent.state_time = float(opponent.ATTACKS["punch"]["active"])
+    opponent._try_attack_contact()
+    if (player.state != "faceupidle"
+            or absf(player.health - health_before) > 0.001
+            or opponent._attack_connected):
+        push_error("A medium hit bypassed the verified low-impact face-up link")
+        return false
+    _prepare_faceup_idle_hit(player, opponent)
+    health_before = player.health
     player.receive_hit(1.0, true, 0.0, 1.0)
     if player.state != "faceupidle" or absf(player.health - health_before) > 0.001:
         push_error("A blocked hit rerouted faceupidle through blockstun")
         return false
+    if player._candidate_clip_paths.has(PortFighter.FACEUP_IMPACT_CLIP):
+        _prepare_faceup_idle_hit(player, opponent)
+        var saved: String = String(
+            player._candidate_clip_paths[PortFighter.FACEUP_IMPACT_CLIP]
+        )
+        player._candidate_clip_paths.erase(PortFighter.FACEUP_IMPACT_CLIP)
+        health_before = player.health
+        _connect_attacker(opponent)
+        player._candidate_clip_paths[PortFighter.FACEUP_IMPACT_CLIP] = saved
+        if (player.state != "faceupidle"
+                or absf(player.health - health_before) > 0.001):
+            push_error("A missing impactfaceup clip changed faceupidle")
+            return false
     return true
 
 
 func _prepare_faceup_idle_hit(
         player: PortFighter,
         opponent: PortFighter,
-) -> void:
+) -> bool:
     player.reset_fighter(Vector3(0.6, 1.2, 0.0))
     opponent.reset_fighter(Vector3(0.0, 1.2, 0.0))
     player.state = "faceupidle"
     player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
     player.facing = -1.0
     opponent.facing = 1.0
+    return true
 
 
 func _check_entry_and_return(player: PortFighter) -> bool:

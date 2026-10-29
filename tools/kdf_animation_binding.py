@@ -162,7 +162,7 @@ def _vector(value: Any, width: int, label: str) -> list[float]:
 
 def _track_values(
         sample: dict, source: str, offsets: list[int], duration: int,
-        width: int, name: str) -> tuple[str, list[list[list[float]]]]:
+        width: int, name: str) -> tuple[str, str, list[list[list[float]]]]:
     codec = sample.get('codec')
     data = sample.get('data')
     if not isinstance(data, dict) or type(data.get('element_count')) is not int:
@@ -175,14 +175,28 @@ def _track_values(
         if not isinstance(values, list) or len(values) != data['element_count']:
             raise KdfError(f'animation {name} raw-fixed value count is invalid')
         if source == 'anmdata':
+            if len(offsets) == 1 and len(values) == duration:
+                return 'per-frame', 'frame-major-single-offset', [
+                    [_vector(value, width, name)] for value in values
+                ]
+            if len(offsets) > 1 and len(values) == len(offsets) * duration:
+                frames = []
+                for frame_ordinal in range(duration):
+                    frame_start = frame_ordinal * len(offsets)
+                    frames.append([
+                        _vector(values[frame_start + offset_ordinal], width, name)
+                        for offset_ordinal in range(len(offsets))
+                    ])
+                return 'per-frame', 'frame-major-candidate', frames
             if len(offsets) != 1 or len(values) != duration:
                 raise KdfError(f'animation {name} raw-fixed anmdata layout is unsupported')
-            return 'per-frame', [
-                [_vector(value, width, name)] for value in values
-            ]
         if len(values) != len(offsets):
             raise KdfError(f'animation {name} raw-fixed anmstatic layout is unsupported')
-        return 'constant', [[_vector(value, width, name) for value in values]]
+        return (
+            'constant',
+            'constant-offset',
+            [[_vector(value, width, name) for value in values]],
+        )
     if codec == 'waveletsample':
         if source != 'anmdata' or sample.get('decode_status') != 'decoded-wavelet-candidate':
             raise KdfError(f'animation {name} wavelet source or decode status is unsupported')
@@ -201,7 +215,7 @@ def _track_values(
             if not isinstance(frame, list) or len(frame) != len(offsets):
                 raise KdfError(f'animation {name} wavelet frame dimensions are invalid')
             frames.append([_vector(value, width, name) for value in frame])
-        return 'per-frame', frames
+        return 'per-frame', 'frame-major', frames
     raise KdfError(f'animation {name} codec is unsupported')
 
 
@@ -282,7 +296,7 @@ def bind_animation(
             sample_ordinal = track.get('sample_ordinal')
             if type(sample_ordinal) is not int or sample_ordinal < 0:
                 raise KdfError(f'animation {name} sample record is missing')
-            layout, frames = _track_values(
+            layout, sample_layout, frames = _track_values(
                 sample, source, offsets, headers['duration'], width, name)
             for offset_ordinal, offset in enumerate(offsets):
                 node = domains[field].get(offset)
@@ -308,6 +322,7 @@ def bind_animation(
                     'codec': sample['codec'],
                     'decode_status': sample['decode_status'],
                     'layout': layout,
+                    'sample_layout': sample_layout,
                     'values': [frame[offset_ordinal] for frame in frames],
                     'application_semantics': (
                         'root-motion-application-unverified'
