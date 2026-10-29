@@ -583,7 +583,7 @@ py -3.12 tools\native_reaction_links.py `
 
 六个 ANM 都存在 `bonepos` 或 `bonerot` 轨道，但 block ANM 没有
 `positions`，不能因此断言格挡没有位置变化。`positions` 是动画局部坐标候选，
-其局部/世界轴、`SetToTime` 插值、blending 和位置增量语义仍为 `UNVERIFIED`；
+其局部/世界轴、`SetToTime` 插值、blending 以及轨道到输出的对应关系仍为 `UNVERIFIED`；
 当前不能把上表的 Y 值直接换算成 Godot `push`。
 
 复核命令：
@@ -600,9 +600,69 @@ py -3.12 tools\native_root_motion.py `
 [`reports/reaction_root_motion_inventory.json`](../reports/reaction_root_motion_inventory.json)，
 SHA-256 为
 `930708b35c2d925256b46fbaba11f63ec4b050dc9b0ebce68342872607b17d21`。
-SO 校验结果为 `verified 16 native root-motion instructions`，退出码 0。
+原始 SO 校验结果为 `verified 16 native root-motion instructions`，退出码 0；
+该校验器后续扩展的结果见下文。
 证据等级：原始 `positions` 数值为 `STATIC_VERIFIED`，动画时间到场景变换的
 调用链为 `STATIC_SUPPORTED`，实际世界坐标与 push 映射仍为 `UNVERIFIED`。
+
+### 根变换输出与位置差分：静态指令证据
+
+以下仅针对 SHA-256 为
+`1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70`
+的本地 ELF，尚未通过原版运行时对照。
+
+- `UpdatePositionWithRootDisplacement` 在 `0x1A1934–0x1A1954` 比较
+  `[fighter+0x34]` 与 `[fighter+0x30]-1`，无符号大于等于时跳过主体。
+  因此下面不是对所有更新时刻的结论。
+- `0x1A19C8–0x1A19DC` 把 `GetAnimTime` 的返回值传入
+  `anmRoot::SetToTime`，结果写到栈首。`0x1A1A3C–0x1A1A44` 读取
+  输出的前三个 float；`0x1A1B38–0x1A1B50` 读取并更新 fighter 的
+  `+0x84/+0x88/+0x8C` 中对应的三个值。
+- 在主体路径上，`0x1A1BD4/0x1A1C0C` 分别计算输出前两个分量减去
+  更新前 `+0x84/+0x88`；`0x1A1BF0/0x1A1C28` 将差值乘以
+  `[fighter+0x158]`。其后的方向相关系数将两项投影到三个分量，
+  `0x1A1C58–0x1A1C74` 加上 `GetPos` 的结果并调用 `SetPos`。
+  `0x1A1B44` 加载的第三个输入为 `0.0`（字面量 `0x1A1C98`），
+  该段没有将第三个输出分量差值加入位置计算；它仍被保存到 `+0x8C`。
+  这是该函数位置更新的局部数据流，不能推广为角色全部位移来源。
+- `anmRoot::SetToTime` `0x406890–0x4068E4` 对输入整数时间的负值
+  取 0、超过 `[root+0x9C]` 的值取该上限；随后结合
+  `fabs([root+0xA4])` 和 1.0 常量运算并转换为整数存入 `+0x98`。
+  `0x4068E8–0x4068F8` 调用 `CRootPlayerBase::GetOutput` 并复制
+  `0x28` 字节。`GetOutput` 的一条路径含 `floor` 和 `BuildFrame` 调用；
+  仅凭这些调用不能断言所有轨道不插值，或确定半帧的输出。
+
+简化伪代码如下，其中 `D` 是由原生浮点指令计算的方向相关变换，
+并非已证实可直接套用到 Godot 的矩阵：
+
+```text
+if fighter.current_frame <unsigned fighter.final_frame - 1:
+    sample = SetToTime(root, base_animation.time)
+    old0, old1 = fighter.saved0, fighter.saved1
+    fighter.saved0, fighter.saved1, fighter.saved2 = sample[0:3]
+    d0 = (sample[0] - old0) * fighter.scale_0x158
+    d1 = (sample[1] - old1) * fighter.scale_0x158
+    frame.position = frame.position + D(d0, d1, 0.0)
+```
+
+这确认了**该路径对 `SetToTime` 输出做差分**，但尚未证明输出的前三项
+与 ANM `positions` 原始轨道一一相同。首次调用时的保存值、动作切换重置、
+朝向矩阵约定、插值、blending、碰撞及其他位置写入仍待核对；不能直接把
+这段伪代码用于替换 Godot 的 `prototype_push`。
+
+扩展后的只读校验命令：
+
+```powershell
+py -3.12 -X utf8 -B tools/native_root_motion.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+```
+
+本机输出 `verified 54 root-motion words and 5 PLT relocations`，退出码 0。
+校验涵盖所列代表性指令、字面量和五个 PLT 的重定位符号，不能替代对整段
+计算或运行时行为的验证。
+
+本次修改的回归检查：`py -3.12 -X utf8 -B -m unittest discover -s tests -p
+"test*.py" -q`，125 项通过，退出码 0；`git diff --check`，退出码 0。
 
 ## 全量 impact 聚合
 
