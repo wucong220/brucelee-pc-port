@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "evidence_level": "STATIC_VERIFIED",
   "object_sha256": "d97f09cb4b4f5c05fd3ddd0f3fa73d8d03440f113baa598ecc5891599e3e2a65",
   "object_decoded_bytes": 15481,
@@ -26,7 +26,27 @@
           "reference_id": 4,
           "path": "objects/hw/bl_brucelee_01_high/textures/63641d8746445ad3ded8a3b271e9862bcba325fa.tex"
         }
-      }
+      },
+      "mesh_sha256": "8c03d12b23935081895b5eeef6c0ec3c035450fb6d717767bcccc7a5ecaaa061",
+      "vertex_count": 213,
+      "index_count": 843,
+      "subset_count": 1,
+      "subsets": [
+        {
+          "record_start": 14,
+          "index_range": [
+            0,
+            843
+          ],
+          "vertex_range": [
+            0,
+            213
+          ],
+          "triangle_count": 281,
+          "material": "bl_brucelee_01_hair_hw",
+          "texture_group": "bl_brucelee_01_hair_hw"
+        }
+      ]
     },
     "body": {
       "mesh": "objects/hw/bl_brucelee_01_high/meshes/bl_brucelee_01_body_hw_skhigh.mesh",
@@ -43,11 +63,60 @@
           "reference_id": 10,
           "path": "objects/hw/bl_brucelee_01_high/textures/fb505d6373c4e948bcba183368bf14c8e6356aed.tex"
         }
-      }
+      },
+      "mesh_sha256": "0860e38296521c9be073d58daf772eda4538bcc8a8eea57dc334153f2ce7f86f",
+      "vertex_count": 2448,
+      "index_count": 10080,
+      "subset_count": 3,
+      "subsets": [
+        {
+          "record_start": 16,
+          "index_range": [
+            0,
+            6141
+          ],
+          "vertex_range": [
+            0,
+            1445
+          ],
+          "triangle_count": 2047,
+          "material": "bl_brucelee_01_body_hw",
+          "texture_group": "bl_brucelee_01_body_hw"
+        },
+        {
+          "record_start": 32,
+          "index_range": [
+            6141,
+            8505
+          ],
+          "vertex_range": [
+            1445,
+            2075
+          ],
+          "triangle_count": 788,
+          "material": "bl_brucelee_01_body_hw",
+          "texture_group": "bl_brucelee_01_body_hw"
+        },
+        {
+          "record_start": 48,
+          "index_range": [
+            8505,
+            10080
+          ],
+          "vertex_range": [
+            2075,
+            2448
+          ],
+          "triangle_count": 525,
+          "material": "bl_brucelee_01_body_hw",
+          "texture_group": "bl_brucelee_01_body_hw"
+        }
+      ]
     }
   },
   "boundaries": [
     "Static resource references and shader-constant declarations are resolved.",
+    "Mesh subset material names and object-level texture groups are statically joined.",
     "Runtime texture loading success is not inferred from static references.",
     "Original Adreno lighting, blending, mip, and pixel output remain unverified.",
     "No original texture, mesh, shader source, or decoded binary payload is included."

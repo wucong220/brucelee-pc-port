@@ -39,13 +39,18 @@ body skinned 有 1 个退化三角形，其余网格没有退化三角形；所�
 
 每个 subset 的 `rangeidx` 和 `rangevtx` 都是两个 `uint32` 的区间 `[start,end)`。body skinned 的三个 subset 连续覆盖完整网格：
 
-| Subset | 索引范围 | 顶点范围 | 局部骨骼映射 |
-|---:|---|---|---:|
-| 0 | `0–6141` | `0–1445` | 31 |
-| 1 | `6141–8505` | `1445–2075` | 31 |
-| 2 | `8505–10080` | `2075–2448` | 18 |
+| Subset | 索引范围 | 顶点范围 | 材质 | 局部骨骼映射 |
+|---:|---|---|---|---:|
+| 0 | `0–6141` | `0–1445` | `bl_brucelee_01_body_hw` | 31 |
+| 1 | `6141–8505` | `1445–2075` | `bl_brucelee_01_body_hw` | 31 |
+| 2 | `8505–10080` | `2075–2448` | `bl_brucelee_01_body_hw` | 18 |
 
 `skl` 的单字节数组把顶点内局部骨骼索引映射为全局骨骼索引。body shadows 没有 subset 局部映射，其顶点骨骼索引直接指全局骨骼。所有映射后的索引都落在对应 skeleton 范围内。
+
+Hair 唯一 subset 覆盖索引 `0–843`、顶点 `0–213`，材质为
+`bl_brucelee_01_hair_hw`。两个主网格的材质名与 OBJ 外部网格 basename
+去掉 `_skhigh` 后一致，三纹理组的静态连接见
+[`MATERIAL_TEXTURE_BINDING_FINDINGS.md`](MATERIAL_TEXTURE_BINDING_FINDINGS.md)。
 
 ## Mesh 内置绑定骨架
 

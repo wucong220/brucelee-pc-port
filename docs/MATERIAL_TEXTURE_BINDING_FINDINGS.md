@@ -14,8 +14,13 @@
   `g_sMaterial`；材质采样值 `r` 用作高光强度，`a` 用作光泽输入。
 - 原生 `krm::gfx::CMaterial::Init` 对哈希字符串属性执行外部资源解析，
   调用 `CManager::GetTexture`，并把返回的纹理引用写入属性表。
+- Hair 主网格的 1 个 subset 和 Body 主网格的 3 个 subset 均使用各自
+  `bl_brucelee_01_*_hw` 材质名；该名称与 OBJ 主网格 basename 去掉
+  `_skhigh` 后的结果一致，因此可静态连接到对应三纹理组。
 
-这闭合了“OBJ 属性名 → 外部纹理资源 → 程序纹理常量 → 材质属性表”的静态链路。它不等于原版运行时已经实际加载成功，也不等于 Adreno 光照、混合、mip 和最终像素已经对齐。
+这闭合了“OBJ mesh → subset → material → 外部纹理资源 → 程序纹理常量 →
+材质属性表”的静态链路。它不等于原版运行时已经实际加载成功，也不等于
+Adreno 光照、混合、mip 和最终像素已经对齐。
 
 ## 输入指纹
 
@@ -57,6 +62,20 @@ profile word `15`、44 字节 payload；着色器源码位于其后，工具只�
 
 Hair 主网格引用 ID 为 `0`，Body 主网格引用 ID 为 `7`。阴影网格不在这六个纹理属性组中。
 
+## Mesh subset 材质归属
+
+| 部件 | Mesh SHA-256 | 顶点 | 索引 | Subset | 材质 |
+|---|---|---:|---:|---:|---|
+| Hair | `8c03d12b23935081895b5eeef6c0ec3c035450fb6d717767bcccc7a5ecaaa061` | 213 | 843 | 1 | `bl_brucelee_01_hair_hw` |
+| Body | `0860e38296521c9be073d58daf772eda4538bcc8a8eea57dc334153f2ce7f86f` | 2,448 | 10,080 | 3 | `bl_brucelee_01_body_hw` |
+
+Body 三个 subset 的索引/顶点区间分别为 `0–6141/0–1445`、
+`6141–8505/1445–2075` 和 `8505–10080/2075–2448`。三个 subset 都使用同一个
+Body 材质组；Hair 唯一 subset 覆盖 `0–843/0–213`。
+
+工具要求每个 subset 的材质名等于 OBJ mesh basename 去掉 `_skhigh`。
+材质缺失、名称不一致、subset 数量不一致或重复 mesh 参数都会失败关闭。
+
 ## 原生数据流
 
 `krm::gfx::CMaterial::Init` 位于 ELF 偏移 `0x34b000`，大小为 `0xefc`。
@@ -83,6 +102,8 @@ py -3.12 tools\kdf_program.py 'C:\private\Diffuse.program'
 py -3.12 tools\material_binding_report.py `
   'C:\private\bl_brucelee_01_High.obj' `
   'C:\private\Diffuse.program' `
+  --mesh 'hair=C:\private\bl_brucelee_01_hair_hw_skhigh.mesh' `
+  --mesh 'body=C:\private\bl_brucelee_01_body_hw_skhigh.mesh' `
   --output reports\material_texture_binding.json
 ```
 
@@ -93,4 +114,5 @@ py -3.12 tools\material_binding_report.py `
 - 未在原版 Adreno 设备上捕获 `GetTexture` 返回值和属性表最终内容。
 - 未逐像素比较法线空间、sRGB 解码、mip 采样、混合和光照。
 - `material.r/a` 到 Godot `SPECULAR/ROUGHNESS` 的映射是候选重建。
+- 已验证 subset 的材质名称与纹理组一致，但未观察原版 GPU 的最终 draw call 和绑定状态。
 - 静态成功不代表所有路径、平台变体或缺失资源回退均成功。
