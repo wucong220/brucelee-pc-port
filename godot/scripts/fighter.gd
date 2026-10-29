@@ -1675,7 +1675,7 @@ func _advance_state() -> void:
 
 func _try_facedown_attack_contact() -> void:
     if (opponent == null or not is_instance_valid(opponent)
-            or opponent.state in ["ko", "facedownko"]):
+            or opponent.state in ["ko", "facedownko", "faceupidle"]):
         return
     var dx: float = opponent.global_position.x - global_position.x
     var dz: float = opponent.global_position.z - global_position.z
@@ -1699,7 +1699,8 @@ func _try_facedown_attack_contact() -> void:
 
 
 func _try_attack_contact() -> void:
-    if opponent == null or not is_instance_valid(opponent) or opponent.state == "ko" or opponent.state == "facedownko":
+    if (opponent == null or not is_instance_valid(opponent)
+            or opponent.state in ["ko", "facedownko", "faceupidle"]):
         return
     var details: Dictionary = ATTACKS[attack_kind]
     var dx: float = opponent.global_position.x - global_position.x
@@ -1886,7 +1887,10 @@ func receive_hit(
         direction: float,
         reaction: Dictionary = {}
 ) -> void:
-    if state == "ko" or state == "facedownko":
+    # impactfaceup and faceupko are not implemented. Keep every incoming hit
+    # out of the standing hitstun/blockstun/KO paths until those links have
+    # their own evidence-backed transitions.
+    if state in ["ko", "facedownko", "faceupidle"]:
         return
     var state_before: String = state
     var position_before: float = position.x

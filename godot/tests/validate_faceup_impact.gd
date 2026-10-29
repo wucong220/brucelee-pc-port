@@ -42,6 +42,9 @@ func _run() -> void:
     if not _check_hit_routing(player, opponent):
         quit(1)
         return
+    if not _check_faceup_idle_ignores_unverified_hits(player, opponent):
+        quit(1)
+        return
     if not _check_entry_and_return(player):
         quit(1)
         return
@@ -58,7 +61,10 @@ func _run() -> void:
             "facedowngetup": [5, 11],
             "facedownattack": [24, 31],
         },
-        "candidate_scope": "low impact only; lethal and missing-clip paths fall back",
+        "candidate_scope": (
+            "low impact only; faceupidle incoming hits are ignored; "
+            + "lethal and missing-clip paths fall back"
+        ),
     }))
     quit(0)
 
@@ -226,6 +232,56 @@ func _connect_attacker(opponent: PortFighter) -> void:
 
 func _attacker_damage(opponent: PortFighter) -> float:
     return float(opponent.ATTACKS["kick"]["damage"])
+
+
+func _check_faceup_idle_ignores_unverified_hits(
+        player: PortFighter,
+        opponent: PortFighter,
+) -> bool:
+    var cases: Array[Array] = [
+        ["ordinary", player.MAX_HEALTH],
+        ["lethal", _attacker_damage(opponent) - 1.0],
+    ]
+    for case_value: Array in cases:
+        _prepare_faceup_idle_hit(player, opponent)
+        player.health = float(case_value[1])
+        var health_before: float = player.health
+        var opponent_hits_before: int = opponent.combo_hits
+        _connect_attacker(opponent)
+        if player.state != "faceupidle":
+            push_error("An unverified hit exited faceupidle: " + String(case_value[0]))
+            return false
+        if absf(player.health - health_before) > 0.001:
+            push_error("An unverified hit changed faceupidle health: "
+                + String(case_value[0]))
+            return false
+        if opponent.combo_hits != opponent_hits_before:
+            push_error("An ignored faceupidle hit counted as a combo hit: "
+                + String(case_value[0]))
+            return false
+        if opponent._attack_connected:
+            push_error("An ignored faceupidle hit marked attack contact: "
+                + String(case_value[0]))
+            return false
+    _prepare_faceup_idle_hit(player, opponent)
+    var health_before: float = player.health
+    player.receive_hit(1.0, true, 0.0, 1.0)
+    if player.state != "faceupidle" or absf(player.health - health_before) > 0.001:
+        push_error("A blocked hit rerouted faceupidle through blockstun")
+        return false
+    return true
+
+
+func _prepare_faceup_idle_hit(
+        player: PortFighter,
+        opponent: PortFighter,
+) -> void:
+    player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    player.state = "faceupidle"
+    player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
+    player.facing = -1.0
+    opponent.facing = 1.0
 
 
 func _check_entry_and_return(player: PortFighter) -> bool:

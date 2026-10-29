@@ -247,9 +247,12 @@ character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨�
 从源动画第 21 帧起播，播放到第 48 帧后进入循环的
 `all_idle_face_up`。致命命中保持现有 `ko` 优先级；缺少任一所需 clip
 时不进入该链。`faceupidle` 当前不开放起身、攻击、受击或 KO 出边。
+在 `impactfaceup` 和 `faceupko` 尚未接入时，该候选状态的普通、格挡和
+致命命中都被明确忽略，角色保持循环；这是候选降级行为，不是原版受击规则。
 
 这没有解释原版 incoming link 的 `time=[0,0]` 或完整分组优先级，也没有
 接入 `faceupgetup`、`faceupattack`、`impactfaceup`、`faceupko`、
 `attacktofloor`。`validate_faceup_impact.gd` 只验证上述候选条件、第 21/48
-帧边界、循环、半径、缺失 clip 和致命命中的降级路径，不证明原版逐帧视觉、
-完整命中盒或最终运行时行为。
+帧边界、循环、半径、缺失 clip、致命命中的降级路径，以及普通和致命攻击
+进入 `faceupidle` 时不会改走通用受击或 KO；它不证明原版逐帧视觉、完整
+命中盒或最终运行时行为。
