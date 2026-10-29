@@ -561,6 +561,49 @@ py -3.12 tools\native_reaction_links.py `
 
 结果为 `verified 45 native reaction-link instructions`，退出码 0。
 
+## Reaction root-motion raw data
+
+`CFighter::BasicUpdate` 在 `0x1A83B0` 调用
+`CFighter::UpdatePositionWithRootDisplacement`。后者从 fighter 的场景对象
+`+0x13c` 取得当前 frame、rotation、hierarchy animation 和 animation state，
+使用 `anmState::GetAnimTime` 调用 `anmRoot::SetToTime`，最后读取 frame 位置并
+通过 `gfxScnFrame::SetRot`、`gfxScnFrame::SetPos` 写回。该链条支持“当前动画
+时间参与场景位置更新”，但不证明具体坐标轴或最终击退效果。
+
+安全导出覆盖六个 normal 受击/格挡 ANM：
+
+| 动作 | `positions` 轨道 | 帧数/最大绝对值 |
+|---|---:|---|
+| `impactlightfrontlow` | 有 | 17；`(0, 18.2522, 0)` |
+| `impactlightfrontmid` | 有 | 16；末值 `(0, 22.8455, 0)` |
+| `impactlightfronthigh` | 有 | 17；末值 `(0.3733, 36.8696, 0)` |
+| `lowblock` | 无 | — |
+| `midblock` | 无 | — |
+| `highblock` | 无 | — |
+
+六个 ANM 都存在 `bonepos` 或 `bonerot` 轨道，但 block ANM 没有
+`positions`，不能因此断言格挡没有位置变化。`positions` 是动画局部坐标候选，
+其局部/世界轴、`SetToTime` 插值、blending 和位置增量语义仍为 `UNVERIFIED`；
+当前不能把上表的 Y 值直接换算成 Godot `push`。
+
+复核命令：
+
+```powershell
+py -3.12 tools\kdf_reaction_root_motion.py `
+  --archive 'D:\private\Bruce Lee Dragon Warrior v1.15.26.zip' `
+  --report 'reports\reaction_root_motion_inventory.new.json'
+py -3.12 tools\native_root_motion.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+```
+
+报告为
+[`reports/reaction_root_motion_inventory.json`](../reports/reaction_root_motion_inventory.json)，
+SHA-256 为
+`930708b35c2d925256b46fbaba11f63ec4b050dc9b0ebce68342872607b17d21`。
+SO 校验结果为 `verified 16 native root-motion instructions`，退出码 0。
+证据等级：原始 `positions` 数值为 `STATIC_VERIFIED`，动画时间到场景变换的
+调用链为 `STATIC_SUPPORTED`，实际世界坐标与 push 映射仍为 `UNVERIFIED`。
+
 ## 全量 impact 聚合
 
 使用完整外层 ZIP 和 `--inventory` 模式重新只读解析后，200 个动作、108 个
