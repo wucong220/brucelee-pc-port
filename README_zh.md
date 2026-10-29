@@ -21,6 +21,7 @@
    EXE/PCK，非安卓模拟器。
 6. 三条真实 ANM 的轨道声明指针、轨道组、raw-fixed Q12/Q14 和五条 wavelet 轨道的逐帧候选值已由实际资源与静态原生指令交叉核对。候选值尚未经过原生运行时对照或 Godot 动画播放验证。测试命令和退出码见 `docs/SKL_ANM_FORMAT_FINDINGS.md`。
 7. Hair/Body 的 Mesh subset、材质名、`diffuse`、`normal`、`material` 外部纹理引用、`Diffuse.program` 纹理常量以及原生 `CMaterial::Init` → `CManager::GetTexture` 数据流已静态闭合；运行时 draw call 与 GPU 最终像素仍未对照。详情见 `docs/MATERIAL_TEXTURE_BINDING_FINDINGS.md`。
+8. Bruce Lee 对象的 `scene/childs` 相对字典已解析为 78 个唯一节点，并与 78 组姿态 section 一一对应；原生父子指针和 draw call 仍未验证。详情见 `docs/OBJ_FORMAT_FINDINGS.md`。
 
 ## 立即运行 Windows PC 原型
 

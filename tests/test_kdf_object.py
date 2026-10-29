@@ -9,7 +9,7 @@ import zlib
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from kdf_data import KdfError
-from kdf_object import inspect_object
+from kdf_object import _visual_bindings, inspect_object
 
 
 def object_fixture(*, bad_reference=False) -> bytes:
@@ -92,6 +92,90 @@ class TestKdfObject(unittest.TestCase):
             self.assertEqual(run.returncode, 0, run.stderr)
             report = json.loads(run.stdout)
             self.assertEqual(report['pose_transform_count'], 1)
+
+
+
+    def test_relative_scene_dictionary_links_pose_sections(self):
+        strings = [
+            "scene", "childs", "type", "frame", "object", "properties",
+            "position", "rotation", "scale", "pelvis",
+        ]
+        records = [
+            (0x30000001, 1),
+            (0x60000000, strings.index("scene")),
+            (0x30000003, 1),
+            (0x60000000, strings.index("childs")),
+            (0x30000001, 5),
+            (0x60000000, strings.index("type")),
+            (0x60000000, strings.index("frame")),
+            (0x60000000, strings.index("properties")),
+            (0x30000003, 13),
+            (0x60000000, strings.index("pelvis")),
+            (0x30000002, 1),
+            (0x60000000, strings.index("type")),
+            (0x60000000, strings.index("object")),
+            (0x60000000, strings.index("properties")),
+            (0x30000003, 1),
+            (0x60000000, strings.index("position")),
+            (0x41800001, 3),
+            (0x60000000, strings.index("rotation")),
+            (0x42000001, 4),
+            (0x60000000, strings.index("scale")),
+            (0x41800001, 5),
+            (0x60000000, strings.index("position")),
+            (0x41800001, 0),
+            (0x60000000, strings.index("rotation")),
+            (0x42000001, 1),
+            (0x60000000, strings.index("scale")),
+            (0x41800001, 2),
+        ]
+        payload = b"".join((
+            struct.pack("<3f", 1, 2, 3),
+            struct.pack("<4f", 0, 0, 0, 1),
+            struct.pack("<3f", 1, 1, 1),
+            struct.pack("<3f", 4, 5, 6),
+            struct.pack("<4f", 0, 0, 0, 1),
+            struct.pack("<3f", 1, 1, 1),
+        ))
+        offsets = (0, 0, 12, 28, 40, 52, 68)
+        raw = bytearray(b"1FDKENONCTX3" + struct.pack(
+            "<IIII", len(strings), 0, 0, len(strings)))
+        for text in strings:
+            encoded = text.encode()
+            identifier = (zlib.crc32(encoded) + len(encoded)) & 0xffffffff
+            raw += struct.pack("<II", identifier, len(encoded)) + encoded + b"\0"
+        raw += b"DATA"
+        raw += struct.pack("<IIII", len(records), 6, 0, len(payload))
+        raw += struct.pack(f"<{len(offsets)}I", *offsets)
+        for record in records:
+            raw += struct.pack("<II", *record)
+        raw += payload + b"object-ident!!!!"
+        result = inspect_object(bytes(raw))
+        self.assertEqual(result["scene_tree_status"], "relative-dictionary")
+        self.assertEqual(
+            [(node["name"], node["parent"], node["type"]) for node in result["scene_nodes"]],
+            [("scene", None, "frame"), ("pelvis", "scene", "object")],
+        )
+        self.assertEqual(result["scene_nodes"][1]["position_section"], 3)
+
+
+
+    def test_visual_binding_checks_mesh_reference(self):
+        strings = [{"text": name} for name in ("body", "mesh")]
+        records = [
+            {"ordinal": 0, "first": 0x30000001, "second": 1},
+            {"ordinal": 1, "first": 0x60000000, "second": 0},
+            {"ordinal": 2, "first": 0x30000001, "second": 1},
+            {"ordinal": 3, "first": 0x60000000, "second": 1},
+            {"ordinal": 4, "first": 0x70000000, "second": 0},
+        ]
+        references = [{"path": "objects/body.mesh"}]
+        self.assertEqual(
+            _visual_bindings(records, strings, 0, references),
+            [{"name": "body", "reference_id": 0, "path": "objects/body.mesh"}],
+        )
+        with self.assertRaisesRegex(KdfError, "does not match"):
+            _visual_bindings(records, strings, 0, [{"path": "objects/other.mesh"}])
 
 
 if __name__ == '__main__':
