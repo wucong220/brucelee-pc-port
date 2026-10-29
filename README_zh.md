@@ -3,6 +3,9 @@
 > **阶段：P0 取证 + P1 可玩的独立战斗原型 + P2 PAK 解析完成 + P3 资源格式恢复进行中**<br>
 > **当前不是原版游戏的完整移植**。原型使用程序生成的占位人物、擂台和自写战斗规则，不包含原始游戏资产，不包含从 ARM 二进制提取的源码。它能作为逐步接入原版资源和逆向玩法的 PC 工程基础。
 
+真实候选模型、纹理、动画和战斗状态的本地集成方式、测试命令与边界见
+[`docs/CANDIDATE_INTEGRATION.md`](docs/CANDIDATE_INTEGRATION.md)。
+
 > 本机初始化时，压缩包内的四个已解码二进制样本另存到 `%LOCALAPPDATA%\BruceLee-PC-Port\decoded_frames`，不放在同步目录或 Git 仓库中；原始 ZIP 保持不变。`.gitignore` 只控制 Git 跟踪，不控制文件同步软件。
 
 > `evidence/candidate_symbols.csv` 是从原版二进制中筛选出的函数符号文本清单，`evidence/source_inventory.json` 记录原文件名、哈希和容器元数据；两者不含原始二进制内容。`docs/INIT_GITHUB_AND_CODEX.md` 保留了初始化包最初建议私有仓库的方案，仓库实际可见性由所有者选择。
@@ -13,7 +16,9 @@
 2. 外部 `data.zpak` 是 ZIP；包含 `Core.pakh`、`Core.pakd000` 和 `metadata.xml`。实际解析器已在完整原包中验证 2144 条索引、417 个目录节点和 2265 条文件路径，尾部 CRC 为 `0xeee1e38a`。
 3. `Core.pakd000` 的 2144 个跨块连续 zlib 流已全部读取，共解码 325,791,952 字节；物理偏移、存储长度、解码长度和目录标识全部一致。早期“第 5 个流截断”的判断已纠正。详情见 `docs/PAK_DECODE_FINDINGS.md`。
 4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
-5. 提供 PowerShell `build_windows.ps1`，在本机安装 Godot 及 Windows 导出模板后生成原生 Windows EXE，非安卓模拟器。
+5. 提供 PowerShell `build_windows.ps1` 和 `validate_windows_exe.ps1`；已使用
+   Godot 4.7.2 Windows Export Templates 生成并在仓库外验证原生 Windows
+   EXE/PCK，非安卓模拟器。
 6. 三条真实 ANM 的轨道声明指针、轨道组、raw-fixed Q12/Q14 和五条 wavelet 轨道的逐帧候选值已由实际资源与静态原生指令交叉核对。候选值尚未经过原生运行时对照或 Godot 动画播放验证。测试命令和退出码见 `docs/SKL_ANM_FORMAT_FINDINGS.md`。
 
 ## 立即运行 Windows PC 原型
