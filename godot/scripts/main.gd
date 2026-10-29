@@ -29,6 +29,11 @@ func _ready() -> void:
 
 
 func _run_export_self_test() -> void:
+    # Freeze gameplay before the readiness wait so autonomous AI input cannot
+    # change the candidate animation that this deterministic self-test checks.
+    set_physics_process(false)
+    player.set_physics_process(false)
+    computer.set_physics_process(false)
     var opponent_idle_clip: String = ""
     await get_tree().process_frame
     await get_tree().process_frame
@@ -104,9 +109,6 @@ func _run_export_self_test() -> void:
         get_tree().quit(1)
         return
 
-    set_physics_process(false)
-    player.set_physics_process(false)
-    computer.set_physics_process(false)
     player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
     computer.reset_fighter(Vector3(0.25, 1.2, 0.0))
     if not player.request_attack("punch"):
@@ -309,7 +311,7 @@ func _think_ai(delta: float) -> void:
     var in_attack_reach: bool = distance <= source_reach
     # Prototype AI makes one decision per attack when the attack first poses
     # a nearby threat, and holds it through the active window.
-    var player_threat: bool = player.state in ["startup", "active"]
+    var player_threat: bool = _player_attack_poses_guard_threat()
     if not player_threat:
         ai_guard_sequence = -1
         ai_guard_decision = false
@@ -332,6 +334,19 @@ func _think_ai(delta: float) -> void:
             if not available.is_empty():
                 computer.request_attack(available[rng.randi_range(0, available.size() - 1)])
 
+
+func _player_attack_poses_guard_threat() -> bool:
+    if player.state in ["startup", "active"]:
+        return true
+    if player.state != "facedownattack":
+        return false
+    var source_frame: float = player.state_time * PortFighter.SOURCE_FRAME_RATE
+    # This prototype exposes the recovery attack directly from facedownidle,
+    # so frames 0-5 act as the AI-visible startup before contact starts at 6.
+    # Damage is still limited to the recovered 6-9 window in fighter.gd.
+    return source_frame <= float(PortFighter.FACEDOWN_ATTACK_DAMAGE_END_FRAME) + 0.0001
+
+
 func _unhandled_key_input(event: InputEvent) -> void:
     if not (event is InputEventKey):
         return
@@ -342,11 +357,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
         return
     match key_event.keycode:
         KEY_J:
+            player.record_virtual_press("a")
             player.request_attack("punch")
         KEY_K:
+            player.record_virtual_press("b")
             player.request_attack("kick")
         KEY_L:
+            player.record_virtual_press("c")
             player.request_attack("heavy")
+        KEY_U:
+            player.record_virtual_press("d")
         KEY_R:
             _reset_match()
 

@@ -6,7 +6,7 @@
   "set_resource_id": "f3d1549105ba342bc17b86a33b3834a0",
   "set_pakd_offset": 21016054,
   "method": "Read-only kdf_fighting_set.read_archive_resource and kdf_combat_reactions._parse_set plus _animation_metadata. This report stores no original bytes.",
-  "status": "证据记录。impactfacedown 已接入候选运行时，原版逐帧行为尚未验收。facedownko 和 facedownattack 尚未实现。",
+  "status": "证据记录。impactfacedown、facedownko 和 facedownattack 已接入候选运行时；facedownattack 的物理键位仍是原型映射，原版逐帧行为尚未验收。",
   "actions": {
     "facedownko": {
       "animation": "adreno_200/animation/all_idle_face_down.anm",
@@ -520,9 +520,16 @@
   "explicit_names_seen_not_closed_note": "Only the action names were read. Animation path, radius, frame count, frame rate, resource id, PAKD offset, SHA-256, group windows, and direct links were not read for these names, so none is closed.",
   "runtime_candidate": {
     "impactfacedown": "候选运行时已接入，不是原版逐帧验收。加载含 all_impct_facedwn 且轨道检查通过的 GLB 时，facedownidle 上的非格挡低高度 impact 在伤害后血量仍大于 0 时播放，半径 80，不循环，第 11 帧回 facedownidle。不应用原型 push。",
-    "facedownko": "候选运行时已接入，不是原版逐帧验收。facedownidle 的 direct link 中 healthzero 位于低高度 impact 之前。血量降到 0 时循环 all_idle_face_down，半径 100，不接受起身，不应用这次致命攻击的原型 push。缺倒地 clip 时仍走站立 ko。"
+    "facedownko": "候选运行时已接入，不是原版逐帧验收。facedownidle 的 direct link 中 healthzero 位于低高度 impact 之前。血量降到 0 时循环 all_idle_face_down，半径 100，不接受起身，不应用这次致命攻击的原型 push。缺倒地 clip 时仍走站立 ko。",
+    "facedownattack": "候选运行时已接入，不是原版逐帧验收。加载含 all_getup_facedwn_attack 且轨道检查通过的 GLB 时，facedownidle 接受 aaa、abb、bcc、bdd 四条抽象输入序列，播放半径 45、35 帧的 clip，并在第 6-9 帧造成一次 6 点伤害、第 32 帧回 idle。J/K/L/U 到 a/b/c/d 只是 PC 原型映射，原版 Android 物理键位未证明。缺 clip 时保持在 facedownidle。"
   },
-  "not_implemented": [
-    "facedownattack"
-  ]
+  "runtime_attack_candidate": {
+    "glb": "C:\\Users\\Lenovo\\AppData\\Local\\BruceLee-PC-Port\\facedown-attack-candidate-20261030\\bruce_candidate_facedown_attack.glb",
+    "glb_sha256": "9d94f0f663c9c66eb39a43df23f8e0547e13957b6e75646bb084fae440904bbb",
+    "source_anm_sha256": "193891b7d864183c3e5873bb6503a4384af88ff66f0af4b3ff48e4a9a07c7630",
+    "animation_count": 17,
+    "track_check": "PASS",
+    "godot_validation": "PASS"
+  },
+  "not_implemented": []
 }

@@ -52,7 +52,7 @@ func _ready() -> void:
     footer.offset_bottom = -12
     footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     footer.add_theme_font_size_override("font_size", 17)
-    footer.text = "A/D move  W/S sidestep   J punch   K kick   L heavy   SHIFT guard   R restart"
+    footer.text = "A/D move  W/S sidestep  J/K/L/U = a/b/c/d  SHIFT guard  R restart"
     screen.add_child(footer)
     center_message = hint
 

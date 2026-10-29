@@ -67,18 +67,23 @@ func _static_flags_stay_false(player: PortFighter) -> bool:
         "all_impct_hard_rht_low", "all_block_high_hard",
         "m01_idle_02", "all_idle_face_down", "all_getup_facedwn",
     ]
-    if animation == null or animation.get_animation_list().size() != expected.size():
-        push_error("Return-state GLB does not expose exactly 15 clips")
+    if animation == null or animation.get_animation_list().size() not in [
+        expected.size(), expected.size() + 2,
+    ]:
+        push_error("Return-state GLB does not expose 15 base clips or 17 clips with attack/KO extensions")
         return false
     for clip_name: String in expected:
         if _find_clip(animation, clip_name).is_empty():
             push_error("Return-state GLB is missing " + clip_name)
             return false
-    for listed_name: StringName in animation.get_animation_list():
-        var listed: String = String(listed_name)
-        if listed.contains("facedownattack") or listed.contains("facedownko"):
-            push_error("Return-state GLB includes an out-of-scope clip: " + listed)
-            return false
+    if animation.get_animation_list().size() == expected.size() + 2:
+        for extension_name: String in [
+            PortFighter.FACEDOWN_IMPACT_CLIP,
+            PortFighter.FACEDOWN_ATTACK_CLIP,
+        ]:
+            if _find_clip(animation, extension_name).is_empty():
+                push_error("17-clip extension is missing " + extension_name)
+                return false
     for group: String in ["hit", "block"]:
         for entry_value: Variant in player.EXACT_REACTIONS[group]:
             var entry: Dictionary = entry_value

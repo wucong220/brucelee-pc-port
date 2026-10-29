@@ -55,7 +55,7 @@ func _run() -> void:
         "exit_frame": 11,
         "radius": 80,
         "facedownko_radius": 100,
-        "not_implemented": ["facedownattack"],
+        "facedownattack": "validated by validate_facedown_attack.gd",
     }))
     quit(0)
 

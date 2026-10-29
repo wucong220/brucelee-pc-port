@@ -98,6 +98,10 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
   `this+0x744` 和 `this+0x76c` 分别传给 `UserControlUpdate` 的两个向量
   参数；这两个容器在角色语义上的具体分工仍需核实。其他控制路径和设备
   配置选择也还需核实。
+- PC 原型现在保留事件队列并复现从后向前跳过不匹配项的逆向有序子序列
+  匹配，因此 `a,b,c,b,b` 可以匹配 `abb`。由于原版 `+500` 的时钟单位
+  尚未闭合，原型单独采用 `0.5` 秒窗口并在 0.5 秒后按最后事件清空整个
+  队列；这个窗口只是 `PROTOTYPE`，不能当作原版时间或毫秒值。
 
 这些写入及 `InputSequenceCheck` 对零值的要求支持该字节与输入消费或
 有效性有关；它同时参与匹配和批量失效，因此不能只命名为 `consumed`，
@@ -116,7 +120,9 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
   `0x5bd2e0` 是 `"Pressed"`，与后一条 GID 初始化对应。
 - 这闭合了 `gid_Press` 的初始化内容，但仍未证明哪个
   `input.config` 项或虚拟键在运行时产生该事件；`.set` 字符串到事件、
-  时钟单位、活动配置及原始手感仍未闭合。`facedownattack` 仍未实现。
+  时钟单位、活动配置及原始手感仍未闭合。PC 原型现已用显式
+  `J/K/L/U → pressa/pressb/pressc/pressd` 接入 `facedownattack`
+  的四条 `keysequence`；这仍不是已证明的原版物理键映射。
 - `tools/native_reaction_links.py` 只复核上列选定指令和三个字符串字面量；
   PC 相对基址与 `0x604148` 的 GOT 重定位关系来自另一次独立静态分析，
   尚未由这个校验脚本自动验证。
@@ -127,5 +133,5 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
   退出码 0，核验 96 条原生指令和三条字符串字面量
   （`ReceiveDamage`、`Press`、`Pressed`）。
 - `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`：
-  退出码 0，运行 190 项，其中 1 项跳过。
+  退出码 0，运行 191 项，其中 1 项跳过。
 - `git diff --check`：退出码 0。

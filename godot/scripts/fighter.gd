@@ -58,11 +58,36 @@ const FACEDOWN_GETUP_EXIT_FRAME: int = 16
 const FACEDOWN_IMPACT_CLIP: String = "all_impct_facedwn"
 const FACEDOWN_IMPACT_EXIT_FRAME: int = 11
 const FACEDOWN_KO_RADIUS: float = 100.0
+const FACEDOWN_ATTACK_CLIP: String = "all_getup_facedwn_attack"
+const FACEDOWN_ATTACK_DURATION_FRAMES: int = 35
+const FACEDOWN_ATTACK_EXIT_FRAME: int = 32
+const FACEDOWN_ATTACK_DAMAGE_START_FRAME: int = 6
+const FACEDOWN_ATTACK_DAMAGE_END_FRAME: int = 9
+const FACEDOWN_ATTACK_DAMAGE: float = 6.0
+const FACEDOWN_ATTACK_RADIUS: float = 120.0
+# UserControlUpdate expires a whole input vector based on the last event's
+# +500 clock value. The clock unit is not proven, so this is an explicit PC
+# prototype lifetime and must not be presented as the original timing.
+const FACEDOWN_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.5
+const FACEDOWN_ATTACK_SEQUENCES: Array = [
+    ["a", "a", "a"],
+    ["a", "b", "b"],
+    ["b", "c", "c"],
+    ["b", "d", "d"],
+]
+const FACEDOWN_ATTACK_IMPACT: Dictionary = {
+    "attack_radius": FACEDOWN_ATTACK_RADIUS,
+    "body_part": "rarm",
+    "height": "medium",
+    "strength": "hard",
+    "direction": "frontal",
+}
 const RETURN_ANIMATION_RADII: Dictionary = {
     "m01_idle_02": 40.0,
     "all_idle_face_down": 75.0,
     "all_getup_facedwn": 25.0,
     "all_impct_facedwn": 80.0,
+    "all_getup_facedwn_attack": 45.0,
 }
 const REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -260,6 +285,7 @@ var state_time: float = 0.0
 var attack_kind: String = ""
 var attack_sequence: int = 0
 var _attack_connected: bool = false
+var _facedown_input_history: Array[Dictionary] = []
 var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
 var last_reaction_animation: String = ""
@@ -996,7 +1022,8 @@ func _try_load_candidate_visual() -> void:
     # enter one only after the same candidate track check used above.
     if _candidate_skeleton != null:
         for return_clip_name: String in [
-            IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP, FACEDOWN_IMPACT_CLIP,
+            IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
+            FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
@@ -1030,6 +1057,11 @@ func _try_load_candidate_visual() -> void:
             _candidate_clip_paths[FACEDOWN_IMPACT_CLIP]
         )
         facedown_impact_clip.loop_mode = Animation.LOOP_NONE
+    if _candidate_clip_paths.has(FACEDOWN_ATTACK_CLIP):
+        var facedown_attack_clip: Animation = _candidate_animation.get_animation(
+            _candidate_clip_paths[FACEDOWN_ATTACK_CLIP]
+        )
+        facedown_attack_clip.loop_mode = Animation.LOOP_NONE
     for action: String in _candidate_clip_paths:
         _disable_candidate_character_position_tracks(
             _candidate_animation.get_animation(_candidate_clip_paths[action])
@@ -1298,6 +1330,7 @@ func _enter_locomotion_state(next_state: String) -> void:
     state = next_state
     state_time = 0.0
     attack_kind = ""
+    _facedown_input_history.clear()
     _clear_reaction_tracking()
     _restart_candidate_action()
 
@@ -1349,6 +1382,21 @@ func _advance_return_state(delta: float) -> void:
         state_time += maxf(delta, 0.0)
         if _reached_source_frame(state_time, FACEDOWN_IMPACT_EXIT_FRAME):
             _enter_locomotion_state("facedownidle")
+        return
+    if state == "facedownattack":
+        var before: float = state_time
+        var after: float = before + maxf(delta, 0.0)
+        if (_attack_connected == false
+                and _source_frame_window_intersects(
+                    before,
+                    after,
+                    FACEDOWN_ATTACK_DAMAGE_START_FRAME,
+                    FACEDOWN_ATTACK_DAMAGE_END_FRAME,
+                )):
+            _try_facedown_attack_contact()
+        state_time = after
+        if _reached_source_frame(state_time, FACEDOWN_ATTACK_EXIT_FRAME):
+            _enter_locomotion_state("idle")
 
 
 func _wrap_return_loop(duration_frames: int) -> void:
@@ -1361,6 +1409,17 @@ func _wrap_return_loop(duration_frames: int) -> void:
 
 func _reached_source_frame(seconds: float, frame: int) -> bool:
     return seconds * SOURCE_FRAME_RATE + 0.0001 >= float(frame)
+
+
+func _source_frame_window_intersects(
+        before: float, after: float, start_frame: int, end_frame: int
+) -> bool:
+    var start_frame_time: float = minf(before, after) * SOURCE_FRAME_RATE
+    var end_frame_time: float = maxf(before, after) * SOURCE_FRAME_RATE
+    return (
+        end_frame_time + 0.0001 >= float(start_frame)
+        and start_frame_time <= float(end_frame) + 0.0001
+    )
 
 
 func _facedown_getup_requested(before: float, after: float) -> bool:
@@ -1381,6 +1440,7 @@ func _begin_facedown_getup() -> void:
     state = "facedowngetup"
     state_time = 0.0
     attack_kind = ""
+    _facedown_input_history.clear()
     _restart_candidate_action()
 
 
@@ -1410,6 +1470,7 @@ func begin_facedown_impact(amount: float) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
+    _facedown_input_history.clear()
     combo_hits = 0
     last_reaction_group = "hit"
     last_reaction_source_action = "impactfacedown"
@@ -1419,6 +1480,57 @@ func begin_facedown_impact(amount: float) -> void:
     if _candidate_animation != null:
         _candidate_animation.stop()
         _candidate_action = ""
+
+
+func record_virtual_press(virtual_key: String) -> bool:
+    # This is the PC prototype's abstract press path. The original Android
+    # physical-key mapping is not yet proven, so main.gd supplies a/b/c/d from
+    # explicit keyboard bindings and this method only reproduces the recovered
+    # three-item sequences as prototype input events.
+    if state != "facedownidle":
+        _facedown_input_history.clear()
+        return false
+    if virtual_key not in ["a", "b", "c", "d"]:
+        return false
+    _prune_facedown_input_history()
+    _facedown_input_history.append({"key": virtual_key, "time": _time})
+    if not _matches_facedown_attack_sequence():
+        return false
+    if not _candidate_clip_paths.has(FACEDOWN_ATTACK_CLIP):
+        return false
+    state = "facedownattack"
+    state_time = 0.0
+    attack_kind = "facedownattack"
+    attack_sequence += 1
+    _attack_connected = false
+    _facedown_input_history.clear()
+    _restart_candidate_action()
+    return true
+
+
+func _prune_facedown_input_history() -> void:
+    if _facedown_input_history.is_empty():
+        return
+    var last_time: float = float(_facedown_input_history.back()["time"])
+    if _time > last_time + FACEDOWN_INPUT_PROTOTYPE_WINDOW_SECONDS:
+        _facedown_input_history.clear()
+
+
+func _matches_facedown_attack_sequence() -> bool:
+    # InputSequenceCheck scans the event vector backwards and skips entries
+    # that do not match the current required key. This is an ordered
+    # subsequence check, not an equality check against the last three presses.
+    for sequence_value: Variant in FACEDOWN_ATTACK_SEQUENCES:
+        var sequence: Array = sequence_value
+        var required: int = sequence.size() - 1
+        for event_index: int in range(_facedown_input_history.size() - 1, -1, -1):
+            var event: Dictionary = _facedown_input_history[event_index]
+            if String(event["key"]) != String(sequence[required]):
+                continue
+            required -= 1
+            if required < 0:
+                return true
+    return false
 
 
 func request_attack(kind: String) -> bool:
@@ -1458,7 +1570,10 @@ func _physics_process(delta: float) -> void:
     _animate_candidate()
 
 func _advance_timed_states(delta: float) -> void:
-    if state == "idle2" or state == "facedownidle" or state == "facedownko" or state == "facedowngetup" or state == "impactfacedown":
+    if state in [
+        "idle2", "facedownidle", "facedownko", "facedowngetup",
+        "impactfacedown", "facedownattack",
+    ]:
         _advance_return_state(delta)
         return
     var remaining: float = delta
@@ -1485,6 +1600,32 @@ func _advance_state() -> void:
             if state != "recovery":
                 next_state = _verified_post_hit_return_state()
             _enter_locomotion_state(next_state)
+
+
+func _try_facedown_attack_contact() -> void:
+    if (opponent == null or not is_instance_valid(opponent)
+            or opponent.state in ["ko", "facedownko"]):
+        return
+    var dx: float = opponent.global_position.x - global_position.x
+    var dz: float = opponent.global_position.z - global_position.z
+    var distance: float = Vector2(dx, dz).length()
+    if distance > attack_reach_world("facedownattack", opponent):
+        return
+    if dx * facing < -0.1:
+        return
+    var blocked: bool = opponent.guard_held and opponent._uses_standing_idle_rules()
+    var reaction: Dictionary = opponent.reaction_for_incoming(
+        FACEDOWN_ATTACK_IMPACT, blocked
+    )
+    _attack_connected = true
+    opponent.receive_hit(
+        FACEDOWN_ATTACK_DAMAGE, blocked, 0.0, facing, reaction
+    )
+    combo_hits += 1
+    combat_hit.emit(
+        self, opponent, "facedownattack", FACEDOWN_ATTACK_DAMAGE, blocked
+    )
+
 
 func _try_attack_contact() -> void:
     if opponent == null or not is_instance_valid(opponent) or opponent.state == "ko" or opponent.state == "facedownko":
@@ -1536,6 +1677,8 @@ func current_source_animation() -> String:
         return FACEDOWN_GETUP_CLIP
     if state == "impactfacedown":
         return FACEDOWN_IMPACT_CLIP
+    if state == "facedownattack":
+        return FACEDOWN_ATTACK_CLIP
     return _owner_idle_animation()
 
 
@@ -1589,6 +1732,11 @@ func source_radius_for_current_animation() -> float:
 
 
 func attack_reach_world(kind: String, target: PortFighter = null) -> float:
+    if kind == "facedownattack":
+        var facedown_source_reach: float = FACEDOWN_ATTACK_RADIUS * radius_scale
+        if target != null:
+            facedown_source_reach += target.source_radius_for_current_animation()
+        return facedown_source_reach * source_units_to_world
     if not ATTACKS.has(kind):
         return 0.0
     var details: Dictionary = ATTACKS[kind]
@@ -1714,6 +1862,7 @@ func reset_fighter(start_position: Vector3) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
+    _facedown_input_history.clear()
     last_reaction_group = ""
     last_reaction_source_action = ""
     last_reaction_animation = ""
@@ -1784,6 +1933,10 @@ func _animate_candidate() -> void:
         requested = FACEDOWN_GETUP_CLIP
     elif state == "impactfacedown" and _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP):
         requested = FACEDOWN_IMPACT_CLIP
+        if _candidate_action != requested and _candidate_character != null:
+            _candidate_character.position = _candidate_character_rest_position
+    elif state == "facedownattack" and _candidate_clip_paths.has(FACEDOWN_ATTACK_CLIP):
+        requested = FACEDOWN_ATTACK_CLIP
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "idle" and _candidate_clip_paths.has("move") and (
