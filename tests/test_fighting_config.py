@@ -155,5 +155,67 @@ class TestFightingConfig(unittest.TestCase):
                     profile["linking_frame"],
                 )
 
+    def test_bruce_exact_hard_reactions_are_not_presented_as_clips(self):
+        data = json.loads(CONFIG.read_text(encoding="utf-8"))
+        exact = data["exact_reactions"]
+        self.assertEqual([item["source_action"] for item in exact["hit"]], [
+            "impacthardfrontmid",
+            "impacthardrightlow",
+        ])
+        self.assertEqual(exact["hit"][0]["exit_start_frame"], 27)
+        self.assertEqual(exact["hit"][0]["animation_duration_frames"], 30)
+        self.assertEqual(exact["hit"][0]["animation_radius"], 40.0)
+        self.assertEqual(exact["hit"][0]["return_action"], "idle")
+        self.assertTrue(exact["hit"][0]["return_implemented"])
+        self.assertFalse(exact["hit"][0]["clip_implemented"])
+        self.assertEqual(exact["hit"][1]["exit_start_frame"], 23)
+        self.assertEqual(exact["hit"][1]["animation_radius"], 70.0)
+        self.assertEqual(exact["hit"][1]["return_action"], "facedownidle")
+        self.assertFalse(exact["hit"][1]["return_implemented"])
+        self.assertFalse(exact["hit"][1]["clip_implemented"])
+        self.assertEqual(exact["block"][0]["source_action"], "highblockhard")
+        self.assertEqual(exact["block"][0]["exit_start_frame"], 11)
+        self.assertEqual(exact["block"][0]["animation_duration_frames"], 14)
+        self.assertEqual(exact["block"][0]["animation_radius"], 25.0)
+        self.assertEqual(exact["block"][0]["return_action"], "idle2")
+        self.assertFalse(exact["block"][0]["return_implemented"])
+        self.assertFalse(exact["block"][0]["clip_implemented"])
+
+    def test_brick_mapping_is_limited_to_the_four_current_clips(self):
+        path = CONFIG.with_name("fighting_set_m03_mapped_attacks.json")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data["schema_version"], 4)
+        self.assertEqual(data["source_archive"], "thai.set")
+        self.assertFalse(data["metadata"]["radiusscale_present"])
+        self.assertEqual(data["source_geometry"]["radius_scale"], 1.0)
+        self.assertEqual(data["source_geometry"]["animation_radii"], {
+            "m03_idle_01": 43.0,
+            "m03_pnch_low_01": 40.0,
+            "m03_kck_low_01": 50.0,
+            "m03_movefwd": 50.0,
+        })
+        punch = data["attacks"]["punch"]
+        kick = data["attacks"]["kick"]
+        self.assertEqual(punch["source_action"], "lowpunch3")
+        self.assertEqual(
+            [punch[key] for key in ("startup_frames", "active_frames", "recovery_frames")],
+            [8, 4, 26],
+        )
+        self.assertEqual(punch["damage"], 7.0)
+        self.assertEqual(punch["source_impact"]["strength"], "hard")
+        self.assertEqual(punch["source_impact"]["direction"], "frontal")
+        self.assertEqual(kick["source_action"], "lowkick3")
+        self.assertEqual(
+            [kick[key] for key in ("startup_frames", "active_frames", "recovery_frames")],
+            [9, 3, 29],
+        )
+        self.assertEqual(kick["damage"], 7.0)
+        self.assertEqual(kick["source_impact"]["direction"], "fromright")
+        for group in data["reaction_profiles"].values():
+            for profile in group.values():
+                self.assertFalse(profile["clip_implemented"])
+
+
+
 if __name__ == "__main__":
     unittest.main()

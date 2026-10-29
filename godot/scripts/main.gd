@@ -245,12 +245,13 @@ func _build_fighters() -> void:
     add_child(player)
     computer = PortFighter.new()
     computer.configure("Opponent (placeholder)", false, Color(0.20, 0.65, 0.76))
+    computer.configure_attack_config(PortFighter.BRICK_ATTACK_CONFIG_PATH)
     computer.configure_candidate_asset(
         OS.get_environment("BRUCELEE_OPPONENT_GLB"),
         OS.get_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT"),
         PortFighter.BRICK_CLIPS,
         "body",
-        true
+        false
     )
     add_child(computer)
     player.opponent = computer

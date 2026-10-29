@@ -57,10 +57,10 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
   电脑候选测量失败则记录错误并使用占位体，避免把 Bruce 的比例套给未知对手。
 - 对手候选验证加载 69 骨 Brick 模型、一个 3-surface 蒙皮 Mesh 和
   idle/punch/kick/movefwd 四段动作；四条 clip 的中点都会改变骨骼姿态。
-- Brick 的 `m03_movefwd` 已作为候选移动视觉使用。punch/kick 的状态总时长按
-  各自 clip 时长等比缩放，只用于让原型状态机与动画结束点一致；命中帧、数值、
-  半径和 reaction 仍是原型或 Bruce fighting-set 候选值，不能视为 Brick 原版规则。
-  该缩放只对 Brick 原型显式开启；玩家继续以已恢复的 fighting-set 时序为准。
+- Brick 的 `m03_movefwd` 仍是候选移动视觉。电脑对手的 punch/kick 直接使用
+  `thai.set` 的 `lowpunch3`（8/4/26）和 `lowkick3`（9/3/29），不再把 Bruce
+  的 `lowpunch1/lowkick1` 时序缩放到 Brick clip。状态总时长等于 clip 时长，
+  因为这两条动画帧数就是 set 记录的帧数。这只覆盖当前四条 clip，不是完整 Thai set、AI 或 knockdown。
 - 候选 GLB 中 `character` 节点的位置轨道对所有已映射 action 都禁用，避免未经
   语义确认的动画平移直接分离视觉与 `CharacterBody3D` 判定位置。原版 root-motion
   轴和位移用途仍是 `UNVERIFIED`。
@@ -153,8 +153,7 @@ WINDOWS_EXE_VALIDATION=PASS
   `prototype_push` 未替换；block ANM 没有 `positions` 轨道也不能证明格挡没有位移。
 - Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
   这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
-- 对手 Brick 目前只接入候选视觉和 `m03_*` 动作映射，尚未应用其 ATC 纹理，
-  也未恢复对手专属攻击帧、伤害、半径、reaction、AI 或 fighting set 选择。
+- 对手 Brick 已加载 `thai.set` 中与当前四条 clip 对应的低段攻击和动画半径，并关闭 Bruce 时序缩放。硬受击和 `highblockhard` 记在 Bruce 防守配置上；这些 clip、`facedownidle` 和 `idle2` 都还没有实现。ATC 纹理、完整 Thai set、AI 和 knockdown 仍未恢复。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。
 
 ## 候选受击与格挡视觉

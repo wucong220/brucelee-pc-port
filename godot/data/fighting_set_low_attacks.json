@@ -102,5 +102,53 @@
         "direction": "frontal"
       }
     }
+  },
+  "exact_reactions": {
+    "hit": [
+      {
+        "strength": "hard",
+        "height": "medium",
+        "direction": "frontal",
+        "source_action": "impacthardfrontmid",
+        "animation": "all_impct_crotch",
+        "animation_radius": 40.0,
+        "exit_start_frame": 27,
+        "animation_duration_frames": 30,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      {
+        "strength": "hard",
+        "height": "low",
+        "direction": "fromright",
+        "source_action": "impacthardrightlow",
+        "animation": "all_impct_hard_rht_low",
+        "animation_radius": 70.0,
+        "exit_start_frame": 23,
+        "animation_duration_frames": 25,
+        "linking_frame": 0,
+        "return_action": "facedownidle",
+        "return_implemented": false,
+        "clip_implemented": false
+      }
+    ],
+    "block": [
+      {
+        "strength": "hard",
+        "height": "",
+        "direction": "",
+        "source_action": "highblockhard",
+        "animation": "all_block_high_hard",
+        "animation_radius": 25.0,
+        "exit_start_frame": 11,
+        "animation_duration_frames": 14,
+        "linking_frame": 0,
+        "return_action": "idle2",
+        "return_implemented": false,
+        "clip_implemented": false
+      }
+    ]
   }
 }
