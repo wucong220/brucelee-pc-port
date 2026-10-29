@@ -210,12 +210,17 @@ func _check_input_boundaries_and_isolation(
         player: PortFighter,
         opponent: PortFighter,
 ) -> bool:
-    for frame: float in [0.0, 45.0]:
+    for frame: float in [0.0, 9.999, 10.0, 44.999, 45.0]:
         if not _enter_faceup_idle(player, opponent, frame):
             return false
         if not _press_sequence(player, ["a", "a", "a"]):
             push_error("Face-up attack rejected valid sequence at frame " + str(frame))
             return false
+    if not _enter_faceup_idle(player, opponent, -0.001):
+        return false
+    if player.record_virtual_press("a"):
+        push_error("Face-up attack accepted input before source frame 0")
+        return false
     if not _enter_faceup_idle(player, opponent, 45.001):
         return false
     if player.record_virtual_press("a"):
@@ -333,6 +338,14 @@ func _check_attack_timing_and_return(
         push_error("faceupattack registered more than one contact")
         return false
     player.combat_hit.disconnect(on_hit)
+    player._attack_connected = false
+    player.state_time = 14.001 / PortFighter.SOURCE_FRAME_RATE
+    var late_health: float = opponent.health
+    player._advance_timed_states(0.5 / PortFighter.SOURCE_FRAME_RATE)
+    if (player._attack_connected
+            or absf(opponent.health - late_health) > 0.001):
+        push_error("faceupattack first contact started after damage frame 14")
+        return false
     player.state_time = 36.999 / PortFighter.SOURCE_FRAME_RATE
     player._advance_timed_states(0.0)
     player._animate_candidate()
@@ -611,11 +624,17 @@ func _check_unverified_hits_stay_closed(
     if not _prepare_ground_hit(player, opponent, 20.0):
         return false
     var health_before: float = player.health
+    var opponent_hits_before: int = opponent.combo_hits
+    opponent._attack_connected = false
+    opponent._try_facedown_attack_contact()
+    opponent._try_faceup_attack_contact()
     player.receive_hit(1.0, false, 0.0, 1.0)
     player.receive_hit(1.0, true, 0.0, 1.0)
     return (
         player.state == "faceupattack"
         and absf(player.health - health_before) <= 0.001
+        and opponent.combo_hits == opponent_hits_before
+        and not opponent._attack_connected
     )
 
 
