@@ -15,6 +15,8 @@ _SIGNATURE = b'1FDKENONCTX3'
 _DATA_SIGNATURE = b'DATA'
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
 _MAX_STRINGS = 20_000
+_MAX_CONTEXT_STRINGS = 100_000
+_MAX_CONTEXT_REFERENCES = 100_000
 _MAX_STRING_BYTES = 1024 * 1024
 _MAX_NODES = 100_000
 _MAX_METADATA_GAP = 1024 * 1024
@@ -24,11 +26,11 @@ class KdfError(ValueError):
     """Resource does not match the bounded CTX3 metadata profile."""
 
 
-def read_strings(raw: bytes) -> tuple[list[dict], int]:
+def _read_strings(raw: bytes, *, max_strings: int) -> tuple[list[dict], int]:
     if len(raw) < 0x1c or not raw.startswith(_SIGNATURE):
         raise KdfError('unsupported CTX3 signature')
     count = struct.unpack_from('<I', raw, 0x18)[0]
-    if count > _MAX_STRINGS:
+    if count > max_strings:
         raise KdfError('CTX3 string count exceeds limit')
     position = 0x1c
     strings = []
@@ -61,23 +63,125 @@ def read_strings(raw: bytes) -> tuple[list[dict], int]:
     return strings, position
 
 
-def parse_container(raw: bytes) -> dict:
+def read_strings(raw: bytes) -> tuple[list[dict], int]:
+    """Read strings with the legacy inspection limit."""
+    return _read_strings(raw, max_strings=_MAX_STRINGS)
+
+
+def parse_context(raw: bytes) -> dict:
+    """Parse a bounded CTX3 context and locate DATA at its exact offset.
+
+    This opt-in API supports up to 100,000 strings and 100,000 references of
+    each kind. It applies the existing UTF-8 and string-identifier checks and
+    rejects retained counts above the total as an unsupported profile. It
+    checks the DATA marker and availability of its fixed header, but does not
+    parse or validate the DATA payload.
+    """
+    if len(raw) > _MAX_RESOURCE_BYTES:
+        raise KdfError('decoded resource exceeds inspection size limit')
+    if len(raw) < 0x1c or not raw.startswith(_SIGNATURE):
+        raise KdfError('unsupported CTX3 signature')
+    retained_count, file_count, function_count, total_count = struct.unpack_from(
+        '<IIII', raw, 0x0c)
+    if file_count > _MAX_CONTEXT_REFERENCES or function_count > _MAX_CONTEXT_REFERENCES:
+        raise KdfError('CTX3 reference count exceeds limit')
+    if retained_count > total_count:
+        raise KdfError('CTX3 retained string count exceeds total (unsupported profile)')
+    strings, table_end = _read_strings(raw, max_strings=_MAX_CONTEXT_STRINGS)
+    padding_length = (table_end - 0x1c) & 3
+    reference_start = table_end + padding_length
+    if reference_start > len(raw):
+        raise KdfError('CTX3 string padding is truncated')
+    padding = raw[table_end:reference_start]
+    if total_count <= 255:
+        width, code = 1, 'B'
+    elif total_count <= 65_535:
+        width, code = 2, 'H'
+    else:
+        width, code = 4, 'I'
+    data_offset = reference_start + (3 * file_count + function_count) * width
+    if data_offset + 20 > len(raw):
+        raise KdfError('CTX3 reference table or DATA header is truncated')
+    if raw[data_offset:data_offset + 4] != _DATA_SIGNATURE:
+        raise KdfError('CTX3 DATA marker is missing at the context boundary')
+
+    def component(index: int, index_offset: int, label: str) -> dict:
+        if index >= total_count:
+            raise KdfError(f'CTX3 {label} string index is out of bounds')
+        entry = strings[index]
+        return {
+            'string_index': index,
+            'index_offset': index_offset,
+            'string_record_offset': entry['record_offset'],
+            'string_offset': entry['record_offset'] + 8,
+            'text': entry['text'],
+        }
+
+    files = []
+    position = reference_start
+    for ordinal in range(file_count):
+        indexes = struct.unpack_from('<3' + code, raw, position)
+        files.append({
+            'ordinal': ordinal,
+            'record_offset': position,
+            'directory': component(indexes[0], position, 'file directory'),
+            'basename': component(indexes[1], position + width, 'file basename'),
+            'extension': component(indexes[2], position + 2 * width, 'file extension'),
+        })
+        position += 3 * width
+    functions = []
+    for ordinal in range(function_count):
+        index = struct.unpack_from('<' + code, raw, position)[0]
+        functions.append({
+            'ordinal': ordinal,
+            'record_offset': position,
+            'name': component(index, position, 'function'),
+        })
+        position += width
+    return {
+        'header_words': [retained_count, file_count, function_count, total_count],
+        'retained_string_count': retained_count,
+        'file_reference_count': file_count,
+        'function_reference_count': function_count,
+        'total_string_count': total_count,
+        'strings': strings,
+        'string_table_start': 0x1c,
+        'string_table_end': table_end,
+        'string_bytes': table_end - 0x1c,
+        'padding_offset': table_end,
+        'padding_length': padding_length,
+        'padding_hex': padding.hex(),
+        'padding_is_zero': not any(padding),
+        'ordinal_width': width,
+        'reference_start': reference_start,
+        'file_references': files,
+        'function_references': functions,
+        'data_offset': data_offset,
+    }
+
+
+def parse_container(raw: bytes, *, data_offset: int | None = None) -> dict:
     if len(raw) > _MAX_RESOURCE_BYTES:
         raise KdfError('decoded resource exceeds inspection size limit')
     if len(raw) < 0x1c + 16 or not raw.startswith(_SIGNATURE):
         raise KdfError('unsupported CTX3 signature')
     header_words = list(struct.unpack_from('<IIII', raw, 0x0c))
     strings, table_end = read_strings(raw)
-    data_offset = raw.find(_DATA_SIGNATURE, table_end, len(raw) - 20)
-    if data_offset < 0:
-        raise KdfError('CTX3 DATA marker was not found')
+    if data_offset is None:
+        data_offset = raw.find(_DATA_SIGNATURE, table_end, len(raw) - 20)
+        if data_offset < 0:
+            raise KdfError('CTX3 DATA marker was not found')
+    elif (type(data_offset) is not int or data_offset < table_end
+          or data_offset + 20 > len(raw)
+          or raw[data_offset:data_offset + 4] != _DATA_SIGNATURE):
+        raise KdfError('CTX3 explicit DATA offset is invalid')
     if data_offset - table_end > _MAX_METADATA_GAP:
         raise KdfError('CTX3 metadata gap exceeds limit')
     record_count, offset_count, reserved, payload_size = struct.unpack_from(
         '<IIII', raw, data_offset + 4)
     if not 0 < record_count <= _MAX_NODES:
         raise KdfError('CTX3 DATA record count out of bounds')
-    if not 0 < offset_count <= _MAX_NODES:
+    if offset_count > _MAX_NODES:
         raise KdfError('CTX3 DATA offset count out of bounds')
     if reserved != 0:
         raise KdfError('CTX3 DATA reserved word is not zero')
@@ -85,10 +189,14 @@ def parse_container(raw: bytes) -> dict:
     header_size = 20 + offset_values * 4 + record_count * 8
     payload_offset = data_offset + header_size
     payload_end = payload_offset + payload_size
-    if payload_size <= 0 or payload_end + 16 != len(raw):
+    # The observed fighting-set profile has no sections and no payload; its
+    # sole offset word is zero. Keep all other zero-payload profiles rejected.
+    if ((offset_count == 0) != (payload_size == 0)
+            or payload_end + 16 != len(raw)):
         raise KdfError('CTX3 DATA payload bounds do not match resource length')
     offsets = list(struct.unpack_from(f'<{offset_values}I', raw, data_offset + 20))
-    if offsets[:2] != [0, 0] or any(a > b for a, b in zip(offsets, offsets[1:])):
+    expected_prefix = [0] if offset_count == 0 else [0, 0]
+    if offsets[:len(expected_prefix)] != expected_prefix or any(a > b for a, b in zip(offsets, offsets[1:])):
         raise KdfError('CTX3 DATA section offsets are invalid')
     if offsets[-1] > payload_size:
         raise KdfError('CTX3 DATA section offset exceeds payload')

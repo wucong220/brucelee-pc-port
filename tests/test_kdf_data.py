@@ -32,6 +32,22 @@ def kdf_container(nodes=((0x60000000, 2), (0, 123)), group_count=1, offsets=(0, 
 
 
 class TestKdfData(unittest.TestCase):
+    def test_record_only_profile_and_invalid_boundaries(self):
+        raw = kdf_container(group_count=0, offsets=(0,), payload=b'')
+        result = parse_container(raw)
+        self.assertEqual(result['offsets'], [0])
+        self.assertEqual(result['sections'], [])
+        self.assertEqual(result['payload_bytes'], 0)
+        self.assertEqual(scalar_property(result, 'duration'), 123)
+        for invalid in (
+                kdf_container(group_count=0, offsets=(1,), payload=b''),
+                kdf_container(group_count=0, offsets=(0,), payload=b'x'),
+                kdf_container(group_count=1, offsets=(0, 0), payload=b''),
+                raw[:-1],
+        ):
+            with self.subTest(length=len(invalid)), self.assertRaises(KdfError):
+                parse_container(invalid)
+
     def test_counts_records_and_identity_tail(self):
         result = parse_container(kdf_container())
         self.assertEqual(result['string_count'], 3)
