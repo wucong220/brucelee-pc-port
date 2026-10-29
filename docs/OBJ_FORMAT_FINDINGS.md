@@ -88,12 +88,16 @@ Hair/Body 主网格、subset 材质和六个纹理资源的静态绑定已经单
 | `+0xC4` | 0 | 新节点前驱改为旧尾 | 与后继互相摘链 |
 | `+0xC8` | 构造参数中的 hierarchy root | 一条路径把父节点的值复制给子节点 | 一条路径清零 |
 
-这是双向兄弟链表：`+0xB4` 是父节点，`+0xB8/+0xBC` 是第一个和最后一个子节点，`+0xC0/+0xC4` 是后继和前驱。`.text` 中没有找到直接跳到这两个函数入口的 ARM `B/BL` 立即数，但 `.rel.plt` 在 `0x6018AC` 和 `0x600188` 引用它们。资源 `childs` 字典还没有追踪到 `Link` 调用，因此不能说 78 个资源节点已经按这个链表建立。
+这是双向兄弟链表：`+0xB4` 是父节点，`+0xB8/+0xBC` 是第一个和最后一个子节点，`+0xC0/+0xC4` 是后继和前驱。调用不直接跳到 `0x3C15C4`，而是通过 PLT `0x12B170`。
 
-可用下面的命令复核指令字，不把原 SO 写入仓库：
+`CScnFrame::Init` 在 `0x35C2E4` 调用 `CreateChilds`。`CreateChilds` 先扫描资源里的 `0x60000000` 键，只有解析出的字符串对象等于 `krm::gfx::gid_Childs`（`.rel.dyn` `0x603548`）才继续。它随后用 `DictKey/DictVal` 遍历这个值。对每个条目先调用 `CWorld::CreateEntity`；返回空时，`0x35BF70` 调用 `CScnFrame::AddChild`，`AddChild` 在 `0x35B420` 调用 `Link`，然后递归调用 `CreateChilds`。
+
+因此，资源 `childs` 键到帧节点 `Link` 的静态调用链已经接上。`CreateEntity` 成功的对象类型没有在这次追踪中逐个接到 `Link`，所以还不能说全部 78 个节点都走这条帧回退路径。draw call 仍未绑定。
+
+可用下面的命令复核指令字和 `gid_Childs` 重定位，不把原 SO 写入仓库：
 
 ```powershell
 py -3.12 tools\native_hierarchy_links.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
 ```
 
-下一步应把资源 `childs` 追踪到创建节点和 `Link` 的调用点，并继续最终 draw call 绑定。
+下一步应区分 `CreateEntity` 成功时各对象类型是否调用 `Link`，并继续最终 draw call 绑定。
