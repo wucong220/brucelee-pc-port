@@ -3,6 +3,8 @@ extends SceneTree
 ## Run after importing the project with Godot 4:
 ## godot --headless --path godot --script res://tests/smoke_test.gd
 
+const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
+
 
 func _initialize() -> void:
     call_deferred("_run_check")
@@ -40,6 +42,25 @@ func _attack_hits_after_frames(player: PortFighter, opponent: PortFighter, kind:
 
 
 func _run_check() -> void:
+    var repository_root: String = CandidatePathGuard.repository_root()
+    var outside_path: String = repository_root.get_base_dir().path_join(
+        "candidate-outside-fixture.glb"
+    )
+    if not CandidatePathGuard.external_path_error(
+            outside_path, "candidate path").is_empty():
+        push_error("Candidate path guard rejected an external fixture path")
+        quit(1)
+        return
+    for repository_path: String in [
+            repository_root,
+            repository_root.path_join("candidate.glb"),
+            repository_root.path_join("godot/candidate.glb")]:
+        if CandidatePathGuard.external_path_error(
+                repository_path, "candidate path").is_empty():
+            push_error("Candidate path guard accepted a repository path")
+            quit(1)
+            return
+
     var packed: PackedScene = load("res://scenes/main.tscn")
     if packed == null:
         push_error("Cannot load the placeholder combat scene")

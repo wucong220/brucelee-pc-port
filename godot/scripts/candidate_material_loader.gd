@@ -1,6 +1,7 @@
 extends RefCounted
 ## Apply repository-external candidate textures to a generated character model.
 
+const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const BODY_CHARACTER_SHADER: Shader = preload(
     "res://shaders/character_candidate_opaque.gdshader"
 )
@@ -25,19 +26,22 @@ func apply_to(root: Node, texture_root: String) -> Dictionary:
     }
     if texture_root.is_empty():
         return result
-    var normalized_root: String = texture_root.replace("\\", "/")
-    if (not texture_root.is_absolute_path()
-            or normalized_root.begins_with("//")
-            or normalized_root.contains("://")
-            or not DirAccess.dir_exists_absolute(texture_root)):
+    var path_error: String = CandidatePathGuard.external_path_error(
+        texture_root, "candidate texture root"
+    )
+    if not path_error.is_empty():
+        result["error"] = path_error
+        return result
+    var normalized_root: String = CandidatePathGuard.normalize_absolute_path(texture_root)
+    if not DirAccess.dir_exists_absolute(normalized_root):
         result["error"] = "candidate texture root must be an absolute local directory"
         return result
 
-    var body_textures: Dictionary = _load_texture_set(texture_root, "body", result)
+    var body_textures: Dictionary = _load_texture_set(normalized_root, "body", result)
     if body_textures.is_empty():
         return result
     var body_material: ShaderMaterial = _make_material(body_textures, BODY_CHARACTER_SHADER)
-    var hair_textures: Dictionary = _load_texture_set(texture_root, "hair", result)
+    var hair_textures: Dictionary = _load_texture_set(normalized_root, "hair", result)
     if hair_textures.is_empty():
         return result
     var hair_material: ShaderMaterial = _make_material(hair_textures, HAIR_CHARACTER_SHADER)

@@ -10,7 +10,8 @@
   `hair_diffuse.png`、`hair_normal.png`、`hair_material.png`
 - Godot 4.7.2 stable
 
-两个输入必须位于仓库外。设置环境变量或使用一键验证脚本：
+两个输入必须位于仓库外。Godot 运行时的 GLB/纹理加载器会拒绝仓库内路径；
+设置环境变量或使用一键验证脚本：
 
 ```powershell
 .\validate_candidate.ps1 `
@@ -31,6 +32,7 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 `LOCAL_TESTED + CANDIDATE`：
 
 - 69 根骨骼、idle/punch/kick 三段动画。
+- 动画验证固定检查 69 根骨骼、关键骨骼索引/名称以及三段动画时长。
 - 头发作为 head 下的无蒙皮附件随头部移动。
 - Body 使用 opaque shader，Hair 使用 blend shader。
 - 六张 Hair/Body 纹理和三项 shader 参数加载成功。

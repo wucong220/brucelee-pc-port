@@ -16,6 +16,7 @@ const CANDIDATE_CLIPS: Dictionary = {
     "kick": "m01_kick_low_01",
 }
 const SOURCE_FRAME_RATE: float = 30.0
+const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 const ATTACKS: Dictionary = {
     # lowpunch1: frames 5..8 hit, 69-frame ANM at 30 FPS, default damage multiplier 1.0.
@@ -210,15 +211,17 @@ func _candidate_path() -> Dictionary:
         index += 1
     if chosen.is_empty():
         return {"path": "", "error": ""}
-    var normalized: String = chosen.replace("\\", "/")
-    if (not chosen.is_absolute_path()
-            or chosen.get_extension().to_lower() != "glb"
-            or normalized.begins_with("//")
-            or normalized.contains("://")):
-        return {"path": "", "error": "candidate path must be an absolute local .glb file"}
-    if not FileAccess.file_exists(chosen):
+    var path_error: String = CandidatePathGuard.external_path_error(
+        chosen, "candidate path"
+    )
+    if not path_error.is_empty():
+        return {"path": "", "error": path_error}
+    var normalized: String = CandidatePathGuard.normalize_absolute_path(chosen)
+    if chosen.get_extension().to_lower() != "glb":
+        return {"path": "", "error": "candidate path must be a local .glb file"}
+    if not FileAccess.file_exists(normalized):
         return {"path": "", "error": "candidate GLB does not exist"}
-    return {"path": chosen, "error": ""}
+    return {"path": normalized, "error": ""}
 
 
 func _find_animation_player(node: Node) -> AnimationPlayer:

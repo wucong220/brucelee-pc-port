@@ -4,6 +4,23 @@ extends SceneTree
 ## godot --headless --path godot --script res://tests/validate_candidate_animation.gd \
 ##     -- C:/private/candidate.glb --expect-hair
 
+const EXPECTED_BONE_COUNT: int = 69
+const EXPECTED_BONES: Dictionary = {
+    0: "pelvis",
+    5: "head",
+    32: "l hand",
+    48: "r hand",
+    63: "l foot",
+    67: "r foot",
+    68: "r toe0",
+}
+const EXPECTED_ANIMATION_LENGTHS: Dictionary = {
+    "m01_idle_01": 3.666,
+    "m01_pnch_low_01": 2.300,
+    "m01_kick_low_01": 2.866,
+}
+const ANIMATION_LENGTH_TOLERANCE: float = 0.001
+
 
 func _initialize() -> void:
     call_deferred("_run_check")
@@ -41,6 +58,20 @@ func _run_check() -> void:
         return
     var player: AnimationPlayer = players[0]
     var skeleton: Skeleton3D = skeletons[0]
+    if skeleton.get_bone_count() != EXPECTED_BONE_COUNT:
+        push_error("Expected %d bones, found %d" % [
+            EXPECTED_BONE_COUNT, skeleton.get_bone_count(),
+        ])
+        quit(1)
+        return
+    for bone_index: int in EXPECTED_BONES:
+        var expected_name: String = EXPECTED_BONES[bone_index]
+        if skeleton.get_bone_name(bone_index) != expected_name:
+            push_error("Unexpected bone %d: expected %s, found %s" % [
+                bone_index, expected_name, skeleton.get_bone_name(bone_index),
+            ])
+            quit(1)
+            return
     var hair: MeshInstance3D
     var head: BoneAttachment3D
     if expect_hair:
@@ -66,6 +97,13 @@ func _run_check() -> void:
             quit(1)
             return
         var animation: Animation = player.get_animation(animation_name)
+        var expected_length: float = EXPECTED_ANIMATION_LENGTHS[animation_name]
+        if absf(animation.length - expected_length) > ANIMATION_LENGTH_TOLERANCE:
+            push_error("Unexpected %s length: %.6f, expected %.6f" % [
+                animation_name, animation.length, expected_length,
+            ])
+            quit(1)
+            return
         player.play(animation_name)
         player.seek(0.0, true)
         await process_frame
