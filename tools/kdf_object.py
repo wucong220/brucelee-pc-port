@@ -25,8 +25,13 @@ def _string_ordinal(container: dict, value: str) -> int:
 
 
 def _inspect_external_references(raw: bytes, container: dict) -> dict:
-    count = container['header_words'][1]
+    declared_count = container['header_words'][1]
     gap = raw[container['string_table_end']:container['data_offset']]
+    leading_sentinel = (
+        len(gap) == (declared_count + 1) * 3
+        and gap[:3] == b'\0\0\0'
+    )
+    count = declared_count + int(leading_sentinel)
     if len(gap) != count * 3:
         raise KdfError(
             f'object external reference table has {len(gap)} bytes; expected {count * 3}'
@@ -36,6 +41,13 @@ def _inspect_external_references(raw: bytes, container: dict) -> dict:
     for ordinal in range(count):
         path_index, basename_index, extension_index = gap[
             ordinal * 3:(ordinal + 1) * 3]
+        if leading_sentinel and ordinal == 0:
+            references.append({
+                'ordinal': ordinal,
+                'sentinel': True,
+                'path': None,
+            })
+            continue
         if any(index >= len(strings) for index in (
                 path_index, basename_index, extension_index)):
             raise KdfError(f'object external reference {ordinal} has invalid string index')
@@ -54,7 +66,8 @@ def _inspect_external_references(raw: bytes, container: dict) -> dict:
     for record_ordinal, record in enumerate(container['records']):
         if record['first'] != _EXTERNAL_REFERENCE_MARKER:
             continue
-        if record['second'] >= count:
+        reference_id = record['second'] + int(leading_sentinel)
+        if reference_id >= count:
             raise KdfError(
                 f'object external reference use {record_ordinal} is out of range')
         property_name = None
@@ -66,10 +79,13 @@ def _inspect_external_references(raw: bytes, container: dict) -> dict:
         uses.append({
             'record_ordinal': record_ordinal,
             'property': property_name,
-            'reference_id': record['second'],
+            'reference_id': reference_id,
         })
     used_ids = {entry['reference_id'] for entry in uses}
-    if used_ids != set(range(count)):
+    expected_used_ids = set(range(count))
+    if leading_sentinel:
+        expected_used_ids.remove(0)
+    if used_ids != expected_used_ids:
         raise KdfError('object external reference IDs are not densely used')
     return {'references': references, 'uses': uses}
 
@@ -217,14 +233,18 @@ def _visual_bindings(records: list[dict], strings: list[dict], index: int,
         if "mesh" not in fields:
             raise KdfError(f"object visual {name!r} has no mesh reference")
         mesh = records[fields["mesh"]]
-        if mesh["first"] != 0x70000000 or mesh["second"] >= len(references):
+        sentinel_offset = (
+            int(references[0].get("sentinel", False)) if references else 0
+        )
+        reference_id = mesh["second"] + sentinel_offset
+        if mesh["first"] != 0x70000000 or reference_id >= len(references):
             raise KdfError(f"object visual {name!r} has an invalid mesh reference")
-        path = references[mesh["second"]]["path"]
+        path = references[reference_id]["path"]
         if PurePosixPath(path).stem != name:
             raise KdfError(f"object visual {name!r} does not match mesh {path!r}")
         bindings.append({
             "name": name,
-            "reference_id": mesh["second"],
+            "reference_id": reference_id,
             "path": path,
         })
     return bindings
