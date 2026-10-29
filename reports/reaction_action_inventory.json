@@ -1,0 +1,1744 @@
+{
+  "actions": [
+    {
+      "animation": "adreno_200/animation/m01_idle_01.anm",
+      "animation_metadata": {
+        "duration": 110,
+        "duration_seconds": 3.6666666666666665,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 17145342,
+        "pose": 1,
+        "resource_id": "b3cb214ac456c1a76e6e7bb99ecad559",
+        "sha256": "adbfa5a598995b0424fb829a95d22d55407aec3fa31d67854d9c6bf6846cfa52",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [],
+      "name": "idle",
+      "radius": 25.0,
+      "source_set": "adreno_200/set/Default.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_block_high.anm",
+      "animation_metadata": {
+        "duration": 14,
+        "duration_seconds": 0.4666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 109062420,
+        "pose": 1,
+        "resource_id": "97fdfd6c32e2d9d85feacb5fd730bef0",
+        "sha256": "0f28bb430632807073b2f47960286125bc7408080af4d306beeba2a20987434e",
+        "version": 7
+      },
+      "categories": [
+        "block"
+      ],
+      "groups": [
+        [
+          "canblock",
+          [
+            6,
+            14
+          ],
+          0
+        ]
+      ],
+      "name": "highblock",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/m01_idle_04.anm",
+      "animation_metadata": {
+        "duration": 140,
+        "duration_seconds": 4.666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 37051200,
+        "pose": 1,
+        "resource_id": "6e74ebb4e6bd6bd9154518600ea6ade0",
+        "sha256": "d08a0820677322be1f71836a98204825b085eea6a65997c099f21090622a8e94",
+        "version": 7
+      },
+      "categories": [
+        "idle"
+      ],
+      "groups": [
+        [
+          "impactable",
+          [
+            0,
+            140
+          ],
+          0
+        ],
+        [
+          "canblock",
+          [
+            0,
+            140
+          ],
+          0
+        ],
+        [
+          "candocounter",
+          [
+            0,
+            140
+          ],
+          0
+        ],
+        [
+          "candobasicattacks",
+          [
+            0,
+            140
+          ],
+          0
+        ],
+        [
+          "canmove",
+          [
+            0,
+            140
+          ],
+          0
+        ]
+      ],
+      "name": "idle",
+      "radius": 50.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_sp_pnch_low_forset04.anm",
+      "animation_metadata": {
+        "duration": 28,
+        "duration_seconds": 0.9333333333333333,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 85428188,
+        "pose": 1,
+        "resource_id": "f5499429a903d9e5c8e4fd6b1eff98da",
+        "sha256": "82cbde2c8eea15daac5c19afbc535113c976141234332395bcb7b19bc5c3bb6f",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "receivedamage",
+          [
+            0,
+            28
+          ],
+          0
+        ]
+      ],
+      "name": "impactbrutalmid",
+      "radius": 60.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_hard_frnt_high.anm",
+      "animation_metadata": {
+        "duration": 35,
+        "duration_seconds": 1.1666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 55067141,
+        "pose": 1,
+        "resource_id": "90575082e8bab0cd21f554d1add5bbd7",
+        "sha256": "01941c60a9840ff9824933008e4f40bb6998b6f5b293a3f9682e6b85e9880232",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "receivedamage",
+          [
+            0,
+            35
+          ],
+          0
+        ]
+      ],
+      "name": "impacthardfronthigh",
+      "radius": 80.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_hard_frnt_low.anm",
+      "animation_metadata": {
+        "duration": 23,
+        "duration_seconds": 0.7666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 104041043,
+        "pose": 1,
+        "resource_id": "35af38864ebe2bfe5d9dcec8ef152853",
+        "sha256": "c38c0b8c3445ec9f4f237c9a882ed960ce6c7b0e333dbdd9e127742d33ff1647",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "receivedamage",
+          [
+            0,
+            23
+          ],
+          0
+        ]
+      ],
+      "name": "impacthardfrontlow",
+      "radius": 70.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_crotch.anm",
+      "animation_metadata": {
+        "duration": 30,
+        "duration_seconds": 1.0,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 53503207,
+        "pose": 1,
+        "resource_id": "f30aad2e549785600fee7bc17ae0d40a",
+        "sha256": "9111b1e02209f39cae9ad4d1e95c9c19c965847357f14c60d19a74cc781f1612",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "receivedamage",
+          [
+            0,
+            30
+          ],
+          0
+        ],
+        [
+          "canblock",
+          [
+            18,
+            30
+          ],
+          0
+        ],
+        [
+          "candocounter",
+          [
+            18,
+            30
+          ],
+          0
+        ],
+        [
+          "candobasicattacks",
+          [
+            18,
+            30
+          ],
+          0
+        ],
+        [
+          "canmove",
+          [
+            18,
+            30
+          ],
+          0
+        ],
+        [
+          "impactable",
+          [
+            0,
+            30
+          ],
+          0
+        ]
+      ],
+      "name": "impacthardfrontmid",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_light_frnt_high.anm",
+      "animation_metadata": {
+        "duration": 17,
+        "duration_seconds": 0.5666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 64967294,
+        "pose": 1,
+        "resource_id": "b931c852dd914e5aecb2c81133f2dc94",
+        "sha256": "12c0eb7277771f07f6a968eaa7a645ab83dfab5f57d8ea1f14d96760bb075d6d",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "receivedamage",
+          [
+            0,
+            17
+          ],
+          0
+        ],
+        [
+          "impactable",
+          [
+            0,
+            17
+          ],
+          0
+        ],
+        [
+          "canblock",
+          [
+            13,
+            17
+          ],
+          0
+        ],
+        [
+          "candocounter",
+          [
+            13,
+            17
+          ],
+          0
+        ],
+        [
+          "candobasicattacks",
+          [
+            13,
+            17
+          ],
+          0
+        ],
+        [
+          "canmove",
+          [
+            13,
+            17
+          ],
+          0
+        ]
+      ],
+      "name": "impactlightfronthigh",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_light_frnt_low.anm",
+      "animation_metadata": {
+        "duration": 17,
+        "duration_seconds": 0.5666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 64810570,
+        "pose": 1,
+        "resource_id": "d5482134916bf69ccd821eede9653a5e",
+        "sha256": "a8ff4c5dc66580414be2b4fb1a96ab6aad841e7fef5696e53708b3199b11f6de",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "receivedamage",
+          [
+            0,
+            17
+          ],
+          0
+        ],
+        [
+          "canblock",
+          [
+            13,
+            17
+          ],
+          0
+        ],
+        [
+          "candocounter",
+          [
+            13,
+            17
+          ],
+          0
+        ],
+        [
+          "candobasicattacks",
+          [
+            13,
+            17
+          ],
+          0
+        ],
+        [
+          "canmove",
+          [
+            13,
+            17
+          ],
+          0
+        ],
+        [
+          "impactable",
+          [
+            0,
+            17
+          ],
+          0
+        ]
+      ],
+      "name": "impactlightfrontlow",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_light_frnt_mid.anm",
+      "animation_metadata": {
+        "duration": 16,
+        "duration_seconds": 0.5333333333333333,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 87149095,
+        "pose": 1,
+        "resource_id": "a45db54135fa8de6daa4fe81eadc90cc",
+        "sha256": "5d351a6cbc9aeb67973b2b60b49ac6729153ec568e6d7556a010d8ee86d3b3aa",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "receivedamage",
+          [
+            0,
+            16
+          ],
+          0
+        ],
+        [
+          "canblock",
+          [
+            12,
+            16
+          ],
+          0
+        ],
+        [
+          "candocounter",
+          [
+            12,
+            16
+          ],
+          0
+        ],
+        [
+          "candobasicattacks",
+          [
+            12,
+            16
+          ],
+          0
+        ],
+        [
+          "canmove",
+          [
+            12,
+            16
+          ],
+          0
+        ],
+        [
+          "impactable",
+          [
+            0,
+            16
+          ],
+          0
+        ]
+      ],
+      "name": "impactlightfrontmid",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_block_low.anm",
+      "animation_metadata": {
+        "duration": 23,
+        "duration_seconds": 0.7666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 61659242,
+        "pose": 1,
+        "resource_id": "ede1c969fee6d7870a675e9f0fdcc760",
+        "sha256": "9c9c1970fdc2ff8a064d5cb8d2b8bf8dcb8a0551e2177551096fc4e18169f61b",
+        "version": 7
+      },
+      "categories": [
+        "block"
+      ],
+      "groups": [
+        [
+          "canblock",
+          [
+            6,
+            23
+          ],
+          0
+        ]
+      ],
+      "name": "lowblock",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_block_mid.anm",
+      "animation_metadata": {
+        "duration": 14,
+        "duration_seconds": 0.4666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 92027933,
+        "pose": 1,
+        "resource_id": "f9e2af1589ff5cf94743822b2f591bea",
+        "sha256": "2a68724ef317d89c74ffc5fae3e19bd5204dc37f05a0817ba313aece16d3a0a9",
+        "version": 7
+      },
+      "categories": [
+        "block"
+      ],
+      "groups": [
+        [
+          "canblock",
+          [
+            6,
+            14
+          ],
+          0
+        ]
+      ],
+      "name": "midblock",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_stunned.anm",
+      "animation_metadata": {
+        "duration": 61,
+        "duration_seconds": 2.033333333333333,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 47090796,
+        "pose": 1,
+        "resource_id": "fe741f24079f50c93ff2b8cfefb15ab5",
+        "sha256": "7dc5ee4f7593a61e8f46e33761fd0365205a4641b94c3426d200b4cf85605538",
+        "version": 7
+      },
+      "categories": [
+        "stun"
+      ],
+      "groups": [
+        [
+          "impactsfromstun",
+          [
+            0,
+            61
+          ],
+          0
+        ]
+      ],
+      "name": "stun",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_stunned.anm",
+      "animation_metadata": {
+        "duration": 61,
+        "duration_seconds": 2.033333333333333,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 47090796,
+        "pose": 1,
+        "resource_id": "fe741f24079f50c93ff2b8cfefb15ab5",
+        "sha256": "7dc5ee4f7593a61e8f46e33761fd0365205a4641b94c3426d200b4cf85605538",
+        "version": 7
+      },
+      "categories": [
+        "stun"
+      ],
+      "groups": [
+        [
+          "impactsfromstun",
+          [
+            0,
+            61
+          ],
+          0
+        ]
+      ],
+      "name": "stun2",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_spectacular_lft.anm",
+      "animation_metadata": {
+        "duration": 45,
+        "duration_seconds": 1.5,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 99848633,
+        "pose": 1,
+        "resource_id": "16a5ce9b3e42d249573af342578c1f3b",
+        "sha256": "00b749b6b91cd3d40d3f6fe62c16d44247add55f5742d29c14bc275bc92abafa",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "impactsfromstun",
+          [
+            0,
+            45
+          ],
+          0
+        ],
+        [
+          "receivedamage",
+          [
+            0,
+            45
+          ],
+          0
+        ]
+      ],
+      "name": "stunbrutalimpact",
+      "radius": 25.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_stunned_fall.anm",
+      "animation_metadata": {
+        "duration": 79,
+        "duration_seconds": 2.6333333333333333,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 95580475,
+        "pose": 1,
+        "resource_id": "c0f552c7636ce4a454787ba46acfb335",
+        "sha256": "96c678d526442c1238a342b07b043ad532ad570ab44187d9b13359c36e901954",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [],
+      "name": "stunfall",
+      "radius": 70.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_hard_frnt_high.anm",
+      "animation_metadata": {
+        "duration": 35,
+        "duration_seconds": 1.1666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 55067141,
+        "pose": 1,
+        "resource_id": "90575082e8bab0cd21f554d1add5bbd7",
+        "sha256": "01941c60a9840ff9824933008e4f40bb6998b6f5b293a3f9682e6b85e9880232",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "impactsfromstun",
+          [
+            0,
+            35
+          ],
+          0
+        ],
+        [
+          "receivedamage",
+          [
+            0,
+            35
+          ],
+          0
+        ]
+      ],
+      "name": "stunhardimpact",
+      "radius": 85.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_light_frnt_high.anm",
+      "animation_metadata": {
+        "duration": 17,
+        "duration_seconds": 0.5666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 64967294,
+        "pose": 1,
+        "resource_id": "b931c852dd914e5aecb2c81133f2dc94",
+        "sha256": "12c0eb7277771f07f6a968eaa7a645ab83dfab5f57d8ea1f14d96760bb075d6d",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "impactsfromstun",
+          [
+            0,
+            17
+          ],
+          0
+        ],
+        [
+          "receivedamage",
+          [
+            0,
+            17
+          ],
+          0
+        ]
+      ],
+      "name": "stunlighthighimpact",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_light_frnt_low.anm",
+      "animation_metadata": {
+        "duration": 17,
+        "duration_seconds": 0.5666666666666667,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 64810570,
+        "pose": 1,
+        "resource_id": "d5482134916bf69ccd821eede9653a5e",
+        "sha256": "a8ff4c5dc66580414be2b4fb1a96ab6aad841e7fef5696e53708b3199b11f6de",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "impactsfromstun",
+          [
+            0,
+            17
+          ],
+          0
+        ],
+        [
+          "receivedamage",
+          [
+            0,
+            17
+          ],
+          0
+        ]
+      ],
+      "name": "stunlightlowimpact",
+      "radius": 25.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_crotch.anm",
+      "animation_metadata": {
+        "duration": 30,
+        "duration_seconds": 1.0,
+        "firstframe": 0,
+        "framerate": 30,
+        "pakd_offset": 53503207,
+        "pose": 1,
+        "resource_id": "f30aad2e549785600fee7bc17ae0d40a",
+        "sha256": "9111b1e02209f39cae9ad4d1e95c9c19c965847357f14c60d19a74cc781f1612",
+        "version": 7
+      },
+      "categories": [],
+      "groups": [
+        [
+          "impactsfromstun",
+          [
+            0,
+            30
+          ],
+          0
+        ],
+        [
+          "receivedamage",
+          [
+            0,
+            30
+          ],
+          0
+        ]
+      ],
+      "name": "stunmediumimpact",
+      "radius": 40.0,
+      "source_set": "adreno_200/set/brucelee.set"
+    }
+  ],
+  "all_frontal_hit_links": {
+    "brutal": {
+      "high": [],
+      "low": [],
+      "medium": [
+        {
+          "blending": 2,
+          "conditions": [
+            "impact",
+            "oppattackstrengthbrutal",
+            "oppattackheightmed",
+            "oppattackdirfrontal"
+          ],
+          "entry_frame": 6,
+          "from_group": "impactable",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "impactbrutalmid",
+          "unique": []
+        }
+      ]
+    },
+    "hard": {
+      "high": [
+        {
+          "blending": 2,
+          "conditions": [
+            "impact",
+            "oppattackstrengthhard",
+            "oppattackheighthigh",
+            "oppattackdirfrontal"
+          ],
+          "entry_frame": 0,
+          "from_group": "impactable",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "impacthardfronthigh",
+          "unique": []
+        }
+      ],
+      "low": [
+        {
+          "blending": 2,
+          "conditions": [
+            "impact",
+            "oppattackstrengthhard",
+            "oppattackheightlow",
+            "oppattackdirfrontal"
+          ],
+          "entry_frame": 0,
+          "from_group": "impactable",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "impacthardfrontlow",
+          "unique": []
+        }
+      ],
+      "medium": [
+        {
+          "blending": 2,
+          "conditions": [
+            "impact",
+            "oppattackstrengthhard",
+            "oppattackheightmed",
+            "oppattackdirfrontal"
+          ],
+          "entry_frame": 0,
+          "from_group": "impactable",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "impacthardfrontmid",
+          "unique": []
+        }
+      ]
+    },
+    "normal": {
+      "high": [
+        {
+          "blending": 2,
+          "conditions": [
+            "impact",
+            "oppattackstrengthnormal",
+            "oppattackheighthigh",
+            "oppattackdirfrontal"
+          ],
+          "entry_frame": 0,
+          "from_group": "impactable",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "impactlightfronthigh",
+          "unique": []
+        }
+      ],
+      "low": [
+        {
+          "blending": 2,
+          "conditions": [
+            "impact",
+            "oppattackstrengthnormal",
+            "oppattackheightlow",
+            "oppattackdirfrontal"
+          ],
+          "entry_frame": 0,
+          "from_group": "impactable",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "impactlightfrontlow",
+          "unique": []
+        }
+      ],
+      "medium": [
+        {
+          "blending": 2,
+          "conditions": [
+            "impact",
+            "oppattackstrengthnormal",
+            "oppattackheightmed",
+            "oppattackdirfrontal"
+          ],
+          "entry_frame": 0,
+          "from_group": "impactable",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "impactlightfrontmid",
+          "unique": []
+        }
+      ]
+    }
+  },
+  "evidence": {
+    "condition_to_action_links": "STATIC_VERIFIED",
+    "configured_action_names_and_metadata": "STATIC_VERIFIED",
+    "effective_hitstun_or_blockstun_duration": "UNVERIFIED",
+    "note": "Transition windows are exported without treating animation duration as loss-of-control duration.",
+    "potential_earliest_idle_transition": "STATIC_SUPPORTED",
+    "push_mapping": "UNVERIFIED",
+    "time_windows_are_in_animation_frames": "STATIC_SUPPORTED"
+  },
+  "normal_block_links": {
+    "canblock": {
+      "high": [
+        {
+          "blending": 1,
+          "conditions": [
+            "impact",
+            "oppattackheighthigh",
+            "oppattackstrengthnormal"
+          ],
+          "entry_frame": 0,
+          "from_group": "canblock",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ]
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "highblock",
+          "unique": []
+        }
+      ],
+      "low": [
+        {
+          "blending": 1,
+          "conditions": [
+            "impact",
+            "oppattackheightlow",
+            "oppattackstrengthnormal"
+          ],
+          "entry_frame": 0,
+          "from_group": "canblock",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ]
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "lowblock",
+          "unique": []
+        }
+      ],
+      "medium": [
+        {
+          "blending": 1,
+          "conditions": [
+            "impact",
+            "oppattackheightmed",
+            "oppattackstrengthnormal"
+          ],
+          "entry_frame": 0,
+          "from_group": "canblock",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ]
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "midblock",
+          "unique": []
+        }
+      ]
+    },
+    "canblock2": {
+      "high": [
+        {
+          "blending": 1,
+          "conditions": [
+            "impact",
+            "oppattackheighthigh",
+            "oppattackstrengthnormal"
+          ],
+          "entry_frame": 0,
+          "from_group": "canblock2",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ]
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "highblock",
+          "unique": []
+        }
+      ],
+      "low": [
+        {
+          "blending": 1,
+          "conditions": [
+            "impact",
+            "oppattackheightlow",
+            "oppattackstrengthnormal"
+          ],
+          "entry_frame": 0,
+          "from_group": "canblock2",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ]
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "lowblock",
+          "unique": []
+        }
+      ],
+      "medium": [
+        {
+          "blending": 1,
+          "conditions": [
+            "impact",
+            "oppattackheightmed",
+            "oppattackstrengthnormal"
+          ],
+          "entry_frame": 0,
+          "from_group": "canblock2",
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "keystatus": [
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ],
+            [
+              [
+                "left",
+                "pressed"
+              ]
+            ]
+          ],
+          "linking_frame": 0,
+          "time": [
+            0,
+            0
+          ],
+          "to": "midblock",
+          "unique": []
+        }
+      ]
+    }
+  },
+  "normal_frontal_hit_links": {
+    "high": [
+      {
+        "blending": 2,
+        "conditions": [
+          "impact",
+          "oppattackstrengthnormal",
+          "oppattackheighthigh",
+          "oppattackdirfrontal"
+        ],
+        "entry_frame": 0,
+        "from_group": "impactable",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          0,
+          0
+        ],
+        "to": "impactlightfronthigh",
+        "unique": []
+      }
+    ],
+    "low": [
+      {
+        "blending": 2,
+        "conditions": [
+          "impact",
+          "oppattackstrengthnormal",
+          "oppattackheightlow",
+          "oppattackdirfrontal"
+        ],
+        "entry_frame": 0,
+        "from_group": "impactable",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          0,
+          0
+        ],
+        "to": "impactlightfrontlow",
+        "unique": []
+      }
+    ],
+    "medium": [
+      {
+        "blending": 2,
+        "conditions": [
+          "impact",
+          "oppattackstrengthnormal",
+          "oppattackheightmed",
+          "oppattackdirfrontal"
+        ],
+        "entry_frame": 0,
+        "from_group": "impactable",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          0,
+          0
+        ],
+        "to": "impactlightfrontmid",
+        "unique": []
+      }
+    ]
+  },
+  "return_to_idle_links": {
+    "highblock": [
+      {
+        "animation_duration_frames": 14,
+        "animation_duration_seconds": 0.4666666666666667,
+        "blending": 2,
+        "conditions": [],
+        "entry_frame": 0,
+        "from": "highblock",
+        "input_reset": "true",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          12,
+          14
+        ],
+        "to": "idle",
+        "transition_end_frame": 14,
+        "transition_start_frame": 12,
+        "unique": []
+      }
+    ],
+    "impacthardfrontmid": [
+      {
+        "animation_duration_frames": 30,
+        "animation_duration_seconds": 1.0,
+        "blending": 3,
+        "conditions": [],
+        "entry_frame": 0,
+        "from": "impacthardfrontmid",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          27,
+          30
+        ],
+        "to": "idle",
+        "transition_end_frame": 30,
+        "transition_start_frame": 27,
+        "unique": []
+      }
+    ],
+    "impactlightfronthigh": [
+      {
+        "animation_duration_frames": 17,
+        "animation_duration_seconds": 0.5666666666666667,
+        "blending": 4,
+        "conditions": [],
+        "entry_frame": 0,
+        "from": "impactlightfronthigh",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          13,
+          17
+        ],
+        "to": "idle",
+        "transition_end_frame": 17,
+        "transition_start_frame": 13,
+        "unique": []
+      }
+    ],
+    "impactlightfrontlow": [
+      {
+        "animation_duration_frames": 17,
+        "animation_duration_seconds": 0.5666666666666667,
+        "blending": 3,
+        "conditions": [],
+        "entry_frame": 0,
+        "from": "impactlightfrontlow",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          13,
+          16
+        ],
+        "to": "idle",
+        "transition_end_frame": 16,
+        "transition_start_frame": 13,
+        "unique": []
+      }
+    ],
+    "impactlightfrontmid": [
+      {
+        "animation_duration_frames": 16,
+        "animation_duration_seconds": 0.5333333333333333,
+        "blending": 2,
+        "conditions": [],
+        "entry_frame": 0,
+        "from": "impactlightfrontmid",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          14,
+          16
+        ],
+        "to": "idle",
+        "transition_end_frame": 16,
+        "transition_start_frame": 14,
+        "unique": []
+      }
+    ],
+    "lowblock": [
+      {
+        "animation_duration_frames": 23,
+        "animation_duration_seconds": 0.7666666666666667,
+        "blending": 2,
+        "conditions": [],
+        "entry_frame": 0,
+        "from": "lowblock",
+        "input_reset": "true",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 14,
+        "time": [
+          12,
+          14
+        ],
+        "to": "idle",
+        "transition_end_frame": 14,
+        "transition_start_frame": 12,
+        "unique": []
+      }
+    ],
+    "midblock": [
+      {
+        "animation_duration_frames": 14,
+        "animation_duration_seconds": 0.4666666666666667,
+        "blending": 2,
+        "conditions": [],
+        "entry_frame": 0,
+        "from": "midblock",
+        "input_reset": "true",
+        "keysequence": [
+          [],
+          [],
+          []
+        ],
+        "keystatus": [
+          [],
+          [],
+          []
+        ],
+        "linking_frame": 0,
+        "time": [
+          12,
+          14
+        ],
+        "to": "idle",
+        "transition_end_frame": 14,
+        "transition_start_frame": 12,
+        "unique": []
+      }
+    ]
+  },
+  "schema_version": 1,
+  "sets": [
+    {
+      "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+      "outer_source_sha256": "429c9c7af3a36d21742c2de60d23c5ecaab5642b9d817564174efc0c5b3b6342",
+      "pakd_offset": 1066750,
+      "path": "adreno_200/set/Default.set",
+      "resource_id": "f6950a3369a764fcc4fb9832485ff17f",
+      "sha256": "ce8e99e911e5f6c2da17d143662156028672fd3ac53ae57f9276367bcc543a39"
+    },
+    {
+      "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+      "outer_source_sha256": "429c9c7af3a36d21742c2de60d23c5ecaab5642b9d817564174efc0c5b3b6342",
+      "pakd_offset": 21016054,
+      "path": "adreno_200/set/brucelee.set",
+      "resource_id": "f3d1549105ba342bc17b86a33b3834a0",
+      "sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c"
+    }
+  ],
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "sha256": "429c9c7af3a36d21742c2de60d23c5ecaab5642b9d817564174efc0c5b3b6342"
+  },
+  "stun_links": [
+    {
+      "blending": 3,
+      "conditions": [
+        "impact",
+        "oppattackstrengthnormal"
+      ],
+      "entry_frame": 0,
+      "from_group": "impactsfromstun",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "linking_frame": 0,
+      "time": [
+        0,
+        0
+      ],
+      "to": "stunlighthighimpact",
+      "unique": []
+    },
+    {
+      "blending": 3,
+      "conditions": [
+        "impact",
+        "oppattackstrengthhard"
+      ],
+      "entry_frame": 0,
+      "from_group": "impactsfromstun",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "linking_frame": 0,
+      "time": [
+        0,
+        0
+      ],
+      "to": "stunhardimpact",
+      "unique": []
+    },
+    {
+      "blending": 3,
+      "conditions": [
+        "impact",
+        "oppattackstrengthnormal"
+      ],
+      "entry_frame": 0,
+      "from_group": "impactsfromstun",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "linking_frame": 0,
+      "time": [
+        0,
+        0
+      ],
+      "to": "stunlightlowimpact",
+      "unique": []
+    },
+    {
+      "blending": 3,
+      "conditions": [
+        "impact",
+        "oppattackheightmed"
+      ],
+      "entry_frame": 0,
+      "from_group": "impactsfromstun",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "linking_frame": 0,
+      "time": [
+        0,
+        0
+      ],
+      "to": "stunmediumimpact",
+      "unique": []
+    },
+    {
+      "blending": 3,
+      "conditions": [
+        "impact",
+        "oppattackstrengthbrutal"
+      ],
+      "entry_frame": 0,
+      "from_group": "impactsfromstun",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "linking_frame": 0,
+      "time": [
+        0,
+        0
+      ],
+      "to": "stunbrutalimpact",
+      "unique": []
+    }
+  ]
+}

@@ -480,6 +480,73 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 等同类集。下一步确认 state 6 的正式枚举名称，以及
 `body_part/height/strength/direction` 到受击动作、推力和其他反馈的运行时映射。
 
+## 受击、格挡和返回窗口
+
+`brucelee.set` 根字典还有 396 条 `links`。其中 normal、frontal 的命中/格挡选择
+已从配置直接恢复：
+
+| 命中输入（必须 frontal） | `impactable` 命中动作 | 格挡输入（方向未限定） | `canblock` 格挡动作 |
+|---|---|---|---|
+| `normal/low/frontal` | `impactlightfrontlow` | `normal/low` | `lowblock` |
+| `normal/medium/frontal` | `impactlightfrontmid` | `normal/medium` | `midblock` |
+| `normal/high/frontal` | `impactlightfronthigh` | `normal/high` | `highblock` |
+
+例如命中 link 的 conditions 为
+`impact + oppattackstrengthnormal + oppattackheightmed + oppattackdirfrontal`，
+目标为 `impactlightfrontmid`。格挡 link 使用同一高度和强度条件，目标为
+`midblock`，但 conditions 中没有 `oppattackdirfrontal`，因此报告不会把格挡
+方向限定为 frontal；其 key status 还包含尚未映射回具体物理按键的输入条件。
+
+原生 `CFighter::UserControlUpdate` 对每个 link 依次调用
+`TimeWindowCheck`、`InputSequenceCheck`、`InputStatusCheck`、`CheckConditions`，
+四项均通过才调用 `FollowLink`。`TimeWindowCheck` 在
+`0x1A1FA8–0x1A1FBC` 对当前动画帧执行包含端点的闭区间比较，因此配置中的
+`time=[start,end]` 可限定为候选帧窗口。反应动作的返回 links 为：
+
+| 反应动作 | 返回 `idle` 窗口 | ANM 总时长 |
+|---|---:|---:|
+| `impactlightfrontlow` | 13–16 | 17 帧 |
+| `impactlightfrontmid` | 14–16 | 16 帧 |
+| `impactlightfronthigh` | 13–17 | 17 帧 |
+| `highblock` | 12–14 | 14 帧 |
+| `midblock` | 12–14 | 14 帧 |
+| `lowblock` | 12–14；`linking_frame=14` | 23 帧 |
+
+这说明 ANM 总时长不能直接当硬直时长。以当前两招为例，`lowpunch1` 的
+normal/medium impact 选择 `impactlightfrontmid`，其返回窗口从帧 14 开始；
+`lowkick1` 的 normal/low impact 选择 `impactlightfrontlow`，返回窗口从帧 13
+开始。格挡路径的返回窗口均从帧 12 开始。由于动画速度、blending、输入取消和
+原版运行时位置修正尚未逐项复核，这些值当前只到 `STATIC_SUPPORTED`，
+Godot 仍保留原型 `hitstun=0.30s`、`blockstun=0.14s`。
+
+推力目前不能由 link 时间直接推出。反应动作自身带有 ANM 根位移候选，后续需要
+沿 `UpdatePositionWithRootDisplacement` 和反应 ANM 的 `positions`/`bonepos`
+轨道继续验证，当前推力仍为 `UNVERIFIED` 和 `prototype_push`。
+
+安全元数据导出：
+
+```powershell
+py -3.12 tools\kdf_combat_reactions.py `
+  --archive 'D:\private\Bruce Lee Dragon Warrior v1.15.26.zip' `
+  --report 'reports\reaction_action_inventory.new.json'
+```
+
+报告覆盖 20 个 idle/block/stun/impact 动作、7 个返回 `idle` 的动作及对应
+ANM 的 SHA-256、资源 ID、duration、framerate 和 radius；不包含原版资源字节。
+已生成报告为
+[`reports/reaction_action_inventory.json`](../reports/reaction_action_inventory.json)，
+SHA-256 为
+`3824b17689585a28e8901d1b8fc41f80a9d12f1e32a581afffd59f313d24581c`。
+
+SO 控制流校验：
+
+```powershell
+py -3.12 tools\native_reaction_links.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+```
+
+结果为 `verified 26 native reaction-link instructions`，退出码 0。
+
 ## 全量 impact 聚合
 
 使用完整外层 ZIP 和 `--inventory` 模式重新只读解析后，200 个动作、108 个

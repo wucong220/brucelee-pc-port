@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+"""Verify the native fighting-set reaction-link control flow."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import struct
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from native_hierarchy_links import HierarchyLinkError, file_offset
+
+
+_SHA256 = "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70"
+_WORDS = {
+    0x001A8A34: 0xEBFE0E32,  # bl CFighter::TimeWindowCheck
+    0x001A8A54: 0xEBFE0C08,  # bl CFighter::InputSequenceCheck
+    0x001A8A74: 0xEBFDFDBD,  # bl CFighter::InputStatusCheck
+    0x001A8A84: 0xEBFE056C,  # bl CFighter::CheckConditions
+    0x001A8A88: 0xE3570000,  # cmp r7,#0 (time window)
+    0x001A8A8C: 0x0AFFFFD7,  # beq next link
+    0x001A8A90: 0xE3580000,  # cmp r8,#0 (key sequence)
+    0x001A8A94: 0x0AFFFFD5,  # beq next link
+    0x001A8A98: 0xE35B0000,  # cmp fp,#0 (key status)
+    0x001A8A9C: 0x0AFFFFD3,  # beq next link
+    0x001A8AA0: 0xE3500000,  # cmp r0,#0 (conditions)
+    0x001A8AA4: 0x0AFFFFD1,  # beq next link
+    0x001A8AB4: 0xEBFDE4D8,  # bl CFighter::FollowLink
+    0x001A1FA8: 0xE1520003,  # cmp currentFrame,windowStart
+    0x001A1FAC: 0x3A000009,  # blo false
+    0x001A1FB0: 0xE5910004,  # ldr r0,[window,#4] windowEnd
+    0x001A1FB4: 0xE1520000,  # cmp currentFrame,windowEnd
+    0x001A1FB8: 0x83A00000,  # movhi r0,#0
+    0x001A1FBC: 0x93A00001,  # movls r0,#1
+    0x001A5554: 0xEBFE1798,  # bl CFighter::GetActiveSetAnimation
+    0x001A5570: 0xEBFDEF20,  # bl CHStrMgr::GetItem("ReceiveDamage")
+    0x001A5590: 0xEBFE0124,  # bl CAnimationDescr::BelongsToGroup
+    0x001A55E0: 0xE3540000,  # cmp r4,#0
+    0x001A55E4: 0x0AFFFFCC,  # beq without ReceiveDamage
+    0x001A5600: 0xEBFE023A,  # bl CFighter::AttackDamage
+    0x001A5610: 0xEBFE08C3,  # bl CFighter::ModifyHealth
+}
+_RECEIVE_DAMAGE_STRING = 0x005BAB9C
+
+
+def verify_bytes(elf: bytes) -> None:
+    if hashlib.sha256(elf).hexdigest() != _SHA256:
+        raise HierarchyLinkError("ELF SHA-256 does not match the recorded libdefault.so")
+    for address, expected in _WORDS.items():
+        actual = struct.unpack_from("<I", elf, file_offset(elf, address))[0]
+        if actual != expected:
+            raise HierarchyLinkError(
+                f"instruction 0x{address:08x} is 0x{actual:08x}, "
+                f"expected 0x{expected:08x}"
+            )
+    string_offset = file_offset(elf, _RECEIVE_DAMAGE_STRING)
+    if elf[string_offset:string_offset + 14] != b"ReceiveDamage\x00":
+        raise HierarchyLinkError(
+            f"literal at 0x{_RECEIVE_DAMAGE_STRING:08x} is not ReceiveDamage"
+        )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("elf", type=Path)
+    args = parser.parse_args()
+    try:
+        verify_bytes(args.elf.read_bytes())
+    except (OSError, HierarchyLinkError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    print(f"verified {len(_WORDS)} native reaction-link instructions")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
