@@ -13,18 +13,33 @@ const TEXTURE_NAMES: Dictionary = {
     "normal": "normal_texture",
     "material": "material_texture",
 }
+const PROFILES: Dictionary = {
+    "body_hair": [
+        {"kind": "body", "node_match": "body", "shader": "body"},
+        {"kind": "hair", "node_match": "hair", "shader": "hair"},
+    ],
+    "body": [
+        {"kind": "body", "node_match": "body", "shader": "body"},
+    ],
+}
 
 
-func apply_to(root: Node, texture_root: String) -> Dictionary:
+func apply_to(root: Node, texture_root: String, profile: String = "body_hair") -> Dictionary:
     var result: Dictionary = {
         "loaded": false,
         "body_loaded": false,
         "hair_loaded": false,
         "body_shader": "character_candidate_opaque.gdshader",
         "hair_shader": "character_candidate.gdshader",
+        "profile": profile,
+        "reason": "",
         "error": "",
     }
+    if not PROFILES.has(profile):
+        result["error"] = "unknown candidate material profile: " + profile
+        return result
     if texture_root.is_empty():
+        result["reason"] = "candidate texture root is not configured"
         return result
     var path_error: String = CandidatePathGuard.external_path_error(
         texture_root, "candidate texture root"
@@ -37,33 +52,43 @@ func apply_to(root: Node, texture_root: String) -> Dictionary:
         result["error"] = "candidate texture root must be an absolute local directory"
         return result
 
-    var body_textures: Dictionary = _load_texture_set(normalized_root, "body", result)
-    if body_textures.is_empty():
-        return result
-    var body_material: ShaderMaterial = _make_material(body_textures, BODY_CHARACTER_SHADER)
-    var hair_textures: Dictionary = _load_texture_set(normalized_root, "hair", result)
-    if hair_textures.is_empty():
-        return result
-    var hair_material: ShaderMaterial = _make_material(hair_textures, HAIR_CHARACTER_SHADER)
+    var prepared_groups: Array[Dictionary] = []
+    for group_value: Variant in PROFILES[profile]:
+        var group: Dictionary = group_value
+        var kind: String = String(group["kind"])
+        var textures: Dictionary = _load_texture_set(normalized_root, kind, result)
+        if textures.is_empty():
+            return result
+        var shader: Shader = (
+            BODY_CHARACTER_SHADER if group["shader"] == "body"
+            else HAIR_CHARACTER_SHADER
+        )
+        var material: ShaderMaterial = _make_material(textures, shader)
+        var targets: Array[MeshInstance3D] = []
+        for node: Node in root.find_children("*", "MeshInstance3D", true, false):
+            var mesh_instance: MeshInstance3D = node as MeshInstance3D
+            if String(mesh_instance.name).to_lower().contains(
+                    String(group["node_match"])
+            ):
+                targets.append(mesh_instance)
+        if targets.is_empty():
+            result["error"] = (
+                "candidate model is missing a %s MeshInstance3D" % kind
+            )
+            return result
+        prepared_groups.append({
+            "kind": kind,
+            "material": material,
+            "targets": targets,
+        })
 
-    var body_applied: bool = false
-    var hair_applied: bool = false
-    for node: Node in root.find_children("*", "MeshInstance3D", true, false):
-        var mesh_instance: MeshInstance3D = node as MeshInstance3D
-        var mesh_name: String = String(mesh_instance.name).to_lower()
-        if mesh_name.contains("body"):
-            mesh_instance.material_override = body_material
-            body_applied = true
-        elif mesh_name.contains("hair"):
-            mesh_instance.material_override = hair_material
-            hair_applied = true
-
-    if not body_applied or not hair_applied:
-        result["error"] = "candidate model is missing a body or hair MeshInstance3D"
-        return result
+    for prepared: Dictionary in prepared_groups:
+        var kind: String = String(prepared["kind"])
+        var material: ShaderMaterial = prepared["material"]
+        for mesh_instance: MeshInstance3D in prepared["targets"]:
+            mesh_instance.material_override = material
+        result[kind + "_loaded"] = true
     result["loaded"] = true
-    result["body_loaded"] = true
-    result["hair_loaded"] = true
     return result
 
 

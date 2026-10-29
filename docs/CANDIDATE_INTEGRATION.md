@@ -6,6 +6,7 @@
 ## 输入
 
 - 候选 GLB：`body_hair_idle_punch_kick_candidate.glb`
+- 可选对手 GLB：`brick_candidate_idle_punch_kick.glb`
 - 纹理目录：`body_diffuse.png`、`body_normal.png`、`body_material.png`、
   `hair_diffuse.png`、`hair_normal.png`、`hair_material.png`
 - Godot 4.7.2 stable
@@ -29,6 +30,17 @@
 真实动画、真实纹理和端到端战斗；最后执行 `--export-pack`，再从生成的 PCK
 重跑 smoke、动画、材质和战斗，确保路径解析器与运行时代码实际入包。
 
+每名角色有独立的 GLB、纹理根目录和动作名映射。环境变量
+`BRUCELEE_PLAYER_GLB`/`BRUCELEE_PLAYER_TEXTURE_ROOT` 控制玩家，
+`BRUCELEE_OPPONENT_GLB`/`BRUCELEE_OPPONENT_TEXTURE_ROOT` 控制电脑。
+玩家旧环境变量保持兼容；未配置对手 GLB 时电脑继续使用占位体。对手缺少可选
+纹理或 reaction clip 时不会阻止角色加载。
+
+材质配置按角色选择：Bruce 使用 `body_hair`，Brick 使用单组 `body`。
+Brick 的三个 `body_*` PNG 都齐全时会把同一身体材质应用到其三-surface Mesh；
+当前没有解码后的 Brick PNG，因此运行报告必须保持
+`opponent_textures_loaded=false`，并给出未配置原因。
+
 `validate_candidate_textures.gd` 使用程序生成的 4×4 PNG 验证材质装配和 shader
 选择；真实纹理文件由 `validate_combat_candidate.gd` 加载。两者都不等于原版
 GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
@@ -38,6 +50,20 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 `LOCAL_TESTED + CANDIDATE`：
 
 - 69 根骨骼、idle/punch/kick 三段动画。
+- 玩家 Bruce 与电脑 Brick 可同时加载，分别使用 `m01_*` 和 `m03_*` 动作名、
+  独立 `AnimationPlayer` 与候选根节点；缺少对手配置时仍可通过单角色和纯占位
+  模式。两名角色均按各自实测 GLB 包围盒缩放到 1.8 米，不再共用 Bruce 的源高度。
+  无法由严格 CPU-skinning 路径测量的旧玩家候选继续使用原固定源比例回退；
+  电脑候选测量失败则记录错误并使用占位体，避免把 Bruce 的比例套给未知对手。
+- 对手候选验证加载 69 骨 Brick 模型、一个 3-surface 蒙皮 Mesh 和
+  idle/punch/kick/movefwd 四段动作；四条 clip 的中点都会改变骨骼姿态。
+- Brick 的 `m03_movefwd` 已作为候选移动视觉使用。punch/kick 的状态总时长按
+  各自 clip 时长等比缩放，只用于让原型状态机与动画结束点一致；命中帧、数值、
+  半径和 reaction 仍是原型或 Bruce fighting-set 候选值，不能视为 Brick 原版规则。
+  该缩放只对 Brick 原型显式开启；玩家继续以已恢复的 fighting-set 时序为准。
+- 候选 GLB 中 `character` 节点的位置轨道对所有已映射 action 都禁用，避免未经
+  语义确认的动画平移直接分离视觉与 `CharacterBody3D` 判定位置。原版 root-motion
+  轴和位移用途仍是 `UNVERIFIED`。
 - 动画验证固定检查 69 根骨骼、关键骨骼索引/名称以及三段动画时长。
 - 候选实际包围盒的最低点为 `Y=-0.093933`；Body 高 `166.336`，含头发总高
   `173.416`。战斗与预览按总高缩放到 `1.8`；运行时每帧把候选可视根固定到
@@ -89,18 +115,27 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 
 ```text
 PROTOTYPE_VALIDATION={"blocked_kick_target_health":99.4,"blockstun_frames":12,"kick_hitstun_frames":13,"ko_and_restart":true,"punch_hitstun_frames":14,"punch_target_health":95.0}
-COMBAT_CANDIDATE_VALIDATION={"candidate_loaded":true,"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.7999997,"candidate_world_min_y":0.0,"idle_clip":"m01_idle_01","punch_clip":"m01_pnch_low_01","punch_hitstun_frames":14,"punch_target_health":95.0}
+COMBAT_CANDIDATE_VALIDATION={"candidate_loaded":true,"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.6010163,"candidate_world_min_y":-0.0051876,"idle_clip":"m01_idle_01","punch_clip":"m01_pnch_low_01","punch_hitstun_frames":14,"punch_target_health":95.0}
+CANDIDATE_TEXTURE_VALIDATION={"body_loaded":true,"body_shader":"character_candidate_opaque.gdshader","failed_profile_remained_unapplied":true,"hair_loaded":true,"hair_shader":"character_candidate.gdshader","invalid_empty_profile_rejected":true}
+DUAL_FIGHTER_CANDIDATE_VALIDATION={"body_only_textures":true,"candidate_world_heights":{"Bruce (placeholder)":1.60101628303528,"Opponent (placeholder)":1.73506438732147},"invalid_clip_mapping_fallback":true,"ko_reset_idle":"m03_idle_01","missing_asset_fallback":true,"missing_clip_fallback":true,"move_root_tracks_suppressed":true,"opponent_idle":"m03_idle_01","opponent_pretransformed_grounding":true,"opponent_punch":"m03_pnch_low_01","opponent_textures_loaded":false,"player_bounds_fallback":true,"player_idle":"m01_idle_01","player_pretransformed_grounding":true,"player_punch":"m01_pnch_low_01","player_textures_loaded":true,"punch_and_kick_timing_aligned":true,"skeleton_isolation":true}
 CANDIDATE_VALIDATION=PASS
-EXPORT_SELF_TEST={"candidate_textures_loaded":true,"candidate_world_height":1.60952,"candidate_world_min_y":-0.00477,"internal_path_rejected":true,"punch_hitstun_frames":14,"punch_target_health":95.0}
+EXPORT_SELF_TEST={"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.61134910583496,"candidate_world_min_y":-0.00488114356994629,"internal_path_rejected":true,"opponent_candidate_loaded":true,"opponent_idle_clip":"m03_idle_01","opponent_texture_reason":"candidate texture root is not configured","opponent_textures_loaded":false,"punch_hitstun_frames":14,"punch_target_health":95.0,"reaction_clip":"all_impct_light_frnt_mid"}
 WINDOWS_EXE_VALIDATION=PASS
 ```
 
 独立 EXE 复核命令：
 
+未取得 Brick PNG 时省略 `-OpponentTextureRoot`，预期
+`opponent_textures_loaded=false`。取得三张 `body_*` PNG 后再加入该参数；
+当前只用四像素合成 PNG 验证了单身体材质配置能进入独立 EXE，
+这不等于 Brick ATC 纹理或原版材质像素已经验收。
+
 ```powershell
 .\validate_windows_exe.ps1 `
   -CandidateGlb 'C:\private\body_hair_idle_punch_kick_candidate.glb' `
+  -OpponentGlb 'C:\private\brick_candidate_idle_punch_kick.glb' `
   -TextureRoot 'C:\private\candidate-textures' `
+  -OpponentTextureRoot 'C:\private\brick-textures' `
   -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64_console.exe'
 ```
 
@@ -118,6 +153,8 @@ WINDOWS_EXE_VALIDATION=PASS
   `prototype_push` 未替换；block ANM 没有 `positions` 轨道也不能证明格挡没有位移。
 - Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
   这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
+- 对手 Brick 目前只接入候选视觉和 `m03_*` 动作映射，尚未应用其 ATC 纹理，
+  也未恢复对手专属攻击帧、伤害、半径、reaction、AI 或 fighting set 选择。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。
 
 ## 候选受击与格挡视觉

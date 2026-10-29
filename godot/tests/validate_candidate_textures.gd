@@ -3,6 +3,8 @@ extends SceneTree
 ## Real texture decoding is exercised by validate_combat_candidate.gd; final
 ## pixel/lighting parity with the original renderer is not verified here.
 
+const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
+
 
 func _initialize() -> void:
     call_deferred("_run_check")
@@ -88,11 +90,29 @@ func _run_check() -> void:
                 push_error("Candidate material is missing shader parameter: " + parameter)
                 quit(7)
                 return
+    var atomic_failure_error: String = _check_atomic_failure(args[0], texture_root)
+    if not atomic_failure_error.is_empty():
+        push_error(atomic_failure_error)
+        quit(8)
+        return
+    var invalid_profile_root: Node = Node.new()
+    var invalid_profile_result: Dictionary = CandidateMaterialLoader.new().apply_to(
+        invalid_profile_root, "", "invalid-profile"
+    )
+    invalid_profile_root.free()
+    if not String(invalid_profile_result["error"]).contains(
+            "unknown candidate material profile"
+    ):
+        push_error("An invalid material profile was hidden by an empty texture root")
+        quit(9)
+        return
     print("CANDIDATE_TEXTURE_VALIDATION=" + JSON.stringify({
         "body_loaded": true,
         "hair_loaded": true,
         "body_shader": body_material.shader.resource_path.get_file(),
         "hair_shader": hair_material.shader.resource_path.get_file(),
+        "failed_profile_remained_unapplied": true,
+        "invalid_empty_profile_rejected": true,
     }))
     scene.queue_free()
     await process_frame
@@ -100,3 +120,68 @@ func _run_check() -> void:
         DirAccess.remove_absolute(path)
     DirAccess.remove_absolute(texture_root)
     quit(0)
+
+
+func _check_atomic_failure(candidate_path: String, valid_texture_root: String) -> String:
+    var partial_root: String = OS.get_temp_dir().path_join(
+        "brucelee-candidate-partial-texture-test-%d" % Time.get_ticks_usec()
+    )
+    if DirAccess.make_dir_recursive_absolute(partial_root) != OK:
+        return "Could not create partial candidate texture directory"
+    var copied_paths: Array[String] = []
+    for map_name: String in ["diffuse", "normal", "material"]:
+        var source: String = valid_texture_root.path_join("body_%s.png" % map_name)
+        var target: String = partial_root.path_join("body_%s.png" % map_name)
+        var copy_error: Error = DirAccess.copy_absolute(source, target)
+        if copy_error != OK:
+            _remove_texture_files(copied_paths, partial_root)
+            return "Could not prepare partial candidate texture set (%d)" % copy_error
+        copied_paths.append(target)
+
+    var document: GLTFDocument = GLTFDocument.new()
+    var state: GLTFState = GLTFState.new()
+    var read_error: Error = document.append_from_file(candidate_path, state)
+    if read_error != OK:
+        _remove_texture_files(copied_paths, partial_root)
+        return "Could not reload candidate for atomic texture test (%d)" % read_error
+    var generated: Node = document.generate_scene(state)
+    if generated == null:
+        _remove_texture_files(copied_paths, partial_root)
+        return "Candidate reload produced no scene for atomic texture test"
+
+    var failure: String = ""
+    var body_material_before: Material = null
+    var body_found: bool = false
+    for node: Node in generated.find_children("*", "MeshInstance3D", true, false):
+        var mesh_instance: MeshInstance3D = node as MeshInstance3D
+        if String(mesh_instance.name).to_lower().contains("body"):
+            body_found = true
+            body_material_before = mesh_instance.material_override
+            break
+    if not body_found:
+        failure = "Candidate has no body mesh for atomic texture test"
+    else:
+        var result: Dictionary = CandidateMaterialLoader.new().apply_to(
+            generated, partial_root, "body_hair"
+        )
+        if result["loaded"]:
+            failure = "Incomplete candidate texture profile unexpectedly succeeded"
+        else:
+            for node: Node in generated.find_children(
+                    "*", "MeshInstance3D", true, false
+            ):
+                var mesh_instance: MeshInstance3D = node as MeshInstance3D
+                if (String(mesh_instance.name).to_lower().contains("body")
+                        and mesh_instance.material_override != body_material_before):
+                    failure = "Failed candidate texture profile partially changed the body"
+                    break
+
+    generated.free()
+    _remove_texture_files(copied_paths, partial_root)
+    return failure
+
+
+func _remove_texture_files(paths: Array[String], directory: String) -> void:
+    for path: String in paths:
+        DirAccess.remove_absolute(path)
+    DirAccess.remove_absolute(directory)

@@ -17,11 +17,18 @@ const CANDIDATE_CLIPS: Dictionary = {
     "punch": "m01_pnch_low_01",
     "kick": "m01_kick_low_01",
 }
+const BRICK_CLIPS: Dictionary = {
+    "idle": "m03_idle_01",
+    "punch": "m03_pnch_low_01",
+    "kick": "m03_kck_low_01",
+    "move": "m03_movefwd",
+}
 const SOURCE_FRAME_RATE: float = 30.0
 const SOURCE_CHARACTER_HEIGHT: float = CANDIDATE_SOURCE_HEIGHT
 const WORLD_CHARACTER_HEIGHT: float = CANDIDATE_HEIGHT
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
+const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const HEAVY_ATTACK: Dictionary = {
     # No recovered fighting-set mapping for this prototype attack yet.
     "startup": 0.33, "active": 0.10, "recovery": 0.42,
@@ -118,6 +125,12 @@ var candidate_animation_clip: String = ""
 var candidate_visual_height: float = 0.0
 var candidate_textures_loaded: bool = false
 var candidate_texture_error: String = ""
+var candidate_texture_reason: String = ""
+var candidate_glb_path: String = ""
+var candidate_texture_root: String = ""
+var candidate_clips: Dictionary = CANDIDATE_CLIPS.duplicate(true)
+var candidate_material_profile: String = "body_hair"
+var candidate_scale_attack_timing: bool = false
 var _time: float = 0.0
 var _body: MeshInstance3D
 var _left_arm: MeshInstance3D
@@ -132,11 +145,30 @@ var _candidate_character: Node3D
 var _candidate_character_rest_position: Vector3
 var _candidate_skeleton: Skeleton3D
 var _candidate_skeleton_parent: Node
+var _candidate_source_min_y: float = CANDIDATE_SOURCE_MIN_Y
+var _candidate_visual_scale: float = 1.0
 
 func configure(display_name: String, human: bool, tint: Color) -> void:
     character_name = display_name
     is_player = human
     _color = tint
+
+
+func configure_candidate_asset(
+        path: String,
+        texture_root: String,
+        clips: Dictionary = CANDIDATE_CLIPS,
+        material_profile: String = "body_hair",
+        scale_attack_timing: bool = false
+) -> void:
+    if is_inside_tree():
+        push_error("Candidate asset must be configured before the fighter enters the tree")
+        return
+    candidate_glb_path = path
+    candidate_texture_root = texture_root
+    candidate_clips = clips.duplicate(true)
+    candidate_material_profile = material_profile
+    candidate_scale_attack_timing = scale_attack_timing
 
 func _ready() -> void:
     if not _load_attack_definitions():
@@ -441,32 +473,40 @@ func _add_mesh(mesh: Mesh, local_pos: Vector3, color: Color) -> MeshInstance3D:
     _placeholder_visuals.append(node)
     return node
 
-## Load the player's real candidate GLB from a user-selected local file.
+## Load this fighter's candidate GLB from a user-selected local file.
 ## The shipped project remains runnable with the generated placeholder visuals.
 func _try_load_candidate_visual() -> void:
-    if not is_player:
-        return
+    candidate_loaded = false
+    candidate_load_error = ""
+    _reset_candidate_derived_state()
     var path_result: Dictionary = _candidate_path()
     if not path_result["error"].is_empty():
         candidate_load_error = path_result["error"]
-        push_warning("Player candidate GLB disabled: " + candidate_load_error)
+        push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
     var path: String = path_result["path"]
     if path.is_empty():
+        return
+    var clip_error: String = _candidate_clip_mapping_error()
+    if not clip_error.is_empty():
+        candidate_load_error = clip_error
+        push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
     var document: GLTFDocument = GLTFDocument.new()
     var state: GLTFState = GLTFState.new()
     var result: Error = document.append_from_file(path, state)
     if result != OK:
         candidate_load_error = "GLB read failed with error %d" % result
-        push_warning("Player candidate GLB disabled: " + candidate_load_error)
+        _reset_candidate_derived_state()
+        push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
     var generated: Node = document.generate_scene(state)
     if generated == null or not generated is Node3D:
         if generated != null:
             generated.free()
         candidate_load_error = "GLB did not generate a 3D scene"
-        push_warning("Player candidate GLB disabled: " + candidate_load_error)
+        _reset_candidate_derived_state()
+        push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
 
     _candidate_root = Node3D.new()
@@ -476,10 +516,12 @@ func _try_load_candidate_visual() -> void:
     _candidate_root.add_child(generated)
     add_child(_candidate_root)
     if not _fit_candidate_visual():
-        candidate_load_error = "GLB mesh bounds could not be measured"
+        if candidate_load_error.is_empty():
+            candidate_load_error = "GLB mesh bounds could not be measured"
         _candidate_root.queue_free()
         _candidate_root = null
-        push_warning("Player candidate GLB disabled: " + candidate_load_error)
+        _reset_candidate_derived_state()
+        push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
 
     _candidate_animation = _find_animation_player(generated)
@@ -487,11 +529,12 @@ func _try_load_candidate_visual() -> void:
         _candidate_root.queue_free()
         _candidate_root = null
         candidate_load_error = "GLB has no AnimationPlayer"
-        push_warning("Player candidate GLB disabled: " + candidate_load_error)
+        _reset_candidate_derived_state()
+        push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
     var missing: Array[String] = []
-    for action: String in CANDIDATE_CLIPS:
-        var expected: String = CANDIDATE_CLIPS[action]
+    for action: String in ["idle", "punch", "kick"]:
+        var expected: String = candidate_clips[action]
         var matched: String = _find_animation_clip(_candidate_animation, expected)
         if matched.is_empty():
             missing.append(expected)
@@ -500,9 +543,9 @@ func _try_load_candidate_visual() -> void:
     if not missing.is_empty():
         _candidate_root.queue_free()
         _candidate_root = null
-        _candidate_animation = null
         candidate_load_error = "GLB is missing candidate clips: " + ", ".join(missing)
-        push_warning("Player candidate GLB disabled: " + candidate_load_error)
+        _reset_candidate_derived_state()
+        push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
     # This local candidate has a named character root. Its reaction translation
     # is not yet mapped to gameplay movement and must not move the visual alone.
@@ -514,6 +557,14 @@ func _try_load_candidate_visual() -> void:
         if skeleton_nodes.size() == 1:
             _candidate_skeleton = skeleton_nodes[0] as Skeleton3D
             _candidate_skeleton_parent = _candidate_skeleton.get_parent()
+    for action: String in ["move", "ko"]:
+        if not candidate_clips.has(action):
+            continue
+        var matched_optional: String = _find_animation_clip(
+            _candidate_animation, String(candidate_clips[action])
+        )
+        if not matched_optional.is_empty():
+            _candidate_clip_paths[action] = matched_optional
     # Reaction clips are optional so earlier three-clip local assets still work.
     for group: String in REACTION_PROFILE_DATA:
         for height: String in REACTION_PROFILE_DATA[group]:
@@ -525,48 +576,130 @@ func _try_load_candidate_visual() -> void:
                     _candidate_clip_paths[reaction_name] = matched
     var idle: Animation = _candidate_animation.get_animation(_candidate_clip_paths["idle"])
     idle.loop_mode = Animation.LOOP_LINEAR
+    if _candidate_clip_paths.has("move"):
+        var move: Animation = _candidate_animation.get_animation(
+            _candidate_clip_paths["move"]
+        )
+        move.loop_mode = Animation.LOOP_LINEAR
+    for action: String in _candidate_clip_paths:
+        _disable_candidate_character_position_tracks(
+            _candidate_animation.get_animation(_candidate_clip_paths[action])
+        )
+    _align_candidate_attack_timings()
+    var texture_root: String = candidate_texture_root
+    if texture_root.is_empty():
+        texture_root = OS.get_environment(
+            "BRUCELEE_PLAYER_TEXTURE_ROOT" if is_player
+            else "BRUCELEE_OPPONENT_TEXTURE_ROOT"
+        )
     var material_result: Dictionary = CandidateMaterialLoader.new().apply_to(
-        generated, OS.get_environment("BRUCELEE_PLAYER_TEXTURE_ROOT")
+        generated, texture_root, candidate_material_profile
     )
     candidate_textures_loaded = material_result["loaded"]
     candidate_texture_error = material_result["error"]
+    candidate_texture_reason = material_result["reason"]
     if not candidate_texture_error.is_empty():
-        push_warning("Player candidate textures disabled: " + candidate_texture_error)
+        push_warning(character_name + " candidate textures disabled: " + candidate_texture_error)
     for visual: MeshInstance3D in _placeholder_visuals:
         visual.visible = false
     candidate_loaded = true
     _play_candidate_action("idle")
 
 
+func _reset_candidate_derived_state() -> void:
+    candidate_animation_clip = ""
+    candidate_visual_height = 0.0
+    candidate_textures_loaded = false
+    candidate_texture_error = ""
+    candidate_texture_reason = ""
+    _candidate_action = ""
+    _candidate_clip_paths.clear()
+    _candidate_animation = null
+    _candidate_character = null
+    _candidate_skeleton = null
+    _candidate_skeleton_parent = null
+    _candidate_source_min_y = CANDIDATE_SOURCE_MIN_Y
+    _candidate_visual_scale = 1.0
+
+
+func _candidate_clip_mapping_error() -> String:
+    for action: Variant in candidate_clips:
+        if typeof(action) != TYPE_STRING or String(action).is_empty():
+            return "candidate clip mapping has an invalid action name"
+        var mapped: Variant = candidate_clips[action]
+        if typeof(mapped) != TYPE_STRING or String(mapped).strip_edges().is_empty():
+            return "candidate clip mapping has an invalid " + String(action)
+    for action: String in ["idle", "punch", "kick"]:
+        if not candidate_clips.has(action):
+            return "candidate clip mapping lacks " + action
+    return ""
+
+
 func _fit_candidate_visual() -> bool:
-    if CANDIDATE_SOURCE_HEIGHT <= 0.0:
+    if CANDIDATE_HEIGHT <= 0.0:
         return false
-    # The local candidate converter preserves the source Z-up height and places
-    # the model origin near the feet. The measured bounds include the rigid hair
-    # attachment and place the lowest body vertex slightly below source y=0.
-    var factor: float = CANDIDATE_HEIGHT / CANDIDATE_SOURCE_HEIGHT
+    var measured: Dictionary = _candidate_local_bounds()
+    var factor: float
+    var visual_source_height: float
+    var measured_error: String = String(measured.get("error", ""))
+    var measured_bounds: AABB
+    var has_bounds: bool = measured.has("bounds")
+    if has_bounds:
+        measured_bounds = measured["bounds"]
+    if not measured_error.is_empty() or not has_bounds or measured_bounds.size.y <= 0.0:
+        if not is_player:
+            candidate_load_error = measured_error
+            if candidate_load_error.is_empty():
+                candidate_load_error = "candidate GLB has no positive visual height"
+            return false
+        # Preserve the previous player-only behavior for candidate layouts that
+        # cannot be measured by the strict CPU-skinning bounds path.
+        _candidate_source_min_y = CANDIDATE_SOURCE_MIN_Y
+        visual_source_height = CANDIDATE_SOURCE_HEIGHT
+        factor = CANDIDATE_HEIGHT / visual_source_height
+        push_warning(character_name + " candidate uses fixed source scale fallback")
+    else:
+        _candidate_source_min_y = measured_bounds.position.y
+        visual_source_height = measured_bounds.size.y
+        factor = CANDIDATE_HEIGHT / visual_source_height
+    _candidate_visual_scale = factor
     _candidate_root.scale = Vector3.ONE * factor
     _candidate_root.position = Vector3(
-        0.0, -PLAYER_ORIGIN_HEIGHT - CANDIDATE_SOURCE_MIN_Y * factor, 0.0
+        0.0, -PLAYER_ORIGIN_HEIGHT - _candidate_source_min_y * factor, 0.0
     )
-    candidate_visual_height = CANDIDATE_SOURCE_HEIGHT * factor
+    candidate_visual_height = visual_source_height * factor
     return true
 
 
+func _candidate_local_bounds() -> Dictionary:
+    var original_transform: Transform3D = _candidate_root.global_transform
+    _candidate_root.global_transform = Transform3D.IDENTITY
+    var measured: Dictionary = CandidateBounds.scene_bounds(_candidate_root)
+    _candidate_root.global_transform = original_transform
+    return measured
+
+
 func _candidate_path() -> Dictionary:
-    var chosen: String = OS.get_environment("BRUCELEE_PLAYER_GLB")
+    var chosen: String = candidate_glb_path
+    if chosen.is_empty():
+        chosen = OS.get_environment(
+            "BRUCELEE_PLAYER_GLB" if is_player else "BRUCELEE_OPPONENT_GLB"
+        )
     var args: PackedStringArray = OS.get_cmdline_user_args()
     var index: int = 0
     while index < args.size():
         var value: String = args[index]
-        if value == "--candidate-player-glb" or value.begins_with("--candidate-player-glb="):
-            if value == "--candidate-player-glb":
+        var argument: String = (
+            "--candidate-player-glb" if is_player else "--candidate-opponent-glb"
+        )
+        if value == argument or value.begins_with(argument + "="):
+            if value == argument:
                 if index + 1 >= args.size() or args[index + 1].begins_with("--"):
-                    return {"path": "", "error": "--candidate-player-glb requires a path"}
+                    return {"path": "", "error": argument + " requires a path"}
                 index += 1
                 chosen = args[index]
             else:
-                chosen = value.trim_prefix("--candidate-player-glb=")
+                chosen = value.trim_prefix(argument + "=")
         index += 1
     if chosen.is_empty():
         return {"path": "", "error": ""}
@@ -599,6 +732,46 @@ func _find_animation_clip(player: AnimationPlayer, expected: String) -> String:
         if name == expected or name.ends_with("/" + expected):
             return name
     return ""
+
+
+func _disable_candidate_character_position_tracks(clip: Animation) -> void:
+    if clip == null or _candidate_character == null:
+        return
+    var animation_root: Node = _candidate_animation.get_node_or_null(
+        _candidate_animation.root_node
+    )
+    if animation_root == null:
+        return
+    for track: int in clip.get_track_count():
+        if clip.track_get_type(track) != Animation.TYPE_POSITION_3D:
+            continue
+        var target: Node = animation_root.get_node_or_null(clip.track_get_path(track))
+        if target == _candidate_character:
+            clip.track_set_enabled(track, false)
+
+
+func _align_candidate_attack_timings() -> void:
+    if not candidate_scale_attack_timing:
+        return
+    for action: String in ["punch", "kick"]:
+        if not ATTACKS.has(action) or not _candidate_clip_paths.has(action):
+            continue
+        var details: Dictionary = ATTACKS[action]
+        var state_duration: float = (
+            float(details["startup"]) + float(details["active"])
+            + float(details["recovery"])
+        )
+        var clip_duration: float = _candidate_animation.get_animation(
+            _candidate_clip_paths[action]
+        ).length
+        if state_duration <= 0.0 or clip_duration <= 0.0:
+            continue
+        var factor: float = clip_duration / state_duration
+        details["startup"] = float(details["startup"]) * factor
+        details["active"] = float(details["active"]) * factor
+        details["recovery"] = float(details["recovery"]) * factor
+        details["candidate_timing_scale"] = factor
+        ATTACKS[action] = details
 
 
 func _prepare_candidate_reaction(clip: Animation) -> bool:
@@ -637,6 +810,15 @@ func _play_candidate_action(action: String) -> void:
     _candidate_action = action
     candidate_animation_clip = _candidate_clip_paths[action]
     _candidate_animation.play(candidate_animation_clip)
+
+
+func supports_attack(kind: String) -> bool:
+    if not ATTACKS.has(kind):
+        return false
+    if candidate_loaded and not candidate_clips.has(kind):
+        return false
+    return true
+
 
 func request_attack(kind: String) -> bool:
     if state != "idle" or guard_held or not ATTACKS.has(kind):
@@ -828,6 +1010,14 @@ func reset_fighter(start_position: Vector3) -> void:
     last_reaction_exit_frame = -1
     guard_held = false
     combo_hits = 0
+    if candidate_loaded:
+        if _candidate_character != null:
+            _candidate_character.position = _candidate_character_rest_position
+        if _candidate_animation != null:
+            _candidate_animation.stop()
+        _candidate_action = ""
+        candidate_animation_clip = ""
+        _animate_candidate()
 
 func _animate_visuals() -> void:
     if candidate_loaded:
@@ -857,7 +1047,7 @@ func _animate_candidate() -> void:
         return
     _candidate_root.global_position.y = (
         CANDIDATE_FLOOR_Y
-        - CANDIDATE_SOURCE_MIN_Y * (CANDIDATE_HEIGHT / CANDIDATE_SOURCE_HEIGHT)
+        - _candidate_source_min_y * _candidate_visual_scale
     )
     var requested: String = "idle"
     if state in ["startup", "active", "recovery"]:
@@ -869,4 +1059,10 @@ func _animate_candidate() -> void:
         requested = last_reaction_animation
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
+    elif state == "ko" and _candidate_clip_paths.has("ko"):
+        requested = "ko"
+    elif state == "idle" and _candidate_clip_paths.has("move") and (
+            absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001
+    ):
+        requested = "move"
     _play_candidate_action(requested)

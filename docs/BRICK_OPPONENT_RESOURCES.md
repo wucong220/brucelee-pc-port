@@ -4,8 +4,9 @@
 
 首个电脑对手目标选择 `BL_Brick_Davis_01_High`。本记录闭合静态资源路径、
 SHA-256、角色 Object、骨架、身体 Mesh、纹理属性及四条 `m03_*` 动画与
-Brick 骨架的引用关系，并在仓库外生成候选 GLB。对手尚未接入 Godot 战斗场景，
-其战斗 set、命中参数、AI、纹理运行时采样和原版视觉表现均为 `UNVERIFIED`。
+Brick 骨架的引用关系，并在仓库外生成候选 GLB。候选 Brick 现已能作为电脑角色
+的独立视觉接入 Godot 场景，但仍需区分视觉与规则：
+其战斗 set、命中参数、AI、纹理运行时采样和原版视觉表现仍为 `UNVERIFIED`。
 
 原始资源及候选 GLB 不进入仓库。安全元数据报告为
 [`reports/brick_opponent_inventory.json`](../reports/brick_opponent_inventory.json)，
@@ -89,9 +90,17 @@ py -3.12 -X utf8 -B tools\opponent_resource_inventory.py `
 
 .\validate_candidate.ps1 -CandidateGlb 'C:\private\bruce_candidate.glb' `
   -OpponentGlb 'C:\private\brick_candidate_idle_punch_kick.glb' `
-  -TextureRoot 'C:\private\textures' -GodotExe 'C:\Tools\Godot.exe'
+  -TextureRoot 'C:\private\bruce-textures' `
+  -OpponentTextureRoot 'C:\private\brick-textures' `
+  -GodotExe 'C:\Tools\Godot.exe'
 ```
 
 报告生成器只读取原包，输出路径哈希和结构元数据，不导出原始字节。实际纹理
-正文未包含在报告中。下一步才是将角色资源选择从 `is_player` 解耦，使玩家和
-电脑分别配置 GLB、纹理和动作映射；对手战斗参数继续独立取证。
+正文未包含在报告中。双角色资源选择已从 `is_player` 解耦：玩家和电脑分别
+保存 GLB、纹理根目录、动作映射和候选动画节点。设置
+`BRUCELEE_OPPONENT_GLB` 后可同时加载 Brick；未设置时电脑回退到占位体。
+当前仓库外候选 GLB 没有解码后的 Brick PNG，因此实际运行报告
+`opponent_textures_loaded=false`。材质加载器已支持 Brick 的单身体纹理组；
+只有在三个 `body_*` PNG 全部存在并通过测试后，才可把运行时纹理标为已加载。
+对手战斗参数仍需独立取证，视觉接入不代表 Brick 的 `m03_*` 动画已经映射到
+原版攻击或 AI。
