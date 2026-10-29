@@ -12,7 +12,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from kdf_data import KdfError, parse_context
-from kdf_fighting_set import inspect_archive, inspect_bytes
+from kdf_fighting_set import inspect_archive, inspect_bytes, inspect_inventory_bytes
 from test_pak_extract import archive_fixture
 
 
@@ -146,6 +146,25 @@ class TestFightingSet(unittest.TestCase):
                          {'type': 'string', 'value': 'larm'})
         self.assertEqual(punch['impacts'][0]['raw_fields']['damage_amount']['first'], 0)
 
+    def test_inventory_aggregates_attack_impact_distributions(self):
+        raw, _ = fixture()
+        result = inspect_inventory_bytes(raw)
+        self.assertEqual(result['action_count'], 2)
+        self.assertEqual(result['attack_action_count'], 2)
+        self.assertEqual(result['impact_count'], 3)
+        self.assertEqual(result['impact_count_distribution'], {'1': 1, '2': 1})
+        self.assertEqual(result['field_distributions']['damage_amount'], {'5': 2, '6': 1})
+        self.assertEqual(result['field_distributions']['attack_radius'], {'70.0': 3})
+        self.assertEqual(result['field_distributions']['body_part'], {'larm': 2, 'lleg': 1})
+        self.assertEqual(result['field_distributions']['height'], {'low': 1, 'medium': 2})
+        self.assertEqual(result['field_distributions']['strength'], {'normal': 3})
+        self.assertEqual(result['field_distributions']['direction'], {'frontal': 3})
+        self.assertEqual(result['damage_time_windows'], {
+            '5..8': 1, '6..9': 1, '7..10': 1,
+        })
+        self.assertEqual(len(result['multi_impact_sequences']), 1)
+        self.assertEqual(next(iter(result['multi_impact_sequences'].values())), 1)
+
     def test_invalid_types_offsets_and_references_fail_closed(self):
         raw, loc = fixture()
         base = parse_context(raw)['data_offset'] + 24
@@ -192,6 +211,10 @@ class TestFightingSet(unittest.TestCase):
                                       '--summary'], capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(summary.returncode, 0, summary.stderr)
             self.assertEqual(json.loads(summary.stdout)['actions'], ['lowpunch1', 'lowkick1'])
+            inventory = subprocess.run([sys.executable, str(script), str(path), '--inventory'],
+                                       capture_output=True, text=True, encoding='utf-8')
+            self.assertEqual(inventory.returncode, 0, inventory.stderr)
+            self.assertEqual(json.loads(inventory.stdout)['impact_count'], 3)
             both = subprocess.run([sys.executable, str(script), str(path), '--list-actions',
                                    '--action', 'lowpunch1'], capture_output=True, text=True)
             self.assertNotEqual(both.returncode, 0)
@@ -218,6 +241,11 @@ class TestFightingSet(unittest.TestCase):
                                  text=True, encoding='utf-8')
             self.assertEqual(run.returncode, 0, run.stderr)
             self.assertEqual(json.loads(run.stdout)['actions'][0]['impacts'][0]['damage_time_raw'], [7, 10])
+            inventory = subprocess.run([sys.executable, str(script), '--archive', str(outer),
+                                        '--inventory'], capture_output=True, text=True,
+                                       encoding='utf-8')
+            self.assertEqual(inventory.returncode, 0, inventory.stderr)
+            self.assertEqual(json.loads(inventory.stdout)['attack_action_count'], 2)
             other = root / 'other.zpak'
             archive_fixture(other, [raw], references=[(0, 'adreno_200/set/other.set')])
             with self.assertRaisesRegex(ValueError, 'exactly one brucelee.set'):

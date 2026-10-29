@@ -197,8 +197,7 @@ def inspect_bytes(raw: bytes, actions: list[str] | None = None, *, list_actions:
     return report
 
 
-def inspect_archive(path: Path, actions: list[str] | None = None, *, list_actions: bool = False,
-                    summary: bool = False) -> dict:
+def _read_archive_set(path: Path) -> tuple[bytes, dict]:
     """Read the identified set from an outer ZIP or data.zpak without exporting it."""
     with _open_zpak_info(path) as (archive, source_hash, zpak_hash):
         members = {item.filename: item for item in archive.infolist() if not item.is_dir()}
@@ -226,14 +225,131 @@ def inspect_archive(path: Path, actions: list[str] | None = None, *, list_action
         if (row['pakd_offset'], row['decoded_bytes'], row['stored_bytes']) != (
                 selected.pakd_offset, selected.decoded_bytes, selected.stored_bytes):
             raise PakError('set stream does not match index offset and lengths')
-        report = inspect_bytes(payload, actions, list_actions=list_actions, summary=summary)
-        if report['tail_identity_hex'] != selected.resource_id_hex:
-            raise PakError('set CTX3 tail identity differs from the PAKH resource ID')
-        report['archive'] = {'source_sha256': source_hash, 'data_zpak_sha256': zpak_hash,
-                             'resource_path': entries[0]['path'],
-                             'resource_id': selected.resource_id_hex,
-                             'index_ordinal': selected.index_ordinal,
-                             'pakd_offset': selected.pakd_offset}
+        return payload, {
+            'source_sha256': source_hash,
+            'data_zpak_sha256': zpak_hash,
+            'resource_path': entries[0]['path'],
+            'resource_id': selected.resource_id_hex,
+            'index_ordinal': selected.index_ordinal,
+            'pakd_offset': selected.pakd_offset,
+        }
+
+
+def inspect_archive(path: Path, actions: list[str] | None = None, *, list_actions: bool = False,
+                    summary: bool = False) -> dict:
+    """Read selected records or list actions without exporting archive contents."""
+    payload, archive = _read_archive_set(path)
+    report = inspect_bytes(payload, actions, list_actions=list_actions, summary=summary)
+    if report['tail_identity_hex'] != archive['resource_id']:
+        raise PakError('set CTX3 tail identity differs from the PAKH resource ID')
+    report['archive'] = archive
+    return report
+
+
+def _attack_action_names(raw: bytes) -> tuple[list[str], dict, int]:
+    context = parse_context(raw)
+    container = parse_container(raw, data_offset=context['data_offset'])
+    reader = RecordReader(container, context)
+    root = reader.dictionary(0)
+    if 'animations' not in root:
+        raise KdfError('root has no animations array')
+    names = []
+    action_count = 0
+    for index in reader.array(root['animations']):
+        animation = reader.dictionary(index)
+        if 'name' not in animation:
+            raise KdfError(f'animation record {index} has no name')
+        action_count += 1
+        if 'attack' not in animation:
+            continue
+        attack = reader.dictionary(animation['attack'])
+        if 'impacts' in attack and reader.array(attack['impacts']):
+            names.append(reader.string(animation['name']))
+    return names, container, action_count
+
+
+def inspect_inventory_bytes(raw: bytes) -> dict:
+    """Aggregate all attack impact fields without exporting source data."""
+    names, container, action_count = _attack_action_names(raw)
+    actions = inspect_bytes(raw, names)['actions'] if names else []
+    impact_count = Counter(len(action['impacts']) for action in actions)
+    fields = {
+        key: Counter()
+        for key in ('damage_amount', 'attack_radius', 'body_part', 'height', 'strength', 'direction')
+    }
+    active_frames = Counter()
+    time_windows = Counter()
+    sequences = Counter()
+    for action in actions:
+        sequence = []
+        for impact in action['impacts']:
+            decoded = impact['decoded_fields']
+            amount = impact['damage_amount_raw']
+            radius = decoded['attack_radius']['value']
+            body = decoded['body_part']['value']
+            height = decoded['height']['value']
+            strength = decoded['strength']['value']
+            direction = decoded['direction']['value']
+            fields['damage_amount'][amount] += 1
+            fields['attack_radius'][radius] += 1
+            fields['body_part'][body] += 1
+            fields['height'][height] += 1
+            fields['strength'][strength] += 1
+            fields['direction'][direction] += 1
+            start, end = impact['damage_time_raw']
+            time_windows[(start, end)] += 1
+            for frame in range(start, end + 1):
+                active_frames[frame] += 1
+            sequence.append((body, height, strength, direction, amount, radius, start, end))
+        if sequence:
+            sequences[tuple(sequence)] += 1
+
+    multi_impact_sequences = {}
+    for sequence, count in sequences.items():
+        if len(sequence) <= 1:
+            continue
+        label = '|'.join(
+            f'{body}/{height}/{strength}/{direction}/dmg{amount}/r{radius}/f{start}-{end}'
+            for body, height, strength, direction, amount, radius, start, end in sequence
+        )
+        multi_impact_sequences[label] = count
+    return {
+        'sha256': container['sha256'],
+        'data_offset': container['data_offset'],
+        'record_count': container['record_count'],
+        'tail_identity_hex': container['tail_identity_hex'],
+        'action_count': action_count,
+        'attack_action_count': len(actions),
+        'impact_count': sum(count * size for size, count in impact_count.items()),
+        'impact_count_distribution': {
+            str(size): count for size, count in sorted(impact_count.items())
+        },
+        'field_distributions': {
+            key: {
+                str(value): count
+                for value, count in sorted(counter.items(), key=lambda item: str(item[0]))
+            }
+            for key, counter in fields.items()
+        },
+        'damage_time_windows': {
+            f'{start}..{end}': count
+            for (start, end), count in sorted(time_windows.items())
+        },
+        'active_frame_distribution': {
+            str(frame): count for frame, count in sorted(active_frames.items())
+        },
+        'multi_impact_sequences': multi_impact_sequences,
+        'note': 'Raw configuration values; runtime speed and effects are unverified.',
+    }
+
+
+def inspect_archive_inventory(path: Path) -> dict:
+    """Aggregate all attack impacts from an outer ZIP or data.zpak."""
+    payload, archive = _read_archive_set(path)
+    report = inspect_inventory_bytes(payload)
+    if report['tail_identity_hex'] != archive['resource_id']:
+        raise PakError('set CTX3 tail identity differs from the PAKH resource ID')
+    report['archive'] = archive
     return report
 
 
@@ -244,12 +360,21 @@ def main() -> int:
     selection = parser.add_mutually_exclusive_group(required=True)
     selection.add_argument('--action', action='append', help='exact action name; repeatable')
     selection.add_argument('--list-actions', action='store_true', help='list action names and available animation references')
+    selection.add_argument('--inventory', action='store_true', help='aggregate all attack impact fields')
     parser.add_argument('--summary', action='store_true', help='with --list-actions, emit names and counts only')
     args = parser.parse_args()
     if (args.source is None) == (args.archive is None):
         parser.error('provide exactly one decoded source path or --archive')
+    if args.summary and not args.list_actions:
+        parser.error('--summary requires --list-actions')
     try:
-        if args.archive is not None:
+        if args.inventory and args.archive is not None:
+            result = inspect_archive_inventory(args.archive)
+        elif args.inventory:
+            with args.source.open('rb') as stream:
+                raw = stream.read(16 * 1024 * 1024 + 1)
+            result = inspect_inventory_bytes(raw)
+        elif args.archive is not None:
             result = inspect_archive(args.archive, args.action, list_actions=args.list_actions,
                                      summary=args.summary)
         else:
