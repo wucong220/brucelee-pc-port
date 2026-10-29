@@ -1,0 +1,528 @@
+{
+  "schema_version": 1,
+  "source_set": "adreno_200/set/brucelee.set",
+  "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+  "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+  "set_resource_id": "f3d1549105ba342bc17b86a33b3834a0",
+  "set_pakd_offset": 21016054,
+  "method": "Read-only kdf_fighting_set.read_archive_resource and kdf_combat_reactions._parse_set plus _animation_metadata. This report stores no original bytes.",
+  "status": "证据记录。impactfacedown 已接入候选运行时，原版逐帧行为尚未验收。facedownko 和 facedownattack 尚未实现。",
+  "actions": {
+    "facedownko": {
+      "animation": "adreno_200/animation/all_idle_face_down.anm",
+      "radius": 100.0,
+      "duration_frames": 45,
+      "framerate": 30,
+      "firstframe": 0,
+      "version": 7,
+      "header_pose": 1,
+      "sha256": "ed5f0ef99967f2536e6472a9afc85e98b88d373287adbc6aec2ef64afdea333f",
+      "resource_id": "a087d9f4ac074f6705f30acdfa99f6de",
+      "pakd_offset": 25028447,
+      "action_pose": "laying",
+      "categories": [
+        "idle"
+      ],
+      "groups": [
+        [
+          "defeated",
+          [
+            0,
+            45
+          ],
+          0
+        ],
+        [
+          "receivedamage",
+          [
+            0,
+            45
+          ],
+          0
+        ]
+      ],
+      "direct_links": [
+        {
+          "to": "facedownko",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            45,
+            45
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 0
+        }
+      ],
+      "incoming_links": [
+        {
+          "from": "stunbrutalimpact",
+          "to": "facedownko",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            40,
+            45
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 5
+        },
+        {
+          "from": "facedownidle",
+          "to": "facedownko",
+          "conditions": [
+            "healthzero"
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            0,
+            45
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 0
+        },
+        {
+          "from": "impacthardfrontlow",
+          "to": "facedownko",
+          "conditions": [
+            "healthzero"
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            21,
+            23
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 2
+        },
+        {
+          "from": "endattackcomp1",
+          "to": "facedownko",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            357,
+            377
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 20
+        },
+        {
+          "from": "endattackcomp2",
+          "to": "facedownko",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            231,
+            235
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 4
+        },
+        {
+          "from": "endattackcompkarate 1",
+          "to": "facedownko",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            132,
+            132
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 0
+        }
+      ]
+    },
+    "impactfacedown": {
+      "animation": "adreno_200/animation/all_impct_facedwn.anm",
+      "radius": 80.0,
+      "duration_frames": 11,
+      "framerate": 30,
+      "firstframe": 0,
+      "version": 7,
+      "header_pose": 1,
+      "sha256": "2b13ac06d8bbbf11ac1cdc72868a21f757fca06dfe1e284380aecb0f1a756d1c",
+      "resource_id": "4d52c01b1e167d87e31f5b61853c6b90",
+      "pakd_offset": 57510854,
+      "action_pose": "laying",
+      "categories": [],
+      "groups": [
+        [
+          "receivedamage",
+          [
+            0,
+            11
+          ],
+          0
+        ]
+      ],
+      "direct_links": [
+        {
+          "to": "facedownidle",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            11,
+            11
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 0
+        }
+      ],
+      "incoming_links": [
+        {
+          "from": "facedownidle",
+          "to": "impactfacedown",
+          "conditions": [
+            "impact",
+            "oppattackheightlow"
+          ],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            0,
+            45
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 6
+        }
+      ]
+    },
+    "facedownattack": {
+      "animation": "adreno_200/animation/all_getup_facedwn_attack.anm",
+      "radius": 45.0,
+      "duration_frames": 35,
+      "framerate": 30,
+      "firstframe": 0,
+      "version": 7,
+      "header_pose": 1,
+      "sha256": "193891b7d864183c3e5873bb6503a4384af88ff66f0af4b3ff48e4a9a07c7630",
+      "resource_id": "5fcc1f589449ff93bbc87f0c9a39fa4b",
+      "pakd_offset": 36778788,
+      "action_pose": "laying",
+      "categories": [
+        "attack"
+      ],
+      "groups": [
+        [
+          "impactable",
+          [
+            29,
+            35
+          ],
+          0
+        ],
+        [
+          "canblock",
+          [
+            26,
+            35
+          ],
+          0
+        ],
+        [
+          "candocounter",
+          [
+            26,
+            35
+          ],
+          0
+        ],
+        [
+          "candobasicattacks",
+          [
+            26,
+            35
+          ],
+          0
+        ],
+        [
+          "canmove",
+          [
+            26,
+            35
+          ],
+          0
+        ],
+        [
+          "impactablefromground",
+          [
+            22,
+            28
+          ],
+          0
+        ]
+      ],
+      "direct_links": [
+        {
+          "to": "idle",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [],
+            [],
+            []
+          ],
+          "time": [
+            32,
+            35
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 3,
+          "input_reset": "true"
+        }
+      ],
+      "incoming_links": [
+        {
+          "from": "facedownidle",
+          "to": "facedownattack",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [
+              "pressa"
+            ],
+            [
+              "pressa"
+            ],
+            [
+              "pressa"
+            ]
+          ],
+          "time": [
+            0,
+            45
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 6
+        },
+        {
+          "from": "facedownidle",
+          "to": "facedownattack",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [
+              "pressa"
+            ],
+            [
+              "pressb"
+            ],
+            [
+              "pressb"
+            ]
+          ],
+          "time": [
+            0,
+            45
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 6
+        },
+        {
+          "from": "facedownidle",
+          "to": "facedownattack",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [
+              "pressb"
+            ],
+            [
+              "pressc"
+            ],
+            [
+              "pressc"
+            ]
+          ],
+          "time": [
+            0,
+            45
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 6
+        },
+        {
+          "from": "facedownidle",
+          "to": "facedownattack",
+          "conditions": [],
+          "keystatus": [
+            [],
+            [],
+            []
+          ],
+          "keysequence": [
+            [
+              "pressb"
+            ],
+            [
+              "pressd"
+            ],
+            [
+              "pressd"
+            ]
+          ],
+          "time": [
+            0,
+            45
+          ],
+          "linking_frame": 0,
+          "entry_frame": 0,
+          "blending": 6
+        }
+      ],
+      "attack": {
+        "impacts": [
+          {
+            "damage_time": [
+              6,
+              9
+            ],
+            "damage_amount": 6,
+            "attack_radius": 120.0,
+            "body_part": "rarm",
+            "height": "medium",
+            "strength": "hard",
+            "direction": "frontal"
+          }
+        ],
+        "counter_time": [
+          0,
+          0
+        ],
+        "complementary": "",
+        "grab_distance": 100.0
+      }
+    }
+  },
+  "ground_hit": {
+    "explicit_action": "impactfacedown",
+    "note": "No ground-hit name was invented. impactfacedown is the explicit facedown reaction name in brucelee.set."
+  },
+  "explicit_names_seen_not_closed": [
+    "attacktofloor",
+    "faceupattack",
+    "faceupgetup",
+    "faceupidle",
+    "faceupko",
+    "impactfaceup",
+    "impacttofloor"
+  ],
+  "explicit_names_seen_not_closed_note": "Only the action names were read. Animation path, radius, frame count, frame rate, resource id, PAKD offset, SHA-256, group windows, and direct links were not read for these names, so none is closed.",
+  "runtime_candidate": {
+    "impactfacedown": "候选运行时已接入，不是原版逐帧验收。加载含 all_impct_facedwn 且轨道检查通过的 GLB 时，facedownidle 上的非格挡低高度 impact 在伤害后血量仍大于 0 时播放，半径 80，不循环，第 11 帧回 facedownidle。不应用原型 push。"
+  },
+  "not_implemented": [
+    "facedownko",
+    "facedownattack"
+  ]
+}

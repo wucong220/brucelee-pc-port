@@ -55,10 +55,13 @@ const FACEDOWN_IDLE_DURATION_FRAMES: int = 45
 const FACEDOWN_GETUP_WINDOW_START: int = 10
 const FACEDOWN_GETUP_WINDOW_END: int = 45
 const FACEDOWN_GETUP_EXIT_FRAME: int = 16
+const FACEDOWN_IMPACT_CLIP: String = "all_impct_facedwn"
+const FACEDOWN_IMPACT_EXIT_FRAME: int = 11
 const RETURN_ANIMATION_RADII: Dictionary = {
     "m01_idle_02": 40.0,
     "all_idle_face_down": 75.0,
     "all_getup_facedwn": 25.0,
+    "all_impct_facedwn": 80.0,
 }
 const REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -991,7 +994,9 @@ func _try_load_candidate_visual() -> void:
     # Return clips stay return_implemented false in JSON. A loaded GLB can
     # enter one only after the same candidate track check used above.
     if _candidate_skeleton != null:
-        for return_clip_name: String in [IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP]:
+        for return_clip_name: String in [
+            IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP, FACEDOWN_IMPACT_CLIP,
+        ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
             )
@@ -1019,6 +1024,11 @@ func _try_load_candidate_visual() -> void:
             _candidate_clip_paths[FACEDOWN_GETUP_CLIP]
         )
         getup_clip.loop_mode = Animation.LOOP_NONE
+    if _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP):
+        var facedown_impact_clip: Animation = _candidate_animation.get_animation(
+            _candidate_clip_paths[FACEDOWN_IMPACT_CLIP]
+        )
+        facedown_impact_clip.loop_mode = Animation.LOOP_NONE
     for action: String in _candidate_clip_paths:
         _disable_candidate_character_position_tracks(
             _candidate_animation.get_animation(_candidate_clip_paths[action])
@@ -1329,6 +1339,11 @@ func _advance_return_state(delta: float) -> void:
         state_time += maxf(delta, 0.0)
         if _reached_source_frame(state_time, FACEDOWN_GETUP_EXIT_FRAME):
             _enter_locomotion_state("idle")
+        return
+    if state == "impactfacedown":
+        state_time += maxf(delta, 0.0)
+        if _reached_source_frame(state_time, FACEDOWN_IMPACT_EXIT_FRAME):
+            _enter_locomotion_state("facedownidle")
 
 
 func _wrap_return_loop(duration_frames: int) -> void:
@@ -1362,6 +1377,33 @@ func _begin_facedown_getup() -> void:
     state_time = 0.0
     attack_kind = ""
     _restart_candidate_action()
+
+
+func _accepts_facedown_low_impact(impact_height: String, blocked: bool, damage: float) -> bool:
+    return (
+        state == "facedownidle"
+        and not blocked
+        and impact_height == "low"
+        and health - damage > 0.0
+        and _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP)
+    )
+
+
+func begin_facedown_impact(amount: float) -> void:
+    health = maxf(0.0, health - amount)
+    state = "impactfacedown"
+    state_time = 0.0
+    attack_kind = ""
+    _attack_connected = false
+    combo_hits = 0
+    last_reaction_group = "hit"
+    last_reaction_source_action = "impactfacedown"
+    last_reaction_animation = FACEDOWN_IMPACT_CLIP
+    last_reaction_exit_frame = FACEDOWN_IMPACT_EXIT_FRAME
+    last_reaction_clip_implemented = _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP)
+    if _candidate_animation != null:
+        _candidate_animation.stop()
+        _candidate_action = ""
 
 
 func request_attack(kind: String) -> bool:
@@ -1401,7 +1443,7 @@ func _physics_process(delta: float) -> void:
     _animate_candidate()
 
 func _advance_timed_states(delta: float) -> void:
-    if state == "idle2" or state == "facedownidle" or state == "facedowngetup":
+    if state == "idle2" or state == "facedownidle" or state == "facedowngetup" or state == "impactfacedown":
         _advance_return_state(delta)
         return
     var remaining: float = delta
@@ -1447,9 +1489,18 @@ func _try_attack_contact() -> void:
         reaction = opponent.reaction_for_incoming(details["source_impact"], blocked)
     # Mark contact before emitting signals, including a guarded hit.
     _attack_connected = true
-    opponent.receive_hit(
-        damage, blocked, float(details["push"]), facing, reaction
-    )
+    var impact_height: String = ""
+    if details.has("source_impact"):
+        impact_height = String(details["source_impact"].get("height", ""))
+    # facedownidle only has a verified low-impact link. Other hits keep the
+    # existing reaction path, and a killing blow stays there because facedownko
+    # is not implemented.
+    if opponent._accepts_facedown_low_impact(impact_height, blocked, damage):
+        opponent.begin_facedown_impact(damage)
+    else:
+        opponent.receive_hit(
+            damage, blocked, float(details["push"]), facing, reaction
+        )
     combo_hits += 1
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
 
@@ -1468,6 +1519,8 @@ func current_source_animation() -> String:
         return FACEDOWN_IDLE_CLIP
     if state == "facedowngetup":
         return FACEDOWN_GETUP_CLIP
+    if state == "impactfacedown":
+        return FACEDOWN_IMPACT_CLIP
     return _owner_idle_animation()
 
 
@@ -1703,6 +1756,10 @@ func _animate_candidate() -> void:
         requested = FACEDOWN_IDLE_CLIP
     elif state == "facedowngetup" and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP):
         requested = FACEDOWN_GETUP_CLIP
+    elif state == "impactfacedown" and _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP):
+        requested = FACEDOWN_IMPACT_CLIP
+        if _candidate_action != requested and _candidate_character != null:
+            _candidate_character.position = _candidate_character_rest_position
     elif state == "idle" and _candidate_clip_paths.has("move") and (
             absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001
     ):
