@@ -90,6 +90,7 @@ func _config_negative_check(player: PortFighter) -> bool:
     var baseline_radius_scale: float = player.radius_scale
     var baseline_units_to_world: float = player.source_units_to_world
     var baseline_radii: Dictionary = player.source_animation_radii.duplicate(true)
+    var baseline_attacks: Dictionary = player.ATTACKS.duplicate(true)
     var wrong_rate: Dictionary = _raw_attack_config()
     wrong_rate["frame_rate"] = 29.0
     cases.append(wrong_rate)
@@ -129,8 +130,9 @@ func _config_negative_check(player: PortFighter) -> bool:
             return false
         if (player.radius_scale != baseline_radius_scale
                 or player.source_units_to_world != baseline_units_to_world
-                or player.source_animation_radii != baseline_radii):
-            push_error("Invalid fighting-set config partially changed geometry: %d" % index)
+                or player.source_animation_radii != baseline_radii
+                or player.ATTACKS != baseline_attacks):
+            push_error("Invalid fighting-set config partially changed loaded state: %d" % index)
             return false
     return true
 
