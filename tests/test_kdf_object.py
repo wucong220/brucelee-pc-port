@@ -191,6 +191,14 @@ class TestKdfObject(unittest.TestCase):
             _visual_bindings(records, strings, 0, references),
             [{"name": "body", "reference_id": 0, "path": "objects/body.mesh"}],
         )
+        sentinel_references = [
+            {"ordinal": 0, "sentinel": True, "path": None},
+            {"ordinal": 1, "path": "objects/body.mesh"},
+        ]
+        self.assertEqual(
+            _visual_bindings(records, strings, 0, sentinel_references),
+            [{"name": "body", "reference_id": 1, "path": "objects/body.mesh"}],
+        )
         with self.assertRaisesRegex(KdfError, "does not match"):
             _visual_bindings(records, strings, 0, [{"path": "objects/other.mesh"}])
 
