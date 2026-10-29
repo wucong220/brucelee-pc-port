@@ -10,7 +10,7 @@
   `hair_diffuse.png`、`hair_normal.png`、`hair_material.png`
 - Godot 4.7.2 stable
 
-两个输入必须位于仓库外。Godot 运行时的 GLB/纹理加载器会拒绝仓库内路径；
+两个输入必须位于仓库外。战斗角色、动画预览和纹理加载器都会拒绝仓库内路径；
 设置环境变量或使用一键验证脚本：
 
 ```powershell

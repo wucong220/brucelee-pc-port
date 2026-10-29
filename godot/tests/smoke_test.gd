@@ -61,6 +61,19 @@ func _run_check() -> void:
             quit(1)
             return
 
+    var previous_preview_glb: String = OS.get_environment("BRUCELEE_CANDIDATE_GLB")
+    OS.set_environment(
+        "BRUCELEE_CANDIDATE_GLB", repository_root.path_join("candidate.glb")
+    )
+    var preview: Node3D = load("res://scripts/candidate_preview.gd").new()
+    root.add_child(preview)
+    if not String(preview.get("load_error")).contains("outside the repository"):
+        push_error("Candidate preview accepted a repository GLB")
+        quit(1)
+        return
+    preview.queue_free()
+    OS.set_environment("BRUCELEE_CANDIDATE_GLB", previous_preview_glb)
+
     var packed: PackedScene = load("res://scenes/main.tscn")
     if packed == null:
         push_error("Cannot load the placeholder combat scene")

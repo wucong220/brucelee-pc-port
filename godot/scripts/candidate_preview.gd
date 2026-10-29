@@ -13,6 +13,7 @@ const CLIP_LABELS: Dictionary = {
     "punch": "出拳",
     "kick": "踢腿",
 }
+const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 
 var status_label: Label
@@ -58,13 +59,17 @@ func _candidate_path() -> Dictionary:
         return {
             "error": "请用 --candidate-glb 指定本地 GLB，或设置 BRUCELEE_CANDIDATE_GLB。"
         }
-    var normalized: String = chosen.replace("\\", "/")
-    if (not chosen.is_absolute_path() or chosen.get_extension().to_lower() != "glb"
-            or normalized.begins_with("//") or normalized.contains("://")):
-        return {"error": "请指定本地 GLB 的绝对路径。"}
-    if not FileAccess.file_exists(chosen):
-        return {"error": "找不到指定的 GLB 文件：" + chosen}
-    return {"path": chosen, "error": ""}
+    var path_error: String = CandidatePathGuard.external_path_error(
+        chosen, "candidate path"
+    )
+    if not path_error.is_empty():
+        return {"error": path_error}
+    var normalized: String = CandidatePathGuard.normalize_absolute_path(chosen)
+    if chosen.get_extension().to_lower() != "glb":
+        return {"error": "请指定本地 .glb 文件的绝对路径。"}
+    if not FileAccess.file_exists(normalized):
+        return {"error": "找不到指定的 GLB 文件：" + normalized}
+    return {"path": normalized, "error": ""}
 
 
 func _load_candidate(path: String) -> void:
