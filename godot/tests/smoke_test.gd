@@ -50,7 +50,6 @@ func _raw_attack_entry(action: String) -> Dictionary:
         "startup_frames": 5 if is_punch else 7,
         "active_frames": 4,
         "recovery_frames": 60 if is_punch else 75,
-        "prototype_range": 1.65 if is_punch else 2.2,
         "damage": 5.0,
         "prototype_push": 0.2 if is_punch else 0.35,
         "source_impact": {
@@ -65,9 +64,19 @@ func _raw_attack_entry(action: String) -> Dictionary:
 
 func _raw_attack_config() -> Dictionary:
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "source_archive": "brucelee.set",
         "frame_rate": 30.0,
+        "source_geometry": {
+            "source_height": 173.415954589844,
+            "world_height": 1.8,
+            "radius_scale": 1.0,
+            "action_radii": {
+                "idle": 50.0,
+                "punch": 40.0,
+                "kick": 50.0,
+            },
+        },
         "attacks": {
             "punch": _raw_attack_entry("punch"),
             "kick": _raw_attack_entry("kick"),
@@ -92,6 +101,24 @@ func _config_negative_check(player: PortFighter) -> bool:
     var wrong_source: Dictionary = _raw_attack_config()
     wrong_source["attacks"]["kick"]["source_action"] = "other"
     cases.append(wrong_source)
+    var fractional_schema: Dictionary = _raw_attack_config()
+    fractional_schema["schema_version"] = 1.5
+    cases.append(fractional_schema)
+    var wrong_radius: Dictionary = _raw_attack_config()
+    wrong_radius["source_geometry"]["action_radii"]["punch"] = 41.0
+    cases.append(wrong_radius)
+    var wrong_scale: Dictionary = _raw_attack_config()
+    wrong_scale["source_geometry"]["radius_scale"] = 0.75
+    cases.append(wrong_scale)
+    var wrong_height: Dictionary = _raw_attack_config()
+    wrong_height["source_geometry"]["source_height"] = 170.0
+    cases.append(wrong_height)
+    var missing_idle_radius: Dictionary = _raw_attack_config()
+    missing_idle_radius["source_geometry"]["action_radii"].erase("idle")
+    cases.append(missing_idle_radius)
+    var missing_geometry: Dictionary = _raw_attack_config()
+    missing_geometry.erase("source_geometry")
+    cases.append(missing_geometry)
     for index in range(cases.size()):
         if not player._parse_attack_config(cases[index]).is_empty():
             push_error("Invalid fighting-set config case was accepted: %d" % index)
@@ -269,6 +296,22 @@ func _run_check() -> void:
         push_error("Fighting-set config source identity changed")
         quit(1)
         return
+    if (absf(player.radius_scale - 1.0) > 0.001
+            or absf(player.source_units_to_world
+                    - PortFighter.CANDIDATE_HEIGHT / PortFighter.CANDIDATE_SOURCE_HEIGHT) > 0.000001
+            or player.source_action_radii != {"idle": 50.0, "punch": 40.0, "kick": 50.0}):
+        push_error("Source geometry scaling does not match the recovered model")
+        quit(1)
+        return
+    var expected_idle_reach: float = (
+        (70.0 + 50.0)
+        * PortFighter.CANDIDATE_HEIGHT
+        / PortFighter.CANDIDATE_SOURCE_HEIGHT
+    )
+    if absf(player.attack_reach_world("punch", opponent) - expected_idle_reach) > 0.0001:
+        push_error("Recovered source reach does not match attack radius plus target radius")
+        quit(1)
+        return
     if not player._parse_attack_config({}).is_empty():
         push_error("Invalid fighting-set config was accepted")
         quit(1)
@@ -292,7 +335,7 @@ func _run_check() -> void:
         push_error("AI did not close the lateral gap")
         quit(1)
         return
-    opponent.position.z = player.position.z
+    opponent.position = Vector3(player.position.x - 1.0, 1.2, player.position.z)
     scene.set("ai_timer", 0.0)
     scene.call("_think_ai", 0.016)
     if opponent.state != "startup":
@@ -334,6 +377,46 @@ func _run_check() -> void:
     if kick_boundaries != [false, true, true, false]:
         push_error("lowkick1 hit window does not match frames 7..10: "
                 + JSON.stringify(kick_boundaries))
+        quit(1)
+        return
+    var source_reach: float = expected_idle_reach
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(source_reach + 0.02, 1.2, 0.0))
+    player.request_attack("punch")
+    player._advance_timed_states(punch_startup + 0.001)
+    player._try_attack_contact()
+    if opponent.health != PortFighter.MAX_HEALTH:
+        push_error("Target outside the recovered source radius was hit")
+        quit(1)
+        return
+    opponent.position = Vector3(0.95, 1.2, 0.95)
+    player._try_attack_contact()
+    if opponent.health < PortFighter.MAX_HEALTH:
+        push_error("Target outside the recovered Euclidean source radius was hit")
+        quit(1)
+        return
+    opponent.position = Vector3(0.85, 1.2, 0.85)
+    player._try_attack_contact()
+    if absf(opponent.health - 95.0) > 0.001:
+        push_error("Target inside the recovered Euclidean source radius was not hit")
+        quit(1)
+        return
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(1.2, 1.2, 0.0))
+    opponent.state = "startup"
+    opponent.attack_kind = "punch"
+    opponent.state_time = punch_startup
+    player.request_attack("punch")
+    player._advance_timed_states(punch_startup + 0.001)
+    player._try_attack_contact()
+    if opponent.health != PortFighter.MAX_HEALTH:
+        push_error("Target radius did not change with the defender's source animation")
+        quit(1)
+        return
+    opponent.position.x = 1.10
+    player._try_attack_contact()
+    if absf(opponent.health - 95.0) > 0.001:
+        push_error("Target inside the defender punch radius was not hit")
         quit(1)
         return
     player.reset_fighter(Vector3(-1.5, 1.2, 0.0))
@@ -395,8 +478,8 @@ func _run_check() -> void:
     player.set_physics_process(true)
     opponent.set_physics_process(true)
 
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.45, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.45, 1.2, 0.0))
     _press_key(KEY_J)
     await process_frame
     if player.state != "startup" or player.attack_kind != "punch":
@@ -407,12 +490,20 @@ func _run_check() -> void:
         await physics_frame
     var punch_health: float = opponent.health
     if absf(punch_health - 95.0) > 0.001:
-        push_error("Punch did not apply the recovered fighting-set damage")
+        push_error("Punch did not apply the recovered fighting-set damage: "
+                + JSON.stringify({
+                    "health": punch_health,
+                    "reach": player.attack_reach_world("punch", opponent),
+                    "player": player.global_position,
+                    "opponent": opponent.global_position,
+                    "player_state": player.state,
+                    "opponent_state": opponent.state,
+                }))
         quit(1)
         return
 
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.45, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.45, 1.2, 0.0))
     opponent.guard_held = true
     _press_key(KEY_K)
     await process_frame
@@ -430,8 +521,8 @@ func _run_check() -> void:
 
     player.set_physics_process(false)
     opponent.set_physics_process(false)
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.45, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.45, 1.2, 0.0))
     opponent.health = 5.0
     player.request_attack("punch")
     player._physics_process(punch_startup + 0.001)
@@ -453,8 +544,8 @@ func _run_check() -> void:
         push_error("R did not restart the round")
         quit(1)
         return
-    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    player.reset_fighter(Vector3(-0.45, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.45, 1.2, 0.0))
     player.health = 5.0
     opponent.request_attack("punch")
     opponent._physics_process(kick_startup + 0.001)

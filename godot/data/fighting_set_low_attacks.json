@@ -1,7 +1,17 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "source_archive": "brucelee.set",
   "frame_rate": 30.0,
+  "source_geometry": {
+    "source_height": 173.415954589844,
+    "world_height": 1.8,
+    "radius_scale": 1.0,
+    "action_radii": {
+      "idle": 50.0,
+      "punch": 40.0,
+      "kick": 50.0
+    }
+  },
   "attacks": {
     "punch": {
       "source_action": "lowpunch1",
@@ -10,7 +20,6 @@
       "startup_frames": 5,
       "active_frames": 4,
       "recovery_frames": 60,
-      "prototype_range": 1.65,
       "damage": 5.0,
       "prototype_push": 0.2,
       "source_impact": {
@@ -28,7 +37,6 @@
       "startup_frames": 7,
       "active_frames": 4,
       "recovery_frames": 75,
-      "prototype_range": 2.2,
       "damage": 5.0,
       "prototype_push": 0.35,
       "source_impact": {

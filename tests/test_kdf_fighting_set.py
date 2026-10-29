@@ -17,7 +17,7 @@ from test_pak_extract import archive_fixture
 
 
 def fixture(*, missing_binary=False, missing_attack=False, duplicate_name=False):
-    strings = ['animations', 'name', 'binary', 'attack', 'impacts', 'damage_time',
+    strings = ['animations', 'name', 'binary', 'radius', 'attack', 'impacts', 'damage_time',
                'damage_amount', 'attack_radius', 'body_part', 'height', 'strength',
                'direction', 'lowpunch1', 'lowkick1', 'larm', 'lleg', 'medium', 'low',
                'normal', 'frontal', 'anim/', 'punch', 'kick', 'anm']
@@ -49,12 +49,14 @@ def fixture(*, missing_binary=False, missing_attack=False, duplicate_name=False)
         keys = ['name']
         if not (missing_binary and no == 1):
             keys.append('binary')
+        keys.append('radius')
         if not (missing_attack and no == 1):
             keys.append('attack')
         anim = dictionary(slots[no], keys)
         nodes[anim['name']] = (0x60000000, strings.index('lowpunch1' if duplicate_name else name))
         if 'binary' in anim:
             nodes[anim['binary']] = (0x70000000, no)
+        nodes[anim['radius']] = (0x20000000, 0x42200000 if no == 0 else 0x42480000)
         loc[name] = {'animation': slots[no], 'name': anim['name'], 'binary': anim.get('binary'),
                      'attack': anim.get('attack')}
         if 'attack' not in anim:
@@ -128,6 +130,8 @@ class TestFightingSet(unittest.TestCase):
         result = inspect_bytes(raw, ['lowkick1', 'lowpunch1'])
         kick, punch = result['actions']
         self.assertEqual(kick['animation_file']['basename'], 'kick')
+        self.assertEqual(kick['animation_radius'], {'type': 'float', 'value': 50.0})
+        self.assertEqual(punch['animation_radius'], {'type': 'float', 'value': 40.0})
         self.assertEqual(kick['impacts'][0]['damage_time_raw'], [7, 10])
         self.assertEqual(kick['impacts'][0]['damage_amount_raw'], 5)
         self.assertEqual(kick['impacts'][0]['decoded_fields']['attack_radius'],

@@ -56,9 +56,15 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 - `lowpunch1` 使用帧 5–8、`lowkick1` 使用帧 7–10，基础伤害均为 5。
 - 两招的帧数、伤害、半径和 impact 字段由
   `godot/data/fighting_set_low_attacks.json` 加载；Godot `PortFighter` 在 `_ready`
-  中校验配置，不再把两招帧和伤害写死在脚本常量里。`prototype_range` 与
-  `prototype_push` 仍是原型值，不是原版碰撞或物理结论。
-- 帧边界、大步长跨阶段不丢时以及单次命中去重由 Godot 回归测试覆盖。
+  中校验配置，不再把两招帧、伤害或已恢复的距离公式写死在脚本常量里。
+- 原生距离链为 `attackRadius × fighter+0x15C + defender.GetRadius()`；
+  `fighter+0x15C` 来自 character list 的 `radiusscale`，Bruce 缺省值为 `1.0`。
+  两招的 `attackRadius=70`，idle/punch/kick 的源动画半径为 `50/40/50`。
+- Godot 用候选模型 `173.416 → 1.8` 的比例把源单位转换为世界单位，因此对手
+  idle 时两招的候选距离上限为约 `1.24556`。源单位是否与原版场景全局单位完全
+  相同仍为 `CANDIDATE`，不能把该换算写成原版运行时已实测。
+- `prototype_push` 仍是原型值。帧边界、不同防守动画半径、二维欧氏距离临界值、
+  大步长跨阶段不丢时以及单次命中去重由 Godot 回归测试覆盖。
 - `--export-pack` 生成的 PCK 包含路径解析器；用 Godot runtime 从该 PCK 运行
   smoke、真实动画、合成/真实纹理和端到端战斗均成功。
 - 使用 Godot 4.7.2 stable Windows Export Templates 生成 release EXE/PCK；
@@ -88,11 +94,11 @@ WINDOWS_EXE_VALIDATION=PASS
 
 - 尚未与原版 Adreno 画面逐帧、逐像素对照；当前只验证了候选材质装配和静态绑定，
   未取得原版运行时 `GetTexture` 返回值或 GPU 最终像素。
-- 战斗配置只证明静态字段和 Godot 候选执行；距离单位换算、碰撞几何、推力和受击方向
-  仍未与原版逐帧录像对齐。
-- 格挡减伤、攻击距离、推力和 `heavy` 仍使用原型规则。
-- `attack_radius/body_part/height/strength/direction` 已作为候选元数据保存，
-  但其运行时碰撞和受击反馈映射尚未闭合。
+- 战斗配置已静态闭合攻击半径、角色半径倍率、防守动画半径和距离比较；源单位到
+  Godot 世界单位的换算、可能存在的原版位置修正、推力和受击方向仍未与原版逐帧录像对齐。
+- 格挡减伤、推力和 `heavy` 仍使用原型规则；`heavy` 仍走占位距离，不套用已恢复公式。
+- `body_part/height/strength/direction` 已作为候选元数据保存，但其受击动作和反馈选择
+  映射尚未闭合。
 - Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
   这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。

@@ -164,8 +164,16 @@ def inspect_bytes(raw: bytes, actions: list[str] | None = None, *, list_actions:
                 'damage_time_records': [reader.raw(i) for i in time_nodes],
                 'damage_amount_raw': reader.scalar(fields['damage_amount']),
             })
-        found[name] = {'name': name, 'record': index,
-                       'animation_file': reader.file(animation['binary']), 'impacts': impacts}
+        found[name] = {
+            'name': name,
+            'record': index,
+            'animation_file': reader.file(animation['binary']),
+            'animation_radius': (
+                reader.decoded_value(animation['radius'])
+                if 'radius' in animation else None
+            ),
+            'impacts': impacts,
+        }
     if list_actions:
         counts = Counter(item['name'] for item in listed)
         for item in listed:
@@ -181,7 +189,7 @@ def inspect_bytes(raw: bytes, actions: list[str] | None = None, *, list_actions:
     report = {'sha256': container['sha256'], 'data_offset': container['data_offset'],
               'record_count': container['record_count'], 'tail_identity_hex': container['tail_identity_hex'],
               'actions': selected,
-              'note': 'Raw configuration values; runtime speed and effects are unverified.'}
+              'note': 'Raw configuration values; remaining runtime effects are not inferred.'}
     if list_actions:
         report['action_count'] = len(listed)
         report['duplicate_names'] = duplicates
@@ -339,7 +347,7 @@ def inspect_inventory_bytes(raw: bytes) -> dict:
             str(frame): count for frame, count in sorted(active_frames.items())
         },
         'multi_impact_sequences': multi_impact_sequences,
-        'note': 'Raw configuration values; runtime speed and effects are unverified.',
+        'note': 'Raw configuration values; remaining runtime effects are not inferred.',
     }
 
 
