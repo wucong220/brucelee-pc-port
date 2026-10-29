@@ -89,6 +89,70 @@ func _reaction_contact_check(
     return true
 
 
+
+func _hard_defender_check(player: PortFighter, opponent: PortFighter) -> bool:
+    player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    if not opponent.request_attack("punch"):
+        push_error("Could not start the Brick hard punch reaction test")
+        return false
+    opponent._advance_timed_states(float(opponent.ATTACKS["punch"]["startup"]))
+    opponent._try_attack_contact()
+    if (player.state != "hitstun"
+            or player.last_reaction_source_action != "impacthardfrontmid"
+            or player.last_reaction_animation != "all_impct_crotch"
+            or player.last_reaction_exit_frame != 27
+            or player.last_reaction_clip_implemented
+            or player.current_source_animation() != "all_impct_crotch"
+            or absf(player.source_radius_for_current_animation() - 40.0) > 0.001):
+        push_error("Hard frontal punch did not use the Bruce defender link: "
+                + player.last_reaction_source_action)
+        return false
+    player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    player.guard_held = true
+    if not opponent.request_attack("punch"):
+        push_error("Could not start the hard block reaction test")
+        return false
+    opponent._advance_timed_states(float(opponent.ATTACKS["punch"]["startup"]))
+    opponent._try_attack_contact()
+    if (player.state != "blockstun"
+            or player.last_reaction_source_action != "highblockhard"
+            or player.last_reaction_animation != "all_block_high_hard"
+            or player.last_reaction_exit_frame != 11
+            or player.last_reaction_clip_implemented
+            or String(player.EXACT_REACTIONS["block"][0]["return_action"]) != "idle2"
+            or bool(player.EXACT_REACTIONS["block"][0]["return_implemented"])):
+        push_error("Hard block did not stay on highblockhard without idle2")
+        return false
+    player._advance_timed_states(float(player.state_time) + 0.001)
+    if player.state != "idle" or player.candidate_animation_clip == "all_block_high_hard":
+        push_error("Missing hard block clip was presented as implemented")
+        return false
+    player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    if not opponent.request_attack("kick"):
+        push_error("Could not start the Brick hard kick reaction test")
+        return false
+    opponent._advance_timed_states(float(opponent.ATTACKS["kick"]["startup"]))
+    opponent._try_attack_contact()
+    if (player.state != "hitstun"
+            or player.last_reaction_source_action != "impacthardrightlow"
+            or player.last_reaction_animation != "all_impct_hard_rht_low"
+            or player.last_reaction_exit_frame != 23
+            or player.last_reaction_clip_implemented
+            or absf(player.source_radius_for_current_animation() - 70.0) > 0.001
+            or String(player.EXACT_REACTIONS["hit"][1]["return_action"]) != "facedownidle"
+            or bool(player.EXACT_REACTIONS["hit"][1]["return_implemented"])):
+        push_error("Hard low kick fell back to a light reaction or invented facedownidle")
+        return false
+    player._advance_timed_states(float(player.state_time) + 0.001)
+    if player.state != "idle":
+        push_error("Missing facedownidle was not kept explicit")
+        return false
+    return true
+
+
 func _reaction_profiles_match(actual: Dictionary, expected: Dictionary) -> bool:
     for group: String in ["hit", "block"]:
         if not actual.has(group) or not actual[group] is Dictionary:
@@ -380,8 +444,23 @@ func _run_check() -> void:
                 + JSON.stringify(player.REACTION_PROFILES))
         quit(1)
         return
+    if (opponent.current_source_animation() != "m03_idle_01"
+            or absf(opponent.source_radius_for_current_animation() - 43.0) > 0.001
+            or player.current_source_animation() != "m01_idle_01"
+            or absf(player.source_radius_for_current_animation() - 25.0) > 0.001):
+        push_error("Idle radius did not follow the defender's own clip table")
+        quit(1)
+        return
+    opponent.state = "hitstun"
+    opponent.last_reaction_animation = "missing_hard_clip"
+    if absf(opponent.source_radius_for_current_animation() - 43.0) > 0.001:
+        push_error("Missing Brick reaction radius fell back to the Bruce idle radius")
+        quit(1)
+        return
+    opponent.state = "idle"
+    opponent.last_reaction_animation = ""
     var expected_idle_reach: float = (
-        (70.0 + 25.0)
+        (70.0 + 43.0)
         * PortFighter.CANDIDATE_HEIGHT
         / PortFighter.CANDIDATE_SOURCE_HEIGHT
     )
@@ -414,6 +493,9 @@ func _run_check() -> void:
     if not _reaction_contact_check(
             player, opponent, "kick", true,
             "lowblock", "all_block_low", 12):
+        quit(1)
+        return
+    if not _hard_defender_check(player, opponent):
         quit(1)
         return
 
@@ -476,9 +558,14 @@ func _run_check() -> void:
                 + JSON.stringify(kick_boundaries))
         quit(1)
         return
-    var source_reach: float = expected_idle_reach
     player.reset_fighter(Vector3(0.0, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(source_reach + 0.02, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    var source_reach: float = player.attack_reach_world("punch", opponent)
+    if absf(source_reach - expected_idle_reach) > 0.0001:
+        push_error("Brick idle reach drifted from attack radius 70 plus idle radius 43")
+        quit(1)
+        return
+    opponent.global_position = player.global_position + Vector3(source_reach + 0.02, 0.0, 0.0)
     player.request_attack("punch")
     player._advance_timed_states(punch_startup + 0.001)
     player._try_attack_contact()
@@ -486,14 +573,15 @@ func _run_check() -> void:
         push_error("Target outside the recovered source radius was hit")
         quit(1)
         return
-    opponent.position.x = source_reach
+    # Stay a hair inside the computed reach; assigning the exact float can land just outside.
+    opponent.global_position = player.global_position + Vector3(source_reach - 0.00001, 0.0, 0.0)
     player._try_attack_contact()
     if absf(opponent.health - 95.0) > 0.001:
         push_error("Target exactly on the recovered source radius was not hit")
         quit(1)
         return
     player.reset_fighter(Vector3(0.0, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.8, 1.2, 0.8))
+    opponent.reset_fighter(Vector3(0.9, 1.2, 0.9))
     player.request_attack("punch")
     player._advance_timed_states(punch_startup + 0.001)
     player._try_attack_contact()
@@ -501,7 +589,7 @@ func _run_check() -> void:
         push_error("Target outside the recovered Euclidean source radius was hit")
         quit(1)
         return
-    opponent.position = Vector3(0.65, 1.2, 0.65)
+    opponent.position = Vector3(0.75, 1.2, 0.75)
     player._try_attack_contact()
     if absf(opponent.health - 95.0) > 0.001:
         push_error("Target inside the recovered Euclidean source radius was not hit")
@@ -654,7 +742,7 @@ func _run_check() -> void:
     opponent.reset_fighter(Vector3(0.25, 1.2, 0.0))
     player.health = 5.0
     opponent.request_attack("punch")
-    opponent._physics_process(kick_startup + 0.001)
+    opponent._physics_process(float(opponent.ATTACKS["punch"]["startup"]) + 0.001)
     if not scene.get("done") or not hud.center_message.text.begins_with("YOU LOSE"):
         push_error("An opponent finishing hit did not preserve the loss message")
         quit(1)

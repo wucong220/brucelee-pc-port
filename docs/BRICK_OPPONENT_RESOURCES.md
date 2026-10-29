@@ -40,8 +40,7 @@ Object 的 `diffuse/normal/material` 引用与以上三条路径静态一致，�
 | `m03_kck_low_01` | 41 | 30 |
 | `m03_movefwd` | 21 | 30 |
 
-动画与 Brick 骨架引用匹配只证明资源配对成立，尚未证明这些动作属于哪个
-原版 fighting set、何时选择、如何融合或如何产生命中效果。
+这四条动画现已按 Brick Davis 的 `adreno_200/set/thai.set` 映射到 `idle`、`lowpunch3`、`lowkick3` 和 `movefwd`。角色条目没有 `radiusscale`，缺省倍率是 `1.0`。动画半径是 `43/40/50/50`。`lowpunch3` 为 8/4/26、伤害 7、攻击半径 80，`larm/medium/hard/frontal`。`lowkick3` 为 9/3/29、伤害 7、攻击半径 70，`lleg/low/hard/fromright`。电脑不再把 Bruce 低段时序缩放到这些 clip 上。这只是当前四条 clip 的规则，不是完整 Thai set、AI 或 knockdown。同名动作的半径和返回帧以各自 set 为准。防守方使用自己的 reaction。Bruce 被这两招打中时使用 `impacthardfrontmid`、`impacthardrightlow` 和 `highblockhard`；对应 clip 以及 `facedownidle`、`idle2` 都还没有进入候选。硬击 clip 缺失时不会改播轻击正面反应。
 
 ## 本地候选导出
 
@@ -102,5 +101,4 @@ py -3.12 -X utf8 -B tools\opponent_resource_inventory.py `
 当前仓库外候选 GLB 没有解码后的 Brick PNG，因此实际运行报告
 `opponent_textures_loaded=false`。材质加载器已支持 Brick 的单身体纹理组；
 只有在三个 `body_*` PNG 全部存在并通过测试后，才可把运行时纹理标为已加载。
-对手战斗参数仍需独立取证，视觉接入不代表 Brick 的 `m03_*` 动画已经映射到
-原版攻击或 AI。
+对手低段攻击已经使用上面的 `thai.set` 帧数、伤害和半径。视觉接入仍然不代表完整 Thai set、AI、knockdown 或原版逐帧画面已经恢复。

@@ -35,6 +35,7 @@ const HEAVY_ATTACK: Dictionary = {
     "range": 1.85, "damage": 19.0, "push": 0.55,
 }
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
+const BRICK_ATTACK_CONFIG_PATH: String = "res://data/fighting_set_m03_mapped_attacks.json"
 const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_idle_01": 25.0,
     "m01_pnch_low_01": 40.0,
@@ -94,8 +95,137 @@ const REACTION_PROFILE_DATA: Dictionary = {
         },
     },
 }
+
+const THAI_ANIMATION_RADII_DATA: Dictionary = {
+    "m03_idle_01": 43.0,
+    "m03_pnch_low_01": 40.0,
+    "m03_kck_low_01": 50.0,
+    "m03_movefwd": 50.0,
+}
+const THAI_REACTION_PROFILE_DATA: Dictionary = {
+    "hit": {
+        "low": {
+            "source_action": "impactlightfrontlow",
+            "animation": "all_impct_light_frnt_low",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "impactlightfrontmid",
+            "animation": "all_impct_light_frnt_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 14,
+            "animation_duration_frames": 16,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "impactlightfronthigh",
+            "animation": "all_impct_light_frnt_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+    "block": {
+        "low": {
+            "source_action": "lowblock",
+            "animation": "all_block_low",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 23,
+            "linking_frame": 14,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "midblock",
+            "animation": "all_block_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "highblock",
+            "animation": "m03_blck_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+}
+const BRUCE_EXACT_REACTION_DATA: Dictionary = {
+    "hit": [
+        {
+            "strength": "hard",
+            "height": "medium",
+            "direction": "frontal",
+            "source_action": "impacthardfrontmid",
+            "animation": "all_impct_crotch",
+            "animation_radius": 40.0,
+            "exit_start_frame": 27,
+            "animation_duration_frames": 30,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        {
+            "strength": "hard",
+            "height": "low",
+            "direction": "fromright",
+            "source_action": "impacthardrightlow",
+            "animation": "all_impct_hard_rht_low",
+            "animation_radius": 70.0,
+            "exit_start_frame": 23,
+            "animation_duration_frames": 25,
+            "linking_frame": 0,
+            "return_action": "facedownidle",
+            "return_implemented": false,
+            "clip_implemented": false,
+        },
+    ],
+    "block": [
+        {
+            "strength": "hard",
+            "height": "",
+            "direction": "",
+            "source_action": "highblockhard",
+            "animation": "all_block_high_hard",
+            "animation_radius": 25.0,
+            "exit_start_frame": 11,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle2",
+            "return_implemented": false,
+            "clip_implemented": false,
+        },
+    ],
+}
 var ATTACKS: Dictionary = {}
 var REACTION_PROFILES: Dictionary = {}
+var EXACT_REACTIONS: Dictionary = {}
+var attack_config_path: String = ATTACK_CONFIG_PATH
 var attack_config_error: String = ""
 var radius_scale: float = 1.0
 var source_units_to_world: float = WORLD_CHARACTER_HEIGHT / SOURCE_CHARACTER_HEIGHT
@@ -117,6 +247,7 @@ var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
 var last_reaction_animation: String = ""
 var last_reaction_exit_frame: int = -1
+var last_reaction_clip_implemented: bool = false
 var facing: float = 1.0
 var combo_hits: int = 0
 var candidate_loaded: bool = false
@@ -170,6 +301,14 @@ func configure_candidate_asset(
     candidate_material_profile = material_profile
     candidate_scale_attack_timing = scale_attack_timing
 
+
+func configure_attack_config(path: String) -> void:
+    if is_inside_tree():
+        push_error("Attack config must be configured before the fighter enters the tree")
+        return
+    attack_config_path = path
+
+
 func _ready() -> void:
     if not _load_attack_definitions():
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
@@ -200,16 +339,17 @@ func _ready() -> void:
 func _load_attack_definitions() -> bool:
     ATTACKS = {}
     REACTION_PROFILES = {}
+    EXACT_REACTIONS = {}
     attack_config_error = ""
     radius_scale = 1.0
     source_units_to_world = WORLD_CHARACTER_HEIGHT / SOURCE_CHARACTER_HEIGHT
     source_animation_radii = SOURCE_ANIMATION_RADII_DATA.duplicate(true)
-    if not FileAccess.file_exists(ATTACK_CONFIG_PATH):
-        attack_config_error = "missing " + ATTACK_CONFIG_PATH
+    if not FileAccess.file_exists(attack_config_path):
+        attack_config_error = "missing " + attack_config_path
         return false
-    var file: FileAccess = FileAccess.open(ATTACK_CONFIG_PATH, FileAccess.READ)
+    var file: FileAccess = FileAccess.open(attack_config_path, FileAccess.READ)
     if file == null:
-        attack_config_error = "could not open " + ATTACK_CONFIG_PATH
+        attack_config_error = "could not open " + attack_config_path
         return false
     var parser: JSON = JSON.new()
     var parse_error: Error = parser.parse(file.get_as_text())
@@ -233,6 +373,9 @@ func _is_number(value: Variant) -> bool:
 
 
 func _parse_attack_config(config: Dictionary) -> Dictionary:
+    var archive_value: Variant = config.get("source_archive", "")
+    if typeof(archive_value) == TYPE_STRING and String(archive_value) == "thai.set":
+        return _parse_thai_mapped_attack_config(config)
     var schema_value: Variant = config.get("schema_version")
     if not _is_number(schema_value) or float(schema_value) != 3.0:
         return _reject_attack_config("unsupported schema version")
@@ -291,6 +434,9 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         config.get("reaction_profiles")
     )
     if loaded_reactions.is_empty():
+        return {}
+    var loaded_exact: Dictionary = _parse_exact_reactions(config.get("exact_reactions"))
+    if loaded_exact.is_empty():
         return {}
     var configured_attacks: Variant = config.get("attacks")
     if not configured_attacks is Dictionary:
@@ -389,10 +535,14 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
     source_units_to_world = world_height / source_height
     source_animation_radii = loaded_radii
     REACTION_PROFILES = loaded_reactions
+    EXACT_REACTIONS = loaded_exact
     return result
 
 
-func _parse_reaction_profiles(value: Variant) -> Dictionary:
+func _parse_reaction_profiles(
+        value: Variant,
+        expected_profiles: Dictionary = REACTION_PROFILE_DATA
+) -> Dictionary:
     if not value is Dictionary:
         return _reject_attack_config("reaction_profiles is not an object")
     var configured: Dictionary = value
@@ -443,7 +593,7 @@ func _parse_reaction_profiles(value: Variant) -> Dictionary:
                 return _reject_attack_config(
                     group + " " + height + " reaction frame values are invalid"
                 )
-            var expected: Dictionary = REACTION_PROFILE_DATA[group][height]
+            var expected: Dictionary = expected_profiles[group][height]
             if (String(profile["source_action"]) != expected["source_action"]
                     or String(profile["animation"]) != expected["animation"]
                     or exit_frame != int(expected["exit_start_frame"])
@@ -452,8 +602,240 @@ func _parse_reaction_profiles(value: Variant) -> Dictionary:
                 return _reject_attack_config(
                     group + " " + height + " reaction does not match the source links"
                 )
+            for extra_key: String in [
+                    "animation_radius", "return_action",
+                    "return_implemented", "clip_implemented"]:
+                if not expected.has(extra_key):
+                    continue
+                if not profile.has(extra_key):
+                    return _reject_attack_config(
+                        group + " " + height + " reaction lacks " + extra_key
+                    )
+                var expected_extra: Variant = expected[extra_key]
+                var actual_extra: Variant = profile[extra_key]
+                if _is_number(expected_extra):
+                    if (not _is_number(actual_extra)
+                            or absf(float(actual_extra) - float(expected_extra)) > 0.001):
+                        return _reject_attack_config(
+                            group + " " + height + " reaction " + extra_key
+                            + " does not match the source links"
+                        )
+                elif typeof(expected_extra) == TYPE_BOOL:
+                    if (typeof(actual_extra) != TYPE_BOOL
+                            or bool(actual_extra) != bool(expected_extra)):
+                        return _reject_attack_config(
+                            group + " " + height + " reaction " + extra_key
+                            + " does not match the source links"
+                        )
+                elif String(actual_extra) != String(expected_extra):
+                    return _reject_attack_config(
+                        group + " " + height + " reaction " + extra_key
+                        + " does not match the source links"
+                    )
             loaded_group[height] = profile.duplicate(true)
         loaded[group] = loaded_group
+    return loaded
+
+
+
+func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
+    var schema_value: Variant = config.get("schema_version")
+    if not _is_number(schema_value) or float(schema_value) != 4.0:
+        return _reject_attack_config("unsupported schema version")
+    var frame_rate_value: Variant = config.get("frame_rate")
+    if not _is_number(frame_rate_value) or absf(float(frame_rate_value) - SOURCE_FRAME_RATE) > 0.001:
+        return _reject_attack_config("frame rate does not match the source")
+    var geometry_value: Variant = config.get("source_geometry")
+    if not geometry_value is Dictionary:
+        return _reject_attack_config("source_geometry is not an object")
+    var geometry: Dictionary = geometry_value
+    for key: String in [
+            "source_height", "world_height", "radius_scale",
+            "idle_source_archive", "animation_radii"]:
+        if not geometry.has(key):
+            return _reject_attack_config("source_geometry lacks " + key)
+    if (not _is_number(geometry["source_height"])
+            or not _is_number(geometry["world_height"])
+            or not _is_number(geometry["radius_scale"])):
+        return _reject_attack_config("source_geometry contains non-numeric scale values")
+    var source_height: float = float(geometry["source_height"])
+    var world_height: float = float(geometry["world_height"])
+    var loaded_radius_scale: float = float(geometry["radius_scale"])
+    if (typeof(geometry["idle_source_archive"]) != TYPE_STRING
+            or String(geometry["idle_source_archive"]) != "thai.set"):
+        return _reject_attack_config("unexpected idle source archive")
+    if (source_height <= 0.0
+            or absf(source_height - SOURCE_CHARACTER_HEIGHT) > 0.001
+            or world_height <= 0.0
+            or absf(world_height - WORLD_CHARACTER_HEIGHT) > 0.001
+            or loaded_radius_scale <= 0.0
+            or absf(loaded_radius_scale - 1.0) > 0.001):
+        return _reject_attack_config("source_geometry has invalid or unexpected scale values")
+    var radii_value: Variant = geometry["animation_radii"]
+    if not radii_value is Dictionary:
+        return _reject_attack_config("animation_radii is not an object")
+    var radii: Dictionary = radii_value
+    if radii.size() != THAI_ANIMATION_RADII_DATA.size():
+        return _reject_attack_config("animation_radii does not contain only the four current clips")
+    var loaded_radii: Dictionary = {}
+    for animation: String in THAI_ANIMATION_RADII_DATA:
+        if not radii.has(animation) or not _is_number(radii[animation]):
+            return _reject_attack_config("animation_radii." + animation + " is missing or non-numeric")
+        var radius: float = float(radii[animation])
+        if absf(radius - float(THAI_ANIMATION_RADII_DATA[animation])) > 0.001 or radius <= 0.0:
+            return _reject_attack_config("animation_radii." + animation + " does not match thai.set")
+        loaded_radii[animation] = radius
+    var loaded_reactions: Dictionary = _parse_reaction_profiles(
+        config.get("reaction_profiles"),
+        THAI_REACTION_PROFILE_DATA
+    )
+    if loaded_reactions.is_empty():
+        return {}
+    var configured_attacks: Variant = config.get("attacks")
+    if not configured_attacks is Dictionary:
+        return _reject_attack_config("attacks is not an object")
+    var attacks: Dictionary = configured_attacks
+    if attacks.size() != 2:
+        return _reject_attack_config("thai mapping contains more than the verified attacks")
+    var result: Dictionary = {}
+    for action: String in ["punch", "kick"]:
+        var entry_value: Variant = attacks.get(action)
+        if not entry_value is Dictionary:
+            return _reject_attack_config(action + " is not an object")
+        var entry: Dictionary = entry_value
+        for key: String in [
+                "source_action", "animation", "animation_frame_count",
+                "startup_frames", "active_frames", "recovery_frames",
+                "damage", "prototype_push", "source_impact"]:
+            if not entry.has(key):
+                return _reject_attack_config(action + " lacks " + key)
+        if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
+                or not _is_number(entry["recovery_frames"])
+                or not _is_number(entry["animation_frame_count"])
+                or not _is_number(entry["damage"])
+                or not _is_number(entry["prototype_push"])):
+            return _reject_attack_config(action + " contains non-numeric values")
+        var startup_frames: int = int(entry["startup_frames"])
+        var active_frames: int = int(entry["active_frames"])
+        var recovery_frames: int = int(entry["recovery_frames"])
+        var frame_count: int = int(entry["animation_frame_count"])
+        if (float(entry["startup_frames"]) != float(startup_frames)
+                or float(entry["active_frames"]) != float(active_frames)
+                or float(entry["recovery_frames"]) != float(recovery_frames)
+                or float(entry["animation_frame_count"]) != float(frame_count)
+                or startup_frames + active_frames + recovery_frames != frame_count):
+            return _reject_attack_config(action + " phase frames do not match the clip")
+        var expected_source: String = "lowpunch3" if action == "punch" else "lowkick3"
+        var expected_animation: String = "m03_pnch_low_01" if action == "punch" else "m03_kck_low_01"
+        var expected_frames: Array = [8, 4, 26, 38] if action == "punch" else [9, 3, 29, 41]
+        if (String(entry["source_action"]) != expected_source
+                or String(entry["animation"]) != expected_animation
+                or startup_frames != int(expected_frames[0])
+                or active_frames != int(expected_frames[1])
+                or recovery_frames != int(expected_frames[2])
+                or frame_count != int(expected_frames[3])
+                or absf(float(entry["damage"]) - 7.0) > 0.001
+                or absf(float(entry["prototype_push"])) > 0.001):
+            return _reject_attack_config(action + " does not match the verified thai.set attack")
+        var impact_value: Variant = entry["source_impact"]
+        if not impact_value is Dictionary:
+            return _reject_attack_config(action + " source_impact is not an object")
+        var impact: Dictionary = impact_value
+        var expected_impact: Dictionary = {
+            "attack_radius": 80.0,
+            "body_part": "larm",
+            "height": "medium",
+            "strength": "hard",
+            "direction": "frontal",
+        } if action == "punch" else {
+            "attack_radius": 70.0,
+            "body_part": "lleg",
+            "height": "low",
+            "strength": "hard",
+            "direction": "fromright",
+        }
+        for key: String in expected_impact.keys():
+            if not impact.has(key):
+                return _reject_attack_config(action + " impact lacks " + key)
+            if _is_number(expected_impact[key]):
+                if (not _is_number(impact[key])
+                        or absf(float(impact[key]) - float(expected_impact[key])) > 0.001):
+                    return _reject_attack_config(action + " impact does not match thai.set")
+            elif String(impact[key]) != String(expected_impact[key]):
+                return _reject_attack_config(action + " impact does not match thai.set")
+        result[action] = {
+            "startup": float(startup_frames) / SOURCE_FRAME_RATE,
+            "active": float(active_frames) / SOURCE_FRAME_RATE,
+            "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
+            "damage": float(entry["damage"]),
+            "push": float(entry["prototype_push"]),
+            "source_action": String(entry["source_action"]),
+            "animation": String(entry["animation"]),
+            "animation_frame_count": frame_count,
+            "source_impact": impact.duplicate(true),
+        }
+    radius_scale = loaded_radius_scale
+    source_units_to_world = world_height / source_height
+    source_animation_radii = loaded_radii
+    REACTION_PROFILES = loaded_reactions
+    EXACT_REACTIONS = {}
+    return result
+
+
+func _parse_exact_reactions(value: Variant) -> Dictionary:
+    if not value is Dictionary:
+        return _reject_attack_config("exact_reactions is not an object")
+    var configured: Dictionary = value
+    if configured.size() != BRUCE_EXACT_REACTION_DATA.size():
+        return _reject_attack_config("exact_reactions has unexpected groups")
+    var loaded: Dictionary = {}
+    for group: String in BRUCE_EXACT_REACTION_DATA.keys():
+        var expected_entries: Array = BRUCE_EXACT_REACTION_DATA[group]
+        var actual_value: Variant = configured.get(group)
+        if not actual_value is Array or actual_value.size() != expected_entries.size():
+            return _reject_attack_config(group + " exact reaction count does not match brucelee.set")
+        var loaded_entries: Array = []
+        for index in range(expected_entries.size()):
+            if not actual_value[index] is Dictionary:
+                return _reject_attack_config(group + " exact reaction is not an object")
+            var actual: Dictionary = actual_value[index]
+            var expected: Dictionary = expected_entries[index]
+            if actual.size() != expected.size():
+                return _reject_attack_config(group + " exact reaction has unexpected fields")
+            for key: String in expected.keys():
+                if not actual.has(key):
+                    return _reject_attack_config(group + " exact reaction lacks " + key)
+                var expected_value: Variant = expected[key]
+                var actual_field: Variant = actual[key]
+                if _is_number(expected_value):
+                    if (not _is_number(actual_field)
+                            or absf(float(actual_field) - float(expected_value)) > 0.001):
+                        return _reject_attack_config(
+                            group + " exact reaction " + key + " does not match brucelee.set"
+                        )
+                elif typeof(expected_value) == TYPE_BOOL:
+                    if typeof(actual_field) != TYPE_BOOL or bool(actual_field) != bool(expected_value):
+                        return _reject_attack_config(
+                            group + " exact reaction " + key + " does not match brucelee.set"
+                        )
+                elif String(actual_field) != String(expected_value):
+                    return _reject_attack_config(
+                        group + " exact reaction " + key + " does not match brucelee.set"
+                    )
+            var duration_frames: int = int(actual["animation_duration_frames"])
+            var exit_frame: int = int(actual["exit_start_frame"])
+            var linking_frame: int = int(actual["linking_frame"])
+            if (duration_frames <= 0
+                    or exit_frame < 0
+                    or exit_frame > duration_frames
+                    or linking_frame < 0
+                    or linking_frame > duration_frames
+                    or float(actual["animation_radius"]) <= 0.0):
+                return _reject_attack_config(group + " exact reaction frames are invalid")
+            if bool(actual["clip_implemented"]):
+                return _reject_attack_config(group + " exact reaction clip is not in the candidate")
+            loaded_entries.append(actual.duplicate(true))
+        loaded[group] = loaded_entries
     return loaded
 
 
@@ -884,6 +1266,7 @@ func _advance_state() -> void:
             last_reaction_source_action = ""
             last_reaction_animation = ""
             last_reaction_exit_frame = -1
+            last_reaction_clip_implemented = false
 
 func _try_attack_contact() -> void:
     if opponent == null or not is_instance_valid(opponent) or opponent.state == "ko":
@@ -900,7 +1283,7 @@ func _try_attack_contact() -> void:
     var blocked: bool = opponent.guard_held and opponent.state == "idle"
     var reaction: Dictionary = {}
     if details.has("source_impact"):
-        reaction = _reaction_profile_for_impact(details["source_impact"], blocked)
+        reaction = opponent.reaction_for_incoming(details["source_impact"], blocked)
     # Mark contact before emitting signals, including a guarded hit.
     _attack_connected = true
     opponent.receive_hit(
@@ -918,14 +1301,52 @@ func current_source_animation() -> String:
         return String(ATTACKS[attack_kind]["animation"])
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return CANDIDATE_CLIPS["kick"]
-    return CANDIDATE_CLIPS["idle"]
+    return _owner_idle_animation()
+
+
+func _owner_idle_animation() -> String:
+    if candidate_clips.has("idle"):
+        return String(candidate_clips["idle"])
+    return String(CANDIDATE_CLIPS["idle"])
+
+
+func _stored_animation_radius(animation: String) -> float:
+    if source_animation_radii.has(animation) and _is_number(source_animation_radii[animation]):
+        return float(source_animation_radii[animation])
+    var profile: Dictionary = _profile_for_animation(animation)
+    if profile.has("animation_radius") and _is_number(profile["animation_radius"]):
+        return float(profile["animation_radius"])
+    return -1.0
+
+
+func _profile_for_animation(animation: String) -> Dictionary:
+    for group_value: Variant in [REACTION_PROFILES, EXACT_REACTIONS]:
+        if not group_value is Dictionary:
+            continue
+        var groups: Dictionary = group_value
+        for entries: Variant in groups.values():
+            if entries is Dictionary:
+                var profiles: Dictionary = entries
+                for profile_value: Variant in profiles.values():
+                    if (profile_value is Dictionary
+                            and String(profile_value.get("animation", "")) == animation):
+                        return profile_value
+            elif entries is Array:
+                for profile_value: Variant in entries:
+                    if (profile_value is Dictionary
+                            and String(profile_value.get("animation", "")) == animation):
+                        return profile_value
+    return {}
 
 
 func source_radius_for_current_animation() -> float:
     var animation: String = current_source_animation()
-    if not source_animation_radii.has(animation):
-        animation = CANDIDATE_CLIPS["idle"]
-    return float(source_animation_radii[animation]) * radius_scale
+    var radius: float = _stored_animation_radius(animation)
+    if radius < 0.0:
+        radius = _stored_animation_radius(_owner_idle_animation())
+    if radius < 0.0:
+        return 0.0
+    return radius * radius_scale
 
 
 func attack_reach_world(kind: String, target: PortFighter = null) -> float:
@@ -939,6 +1360,45 @@ func attack_reach_world(kind: String, target: PortFighter = null) -> float:
     if target != null:
         source_reach += target.source_radius_for_current_animation()
     return source_reach * source_units_to_world
+
+
+func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
+    var exact: Dictionary = _matching_exact_reaction(impact, blocked)
+    if not exact.is_empty():
+        return exact
+    # Hard and brutal attacks have no light-height fallback when the exact link is absent.
+    if String(impact.get("strength", "")) != "normal":
+        return {}
+    return _reaction_profile_for_impact(impact, blocked)
+
+
+func _matching_exact_reaction(impact: Dictionary, blocked: bool) -> Dictionary:
+    var group: String = "block" if blocked else "hit"
+    var entries_value: Variant = EXACT_REACTIONS.get(group, [])
+    if not entries_value is Array:
+        return {}
+    var strength: String = String(impact.get("strength", ""))
+    var height: String = String(impact.get("height", ""))
+    var direction: String = String(impact.get("direction", ""))
+    var strength_only: Dictionary = {}
+    for entry_value: Variant in entries_value:
+        if not entry_value is Dictionary:
+            continue
+        var entry: Dictionary = entry_value
+        if String(entry.get("strength", "")) != strength:
+            continue
+        var entry_height: String = String(entry.get("height", ""))
+        var entry_direction: String = String(entry.get("direction", ""))
+        if entry_height == height and entry_direction == direction:
+            return entry.duplicate(true)
+        if (blocked
+                and entry_height.is_empty()
+                and entry_direction.is_empty()
+                and strength_only.is_empty()):
+            strength_only = entry
+    if not strength_only.is_empty():
+        return strength_only.duplicate(true)
+    return {}
 
 
 func _reaction_profile_for_impact(
@@ -981,11 +1441,13 @@ func receive_hit(
         last_reaction_source_action = String(reaction["source_action"])
         last_reaction_animation = String(reaction["animation"])
         last_reaction_exit_frame = int(reaction["exit_start_frame"])
+        last_reaction_clip_implemented = reaction.get("clip_implemented", true) == true
         state_time = float(last_reaction_exit_frame) / SOURCE_FRAME_RATE
     else:
         last_reaction_source_action = ""
         last_reaction_animation = ""
         last_reaction_exit_frame = -1
+        last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
     if health <= 0.0:
         state = "ko"
@@ -1008,6 +1470,7 @@ func reset_fighter(start_position: Vector3) -> void:
     last_reaction_source_action = ""
     last_reaction_animation = ""
     last_reaction_exit_frame = -1
+    last_reaction_clip_implemented = false
     guard_held = false
     combo_hits = 0
     if candidate_loaded:
@@ -1055,7 +1518,9 @@ func _animate_candidate() -> void:
             requested = "punch"
         elif attack_kind in ["kick", "heavy"]:
             requested = "kick"
-    elif state in ["hitstun", "blockstun"] and _candidate_clip_paths.has(last_reaction_animation):
+    elif (state in ["hitstun", "blockstun"]
+            and last_reaction_clip_implemented
+            and _candidate_clip_paths.has(last_reaction_animation)):
         requested = last_reaction_animation
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position

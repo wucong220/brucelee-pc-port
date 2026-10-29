@@ -140,11 +140,21 @@ func _run() -> void:
         push_error("Player fighting-set timing was unexpectedly clip-scaled")
         quit(1)
         return
-    if not opponent.candidate_scale_attack_timing:
-        push_error("Brick candidate timing scaling is not explicitly enabled")
+    if opponent.candidate_scale_attack_timing:
+        push_error("Brick low-attack timing is still scaled from Bruce clips")
         quit(1)
         return
     var opponent_punch_config: Dictionary = opponent.ATTACKS["punch"]
+    if (String(opponent_punch_config["source_action"]) != "lowpunch3"
+            or String(opponent_punch_config["animation"]) != "m03_pnch_low_01"
+            or int(opponent_punch_config["animation_frame_count"]) != 38
+            or absf(float(opponent_punch_config["startup"]) * PortFighter.SOURCE_FRAME_RATE - 8.0) > 0.001
+            or absf(float(opponent_punch_config["active"]) * PortFighter.SOURCE_FRAME_RATE - 4.0) > 0.001
+            or absf(float(opponent_punch_config["recovery"]) * PortFighter.SOURCE_FRAME_RATE - 26.0) > 0.001
+            or absf(float(opponent_punch_config["damage"]) - 7.0) > 0.001):
+        push_error("Brick punch does not use verified thai.set lowpunch3 phases")
+        quit(1)
+        return
     var opponent_punch_state_duration: float = (
         float(opponent_punch_config["startup"])
         + float(opponent_punch_config["active"])
@@ -199,6 +209,16 @@ func _run() -> void:
         opponent.get("_candidate_clip_paths")["kick"]
     )
     var opponent_kick_config: Dictionary = opponent.ATTACKS["kick"]
+    if (String(opponent_kick_config["source_action"]) != "lowkick3"
+            or String(opponent_kick_config["animation"]) != "m03_kck_low_01"
+            or int(opponent_kick_config["animation_frame_count"]) != 41
+            or absf(float(opponent_kick_config["startup"]) * PortFighter.SOURCE_FRAME_RATE - 9.0) > 0.001
+            or absf(float(opponent_kick_config["active"]) * PortFighter.SOURCE_FRAME_RATE - 3.0) > 0.001
+            or absf(float(opponent_kick_config["recovery"]) * PortFighter.SOURCE_FRAME_RATE - 29.0) > 0.001
+            or absf(float(opponent_kick_config["damage"]) - 7.0) > 0.001):
+        push_error("Brick kick does not use verified thai.set lowkick3 phases")
+        quit(1)
+        return
     var opponent_kick_state_duration: float = (
         float(opponent_kick_config["startup"])
         + float(opponent_kick_config["active"])

@@ -1,0 +1,137 @@
+{
+  "schema_version": 4,
+  "source_archive": "thai.set",
+  "frame_rate": 30.0,
+  "metadata": {
+    "character": "brick davis",
+    "fighting_set": "adreno_200/set/thai.set",
+    "radiusscale_present": false,
+    "evidence_report": "reports/brick_thai_low_attack_evidence.json",
+    "scope": "Rules for the four current clips only. Not a complete Thai set, AI, or knockdown.",
+    "prototype_push_status": "UNVERIFIED",
+    "missing_return_actions": [
+      "facedownidle",
+      "idle2"
+    ]
+  },
+  "source_geometry": {
+    "source_height": 173.415954589844,
+    "world_height": 1.8,
+    "radius_scale": 1.0,
+    "idle_source_archive": "thai.set",
+    "animation_radii": {
+      "m03_idle_01": 43.0,
+      "m03_pnch_low_01": 40.0,
+      "m03_kck_low_01": 50.0,
+      "m03_movefwd": 50.0
+    }
+  },
+  "reaction_profiles": {
+    "hit": {
+      "low": {
+        "source_action": "impactlightfrontlow",
+        "animation": "all_impct_light_frnt_low",
+        "animation_radius": 40.0,
+        "exit_start_frame": 13,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      "medium": {
+        "source_action": "impactlightfrontmid",
+        "animation": "all_impct_light_frnt_mid",
+        "animation_radius": 40.0,
+        "exit_start_frame": 14,
+        "animation_duration_frames": 16,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      "high": {
+        "source_action": "impactlightfronthigh",
+        "animation": "all_impct_light_frnt_high",
+        "animation_radius": 40.0,
+        "exit_start_frame": 13,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      }
+    },
+    "block": {
+      "low": {
+        "source_action": "lowblock",
+        "animation": "all_block_low",
+        "animation_radius": 40.0,
+        "exit_start_frame": 12,
+        "animation_duration_frames": 23,
+        "linking_frame": 14,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      "medium": {
+        "source_action": "midblock",
+        "animation": "all_block_mid",
+        "animation_radius": 40.0,
+        "exit_start_frame": 12,
+        "animation_duration_frames": 14,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      "high": {
+        "source_action": "highblock",
+        "animation": "m03_blck_high",
+        "animation_radius": 40.0,
+        "exit_start_frame": 12,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      }
+    }
+  },
+  "attacks": {
+    "punch": {
+      "source_action": "lowpunch3",
+      "animation": "m03_pnch_low_01",
+      "animation_frame_count": 38,
+      "startup_frames": 8,
+      "active_frames": 4,
+      "recovery_frames": 26,
+      "damage": 7.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 80.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "hard",
+        "direction": "frontal"
+      }
+    },
+    "kick": {
+      "source_action": "lowkick3",
+      "animation": "m03_kck_low_01",
+      "animation_frame_count": 41,
+      "startup_frames": 9,
+      "active_frames": 3,
+      "recovery_frames": 29,
+      "damage": 7.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "hard",
+        "direction": "fromright"
+      }
+    }
+  }
+}
