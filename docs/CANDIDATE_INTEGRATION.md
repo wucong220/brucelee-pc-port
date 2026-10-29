@@ -10,10 +10,13 @@
   `hair_diffuse.png`、`hair_normal.png`、`hair_material.png`
 - Godot 4.7.2 stable
 
-两个输入必须位于仓库外。战斗角色、动画预览和纹理加载器都会拒绝仓库内路径；
+两个输入必须位于开发仓库或导出应用目录外。战斗角色、动画预览和纹理加载器
+都会拒绝内部的词法路径；
 路径检查会解析符号链接、Windows junction 和缺失尾部路径前最近的真实父目录，
-以实际目标位置判断是否落入仓库。一键验证脚本复用同一解析器。设置环境变量或
-使用一键验证脚本：
+以实际目标位置判断是否落入受保护目录。Windows 解析器作为
+`res://tools/resolve_candidate_path.ps1` 随项目打包，运行时解压到 `user://`
+再执行；一键验证脚本直接复用同一文件。开发运行时以仓库根目录为边界，导出
+运行时以 EXE 所在应用目录为边界。设置环境变量或使用一键验证脚本：
 
 ```powershell
 .\validate_candidate.ps1 `
@@ -41,6 +44,8 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 - 真实 GLB、纹理、idle/punch 动画和战斗状态可在同一场景联动。
 - `lowpunch1` 使用帧 5–8、`lowkick1` 使用帧 7–10，基础伤害均为 5。
 - 帧边界、大步长跨阶段不丢时以及单次命中去重由 Godot 回归测试覆盖。
+- `--export-pack` 生成的 PCK 包含路径解析器；用 Godot runtime 从该 PCK 运行
+  smoke、真实动画、合成/真实纹理和端到端战斗均成功。
 
 本地验证输出：
 
@@ -56,5 +61,6 @@ CANDIDATE_VALIDATION=PASS
 - 格挡减伤、攻击距离、推力和 `heavy` 仍使用原型规则。
 - `attack_radius/body_part/height/strength/direction` 已作为候选元数据保存，
   但其运行时碰撞和受击反馈映射尚未闭合。
-- 未验证 Windows EXE/PCK 在目标机器上的导出和运行。
+- PCK 资源包验证已完成；尚未安装匹配的 Windows Export Templates，因此
+  独立 EXE 在无源码目录中的启动与外部资源加载仍待验证。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。

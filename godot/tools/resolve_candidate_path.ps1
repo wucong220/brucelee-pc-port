@@ -3,6 +3,7 @@ param(
     [string]$LiteralPath
 )
 
+# Resolve a Windows path through symlinks and junctions using the file handle.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 

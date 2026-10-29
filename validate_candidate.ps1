@@ -11,7 +11,7 @@ $ErrorActionPreference = "Stop"
 $lexicalRepoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
 $repoRoot = $lexicalRepoRoot
 $godotProject = Join-Path $repoRoot "godot"
-$pathResolver = Join-Path $repoRoot "tools\resolve_candidate_path.ps1"
+$pathResolver = Join-Path $repoRoot "godot\tools\resolve_candidate_path.ps1"
 
 function Resolve-CanonicalPath([string]$Value) {
     $resolved = & $pathResolver -LiteralPath $Value
@@ -92,7 +92,7 @@ function Test-CandidatePathBoundary {
 
 $repoRoot = Resolve-CanonicalPath $repoRoot
 $godotProject = Join-Path $repoRoot "godot"
-$pathResolver = Join-Path $repoRoot "tools\resolve_candidate_path.ps1"
+$pathResolver = Join-Path $repoRoot "godot\tools\resolve_candidate_path.ps1"
 Test-CandidatePathBoundary
 $CandidateGlb = Resolve-ExternalPath $CandidateGlb "Candidate GLB"
 $TextureRoot = Resolve-ExternalPath $TextureRoot "Texture root"

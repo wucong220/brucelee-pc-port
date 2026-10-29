@@ -1,5 +1,11 @@
 extends RefCounted
-## Validate local candidate inputs without allowing repository copies.
+## Validate local candidate inputs without allowing packaged copies.
+
+
+const RESOLVER_RESOURCE: String = "res://tools/resolve_candidate_path.ps1"
+
+static var _runtime_resolver_path: String = ""
+static var _runtime_resolver_error: String = ""
 
 
 static func normalize_absolute_path(path: String) -> String:
@@ -7,10 +13,55 @@ static func normalize_absolute_path(path: String) -> String:
 
 
 static func repository_root() -> String:
+    if OS.has_feature("template"):
+        return normalize_absolute_path(
+            OS.get_executable_path().get_base_dir()
+        ).trim_suffix("/")
     var project_directory: String = normalize_absolute_path(
         ProjectSettings.globalize_path("res://")
     ).trim_suffix("/")
+    if (project_directory.is_empty()
+            or not project_directory.is_absolute_path()):
+        return normalize_absolute_path(
+            OS.get_executable_path().get_base_dir()
+        ).trim_suffix("/")
     return normalize_absolute_path(project_directory.get_base_dir())
+
+
+static func windows_resolver_path() -> Dictionary:
+    if not _runtime_resolver_error.is_empty():
+        return {"path": "", "error": _runtime_resolver_error}
+    if not _runtime_resolver_path.is_empty():
+        return {"path": _runtime_resolver_path, "error": ""}
+    var source: FileAccess = FileAccess.open(RESOLVER_RESOURCE, FileAccess.READ)
+    if source == null:
+        _runtime_resolver_error = (
+            "packed candidate path resolver is missing: " + RESOLVER_RESOURCE
+        )
+        return {"path": "", "error": _runtime_resolver_error}
+    var source_text: String = source.get_as_text()
+    source.close()
+    if source_text.is_empty():
+        _runtime_resolver_error = "packed candidate path resolver is empty"
+        return {"path": "", "error": _runtime_resolver_error}
+    var resolver_path: String = normalize_absolute_path(
+        ProjectSettings.globalize_path("user://candidate_path_resolver.ps1")
+    )
+    var target: FileAccess = FileAccess.open(resolver_path, FileAccess.WRITE)
+    if target == null:
+        _runtime_resolver_error = (
+            "could not materialize candidate path resolver: " + resolver_path
+        )
+        return {"path": "", "error": _runtime_resolver_error}
+    target.store_string(source_text)
+    target.close()
+    if not FileAccess.file_exists(resolver_path):
+        _runtime_resolver_error = (
+            "candidate path resolver was not materialized: " + resolver_path
+        )
+        return {"path": "", "error": _runtime_resolver_error}
+    _runtime_resolver_path = resolver_path
+    return {"path": resolver_path, "error": ""}
 
 
 static func canonical_path(path: String) -> Dictionary:
@@ -18,14 +69,10 @@ static func canonical_path(path: String) -> Dictionary:
     var output: Array = []
     var exit_code: int
     if OS.get_name() == "Windows":
-        var resolver_path: String = repository_root().path_join(
-            "tools/resolve_candidate_path.ps1"
-        )
-        if not FileAccess.file_exists(resolver_path):
-            return {
-                "path": "",
-                "error": "candidate path resolver is missing: " + resolver_path,
-            }
+        var resolver_result: Dictionary = windows_resolver_path()
+        if not resolver_result["error"].is_empty():
+            return resolver_result
+        var resolver_path: String = String(resolver_result["path"])
         exit_code = OS.execute(
             "powershell.exe",
             PackedStringArray([

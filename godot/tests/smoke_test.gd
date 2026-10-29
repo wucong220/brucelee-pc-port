@@ -77,9 +77,12 @@ func _path_guard_check() -> bool:
         repository_handle.store_string("repository fixture")
         repository_handle.close()
 
-    if passed and not CandidatePathGuard.external_path_error(
-            external_file, "candidate path").is_empty():
-        push_error("Candidate path guard rejected an external fixture path")
+    var external_error: String = CandidatePathGuard.external_path_error(
+        external_file, "candidate path"
+    )
+    if passed and not external_error.is_empty():
+        push_error("Candidate path guard rejected an external fixture path: "
+                + external_error)
         passed = false
 
     for repository_path: String in [
