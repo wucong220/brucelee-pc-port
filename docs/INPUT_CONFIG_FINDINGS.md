@@ -95,11 +95,13 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
   它按最后一条事件批量标记，而不是逐条按年龄删除。时钟来源、单位、
   整数回绕和原版运行时行为尚未闭合；不能把 500 直接写成毫秒。
 - 同一 `Update` 的 `0x17d5f8–0x17d614` 通过已解析的 PLT 将
-  `this+0x744` 和 `this+0x76c` 传给 `UserControlUpdate` 的事件向量和
-  状态向量参数。其他控制路径和设备配置选择还需核实。
+  `this+0x744` 和 `this+0x76c` 分别传给 `UserControlUpdate` 的两个向量
+  参数；这两个容器在角色语义上的具体分工仍需核实。其他控制路径和设备
+  配置选择也还需核实。
 
-这些写入及 `InputSequenceCheck` 对零值的要求支持该字节是输入消费标记，
-但并不证明完整的原版输入行为。
+这些写入及 `InputSequenceCheck` 对零值的要求支持该字节与输入消费或
+有效性有关；它同时参与匹配和批量失效，因此不能只命名为 `consumed`，
+也不能据此证明完整的原版输入行为。
 
 ## `gid_Press` 初始化
 
@@ -119,7 +121,8 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
 ## 本次验证
 
 - `py -3.12 -X utf8 -B tools/native_reaction_links.py <本机 libdefault.so>`：
-  退出码 0，核验 96 条原生指令和两个初始化字符串。
+  退出码 0，核验 96 条原生指令和三条字符串字面量
+  （`ReceiveDamage`、`Press`、`Pressed`）。
 - `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`：
   退出码 0，运行 190 项，其中 1 项跳过。
 - `git diff --check`：退出码 0。
