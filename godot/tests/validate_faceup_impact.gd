@@ -45,6 +45,9 @@ func _run() -> void:
     if not _check_faceup_ko(player, opponent):
         quit(1)
         return
+    if not _check_reaction_states_ignore_repeated_hits(player, opponent):
+        quit(1)
+        return
     if not _check_faceup_idle_keeps_unverified_hits_closed(player, opponent):
         quit(1)
         return
@@ -390,6 +393,58 @@ func _check_faceup_ko(
             or player.record_virtual_press("a")):
         push_error("faceupko did not loop without getup or input exits")
         return false
+    return true
+
+
+func _check_reaction_states_ignore_repeated_hits(
+        player: PortFighter,
+        opponent: PortFighter,
+) -> bool:
+    for reaction_state: String in ["impactfaceup", "faceupko"]:
+        if not _prepare_faceup_idle_hit(player, opponent):
+            return false
+        if reaction_state == "impactfaceup":
+            player.begin_faceup_impact(1.0)
+        else:
+            player._begin_faceup_ko(player.health)
+        if player.state != reaction_state:
+            push_error("Could not prepare repeated-hit state " + reaction_state)
+            return false
+        if not opponent.request_attack("punch"):
+            push_error("Could not start the repeated Brick hit for " + reaction_state)
+            return false
+        opponent.state = "active"
+        opponent.state_time = float(opponent.ATTACKS["punch"]["active"])
+        opponent._attack_connected = false
+        opponent.combo_hits = 0
+        var state_time_before: float = player.state_time
+        var health_before: float = player.health
+        var hit_events: Array[String] = []
+        var ko_events: Array[String] = []
+        var on_hit: Callable = func(
+            _attacker: PortFighter,
+            _defender: PortFighter,
+            action: String,
+            _damage: float,
+            _blocked: bool,
+        ) -> void:
+            hit_events.append(action)
+        var on_ko: Callable = func(_fighter: PortFighter) -> void:
+            ko_events.append(reaction_state)
+        opponent.combat_hit.connect(on_hit)
+        player.combat_ko.connect(on_ko)
+        opponent._try_attack_contact()
+        opponent.combat_hit.disconnect(on_hit)
+        player.combat_ko.disconnect(on_ko)
+        if (player.state != reaction_state
+                or absf(player.state_time - state_time_before) > 0.001
+                or absf(player.health - health_before) > 0.001
+                or opponent._attack_connected
+                or opponent.combo_hits != 0
+                or not hit_events.is_empty()
+                or not ko_events.is_empty()):
+            push_error("A repeated hit was counted during " + reaction_state)
+            return false
     return true
 
 

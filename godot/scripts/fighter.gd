@@ -1936,7 +1936,10 @@ func _try_attack_contact() -> void:
         impact_height, blocked, damage
     )
     var accepts_faceup_ko: bool = opponent._accepts_faceup_ko(damage, blocked)
-    if (opponent.state in ["faceupidle", "faceupgetup", "faceupattack"]
+    if (opponent.state in [
+                "faceupidle", "faceupgetup", "faceupattack",
+                "impactfaceup", "faceupko",
+            ]
             and not accepts_impact_to_floor
             and not accepts_faceup_impact
             and not accepts_faceup_ko):
