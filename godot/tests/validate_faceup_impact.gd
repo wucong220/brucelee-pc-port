@@ -71,9 +71,26 @@ func _run() -> void:
 
 func _check_clips(player: PortFighter) -> bool:
     var animation: AnimationPlayer = player.get("_candidate_animation")
-    if animation == null or animation.get_animation_list().size() != 19:
-        push_error("Face-up GLB does not expose exactly 19 clips")
+    var clip_count: int = animation.get_animation_list().size() if animation != null else 0
+    if clip_count not in [19, 22]:
+        push_error("Face-up GLB does not expose the 19-clip base or 22-clip extension")
         return false
+    if clip_count == 22:
+        for extension_name: String in [
+            PortFighter.FACEUP_GETUP_CLIP,
+            "all_getup_faceup_attack",
+            "m01_attack_to_floor",
+        ]:
+            if animation.get_animation_list().has(extension_name):
+                continue
+            var found: bool = false
+            for clip_name: StringName in animation.get_animation_list():
+                if String(clip_name).ends_with("/" + extension_name):
+                    found = true
+                    break
+            if not found:
+                push_error("22-clip face-up extension is missing " + extension_name)
+                return false
     if not _check_clip(
         player,
         PortFighter.FACEUP_IMPACT_TO_FLOOR_CLIP,
@@ -340,7 +357,7 @@ func _check_entry_and_return(player: PortFighter) -> bool:
 func _check_faceup_idle_has_no_unverified_exits(player: PortFighter) -> bool:
     player.state = "faceupidle"
     player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
-    player.move_axis = Vector2(-1.0, 0.0)
+    player.move_axis = Vector2(0.0, 1.0)
     if player.record_virtual_press("a"):
         push_error("faceupidle accepted the facedown attack input sequence")
         return false
