@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "source_set": "adreno_200/set/brucelee.set",
+  "method": "Re-read read-only with kdf_fighting_set.read_archive_resource and kdf_combat_reactions._parse_set plus _animation_metadata before writing ANMs. This report stores no original bytes.",
+  "actions": {
+    "idle2": {
+      "animation": "adreno_200/animation/m01_idle_02.anm",
+      "radius": 40,
+      "duration_frames": 43,
+      "framerate": 30,
+      "sha256": "4ec45535b388da4951159691e0cd46b66eacecd214c15df3819b6e557453b8c0",
+      "resource_id": "629a92aab8e123e269f8795ea7d349ea",
+      "pakd_offset": 93586337,
+      "groups": {
+        "impactable": [
+          0,
+          43
+        ],
+        "canblock": [
+          0,
+          43
+        ],
+        "candocounter": [
+          0,
+          43
+        ],
+        "candobasicattacks": [
+          0,
+          43
+        ],
+        "canmove": [
+          0,
+          43
+        ]
+      },
+      "direct_links": [
+        {
+          "to": "idle2",
+          "time": [
+            43,
+            43
+          ],
+          "linking_frame": 0
+        }
+      ]
+    },
+    "facedownidle": {
+      "animation": "adreno_200/animation/all_idle_face_down.anm",
+      "radius": 75,
+      "duration_frames": 45,
+      "framerate": 30,
+      "sha256": "ed5f0ef99967f2536e6472a9afc85e98b88d373287adbc6aec2ef64afdea333f",
+      "resource_id": "a087d9f4ac074f6705f30acdfa99f6de",
+      "pakd_offset": 25028447,
+      "groups": [],
+      "direct_links": [
+        {
+          "to": "facedownidle",
+          "time": [
+            45,
+            45
+          ],
+          "linking_frame": 0
+        },
+        {
+          "to": "facedownko",
+          "conditions": [
+            "healthzero"
+          ],
+          "time": [
+            0,
+            45
+          ],
+          "linking_frame": 0,
+          "implemented": false
+        },
+        {
+          "to": "impactfacedown",
+          "conditions": [
+            "impact",
+            "oppattackheightlow"
+          ],
+          "time": [
+            0,
+            45
+          ],
+          "linking_frame": 0,
+          "implemented": false
+        },
+        {
+          "to": "facedowngetup",
+          "keystatus": [
+            "left",
+            "pressed"
+          ],
+          "time": [
+            10,
+            45
+          ],
+          "linking_frame": 0,
+          "prototype_input": "move_axis.x < 0"
+        },
+        {
+          "to": "facedowngetup",
+          "keystatus": [
+            "right",
+            "pressed"
+          ],
+          "time": [
+            10,
+            45
+          ],
+          "linking_frame": 0,
+          "prototype_input": "move_axis.x > 0"
+        }
+      ],
+      "out_of_scope_links": "facedownattack punch/kick keysequence links are not implemented"
+    },
+    "facedowngetup": {
+      "animation": "adreno_200/animation/all_getup_facedwn.anm",
+      "radius": 25,
+      "duration_frames": 19,
+      "framerate": 30,
+      "sha256": "632e3d786edb9fac44b1ebf2515d043c53f42cb1197f776a706c8743d94cd676",
+      "resource_id": "877c627d606711bb6016c853d8ce68c4",
+      "pakd_offset": 102863174,
+      "direct_links": [
+        {
+          "to": "idle",
+          "time": [
+            16,
+            19
+          ],
+          "linking_frame": 0
+        }
+      ]
+    }
+  },
+  "not_implemented": [
+    "facedownattack",
+    "facedownko",
+    "impactfacedown",
+    "ground_hit_reactions"
+  ],
+  "prototype_move_axis": "Horizontal facedown getup uses the prototype move_axis.x sign, not a verified original keyboard binding.",
+  "candidate_glb": {
+    "path": "C:\\Users\\Lenovo\\AppData\\Local\\BruceLee-PC-Port\\reaction-candidate-20261030\\bruce_candidate_return_states.glb",
+    "sha256": "8c864109dcd9206cde30f287bf35f55cdb08b039780ee4fe9128aa63a833d925",
+    "animation_names": [
+      "m01_idle_01",
+      "m01_pnch_low_01",
+      "m01_kick_low_01",
+      "all_block_high",
+      "all_block_low",
+      "all_block_mid",
+      "all_impct_light_frnt_high",
+      "all_impct_light_frnt_low",
+      "all_impct_light_frnt_mid",
+      "all_impct_crotch",
+      "all_impct_hard_rht_low",
+      "all_block_high_hard",
+      "m01_idle_02",
+      "all_idle_face_down",
+      "all_getup_facedwn"
+    ]
+  },
+  "static_json": {
+    "highblockhard_return_implemented": false,
+    "impacthardrightlow_return_implemented": false,
+    "clip_implemented": false,
+    "loader_accepts_clip_implemented_true": false
+  }
+}

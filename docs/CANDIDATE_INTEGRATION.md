@@ -153,7 +153,7 @@ WINDOWS_EXE_VALIDATION=PASS
   `prototype_push` 未替换；block ANM 没有 `positions` 轨道也不能证明格挡没有位移。
 - Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
   这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
-- 对手 Brick 已加载 `thai.set` 中与当前四条 clip 对应的低段攻击和动画半径，并关闭 Bruce 时序缩放。硬受击和 `highblockhard` 记在 Bruce 防守配置上。JSON 的 `clip_implemented` 仍是 false；加载的 GLB 实际含有对应动画且候选轨道检查通过时，hitstun/blockstun 播放该 clip，不再改播轻击正面反应。`facedownidle` 和 `idle2` 仍未实现，退出帧之后显式回到 idle。这不是原版逐帧视觉验收，也不是 knockdown 或完整 Thai set。ATC 纹理、完整 Thai set、AI 和 knockdown 仍未恢复。
+- 对手 Brick 已加载 `thai.set` 中与当前四条 clip 对应的低段攻击和动画半径，并关闭 Bruce 时序缩放。硬受击和 `highblockhard` 记在 Bruce 防守配置上。JSON 的 `clip_implemented` 仍是 false，`facedownidle` 和 `idle2` 的 `return_implemented` 也仍是 false；加载的 GLB 实际含有对应动画且候选轨道检查通过时，hitstun/blockstun 播放该 clip，不再改播轻击正面反应。15 段返回候选含有 `idle2` 和 `facedownidle` 时，退出帧之后进入这两个已核对状态；缺 clip 时仍显式回到普通 idle。这不是原版逐帧视觉验收，也不是 knockdown 或完整 Thai set。ATC 纹理、完整 Thai set、AI 和 knockdown 仍未恢复。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。
 
 ## 候选受击与格挡视觉
@@ -200,3 +200,17 @@ WINDOWS_EXE_VALIDATION=PASS
 `all_impct_hard_rht_low` 含一条 raw-fixed `rotations` 轨道。采样为 25 帧 `int16[4]`，按已验证的 `bonerot` Q14 解码后首帧是单位四元数，模长误差与该轨道同一量级。offset 为 0，对应骨架 object `character` 的 `object_rotation_index`。四元数分量顺序，以及对象旋转如何作用到朝向，仍未验证。运行时关闭 character 节点的平移、旋转和缩放，避免把未验证的对象运动当成 fighter push、朝向或体型变化；当前样本的 scale 虽是恒等缩放，代码也不保留这条轨道。骨骼轨道仍播放。
 
 没有加载这些 clip 的旧 GLB 仍可使用。缺失硬击 clip 时不改播轻击正面反应。`return_implemented` 不因本轮改为 true。
+
+## 受击后的返回状态
+
+仓库外 `bruce_candidate_return_states.glb` 在上述 12 段上增加三条从 `adreno_200/set/brucelee.set` 复核的 clip：`m01_idle_02`、`all_idle_face_down`、`all_getup_facedwn`。GLB JSON 只有这 15 个动画名。原始 ANM、GLB 和字节留在仓库外。resource id、PAKD offset 和 SHA-256 见 [`bruce_return_states.json`](../reports/bruce_return_states.json)。
+
+只有当前加载的 GLB 含有所需 clip，并且现有候选轨道检查通过时，才进入返回状态。静态 JSON 的 `return_implemented` 与 `clip_implemented` 保持 false。加载器仍拒绝 `clip_implemented: true`。缺 clip 时，`highblockhard` 和 `impacthardrightlow` 在记录到的退出帧之后回到普通 idle。
+
+`highblockhard` 到达退出帧后进入 `idle2`，循环播放 `m01_idle_02`，动画半径 40。现有移动、拳和踢仍可从 `idle2` 发出：`canmove`、`candobasicattacks` 和 `canblock` 覆盖第 0 到 43 帧。这里不新增攻击。`idle2` 的直接循环是 `idle2 -> idle2`，时间 `[43, 43]`。
+
+`impacthardrightlow` 到达退出帧后进入 `facedownidle`，循环播放 `all_idle_face_down`，动画半径 75。这个状态不接受普通拳或踢。它在第 10 到 45 帧接受一次水平移动输入并进入 `facedowngetup`。负的 `move_axis.x` 代表档案里的 left，正的代表 right。这用的是原型移动轴，不是已核对的原版键盘绑定。`facedownidle` 没有战斗分组；档案里的 `facedownko`、`impactfacedown` 和 `facedownattack` 都没有实现。
+
+`facedowngetup` 播放 `all_getup_facedwn`，动画半径 25，并在第 16 帧回到普通 idle 的第 0 帧。档案窗口是 `[16, 19]`，linking frame 为 0。不继续进入 `facedownattack`。这不是完整 knockdown，也没有倒地受击。
+
+character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨道仍播放。12 段硬受击 GLB 不含这三条返回 clip，因此仍在退出帧之后回到普通 idle。
