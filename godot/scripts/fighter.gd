@@ -47,6 +47,19 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "all_block_mid": 40.0,
     "all_block_high": 40.0,
 }
+const IDLE2_CLIP: String = "m01_idle_02"
+const FACEDOWN_IDLE_CLIP: String = "all_idle_face_down"
+const FACEDOWN_GETUP_CLIP: String = "all_getup_facedwn"
+const IDLE2_DURATION_FRAMES: int = 43
+const FACEDOWN_IDLE_DURATION_FRAMES: int = 45
+const FACEDOWN_GETUP_WINDOW_START: int = 10
+const FACEDOWN_GETUP_WINDOW_END: int = 45
+const FACEDOWN_GETUP_EXIT_FRAME: int = 16
+const RETURN_ANIMATION_RADII: Dictionary = {
+    "m01_idle_02": 40.0,
+    "all_idle_face_down": 75.0,
+    "all_getup_facedwn": 25.0,
+}
 const REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
         "low": {
@@ -975,6 +988,18 @@ func _try_load_candidate_visual() -> void:
             var exact_clip: Animation = _candidate_animation.get_animation(matched_exact)
             if _prepare_candidate_reaction(exact_clip):
                 _candidate_clip_paths[exact_name] = matched_exact
+    # Return clips stay return_implemented false in JSON. A loaded GLB can
+    # enter one only after the same candidate track check used above.
+    if _candidate_skeleton != null:
+        for return_clip_name: String in [IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP]:
+            var matched_return: String = _find_animation_clip(
+                _candidate_animation, return_clip_name
+            )
+            if matched_return.is_empty():
+                continue
+            var return_clip: Animation = _candidate_animation.get_animation(matched_return)
+            if _prepare_candidate_reaction(return_clip):
+                _candidate_clip_paths[return_clip_name] = matched_return
     var idle: Animation = _candidate_animation.get_animation(_candidate_clip_paths["idle"])
     idle.loop_mode = Animation.LOOP_LINEAR
     if _candidate_clip_paths.has("move"):
@@ -982,6 +1007,18 @@ func _try_load_candidate_visual() -> void:
             _candidate_clip_paths["move"]
         )
         move.loop_mode = Animation.LOOP_LINEAR
+    for looping_return: String in [IDLE2_CLIP, FACEDOWN_IDLE_CLIP]:
+        if not _candidate_clip_paths.has(looping_return):
+            continue
+        var looping_clip: Animation = _candidate_animation.get_animation(
+            _candidate_clip_paths[looping_return]
+        )
+        looping_clip.loop_mode = Animation.LOOP_LINEAR
+    if _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP):
+        var getup_clip: Animation = _candidate_animation.get_animation(
+            _candidate_clip_paths[FACEDOWN_GETUP_CLIP]
+        )
+        getup_clip.loop_mode = Animation.LOOP_NONE
     for action: String in _candidate_clip_paths:
         _disable_candidate_character_position_tracks(
             _candidate_animation.get_animation(_candidate_clip_paths[action])
@@ -1227,8 +1264,108 @@ func supports_attack(kind: String) -> bool:
     return true
 
 
+
+func _uses_standing_idle_rules() -> bool:
+    return state == "idle" or state == "idle2"
+
+
+func _clear_reaction_tracking() -> void:
+    last_reaction_group = ""
+    last_reaction_source_action = ""
+    last_reaction_animation = ""
+    last_reaction_exit_frame = -1
+    last_reaction_clip_implemented = false
+
+
+func _restart_candidate_action() -> void:
+    if _candidate_animation != null:
+        _candidate_animation.stop()
+    _candidate_action = ""
+
+
+func _enter_locomotion_state(next_state: String) -> void:
+    state = next_state
+    state_time = 0.0
+    attack_kind = ""
+    _clear_reaction_tracking()
+    _restart_candidate_action()
+
+
+func _verified_post_hit_return_state() -> String:
+    var profile: Dictionary = _profile_for_animation(last_reaction_animation)
+    var return_action: String = String(profile.get("return_action", ""))
+    # The return clip alone must not start a post-hit state. The hard reaction
+    # that links to it has to be registered and marked implemented.
+    var reaction_clip_ready: bool = (
+        last_reaction_clip_implemented
+        and _candidate_clip_paths.has(last_reaction_animation)
+    )
+    if (reaction_clip_ready
+            and return_action == "idle2"
+            and _candidate_clip_paths.has(IDLE2_CLIP)):
+        return "idle2"
+    if (reaction_clip_ready
+            and return_action == "facedownidle"
+            and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)
+            and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP)):
+        return "facedownidle"
+    return "idle"
+
+
+func _advance_return_state(delta: float) -> void:
+    if state == "idle2":
+        state_time += maxf(delta, 0.0)
+        _wrap_return_loop(IDLE2_DURATION_FRAMES)
+        return
+    if state == "facedownidle":
+        var before: float = state_time
+        state_time += maxf(delta, 0.0)
+        if _facedown_getup_requested(before, state_time):
+            _begin_facedown_getup()
+            return
+        _wrap_return_loop(FACEDOWN_IDLE_DURATION_FRAMES)
+        return
+    if state == "facedowngetup":
+        state_time += maxf(delta, 0.0)
+        if _reached_source_frame(state_time, FACEDOWN_GETUP_EXIT_FRAME):
+            _enter_locomotion_state("idle")
+
+
+func _wrap_return_loop(duration_frames: int) -> void:
+    var duration: float = float(duration_frames) / SOURCE_FRAME_RATE
+    if duration <= 0.0:
+        return
+    while state_time >= duration:
+        state_time -= duration
+
+
+func _reached_source_frame(seconds: float, frame: int) -> bool:
+    return seconds * SOURCE_FRAME_RATE + 0.0001 >= float(frame)
+
+
+func _facedown_getup_requested(before: float, after: float) -> bool:
+    # brucelee.set uses keystatus left/right. This prototype only has move_axis:
+    # negative x stands in for left and positive x for right. It is not a
+    # verified original keyboard binding.
+    if absf(move_axis.x) <= 0.001 or not _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP):
+        return false
+    var start_frame: float = minf(before, after) * SOURCE_FRAME_RATE
+    var end_frame: float = maxf(before, after) * SOURCE_FRAME_RATE
+    return (
+        end_frame + 0.0001 >= float(FACEDOWN_GETUP_WINDOW_START)
+        and start_frame <= float(FACEDOWN_GETUP_WINDOW_END) + 0.0001
+    )
+
+
+func _begin_facedown_getup() -> void:
+    state = "facedowngetup"
+    state_time = 0.0
+    attack_kind = ""
+    _restart_candidate_action()
+
+
 func request_attack(kind: String) -> bool:
-    if state != "idle" or guard_held or not ATTACKS.has(kind):
+    if not _uses_standing_idle_rules() or guard_held or not ATTACKS.has(kind):
         return false
     attack_kind = kind
     attack_sequence += 1
@@ -1247,9 +1384,9 @@ func _physics_process(delta: float) -> void:
     if state == "active" and not _attack_connected:
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
-    if state == "idle" and not guard_held:
+    if _uses_standing_idle_rules() and not guard_held:
         motion = Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED
-    elif state == "idle" and guard_held:
+    elif _uses_standing_idle_rules() and guard_held:
         motion = Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED * 0.25
     velocity.x = motion.x
     velocity.z = motion.z
@@ -1264,6 +1401,9 @@ func _physics_process(delta: float) -> void:
     _animate_candidate()
 
 func _advance_timed_states(delta: float) -> void:
+    if state == "idle2" or state == "facedownidle" or state == "facedowngetup":
+        _advance_return_state(delta)
+        return
     var remaining: float = delta
     while (remaining > 0.0
             and state in ["startup", "active", "recovery", "hitstun", "blockstun"]):
@@ -1284,14 +1424,10 @@ func _advance_state() -> void:
             state = "recovery"
             state_time = float(ATTACKS[attack_kind]["recovery"])
         "recovery", "hitstun", "blockstun":
-            state = "idle"
-            state_time = 0.0
-            attack_kind = ""
-            last_reaction_group = ""
-            last_reaction_source_action = ""
-            last_reaction_animation = ""
-            last_reaction_exit_frame = -1
-            last_reaction_clip_implemented = false
+            var next_state: String = "idle"
+            if state != "recovery":
+                next_state = _verified_post_hit_return_state()
+            _enter_locomotion_state(next_state)
 
 func _try_attack_contact() -> void:
     if opponent == null or not is_instance_valid(opponent) or opponent.state == "ko":
@@ -1305,7 +1441,7 @@ func _try_attack_contact() -> void:
     if dx * facing < -0.1:
         return
     var damage: float = float(details["damage"])
-    var blocked: bool = opponent.guard_held and opponent.state == "idle"
+    var blocked: bool = opponent.guard_held and opponent._uses_standing_idle_rules()
     var reaction: Dictionary = {}
     if details.has("source_impact"):
         reaction = opponent.reaction_for_incoming(details["source_impact"], blocked)
@@ -1326,6 +1462,12 @@ func current_source_animation() -> String:
         return String(ATTACKS[attack_kind]["animation"])
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return CANDIDATE_CLIPS["kick"]
+    if state == "idle2":
+        return IDLE2_CLIP
+    if state == "facedownidle":
+        return FACEDOWN_IDLE_CLIP
+    if state == "facedowngetup":
+        return FACEDOWN_GETUP_CLIP
     return _owner_idle_animation()
 
 
@@ -1338,6 +1480,8 @@ func _owner_idle_animation() -> String:
 func _stored_animation_radius(animation: String) -> float:
     if source_animation_radii.has(animation) and _is_number(source_animation_radii[animation]):
         return float(source_animation_radii[animation])
+    if RETURN_ANIMATION_RADII.has(animation) and _is_number(RETURN_ANIMATION_RADII[animation]):
+        return float(RETURN_ANIMATION_RADII[animation])
     var profile: Dictionary = _profile_for_animation(animation)
     if profile.has("animation_radius") and _is_number(profile["animation_radius"]):
         return float(profile["animation_radius"])
@@ -1520,7 +1664,7 @@ func _animate_visuals() -> void:
     _left_arm.rotation.z = 0.0
     if state in ["startup", "active"]:
         _right_arm.rotation.z = 1.05 if attack_kind == "punch" else 0.45
-    elif guard_held and state == "idle":
+    elif guard_held and _uses_standing_idle_rules():
         _right_arm.rotation.z = 0.90
         _left_arm.rotation.z = -0.90
     elif state == "hitstun":
@@ -1553,6 +1697,12 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "ko" and _candidate_clip_paths.has("ko"):
         requested = "ko"
+    elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
+        requested = IDLE2_CLIP
+    elif state == "facedownidle" and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP):
+        requested = FACEDOWN_IDLE_CLIP
+    elif state == "facedowngetup" and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP):
+        requested = FACEDOWN_GETUP_CLIP
     elif state == "idle" and _candidate_clip_paths.has("move") and (
             absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001
     ):
