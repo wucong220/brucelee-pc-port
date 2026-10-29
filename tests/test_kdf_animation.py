@@ -33,7 +33,8 @@ def animation_fixture(
         reverse_first_declarations=False,
         wavelet_properties_pointer=1, wavelet_words=None,
         numaproximations=3, first_huffman_level=0, quantizedbits=32,
-        duplicate_wavelets=0) -> bytes:
+        duplicate_wavelets=0, include_section_pointers=False,
+        section_pointer_delta=0) -> bytes:
     values = HEADER_VALUES if values is None else values
     wavelet_words = [3, 0, 1, 2] if wavelet_words is None else wavelet_words
     strings = list(values) + [
@@ -43,9 +44,18 @@ def animation_fixture(
         'firsthuffmanlevel', 'numaproximations',
         'huffsize', 'huffcode', 'compresschannels',
     ]
+    if include_section_pointers:
+        strings.extend(['anmdata', 'anmstatic'])
     records = []
     for key, value in values.items():
         records.extend(((0x60000000, strings.index(key)), (0, value)))
+
+    section_pointer_records = {}
+    if include_section_pointers:
+        for name in ('anmdata', 'anmstatic'):
+            records.append((0x60000000, strings.index(name)))
+            section_pointer_records[name] = len(records)
+            records.append((0x30000003, 0))
 
     first_declarations = [
         ('bonepos', 'bonepos_raw', 'bonepos_raw', 0x30000003),
@@ -140,6 +150,13 @@ def animation_fixture(
     for name, pointer_ordinal in pointer_records.items():
         records[pointer_ordinal] = (
             pointer_markers[name], sample_targets[name] - pointer_ordinal)
+
+    if include_section_pointers:
+        for name, target in (('anmdata', first_track_start),
+                             ('anmstatic', second_track_start)):
+            pointer_ordinal = section_pointer_records[name]
+            delta = section_pointer_delta if name == 'anmdata' else 0
+            records[pointer_ordinal] = (0x30000003, target - pointer_ordinal + delta)
 
     for _ in range(duplicate_wavelets):
         records.extend((
@@ -326,6 +343,16 @@ class TestKdfAnimation(unittest.TestCase):
         with mock.patch('kdf_animation._MAX_WAVELET_SCALARS', 48):
             with self.assertRaisesRegex(KdfError, 'aggregate work limit'):
                 inspect_animation(raw, decode_wavelet_values=True)
+
+    def test_track_section_labels_follow_relative_pointers(self):
+        result = inspect_animation(animation_fixture(include_section_pointers=True))
+        self.assertEqual(
+            [group['source_section'] for group in result['track_groups']],
+            ['anmdata', 'anmstatic'],
+        )
+        with self.assertRaisesRegex(KdfError, 'anmdata does not uniquely target'):
+            inspect_animation(animation_fixture(
+                include_section_pointers=True, section_pointer_delta=1))
 
     def test_second_track_group_decodes_q14_rotation_and_scale(self):
         result = inspect_animation(animation_fixture(), include_values=True)
