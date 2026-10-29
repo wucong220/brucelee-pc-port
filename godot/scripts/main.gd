@@ -4,6 +4,8 @@ extends Node3D
 
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
+const EXPECTED_CANDIDATE_ANIMATED_HEIGHT: float = 1.6113350
+const ANIMATED_HEIGHT_TOLERANCE: float = 0.01
 
 var player: PortFighter
 var computer: PortFighter
@@ -28,6 +30,7 @@ func _ready() -> void:
 
 
 func _run_export_self_test() -> void:
+    var opponent_idle_clip: String = ""
     await get_tree().process_frame
     await get_tree().process_frame
     for _frame: int in 120:
@@ -42,6 +45,28 @@ func _run_export_self_test() -> void:
                 + player.candidate_texture_error)
         get_tree().quit(1)
         return
+    var expect_opponent_candidate: bool = not OS.get_environment(
+        "BRUCELEE_OPPONENT_GLB"
+    ).is_empty()
+    if expect_opponent_candidate and not computer.candidate_loaded:
+        push_error("EXPORT_SELF_TEST: opponent candidate GLB was not loaded: "
+                + computer.candidate_load_error)
+        get_tree().quit(1)
+        return
+    if expect_opponent_candidate:
+        computer.reset_fighter(Vector3(2.0, 1.20, 0.0))
+        computer._animate_candidate()
+        if computer.candidate_animation_clip != "m03_idle_01":
+            push_error("EXPORT_SELF_TEST: opponent candidate did not select Brick idle")
+            get_tree().quit(1)
+            return
+        opponent_idle_clip = computer.candidate_animation_clip
+        if (not OS.get_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT").is_empty()
+                and not computer.candidate_textures_loaded):
+            push_error("EXPORT_SELF_TEST: opponent textures were not loaded: "
+                    + computer.candidate_texture_error)
+            get_tree().quit(1)
+            return
     if player.candidate_animation_clip != "m01_idle_01":
         push_error("EXPORT_SELF_TEST: candidate did not start in idle")
         get_tree().quit(1)
@@ -58,8 +83,11 @@ func _run_export_self_test() -> void:
         return
     var bounds: AABB = measured["bounds"]
     var expected_floor_y: float = 0.0
-    if bounds.size.y < 1.5 or bounds.size.y > 1.9:
-        push_error("EXPORT_SELF_TEST: animated candidate height is %.6f" % bounds.size.y)
+    if absf(bounds.size.y - EXPECTED_CANDIDATE_ANIMATED_HEIGHT) > ANIMATED_HEIGHT_TOLERANCE:
+        push_error(
+            "EXPORT_SELF_TEST: animated candidate height is %.6f, expected %.6f"
+            % [bounds.size.y, EXPECTED_CANDIDATE_ANIMATED_HEIGHT]
+        )
         get_tree().quit(1)
         return
     if absf(bounds.position.y - expected_floor_y) > 0.02:
@@ -116,6 +144,10 @@ func _run_export_self_test() -> void:
         "punch_target_health": computer.health,
         "punch_hitstun_frames": computer.last_reaction_exit_frame,
         "reaction_clip": player.candidate_animation_clip,
+        "opponent_candidate_loaded": computer.candidate_loaded,
+        "opponent_idle_clip": opponent_idle_clip,
+        "opponent_textures_loaded": computer.candidate_textures_loaded,
+        "opponent_texture_reason": computer.candidate_texture_reason,
     }))
     get_tree().quit(0)
 
@@ -204,9 +236,22 @@ func _make_arena_line(x: float) -> void:
 func _build_fighters() -> void:
     player = PortFighter.new()
     player.configure("Bruce (placeholder)", true, Color(0.85, 0.56, 0.18))
+    player.configure_candidate_asset(
+        OS.get_environment("BRUCELEE_PLAYER_GLB"),
+        OS.get_environment("BRUCELEE_PLAYER_TEXTURE_ROOT"),
+        PortFighter.CANDIDATE_CLIPS,
+        "body_hair"
+    )
     add_child(player)
     computer = PortFighter.new()
     computer.configure("Opponent (placeholder)", false, Color(0.20, 0.65, 0.76))
+    computer.configure_candidate_asset(
+        OS.get_environment("BRUCELEE_OPPONENT_GLB"),
+        OS.get_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT"),
+        PortFighter.BRICK_CLIPS,
+        "body",
+        true
+    )
     add_child(computer)
     player.opponent = computer
     computer.opponent = player
@@ -280,7 +325,8 @@ func _think_ai(delta: float) -> void:
             var moves: Array[String] = ["punch", "kick", "heavy"]
             var available: Array[String] = []
             for move: String in moves:
-                if computer.attack_reach_world(move, player) >= distance:
+                if (computer.supports_attack(move)
+                        and computer.attack_reach_world(move, player) >= distance):
                     available.append(move)
             if not available.is_empty():
                 computer.request_attack(available[rng.randi_range(0, available.size() - 1)])

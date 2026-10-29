@@ -32,6 +32,7 @@
     `173.416 → 1.8` 的高度比例转换到 Godot 世界；该换算属于 `CANDIDATE`，仍未证明原版场景另有全局缩放或位置修正。`prototype_push` 仍为原型值。
 15. `brucelee.set` 的 396 条战斗 links、normal 正面受击映射、格挡映射、反应动作返回窗口及对应 ANM 时长已只读导出到 `reports/reaction_action_inventory.json`。Godot 的 `hitstun/blockstun` 已按 reaction return frame 配置驱动，并保留 `CANDIDATE` 边界；`push` 仍使用原型规则。
 16. reaction root-motion 取证已导出 `positions` 逐帧值、轨道存在性和 ANM 哈希到 `reports/reaction_root_motion_inventory.json`，并由 16 条原生变换链指令校验。当前尚未把任何坐标轴映射为 Godot `push`。
+17. 玩家 Bruce 和电脑 Brick 已分别加载独立候选 GLB、动作映射与动画节点；Brick 可使用 `m03_*` idle/punch/kick/movefwd。此接入仍是原型：Brick PNG 尚未解码，Brick 原版 fighting set、命中参数、reaction 和 AI 未恢复；候选动画的未验证角色位移轨道已禁用。
 
 ## 立即运行 Windows PC 原型
 

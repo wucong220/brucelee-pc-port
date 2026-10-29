@@ -4,6 +4,8 @@ extends SceneTree
 
 
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
+const EXPECTED_PLAYER_ANIMATED_HEIGHT: float = 1.6010163
+const ANIMATED_HEIGHT_TOLERANCE: float = 0.01
 
 
 func _initialize() -> void:
@@ -85,10 +87,10 @@ func _run_check() -> void:
         return
     var final_bounds: AABB = measured["bounds"]
     var expected_floor_y: float = PortFighter.CANDIDATE_FLOOR_Y
-    if absf(final_bounds.size.y - PortFighter.CANDIDATE_HEIGHT) > 0.02:
+    if absf(final_bounds.size.y - EXPECTED_PLAYER_ANIMATED_HEIGHT) > ANIMATED_HEIGHT_TOLERANCE:
         push_error(
-            "Integrated candidate final height is %.6f, expected %.6f"
-            % [final_bounds.size.y, PortFighter.CANDIDATE_HEIGHT]
+            "Integrated candidate animated height is %.6f, expected %.6f"
+            % [final_bounds.size.y, EXPECTED_PLAYER_ANIMATED_HEIGHT]
         )
         quit(1)
         return

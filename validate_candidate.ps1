@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$TextureRoot,
     [string]$OpponentGlb,
+    [string]$OpponentTextureRoot,
     [string]$GodotExe = "C:\Tools\Godot_v4.7.2-stable_win64_console.exe",
     [string]$Python = "py -3.12",
     [switch]$ExpectReactionClips,
@@ -13,6 +14,10 @@ param(
 $ErrorActionPreference = "Stop"
 if ($ExpectReactionClips -and $ExpectLegacyClips) {
     throw "Choose either reaction clips or legacy fallback, not both."
+}
+if (-not [string]::IsNullOrWhiteSpace($OpponentTextureRoot) -and
+        [string]::IsNullOrWhiteSpace($OpponentGlb)) {
+    throw "OpponentTextureRoot requires OpponentGlb."
 }
 $reactionMode = if ($ExpectReactionClips) { "with-reactions" } else { "legacy" }
 $lexicalRepoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
@@ -106,9 +111,24 @@ $TextureRoot = Resolve-ExternalPath $TextureRoot "Texture root"
 if (-not [string]::IsNullOrWhiteSpace($OpponentGlb)) {
     $OpponentGlb = Resolve-ExternalPath $OpponentGlb "Opponent GLB"
 }
+if (-not [string]::IsNullOrWhiteSpace($OpponentTextureRoot)) {
+    $OpponentTextureRoot = Resolve-ExternalPath $OpponentTextureRoot "Opponent texture root"
+}
 $GodotExe = (Resolve-Path -LiteralPath $GodotExe).Path
 
 Push-Location $repoRoot
+$validationEnvironmentNames = @(
+    "BRUCELEE_EXPORT_SELF_TEST",
+    "BRUCELEE_PLAYER_GLB",
+    "BRUCELEE_PLAYER_TEXTURE_ROOT",
+    "BRUCELEE_OPPONENT_GLB",
+    "BRUCELEE_OPPONENT_TEXTURE_ROOT"
+)
+$savedValidationEnvironment = @{}
+foreach ($name in $validationEnvironmentNames) {
+    $savedValidationEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, "Process")
+    Remove-Item -Path "Env:$name" -ErrorAction SilentlyContinue
+}
 try {
     $pythonParts = $Python -split '\s+', 2
     $pythonExe = Get-Command $pythonParts[0] -ErrorAction Stop
@@ -137,6 +157,15 @@ try {
         Invoke-Checked "Opponent candidate animation" {
             & $GodotExe --headless --path $godotProject `
                 --script res://tests/validate_opponent_candidate.gd -- $OpponentGlb
+        }
+        Invoke-Checked "Dual fighter candidate assets" {
+            $dualArgs = @($CandidateGlb, $OpponentGlb, $TextureRoot)
+            if (-not [string]::IsNullOrWhiteSpace($OpponentTextureRoot)) {
+                $dualArgs += $OpponentTextureRoot
+            }
+            & $GodotExe --headless --path $godotProject `
+                --script res://tests/validate_dual_fighter_candidates.gd `
+                -- $dualArgs
         }
     }
     Invoke-Checked "Candidate bounds and scale" {
@@ -187,6 +216,15 @@ try {
                 & $GodotExe --headless --main-pack $packPath `
                     --script res://tests/validate_opponent_candidate.gd -- $OpponentGlb
             }
+            Invoke-Checked "Packed dual fighter candidate assets" {
+                $dualArgs = @($CandidateGlb, $OpponentGlb, $TextureRoot)
+                if (-not [string]::IsNullOrWhiteSpace($OpponentTextureRoot)) {
+                    $dualArgs += $OpponentTextureRoot
+                }
+                & $GodotExe --headless --main-pack $packPath `
+                    --script res://tests/validate_dual_fighter_candidates.gd `
+                    -- $dualArgs
+            }
         }
         Invoke-Checked "Packed candidate bounds and scale" {
             & $GodotExe --headless --main-pack $packPath `
@@ -214,6 +252,14 @@ try {
     }
 }
 finally {
+    foreach ($name in $validationEnvironmentNames) {
+        $savedValue = $savedValidationEnvironment[$name]
+        if ($null -eq $savedValue) {
+            Remove-Item -Path "Env:$name" -ErrorAction SilentlyContinue
+        } else {
+            Set-Item -Path "Env:$name" -Value $savedValue
+        }
+    }
     Pop-Location
 }
 
