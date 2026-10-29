@@ -9,6 +9,8 @@ var player: PortFighter
 var computer: PortFighter
 var hud: PortHUD
 var ai_timer: float = 0.0
+var ai_guard_sequence: int = -1
+var ai_guard_decision: bool = false
 var done: bool = false
 var elapsed: float = 0.0
 var notice_timer: float = 0.0
@@ -219,6 +221,8 @@ func _reset_match() -> void:
     done = false
     elapsed = 0.0
     ai_timer = 0.75
+    ai_guard_sequence = -1
+    ai_guard_decision = false
     notice_timer = 1.2
     hud.show_message("ROUND 1 · FIGHT")
 
@@ -257,11 +261,18 @@ func _think_ai(delta: float) -> void:
         computer.move_axis.x = -signf(separation) * 0.35
         computer.move_axis.y = -signf(separation_z) * 0.35
     var in_attack_reach: bool = distance <= source_reach
-    computer.guard_held = (
-        in_attack_reach
-        and player.state == "startup"
-        and rng.randf() < 0.25
-    )
+    # Prototype AI makes one decision per attack when the attack first poses
+    # a nearby threat, and holds it through the active window.
+    var player_threat: bool = player.state in ["startup", "active"]
+    if not player_threat:
+        ai_guard_sequence = -1
+        ai_guard_decision = false
+    if (player_threat and player.attack_sequence != ai_guard_sequence
+            and distance <= player.attack_reach_world(player.attack_kind, computer)):
+        ai_guard_sequence = player.attack_sequence
+        ai_guard_decision = rng.randf() < 0.25
+    computer.guard_held = (player_threat and player.attack_sequence == ai_guard_sequence
+            and ai_guard_decision)
     ai_timer -= delta
     if ai_timer <= 0.0:
         ai_timer = rng.randf_range(0.45, 0.95)

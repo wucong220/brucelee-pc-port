@@ -57,6 +57,9 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 - 两招的帧数、伤害、半径和 impact 字段由
   `godot/data/fighting_set_low_attacks.json` 加载；Godot `PortFighter` 在 `_ready`
   中校验配置，不再把两招帧、伤害或已恢复的距离公式写死在脚本常量里。
+- 原型 AI 对每次玩家攻击只采样一次格挡决定，并在攻击启动帧和有效帧期间保持
+  该决定；攻击进入范围后才触发决定，受击打断、恢复帧和回合重置均清除格挡。
+  这里只验证原型 AI 的稳定性，不代表恢复原版 AI 格挡概率或决策规则。
 - 原生距离链为 `attackRadius × fighter+0x15C + defender.GetRadius()`；
   `fighter+0x15C` 来自 character list 的 `radiusscale`，Bruce 缺省值为 `1.0`。
   两招的 `attackRadius=70`；当前候选 clip 的源半径为
