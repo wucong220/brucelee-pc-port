@@ -206,13 +206,13 @@ def inspect_bytes(raw: bytes, actions: list[str] | None = None, *, list_actions:
     return report
 
 
-def _read_archive_set(path: Path, set_path: str = _SET_PATH) -> tuple[bytes, dict]:
-    """Read one named set from an outer ZIP or data.zpak without exporting it."""
-    normalized_path = set_path.replace('\\', '/')
-    if (not normalized_path.startswith('adreno_200/set/')
-            or not normalized_path.lower().endswith('.set')
-            or '..' in normalized_path.split('/')):
-        raise PakError(f'invalid set path: {set_path!r}')
+def read_archive_resource(path: Path, resource_path: str) -> tuple[bytes, dict]:
+    """Read one named PAK resource without exporting it."""
+    normalized_path = resource_path.replace('\\', '/')
+    if (not normalized_path.startswith('adreno_200/')
+            or '..' in normalized_path.split('/')
+            or normalized_path.endswith('/')):
+        raise PakError(f'invalid resource path: {resource_path!r}')
     with _open_zpak_info(path) as (archive, source_hash, zpak_hash):
         members = {item.filename: item for item in archive.infolist() if not item.is_dir()}
         if 'Core.pakh' not in members or 'Core.pakd000' not in members:
@@ -229,11 +229,11 @@ def _read_archive_set(path: Path, set_path: str = _SET_PATH) -> tuple[bytes, dic
         ]
         if len(entries) != 1:
             raise PakError(
-                f'expected exactly one {Path(normalized_path).name} path in {normalized_path}'
+                f'expected exactly one {Path(normalized_path).name} resource path at {normalized_path}'
             )
         matches = [r for r in records if r.resource_id_hex == entries[0]['resource_id_hex']]
         if len(matches) != 1:
-            raise PakError('set resource identity is ambiguous or missing')
+            raise PakError('resource identity is ambiguous or missing')
         selected = matches[0]
         if (sum(r.pakd_offset == selected.pakd_offset for r in records) != 1
                 or selected.pakd_offset + selected.stored_bytes > members['Core.pakd000'].file_size):
@@ -252,6 +252,15 @@ def _read_archive_set(path: Path, set_path: str = _SET_PATH) -> tuple[bytes, dic
             'index_ordinal': selected.index_ordinal,
             'pakd_offset': selected.pakd_offset,
         }
+
+
+def _read_archive_set(path: Path, set_path: str = _SET_PATH) -> tuple[bytes, dict]:
+    """Read one named fighting set from an outer ZIP or data.zpak."""
+    normalized_path = set_path.replace('\\', '/')
+    if (not normalized_path.startswith('adreno_200/set/')
+            or not normalized_path.lower().endswith('.set')):
+        raise PakError(f'invalid set path: {set_path!r}')
+    return read_archive_resource(path, normalized_path)
 
 
 def inspect_archive(path: Path, actions: list[str] | None = None, *, list_actions: bool = False,
