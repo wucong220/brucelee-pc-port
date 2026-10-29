@@ -104,6 +104,7 @@ var opponent: PortFighter
 var state: String = "idle"
 var state_time: float = 0.0
 var attack_kind: String = ""
+var attack_sequence: int = 0
 var _attack_connected: bool = false
 var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
@@ -641,6 +642,7 @@ func request_attack(kind: String) -> bool:
     if state != "idle" or guard_held or not ATTACKS.has(kind):
         return false
     attack_kind = kind
+    attack_sequence += 1
     _attack_connected = false
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])

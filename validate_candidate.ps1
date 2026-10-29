@@ -122,6 +122,9 @@ try {
     Invoke-Checked "Prototype smoke" {
         & $GodotExe --headless --path $godotProject --script res://tests/smoke_test.gd
     }
+    Invoke-Checked "Prototype AI guard" {
+        & $GodotExe --headless --path $godotProject --script res://tests/validate_ai_guard.gd
+    }
     Invoke-Checked "Candidate animation" {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_candidate_animation.gd -- $CandidateGlb --expect-hair
@@ -159,6 +162,10 @@ try {
         Invoke-Checked "Packed prototype smoke" {
             & $GodotExe --headless --main-pack $packPath `
                 --script res://tests/smoke_test.gd
+        }
+        Invoke-Checked "Packed prototype AI guard" {
+            & $GodotExe --headless --main-pack $packPath `
+                --script res://tests/validate_ai_guard.gd
         }
         Invoke-Checked "Packed candidate animation" {
             & $GodotExe --headless --main-pack $packPath `
