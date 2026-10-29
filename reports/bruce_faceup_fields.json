@@ -6,7 +6,20 @@
   "set_resource_id": "f3d1549105ba342bc17b86a33b3834a0",
   "set_pakd_offset": 21016054,
   "method": "Read-only kdf_fighting_set.read_archive_resource and kdf_combat_reactions._parse_set plus _animation_metadata. This report stores no original bytes.",
-  "status": "证据记录，尚未实现",
+  "status": "证据记录；impacttofloor 与 faceupidle 已在受限 PC 候选路径接入，其余动作尚未实现",
+  "candidate_runtime": {
+    "impacttofloor": "仅在 facedowngetup [5,11] 或 facedownattack [24,31] 受到非致命、非格挡的低段 impact 时触发；从源动画第 21 帧起播，第 48 帧进入 faceupidle。",
+    "faceupidle": "循环播放 45 帧，当前不开放起身、攻击、受击或 KO 出边。",
+    "requires_clips": [
+      "all_stunned_fall",
+      "all_idle_face_up"
+    ],
+    "not_established": [
+      "incoming group link time=[0,0] 的语义",
+      "完整分组优先级与逐帧原版行为",
+      "impactfaceup、attacktofloor、faceupko、faceupattack、faceupgetup 的运行时接入"
+    ]
+  },
   "actions": {
     "impactfaceup": {
       "animation": "adreno_200/animation/all_impct_faceup.anm",
@@ -1955,11 +1968,9 @@
   },
   "not_implemented": [
     "impactfaceup",
-    "impacttofloor",
     "attacktofloor",
     "faceupko",
     "faceupattack",
-    "faceupidle",
     "faceupgetup"
   ]
 }

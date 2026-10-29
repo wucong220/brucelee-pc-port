@@ -33,6 +33,7 @@
 15. `brucelee.set` 的 396 条战斗 links、normal 正面受击映射、格挡映射、反应动作返回窗口及对应 ANM 时长已只读导出到 `reports/reaction_action_inventory.json`。Godot 的 `hitstun/blockstun` 已按 reaction return frame 配置驱动，并保留 `CANDIDATE` 边界；`push` 仍使用原型规则。
 16. reaction root-motion 取证已导出 `positions` 逐帧值、轨道存在性和 ANM 哈希到 `reports/reaction_root_motion_inventory.json`，并由 16 条原生变换链指令校验。当前尚未把任何坐标轴映射为 Godot `push`。
 17. 玩家 Bruce 和电脑 Brick 已分别加载独立候选 GLB、动作映射与动画节点；Brick 可使用 `m03_*` idle/punch/kick/movefwd。Brick 的 diffuse/normal `atc_rgb` 与 material `r8g8b8a8` 1024×1024 mip 链已可由转换器解码基础层；原版 fighting set、命中参数、reaction、AI 和逐像素视觉仍未恢复；候选动画的未验证角色位移轨道已禁用。
+18. 受限候选路径已接入 `impacttofloor -> faceupidle`：仅当 Bruce 处于 `facedowngetup [5,11]` 或 `facedownattack [24,31]` 的 `impactablefromground` 窗口，受到非致命、非格挡的低段命中，且候选 GLB 同时含 `all_stunned_fall` 与 `all_idle_face_up` 时触发。`impacttofloor` 从源动画第 21 帧起播，第 48 帧进入循环 `faceupidle`。这是候选运行时接入，不是原版 `time=[0,0]` 分组链接或逐帧视觉的完整复原。`faceupidle` 尚未接入 `impactfaceup` 或 `faceupko` 时，普通、格挡和致命命中都被候选层忽略并保持循环，避免暗中复用站立受击路径。
 
 ## 立即运行 Windows PC 原型
 

@@ -27,9 +27,12 @@ _FLOAT = 5126
 _UNSIGNED_BYTE = 5121
 _UNSIGNED_SHORT = 5123
 _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
-# The current verified Bruce candidate uses 17 clips after adding the facedown
-# attack. Keep the limit explicit so an accidental unbounded import is rejected.
-_MAX_ANIMATION_FILES = 17
+# This face-up slice adds all_stunned_fall and all_idle_face_up to the existing
+# 17-clip Bruce candidate. Keep the limit at the exact number needed by this
+# prototype path; all_impct_faceup and the remaining face-up actions are not
+# part of this candidate yet.
+# Keep the limit explicit so an accidental unbounded import is rejected.
+_MAX_ANIMATION_FILES = 19
 _MAX_RIGID_ATTACHMENTS = 16
 
 
