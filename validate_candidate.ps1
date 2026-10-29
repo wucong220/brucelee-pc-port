@@ -8,7 +8,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
+$lexicalRepoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
+$repoRoot = $lexicalRepoRoot
 $godotProject = Join-Path $repoRoot "godot"
 $pathResolver = Join-Path $repoRoot "tools\resolve_candidate_path.ps1"
 
@@ -20,11 +21,20 @@ function Resolve-CanonicalPath([string]$Value) {
     return ([string]$resolved).Trim()
 }
 
+function Assert-OutsideRepositoryLexically([string]$Value, [string]$Label) {
+    $prefix = $lexicalRepoRoot.TrimEnd('\') + '\'
+    if ($Value.Equals($lexicalRepoRoot, [StringComparison]::OrdinalIgnoreCase) -or
+            $Value.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "$Label must remain outside the repository: $Value"
+    }
+}
+
 function Resolve-ExternalPath([string]$Value, [string]$Label) {
     $resolved = [IO.Path]::GetFullPath($Value)
     if (-not (Test-Path -LiteralPath $resolved)) {
         throw "$Label does not exist: $resolved"
     }
+    Assert-OutsideRepositoryLexically $resolved $Label
     $resolved = Resolve-CanonicalPath $resolved
     $prefix = $repoRoot.TrimEnd('\') + '\'
     if ($resolved.Equals($repoRoot, [StringComparison]::OrdinalIgnoreCase) -or
@@ -42,9 +52,48 @@ function Invoke-Checked([string]$Label, [scriptblock]$Command) {
     }
 }
 
+function Test-CandidatePathBoundary {
+    $token = [Guid]::NewGuid().ToString('N')
+    $repositoryFixture = Join-Path $repoRoot ".path-guard-cli-fixture-$token"
+    $externalFixture = Join-Path ([IO.Path]::GetTempPath()) "brucelee-path-guard-cli-$token"
+    $externalFile = Join-Path $externalFixture "candidate.glb"
+    $junction = Join-Path $repositoryFixture "external-junction"
+    New-Item -ItemType Directory -Path $repositoryFixture | Out-Null
+    New-Item -ItemType Directory -Path $externalFixture | Out-Null
+    New-Item -ItemType File -Path $externalFile | Out-Null
+    New-Item -ItemType Junction -Path $junction -Target $externalFixture | Out-Null
+    try {
+        try {
+            Resolve-ExternalPath (Join-Path $junction "candidate.glb") `
+                "Candidate path guard self-test" | Out-Null
+            throw "Candidate path guard accepted a lexically internal junction"
+        }
+        catch {
+            if ($_.Exception.Message -notlike "*must remain outside the repository*") {
+                throw
+            }
+        }
+    }
+    finally {
+        if (Test-Path -LiteralPath $junction) {
+            Remove-Item -LiteralPath $junction -Force
+        }
+        if (Test-Path -LiteralPath $externalFile) {
+            Remove-Item -LiteralPath $externalFile -Force
+        }
+        if (Test-Path -LiteralPath $externalFixture) {
+            Remove-Item -LiteralPath $externalFixture -Force
+        }
+        if (Test-Path -LiteralPath $repositoryFixture) {
+            Remove-Item -LiteralPath $repositoryFixture -Force
+        }
+    }
+}
+
 $repoRoot = Resolve-CanonicalPath $repoRoot
 $godotProject = Join-Path $repoRoot "godot"
 $pathResolver = Join-Path $repoRoot "tools\resolve_candidate_path.ps1"
+Test-CandidatePathBoundary
 $CandidateGlb = Resolve-ExternalPath $CandidateGlb "Candidate GLB"
 $TextureRoot = Resolve-ExternalPath $TextureRoot "Texture root"
 $GodotExe = (Resolve-Path -LiteralPath $GodotExe).Path
