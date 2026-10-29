@@ -1,4 +1,6 @@
 extends SceneTree
+
+var _ko_hit_count: int = 0
 ## Play the verified facedown low-impact reaction from the 16-clip candidate.
 
 
@@ -39,17 +41,21 @@ func _run() -> void:
     if not _check_medium_stays_standing(player, opponent):
         quit(1)
         return
-    if not _check_lethal_stays_ko(player, opponent):
+    if not _check_lethal_facedown_ko(player, opponent):
         quit(1)
         return
     if not _check_missing_clip(player, opponent):
+        quit(1)
+        return
+    if not _check_missing_facedown_clip_stays_standing_ko(player, opponent):
         quit(1)
         return
     print("FACEDOWN_IMPACT_VALIDATION=" + JSON.stringify({
         "clip": "all_impct_facedwn",
         "exit_frame": 11,
         "radius": 80,
-        "not_implemented": ["facedownko", "facedownattack"],
+        "facedownko_radius": 100,
+        "not_implemented": ["facedownattack"],
     }))
     quit(0)
 
@@ -136,15 +142,68 @@ func _check_medium_stays_standing(player: PortFighter, opponent: PortFighter) ->
     return true
 
 
-func _check_lethal_stays_ko(player: PortFighter, opponent: PortFighter) -> bool:
+func _check_lethal_facedown_ko(player: PortFighter, opponent: PortFighter) -> bool:
     if not _enter_facedown(player, opponent):
         return false
     var damage: float = float(opponent.ATTACKS["kick"]["damage"])
     player.health = damage
     if not _follow_up(player, opponent, "kick"):
         return false
-    if player.state != "ko" or player.state == "impactfacedown":
-        push_error("Lethal low impact entered impactfacedown instead of the existing ko")
+    if not _facedown_ko_is(player):
+        push_error("Lethal low impact did not enter facedownko")
+        return false
+    player.move_axis = Vector2(-1.0, 0.0)
+    player._advance_timed_states(1.0)
+    player._animate_candidate()
+    if player.state != "facedownko" or _clip_is(player.candidate_animation_clip, "all_getup_facedwn"):
+        push_error("facedownko accepted a getup")
+        return false
+    _ko_hit_count = 0
+    if not opponent.combat_hit.is_connected(_count_ko_hit):
+        opponent.combat_hit.connect(_count_ko_hit)
+    if not _follow_up(player, opponent, "kick"):
+        return false
+    if _ko_hit_count != 0 or opponent.combo_hits != 0 or opponent._attack_connected:
+        push_error("facedownko still recorded a new hit")
+        return false
+    if player.state != "facedownko" or player.health > 0.0:
+        push_error("A later attack changed facedownko")
+        return false
+    if not _enter_facedown(player, opponent):
+        return false
+    player.health = float(opponent.ATTACKS["punch"]["damage"])
+    if not _follow_up(player, opponent, "punch"):
+        return false
+    if not _facedown_ko_is(player):
+        push_error("Lethal medium impact did not prefer facedownko")
+        return false
+    return true
+
+
+func _facedown_ko_is(player: PortFighter) -> bool:
+    return (
+        player.state == "facedownko"
+        and player.health <= 0.0
+        and _clip_is(player.candidate_animation_clip, "all_idle_face_down")
+        and not _clip_is(player.candidate_animation_clip, "all_impct_facedwn")
+        and absf(player.position.x - 0.6) <= 0.001
+        and absf(player.source_radius_for_current_animation() - 100.0) <= 0.001
+        and not bool(player.EXACT_REACTIONS["hit"][1]["clip_implemented"])
+    )
+
+
+func _check_missing_facedown_clip_stays_standing_ko(player: PortFighter, opponent: PortFighter) -> bool:
+    if not _enter_facedown(player, opponent):
+        return false
+    var saved: String = String(player._candidate_clip_paths["all_idle_face_down"])
+    player._candidate_clip_paths.erase("all_idle_face_down")
+    player.health = float(opponent.ATTACKS["kick"]["damage"])
+    if not _follow_up(player, opponent, "kick"):
+        player._candidate_clip_paths["all_idle_face_down"] = saved
+        return false
+    player._candidate_clip_paths["all_idle_face_down"] = saved
+    if player.state != "ko" or player.state == "facedownko":
+        push_error("Missing facedown clip still entered facedownko")
         return false
     return true
 
@@ -250,3 +309,13 @@ func _find_clip(animation: AnimationPlayer, expected: String) -> String:
 
 func _clip_is(actual: String, expected: String) -> bool:
     return actual == expected or actual.ends_with("/" + expected)
+
+
+func _count_ko_hit(
+        _attacker: PortFighter,
+        _defender: PortFighter,
+        _action: String,
+        _damage: float,
+        _blocked: bool
+) -> void:
+    _ko_hit_count += 1
