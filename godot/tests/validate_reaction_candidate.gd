@@ -32,12 +32,19 @@ func _run_check() -> void:
         quit(1)
         return
     var skeleton: Skeleton3D = skeletons[0]
+    var skeleton_parent: Node3D = skeleton.get_parent() as Node3D
+    if skeleton_parent == null:
+        push_error("Candidate skeleton parent is not 3D")
+        quit(1)
+        return
     var character: Node3D = player.get("_candidate_character")
     var character_rest: Vector3 = player.get("_candidate_character_rest_position")
     for group: String in ["hit", "block"]:
         for height: String in ["low", "medium", "high"]:
             player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
             player._animate_candidate()
+            animation.seek(0.0, true)
+            var idle_skeleton_position: Vector3 = skeleton_parent.global_position
             var profile: Dictionary = player.REACTION_PROFILES[group][height]
             player.receive_hit(5.0, group == "block", 0.0, 1.0, profile)
             player._animate_candidate()
@@ -49,6 +56,7 @@ func _run_check() -> void:
             if expect_reactions:
                 animation.seek(0.0, true)
                 var fighter_position: Vector3 = player.position
+                var skeleton_start: Vector3 = skeleton_parent.global_position
                 var positions: Array[Vector3] = []
                 var rotations: Array[Quaternion] = []
                 for bone: int in skeleton.get_bone_count():
@@ -65,6 +73,13 @@ func _run_check() -> void:
                     push_error("Reaction skeleton did not move: " + expected)
                     quit(1)
                     return
+                for fraction: float in [0.25, 0.5, 0.75, 1.0]:
+                    animation.seek(animation.current_animation_length * fraction, true)
+                    var displacement: float = skeleton_parent.global_position.distance_to(skeleton_start)
+                    if not is_finite(displacement) or displacement > 0.5:
+                        push_error("Reaction skeleton moved more than the candidate safety bound: " + expected)
+                        quit(1)
+                        return
                 if not player.position.is_equal_approx(fighter_position):
                     push_error("Visual reaction changed the fighter position: " + expected)
                     quit(1)
@@ -87,6 +102,11 @@ func _run_check() -> void:
                 return
             if expect_reactions and not character.position.is_equal_approx(character_rest):
                 push_error("Reaction root did not return to rest: " + expected)
+                quit(1)
+                return
+            animation.seek(0.0, true)
+            if skeleton_parent.global_position.distance_to(idle_skeleton_position) > 0.001:
+                push_error("Idle did not restore skeleton position after reaction: " + expected)
                 quit(1)
                 return
     player.reset_fighter(Vector3(-0.25, 1.2, 0.0))

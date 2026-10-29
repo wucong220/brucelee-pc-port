@@ -619,6 +619,8 @@ func _prepare_candidate_reaction(clip: Animation) -> bool:
             if kind != Animation.TYPE_POSITION_3D:
                 return false
             character_position_tracks.append(track)
+        # The candidate exporter places the animated skeleton under this parent;
+        # retain its pose transforms as unverified visual motion, not gameplay push.
         elif target != _candidate_skeleton_parent:
             return false
     for track: int in character_position_tracks:

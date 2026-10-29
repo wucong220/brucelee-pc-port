@@ -140,12 +140,16 @@ WINDOWS_EXE_VALIDATION=PASS
 .\validate_candidate.ps1 -CandidateGlb 'C:\private\reaction_candidate.glb' `
   -TextureRoot 'C:\private\textures' -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64_console.exe' `
   -ExpectReactionClips
+.\validate_candidate.ps1 -CandidateGlb 'C:\private\legacy_candidate.glb' `
+  -TextureRoot 'C:\private\textures' -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64_console.exe' `
+  -ExpectLegacyClips
 .\validate_windows_exe.ps1 -CandidateGlb 'C:\private\reaction_candidate.glb' `
   -TextureRoot 'C:\private\textures' -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64_console.exe' `
   -ExpectReactionClips
 ```
 
-两条命令退出码均为 0；前者包含 126 项 Python 测试、开发版与 PCK 下六个
-反应选择、骨骼变化、重入、返回和未知目标回退，后者的独立 EXE 自检确认
-选中 `all_impct_light_frnt_mid`。旧三段 GLB 的 reaction fallback 测试退出码
-也为 0；尚无原版逐帧对照或可见窗口人工验收。
+上述三条命令退出码均为 0；候选验证包含 126 项 Python 测试、开发版与 PCK
+下六个反应选择、骨骼变化、重入、返回和未知目标回退，独立 EXE 自检确认
+选中 `all_impct_light_frnt_mid`。受击期间检查骨架父节点相对首帧的世界位置
+变化不超过 0.5 米，并检查返回 idle 后恢复位置；这个阈值仅用于捕捉明显跳变，
+不是原版距离或视觉准确性的证据。尚无原版逐帧对照或可见窗口人工验收。
