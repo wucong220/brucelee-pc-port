@@ -165,6 +165,8 @@ py -3.12 tools\native_pass_mask.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\
 
 `CShaderInstance` 的两个构造函数 `0x2FC888`、`0x2FC9E8` 都在 `0x2FC944/0x2FCAA4` 取 `+0xD4` 起始地址，并在 `0x2FC95C/0x2FCABC` 用 `MemorySet` 把 0x80 字节填成 `0xFF`。但 `_Update` 的循环在 `0x2FC6DC–0x2FC6E8` 对 `+0xD4` 以 8 字节步长执行 32 次写入（`0x2FC6A4`），所以只能确认“构造时初始化了 0x80 字节”，不能确认完整表只有 16 个槽位。完整表边界、后半部分初始化和业务语义仍未闭合；它不是 `CRenderTargetBase` 的字段。
 
+每次循环的 8 字节槽位写入两个值：第一字在 `0x2FC694` 从 `CShader+0x3C + variation_index*0x7C` 的变体记录读取；第二字在 `0x2FC6D4–0x2FC6D8` 由 `CVariation::GetParamsID` 返回并写到 `+0xD8`。因此这两个键字分别是“shader 变体记录首字”和“参数 ID”候选，具体业务名称仍未由调用方闭合。
+
 `CRenderTargetBase::Commit` 的 TBatchID 来源在 `0x3070B8–0x307184`：`r4` 先保存参数中的 `CShaderInstance` 指针，`r5` 保存 `CRenderTargetBase`。读取 `CRenderTargetBase+0xCC` 的当前 render-target 槽位，再以 8 字节 stride 访问 `CShaderInstance+0xD4` 表，复制两个字到传给 `CGeometryBatcher::Add` 的临时 TBatchID。`j` 来自 `Commit` 的最后一个参数 `0x307174` 和 `0x307190`。这是 shader-instance per-target 表到批处理键的来源链，不代表两个键字分别等于材质或纹理。
 
 可用下面的命令复核三元键比较指令，不把原 SO 写入仓库：
