@@ -56,7 +56,7 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 
 ```text
 PROTOTYPE_VALIDATION={"blocked_kick_target_health":99.4,"ko_and_restart":true,"punch_target_health":95.0}
-COMBAT_CANDIDATE_VALIDATION={"candidate_loaded":true,"candidate_textures_loaded":true,"candidate_visual_height":1.8,"idle_clip":"m01_idle_01","punch_clip":"m01_pnch_low_01","punch_target_health":95.0}
+COMBAT_CANDIDATE_VALIDATION={"candidate_loaded":true,"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.7999997,"candidate_world_min_y":0.0,"idle_clip":"m01_idle_01","punch_clip":"m01_pnch_low_01","punch_target_health":95.0}
 CANDIDATE_VALIDATION=PASS
 ```
 
