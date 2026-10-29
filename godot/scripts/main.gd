@@ -98,6 +98,14 @@ func _run_export_self_test() -> void:
         push_error("EXPORT_SELF_TEST: punch clip was not selected")
         get_tree().quit(1)
         return
+    var reaction_available: bool = player.get("_candidate_clip_paths").has("all_impct_light_frnt_mid")
+    player.receive_hit(5.0, false, 0.0, 1.0, player.REACTION_PROFILES["hit"]["medium"])
+    player._animate_candidate()
+    var expected_reaction: String = "all_impct_light_frnt_mid" if reaction_available else "m01_idle_01"
+    if player.candidate_animation_clip != expected_reaction:
+        push_error("EXPORT_SELF_TEST: reaction clip was not selected")
+        get_tree().quit(1)
+        return
     print("EXPORT_SELF_TEST=" + JSON.stringify({
         "candidate_world_height": bounds.size.y,
         "candidate_world_min_y": bounds.position.y,
@@ -105,6 +113,7 @@ func _run_export_self_test() -> void:
         "internal_path_rejected": true,
         "punch_target_health": computer.health,
         "punch_hitstun_frames": computer.last_reaction_exit_frame,
+        "reaction_clip": player.candidate_animation_clip,
     }))
     get_tree().quit(0)
 

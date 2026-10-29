@@ -4,10 +4,16 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$TextureRoot,
     [string]$GodotExe = "C:\Tools\Godot_v4.7.2-stable_win64_console.exe",
-    [string]$Python = "py -3.12"
+    [string]$Python = "py -3.12",
+    [switch]$ExpectReactionClips,
+    [switch]$ExpectLegacyClips
 )
 
 $ErrorActionPreference = "Stop"
+if ($ExpectReactionClips -and $ExpectLegacyClips) {
+    throw "Choose either reaction clips or legacy fallback, not both."
+}
+$reactionMode = if ($ExpectReactionClips) { "with-reactions" } else { "legacy" }
 $lexicalRepoRoot = [IO.Path]::GetFullPath($PSScriptRoot)
 $repoRoot = $lexicalRepoRoot
 $godotProject = Join-Path $repoRoot "godot"
@@ -132,6 +138,12 @@ try {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_combat_candidate.gd -- $CandidateGlb $TextureRoot
     }
+    if ($ExpectReactionClips -or $ExpectLegacyClips) {
+        Invoke-Checked "Candidate reactions" {
+            & $GodotExe --headless --path $godotProject `
+                --script res://tests/validate_reaction_candidate.gd -- $CandidateGlb $reactionMode
+        }
+    }
 
     $packPath = Join-Path ([IO.Path]::GetTempPath()) (
         "brucelee-candidate-$PID-$([Guid]::NewGuid().ToString('N')).pck"
@@ -164,6 +176,12 @@ try {
         Invoke-Checked "Packed real texture and combat candidate" {
             & $GodotExe --headless --main-pack $packPath `
                 --script res://tests/validate_combat_candidate.gd -- $CandidateGlb $TextureRoot
+        }
+        if ($ExpectReactionClips -or $ExpectLegacyClips) {
+            Invoke-Checked "Packed candidate reactions" {
+                & $GodotExe --headless --main-pack $packPath `
+                    --script res://tests/validate_reaction_candidate.gd -- $CandidateGlb $reactionMode
+            }
         }
     }
     finally {

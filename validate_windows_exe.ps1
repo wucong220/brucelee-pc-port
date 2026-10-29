@@ -4,7 +4,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$TextureRoot,
     [string]$GodotExe = "C:\Tools\Godot_v4.7.2-stable_win64_console.exe",
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [switch]$ExpectReactionClips
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,6 +76,9 @@ try {
             -not $report.internal_path_rejected -or
             [math]::Abs([double]$report.punch_target_health - 95.0) -gt 0.001) {
         throw "Exported EXE self-test reported an invalid candidate/combat result"
+    }
+    if ($ExpectReactionClips -and $report.reaction_clip -ne "all_impct_light_frnt_mid") {
+        throw "Exported EXE self-test did not select the candidate reaction clip"
     }
     if ([double]$report.candidate_world_height -lt 1.5 -or
             [double]$report.candidate_world_height -gt 1.9 -or
