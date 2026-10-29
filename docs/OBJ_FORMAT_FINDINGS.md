@@ -115,4 +115,20 @@ Hair/Body 主网格、subset 材质和六个纹理资源的静态绑定已经单
 py -3.12 tools\native_hierarchy_links.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
 ```
 
-下一步应继续最终 draw call 绑定。
+## 场景对象绘制路径
+
+`CScnObj::Commit` 在两处调用 `CRenderTargetBase::Commit`（`0x36E1FC`、`0x36E480`）。该 `Commit` 创建 `CRenderPrimitive` 并加入 `CGeometryBatcher`，不是立即调用 OpenGL。
+
+批处理提交由 `CRenderTargetBase::EndBlock` 在 `0x307598` 调用 `CGeometryBatcher::Commit`。后者在 `0x32D6FC` 绑定 primitive，并在 `0x32D710`、`0x32D774` 调用 `_DrawBatch`。`_DrawBatch` 在 `0x32D348`、`0x32D46C`、`0x32D534`、`0x32D580` 调用 `CRenderPrimitive::Draw`，再进入 `CVariation::Draw`。
+
+`CProgram::Draw` 在 `0x3162EC`、`0x316758` 调用 `glDrawElements`，在 `0x316848` 调用 `glDrawArrays`。对应 PLT 是 `0x1275D0`、`0x128824`，重定位目标分别是 `glDrawElements` 和 `glDrawArrays`。
+
+这闭合了场景对象到 OpenGL 绘制入口的静态路径。它没有证明某个具体对象实际提交了几次 draw call，也没有证明材质状态或最终 GPU 像素。
+
+可用下面的命令复核绘制路径指令，不把原 SO 写入仓库：
+
+```powershell
+py -3.12 tools\native_draw_path.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
+```
+
+下一步应继续把具体视觉对象的材质状态和 draw-call 次数接到这条批处理路径。
