@@ -1,5 +1,7 @@
 extends SceneTree
-## Verify repository-external candidate textures on both skinned body and hair.
+## Verify synthetic texture parameters on both skinned body and hair.
+## Real texture decoding is exercised by validate_combat_candidate.gd; final
+## pixel/lighting parity with the original renderer is not verified here.
 
 
 func _initialize() -> void:

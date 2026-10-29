@@ -109,17 +109,28 @@ func _run_check() -> void:
     # Drive fixed physics steps to place the opponent into range after startup.
     player.set_physics_process(false)
     opponent.set_physics_process(false)
+    player.reset_fighter(Vector3(-0.6, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(-0.3, 1.2, 0.0))
+    if not player.request_attack("punch"):
+        push_error("Could not start the large-delta timing test")
+        quit(1)
+        return
+    player._physics_process(1.0)
+    if absf(opponent.health - 95.0) > 0.001 or player.combo_hits != 1:
+        push_error("Large-delta update lost or duplicated the attack window")
+        quit(1)
+        return
     var punch_boundaries: Array[bool] = [
         _attack_hits_after_frames(player, opponent, "punch", 4.0, 0.6),
         _attack_hits_after_frames(player, opponent, "punch", 4.5, 0.6),
         _attack_hits_after_frames(player, opponent, "punch", 7.5, 1.0),
-        _attack_hits_after_frames(player, opponent, "punch", 8.5, 1.0),
+        _attack_hits_after_frames(player, opponent, "punch", 9.0, 0.6),
     ]
     var kick_boundaries: Array[bool] = [
         _attack_hits_after_frames(player, opponent, "kick", 6.0, 0.6),
         _attack_hits_after_frames(player, opponent, "kick", 6.5, 0.6),
         _attack_hits_after_frames(player, opponent, "kick", 9.5, 1.0),
-        _attack_hits_after_frames(player, opponent, "kick", 10.5, 1.0),
+        _attack_hits_after_frames(player, opponent, "kick", 11.0, 0.6),
     ]
     if punch_boundaries != [false, true, true, false]:
         push_error("lowpunch1 hit window does not match frames 5..8: "

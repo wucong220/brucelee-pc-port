@@ -17,7 +17,8 @@ function Resolve-ExternalPath([string]$Value, [string]$Label) {
         throw "$Label does not exist: $resolved"
     }
     $prefix = $repoRoot.TrimEnd('\') + '\'
-    if ($resolved.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+    if ($resolved.Equals($repoRoot, [StringComparison]::OrdinalIgnoreCase) -or
+            $resolved.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
         throw "$Label must remain outside the repository: $resolved"
     }
     return $resolved
@@ -57,11 +58,11 @@ try {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_candidate_animation.gd -- $CandidateGlb --expect-hair
     }
-    Invoke-Checked "Candidate textures" {
+    Invoke-Checked "Synthetic texture material binding" {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_candidate_textures.gd -- $CandidateGlb
     }
-    Invoke-Checked "End-to-end combat candidate" {
+    Invoke-Checked "Real texture and combat candidate" {
         & $GodotExe --headless --path $godotProject `
             --script res://tests/validate_combat_candidate.gd -- $CandidateGlb $TextureRoot
     }

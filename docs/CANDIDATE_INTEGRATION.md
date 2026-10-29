@@ -22,6 +22,10 @@
 脚本先执行 Python 测试，再运行一次无界面 Godot 导入，随后验证普通战斗 smoke、
 真实动画、真实纹理和端到端战斗。
 
+`validate_candidate_textures.gd` 使用程序生成的 4×4 PNG 验证材质装配和 shader
+选择；真实纹理文件由 `validate_combat_candidate.gd` 加载。两者都不等于原版
+GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
+
 ## 已验证
 
 `LOCAL_TESTED + CANDIDATE`：
@@ -32,7 +36,7 @@
 - 六张 Hair/Body 纹理和三项 shader 参数加载成功。
 - 真实 GLB、纹理、idle/punch 动画和战斗状态可在同一场景联动。
 - `lowpunch1` 使用帧 5–8、`lowkick1` 使用帧 7–10，基础伤害均为 5。
-- 帧边界和单次命中去重由 Godot 回归测试覆盖。
+- 帧边界、大步长跨阶段不丢时以及单次命中去重由 Godot 回归测试覆盖。
 
 本地验证输出：
 

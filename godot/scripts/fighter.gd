@@ -263,10 +263,7 @@ func _physics_process(delta: float) -> void:
         facing = 1.0 if opponent.global_position.x >= global_position.x else -1.0
     # Turn the torso toward the opponent (local 'front' is +X).
     rotation.y = 0.0 if facing > 0.0 else PI
-    if state in ["startup", "active", "recovery", "hitstun", "blockstun"]:
-        state_time -= delta
-        if state_time <= 0.0:
-            _advance_state()
+    _advance_timed_states(delta)
     if state == "active" and not _attack_connected:
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
@@ -285,6 +282,18 @@ func _physics_process(delta: float) -> void:
     position.z = clampf(position.z, -3.0, 3.0)
     _animate_visuals()
     _animate_candidate()
+
+func _advance_timed_states(delta: float) -> void:
+    var remaining: float = delta
+    while (remaining > 0.0
+            and state in ["startup", "active", "recovery", "hitstun", "blockstun"]):
+        if state == "active" and not _attack_connected:
+            _try_attack_contact()
+        if remaining < state_time:
+            state_time -= remaining
+            return
+        remaining -= maxf(state_time, 0.0)
+        _advance_state()
 
 func _advance_state() -> void:
     match state:
