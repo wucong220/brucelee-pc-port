@@ -9,7 +9,7 @@ import struct
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from kdf_data import KdfError, parse_container, scalar_property
+from kdf_data import KdfError, parse_container, property_occurrences, scalar_property
 from kdf_wavelet import decode_wavelet
 
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
@@ -431,7 +431,9 @@ def _parse_tracks(
         if _is_track_declaration(container, ordinal):
             if active_tracks:
                 raise KdfError('animation track block has missing sample definitions')
-            active_block = {'ordinal': len(blocks), 'tracks': []}
+            active_block = {
+                'ordinal': len(blocks), 'record_start': ordinal, 'tracks': [],
+            }
             blocks.append(active_block)
             while _is_track_declaration(container, ordinal):
                 name = _record_text(container, ordinal)
@@ -494,10 +496,30 @@ def _parse_tracks(
     return blocks
 
 
+def _identify_track_sections(container: dict, groups: list[dict]) -> None:
+    """Bind observed anmdata/anmstatic labels through their relative pointers."""
+    strings = {item['text'] for item in container['strings']}
+    by_start = {group['record_start']: group for group in groups}
+    seen = set()
+    for key in ('anmdata', 'anmstatic'):
+        if key not in strings:
+            continue
+        matches = property_occurrences(container, key)
+        if len(matches) != 1 or matches[0]['value_marker'] >> 28 != 3:
+            raise KdfError(f'animation {key} section pointer is invalid')
+        match = matches[0]
+        target = match['value_record'] + match['value']
+        if target not in by_start or target in seen:
+            raise KdfError(f'animation {key} does not uniquely target a track group')
+        by_start[target]['source_section'] = key
+        seen.add(target)
+
+
 def inspect_animation(
         raw: bytes, *, include_values: bool = False,
-        decode_wavelet_values: bool = False) -> dict:
-    container = parse_container(raw)
+        decode_wavelet_values: bool = False,
+        data_offset: int | None = None) -> dict:
+    container = parse_container(raw, data_offset=data_offset)
     names = {entry['text'] for entry in container['strings']}
     missing = [key for key in _HEADER_KEYS if key not in names]
     if missing:
@@ -507,6 +529,7 @@ def inspect_animation(
         raise KdfError('animation version is outside the observed wavelet profile')
     track_groups = _parse_tracks(
         raw, container, include_values, headers['duration'], decode_wavelet_values)
+    _identify_track_sections(container, track_groups)
     codecs = [
         {
             'track_group': group['ordinal'],

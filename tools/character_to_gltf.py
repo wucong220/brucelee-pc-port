@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Build a local static-pose GLB from validated Mesh and Skl resources."""
+"""Build local candidate GLB files from validated Mesh, Skl, and ANM resources."""
 from __future__ import annotations
 
 import argparse
 import hashlib
+from itertools import islice
 import json
 import math
 import os
@@ -16,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kdf_data import KdfError
 from kdf_mesh import inspect_file as inspect_mesh_file
 from kdf_skeleton import inspect_file as inspect_skeleton_file
+from gltf_animation import build_animations
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _ARRAY_BUFFER = 34962
@@ -23,10 +25,13 @@ _ELEMENT_ARRAY_BUFFER = 34963
 _FLOAT = 5126
 _UNSIGNED_BYTE = 5121
 _UNSIGNED_SHORT = 5123
+_MAX_ANIMATION_BYTES = 16 * 1024 * 1024
+_MAX_ANIMATION_FILES = 16
+_MAX_RIGID_ATTACHMENTS = 16
 
 
 class GltfExportError(ValueError):
-    """Inputs cannot be represented by the validated static-pose GLB profile."""
+    """Inputs cannot be represented by the candidate GLB exporter profile."""
 
 
 def _safe_output_path(path: Path) -> Path:
@@ -114,9 +119,21 @@ def _matrix_multiply(left: list[list[float]],
     ]
 
 
-def _compose_skeleton(skeleton: dict) -> tuple[dict[int, list[list[float]]], dict[str, dict]]:
+def _skeleton_transforms(skeleton: dict, *, include_objects: bool = False) -> dict[int, dict]:
+    values = list(skeleton['static_transforms'] or [])
+    if include_objects:
+        values.extend(skeleton.get('object_static_transforms', []))
+    transforms = {item['nodeid']: item for item in values}
+    if len(transforms) != len(values):
+        raise GltfExportError('Skl contains duplicate node transforms')
+    return transforms
+
+
+def _compose_skeleton(
+        skeleton: dict, *, include_objects: bool = False,
+        ) -> tuple[dict[int, list[list[float]]], dict[str, dict]]:
     nodes = {node['nodeid']: node for node in skeleton['nodes']}
-    transforms = {item['nodeid']: item for item in skeleton['static_transforms']}
+    transforms = _skeleton_transforms(skeleton, include_objects=include_objects)
     cache = {}
 
     def global_matrix(nodeid: int) -> list[list[float]]:
@@ -295,18 +312,96 @@ def _build_glb(gltf: dict, binary: bytes) -> bytes:
 
 def convert_file(mesh_source: Path, destination: Path, *,
                  skeleton_source: Path | None = None,
-                 validate_rest_pose: bool = True) -> dict:
+                 validate_rest_pose: bool = True,
+                 include_object_transforms: bool = False,
+                 animation_sources: Iterable[Path] | None = None,
+                 expected_skeleton_reference: str | None = None,
+                 expected_skeleton_sha256: str | None = None,
+                 rigid_attachments: Iterable[tuple[Path, str]] | None = None) -> dict:
+    animation_sources = list(animation_sources or [])
+    if len(animation_sources) > _MAX_ANIMATION_FILES:
+        raise GltfExportError('too many candidate animation files')
+    rigid_attachments = list(islice(rigid_attachments or (), _MAX_RIGID_ATTACHMENTS + 1))
+    if len(rigid_attachments) > _MAX_RIGID_ATTACHMENTS:
+        raise GltfExportError('too many candidate rigid attachments')
+    if rigid_attachments and (skeleton_source is None or not include_object_transforms):
+        raise GltfExportError(
+            'rigid attachments require --skeleton and --include-object-transforms')
     mesh = inspect_mesh_file(
         mesh_source, include_vertices=True, include_indices=True)
     skeleton = inspect_skeleton_file(skeleton_source) if skeleton_source else None
     if mesh['skeleton'] is not None and skeleton is None:
         raise GltfExportError('skinned Mesh requires --skeleton')
+    if include_object_transforms and skeleton is None:
+        raise GltfExportError('object transforms require --skeleton')
+    if include_object_transforms:
+        object_nodes = [node for node in skeleton['nodes'] if node['type'] == 'object']
+        object_transforms = skeleton.get('object_static_transforms')
+        if (not isinstance(object_transforms, list)
+                or len(object_transforms) != len(object_nodes)
+                or {value['nodeid'] for value in object_transforms}
+                != {node['nodeid'] for node in object_nodes}):
+            raise GltfExportError('object transforms are missing or incomplete')
+    attachments = []
+    for item in rigid_attachments:
+        if not isinstance(item, (tuple, list)) or len(item) != 2:
+            raise GltfExportError('rigid attachment must specify a Mesh and object node name')
+        source, node_name = item
+        if (not isinstance(source, (str, os.PathLike))
+                or not isinstance(node_name, str) or not node_name):
+            raise GltfExportError('rigid attachment Mesh or object node name is invalid')
+        source = Path(source)
+        matches = [node for node in skeleton['nodes'] if node['name'] == node_name]
+        if len(matches) != 1 or matches[0]['type'] != 'object':
+            raise GltfExportError(
+                f'rigid attachment target {node_name!r} must match one unique Skl object node')
+        object_transforms = skeleton.get('object_static_transforms') or []
+        if sum(value['nodeid'] == matches[0]['nodeid'] for value in object_transforms) != 1:
+            raise GltfExportError(
+                f'rigid attachment target {node_name!r} has no unique object transform')
+        attachment_mesh = inspect_mesh_file(
+            source, include_vertices=True, include_indices=True)
+        if attachment_mesh['skeleton'] is not None:
+            raise GltfExportError('rigid attachment Mesh must not be skinned')
+        attachments.append({
+            'source': source,
+            'mesh': attachment_mesh,
+            'target': matches[0],
+        })
+    bound_animations = []
+    if animation_sources:
+        if skeleton is None or mesh['skeleton'] is None:
+            raise GltfExportError('candidate animation requires a skinned Mesh and Skl')
+        if not include_object_transforms:
+            raise GltfExportError('candidate animation requires --include-object-transforms')
+        if not expected_skeleton_reference or not expected_skeleton_sha256:
+            raise GltfExportError(
+                'candidate animation requires the expected Skl reference and SHA-256')
+        from kdf_animation_binding import bind_animation
+
+        with skeleton_source.open('rb') as file:
+            skeleton_raw = file.read(_MAX_ANIMATION_BYTES + 1)
+        if len(skeleton_raw) > _MAX_ANIMATION_BYTES:
+            raise GltfExportError('Skl exceeds the candidate animation size limit')
+        if hashlib.sha256(skeleton_raw).hexdigest() != skeleton['sha256']:
+            raise GltfExportError('Skl changed between inspection and animation binding')
+        for source in animation_sources:
+            with source.open('rb') as file:
+                animation_raw = file.read(_MAX_ANIMATION_BYTES + 1)
+            if len(animation_raw) > _MAX_ANIMATION_BYTES:
+                raise GltfExportError('ANM exceeds the candidate animation size limit')
+            bound = bind_animation(
+                animation_raw, skeleton_raw,
+                expected_reference=expected_skeleton_reference,
+                expected_skeleton_sha256=expected_skeleton_sha256)
+            bound_animations.append((source.stem, bound))
 
     skl_global = None
     skl_by_name = None
     rest_pose_validation = None
     if skeleton is not None:
-        skl_global, skl_by_name = _compose_skeleton(skeleton)
+        skl_global, skl_by_name = _compose_skeleton(
+            skeleton, include_objects=include_object_transforms)
         if mesh['skeleton'] is not None and validate_rest_pose:
             rest_pose_validation = _validate_rest_pose(mesh, skl_by_name)
 
@@ -420,7 +515,8 @@ def convert_file(mesh_source: Path, destination: Path, *,
     }]
     node_index_by_id = {}
     if skeleton is not None:
-        transforms = {item['nodeid']: item for item in skeleton['static_transforms']}
+        transforms = _skeleton_transforms(
+            skeleton, include_objects=include_object_transforms)
         for value in skeleton['nodes']:
             node_index = len(nodes)
             node_index_by_id[value['nodeid']] = node_index
@@ -470,6 +566,99 @@ def convert_file(mesh_source: Path, destination: Path, *,
             'skeleton': node_index_by_id[common],
         })
 
+    attachment_metadata = []
+    for attachment in attachments:
+        source = attachment['source']
+        value = attachment['mesh']
+        target_node = attachment['target']
+        position_view = builder.add(
+            _pack_floats(
+                component for vertex in value['vertices']
+                for component in vertex['position']),
+            _ARRAY_BUFFER,
+        )
+        uv_view = builder.add(
+            _pack_floats(
+                component for vertex in value['vertices']
+                for component in vertex['uv']),
+            _ARRAY_BUFFER,
+        )
+        index_view = builder.add(
+            struct.pack(f'<{len(value["indices"])}H', *value['indices']),
+            _ELEMENT_ARRAY_BUFFER,
+        )
+        position_accessor = len(accessors)
+        accessors.append({
+            'bufferView': position_view,
+            'componentType': _FLOAT,
+            'count': value['vertex_count'],
+            'type': 'VEC3',
+            'min': value['position_min'],
+            'max': value['position_max'],
+        })
+        uv_accessor = len(accessors)
+        accessors.append({
+            'bufferView': uv_view,
+            'componentType': _FLOAT,
+            'count': value['vertex_count'],
+            'type': 'VEC2',
+        })
+        rigid_primitives = []
+        for subset in value['subsets']:
+            start, end = subset['index_range']
+            index_accessor = len(accessors)
+            accessors.append({
+                'bufferView': index_view,
+                'byteOffset': start * 2,
+                'componentType': _UNSIGNED_SHORT,
+                'count': end - start,
+                'type': 'SCALAR',
+            })
+            material_name = subset['material']
+            if material_name not in material_indices:
+                material_indices[material_name] = len(materials)
+                materials.append({
+                    'name': material_name,
+                    'pbrMetallicRoughness': {
+                        'baseColorFactor': palette[len(materials) % len(palette)],
+                        'metallicFactor': 0.0,
+                        'roughnessFactor': 0.8,
+                    },
+                })
+            rigid_primitives.append({
+                'attributes': {
+                    'POSITION': position_accessor,
+                    'TEXCOORD_0': uv_accessor,
+                },
+                'indices': index_accessor,
+                'material': material_indices[material_name],
+                'mode': 4,
+            })
+        gltf_mesh_index = len(gltf_meshes)
+        gltf_meshes.append({'name': source.stem, 'primitives': rigid_primitives})
+        metadata = {
+            'sourceMeshSha256': value['sha256'],
+            'targetNodeName': target_node['name'],
+            'targetNodeId': target_node['nodeid'],
+            'status': 'candidate',
+            'placement': 'unverified',
+        }
+        attachment_metadata.append(metadata)
+        attachment_index = len(nodes)
+        nodes.append({
+            'name': source.stem + '_rigid_attachment',
+            'mesh': gltf_mesh_index,
+            'extras': dict(metadata),
+        })
+        nodes[node_index_by_id[target_node['nodeid']]]['children'].append(attachment_index)
+
+    animations = []
+    if bound_animations:
+        from gltf_animation import build_animations
+
+        animations = build_animations(
+            builder, accessors, node_index_by_id, skeleton, bound_animations)
+
     gltf = {
         'asset': {
             'version': '2.0',
@@ -482,7 +671,7 @@ def convert_file(mesh_source: Path, destination: Path, *,
                 'inverseBindSource': 'mesh-original-float32',
                 'inverseBindMatrixSemantics': 'candidate',
                 'restPoseValidation': rest_pose_validation,
-                'animationsIncluded': False,
+                'animationsIncluded': bool(animations),
             },
         },
         'scene': 0,
@@ -496,12 +685,20 @@ def convert_file(mesh_source: Path, destination: Path, *,
     }
     if skins:
         gltf['skins'] = skins
+    if animations:
+        gltf['animations'] = animations
+        gltf['asset']['generator'] = 'BruceLee PC Port candidate animation converter'
+    if include_object_transforms:
+        gltf['asset']['extras']['objectTransformsIncluded'] = True
+        gltf['asset']['extras']['objectTransformSpace'] = 'unverified'
+    if attachment_metadata:
+        gltf['asset']['extras']['rigidAttachments'] = attachment_metadata
 
     target = _safe_output_path(destination)
     glb = _build_glb(gltf, bytes(builder.data))
     with target.open('xb') as file:
         file.write(glb)
-    return {
+    result = {
         'mesh_source': str(mesh_source),
         'skeleton_source': None if skeleton_source is None else str(skeleton_source),
         'output': str(target),
@@ -512,8 +709,20 @@ def convert_file(mesh_source: Path, destination: Path, *,
         'subset_count': mesh['subset_count'],
         'skin_joint_count': None if not skins else len(skins[0]['joints']),
         'rest_pose_validation': rest_pose_validation,
-        'animations_included': False,
+        'animations_included': bool(animations),
     }
+    if include_object_transforms:
+        result['object_transforms_included'] = True
+        result['object_transform_space'] = 'unverified'
+    if animations:
+        result['animation_names'] = [animation['name'] for animation in animations]
+        result['animation_status'] = 'candidate'
+    if attachments:
+        result['rigid_attachments'] = [
+            {'mesh_source': str(attachment['source']), **metadata}
+            for attachment, metadata in zip(attachments, attachment_metadata, strict=True)
+        ]
+    return result
 
 
 def main() -> int:
@@ -523,10 +732,31 @@ def main() -> int:
                         help='decoded Skl resource; required for skinned Mesh')
     parser.add_argument('--output', type=Path, required=True,
                         help='new GLB outside the checkout and sync directories')
+    parser.add_argument(
+        '--include-object-transforms', action='store_true',
+        help='include candidate Skl object transforms; coordinate space remains unverified')
+    parser.add_argument(
+        '--animation', type=Path, action='append', default=[],
+        help='decoded ANM to include as a candidate animation; may be repeated')
+    parser.add_argument(
+        '--expected-skeleton-reference',
+        help='expected ANM skeleton reference from a trusted extraction record')
+    parser.add_argument(
+        '--expected-skeleton-sha256',
+        help='expected SHA-256 of the matching Skl from that record')
+    parser.add_argument(
+        '--rigid-attachment', nargs=2, action='append', default=[],
+        metavar=('MESH', 'NODE'),
+        help='candidate unskinned Mesh attached to an exactly named Skl object; repeatable')
     args = parser.parse_args()
     try:
         result = convert_file(
-            args.mesh, args.output, skeleton_source=args.skeleton)
+            args.mesh, args.output, skeleton_source=args.skeleton,
+            include_object_transforms=args.include_object_transforms,
+            animation_sources=args.animation,
+            expected_skeleton_reference=args.expected_skeleton_reference,
+            expected_skeleton_sha256=args.expected_skeleton_sha256,
+            rigid_attachments=args.rigid_attachment)
     except (OSError, KdfError, GltfExportError) as exc:
         print(f'error: {exc}', file=sys.stderr)
         return 1
