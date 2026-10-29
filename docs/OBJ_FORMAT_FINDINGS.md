@@ -61,4 +61,9 @@ uint8 extension_string_index
 - 所有 `DATA` section 是否都被 PRS 数组消费；
 - 输出保留 `scene_tree_status=unresolved`、`mesh_payload_status=external-resource` 和未验证坐标边界。
 
-下一步应定位四个 `.mesh` 资源，恢复 positions、normals、textures/UV、indices、Bones、Weights 和 subsets。
+Hair/Body 主网格到六个纹理资源的静态绑定已经单独闭合，见
+[`MATERIAL_TEXTURE_BINDING_FINDINGS.md`](MATERIAL_TEXTURE_BINDING_FINDINGS.md)。
+该绑定只证明 OBJ 属性、程序常量和原生材质初始化数据流一致；运行时纹理加载、
+Adreno 光照与最终像素仍未验证。
+
+下一步应继续恢复场景树递归、子对象指针语义以及材质到网格 subset 的最终运行时绑定。

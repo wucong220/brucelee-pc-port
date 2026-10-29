@@ -47,6 +47,9 @@ GPU 最终像素、法线方向或 Alpha 混合效果已经验收。
 - 头发作为 head 下的无蒙皮附件随头部移动。
 - Body 使用 opaque shader，Hair 使用 blend shader。
 - 六张 Hair/Body 纹理和三项 shader 参数加载成功。
+- Hair/Body 的 `diffuse/normal/material` 引用 ID、`Diffuse.program` 纹理常量和
+  原生 `CMaterial::Init` 到 `CManager::GetTexture` 的静态数据流已闭合；证据与
+  限制见 [`MATERIAL_TEXTURE_BINDING_FINDINGS.md`](MATERIAL_TEXTURE_BINDING_FINDINGS.md)。
 - 真实 GLB、纹理、idle/punch 动画和战斗状态可在同一场景联动。
 - `lowpunch1` 使用帧 5–8、`lowkick1` 使用帧 7–10，基础伤害均为 5。
 - 帧边界、大步长跨阶段不丢时以及单次命中去重由 Godot 回归测试覆盖。
@@ -77,7 +80,8 @@ WINDOWS_EXE_VALIDATION=PASS
 
 ## 边界
 
-- 尚未与原版 Adreno 画面逐帧、逐像素对照。
+- 尚未与原版 Adreno 画面逐帧、逐像素对照；当前只验证了候选材质装配和静态绑定，
+  未取得原版运行时 `GetTexture` 返回值或 GPU 最终像素。
 - 格挡减伤、攻击距离、推力和 `heavy` 仍使用原型规则。
 - `attack_radius/body_part/height/strength/direction` 已作为候选元数据保存，
   但其运行时碰撞和受击反馈映射尚未闭合。
