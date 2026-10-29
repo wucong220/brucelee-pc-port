@@ -142,19 +142,21 @@ else:
 
 ```text
 SetAnimation:                 marker = 0
-impact id x accepted:         marker = x + 1
+DamageReceiveCheck for id x:  marker = x + 1
 later check of id y:          y < marker 表示 y 已处理
 ```
 
-这支持第二道字节门控用于阻止同一动画中较早 impact 的重复结算，并允许后续
-impact 按序号推进。证据等级：
+这组更新时序与“按 impact 顺序推进的高水位状态”相符，但尚不能仅凭比较和
+更新位置证明所有较早 impact 都会因此被阻止重复结算。证据等级：
 
 - `STATIC_VERIFIED`：SetAnimation 清零、DamageReceiveCheck 写
   `impact+0+1`、CheckConditions 比较，以及 copy-constructor 仅复制。
 - `STATIC_SUPPORTED`：`impact+0` 是配置内 impact 的顺序标识，
-  `fighter+0x16C` 是本次动画的 processed-impact 高水位。
+  `fighter+0x16C` 是本次动画的 processed-impact 高水位；该解释仍属状态机
+  假说。
 - `UNVERIFIED`：字段的正式源码名称、全部多 impact 动画是否严格按该顺序
-  结算，以及 `0x1A4328/0x1A439C` 两个分支的全部后续行为。
+  结算、字节自增溢出后的语义，以及 `0x1A4328/0x1A439C` 两个分支的全部
+  后续行为。
 
 证据等级：
 
