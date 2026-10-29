@@ -657,12 +657,12 @@ py -3.12 -X utf8 -B tools/native_root_motion.py `
   'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
 ```
 
-本机输出 `verified 54 root-motion words and 5 PLT relocations`，退出码 0。
-校验涵盖所列代表性指令、字面量和五个 PLT 的重定位符号，不能替代对整段
+本机输出 `verified 56 root-motion words and 5 PLT relocations`，退出码 0。
+校验涵盖所列代表性指令、字面量以及五个 PLT stub 到 GOT 槽和重定位符号的关联，不能替代对整段
 计算或运行时行为的验证。
 
 本次修改的回归检查：`py -3.12 -X utf8 -B -m unittest discover -s tests -p
-"test*.py" -q`，125 项通过，退出码 0；`git diff --check`，退出码 0。
+"test*.py" -q`，126 项通过，退出码 0；`git diff --check`，退出码 0。
 
 ## 全量 impact 聚合
 

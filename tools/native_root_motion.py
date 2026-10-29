@@ -19,6 +19,8 @@ _WORDS = {
     0x001A1934: 0xE5903030,  # ldr r3,[fighter,#0x30] final frame
     0x001A1938: 0xE5902034,  # ldr r2,[fighter,#0x34] current frame
     0x001A193C: 0xE2433001,  # sub r3,r3,#1
+    0x001A1940: 0xE1520003,  # cmp current frame, final frame - 1
+    0x001A1954: 0x2A0000CB,  # bhs: skip the update
     0x001A1958: 0xE2805F4F,  # add r5,fighter,#0x13c scene object
     0x001A196C: 0xEBFE0169,  # bl gfxScnObj::GetFrame
     0x001A1978: 0xEBFDF863,  # bl gfxScnFrame::GetRot
@@ -83,6 +85,17 @@ _PLT = {
 }
 
 
+def _plt_target(address: int, words: tuple[int, int, int]) -> int:
+    """Resolve the checked ARM add/add/ldr PLT stub to its GOT slot."""
+    def immediate(word: int) -> int:
+        value = word & 0xff
+        shift = ((word >> 8) & 0xf) * 2
+        return ((value >> shift) | (value << (32 - shift))) & 0xffffffff if shift else value
+
+    return (address + 8 + immediate(words[0]) + immediate(words[1])
+            + (words[2] & 0xfff)) & 0xffffffff
+
+
 def verify_bytes(elf: bytes) -> None:
     if hashlib.sha256(elf).hexdigest() != _SHA256:
         raise HierarchyLinkError("ELF SHA-256 does not match the recorded libdefault.so")
@@ -96,7 +109,8 @@ def verify_bytes(elf: bytes) -> None:
     symbols = _dynamic_symbols(elf)
     for address, (relocation, name, words) in _PLT.items():
         actual_words = struct.unpack_from("<III", elf, file_offset(elf, address))
-        if actual_words != words or symbols.get(relocation) != name:
+        if (actual_words != words or _plt_target(address, actual_words) != relocation
+                or symbols.get(relocation) != name):
             raise HierarchyLinkError(f"PLT or relocation mismatch at 0x{address:08x}")
 
 
