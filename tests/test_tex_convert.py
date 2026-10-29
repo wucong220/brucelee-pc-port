@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import struct
@@ -342,6 +343,30 @@ class TestTextureConversion(unittest.TestCase):
                         convert_file(source, failed)
                 self.assertFalse(failed.exists())
                 self.assertEqual(list(root.glob('.failed.png.*.tmp')), [])
+
+                operation = 'rename' if os.name == 'nt' else 'link'
+                real_publish = getattr(os, operation)
+                concurrent = root / 'concurrent.png'
+                concurrent_data = b'created by another process'
+
+                def create_competing_target(src, dst):
+                    Path(dst).write_bytes(concurrent_data)
+                    real_publish(src, dst)
+
+                with patch.object(tex_convert.os, operation, side_effect=create_competing_target):
+                    with self.assertRaises(FileExistsError):
+                        convert_file(source, concurrent)
+                self.assertEqual(concurrent.read_bytes(), concurrent_data)
+                self.assertEqual(list(root.glob('.concurrent.png.*.tmp')), [])
+
+                if os.name == 'nt':
+                    hardlink_free = root / 'hardlink-free.png'
+                    with patch.object(
+                            tex_convert.os, 'link', side_effect=OSError('link unsupported')) as link:
+                        convert_file(source, hardlink_free)
+                    link.assert_not_called()
+                    self.assertTrue(hardlink_free.is_file())
+                    self.assertEqual(list(root.glob('.hardlink-free.png.*.tmp')), [])
 
     def test_cli_emits_json_report_for_mip_packed_rgba(self):
         with tempfile.TemporaryDirectory() as temp:

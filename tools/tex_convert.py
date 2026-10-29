@@ -370,21 +370,29 @@ def _safe_output_path(path: Path) -> Path:
 
 
 def _write_atomic_exclusive(target: Path, data: bytes) -> None:
-    """Publish a complete file atomically without replacing an existing path."""
+    """Publish a complete file without replacing a concurrent destination."""
     descriptor, temporary_name = tempfile.mkstemp(
         prefix=f'.{target.name}.', suffix='.tmp', dir=target.parent)
     temporary = Path(temporary_name)
     try:
-        with os.fdopen(descriptor, 'wb') as file:
-            file.write(data)
+        try:
+            file = os.fdopen(descriptor, 'wb')
+        except BaseException:
+            os.close(descriptor)
+            raise
+        with file:
+            if file.write(data) != len(data):
+                raise OSError('incomplete PNG write')
             file.flush()
             os.fsync(file.fileno())
-        os.link(temporary, target)
+        # Windows rename fails when the target exists, including on filesystems
+        # without hard links. POSIX rename may overwrite, so use link instead.
+        if os.name == 'nt':
+            os.rename(temporary, target)
+        else:
+            os.link(temporary, target)
     finally:
-        try:
-            temporary.unlink()
-        except FileNotFoundError:
-            pass
+        temporary.unlink(missing_ok=True)
 
 
 def convert_file(source: Path, destination: Path, *, flip_vertical: bool = True) -> dict:
