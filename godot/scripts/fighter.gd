@@ -57,6 +57,7 @@ const FACEDOWN_GETUP_WINDOW_END: int = 45
 const FACEDOWN_GETUP_EXIT_FRAME: int = 16
 const FACEDOWN_IMPACT_CLIP: String = "all_impct_facedwn"
 const FACEDOWN_IMPACT_EXIT_FRAME: int = 11
+const FACEDOWN_KO_RADIUS: float = 100.0
 const RETURN_ANIMATION_RADII: Dictionary = {
     "m01_idle_02": 40.0,
     "all_idle_face_down": 75.0,
@@ -1335,6 +1336,10 @@ func _advance_return_state(delta: float) -> void:
             return
         _wrap_return_loop(FACEDOWN_IDLE_DURATION_FRAMES)
         return
+    if state == "facedownko":
+        state_time += maxf(delta, 0.0)
+        _wrap_return_loop(FACEDOWN_IDLE_DURATION_FRAMES)
+        return
     if state == "facedowngetup":
         state_time += maxf(delta, 0.0)
         if _reached_source_frame(state_time, FACEDOWN_GETUP_EXIT_FRAME):
@@ -1387,6 +1392,16 @@ func _accepts_facedown_low_impact(impact_height: String, blocked: bool, damage: 
         and health - damage > 0.0
         and _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP)
     )
+
+
+func _begin_facedown_ko() -> void:
+    state = "facedownko"
+    state_time = 0.0
+    attack_kind = ""
+    _attack_connected = false
+    _clear_reaction_tracking()
+    _restart_candidate_action()
+    combat_ko.emit(self)
 
 
 func begin_facedown_impact(amount: float) -> void:
@@ -1443,7 +1458,7 @@ func _physics_process(delta: float) -> void:
     _animate_candidate()
 
 func _advance_timed_states(delta: float) -> void:
-    if state == "idle2" or state == "facedownidle" or state == "facedowngetup" or state == "impactfacedown":
+    if state == "idle2" or state == "facedownidle" or state == "facedownko" or state == "facedowngetup" or state == "impactfacedown":
         _advance_return_state(delta)
         return
     var remaining: float = delta
@@ -1515,7 +1530,7 @@ func current_source_animation() -> String:
         return CANDIDATE_CLIPS["kick"]
     if state == "idle2":
         return IDLE2_CLIP
-    if state == "facedownidle":
+    if state == "facedownidle" or state == "facedownko":
         return FACEDOWN_IDLE_CLIP
     if state == "facedowngetup":
         return FACEDOWN_GETUP_CLIP
@@ -1562,6 +1577,8 @@ func _profile_for_animation(animation: String) -> Dictionary:
 
 
 func source_radius_for_current_animation() -> float:
+    if state == "facedownko":
+        return FACEDOWN_KO_RADIUS * radius_scale
     var animation: String = current_source_animation()
     var radius: float = _stored_animation_radius(animation)
     if radius < 0.0:
@@ -1644,8 +1661,10 @@ func receive_hit(
         direction: float,
         reaction: Dictionary = {}
 ) -> void:
-    if state == "ko":
+    if state == "ko" or state == "facedownko":
         return
+    var state_before: String = state
+    var position_before: float = position.x
     _attack_connected = false
     if blocked:
         health = maxf(0.0, health - amount * 0.12)
@@ -1673,7 +1692,12 @@ func receive_hit(
         last_reaction_exit_frame = -1
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
-    if health <= 0.0:
+    if health <= 0.0 and state_before == "facedownidle" and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP):
+        # brucelee.set lists healthzero before the low-impact link. Do not play
+        # impactfacedown or apply the standing prototype push.
+        position.x = position_before
+        _begin_facedown_ko()
+    elif health <= 0.0:
         state = "ko"
         combat_ko.emit(self)
     elif _candidate_animation != null and _candidate_clip_paths.has(last_reaction_animation):
@@ -1753,6 +1777,8 @@ func _animate_candidate() -> void:
     elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
         requested = IDLE2_CLIP
     elif state == "facedownidle" and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP):
+        requested = FACEDOWN_IDLE_CLIP
+    elif state == "facedownko" and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP):
         requested = FACEDOWN_IDLE_CLIP
     elif state == "facedowngetup" and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP):
         requested = FACEDOWN_GETUP_CLIP

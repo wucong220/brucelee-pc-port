@@ -519,10 +519,10 @@
   ],
   "explicit_names_seen_not_closed_note": "Only the action names were read. Animation path, radius, frame count, frame rate, resource id, PAKD offset, SHA-256, group windows, and direct links were not read for these names, so none is closed.",
   "runtime_candidate": {
-    "impactfacedown": "候选运行时已接入，不是原版逐帧验收。加载含 all_impct_facedwn 且轨道检查通过的 GLB 时，facedownidle 上的非格挡低高度 impact 在伤害后血量仍大于 0 时播放，半径 80，不循环，第 11 帧回 facedownidle。不应用原型 push。"
+    "impactfacedown": "候选运行时已接入，不是原版逐帧验收。加载含 all_impct_facedwn 且轨道检查通过的 GLB 时，facedownidle 上的非格挡低高度 impact 在伤害后血量仍大于 0 时播放，半径 80，不循环，第 11 帧回 facedownidle。不应用原型 push。",
+    "facedownko": "候选运行时已接入，不是原版逐帧验收。facedownidle 的 direct link 中 healthzero 位于低高度 impact 之前。血量降到 0 时循环 all_idle_face_down，半径 100，不接受起身，不应用这次致命攻击的原型 push。缺倒地 clip 时仍走站立 ko。"
   },
   "not_implemented": [
-    "facedownko",
     "facedownattack"
   ]
 }
