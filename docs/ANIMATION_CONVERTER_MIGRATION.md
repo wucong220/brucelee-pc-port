@@ -1,8 +1,11 @@
 # 本地候选动画 GLB 导出
 
-转换器将经验证的 Mesh、Skl 和 ANM 绑定为候选 GLB；输入和输出必须留在
-仓库及同步目录之外，原始游戏资产不得提交。ANM 骨架引用与提供的 Skl
-SHA-256 必须同时匹配。工具只读取输入，并拒绝覆盖已有输出。
+转换器将经验证的 Mesh、Skl 和 ANM 绑定为候选 GLB。输入可从用户指定的本地
+路径只读加载，包括工作区；原始游戏资产不得提交。输出必须位于仓库及已知
+同步目录之外。ANM 骨架引用与提供的 Skl SHA-256 必须同时匹配。工具只读取
+输入，并拒绝覆盖已有输出；写入完整的临时文件后，以不覆盖方式发布。
+Windows 使用同目录重命名并拒绝已存在的目标；POSIX 使用不覆盖的同目录
+硬链接后删除临时文件，若文件系统不支持硬链接则报错。
 
 `--include-object-transforms`、骨骼姿态组合、坐标空间、动画插值和根运动
 均为候选实现，尚未通过原版运行时逐帧对照。导出成功或 Godot 能播放不能
@@ -19,7 +22,7 @@ $taskRoot = 'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port'
 $assetRoot = Join-Path $taskRoot 'validation-f0c9a3a-20261029\adreno_200'
 $animRoot = Join-Path $taskRoot 'reaction-candidate-20261030'
 $meshRoot = Join-Path $taskRoot 'mesh-format-20261029\adreno_200\objects\hw\bl_brucelee_01_high\meshes'
-$taskOutput = Join-Path $animRoot 'bruce_candidate_compatibility_verify.glb'
+$taskOutput = Join-Path $animRoot 'bruce_candidate_windows_rename_verify.glb'
 $converterArgs = @(
     (Join-Path $meshRoot 'bl_brucelee_01_body_hw_skhigh.Mesh'),
     '--skeleton', (Join-Path $assetRoot 'skeletons\bl_brucelee_01_High.Skl'),
@@ -51,7 +54,7 @@ py -3.12 -X utf8 -B tools/character_to_gltf.py @converterArgs
 
 ```powershell
 py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
-# 170 tests, OK, exit 0
+# 177 tests, OK (1 skipped), exit 0
 
 $godot = 'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\godot-portable-773280yg\Godot_v4.7.2-stable_win64_console.exe'
 & $godot --headless --editor --path godot --quit
@@ -66,6 +69,10 @@ git diff --check
 Godot 校验脚本使用相同 SHA-256 的首次迁移输出 `bruce_candidate_migration_verify.glb`，
 目前只检查 idle/punch/kick 三段；另外六段受击和格挡动作的
 本轮证据为来源哈希及 glTF 结构检查，不能据此宣称其视觉表现已验收。
+本机 Windows 缺少创建符号链接的权限，输出悬空符号链接的回归测试被跳过；
+真实 Windows 同目录重命名、并发目标不覆盖、失败清理及输出目录限制测试均通过。
+测试通过阻止硬链接调用确认 Windows 发布不依赖硬链接；当前未在 FAT32、exFAT
+或 POSIX 文件系统实测。
 
 旧版只包含 object 层级而没有已观察对象采样声明的 Skl 仍可解析基础层级并
 导出静态模型；此时 `object_static_transforms` 为 `None`。显式启用对象变换

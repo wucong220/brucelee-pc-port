@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import struct
 import sys
+import tempfile
 from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -35,7 +36,10 @@ class GltfExportError(ValueError):
 
 
 def _safe_output_path(path: Path) -> Path:
-    target = path.expanduser().resolve()
+    requested = path.expanduser()
+    if requested.is_symlink():
+        raise GltfExportError('GLB output already exists')
+    target = requested.resolve()
     project = _PROJECT_ROOT.resolve()
     if target == project or target.is_relative_to(project):
         raise GltfExportError('GLB output must be outside the project checkout')
@@ -58,6 +62,31 @@ def _safe_output_path(path: Path) -> Path:
     if not target.parent.is_dir():
         raise GltfExportError('GLB output parent is not an existing directory')
     return target
+
+
+def _publish_glb(target: Path, payload: bytes) -> None:
+    """Publish a complete file without replacing a concurrent destination."""
+    fd, temp_name = tempfile.mkstemp(prefix='.brucelee-glb-', suffix='.tmp', dir=target.parent)
+    temp_path = Path(temp_name)
+    try:
+        try:
+            file = os.fdopen(fd, 'wb')
+        except BaseException:
+            os.close(fd)
+            raise
+        with file:
+            if file.write(payload) != len(payload):
+                raise OSError('incomplete GLB write')
+            file.flush()
+            os.fsync(file.fileno())
+        # Windows rename fails when the target exists, including on filesystems
+        # without hard links. POSIX rename may overwrite, so use link instead.
+        if os.name == 'nt':
+            os.rename(temp_path, target)
+        else:
+            os.link(temp_path, target)
+    finally:
+        temp_path.unlink(missing_ok=True)
 
 
 def _quaternion_matrix(value: Iterable[float]) -> tuple[tuple[float, ...], ...]:
@@ -696,8 +725,7 @@ def convert_file(mesh_source: Path, destination: Path, *,
 
     target = _safe_output_path(destination)
     glb = _build_glb(gltf, bytes(builder.data))
-    with target.open('xb') as file:
-        file.write(glb)
+    _publish_glb(target, glb)
     result = {
         'mesh_source': str(mesh_source),
         'skeleton_source': None if skeleton_source is None else str(skeleton_source),
