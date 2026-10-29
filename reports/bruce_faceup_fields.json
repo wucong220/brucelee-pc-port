@@ -6,32 +6,38 @@
   "set_resource_id": "f3d1549105ba342bc17b86a33b3834a0",
   "set_pakd_offset": 21016054,
   "method": "Read-only kdf_fighting_set.read_archive_resource and kdf_combat_reactions._parse_set plus _animation_metadata. This report stores no original bytes.",
-  "status": "证据记录；impacttofloor、faceupidle、受限 faceupgetup 与 faceupattack 已在 PC 候选路径接入，其余动作尚未实现",
+  "status": "证据记录；impacttofloor、faceupidle、受限 faceupgetup/faceupattack、impactfaceup 与 faceupko 已在 PC 候选路径接入，attacktofloor 仍仅保留档案证据",
   "candidate_runtime": {
     "impacttofloor": "仅在 facedowngetup [5,11] 或 facedownattack [24,31] 受到非致命、非格挡的低段 impact 时触发；从源动画第 21 帧起播，第 48 帧进入 faceupidle。",
-    "faceupidle": "循环播放 45 帧；在源帧 [10,45] 接受候选水平 move_axis.x 并在 all_getup_faceup 存在时进入 faceupgetup；在源帧 [0,45] 接受 aaa/abb/bcc/bdd 抽象序列并在 all_getup_faceup_attack 存在时进入 faceupattack。",
+    "faceupidle": "循环播放 45 帧；受到非致命、非格挡低段 impact 且 all_impct_faceup 存在时进入 impactfaceup；伤害会使血量归零且 all_idle_face_up 存在时优先进入 faceupko；在源帧 [10,45] 接受候选水平 move_axis.x 并在 all_getup_faceup 存在时进入 faceupgetup；在源帧 [0,45] 接受 aaa/abb/bcc/bdd 抽象序列并在 all_getup_faceup_attack 存在时进入 faceupattack。",
     "faceupgetup": "播放 24 帧、半径 40 的非循环 all_getup_faceup；源档案只给出到 idle 的 [20,24] 窗口，候选运行时选择第 20 帧退出，不开放攻击或受击出口。",
     "faceupattack": "播放 38 帧、半径 45 的非循环 all_getup_faceup_attack；第 [9,14] 帧至多造成一次 6 点伤害，攻击半径 90，属性为 larm/low/hard/frontal；候选运行时选择第 37 帧回到 idle。第 [24,31] 帧只会进入已验证的非致命、非格挡低段 impacttofloor 路径；canblock [27,38] 只作为保护性格挡门控，完整格挡反应、普通受击和 KO 出边仍封闭。",
+    "impactfaceup": "播放 11 帧、30 fps、半径 80 的非循环 all_impct_faceup；只从 faceupidle 的非致命、非格挡低段 impact 进入，第 11 帧回到 faceupidle 第 0 帧，不应用原型 push，播放期间不接受新输入或受击出口。",
+    "faceupko": "复用 all_idle_face_up，独立状态半径 100；只从 faceupidle 的 healthzero 条件进入，45 帧循环，不接受起身或攻击输入，也不对自己应用致命攻击的原型 push。",
     "candidate_glb": {
-      "path": "C:\\Users\\Lenovo\\AppData\\Local\\BruceLee-PC-Port\\faceup-attack-candidate-20261030\\bruce_candidate_faceup_attack.glb",
-      "sha256": "1febe0b41f0b0c616565f4d6b2a67eb9810362d211baaad9b7ef80e8b9c31b86",
-      "animation_count": 21,
+      "path": "C:\\Users\\Lenovo\\AppData\\Local\\BruceLee-PC-Port\\faceup-reaction-candidate-20261030\\bruce_candidate_faceup_reaction.glb",
+      "sha256": "1d1870d3918a92a39fd0f4f17eaabf6b4b43d984db0bf26a6d5f5a85f2ce39a5",
+      "bytes": 1055068,
+      "animation_count": 22,
       "excluded": [
         "m01_attack_to_floor"
-      ]
+      ],
+      "impact_animation_layout": "11 frames x 26 bonerot offsets decoded as candidate frame-major Q14 quaternions; native runtime layout remains unverified"
     },
     "requires_clips": [
       "all_stunned_fall",
       "all_idle_face_up",
       "all_getup_faceup",
-      "all_getup_faceup_attack"
+      "all_getup_faceup_attack",
+      "all_impct_faceup"
     ],
     "not_established": [
       "incoming group link time=[0,0] 的语义",
       "完整分组优先级与逐帧原版行为",
       "原版 Android 物理键位及三维 keysequence 运行时匹配",
       "faceupattack 未验证的普通受击与 KO 出边",
-      "impactfaceup、attacktofloor、faceupko 的运行时接入"
+      "impactfaceup/faceupko 的完整原版分组优先级、blending 与逐帧行为",
+      "attacktofloor 的运行时接入"
     ]
   },
   "actions": {

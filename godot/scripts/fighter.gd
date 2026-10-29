@@ -85,6 +85,10 @@ const FACEUP_ATTACK_DAMAGE_START_FRAME: int = 9
 const FACEUP_ATTACK_DAMAGE_END_FRAME: int = 14
 const FACEUP_ATTACK_DAMAGE: float = 6.0
 const FACEUP_ATTACK_RADIUS: float = 90.0
+const FACEUP_IMPACT_CLIP: String = "all_impct_faceup"
+const FACEUP_IMPACT_DURATION_FRAMES: int = 11
+const FACEUP_IMPACT_EXIT_FRAME: int = 11
+const FACEUP_KO_RADIUS: float = 100.0
 # UserControlUpdate expires a whole input vector based on the last event's
 # +500 clock value. The clock unit is not proven, so this is an explicit PC
 # prototype lifetime and must not be presented as the original timing.
@@ -119,6 +123,7 @@ const RETURN_ANIMATION_RADII: Dictionary = {
     "all_idle_face_up": 75.0,
     "all_getup_faceup": 40.0,
     "all_getup_faceup_attack": 45.0,
+    "all_impct_faceup": 80.0,
 }
 const REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -1057,7 +1062,7 @@ func _try_load_candidate_visual() -> void:
             IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
             FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
             FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP,
-            FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP,
+            FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP,
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
@@ -1467,6 +1472,15 @@ func _advance_return_state(delta: float) -> void:
         if _reached_source_frame(state_time, FACEUP_IMPACT_TO_FLOOR_EXIT_FRAME):
             _enter_locomotion_state("faceupidle")
         return
+    if state == "impactfaceup":
+        state_time += maxf(delta, 0.0)
+        if _reached_source_frame(state_time, FACEUP_IMPACT_EXIT_FRAME):
+            _enter_locomotion_state("faceupidle")
+        return
+    if state == "faceupko":
+        state_time += maxf(delta, 0.0)
+        _wrap_return_loop(FACEUP_IDLE_DURATION_FRAMES)
+        return
     if state == "faceupidle":
         var before: float = state_time
         state_time += maxf(delta, 0.0)
@@ -1604,11 +1618,48 @@ func _accepts_impact_to_floor(
     )
 
 
+func _accepts_faceup_low_impact(
+        impact_height: String,
+        blocked: bool,
+        damage: float,
+) -> bool:
+    return (
+        state == "faceupidle"
+        and not blocked
+        and impact_height == "low"
+        and health - damage > 0.0
+        and _candidate_clip_paths.has(FACEUP_IMPACT_CLIP)
+        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+    )
+
+
+func _accepts_faceup_ko(damage: float, blocked: bool) -> bool:
+    return (
+        state == "faceupidle"
+        and not blocked
+        and health - damage <= 0.0
+        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+    )
+
+
 func _begin_facedown_ko() -> void:
     state = "facedownko"
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
+    _clear_reaction_tracking()
+    _restart_candidate_action()
+    combat_ko.emit(self)
+
+
+func _begin_faceup_ko(amount: float) -> void:
+    health = maxf(0.0, health - amount)
+    state = "faceupko"
+    state_time = 0.0
+    attack_kind = ""
+    _attack_connected = false
+    _clear_ground_attack_input_history()
+    combo_hits = 0
     _clear_reaction_tracking()
     _restart_candidate_action()
     combat_ko.emit(self)
@@ -1644,6 +1695,22 @@ func begin_facedown_impact(amount: float) -> void:
     if _candidate_animation != null:
         _candidate_animation.stop()
         _candidate_action = ""
+
+
+func begin_faceup_impact(amount: float) -> void:
+    health = maxf(0.0, health - amount)
+    state = "impactfaceup"
+    state_time = 0.0
+    attack_kind = ""
+    _attack_connected = false
+    _clear_ground_attack_input_history()
+    combo_hits = 0
+    last_reaction_group = "hit"
+    last_reaction_source_action = "impactfaceup"
+    last_reaction_animation = FACEUP_IMPACT_CLIP
+    last_reaction_exit_frame = FACEUP_IMPACT_EXIT_FRAME
+    last_reaction_clip_implemented = _candidate_clip_paths.has(FACEUP_IMPACT_CLIP)
+    _restart_candidate_action()
 
 
 func record_virtual_press(virtual_key: String) -> bool:
@@ -1756,7 +1823,7 @@ func _advance_timed_states(delta: float) -> void:
     if state in [
         "idle2", "facedownidle", "facedownko", "facedowngetup",
         "impactfacedown", "facedownattack", "impacttofloor", "faceupidle",
-        "faceupgetup", "faceupattack",
+        "faceupgetup", "faceupattack", "impactfaceup", "faceupko",
     ]:
         _advance_return_state(delta)
         return
@@ -1790,6 +1857,7 @@ func _try_facedown_attack_contact() -> void:
     if (opponent == null or not is_instance_valid(opponent)
             or opponent.state in [
                 "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
+                "impactfaceup", "faceupko",
             ]):
         return
     var dx: float = opponent.global_position.x - global_position.x
@@ -1817,6 +1885,7 @@ func _try_faceup_attack_contact() -> void:
     if (opponent == null or not is_instance_valid(opponent)
             or opponent.state in [
                 "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
+                "impactfaceup", "faceupko",
             ]):
         return
     var dx: float = opponent.global_position.x - global_position.x
@@ -1863,15 +1932,25 @@ func _try_attack_contact() -> void:
     var accepts_impact_to_floor: bool = opponent._accepts_impact_to_floor(
         impact_height, blocked, damage
     )
+    var accepts_faceup_impact: bool = opponent._accepts_faceup_low_impact(
+        impact_height, blocked, damage
+    )
+    var accepts_faceup_ko: bool = opponent._accepts_faceup_ko(damage, blocked)
     if (opponent.state in ["faceupidle", "faceupgetup", "faceupattack"]
-            and not accepts_impact_to_floor):
+            and not accepts_impact_to_floor
+            and not accepts_faceup_impact
+            and not accepts_faceup_ko):
         return
     # Mark contact before emitting signals, including a guarded hit.
     _attack_connected = true
     # Ground states only accept the verified low-impact paths. Other hits keep
     # their existing reaction path, except the face-up states protected above.
-    if accepts_impact_to_floor:
+    if accepts_faceup_ko:
+        opponent._begin_faceup_ko(damage)
+    elif accepts_impact_to_floor:
         opponent.begin_impact_to_floor(damage)
+    elif accepts_faceup_impact:
+        opponent.begin_faceup_impact(damage)
     elif opponent._accepts_facedown_low_impact(impact_height, blocked, damage):
         opponent.begin_facedown_impact(damage)
     else:
@@ -1902,6 +1981,10 @@ func current_source_animation() -> String:
         return FACEDOWN_ATTACK_CLIP
     if state == "impacttofloor":
         return FACEUP_IMPACT_TO_FLOOR_CLIP
+    if state == "impactfaceup":
+        return FACEUP_IMPACT_CLIP
+    if state == "faceupko":
+        return FACEUP_IDLE_CLIP
     if state == "faceupidle":
         return FACEUP_IDLE_CLIP
     if state == "faceupgetup":
@@ -1951,6 +2034,8 @@ func _profile_for_animation(animation: String) -> Dictionary:
 func source_radius_for_current_animation() -> float:
     if state == "facedownko":
         return FACEDOWN_KO_RADIUS * radius_scale
+    if state == "faceupko":
+        return FACEUP_KO_RADIUS * radius_scale
     var animation: String = current_source_animation()
     var radius: float = _stored_animation_radius(animation)
     if radius < 0.0:
@@ -2043,10 +2128,13 @@ func receive_hit(
         direction: float,
         reaction: Dictionary = {}
 ) -> void:
-    # impactfaceup and faceupko are not implemented. Keep every incoming hit
+    # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
-    if state in ["ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack"]:
+    if state in [
+        "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
+        "impactfaceup", "faceupko",
+    ]:
         return
     var state_before: String = state
     var position_before: float = position.x
@@ -2180,6 +2268,12 @@ func _animate_candidate() -> void:
         requested = FACEUP_IMPACT_TO_FLOOR_CLIP
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
+    elif state == "impactfaceup" and _candidate_clip_paths.has(FACEUP_IMPACT_CLIP):
+        requested = FACEUP_IMPACT_CLIP
+        if _candidate_action != requested and _candidate_character != null:
+            _candidate_character.position = _candidate_character_rest_position
+    elif state == "faceupko" and _candidate_clip_paths.has(FACEUP_IDLE_CLIP):
+        requested = FACEUP_IDLE_CLIP
     elif state == "faceupidle" and _candidate_clip_paths.has(FACEUP_IDLE_CLIP):
         requested = FACEUP_IDLE_CLIP
     elif state == "faceupgetup" and _candidate_clip_paths.has(FACEUP_GETUP_CLIP):

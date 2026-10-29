@@ -11,7 +11,7 @@ from test_kdf_mesh import mesh_fixture
 
 
 class TestGltfPublication(unittest.TestCase):
-    def test_more_than_twenty_animations_is_rejected(self):
+    def test_more_than_twenty_two_animations_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             with self.assertRaisesRegex(GltfExportError, 'too many candidate'):
@@ -19,7 +19,7 @@ class TestGltfPublication(unittest.TestCase):
                     root / 'missing.mesh',
                     root / 'candidate.glb',
                     animation_sources=[
-                        root / f'animation-{index}.anm' for index in range(22)
+                        root / f'animation-{index}.anm' for index in range(23)
                     ],
                 )
             self.assertFalse((root / 'candidate.glb').exists())

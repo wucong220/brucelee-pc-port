@@ -341,6 +341,87 @@ class TestAnimationBinding(unittest.TestCase):
                     with self.assertRaises(KdfError):
                         bind_animation(self.animation_raw, self.skeleton_raw)
 
+    def test_rawfixed_anmdata_multi_offset_frame_major_candidate(self):
+        def multi_offset_values(animation):
+            animation['headers']['duration'] = 11
+            dynamic_group = animation['track_groups'][0]['tracks']
+            static_group = animation['track_groups'][1]['tracks']
+            dynamic_bonerot = next(
+                track for track in static_group if track['name'] == 'bonerot'
+            )
+            static_group.remove(dynamic_bonerot)
+            dynamic_group.append(dynamic_bonerot)
+            for track in animation['track_groups'][0]['tracks']:
+                sample = track['sample']
+                values = sample['data']['decoded']['values']
+                if track['name'] == 'bonerot':
+                    values[:] = [
+                        [frame * 0.01, (offset + 1) * 0.01, float(frame), 1.0]
+                        for frame in range(11)
+                        for offset in range(26)
+                    ]
+                    sample['offsets']['values'] = list(range(1, 27))
+                    sample['offsets']['element_count'] = 26
+                else:
+                    values[:] = [[float(frame), 0.0, 0.0] for frame in range(11)]
+                sample['data']['element_count'] = len(values)
+
+        def skeleton_with_multi_rotation_offsets(skeleton):
+            for offset in range(1, 27):
+                skeleton['nodes'].append({
+                    'nodeid': 200 + offset,
+                    'name': f'bone_{offset}',
+                    'type': 'bone',
+                    'bone_position_index': offset,
+                    'bone_rotation_index': offset,
+                    'scale_index': offset + 2,
+                })
+
+        with self._mock_animation(multi_offset_values), \
+                self._mock_skeleton(skeleton_with_multi_rotation_offsets):
+            result = bind_animation(self.animation_raw, self.skeleton_raw)
+        rotations = [
+            item for item in result['bindings'] if item['track'] == 'bonerot'
+        ]
+        self.assertEqual(len(rotations), 26)
+        dynamic = next(item for item in rotations if item['offset'] == 26)
+        self.assertEqual(dynamic['layout'], 'per-frame')
+        self.assertEqual(dynamic['sample_layout'], 'frame-major-candidate')
+        self.assertEqual(len(dynamic['values']), 11)
+        for frame, value in enumerate(dynamic['values']):
+            self.assertEqual(
+                value,
+                [frame * 0.01, 0.26, float(frame), 1.0],
+            )
+        self.assertTrue(all(
+            item['sample_layout'] == 'frame-major-candidate'
+            for item in rotations
+        ))
+
+    def test_rawfixed_anmdata_multi_offset_rejects_wrong_shape(self):
+        def wrong_shape(animation):
+            animation['headers']['duration'] = 11
+            static_group = animation['track_groups'][1]['tracks']
+            dynamic_bonerot = next(
+                track for track in static_group if track['name'] == 'bonerot'
+            )
+            static_group.remove(dynamic_bonerot)
+            animation['track_groups'][0]['tracks'].append(dynamic_bonerot)
+            track = next(
+                item for item in animation['track_groups'][0]['tracks']
+                if item['name'] == 'bonerot'
+            )
+            sample = track['sample']
+            sample['offsets']['values'] = list(range(1, 27))
+            sample['offsets']['element_count'] = 26
+            sample['data']['decoded']['values'][:] = [[0.0, 0.0, 0.0, 1.0]] * 285
+            sample['data']['element_count'] = 285
+
+        with self._mock_animation(wrong_shape):
+            with self.assertRaisesRegex(
+                    KdfError, 'raw-fixed anmdata layout is unsupported'):
+                bind_animation(self.animation_raw, self.skeleton_raw)
+
     def test_nonfinite_values_are_rejected(self):
         def invalid_value(animation):
             track = animation['track_groups'][0]['tracks'][0]
