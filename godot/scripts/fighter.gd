@@ -20,20 +20,15 @@ const CANDIDATE_CLIPS: Dictionary = {
 const SOURCE_FRAME_RATE: float = 30.0
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
-const ATTACKS: Dictionary = {
-    # lowpunch1: frames 5..8 hit, 69-frame ANM at 30 FPS, default damage multiplier 1.0.
-    "punch": {"startup": 5.0 / SOURCE_FRAME_RATE, "active": 4.0 / SOURCE_FRAME_RATE,
-              "recovery": 60.0 / SOURCE_FRAME_RATE, "range": 1.65, "damage": 5.0, "push": 0.20,
-              "source_impact": {"attack_radius": 70.0, "body_part": "larm",
-                                "height": "medium", "strength": "normal", "direction": "frontal"}},
-    # lowkick1: frames 7..10 hit, 86-frame ANM at 30 FPS, default damage multiplier 1.0.
-    "kick": {"startup": 7.0 / SOURCE_FRAME_RATE, "active": 4.0 / SOURCE_FRAME_RATE,
-             "recovery": 75.0 / SOURCE_FRAME_RATE, "range": 2.2, "damage": 5.0, "push": 0.35,
-             "source_impact": {"attack_radius": 70.0, "body_part": "lleg",
-                               "height": "low", "strength": "normal", "direction": "frontal"}},
-    # No recovered fighting-set mapping for the third prototype attack yet.
-    "heavy": {"startup": 0.33, "active": 0.10, "recovery": 0.42, "range": 1.85, "damage": 19.0, "push": 0.55},
+const HEAVY_ATTACK: Dictionary = {
+    # No recovered fighting-set mapping for this prototype attack yet.
+    "startup": 0.33, "active": 0.10, "recovery": 0.42,
+    "range": 1.85, "damage": 19.0, "push": 0.55,
 }
+const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
+var ATTACKS: Dictionary = {}
+var attack_config_error: String = ""
+
 
 var character_name: String = "Fighter"
 var is_player: bool = true
@@ -70,6 +65,8 @@ func configure(display_name: String, human: bool, tint: Color) -> void:
     _color = tint
 
 func _ready() -> void:
+    if not _load_attack_definitions():
+        push_error("Fighting-set attack config failed closed: " + attack_config_error)
     collision_layer = 2
     collision_mask = 1 | 2
     var capsule: CapsuleShape3D = CapsuleShape3D.new()
@@ -93,6 +90,139 @@ func _ready() -> void:
     _add_mesh(foot, Vector3(-0.20, -0.86, 0.0), Color(0.16, 0.16, 0.16))
     _add_mesh(foot, Vector3(0.20, -0.86, 0.0), Color(0.16, 0.16, 0.16))
     _try_load_candidate_visual()
+
+func _load_attack_definitions() -> bool:
+    ATTACKS = {}
+    attack_config_error = ""
+    if not FileAccess.file_exists(ATTACK_CONFIG_PATH):
+        attack_config_error = "missing " + ATTACK_CONFIG_PATH
+        return false
+    var file: FileAccess = FileAccess.open(ATTACK_CONFIG_PATH, FileAccess.READ)
+    if file == null:
+        attack_config_error = "could not open " + ATTACK_CONFIG_PATH
+        return false
+    var parser: JSON = JSON.new()
+    var parse_error: Error = parser.parse(file.get_as_text())
+    if parse_error != OK:
+        attack_config_error = "invalid JSON: " + parser.get_error_message()
+        return false
+    var parsed: Variant = parser.data
+    if not parsed is Dictionary:
+        attack_config_error = "root is not an object"
+        return false
+    var loaded: Dictionary = _parse_attack_config(parsed)
+    if loaded.is_empty():
+        return false
+    loaded["heavy"] = HEAVY_ATTACK
+    ATTACKS = loaded
+    return true
+
+
+func _is_number(value: Variant) -> bool:
+    return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
+
+
+func _parse_attack_config(config: Dictionary) -> Dictionary:
+    var schema_value: Variant = config.get("schema_version")
+    if not _is_number(schema_value) or int(schema_value) != 1:
+        return _reject_attack_config("unsupported schema version")
+    if typeof(config.get("source_archive")) != TYPE_STRING or String(config.get("source_archive")) != "brucelee.set":
+        return _reject_attack_config("unexpected source archive")
+    var frame_rate_value: Variant = config.get("frame_rate")
+    if not _is_number(frame_rate_value) or absf(float(frame_rate_value) - SOURCE_FRAME_RATE) > 0.001:
+        return _reject_attack_config("frame rate does not match the source")
+    var configured_attacks: Variant = config.get("attacks")
+    if not configured_attacks is Dictionary:
+        return _reject_attack_config("attacks is not an object")
+    var result: Dictionary = {}
+    for action: String in ["punch", "kick"]:
+        var entry_value: Variant = configured_attacks.get(action)
+        if not entry_value is Dictionary:
+            return _reject_attack_config(action + " is not an object")
+        var entry: Dictionary = entry_value
+        for key: String in [
+                "source_action", "animation", "animation_frame_count",
+                "startup_frames", "active_frames", "recovery_frames",
+                "prototype_range", "damage", "prototype_push", "source_impact"]:
+            if not entry.has(key):
+                return _reject_attack_config(action + " lacks " + key)
+        if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
+                or not _is_number(entry["recovery_frames"])
+                or not _is_number(entry["animation_frame_count"])
+                or not _is_number(entry["prototype_range"])
+                or not _is_number(entry["damage"])
+                or not _is_number(entry["prototype_push"])):
+            return _reject_attack_config(action + " contains non-numeric values")
+        var startup_frames: int = int(entry["startup_frames"])
+        var active_frames: int = int(entry["active_frames"])
+        var recovery_frames: int = int(entry["recovery_frames"])
+        var frame_count: int = int(entry["animation_frame_count"])
+        if (startup_frames < 0 or active_frames < 0 or recovery_frames < 0
+                or frame_count <= 0
+                or startup_frames + active_frames + recovery_frames <= 0):
+            return _reject_attack_config(action + " has invalid frame counts")
+        if startup_frames + active_frames + recovery_frames != frame_count:
+            return _reject_attack_config(action + " phase frames do not sum to animation_frame_count")
+        if (float(entry["startup_frames"]) != float(startup_frames)
+                or float(entry["active_frames"]) != float(active_frames)
+                or float(entry["recovery_frames"]) != float(recovery_frames)
+                or float(entry["animation_frame_count"]) != float(frame_count)):
+            return _reject_attack_config(action + " frame counts are not integers")
+        if typeof(entry["source_action"]) != TYPE_STRING or typeof(entry["animation"]) != TYPE_STRING:
+            return _reject_attack_config(action + " source identifiers are not strings")
+        var expected_source: String = "lowpunch1" if action == "punch" else "lowkick1"
+        var expected_animation: String = "m01_pnch_low_01" if action == "punch" else "m01_kick_low_01"
+        var expected_frame_count: int = 69 if action == "punch" else 86
+        if String(entry["source_action"]) != expected_source:
+            return _reject_attack_config(action + " source action is not " + expected_source)
+        if String(entry["animation"]) != expected_animation:
+            return _reject_attack_config(action + " animation is not " + expected_animation)
+        if frame_count != expected_frame_count:
+            return _reject_attack_config(action + " animation frame count is not " + str(expected_frame_count))
+        var attack_range: float = float(entry["prototype_range"])
+        var damage: float = float(entry["damage"])
+        var push: float = float(entry["prototype_push"])
+        if attack_range <= 0.0 or damage < 0.0 or push < 0.0:
+            return _reject_attack_config(action + " has invalid numeric values")
+        var impact_value: Variant = entry["source_impact"]
+        if not impact_value is Dictionary:
+            return _reject_attack_config(action + " source_impact is not an object")
+        var impact: Dictionary = impact_value
+        for key: String in ["attack_radius", "body_part", "height", "strength", "direction"]:
+            if not impact.has(key):
+                return _reject_attack_config(action + " impact lacks " + key)
+        if not _is_number(impact["attack_radius"]) or float(impact["attack_radius"]) <= 0.0:
+            return _reject_attack_config(action + " impact radius is invalid")
+        for key: String in ["body_part", "height", "strength", "direction"]:
+            if typeof(impact[key]) != TYPE_STRING:
+                return _reject_attack_config(action + " impact enum " + key + " is not a string")
+        if String(impact["body_part"]) not in ["larm", "rarm", "lleg", "rleg"]:
+            return _reject_attack_config(action + " body part is invalid")
+        if String(impact["height"]) not in ["high", "medium", "low"]:
+            return _reject_attack_config(action + " height is invalid")
+        if String(impact["strength"]) not in ["hard", "normal", "brutal"]:
+            return _reject_attack_config(action + " strength is invalid")
+        if String(impact["direction"]) not in ["frontal", "fromleft", "fromright", "fromabove"]:
+            return _reject_attack_config(action + " direction is invalid")
+        result[action] = {
+            "startup": float(startup_frames) / SOURCE_FRAME_RATE,
+            "active": float(active_frames) / SOURCE_FRAME_RATE,
+            "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
+            "range": attack_range,
+            "damage": damage,
+            "push": push,
+            "source_action": String(entry["source_action"]),
+            "animation": String(entry["animation"]),
+            "animation_frame_count": frame_count,
+            "source_impact": impact.duplicate(true),
+        }
+    return result
+
+
+func _reject_attack_config(message: String) -> Dictionary:
+    attack_config_error = message
+    return {}
+
 
 func _add_mesh(mesh: Mesh, local_pos: Vector3, color: Color) -> MeshInstance3D:
     var node: MeshInstance3D = MeshInstance3D.new()

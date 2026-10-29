@@ -28,7 +28,7 @@ func _attack_hits_after_frames(player: PortFighter, opponent: PortFighter, kind:
     if not player.request_attack(kind):
         push_error("Could not start %s boundary test" % kind)
         return false
-    var startup_frames: float = (float(PortFighter.ATTACKS[kind]["startup"])
+    var startup_frames: float = (float(player.ATTACKS[kind]["startup"])
             * PortFighter.SOURCE_FRAME_RATE)
     if before_frame <= startup_frames:
         player._physics_process(before_frame / PortFighter.SOURCE_FRAME_RATE)
@@ -39,6 +39,64 @@ func _attack_hits_after_frames(player: PortFighter, opponent: PortFighter, kind:
     opponent.position.x = -0.3
     player._physics_process(advance_frames / PortFighter.SOURCE_FRAME_RATE)
     return opponent.health < PortFighter.MAX_HEALTH
+
+
+func _raw_attack_entry(action: String) -> Dictionary:
+    var is_punch: bool = action == "punch"
+    return {
+        "source_action": "lowpunch1" if is_punch else "lowkick1",
+        "animation": "m01_pnch_low_01" if is_punch else "m01_kick_low_01",
+        "animation_frame_count": 69 if is_punch else 86,
+        "startup_frames": 5 if is_punch else 7,
+        "active_frames": 4,
+        "recovery_frames": 60 if is_punch else 75,
+        "prototype_range": 1.65 if is_punch else 2.2,
+        "damage": 5.0,
+        "prototype_push": 0.2 if is_punch else 0.35,
+        "source_impact": {
+            "attack_radius": 70.0,
+            "body_part": "larm" if is_punch else "lleg",
+            "height": "medium" if is_punch else "low",
+            "strength": "normal",
+            "direction": "frontal",
+        },
+    }
+
+
+func _raw_attack_config() -> Dictionary:
+    return {
+        "schema_version": 1,
+        "source_archive": "brucelee.set",
+        "frame_rate": 30.0,
+        "attacks": {
+            "punch": _raw_attack_entry("punch"),
+            "kick": _raw_attack_entry("kick"),
+        },
+    }
+
+
+func _config_negative_check(player: PortFighter) -> bool:
+    var cases: Array[Dictionary] = []
+    var wrong_rate: Dictionary = _raw_attack_config()
+    wrong_rate["frame_rate"] = 29.0
+    cases.append(wrong_rate)
+    var fractional: Dictionary = _raw_attack_config()
+    fractional["attacks"]["punch"]["startup_frames"] = 5.5
+    cases.append(fractional)
+    var invalid_enum: Dictionary = _raw_attack_config()
+    invalid_enum["attacks"]["punch"]["source_impact"]["body_part"] = "tail"
+    cases.append(invalid_enum)
+    var wrong_total: Dictionary = _raw_attack_config()
+    wrong_total["attacks"]["punch"]["recovery_frames"] = 59
+    cases.append(wrong_total)
+    var wrong_source: Dictionary = _raw_attack_config()
+    wrong_source["attacks"]["kick"]["source_action"] = "other"
+    cases.append(wrong_source)
+    for index in range(cases.size()):
+        if not player._parse_attack_config(cases[index]).is_empty():
+            push_error("Invalid fighting-set config case was accepted: %d" % index)
+            return false
+    return true
 
 
 func _path_guard_check() -> bool:
@@ -176,30 +234,46 @@ func _run_check() -> void:
         push_error("Fighters are missing after scene initialization")
         quit(1)
         return
-    var punch_startup: float = float(PortFighter.ATTACKS["punch"]["startup"])
-    var punch_active: float = float(PortFighter.ATTACKS["punch"]["active"])
-    var punch_recovery: float = float(PortFighter.ATTACKS["punch"]["recovery"])
-    var kick_startup: float = float(PortFighter.ATTACKS["kick"]["startup"])
+    var punch_startup: float = float(player.ATTACKS["punch"]["startup"])
+    var punch_active: float = float(player.ATTACKS["punch"]["active"])
+    var punch_recovery: float = float(player.ATTACKS["punch"]["recovery"])
+    var kick_startup: float = float(player.ATTACKS["kick"]["startup"])
     if (absf(punch_startup * PortFighter.SOURCE_FRAME_RATE - 5.0) > 0.001
             or absf(punch_active * PortFighter.SOURCE_FRAME_RATE - 4.0) > 0.001
             or absf(punch_recovery * PortFighter.SOURCE_FRAME_RATE - 60.0) > 0.001
-            or float(PortFighter.ATTACKS["punch"]["damage"]) != 5.0
+            or float(player.ATTACKS["punch"]["damage"]) != 5.0
             or absf(kick_startup * PortFighter.SOURCE_FRAME_RATE - 7.0) > 0.001
-            or absf(float(PortFighter.ATTACKS["kick"]["active"]) * PortFighter.SOURCE_FRAME_RATE - 4.0) > 0.001
-            or absf(float(PortFighter.ATTACKS["kick"]["recovery"]) * PortFighter.SOURCE_FRAME_RATE - 75.0) > 0.001
-            or float(PortFighter.ATTACKS["kick"]["damage"]) != 5.0):
+            or absf(float(player.ATTACKS["kick"]["active"]) * PortFighter.SOURCE_FRAME_RATE - 4.0) > 0.001
+            or absf(float(player.ATTACKS["kick"]["recovery"]) * PortFighter.SOURCE_FRAME_RATE - 75.0) > 0.001
+            or float(player.ATTACKS["kick"]["damage"]) != 5.0):
         push_error("Recovered lowpunch1/lowkick1 timing or damage constants changed")
         quit(1)
         return
-    if (PortFighter.ATTACKS["punch"]["source_impact"] != {
+    if (player.ATTACKS["punch"]["source_impact"] != {
                 "attack_radius": 70.0, "body_part": "larm", "height": "medium",
                 "strength": "normal", "direction": "frontal",
             }
-            or PortFighter.ATTACKS["kick"]["source_impact"] != {
+            or player.ATTACKS["kick"]["source_impact"] != {
                 "attack_radius": 70.0, "body_part": "lleg", "height": "low",
                 "strength": "normal", "direction": "frontal",
             }):
         push_error("Recovered fighting-set impact metadata changed")
+        quit(1)
+        return
+    if (String(player.ATTACKS["punch"]["source_action"]) != "lowpunch1"
+            or String(player.ATTACKS["kick"]["source_action"]) != "lowkick1"
+            or String(player.ATTACKS["punch"]["animation"]) != "m01_pnch_low_01"
+            or String(player.ATTACKS["kick"]["animation"]) != "m01_kick_low_01"
+            or int(player.ATTACKS["punch"]["animation_frame_count"]) != 69
+            or int(player.ATTACKS["kick"]["animation_frame_count"]) != 86):
+        push_error("Fighting-set config source identity changed")
+        quit(1)
+        return
+    if not player._parse_attack_config({}).is_empty():
+        push_error("Invalid fighting-set config was accepted")
+        quit(1)
+        return
+    if not _config_negative_check(player):
         quit(1)
         return
 
