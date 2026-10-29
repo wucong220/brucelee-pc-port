@@ -1,0 +1,750 @@
+{
+  "actions": [
+    {
+      "animation": "adreno_200/animation/all_block_high.anm",
+      "headers": {
+        "duration": 14,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 109062420,
+      "positions_track_present": false,
+      "resource_id": "97fdfd6c32e2d9d85feacb5fd730bef0",
+      "sha256": "0f28bb430632807073b2f47960286125bc7408080af4d306beeba2a20987434e",
+      "source_action": "highblock",
+      "track_presence": {
+        "bonepos": true,
+        "bonerot": true,
+        "positions": false,
+        "scales": true
+      },
+      "tracks": [
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 75,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonepos"
+        },
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 376,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 4,
+          "element_stride": 12,
+          "group": 1,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 24,
+          "element_stride": 8,
+          "group": 1,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "scales"
+        }
+      ]
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_light_frnt_high.anm",
+      "headers": {
+        "duration": 17,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 64967294,
+      "positions": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.023193359375,
+          2.30419921875,
+          0.0
+        ],
+        [
+          0.046630859375,
+          4.608642578125,
+          0.0
+        ],
+        [
+          0.06982421875,
+          6.9130859375,
+          0.0
+        ],
+        [
+          0.09326171875,
+          9.21728515625,
+          0.0
+        ],
+        [
+          0.11669921875,
+          11.521728515625,
+          0.0
+        ],
+        [
+          0.139892578125,
+          13.826171875,
+          0.0
+        ],
+        [
+          0.163330078125,
+          16.13037109375,
+          0.0
+        ],
+        [
+          0.1865234375,
+          18.434814453125,
+          0.0
+        ],
+        [
+          0.2099609375,
+          20.7392578125,
+          0.0
+        ],
+        [
+          0.2333984375,
+          23.04345703125,
+          0.0
+        ],
+        [
+          0.256591796875,
+          25.347900390625,
+          0.0
+        ],
+        [
+          0.280029296875,
+          27.65234375,
+          0.0
+        ],
+        [
+          0.303466796875,
+          29.95654296875,
+          0.0
+        ],
+        [
+          0.32666015625,
+          32.260986328125,
+          0.0
+        ],
+        [
+          0.35009765625,
+          34.5654296875,
+          0.0
+        ],
+        [
+          0.373291015625,
+          36.86962890625,
+          0.0
+        ]
+      ],
+      "positions_summary": {
+        "first": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_count": 17,
+        "last": [
+          0.373291015625,
+          36.86962890625,
+          0.0
+        ],
+        "maximum": [
+          0.373291015625,
+          36.86962890625,
+          0.0
+        ],
+        "maximum_absolute": [
+          0.373291015625,
+          36.86962890625,
+          0.0
+        ],
+        "minimum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "range": [
+          0.373291015625,
+          36.86962890625,
+          0.0
+        ]
+      },
+      "positions_track_present": true,
+      "resource_id": "b931c852dd914e5aecb2c81133f2dc94",
+      "sha256": "12c0eb7277771f07f6a968eaa7a645ab83dfab5f57d8ea1f14d96760bb075d6d",
+      "source_action": "impactlightfronthigh",
+      "track_presence": {
+        "bonepos": true,
+        "bonerot": true,
+        "positions": true,
+        "scales": true
+      },
+      "tracks": [
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 146,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 17,
+          "element_stride": 12,
+          "group": 0,
+          "name": "positions"
+        },
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 635,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 19,
+          "element_stride": 8,
+          "group": 1,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "scales"
+        }
+      ]
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_light_frnt_low.anm",
+      "headers": {
+        "duration": 17,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 64810570,
+      "positions": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        [
+          0.0,
+          12.168212890625,
+          0.0
+        ],
+        [
+          0.0,
+          6.083984375,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "positions_summary": {
+        "first": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_count": 17,
+        "last": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum": [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        "maximum_absolute": [
+          0.0,
+          18.252197265625,
+          0.0
+        ],
+        "minimum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "range": [
+          0.0,
+          18.252197265625,
+          0.0
+        ]
+      },
+      "positions_track_present": true,
+      "resource_id": "d5482134916bf69ccd821eede9653a5e",
+      "sha256": "a8ff4c5dc66580414be2b4fb1a96ab6aad841e7fef5696e53708b3199b11f6de",
+      "source_action": "impactlightfrontlow",
+      "track_presence": {
+        "bonepos": true,
+        "bonerot": true,
+        "positions": true,
+        "scales": true
+      },
+      "tracks": [
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 162,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 17,
+          "element_stride": 12,
+          "group": 0,
+          "name": "positions"
+        },
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 602,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 22,
+          "element_stride": 8,
+          "group": 1,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "scales"
+        }
+      ]
+    },
+    {
+      "animation": "adreno_200/animation/all_impct_light_frnt_mid.anm",
+      "headers": {
+        "duration": 16,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 87149095,
+      "positions": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.52294921875,
+          0.0
+        ],
+        [
+          0.0,
+          3.0458984375,
+          0.0
+        ],
+        [
+          0.0,
+          4.569091796875,
+          0.0
+        ],
+        [
+          0.0,
+          6.092041015625,
+          0.0
+        ],
+        [
+          0.0,
+          7.614990234375,
+          0.0
+        ],
+        [
+          0.0,
+          9.13818359375,
+          0.0
+        ],
+        [
+          0.0,
+          10.6611328125,
+          0.0
+        ],
+        [
+          0.0,
+          12.184326171875,
+          0.0
+        ],
+        [
+          0.0,
+          13.707275390625,
+          0.0
+        ],
+        [
+          0.0,
+          15.230224609375,
+          0.0
+        ],
+        [
+          0.0,
+          16.75341796875,
+          0.0
+        ],
+        [
+          0.0,
+          18.2763671875,
+          0.0
+        ],
+        [
+          0.0,
+          19.799560546875,
+          0.0
+        ],
+        [
+          0.0,
+          21.322509765625,
+          0.0
+        ],
+        [
+          0.0,
+          22.845458984375,
+          0.0
+        ]
+      ],
+      "positions_summary": {
+        "first": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_count": 16,
+        "last": [
+          0.0,
+          22.845458984375,
+          0.0
+        ],
+        "maximum": [
+          0.0,
+          22.845458984375,
+          0.0
+        ],
+        "maximum_absolute": [
+          0.0,
+          22.845458984375,
+          0.0
+        ],
+        "minimum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "range": [
+          0.0,
+          22.845458984375,
+          0.0
+        ]
+      },
+      "positions_track_present": true,
+      "resource_id": "a45db54135fa8de6daa4fe81eadc90cc",
+      "sha256": "5d351a6cbc9aeb67973b2b60b49ac6729153ec568e6d7556a010d8ee86d3b3aa",
+      "source_action": "impactlightfrontmid",
+      "track_presence": {
+        "bonepos": true,
+        "bonerot": true,
+        "positions": true,
+        "scales": true
+      },
+      "tracks": [
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 93,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 16,
+          "element_stride": 12,
+          "group": 0,
+          "name": "positions"
+        },
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 523,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 18,
+          "element_stride": 8,
+          "group": 1,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "scales"
+        }
+      ]
+    },
+    {
+      "animation": "adreno_200/animation/all_block_low.anm",
+      "headers": {
+        "duration": 23,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 61659242,
+      "positions_track_present": false,
+      "resource_id": "ede1c969fee6d7870a675e9f0fdcc760",
+      "sha256": "9c9c1970fdc2ff8a064d5cb8d2b8bf8dcb8a0551e2177551096fc4e18169f61b",
+      "source_action": "lowblock",
+      "track_presence": {
+        "bonepos": true,
+        "bonerot": true,
+        "positions": false,
+        "scales": true
+      },
+      "tracks": [
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 186,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonepos"
+        },
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 1186,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 8,
+          "group": 1,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "scales"
+        }
+      ]
+    },
+    {
+      "animation": "adreno_200/animation/all_block_mid.anm",
+      "headers": {
+        "duration": 14,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 92027933,
+      "positions_track_present": false,
+      "resource_id": "f9e2af1589ff5cf94743822b2f591bea",
+      "sha256": "2a68724ef317d89c74ffc5fae3e19bd5204dc37f05a0817ba313aece16d3a0a9",
+      "source_action": "midblock",
+      "track_presence": {
+        "bonepos": true,
+        "bonerot": true,
+        "positions": false,
+        "scales": true
+      },
+      "tracks": [
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 75,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonepos"
+        },
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 385,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 3,
+          "element_stride": 12,
+          "group": 1,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 24,
+          "element_stride": 8,
+          "group": 1,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "scales"
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "native_instruction_chain": "STATIC_VERIFIED",
+    "note": "The report exports positions tracks and frame values only. It does not classify an axis as horizontal push or replace the Godot prototype push.",
+    "positions_axis_semantics": "UNVERIFIED",
+    "positions_track_consumed_by_root_transform": "STATIC_SUPPORTED",
+    "positions_track_values": "STATIC_VERIFIED",
+    "push_or_knockback_mapping": "HYPOTHESIS"
+  },
+  "schema_version": 1,
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "sha256": "429c9c7af3a36d21742c2de60d23c5ecaab5642b9d817564174efc0c5b3b6342"
+  }
+}

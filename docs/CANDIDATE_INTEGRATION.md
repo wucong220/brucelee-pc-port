@@ -110,6 +110,9 @@ WINDOWS_EXE_VALIDATION=PASS
 - 格挡减伤、推力和 `heavy` 仍使用原型规则；`heavy` 仍走占位距离，不套用已恢复公式。
 - `height/strength/direction` 已映射到 normal reaction actions；`body_part` 到命中
   部位、受击反馈和推力的运行时映射尚未闭合。
+- reaction root-motion 的 `positions` 原始帧值、`bonepos` 存在性和 ANM 哈希已导出，
+  但 `positions` 的坐标轴、局部/世界空间语义及帧间增量尚未闭合。Godot 的
+  `prototype_push` 未替换；block ANM 没有 `positions` 轨道也不能证明格挡没有位移。
 - Windows release EXE/PCK 已在无源码目录验证启动、外部候选资源加载和战斗；
   这不等于完整原版游戏、逐像素视觉或最终发行质量已经验收。
 - 本分支测试通过不等于原版角色动画、光照、碰撞或战斗规则已完成运行时复刻。
