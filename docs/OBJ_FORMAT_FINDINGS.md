@@ -131,4 +131,20 @@ py -3.12 tools\native_hierarchy_links.py "$env:LOCALAPPDATA\BruceLee-PC-Port\bin
 py -3.12 tools\native_draw_path.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
 ```
 
-下一步应继续把具体视觉对象的材质状态和 draw-call 次数接到这条批处理路径。
+## 视觉项与 subset 提交粒度
+
+`CScnObj::Commit` 的外层按 `0x30` 字节遍历视觉项（`0x36E260`、`0x36E4E4`），内层读取当前视觉项的 `+0x14` 数量与 `+0x18` 数组，在 `0x36E1D8`、`0x36E45C` 逐个取出 subset 索引。每次索引通过 `CRenderTargetBase::Commit` 加入批处理，所以静态提交单位是“视觉项 × 通过 pass 过滤的 subset”。
+
+pass 过滤位于 `0x36E1B0`、`0x36E434`：取视觉项 `+0x20` 指向对象的 `+0x50` 位图，并测试 `1 << pass`。位未置位时不提交该视觉项。两个结构相同的循环分别覆盖两条提交分支。
+
+按已解析的资源和 mesh 数据，`male_01` 的 Body 阴影视觉项有 1 个 subset、Body 主蒙皮视觉项有 3 个 subset；如果两个视觉项都通过同一 pass，最多形成 4 个 primitive 提交。Hair 主网格和 Hair 阴影各为独立 object 视觉项，各有 1 个 subset，分别最多形成 1 个 primitive 提交。
+
+这些是 primitive 入批上限，不是最终 `glDrawElements/glDrawArrays` 次数。批处理器可以合并或拆分，实际次数还取决于 pass 位、运行时视觉状态和批处理键。
+
+可用下面的命令复核 subset 循环指令，不把原 SO 写入仓库：
+
+```powershell
+py -3.12 tools\native_visual_commits.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so"
+```
+
+下一步应继续解析批处理键和材质状态，确定哪些 primitive 会合并为同一次 OpenGL draw。
