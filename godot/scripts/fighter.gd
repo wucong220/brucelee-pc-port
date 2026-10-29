@@ -65,6 +65,12 @@ const FACEDOWN_ATTACK_DAMAGE_START_FRAME: int = 6
 const FACEDOWN_ATTACK_DAMAGE_END_FRAME: int = 9
 const FACEDOWN_ATTACK_DAMAGE: float = 6.0
 const FACEDOWN_ATTACK_RADIUS: float = 120.0
+const FACEUP_IMPACT_TO_FLOOR_CLIP: String = "all_stunned_fall"
+const FACEUP_IDLE_CLIP: String = "all_idle_face_up"
+const FACEUP_IMPACT_TO_FLOOR_DURATION_FRAMES: int = 79
+const FACEUP_IMPACT_TO_FLOOR_ENTRY_FRAME: int = 21
+const FACEUP_IMPACT_TO_FLOOR_EXIT_FRAME: int = 48
+const FACEUP_IDLE_DURATION_FRAMES: int = 45
 # UserControlUpdate expires a whole input vector based on the last event's
 # +500 clock value. The clock unit is not proven, so this is an explicit PC
 # prototype lifetime and must not be presented as the original timing.
@@ -88,6 +94,8 @@ const RETURN_ANIMATION_RADII: Dictionary = {
     "all_getup_facedwn": 25.0,
     "all_impct_facedwn": 80.0,
     "all_getup_facedwn_attack": 45.0,
+    "all_stunned_fall": 75.0,
+    "all_idle_face_up": 75.0,
 }
 const REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -1024,6 +1032,7 @@ func _try_load_candidate_visual() -> void:
         for return_clip_name: String in [
             IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
             FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
+            FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP,
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
@@ -1040,7 +1049,9 @@ func _try_load_candidate_visual() -> void:
             _candidate_clip_paths["move"]
         )
         move.loop_mode = Animation.LOOP_LINEAR
-    for looping_return: String in [IDLE2_CLIP, FACEDOWN_IDLE_CLIP]:
+    for looping_return: String in [
+        IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
+    ]:
         if not _candidate_clip_paths.has(looping_return):
             continue
         var looping_clip: Animation = _candidate_animation.get_animation(
@@ -1062,6 +1073,11 @@ func _try_load_candidate_visual() -> void:
             _candidate_clip_paths[FACEDOWN_ATTACK_CLIP]
         )
         facedown_attack_clip.loop_mode = Animation.LOOP_NONE
+    if _candidate_clip_paths.has(FACEUP_IMPACT_TO_FLOOR_CLIP):
+        var faceup_impact_clip: Animation = _candidate_animation.get_animation(
+            _candidate_clip_paths[FACEUP_IMPACT_TO_FLOOR_CLIP]
+        )
+        faceup_impact_clip.loop_mode = Animation.LOOP_NONE
     for action: String in _candidate_clip_paths:
         _disable_candidate_character_position_tracks(
             _candidate_animation.get_animation(_candidate_clip_paths[action])
@@ -1289,7 +1305,7 @@ func _prepare_candidate_reaction(clip: Animation) -> bool:
     return true
 
 
-func _play_candidate_action(action: String) -> void:
+func _play_candidate_action(action: String, start_frame: int = 0) -> void:
     if _candidate_animation == null or not _candidate_clip_paths.has(action):
         return
     if _candidate_action == action and _candidate_animation.is_playing():
@@ -1297,6 +1313,10 @@ func _play_candidate_action(action: String) -> void:
     _candidate_action = action
     candidate_animation_clip = _candidate_clip_paths[action]
     _candidate_animation.play(candidate_animation_clip)
+    if start_frame > 0:
+        _candidate_animation.seek(
+            float(start_frame) / SOURCE_FRAME_RATE, true
+        )
 
 
 func supports_attack(kind: String) -> bool:
@@ -1397,6 +1417,18 @@ func _advance_return_state(delta: float) -> void:
         state_time = after
         if _reached_source_frame(state_time, FACEDOWN_ATTACK_EXIT_FRAME):
             _enter_locomotion_state("idle")
+        return
+    if state == "impacttofloor":
+        state_time += maxf(delta, 0.0)
+        if _reached_source_frame(state_time, FACEUP_IMPACT_TO_FLOOR_EXIT_FRAME):
+            _enter_locomotion_state("faceupidle")
+        return
+    if state == "faceupidle":
+        state_time += maxf(delta, 0.0)
+        var duration: float = float(FACEUP_IDLE_DURATION_FRAMES) / SOURCE_FRAME_RATE
+        if duration > 0.0:
+            while state_time >= duration:
+                state_time -= duration
 
 
 func _wrap_return_loop(duration_frames: int) -> void:
@@ -1454,6 +1486,31 @@ func _accepts_facedown_low_impact(impact_height: String, blocked: bool, damage: 
     )
 
 
+func _accepts_impact_to_floor(
+        impact_height: String,
+        blocked: bool,
+        damage: float
+) -> bool:
+    var source_frame: float = state_time * SOURCE_FRAME_RATE
+    var in_source_window: bool = (
+        (state == "facedowngetup"
+            and source_frame + 0.0001 >= 5.0
+            and source_frame <= 11.0001)
+        or
+        (state == "facedownattack"
+            and source_frame + 0.0001 >= 24.0
+            and source_frame <= 31.0001)
+    )
+    return (
+        in_source_window
+        and not blocked
+        and impact_height == "low"
+        and health - damage > 0.0
+        and _candidate_clip_paths.has(FACEUP_IMPACT_TO_FLOOR_CLIP)
+        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+    )
+
+
 func _begin_facedown_ko() -> void:
     state = "facedownko"
     state_time = 0.0
@@ -1462,6 +1519,20 @@ func _begin_facedown_ko() -> void:
     _clear_reaction_tracking()
     _restart_candidate_action()
     combat_ko.emit(self)
+
+
+func begin_impact_to_floor(amount: float) -> void:
+    health = maxf(0.0, health - amount)
+    state = "impacttofloor"
+    state_time = (
+        float(FACEUP_IMPACT_TO_FLOOR_ENTRY_FRAME) / SOURCE_FRAME_RATE
+    )
+    attack_kind = ""
+    _attack_connected = false
+    _facedown_input_history.clear()
+    combo_hits = 0
+    _clear_reaction_tracking()
+    _restart_candidate_action()
 
 
 func begin_facedown_impact(amount: float) -> void:
@@ -1572,7 +1643,7 @@ func _physics_process(delta: float) -> void:
 func _advance_timed_states(delta: float) -> void:
     if state in [
         "idle2", "facedownidle", "facedownko", "facedowngetup",
-        "impactfacedown", "facedownattack",
+        "impactfacedown", "facedownattack", "impacttofloor", "faceupidle",
     ]:
         _advance_return_state(delta)
         return
@@ -1651,7 +1722,9 @@ func _try_attack_contact() -> void:
     # facedownidle only has a verified low-impact link. Other hits keep the
     # existing reaction path, and a killing blow stays there because facedownko
     # is not implemented.
-    if opponent._accepts_facedown_low_impact(impact_height, blocked, damage):
+    if opponent._accepts_impact_to_floor(impact_height, blocked, damage):
+        opponent.begin_impact_to_floor(damage)
+    elif opponent._accepts_facedown_low_impact(impact_height, blocked, damage):
         opponent.begin_facedown_impact(damage)
     else:
         opponent.receive_hit(
@@ -1679,6 +1752,10 @@ func current_source_animation() -> String:
         return FACEDOWN_IMPACT_CLIP
     if state == "facedownattack":
         return FACEDOWN_ATTACK_CLIP
+    if state == "impacttofloor":
+        return FACEUP_IMPACT_TO_FLOOR_CLIP
+    if state == "faceupidle":
+        return FACEUP_IDLE_CLIP
     return _owner_idle_animation()
 
 
@@ -1939,8 +2016,19 @@ func _animate_candidate() -> void:
         requested = FACEDOWN_ATTACK_CLIP
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
+    elif state == "impacttofloor" and _candidate_clip_paths.has(FACEUP_IMPACT_TO_FLOOR_CLIP):
+        requested = FACEUP_IMPACT_TO_FLOOR_CLIP
+        if _candidate_action != requested and _candidate_character != null:
+            _candidate_character.position = _candidate_character_rest_position
+    elif state == "faceupidle" and _candidate_clip_paths.has(FACEUP_IDLE_CLIP):
+        requested = FACEUP_IDLE_CLIP
     elif state == "idle" and _candidate_clip_paths.has("move") and (
             absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001
     ):
         requested = "move"
-    _play_candidate_action(requested)
+    var start_frame: int = (
+        int(state_time * SOURCE_FRAME_RATE + 0.0001)
+        if requested == FACEUP_IMPACT_TO_FLOOR_CLIP
+        else 0
+    )
+    _play_candidate_action(requested, start_frame)
