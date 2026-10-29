@@ -14,6 +14,29 @@ from native_hierarchy_links import HierarchyLinkError, file_offset
 
 _SHA256 = "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70"
 _WORDS = {
+    0x0017F860: 0xE3A02000,  # new event flag value
+    0x0017F864: 0xE5CD206C,  # event +0x10 = 0 on stack
+    0x0017F868: 0xE58D3068,  # event +0x0c = caller argument
+    0x00177FAC: 0xE5D12010,  # event copy reads flag
+    0x00177FB4: 0xE5C02010,  # event copy writes flag
+    0x001A0B5C: 0xE5934008,  # ConsumeEvents reads event string item
+    0x001A0B64: 0xE1550004,  # compare desired string item
+    0x001A0B68: 0x05C38010,  # on match write flag = 1
+    0x001A0B6C: 0x02466001,  # advance desired sequence on match
+    0x0017C1D8: 0xE594274C,  # first event queue size
+    0x0017C204: 0xE5940750,  # first event queue data
+    0x0017C20C: 0xE594C754,  # first event queue stride
+    0x0017C214: 0xE593300C,  # last event's +0x0c field
+    0x0017C218: 0xE2833F7D,  # add 500 clock units
+    0x0017C21C: 0xE1580003,  # compare Update argument
+    0x0017C220: 0x9A000008,  # leave queue unchanged when <=
+    0x0017C240: 0xE5C16010,  # otherwise mark each event
+    0x0017C248: 0xE5942760,  # second event queue size
+    0x0017C264: 0xE593300C,  # last event's +0x0c field
+    0x0017C268: 0xE2833F7D,  # add 500 clock units
+    0x0017C26C: 0xE1580003,  # compare Update argument
+    0x0017C270: 0x9A000008,  # leave queue unchanged when <=
+    0x0017C290: 0xE5C16010,  # otherwise mark each event
     0x001A0184: 0xE5915008,  # ldr r5,[keysequence,#8] size
     0x001A0188: 0xE3A03001,  # mov r3,#1
     0x001A018C: 0xE3A00000,  # mov r0,#0
@@ -59,6 +82,10 @@ _WORDS = {
     0x001A8AA0: 0xE3500000,  # cmp r0,#0 (conditions)
     0x001A8AA4: 0x0AFFFFD1,  # beq next link
     0x001A8AB4: 0xEBFDE4D8,  # bl CFighter::FollowLink
+    0x001A8AD0: 0xEBFDF96E,  # bl CFighter::ConsumeEvents
+    0x001A8AD4: 0xE5D530E0,  # load link byte at +0xe0
+    0x001A8ADC: 0x0A00000D,  # skip marking all when byte is zero
+    0x001A8B10: 0xE5C1C010,  # otherwise mark each event
     0x001A1FA8: 0xE1520003,  # cmp currentFrame,windowStart
     0x001A1FAC: 0x3A000009,  # blo false
     0x001A1FB0: 0xE5910004,  # ldr r0,[window,#4] windowEnd
