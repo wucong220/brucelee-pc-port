@@ -572,7 +572,7 @@ py -3.12 tools\native_reaction_links.py `
 
 安全导出覆盖六个 normal 受击/格挡 ANM：
 
-| 动作 | `positions` 轨道 | 帧数/最大绝对值 |
+| 动作 | `positions` 轨道 | 帧数/关键值 |
 |---|---:|---|
 | `impactlightfrontlow` | 有 | 17；`(0, 18.2522, 0)` |
 | `impactlightfrontmid` | 有 | 16；末值 `(0, 22.8455, 0)` |
