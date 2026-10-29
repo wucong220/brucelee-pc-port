@@ -4,7 +4,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from kdf_data import KdfError
-from material_binding_report import build_report
+from material_binding_report import build_report, parse_mesh_specs
 
 
 def object_report():
@@ -48,10 +48,63 @@ def program_report():
     }
 
 
+def mesh_report(kind):
+    if kind == 'hair':
+        subsets = [{
+            'record_start': 14,
+            'index_range': [0, 843],
+            'vertex_range': [0, 213],
+            'triangle_count': 281,
+            'material': 'hair_hw',
+        }]
+        return {
+            'sha256': 'hair-mesh-hash',
+            'vertex_count': 213,
+            'index_count': 843,
+            'subset_count': 1,
+            'subsets': subsets,
+        }
+    subsets = [
+        {
+            'record_start': 16,
+            'index_range': [0, 6141],
+            'vertex_range': [0, 1445],
+            'triangle_count': 2047,
+            'material': 'body_hw',
+        },
+        {
+            'record_start': 32,
+            'index_range': [6141, 8505],
+            'vertex_range': [1445, 2075],
+            'triangle_count': 788,
+            'material': 'body_hw',
+        },
+        {
+            'record_start': 48,
+            'index_range': [8505, 10080],
+            'vertex_range': [2075, 2448],
+            'triangle_count': 525,
+            'material': 'body_hw',
+        },
+    ]
+    return {
+        'sha256': 'body-mesh-hash',
+        'vertex_count': 2448,
+        'index_count': 10080,
+        'subset_count': 3,
+        'subsets': subsets,
+    }
+
+
 class TestMaterialBindingReport(unittest.TestCase):
     def test_builds_hair_and_body_mappings(self):
-        result = build_report(object_report(), program_report())
+        result = build_report(
+            object_report(),
+            program_report(),
+            {'hair': mesh_report('hair'), 'body': mesh_report('body')},
+        )
         self.assertEqual(result['evidence_level'], 'STATIC_VERIFIED')
+        self.assertEqual(result['schema_version'], 2)
         self.assertEqual(result['program_texture_constants'], [
             'diffuse', 'normal', 'material',
         ])
@@ -63,6 +116,11 @@ class TestMaterialBindingReport(unittest.TestCase):
             result['bindings']['body']['textures']['material']['path'],
             'objects/body/textures/material.tex',
         )
+        self.assertEqual(result['bindings']['body']['subset_count'], 3)
+        self.assertEqual(
+            result['bindings']['body']['subsets'][1]['index_range'],
+            [6141, 8505],
+        )
 
     def test_rejects_missing_texture_property(self):
         source = object_report()
@@ -71,7 +129,42 @@ class TestMaterialBindingReport(unittest.TestCase):
             if not (use['record_ordinal'] == 13)
         ]
         with self.assertRaisesRegex(KdfError, 'missing texture properties: normal'):
-            build_report(source, program_report())
+            build_report(
+                source,
+                program_report(),
+                {'hair': mesh_report('hair'), 'body': mesh_report('body')},
+            )
+
+    def test_rejects_mesh_material_mismatch(self):
+        body_mesh = mesh_report('body')
+        body_mesh['subsets'][1]['material'] = 'other_material'
+        with self.assertRaisesRegex(KdfError, 'does not match'):
+            build_report(
+                object_report(),
+                program_report(),
+                {'hair': mesh_report('hair'), 'body': body_mesh},
+            )
+
+    def test_mesh_arguments_require_one_part_each(self):
+        parsed = parse_mesh_specs(['hair=C:/private/hair.mesh',
+                                   'body=C:/private/body.mesh'])
+        self.assertEqual(set(parsed), {'hair', 'body'})
+        for invalid in (
+                [], ['hair=C:/private/hair.mesh'],
+                ['hair=C:/a', 'hair=C:/b', 'body=C:/c']):
+            with self.subTest(values=invalid), self.assertRaises(KdfError):
+                parse_mesh_specs(invalid)
+
+
+    def test_mesh_reports_are_required(self):
+        with self.assertRaises(TypeError):
+            build_report(object_report(), program_report())
+        with self.assertRaisesRegex(KdfError, 'exactly hair and body'):
+            build_report(
+                object_report(),
+                program_report(),
+                {'hair': mesh_report('hair')},
+            )
 
 
 if __name__ == '__main__':
