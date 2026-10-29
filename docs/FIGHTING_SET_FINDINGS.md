@@ -90,6 +90,23 @@ DATA 头为 `(37870, 0, 0, 0)`，唯一 offset word 为 0，记录从 DATA+24
 栈后作为 `r0–r3` 传给未知函数、对象复制后的别名以及通过间接调用返回的
 指针。由于这些路径尚未闭合，运行时语义继续保持 `SEMANTICS_UNVERIFIED`。
 
+补充用完整 `.symtab` 将全 ELF 的 `LDR/LDRB/STR/STRB/ADD/SUB #0x14`
+指令归属到包含函数，并对 `TAttackImpact` 相关函数单独筛选后：
+
+- `TAttackImpact::createcopy` 的 `0x1A0634/0x1A0648` 是唯一明确的
+  `+0x14` 读/写配对。
+- `TAttackImpact::destroy` 的 `0x1A3870/0x1A38AC` 读取同一引用以执行
+  生命周期处理。
+- `IsAttacking`、`AttackDamage`、`CheckConditions`、
+  `DamageReceiveCheck`、`DrawDebugInfo` 的 current-impact 使用中没有
+  `+0x14` 访存。
+- 全 ELF 中还存在大量其他对象的 `+0x14` 访存；只有能证明基址来自
+  `TAttackImpact` 的命中才计入本表，不能把同一立即数偏移一概归给
+  `body_part`。
+
+该扫描把负证据收紧到 `SCAN_SUPPORTED`：当前可追踪的复制/销毁和直接玩法
+使用点均未消费 `body_part`，但仍不能据此断言整个程序永远不消费它。
+
 `CFighter::CheckConditions` 在 `0x1A42E4–0x1A4324` 对关联 fighter 的
 `IsAttacking()` 前置条件完成后，执行以下单精度公式：
 
