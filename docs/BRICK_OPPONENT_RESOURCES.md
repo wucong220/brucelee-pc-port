@@ -148,3 +148,5 @@ py -3.12 -X utf8 -B tools\compare_animation_bindings.py `
 封装为可复用命令，不能替代原生变换链或视觉对照。
 
 Validation: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q` (201 tests, 1 skipped; exit 0).
+
+Review follow-up: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q` (207 tests, 1 skipped; exit 0, including 4 local untracked retarget-audit tests).

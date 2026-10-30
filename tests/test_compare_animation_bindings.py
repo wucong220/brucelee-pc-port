@@ -1,5 +1,7 @@
 from pathlib import Path
+import subprocess
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
@@ -38,6 +40,25 @@ class TestCompareAnimationBindings(unittest.TestCase):
         source['bindings'].append(source['bindings'][0])
         with self.assertRaises(KdfError):
             compare(source, binding('b'))
+
+    def test_rejects_inconsistent_reference(self):
+        target = binding('b')
+        target['skeleton_reference']['reference'] = 'skeletons/other.skl'
+        with self.assertRaises(KdfError):
+            compare(binding('a'), target)
+
+    def test_cli_rejects_missing_and_invalid_files(self):
+        script = Path(__file__).resolve().parents[1] / 'tools' / 'compare_animation_bindings.py'
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'bad.anm'
+            missing = path.with_name('missing.skl')
+            path.write_bytes(b'not an animation')
+            for paths in ((missing, missing, missing), (path, path, path)):
+                result = subprocess.run([sys.executable, str(script), *map(str, paths)],
+                                        capture_output=True, text=True, encoding='utf-8')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.stdout, '')
+                self.assertIn('error:', result.stderr)
 
 
 if __name__ == '__main__':
