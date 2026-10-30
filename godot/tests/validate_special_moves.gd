@@ -40,6 +40,9 @@ func _run() -> void:
     if not _validate_backstep_gate(player):
         quit(1)
         return
+    if not await _validate_blocked_hit_grants_no_rage(player):
+        quit(1)
+        return
     if not await _validate_special_hit(player, opponent):
         quit(1)
         return
@@ -102,6 +105,31 @@ func _validate_backstep_gate(player: PortFighter) -> bool:
     if player.attack_kind == "special_kick_high":
         push_error("The special fired without a backstep first press")
         return false
+    return true
+
+
+func _validate_blocked_hit_grants_no_rage(player: PortFighter) -> bool:
+    var defender: PortFighter = load("res://scripts/fighter.gd").new()
+    defender.configure_attack_config(PortFighter.ATTACK_CONFIG_PATH)
+    root.add_child(defender)
+    await process_frame
+    player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
+    defender.reset_fighter(Vector3(0.25, 1.20, 0.0))
+    player.opponent = defender
+    player.facing = 1.0
+    player._time = 0.0
+    player.rage = 0.0
+    defender.guard_held = true
+    if not player.request_attack("punch"):
+        push_error("Could not start the blocked-hit check")
+        return false
+    player._advance_timed_states(
+        float(player.ATTACKS["punch"]["startup"]) + 0.001
+    )
+    if not is_zero_approx(player.rage):
+        push_error("A blocked hit granted rage: " + str(player.rage))
+        return false
+    defender.queue_free()
     return true
 
 

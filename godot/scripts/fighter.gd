@@ -2538,9 +2538,10 @@ func _try_facedown_attack_contact() -> void:
         FACEDOWN_ATTACK_IMPACT, blocked
     )
     _attack_connected = true
-    opponent.receive_hit(
+    if not opponent.receive_hit(
         FACEDOWN_ATTACK_DAMAGE, blocked, 0.0, facing, reaction
-    )
+    ):
+        return
     _register_landed_hit(FACEDOWN_ATTACK_DAMAGE, blocked)
     combat_hit.emit(
         self, opponent, "facedownattack", FACEDOWN_ATTACK_DAMAGE, blocked
@@ -2568,9 +2569,10 @@ func _try_faceup_attack_contact() -> void:
     if opponent._accepts_brick_faceup_candidate(FACEUP_ATTACK_DAMAGE, blocked):
         reaction = BRICK_FRONT_LOW_REACTION.duplicate(true)
     _attack_connected = true
-    opponent.receive_hit(
+    if not opponent.receive_hit(
         FACEUP_ATTACK_DAMAGE, blocked, 0.0, facing, reaction
-    )
+    ):
+        return
     _register_landed_hit(FACEUP_ATTACK_DAMAGE, blocked)
     combat_hit.emit(
         self, opponent, "faceupattack", FACEUP_ATTACK_DAMAGE, blocked
@@ -2619,7 +2621,7 @@ func _try_attack_contact() -> void:
             and not accepts_faceup_ko):
         return
     # Mark contact before emitting signals, including a guarded hit.
-    _attack_connected = true
+    var accepted: bool = true
     # Ground states only accept the verified low-impact paths. Other hits keep
     # their existing reaction path, except the face-up states protected above.
     if accepts_faceup_ko:
@@ -2631,9 +2633,12 @@ func _try_attack_contact() -> void:
     elif opponent._accepts_facedown_low_impact(impact_height, blocked, damage):
         opponent.begin_facedown_impact(damage)
     else:
-        opponent.receive_hit(
+        accepted = opponent.receive_hit(
             damage, blocked, float(details["push"]), facing, reaction
         )
+    if not accepted:
+        return
+    _attack_connected = true
     _register_landed_hit(damage, blocked)
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
 
