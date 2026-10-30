@@ -149,6 +149,10 @@ try {
     Invoke-Checked "Prototype smoke" {
         & $GodotExe --headless --path $godotProject --script res://tests/smoke_test.gd
     }
+    Invoke-Checked "Prototype controller input" {
+        & $GodotExe --headless --path $godotProject `
+            --script res://tests/validate_controller_input.gd
+    }
     Invoke-Checked "Prototype AI guard" {
         & $GodotExe --headless --path $godotProject --script res://tests/validate_ai_guard.gd
     }
@@ -214,6 +218,10 @@ try {
         Invoke-Checked "Packed prototype smoke" {
             & $GodotExe --headless --main-pack $packPath `
                 --script res://tests/smoke_test.gd
+        }
+        Invoke-Checked "Packed prototype controller input" {
+            & $GodotExe --headless --main-pack $packPath `
+                --script res://tests/validate_controller_input.gd
         }
         Invoke-Checked "Packed prototype AI guard" {
             & $GodotExe --headless --main-pack $packPath `

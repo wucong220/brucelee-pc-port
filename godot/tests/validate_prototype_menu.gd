@@ -103,7 +103,7 @@ func _run() -> void:
         push_error("Could not start a punch before pause validation")
         quit(1)
         return
-    scene._unhandled_key_input(_key(KEY_ESCAPE))
+    scene._unhandled_input(_key(KEY_ESCAPE))
     await process_frame
     if not menu.visible or not scene.get("menu_paused") or menu.menu_state != "pause":
         push_error("Escape did not open the pause menu")
@@ -146,7 +146,7 @@ func _run() -> void:
     player.set_physics_process(false)
     computer.set_physics_process(false)
     scene._reset_match()
-    scene._unhandled_key_input(_key(KEY_ESCAPE))
+    scene._unhandled_input(_key(KEY_ESCAPE))
     menu.handle_key_event(_key(KEY_DOWN))
     if menu.selected_command() != "restart":
         push_error("Pause menu did not select restart")

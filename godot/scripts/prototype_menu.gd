@@ -6,6 +6,7 @@ class_name PortPrototypeMenu
 signal command_requested(command: String)
 
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
+const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const MAIN_COMMANDS: Array[String] = ["fight", "training", "quit"]
 const MAIN_LABELS: Array[String] = ["VS FIGHT", "GROUND TRAINING", "QUIT GAME"]
 const PAUSE_COMMANDS: Array[String] = ["resume", "restart", "main_menu", "quit"]
@@ -102,7 +103,7 @@ func _build_ui() -> void:
     status_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.40))
     panel.add_child(status_label)
     controls_label = Label.new()
-    controls_label.text = "UP/DOWN select   ENTER/J confirm   ESC resume"
+    controls_label.text = "UP/DOWN or D-PAD select   ENTER/J/A confirm   ESC/B/START resume"
     controls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     controls_label.add_theme_font_size_override("font_size", 16)
@@ -144,7 +145,7 @@ func show_main_menu() -> void:
     visible = true
     mode_label.text = "MAIN MENU"
     status_label.text = ""
-    controls_label.text = "UP/DOWN choose   ENTER or J confirm"
+    controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"
     _refresh_items(MAIN_LABELS)
 
 func show_pause_menu() -> void:
@@ -153,7 +154,7 @@ func show_pause_menu() -> void:
     visible = true
     mode_label.text = "PAUSED"
     status_label.text = ""
-    controls_label.text = "UP/DOWN choose   ENTER or J confirm   ESC resume"
+    controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm   ESC/B/START resume"
     _refresh_items(PAUSE_LABELS)
 
 func hide_menu() -> void:
@@ -172,33 +173,39 @@ func selected_command() -> String:
     return commands[selected_index]
 
 func handle_key_event(event: InputEventKey) -> bool:
+    return handle_input_event(event)
+
+func handle_input_event(event: InputEvent) -> bool:
     if not visible:
         return false
-    if not event.pressed or event.echo:
-        return true
-    var commands: Array[String] = (
-        MAIN_COMMANDS if menu_state == "main" else PAUSE_COMMANDS
-    )
-    match event.keycode:
-        KEY_UP, KEY_W:
-            selected_index = wrapi(selected_index - 1, 0, commands.size())
-            _refresh_selection()
-        KEY_DOWN, KEY_S:
-            selected_index = wrapi(selected_index + 1, 0, commands.size())
-            _refresh_selection()
-        KEY_ENTER, KEY_KP_ENTER, KEY_J:
-            var command: String = selected_command()
-            if not command.is_empty():
-                command_requested.emit(command)
-        KEY_ESCAPE:
-            if menu_state == "pause":
-                command_requested.emit("resume")
+    if not PrototypeControls.is_press_edge(event):
+        return false
+    var commands: Array[String] = _commands()
+    if event.is_action_pressed(PrototypeControls.MENU_UP):
+        selected_index = wrapi(selected_index - 1, 0, commands.size())
+        _refresh_selection()
+    elif event.is_action_pressed(PrototypeControls.MENU_DOWN):
+        selected_index = wrapi(selected_index + 1, 0, commands.size())
+        _refresh_selection()
+    elif event.is_action_pressed(PrototypeControls.MENU_ACCEPT):
+        var command: String = selected_command()
+        if not command.is_empty():
+            command_requested.emit(command)
+    elif event.is_action_pressed(PrototypeControls.MENU_CANCEL):
+        if menu_state == "pause":
+            command_requested.emit("resume")
+    else:
+        return false
     return true
 
+func _commands() -> Array[String]:
+    if menu_state == "main":
+        return MAIN_COMMANDS
+    return PAUSE_COMMANDS
+
 func _input(event: InputEvent) -> void:
-    if event is InputEventKey:
-        if handle_key_event(event as InputEventKey):
-            get_viewport().set_input_as_handled()
+    if handle_input_event(event):
+        get_viewport().set_input_as_handled()
 
 func _refresh_items(labels: Array[String]) -> void:
     for index: int in range(item_labels.size()):

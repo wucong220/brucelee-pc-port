@@ -5,6 +5,7 @@ extends Node3D
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
+const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 
 var player: PortFighter
@@ -29,6 +30,7 @@ var notice_timer: float = 0.0
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 func _ready() -> void:
+    PrototypeControls.ensure_default_actions()
     rng.seed = 0xB17E
     _build_environment()
     _build_fighters()
@@ -468,10 +470,14 @@ func _physics_process(delta: float) -> void:
         computer.move_axis = Vector2.ZERO
         return
     elapsed += delta
-    var x: float = float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A))
-    var z: float = float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W))
-    player.move_axis = Vector2(x, z)
-    player.guard_held = Input.is_key_pressed(KEY_SHIFT)
+    player.move_axis = Input.get_vector(
+        PrototypeControls.MOVE_LEFT,
+        PrototypeControls.MOVE_RIGHT,
+        PrototypeControls.MOVE_UP,
+        PrototypeControls.MOVE_DOWN,
+        0.2
+    )
+    player.guard_held = Input.is_action_pressed(PrototypeControls.GUARD)
     if training_mode:
         computer.move_axis = Vector2.ZERO
         computer.guard_held = false
@@ -559,51 +565,58 @@ func _player_attack_poses_guard_threat() -> bool:
     return source_frame <= float(damage_end_frame) + 0.0001
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
-    if not (event is InputEventKey):
+func _unhandled_input(event: InputEvent) -> void:
+    if prototype_menu != null and prototype_menu.handle_input_event(event):
+        get_viewport().set_input_as_handled()
         return
-    var key_event: InputEventKey = event as InputEventKey
-    if not key_event.pressed or key_event.echo:
+    if not PrototypeControls.is_press_edge(event):
         return
-    if prototype_menu != null and prototype_menu.handle_key_event(key_event):
-        return
-    if key_event.keycode == KEY_ESCAPE:
+    if event.is_action_pressed(PrototypeControls.PAUSE):
         _open_pause_menu()
+        get_viewport().set_input_as_handled()
         return
-    if done and key_event.keycode not in [KEY_R, KEY_F2]:
+    if done and not (
+        event.is_action_pressed(PrototypeControls.RESTART)
+        or event.is_action_pressed(PrototypeControls.TOGGLE_TRAINING)
+    ):
         return
-    if training_completed and key_event.keycode not in [KEY_R, KEY_F2]:
+    if training_completed and not (
+        event.is_action_pressed(PrototypeControls.RESTART)
+        or event.is_action_pressed(PrototypeControls.TOGGLE_TRAINING)
+    ):
         return
-    match key_event.keycode:
-        KEY_J:
-            player.record_virtual_press("a")
-            player.request_attack("punch")
-        KEY_K:
-            if (player.try_attack_to_floor_press("b")
-                    == PortFighter.AttackToFloorInputResult.IGNORED):
-                player.record_virtual_press("b")
-                player.request_attack("kick")
-        KEY_L:
-            if (player.try_attack_to_floor_press("c")
-                    == PortFighter.AttackToFloorInputResult.IGNORED):
-                player.record_virtual_press("c")
-                player.request_attack("heavy")
-        KEY_U:
-            if (player.try_attack_to_floor_press("d")
-                    == PortFighter.AttackToFloorInputResult.IGNORED):
-                player.record_virtual_press("d")
-        KEY_R:
+    if event.is_action_pressed(PrototypeControls.ATTACK_A):
+        player.record_virtual_press("a")
+        player.request_attack("punch")
+    elif event.is_action_pressed(PrototypeControls.ATTACK_B):
+        if (player.try_attack_to_floor_press("b")
+                == PortFighter.AttackToFloorInputResult.IGNORED):
+            player.record_virtual_press("b")
+            player.request_attack("kick")
+    elif event.is_action_pressed(PrototypeControls.ATTACK_C):
+        if (player.try_attack_to_floor_press("c")
+                == PortFighter.AttackToFloorInputResult.IGNORED):
+            player.record_virtual_press("c")
+            player.request_attack("heavy")
+    elif event.is_action_pressed(PrototypeControls.ATTACK_D):
+        if (player.try_attack_to_floor_press("d")
+                == PortFighter.AttackToFloorInputResult.IGNORED):
+            player.record_virtual_press("d")
+    elif event.is_action_pressed(PrototypeControls.RESTART):
+        _reset_match()
+    elif event.is_action_pressed(PrototypeControls.TOGGLE_TRAINING):
+        if training_mode:
+            training_mode = false
             _reset_match()
-        KEY_F2:
-            if training_mode:
-                training_mode = false
-                _reset_match()
-            elif _training_available():
-                training_mode = true
-                _reset_match()
-            else:
-                hud.show_message("TRAINING NEEDS CANDIDATE ANIMATIONS")
-                notice_timer = 2.0
+        elif _training_available():
+            training_mode = true
+            _reset_match()
+        else:
+            hud.show_message("TRAINING NEEDS CANDIDATE ANIMATIONS")
+            notice_timer = 2.0
+    else:
+        return
+    get_viewport().set_input_as_handled()
 
 func _training_available() -> bool:
     var player_clips: Dictionary = player.get("_candidate_clip_paths")
