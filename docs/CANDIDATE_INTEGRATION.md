@@ -444,6 +444,9 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 包含 `m01_pnch_high_02`、`m01_kick_high_02`、`m01_kick_low_02`；
 `m01_pnch_low_02` 的第三个 wavelet root 不是简单的全零空流，无法安全解码，
 `low_punch2` 保持 fail-closed。转换器动画上限已从 32 提升到 40。
+下段踢必杀使用 36 段带头候选：2,041,584 字节，SHA-256
+`5a597d2151ac3b2f93e7ad455ab9d43d0a0836585134a014dad17c6c7bd5ba75`，
+新增 `m01_sp_kick_low_fail`、`m01_sp_kick_low`。
 
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
 `[31,86]`、`[17,101]` 和 `[33,73]`；四个 `*_3` 目标窗口为 `[33,81]`、

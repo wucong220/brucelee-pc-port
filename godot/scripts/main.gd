@@ -691,6 +691,10 @@ func _standing_combo_modifiers(fighter: PortFighter) -> Array:
         modifiers.append("in")
     elif toward < -0.5:
         modifiers.append("out")
+    if horizontal < -0.5:
+        modifiers.append("left")
+    elif horizontal > 0.5:
+        modifiers.append("right")
     return modifiers
 
 func _training_available() -> bool:
