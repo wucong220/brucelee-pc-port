@@ -52,8 +52,10 @@ func _run() -> void:
     await process_frame
     scene._on_hit(player, opponent, "kick", 5.0, true)
     await process_frame
+    scene._on_hit(player, opponent, "attacktofloor", 5.0, false)
+    await process_frame
     if combat_audio.get_child_count() != 2:
-        push_error("Expected one candidate sound player per hit/block event")
+        push_error("Unsupported attack action should not reuse a candidate sound")
         quit(1)
         return
     for child: Node in combat_audio.get_children():
@@ -62,9 +64,15 @@ func _run() -> void:
             push_error("Candidate sound did not start")
             quit(1)
             return
-    for child: Node in combat_audio.get_children():
-        (child as AudioStreamPlayer).stop()
-        child.queue_free()
+    var longest_stream: float = 0.0
+    for stream: AudioStreamWAV in streams.values():
+        longest_stream = maxf(longest_stream, stream.get_length())
+    await create_timer(longest_stream + 0.25).timeout
+    await process_frame
+    if combat_audio.get_child_count() != 0:
+        push_error("Finished candidate sound players were not released")
+        quit(1)
+        return
     scene.set("_candidate_audio", {})
     streams.clear()
     await process_frame

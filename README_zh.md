@@ -62,7 +62,8 @@
 本地音效为可选输入：设置 `BRUCELEE_AUDIO_ROOT` 指向自有数据包提取出的
 `sounds/sfx` 目录；未设置时尝试本机默认的
 `%LOCALAPPDATA%\BruceLee-PC-Port\candidate-sfx-20261030\adreno_200\sounds\sfx`。
-当前用轻拳、踢击、格挡三个候选文件分别驱动拳、踢、格挡反馈。文件可用
+当前只把轻拳和踢击候选文件用于 `punch`、`kick`，格挡候选文件用于格挡反馈；
+`attacktofloor`、地面攻击和重击等尚无映射证据的动作保持静默。文件可用
 不等于已经证明原版事件映射。该目录必须位于仓库之外，音频不会写入 PCK。
 
 练习模式是 PC 原型新增的辅助功能：Brick 从倒地状态开始，输入 `K,L,L`

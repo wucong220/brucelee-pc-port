@@ -319,9 +319,13 @@ func _build_combat_audio() -> void:
         _candidate_audio[event] = stream
 
 func _play_hit_audio(action: String, blocked: bool) -> void:
-    var event: String = (
-        "block" if blocked else ("punch" if action == "punch" else "kick")
-    )
+    var event: String = ""
+    if blocked:
+        event = "block"
+    elif action in ["punch", "kick"]:
+        event = action
+    else:
+        return
     if not _candidate_audio.has(event):
         return
     var player: AudioStreamPlayer = AudioStreamPlayer.new()
