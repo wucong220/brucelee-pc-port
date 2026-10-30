@@ -174,7 +174,8 @@ Validation: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`
 组链接 `TimeWindowCheck` 已对其他组做静态追踪，尚未单独核实该入口的完整
 运行路径；跨骨架变换、原版优先级、真实位移及逐帧视觉均未验收。
 
-2026-10-30，本机 Godot 4.7.2 headless 执行以下命令，均退出码 0：
+2026-10-30 09:25（`f83071b`）历史快照中，本机 Godot 4.7.2 headless
+执行以下命令，均退出码 0：
 
 ```powershell
 $godot = "$env:LOCALAPPDATA\BruceLee-PC-Port\godot-portable-773280yg\Godot_v4.7.2-stable_win64_console.exe"
@@ -188,8 +189,10 @@ $brick = "$env:LOCALAPPDATA\BruceLee-PC-Port\brick-retarget-candidate-20261030\b
 python -B -X utf8 -m unittest discover -s tests -p 'test*.py' -q
 ```
 
-Python 测试共 216 项，跳过 1 项，退出码 0。这些检查只验证当前本机候选资源
-与原型行为，不证明原版逐帧等价。
+该快照的 Python 测试共 216 项，跳过 1 项，退出码 0。后续
+`attacktofloor` 改动新增 1 项测试；`f476692` 的完整测试命令为
+217 项、跳过 1 项。这些检查只验证对应当前本机候选资源与原型行为，不证明
+原版逐帧等价。
 同日增加循环和阶段切换检查后，重新执行上述 `validate_brick_ground_entry.gd`
 命令，退出码 0。
 
@@ -220,7 +223,7 @@ PR 审查补充异常父链后：`py -3.12 -X utf8 -B -m unittest discover -s te
 验证：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
 共 212 项、其中 1 项跳过，退出码 0。
 
-## 六段 Brick 候选导出和 Godot 检查（2026-10-30）
+## 六段 Brick 候选导出和 Godot 检查（2026-10-30 09:07，`598432b`）
 
 转换器 `--retarget-animation ANM SHA256` 显式启用跨骨架实验，还需指定
 `--retarget-source-skeleton`、`--retarget-source-reference`、
@@ -241,8 +244,8 @@ res://tests/validate_brick_retarget.gd -- <仓库外GLB路径>` 检查，退出�
 且至少一个非眼部骨骼发生变化。导出器将 23 个样本分布在取整的候选时长内，
 Godot 导入后重采样为 24 个键；这些时间不等于已验证的原版帧时间。这不验证动画视觉质量、原版姿势或战斗触发。
 
-验证：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
-共 216 项、其中 1 项跳过，退出码 0。
+该阶段验证：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
+共 216 项、其中 1 项跳过，退出码 0；后续完整测试已增至 217 项、跳过 1 项。
 
 `validate_ground_pose.gd` 使用本机 Bruce 23 段及 Brick 5 段候选，退出码 0；
 测试通过真实 `main.gd` 按键回调验证 `K,L,L` 前缀缓存和候选

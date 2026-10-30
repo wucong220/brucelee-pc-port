@@ -148,7 +148,8 @@ func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter
         push_error("attacktofloor repeated contact")
         return false
 
-    # Range, facing, blocked and lethal cases stay on explicit fallbacks.
+    # Range and facing are contact gates, so they must start the action and miss.
+    # Blocked and lethal cases remain separate contact/follow-up checks.
     for case_name: String in [
         "far", "backward", "guard", "lethal", "missing_attack", "missing_return",
     ]:
@@ -182,13 +183,30 @@ func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter
                 return false
             player._candidate_clip_paths[missing_key] = saved_clip
             continue
+        var is_miss_case: bool = case_name in ["far", "backward"]
+        var combo_before: int = player.combo_hits
+        if is_miss_case:
+            _ground_pose_combat_hit_count = 0
+            player.combat_hit.connect(_count_ground_pose_combat_hit)
         for key_value: Variant in ["b", "c", "c"]:
             player.record_attack_to_floor_press(String(key_value))
+        if player.state != "attacktofloor":
+            push_error("attacktofloor did not start before contact missed: " + case_name)
+            return false
         health = brick.health
         if case_name == "guard" and brick._can_block_current_hit():
             push_error("facedownidle unexpectedly allowed a standing block")
             return false
         player._advance_timed_states(18.01 / PortFighter.SOURCE_FRAME_RATE)
+        if is_miss_case:
+            player.combat_hit.disconnect(_count_ground_pose_combat_hit)
+            if (player.state != "attacktofloor"
+                    or absf(brick.health - health) > 0.001
+                    or player._attack_connected
+                    or player.combo_hits != combo_before
+                    or _ground_pose_combat_hit_count != 0):
+                push_error("attacktofloor entry/contact mismatch for " + case_name)
+                return false
         if case_name == "lethal" and brick.state != "facedownko":
             push_error("lethal attacktofloor did not preserve KO fallback: health=%s state=%s reaction=%s" % [
                 brick.health, brick.state, brick.last_reaction_source_action])
