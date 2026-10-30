@@ -43,6 +43,9 @@ func _run() -> void:
     if not _validate_endattack2(player, defender):
         quit(1)
         return
+    if not _validate_blocked_grab_rejects_endattack(player, defender):
+        quit(1)
+        return
     print("ENDATTACK_VALIDATION=" + JSON.stringify({
         "endattack1": "m01_end_attack_01",
         "source_damage": 0.0,
@@ -133,5 +136,41 @@ func _validate_endattack2(player: PortFighter, defender: PortFighter) -> bool:
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if absf(defender.health - health_before) > 0.001:
         push_error("Endattack2 invented damage")
+        return false
+    return true
+
+
+func _validate_blocked_grab_rejects_endattack(player: PortFighter, defender: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    player.rage = 70.0
+    player.facing = 1.0
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    player.opponent = defender
+    if not player.request_attack("punch"):
+        return false
+    player.record_standing_combo_press("a", ["left"])
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
+    if not player._try_begin_pending_standing_combo():
+        push_error("Blocked-grab setup did not start grab1")
+        return false
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.guard_held = true
+    player.opponent = defender
+    for _i: int in range(47):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if bool(player.get("_grab_connected")):
+        push_error("A blocked grab set the grab-connected flag")
+        return false
+    player.record_standing_combo_press("b", ["up", "in"])
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    if player._try_begin_pending_standing_combo():
+        push_error("Endattack started after a blocked grab")
+        return false
+    if player.attack_kind in ["endattack1", "endattack2"]:
+        push_error("Blocked grab changed into an endattack")
         return false
     return true

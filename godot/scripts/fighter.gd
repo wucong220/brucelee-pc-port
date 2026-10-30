@@ -848,6 +848,7 @@ var rage: float = 0.0
 var _special_stepback_origin: bool = false
 var _multi_impact_applied: Array = []
 var _attack_hit_landed: bool = false
+var _grab_connected: bool = false
 var _parry_press_times: Array = []
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
@@ -2463,6 +2464,7 @@ func record_parry_press() -> bool:
     attack_sequence += 1
     _attack_connected = false
     _attack_hit_landed = false
+    _grab_connected = false
     _multi_impact_applied.clear()
     state = "startup"
     state_time = float(ATTACKS["parry_high"]["startup"])
@@ -2638,7 +2640,11 @@ func _try_begin_pending_standing_combo() -> bool:
             _clear_standing_combo_state()
             return false
     if ENDATTACK_ATTACKS.has(_standing_combo_pending_attack):
+        if not _grab_connected:
+            _clear_standing_combo_state()
+            return false
         if (opponent == null or not is_instance_valid(opponent)
+                or opponent.guard_held
                 or opponent.state not in ["hitstun", "idle", "idle2"]):
             _clear_standing_combo_state()
             return false
@@ -2833,6 +2839,7 @@ func request_attack(kind: String) -> bool:
     attack_sequence += 1
     _attack_connected = false
     _attack_hit_landed = false
+    _grab_connected = false
     _multi_impact_applied.clear()
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
@@ -2969,6 +2976,7 @@ func _begin_chained_attack(kind: String) -> void:
     attack_sequence += 1
     _attack_connected = false
     _attack_hit_landed = false
+    _grab_connected = false
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
     _restart_candidate_action()
@@ -3053,6 +3061,8 @@ func _register_landed_hit(damage: float, blocked: bool) -> void:
     combo_hits += 1
     if damage > 0.0 and not blocked:
         _attack_hit_landed = true
+        if GRAB_ATTACKS.has(attack_kind):
+            _grab_connected = true
         rage = minf(RAGE_MAX, rage + RAGE_GAIN_PER_HIT)
 
 
