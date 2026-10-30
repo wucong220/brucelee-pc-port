@@ -84,8 +84,9 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 命中后，再用同一按键序列会转到对应第 2 段（`high_punch2`、`low_punch2`、
 `high_kick2`、`low_kick2`）。原型用当前攻击种类表示 `combolevel1`；
 原版 `keystatus` 的 down pressed/released 尚未复刻。`low_punch2` 的动画
-`m01_pnch_low_02` 目前仍无法安全解码（其第三个 root 不是简单的全零空流，
-不能靠跳过 root 猜测），因此该招 fail-closed（不加载、不可发动），其余三段可用。
+`m01_pnch_low_02` 现在可以安全解码：它的第三个 approximation root 的首节点字为 0
+且 root 之后没有放树的余地，表示该近似层为空（channel array 存在但没有节点），
+跳过它不会丢弃任何节点数据。因此四段第 2 攻击全部可用。
 第 3 段仍从第 2 段按原方向序列衔接。
 
 已实现来源窗口为 lowpunch 第 `[22,69]` 帧、lowkick 第 `[31,86]` 帧、
