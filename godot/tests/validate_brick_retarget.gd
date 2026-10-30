@@ -57,8 +57,17 @@ func _run() -> void:
     var poses: Array[Quaternion] = []
     var initial_bones: Array[Transform3D] = []
     var body_moved := false
+    var sample_times: Array[float] = []
     for frame in [0, 10, 20, 22]:
-        player.seek(clip.length * float(frame) / 22.0, true)
+        # The exporter spreads candidate samples over its rounded duration;
+        # Godot resamples them on import. Original frame timing is unverified.
+        var sample_time := clip.length * float(frame) / 22.0
+        if sample_time < 0.0 or sample_time > clip.length + 0.00001:
+            push_error("Candidate sample time lies outside the animation")
+            quit(1)
+            return
+        sample_times.append(sample_time)
+        player.seek(sample_time, true)
         var q := skeleton.get_bone_pose_rotation(eye)
         if not q.is_finite() or absf(q.length() - 1.0) > 0.001:
             push_error("Invalid sampled right-eye quaternion")
@@ -83,6 +92,7 @@ func _run() -> void:
         "bones": skeleton.get_bone_count(), "clip": clip_name,
         "duration": clip.length, "tracks": clip.get_track_count(),
         "right_eye_tracks": eye_tracks, "sample_count": poses.size(),
+        "candidate_sample_times": sample_times,
         "body_moved": body_moved,
         "native_behavior": "unverified",
     }))
