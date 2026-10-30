@@ -589,6 +589,10 @@ func _unhandled_input(event: InputEvent) -> void:
     # Refresh the guard state here so a press in the same frame as the guard
     # key cannot be accepted from a stale snapshot.
     player.guard_held = Input.is_action_pressed(PrototypeControls.GUARD)
+    # Guard presses cancel a matched combo in the same input event; a tap that
+    # is released before the next physics tick would otherwise keep it alive.
+    if event.is_action_pressed(PrototypeControls.GUARD):
+        player.begin_guard()
     if _handle_fighter_attack_input(
         player,
         event,

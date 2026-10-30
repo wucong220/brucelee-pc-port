@@ -2024,6 +2024,17 @@ func record_standing_combo_press(virtual_key: String) -> bool:
     return _try_begin_pending_standing_combo()
 
 
+func begin_guard() -> void:
+    # Guard press must cancel a matched combo immediately. Waiting for the next
+    # physics frame loses a rapid press-and-release tap entirely.
+    guard_held = true
+    _clear_standing_combo_state()
+
+
+func end_guard() -> void:
+    guard_held = false
+
+
 func _accepts_standing_combo_input(virtual_key: String) -> bool:
     # Guard rejects attack requests, so it must also reject combo history.
     # Otherwise a press made while guarding becomes the first key of a later

@@ -404,6 +404,27 @@ func _validate_guard_cancels_combo(
     if not String(player.get("_standing_combo_pending_attack")).is_empty():
         push_error("Raising guard did not clear the pending combo")
         return false
+    # A guard tap that is pressed and released before the next physics frame
+    # must cancel the pending combo immediately, not on a later tick.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch for the guard tap check")
+        return false
+    for _index: int in 3:
+        player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
+        push_error("AAA did not queue highpunch1 before the guard tap")
+        return false
+    player.begin_guard()
+    player.end_guard()
+    if not String(player.get("_standing_combo_pending_attack")).is_empty():
+        push_error("A quick guard tap did not clear the pending combo")
+        return false
+    player._advance_timed_states(22.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player._try_begin_pending_standing_combo():
+        push_error("A quick guard tap still allowed the old combo to fire")
+        return false
     return true
 
 
