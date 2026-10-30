@@ -34,12 +34,12 @@ func _ready() -> void:
     hint = Label.new()
     hint.anchor_left = 0.5
     hint.anchor_right = 0.5
-    hint.anchor_top = 0.50
-    hint.anchor_bottom = 0.50
+    hint.anchor_top = 0.16
+    hint.anchor_bottom = 0.16
     hint.offset_left = -420
     hint.offset_right = 420
-    hint.offset_top = -50
-    hint.offset_bottom = 20
+    hint.offset_top = 0
+    hint.offset_bottom = 50
     hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     hint.add_theme_font_size_override("font_size", 29)
     screen.add_child(hint)

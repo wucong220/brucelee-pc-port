@@ -9,6 +9,7 @@ const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 var player: PortFighter
 var computer: PortFighter
 var hud: PortHUD
+var fight_camera: Camera3D
 var ai_timer: float = 0.0
 var ai_guard_sequence: int = -1
 var ai_guard_decision: bool = false
@@ -168,11 +169,11 @@ func _build_environment() -> void:
     light.rotation_degrees = Vector3(-52.0, -28.0, 0.0)
     light.light_energy = 1.65
     add_child(light)
-    var camera: Camera3D = Camera3D.new()
-    camera.position = Vector3(0.0, 6.0, 12.5)
-    camera.current = true
-    add_child(camera)
-    camera.look_at(Vector3(0.0, 1.1, 0.0), Vector3.UP)
+    fight_camera = Camera3D.new()
+    fight_camera.position = Vector3(0.0, 6.0, 12.5)
+    fight_camera.current = true
+    add_child(fight_camera)
+    fight_camera.look_at(Vector3(0.0, 1.1, 0.0), Vector3.UP)
     _try_add_local_background()
     _make_floor()
     _make_arena_line(-7.0)
@@ -279,6 +280,23 @@ func _reset_match() -> void:
     ai_guard_decision = false
     notice_timer = 1.2
     hud.show_message("TRAINING · K L L / K U U" if training_mode else "ROUND 1 · FIGHT")
+    _update_fight_camera()
+
+func _process(_delta: float) -> void:
+    _update_fight_camera()
+
+func _update_fight_camera() -> void:
+    if (not is_instance_valid(fight_camera) or not is_instance_valid(player)
+            or not is_instance_valid(computer)):
+        return
+    var center: Vector3 = (player.global_position + computer.global_position) * 0.5
+    var x_separation: float = absf(player.global_position.x - computer.global_position.x)
+    var z_separation: float = absf(player.global_position.z - computer.global_position.z)
+    # These are prototype framing choices, not measurements of the original camera.
+    var distance: float = 7.0 + maxf(0.0, x_separation - 6.0) * 0.5 + z_separation * 0.65
+    var target: Vector3 = Vector3(center.x, 1.0, center.z)
+    fight_camera.global_position = target + Vector3(0.0, distance * 0.42, distance)
+    fight_camera.look_at(target, Vector3.UP)
 
 func _physics_process(delta: float) -> void:
     if hud == null:

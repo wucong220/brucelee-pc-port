@@ -467,7 +467,32 @@ git diff --check
 重试后清除完成状态的检查。同一测试在修订版导出 PCK 中通过，Windows
 EXE 的资源和拳击自检也通过，退出码均为 0。修订版 Windows Demo 的实际
 操作确认了 F2 进入、`K,L,L` 命中、完成提示保持、R 重试和 F2 返回；
-角色在当前固定镜头下偏小，仍需改善。
+当时的固定镜头下角色偏小，随后做了下述镜头调整。
+
+### 候选双人镜头
+
+原型镜头现在跟随双方的 x/z 中点，根据横向和纵向间距调整距离，保持固定
+观察方向。近距离人物比旧固定镜头更大；回合重置时立即定位新构图。
+命中和训练提示移到血条下方，避免覆盖场中角色。这些都是 PC 原型的视觉
+选择，不代表原版镜头参数。当前以固定高度及横向余量近似角色范围，不是
+逐帧蒙皮模型边界；快速移动舒适度和所有姿态仍需进一步验证。
+
+2026-10-30 使用 Godot 4.7.2 执行：
+
+```powershell
+& $GodotExe --headless --path godot --editor --quit
+& $GodotExe --headless --path godot --script res://tests/validate_fight_camera.gd
+& $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- $BruceGlb $BrickGlb
+& $GodotExe --headless --path godot --script res://tests/smoke_test.gd
+py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
+git diff --check
+```
+
+以上退出码均为 0；Python 223 项通过、1 项跳过。镜头测试用
+1280×720 与 800×600 视口，覆盖近距离、两侧边界、最大 x/z 间距和换边，
+检查近似角色范围的投影边距与近距离放大比例；同一镜头测试和地面测试
+也在导出的 PCK 中通过（退出码 0）。Windows EXE 实际进入练习并完成一次
+追击，确认人物更清晰且成功提示不覆盖角色。
 
 以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
 
