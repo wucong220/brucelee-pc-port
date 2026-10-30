@@ -18,6 +18,9 @@ from kdf_data import KdfError
 def compare(source: dict, target: dict) -> dict:
     if source['animation_sha256'] != target['animation_sha256']:
         raise KdfError('bindings do not refer to the same animation')
+    if (source['skeleton_reference']['reference']
+            != target['skeleton_reference']['reference']):
+        raise KdfError('bindings have different animation skeleton references')
 
     def indexed(binding: dict) -> dict:
         result = {}
