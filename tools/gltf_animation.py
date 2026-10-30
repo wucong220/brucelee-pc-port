@@ -125,19 +125,35 @@ def _candidate_times(duration: int, framerate: int) -> tuple[int, list[tuple[flo
     return duration_ms, times
 
 
-def _metadata(name: str, bound: dict, skeleton: dict) -> tuple[dict, int, int]:
-    if not isinstance(bound, dict) or bound.get('status') != 'candidate':
+def _metadata(name: str, bound: dict, skeleton: dict, *,
+              allow_experimental_retarget: bool = False) -> tuple[dict, int, int]:
+    if not isinstance(bound, dict):
         raise KdfError(f'animation {name!r} is not a candidate binding')
-    if bound.get('pairing_status') != 'matched-provided-reference-and-hash':
-        raise KdfError(f'animation {name!r} has an unverified skeleton pairing')
+    experimental = bound.get('status') == 'experimental-cross-skeleton-candidate'
+    if experimental:
+        if allow_experimental_retarget is not True:
+            raise KdfError(f'animation {name!r} requires explicit experimental retarget opt-in')
+        if (bound.get('source_pairing_status') != 'matched-provided-reference-and-hash'
+                or bound.get('mapping_status') != 'identity-candidate-only'):
+            raise KdfError(f'animation {name!r} has invalid candidate evidence')
+        skeleton_hash = bound.get('source_skeleton_sha256')
+        target_hash = bound.get('target_skeleton_sha256')
+        reference = bound.get('source_skeleton_reference')
+    else:
+        if bound.get('status') != 'candidate':
+            raise KdfError(f'animation {name!r} is not a candidate binding')
+        if bound.get('pairing_status') != 'matched-provided-reference-and-hash':
+            raise KdfError(f'animation {name!r} has an unverified skeleton pairing')
+        skeleton_hash = bound.get('skeleton_sha256')
+        target_hash = skeleton_hash
+        reference = bound.get('skeleton_reference')
+        reference = reference.get('reference') if isinstance(reference, dict) else None
     animation_hash = bound.get('animation_sha256')
-    skeleton_hash = bound.get('skeleton_sha256')
     if (not isinstance(animation_hash, str) or _SHA256.fullmatch(animation_hash) is None
             or not isinstance(skeleton_hash, str) or _SHA256.fullmatch(skeleton_hash) is None
-            or skeleton.get('sha256') != skeleton_hash):
+            or not isinstance(target_hash, str) or _SHA256.fullmatch(target_hash) is None
+            or skeleton.get('sha256') != target_hash):
         raise KdfError(f'animation {name!r} source SHA-256 metadata is invalid')
-    reference = bound.get('skeleton_reference')
-    reference = reference.get('reference') if isinstance(reference, dict) else None
     if (not isinstance(reference, str) or not reference.endswith('.skl')
             or not reference or len(reference.encode('utf-8')) > 4096):
         raise KdfError(f'animation {name!r} skeleton reference is invalid')
@@ -157,7 +173,6 @@ def _metadata(name: str, bound: dict, skeleton: dict) -> tuple[dict, int, int]:
         'sourceAnimationSha256': animation_hash,
         'sourceSkeletonSha256': skeleton_hash,
         'skeletonReference': reference,
-        'pairingStatus': bound['pairing_status'],
         'sourceFrameCount': duration,
         'sourceFramerate': framerate,
         'pose': 1,
@@ -173,11 +188,25 @@ def _metadata(name: str, bound: dict, skeleton: dict) -> tuple[dict, int, int]:
         'nativeRuntimeComparison': 'unverified',
         'godotPlayback': 'unverified',
     }
+    if experimental:
+        extras.update({
+            'status': 'experimental-cross-skeleton-candidate',
+            'targetSkeletonSha256': target_hash,
+            'sourcePairingStatus': bound['source_pairing_status'],
+            'targetPairingStatus': 'unverified',
+            'mappingStatus': bound['mapping_status'],
+            'retargetComposition': 'raw-track-applied-to-target-rest-candidate-unverified',
+            'composition': 'target-rest-pose-1-formula-candidate-unverified',
+            'retargetSemantics': 'unverified',
+        })
+    else:
+        extras['pairingStatus'] = bound['pairing_status']
     return extras, duration, framerate
 
 
 def _prepare(
-        node_index_by_id: dict, skeleton: dict, animations: list) -> list[dict]:
+        node_index_by_id: dict, skeleton: dict, animations: list, *,
+        allow_experimental_retarget: bool = False) -> list[dict]:
     if not isinstance(animations, (list, tuple)) or len(animations) > _MAX_ANIMATIONS:
         raise KdfError('animation list is invalid or too large')
     nodes, rest = _rest_nodes(skeleton, node_index_by_id)
@@ -193,10 +222,40 @@ def _prepare(
                 or name in names):
             raise KdfError('animation names must be unique nonempty short strings')
         names.add(name)
-        extras, duration, framerate = _metadata(name, bound, skeleton)
+        extras, duration, framerate = _metadata(
+            name, bound, skeleton, allow_experimental_retarget=allow_experimental_retarget)
         bindings = bound.get('bindings')
         if not isinstance(bindings, list) or not bindings:
             raise KdfError(f'animation {name!r} has no bound tracks')
+        if bound.get('status') == 'experimental-cross-skeleton-candidate':
+            from audit_animation_retarget import _paths
+
+            _, target_paths = _paths(skeleton)
+            mapping = bound.get('mapping')
+            if not isinstance(mapping, list) or len(mapping) != len(bindings):
+                raise KdfError('experimental candidate mapping is incomplete')
+            for binding, entry in zip(bindings, mapping, strict=True):
+                if not isinstance(binding, dict) or not isinstance(entry, dict):
+                    raise KdfError('experimental candidate mapping is malformed')
+                nodeid = binding.get('nodeid')
+                node = nodes.get(nodeid) if type(nodeid) is int else None
+                if (node is None or binding.get('node_name') != node.get('name')
+                        or entry.get('target_nodeid') != nodeid
+                        or entry.get('target_offset') != binding.get('offset')
+                        or entry.get('track') != binding.get('track')
+                        or entry.get('channel') != binding.get('target')
+                        or entry.get('path') != [list(part) for part in target_paths[nodeid]]
+                        or type(entry.get('source_nodeid')) is not int
+                        or entry['source_nodeid'] < 0
+                        or type(entry.get('source_offset')) is not int
+                        or entry['source_offset'] < 0):
+                    raise KdfError('experimental candidate mapping does not match target')
+            extras['retargetMapping'] = [
+                {key: entry[key] for key in (
+                    'track', 'channel', 'path', 'source_offset', 'target_offset',
+                    'source_nodeid', 'target_nodeid')}
+                for entry in mapping
+            ]
         channel_count += len(bindings)
         if channel_count > _MAX_CHANNELS:
             raise KdfError('animation channel count exceeds the export limit')
@@ -295,11 +354,13 @@ def _prepare(
 
 def build_animations(
         builder: Any, accessors: list, node_index_by_id: dict,
-        skeleton: dict, animations: list) -> list[dict]:
+        skeleton: dict, animations: list, *,
+        allow_experimental_retarget: bool = False) -> list[dict]:
     """Append glTF accessors and bufferViews after validating all candidates."""
     if not callable(getattr(builder, 'add', None)) or not isinstance(accessors, list):
         raise KdfError('glTF builder or accessor list is invalid')
-    prepared = _prepare(node_index_by_id, skeleton, animations)
+    prepared = _prepare(node_index_by_id, skeleton, animations,
+                        allow_experimental_retarget=allow_experimental_retarget)
     result = []
     for clip in prepared:
         input_accessors = {}

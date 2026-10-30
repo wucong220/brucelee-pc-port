@@ -170,8 +170,33 @@ PR 审查补充异常父链后：`py -3.12 -X utf8 -B -m unittest discover -s te
 源 Skl、目标 Skl 的 SHA-256 和源引用，先检查来源配对状态，再运行逐轨道
 身份审计；它保留原始轨道值并产生单独的目标索引记录，不修改来源记录。
 真实资源内存调用退出码 0：61 条轨道，`r eyeball` 的目标旋转索引为 15，
-所有轨道值与来源逐项相同。本功能还没有接入 GLB 导出、Godot 播放或正常战斗；
+所有轨道值与来源逐项相同。本功能现已用于下述离线 GLB 候选，尚未接入正常战斗；
 不是对变换空间或原生行为的验证。
 
 验证：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
 共 212 项、其中 1 项跳过，退出码 0。
+
+## 六段 Brick 候选导出和 Godot 检查（2026-10-30）
+
+转换器 `--retarget-animation ANM SHA256` 显式启用跨骨架实验，还需指定
+`--retarget-source-skeleton`、`--retarget-source-reference`、
+`--retarget-source-sha256` 和 `--retarget-target-sha256`。普通动画仍按原本的
+严格配对检查。实验路径按 typed-path 识别目标节点，再用当前 pose=1 候选
+公式将原始轨道与目标静态姿态组合；该组合未通过原版逐帧对照。导出动画
+extras 分别记录来源与目标哈希、来源配对和目标配对未验证状态。
+
+本机仓库外 `brick_candidate_6.glb` 为 414092 字节，SHA-256
+`96d05e9652b7ecde39bbb698062e4f2041df4a928aad41d2e866ecf7857528b2`，
+含 5 条现有 Brick 动画和跨骨架候选 `all_impct_hard_frnt_low`；导出命令
+退出码 0。原资源、导出 GLB 均未提交。
+
+Godot 4.7.2 使用 `--headless --path godot --script
+res://tests/validate_brick_retarget.gd -- <仓库外GLB路径>` 检查，退出码 0：
+69 根骨骼，受击动画导入后 58 条 Godot 轨道、时长约 0.766 秒，右眼骨骼
+恰有一条旋转轨道；在候选第 0、10、20、22 帧采样的骨架变换有限，且至少
+一个非眼部骨骼发生变化。这不验证动画视觉质量、原版姿势或战斗触发。
+
+验证：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
+共 216 项、其中 1 项跳过，退出码 0。
+
+`validate_ground_pose.gd` 使用本机 Bruce 23 段及 Brick 6 段候选，退出码 0；该测试注入状态，正常对战触发尚未实现。
