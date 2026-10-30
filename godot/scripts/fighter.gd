@@ -23,6 +23,10 @@ const CANDIDATE_CLIPS: Dictionary = {
     "low_kick3": "m01_kick_low_03",
     "high_kick3": "m01_sp_kick_jump_01",
     "special_kick_high": "m01_kck_front_step",
+    "high_punch2": "m01_pnch_high_02",
+    "low_punch2": "m01_pnch_low_02",
+    "high_kick2": "m01_kick_high_02",
+    "low_kick2": "m01_kick_low_02",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -57,6 +61,10 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_kick_low_03": 50.0,
     "m01_sp_kick_jump_01": 60.0,
     "m01_kck_front_step": 65.0,
+    "m01_pnch_high_02": 45.0,
+    "m01_pnch_low_02": 40.0,
+    "m01_kick_high_02": 60.0,
+    "m01_kick_low_02": 50.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
     "all_impct_light_frnt_high": 40.0,
@@ -161,6 +169,14 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3"},
     {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3"},
     {"steps": [["out", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_high"},
+    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch2", "from_attack": "high_punch"},
+    {"steps": [["a"], ["b"], ["b"]], "attack": "low_punch2", "from_attack": "punch"},
+    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick2", "from_attack": "high_kick"},
+    {"steps": [["b"], ["d"], ["d"]], "attack": "low_kick2", "from_attack": "kick"},
+    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3", "from_attack": "high_punch2"},
+    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3", "from_attack": "low_punch2"},
+    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3", "from_attack": "high_kick2"},
+    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "from_attack": "low_kick2"},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
@@ -276,6 +292,50 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "height": "high",
         "strength": "hard",
         "direction": "frontal",
+    },
+    "high_punch2": {
+        "source_action": "highpunch2",
+        "animation": "m01_pnch_high_02",
+        "frame_count": 81,
+        "damage": 5.0,
+        "radius": 75.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "fromleft",
+    },
+    "low_punch2": {
+        "source_action": "lowpunch2",
+        "animation": "m01_pnch_low_02",
+        "frame_count": 65,
+        "damage": 6.0,
+        "radius": 75.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "high_kick2": {
+        "source_action": "highkick2",
+        "animation": "m01_kick_high_02",
+        "frame_count": 95,
+        "damage": 5.0,
+        "radius": 80.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "normal",
+        "direction": "fromleft",
+    },
+    "low_kick2": {
+        "source_action": "lowkick2",
+        "animation": "m01_kick_low_02",
+        "frame_count": 27,
+        "damage": 5.0,
+        "radius": 70.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "normal",
+        "direction": "fromleft",
     },
 }
 
@@ -1278,7 +1338,8 @@ func _try_load_candidate_visual() -> void:
     for action: String in [
             "move", "ko", "high_punch", "high_kick",
             "high_punch3", "low_punch3", "low_kick3", "high_kick3",
-            "special_kick_high"]:
+            "special_kick_high",
+            "high_punch2", "low_punch2", "high_kick2", "low_kick2"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2194,16 +2255,24 @@ func _prune_standing_combo_input_history() -> void:
 
 
 func _matching_standing_combo_attack() -> String:
-    for entry: Dictionary in STANDING_COMBO_SEQUENCES:
-        var steps: Array = entry["steps"]
-        var required: int = steps.size() - 1
-        for event_index: int in range(_standing_combo_input_history.size() - 1, -1, -1):
-            var event: Dictionary = _standing_combo_input_history[event_index]
-            if not _event_satisfies_step(event, steps[required]):
+    for require_source: bool in [true, false]:
+        for entry: Dictionary in STANDING_COMBO_SEQUENCES:
+            var from_attack: String = String(entry.get("from_attack", ""))
+            if require_source and from_attack != attack_kind:
                 continue
-            required -= 1
-            if required < 0:
-                return String(entry["attack"])
+            if require_source and not supports_attack(String(entry["attack"])):
+                continue
+            if not require_source and not from_attack.is_empty():
+                continue
+            var steps: Array = entry["steps"]
+            var required: int = steps.size() - 1
+            for event_index: int in range(_standing_combo_input_history.size() - 1, -1, -1):
+                var event: Dictionary = _standing_combo_input_history[event_index]
+                if not _event_satisfies_step(event, steps[required]):
+                    continue
+                required -= 1
+                if required < 0:
+                    return String(entry["attack"])
     return ""
 
 
@@ -2297,7 +2366,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2":
             return kind
     return ""
 
@@ -3044,7 +3113,8 @@ func _animate_candidate() -> void:
         elif attack_kind in ["kick", "heavy"]:
             requested = "kick"
         elif attack_kind in ["high_punch", "high_kick", "high_punch3", "low_punch3",
-                "low_kick3", "high_kick3", "special_kick_high"]:
+                "low_kick3", "high_kick3", "special_kick_high",
+                "high_punch2", "low_punch2", "high_kick2", "low_kick2"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented

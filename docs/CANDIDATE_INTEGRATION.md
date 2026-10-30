@@ -439,6 +439,12 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 `all_impct_hard_frnt_high` 被转换器以 wavelet 错误拒绝，故该反应 fail-closed。
 完整证据见 `reports/special_moves_evidence.json`。
 
+普通攻击第 2 段使用 34 段带头候选：1,948,476 字节，SHA-256
+`38743058c8658dbdbeb488fc8d70e4f4d8982fe3b10bdec251a3b1300eeb3281`，
+包含 `m01_pnch_high_02`、`m01_kick_high_02`、`m01_kick_low_02`；
+`m01_pnch_low_02` 被转换器 wavelet 解析拒绝，`low_punch2` fail-closed。
+转换器动画上限已从 32 提升到 40。
+
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
 `[31,86]`、`[17,101]` 和 `[33,73]`；四个 `*_3` 目标窗口为 `[33,81]`、
 `[26,56]`、`[21,85]` 和 `[30,51]`。从首键起算的原型输入期限为 0.5 秒。
