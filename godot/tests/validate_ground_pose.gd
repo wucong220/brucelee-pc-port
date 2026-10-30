@@ -638,7 +638,7 @@ func _press_key(scene: Node, keycode: Key) -> void:
     var event := InputEventKey.new()
     event.pressed = true
     event.keycode = keycode
-    scene._unhandled_key_input(event)
+    scene._unhandled_input(event)
 
 
 func _press_virtual_key(scene: Node, virtual_key: String) -> void:

@@ -35,6 +35,24 @@
 - 暂停菜单冻结玩法，十字键导航、A 确认和 B 恢复有效。
 - 主菜单用十字键和 A 选择 `VS FIGHT`。
 
+## 站立基础连段
+
+站立攻击会把 `J/K/L/U` 转成抽象 `a/b/c/d`。原型记录从首键起算最多
+0.5 秒内的三条输入，并在当前攻击的来源帧进入相应
+`candobasicattacks` 窗口时转换：
+
+- `AAA -> highpunch1`
+- `ABB -> lowpunch1`
+- `BCC -> highkick1`
+- `BDD -> lowkick1`
+
+已实现来源窗口为 lowpunch 第 `[22,69]` 帧、lowkick 第 `[31,86]` 帧、
+highpunch 第 `[17,101]` 帧和 highkick 第 `[33,73]` 帧。目标 clip 未加载时
+转换保持关闭，普通攻击路径继续工作。0.5 秒期限是 PC 原型选择；
+`candobasicattacks` 的 84 个成员、原版输入超时、链接优先级、blending 和
+Android 物理键位尚未恢复。源值及限制见
+[`reports/basic_attack_combo_evidence.json`](../reports/basic_attack_combo_evidence.json)。
+
 命令：
 
 ```powershell

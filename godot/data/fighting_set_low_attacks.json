@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "source_archive": "brucelee.set",
   "frame_rate": 30.0,
   "source_geometry": {
@@ -11,6 +11,8 @@
       "m01_idle_01": 25.0,
       "m01_pnch_low_01": 40.0,
       "m01_kick_low_01": 50.0,
+      "m01_pnch_high_01": 45.0,
+      "m01_kick_high_01": 60.0,
       "all_impct_light_frnt_low": 40.0,
       "all_impct_light_frnt_mid": 40.0,
       "all_impct_light_frnt_high": 40.0,
@@ -98,6 +100,40 @@
         "attack_radius": 70.0,
         "body_part": "lleg",
         "height": "low",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "high_punch": {
+      "source_action": "highpunch1",
+      "animation": "m01_pnch_high_01",
+      "animation_frame_count": 101,
+      "startup_frames": 4,
+      "active_frames": 4,
+      "recovery_frames": 93,
+      "damage": 5.0,
+      "prototype_push": 0.2,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "high_kick": {
+      "source_action": "highkick1",
+      "animation": "m01_kick_high_01",
+      "animation_frame_count": 73,
+      "startup_frames": 7,
+      "active_frames": 4,
+      "recovery_frames": 62,
+      "damage": 6.0,
+      "prototype_push": 0.35,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "lleg",
+        "height": "high",
         "strength": "normal",
         "direction": "frontal"
       }

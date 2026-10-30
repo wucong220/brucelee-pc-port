@@ -369,6 +369,38 @@ SHA-256 是
 改写既有输入和攻击链。这些测试不证明原版逐帧视觉、完整命中盒、blending
 或 draw-level 行为。
 
+## 站立基础连段与高拳脚
+
+本机 25 段 Bruce 候选在已有 23 段基础上加入 `m01_pnch_high_01` 和
+`m01_kick_high_01`，文件 SHA-256 为
+`384e1a20e41ff5a996fc3e4b71ac4a47957aae3fae5d9576f49736904d64eda9`。
+两个 ANM 的 SHA-256 分别为
+`cd14253de0476aeff5e4132ad216177f444b55ed926692bd748bcad6aeac2f73`
+和 `116bb542d8c9c2a6ec50ed8131e40d21118b41d2a355123a6c48fb51c0d84f4e`；
+文件只保留在仓库外。
+
+`brucelee.set` 的动作记录给出 `highpunch1` 为 101 帧、半径 45，动作记录
+14 的 impact 为 5 点、半径 70、`larm/high/normal/frontal`，伤害时间
+`[4,7]`；`highkick1` 为 73 帧、半径 60，动作记录 20 的 impact 为 6 点、
+半径 75、`lleg/high/normal/frontal`，伤害时间 `[7,10]`。Godot 状态机把
+这些值转换成完整启动/活跃/恢复时序，并继续使用候选高度换算。
+
+原型站立输入为 `J/K/L/U -> a/b/c/d`。当前实现只在当前动作的来源帧进入
+自己的 `candobasicattacks` 窗口时转换：
+
+- `aaa -> highpunch1`
+- `abb -> lowpunch1`
+- `bcc -> highkick1`
+- `bdd -> lowkick1`
+
+lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
+`[31,86]`、`[17,101]` 和 `[33,73]`。从首键起算的原型输入期限为 0.5 秒。
+来源组共 84 个成员，尚未全部覆盖；成员记录第三项的切换时序、link
+优先级、blending、原版输入时钟、Android 物理键位和逐帧视觉仍未验证。
+`validate_standing_combos.gd` 使用真实 25 段 GLB 检查四条窗口、普通低段到
+目标的转换、来源动画选择、两段实际命中与高段 reaction。源值和限制见
+`reports/basic_attack_combo_evidence.json`。
+
 ## 地面姿态与 `attacktofloor` 候选路径
 
 本地已生成两个新的候选 GLB，均在仓库及同步目录之外：

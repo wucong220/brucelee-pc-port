@@ -15,7 +15,7 @@
 1. APK 中 `lib/armeabi/libdefault.so` 为 **ARM ELF32**，保留 `.symtab` 和大量 C++ 符号。提取并生成 **454 条候选函数符号清单** `evidence/candidate_symbols.csv`（类别：资源、战斗、动画、输入）。
 2. 外部 `data.zpak` 是 ZIP；包含 `Core.pakh`、`Core.pakd000` 和 `metadata.xml`。实际解析器已在完整原包中验证 2144 条索引、417 个目录节点和 2265 条文件路径，尾部 CRC 为 `0xeee1e38a`。
 3. `Core.pakd000` 的 2144 个跨块连续 zlib 流已全部读取，共解码 325,791,952 字节；物理偏移、存储长度、解码长度和目录标识全部一致。早期“第 5 个流截断”的判断已纠正。详情见 `docs/PAK_DECODE_FINDINGS.md`。
-4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
+4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、低/高拳脚与原型重击、格挡、受击状态、血量、回合重开、简易对手 AI。
 5. 提供 PowerShell `build_windows.ps1` 和 `validate_windows_exe.ps1`；已使用
    Godot 4.7.2 Windows Export Templates 生成并在仓库外验证原生 Windows
    EXE/PCK，非安卓模拟器。
@@ -34,6 +34,7 @@
 16. reaction root-motion 取证已导出 `positions` 逐帧值、轨道存在性和 ANM 哈希到 `reports/reaction_root_motion_inventory.json`，并由 16 条原生变换链指令校验。当前尚未把任何坐标轴映射为 Godot `push`。
 17. 玩家 Bruce 和电脑 Brick 已分别加载独立候选 GLB、动作映射与动画节点；Brick 可使用 `m03_*` idle/punch/kick/movefwd。Brick 的 diffuse/normal `atc_rgb` 与 material `r8g8b8a8` 1024×1024 mip 链已可由转换器解码基础层；原版 fighting set、命中参数、reaction、AI 和逐像素视觉仍未恢复；候选动画的未验证角色位移轨道已禁用。
 18. 受限候选路径已接入 `impacttofloor -> faceupidle -> faceupgetup/faceupattack -> idle`：`impacttofloor` 只在 Bruce 处于 `facedowngetup [5,11]` 或 `facedownattack [24,31]` 的 `impactablefromground` 窗口，受到非致命、非格挡的低段命中，且候选 GLB 含所需 clip 时触发；它从源动画第 21 帧起播，第 48 帧进入循环 `faceupidle`。候选 GLB 还含 `all_getup_faceup` 时，`faceupidle` 在源帧 `[10,45]` 接受水平 `move_axis.x` 进入 24 帧、半径 40 的 `faceupgetup`，并在候选选定的源帧 20 进入普通 idle。档案的 `idle` 链接窗口是 `[20,24]`，所以第 20 帧只是确定性候选选择，不是原版实际切换帧的证明。21 段候选含 `all_getup_faceup_attack` 时，`faceupidle` 在源帧 `[0,45]` 接受 `aaa/abb/bcc/bdd` 四条抽象序列，进入 38 帧、半径 45 的非循环 `faceupattack`；第 `[9,14]` 帧至多造成一次 6 点伤害，攻击半径 90、属性为 `larm/low/hard/frontal`，候选运行时选择第 37 帧回 idle。它在 `[24,31]` 仅接受已验证的非致命、非格挡低段 `impacttofloor` 路径；`canblock [27,38]` 只用作格挡门控，避免该窗口内的格挡低段误入倒地链，完整格挡反应、普通受击和 KO 出边仍封闭。22 段候选含 `all_impct_faceup` 时，`faceupidle` 受到非致命、非格挡低段 impact 会播放 11 帧、半径 80 的非循环 `impactfaceup`，第 11 帧回到 `faceupidle`；伤害会使血量归零时优先进入复用 `all_idle_face_up` 的独立 `faceupko`，半径 100、45 帧循环，不接受起身或攻击输入。两者均不应用原型 push；中高段非致命、格挡、缺 clip 及 `faceupattack/faceupgetup` 的未闭合来向继续 fail closed。23 段候选另含 `m01_attack_to_floor`：Bruce 在 `idle/idle2`、Brick 报告 `laying` 时，原型把 `K,L,L` 或 `K,U,U` 映射为 `bcc/bdd`，从源动画第 9 帧进入，第 `[18,23]` 帧至多造成一次 6 点伤害，半径 60、属性 `lleg/normal/low/frontal`；档案直接出边为 `[80,90] -> idle2`，候选选择最早的第 80 帧进入 `m01_idle_02`。输入前缀会先缓存，避免第一个 `b` 被普通踢提前消费；完整原版组成员窗口、链接优先级、blending、物理键位和目标反应链仍未验证。
+19. 25 段 Bruce 候选已接入四条 `candobasicattacks` 站立连段：`aaa -> highpunch1`、`abb -> lowpunch1`、`bcc -> highkick1`、`bdd -> lowkick1`。新增高拳为 101 帧、伤害 5、半径 70、`larm/high/normal/frontal`；高踢为 73 帧、伤害 6、半径 75、`lleg/high/normal/frontal`。转换只会在当前攻击自己的来源窗口内发生，已实现窗口为 lowpunch `[22,69]`、lowkick `[31,86]`、highpunch `[17,101]`、highkick `[33,73]`。PC 原型用 `J/K/L/U` 产生抽象 `a/b/c/d`，并以从首键起算的 0.5 秒原型输入期限限制序列；这些都不是原版物理键位或计时证据。`candobasicattacks` 共 84 个成员，目前只实现本文件记录的窗口，完整成员覆盖、链接顺序和 blending 仍未验证。源记录与测试边界见 `reports/basic_attack_combo_evidence.json`。
 
 ## 立即运行 Windows PC 原型
 
@@ -66,6 +67,14 @@ Esc 或手柄 B/Start 从暂停菜单恢复。上述键位是 PC 原型默认值
 按键编号仍取决于 Windows 与 Godot 的手柄映射。当前实现只验证合成事件触发的
 动作、状态和菜单路径，尚未逐一实测各种真实手柄。
 实现和验证边界见 [`docs/PC_INPUT.md`](docs/PC_INPUT.md)。
+
+站立时，原型把 `J/K/L/U` 映射为抽象 `a/b/c/d`。在当前攻击的来源帧
+进入已恢复的 `candobasicattacks` 窗口后，输入 `AAA`、`ABB`、`BCC` 或
+`BDD` 会分别转入高拳、低拳、高踢或低踢；候选 GLB 缺少目标动作时保持
+普通攻击路径。序列从首键起算最多保留 0.5 秒，这是一个 PC 原型门限。
+完整 84 个组成员、原版输入期限、链接优先级、blending 和 Android 物理键位
+仍未恢复。源记录见
+[`reports/basic_attack_combo_evidence.json`](reports/basic_attack_combo_evidence.json)。
 
 本地音效为可选输入：设置 `BRUCELEE_AUDIO_ROOT` 指向自有数据包提取出的
 `sounds/sfx` 目录；未设置时尝试本机默认的

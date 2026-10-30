@@ -27,13 +27,11 @@ _FLOAT = 5126
 _UNSIGNED_BYTE = 5121
 _UNSIGNED_SHORT = 5123
 _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
-# This face-up slice adds all_stunned_fall, all_idle_face_up,
-# all_getup_faceup, all_getup_faceup_attack, all_impct_faceup, and
-# m01_attack_to_floor to the existing 17-clip Bruce candidate. Keep the limit
-# at the exact number needed by this prototype path; the remaining face-up
-# actions are not included.
+# This slice adds the recovered highpunch1/highkick1 clips to the 23-clip
+# Bruce candidate used by the ground-reaction prototype. Keep the limit at the
+# exact number needed by this path; other actions remain excluded.
 # Keep the limit explicit so an accidental unbounded import is rejected.
-_MAX_ANIMATION_FILES = 23
+_MAX_ANIMATION_FILES = 25
 _MAX_RIGID_ATTACHMENTS = 16
 
 

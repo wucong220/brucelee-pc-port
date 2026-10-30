@@ -9,7 +9,7 @@ REPORT = Path(__file__).resolve().parents[1] / "reports" / "reaction_action_inve
 class TestFightingConfig(unittest.TestCase):
     def test_low_attack_config_matches_verified_metadata(self):
         data = json.loads(CONFIG.read_text(encoding="utf-8"))
-        self.assertEqual(data["schema_version"], 3)
+        self.assertEqual(data["schema_version"], 4)
         self.assertEqual(data["source_archive"], "brucelee.set")
         self.assertEqual(data["frame_rate"], 30.0)
         self.assertEqual(data["source_geometry"], {
@@ -21,6 +21,8 @@ class TestFightingConfig(unittest.TestCase):
                 "m01_idle_01": 25.0,
                 "m01_pnch_low_01": 40.0,
                 "m01_kick_low_01": 50.0,
+                "m01_pnch_high_01": 45.0,
+                "m01_kick_high_01": 60.0,
                 "all_impct_light_frnt_low": 40.0,
                 "all_impct_light_frnt_mid": 40.0,
                 "all_impct_light_frnt_high": 40.0,
@@ -78,9 +80,11 @@ class TestFightingConfig(unittest.TestCase):
             },
         })
         attacks = data["attacks"]
-        self.assertEqual(set(attacks), {"punch", "kick"})
+        self.assertEqual(set(attacks), {"punch", "kick", "high_punch", "high_kick"})
         self.assertEqual(attacks["punch"]["source_action"], "lowpunch1")
         self.assertEqual(attacks["kick"]["source_action"], "lowkick1")
+        self.assertEqual(attacks["high_punch"]["source_action"], "highpunch1")
+        self.assertEqual(attacks["high_kick"]["source_action"], "highkick1")
         self.assertEqual(
             [attacks["punch"][key] for key in ("startup_frames", "active_frames", "recovery_frames")],
             [5, 4, 60],
@@ -89,8 +93,18 @@ class TestFightingConfig(unittest.TestCase):
             [attacks["kick"][key] for key in ("startup_frames", "active_frames", "recovery_frames")],
             [7, 4, 75],
         )
+        self.assertEqual(
+            [attacks["high_punch"][key] for key in ("startup_frames", "active_frames", "recovery_frames")],
+            [4, 4, 93],
+        )
+        self.assertEqual(
+            [attacks["high_kick"][key] for key in ("startup_frames", "active_frames", "recovery_frames")],
+            [7, 4, 62],
+        )
         self.assertEqual(attacks["punch"]["damage"], 5.0)
         self.assertEqual(attacks["kick"]["damage"], 5.0)
+        self.assertEqual(attacks["high_punch"]["damage"], 5.0)
+        self.assertEqual(attacks["high_kick"]["damage"], 6.0)
         self.assertEqual(attacks["punch"]["source_impact"], {
             "attack_radius": 70.0,
             "body_part": "larm",
@@ -102,6 +116,20 @@ class TestFightingConfig(unittest.TestCase):
             "attack_radius": 70.0,
             "body_part": "lleg",
             "height": "low",
+            "strength": "normal",
+            "direction": "frontal",
+        })
+        self.assertEqual(attacks["high_punch"]["source_impact"], {
+            "attack_radius": 70.0,
+            "body_part": "larm",
+            "height": "high",
+            "strength": "normal",
+            "direction": "frontal",
+        })
+        self.assertEqual(attacks["high_kick"]["source_impact"], {
+            "attack_radius": 75.0,
+            "body_part": "lleg",
+            "height": "high",
             "strength": "normal",
             "direction": "frontal",
         })

@@ -585,24 +585,17 @@ func _unhandled_input(event: InputEvent) -> void:
         or event.is_action_pressed(PrototypeControls.TOGGLE_TRAINING)
     ):
         return
-    if event.is_action_pressed(PrototypeControls.ATTACK_A):
-        player.record_virtual_press("a")
-        player.request_attack("punch")
-    elif event.is_action_pressed(PrototypeControls.ATTACK_B):
-        if (player.try_attack_to_floor_press("b")
-                == PortFighter.AttackToFloorInputResult.IGNORED):
-            player.record_virtual_press("b")
-            player.request_attack("kick")
-    elif event.is_action_pressed(PrototypeControls.ATTACK_C):
-        if (player.try_attack_to_floor_press("c")
-                == PortFighter.AttackToFloorInputResult.IGNORED):
-            player.record_virtual_press("c")
-            player.request_attack("heavy")
-    elif event.is_action_pressed(PrototypeControls.ATTACK_D):
-        if (player.try_attack_to_floor_press("d")
-                == PortFighter.AttackToFloorInputResult.IGNORED):
-            player.record_virtual_press("d")
-    elif event.is_action_pressed(PrototypeControls.RESTART):
+    if _handle_fighter_attack_input(
+        player,
+        event,
+        PrototypeControls.ATTACK_A,
+        PrototypeControls.ATTACK_B,
+        PrototypeControls.ATTACK_C,
+        PrototypeControls.ATTACK_D
+    ):
+        get_viewport().set_input_as_handled()
+        return
+    if event.is_action_pressed(PrototypeControls.RESTART):
         _reset_match()
     elif event.is_action_pressed(PrototypeControls.TOGGLE_TRAINING):
         if training_mode:
@@ -617,6 +610,54 @@ func _unhandled_input(event: InputEvent) -> void:
     else:
         return
     get_viewport().set_input_as_handled()
+
+func _handle_fighter_attack_input(
+        fighter: PortFighter,
+        event: InputEvent,
+        action_a: String,
+        action_b: String,
+        action_c: String,
+        action_d: String
+) -> bool:
+    if event.is_action_pressed(action_a):
+        if fighter.state in ["facedownidle", "faceupidle"]:
+            fighter.record_virtual_press("a")
+        elif not fighter.record_standing_combo_press("a"):
+            fighter.request_attack("punch")
+    elif event.is_action_pressed(action_b):
+        var attack_to_floor: PortFighter.AttackToFloorInputResult = (
+            fighter.try_attack_to_floor_press("b")
+        )
+        if attack_to_floor == PortFighter.AttackToFloorInputResult.IGNORED:
+            if fighter.state in ["facedownidle", "faceupidle"]:
+                fighter.record_virtual_press("b")
+            elif fighter.record_standing_combo_press("b"):
+                return true
+            fighter.request_attack("kick")
+    elif event.is_action_pressed(action_c):
+        var attack_to_floor: PortFighter.AttackToFloorInputResult = (
+            fighter.try_attack_to_floor_press("c")
+        )
+        if attack_to_floor == PortFighter.AttackToFloorInputResult.IGNORED:
+            if fighter.state in ["facedownidle", "faceupidle"]:
+                fighter.record_virtual_press("c")
+            elif fighter.record_standing_combo_press("c"):
+                return true
+            fighter.request_attack("heavy")
+    elif event.is_action_pressed(action_d):
+        var attack_to_floor: PortFighter.AttackToFloorInputResult = (
+            fighter.try_attack_to_floor_press("d")
+        )
+        if attack_to_floor == PortFighter.AttackToFloorInputResult.IGNORED:
+            if fighter.state in ["facedownidle", "faceupidle"]:
+                fighter.record_virtual_press("d")
+            else:
+                fighter.record_standing_combo_press("d")
+    elif event.is_action_pressed(PrototypeControls.RESTART):
+        return false
+    else:
+        return false
+    return true
 
 func _training_available() -> bool:
     var player_clips: Dictionary = player.get("_candidate_clip_paths")
