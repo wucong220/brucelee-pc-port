@@ -422,7 +422,10 @@ Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 `pressup+pressright+pressa -> pressc -> pressc`；其余 `endattack <对手名>`
 指向 `m0x_end_attack_0x`，多数还带 `grabdistance`。这些链接都要求
 `oppposestun`（对手处于眩晕），目前原型没有眩晕状态、抓取距离判定和对应
-终结动画，因此保持关闭；不是输入层缺失，而是缺少状态与资产证据。
+终结动画，因此保持关闭；不是输入层缺失，而是缺少状态与资产证据。11 条
+`endattack*` 链接的目标动画、半径、按键序列与条件见
+`reports/grab_finisher_evidence.json`；已恢复的眩晕入口只有
+`impactstunhigh/low`，且都带 `healthzero`（致命一击）条件，不能当作普通眩晕。
 
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
 `[31,86]`、`[17,101]` 和 `[33,73]`；四个 `*_3` 目标窗口为 `[33,81]`、

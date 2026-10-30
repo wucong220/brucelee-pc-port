@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "derived_from": "reports/candobasicattacks_group_inventory.json",
+  "group": "candobasicattacks",
+  "link_count": 11,
+  "links": [
+    {
+      "to": "endattack1",
+      "target_animation": "m01_end_attack_01",
+      "target_radius": 45.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressb"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 2,
+      "source_index": 34
+    },
+    {
+      "to": "endattack2",
+      "target_animation": "m01_end_attack_02",
+      "target_radius": 45.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressc"
+        ],
+        [
+          "pressc"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 2,
+      "source_index": 35
+    },
+    {
+      "to": "endattack brick",
+      "target_animation": "m03_end_attack_01",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 36
+    },
+    {
+      "to": "endattack chief",
+      "target_animation": "m02_end_attack_02",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 37
+    },
+    {
+      "to": "endattack johnson",
+      "target_animation": "m03_end_attack_02",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 38
+    },
+    {
+      "to": "endattack ken",
+      "target_animation": "m02_end_attack_01",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 39
+    },
+    {
+      "to": "endattack loming",
+      "target_animation": "m04_end_attack_01",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 40
+    },
+    {
+      "to": "endattack master",
+      "target_animation": "m04_end_attack_02",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 41
+    },
+    {
+      "to": "endattack shenlo",
+      "target_animation": "m04_end_attack_01",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 42
+    },
+    {
+      "to": "endattack sinfu",
+      "target_animation": "m04_end_attack_02",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 43
+    },
+    {
+      "to": "endattack smallboy",
+      "target_animation": "m03_end_attack_01",
+      "target_radius": 25.0,
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "source_index": 44
+    }
+  ],
+  "stun_entry_evidence": [
+    {
+      "from_group": "impactable",
+      "conditions": [
+        "impact",
+        "oppattackstrengthnormal",
+        "oppattackheighthigh",
+        "healthzero"
+      ],
+      "to": "impactstunhigh",
+      "target_animation": "all_impct_light_frnt_high",
+      "stun_link": {
+        "from": "impactstunhigh",
+        "to": "stun",
+        "time": [
+          14,
+          17
+        ],
+        "blending": 3
+      }
+    },
+    {
+      "from_group": "impactable",
+      "conditions": [
+        "impact",
+        "oppattackstrengthnormal",
+        "oppattackheightmed",
+        "healthzero"
+      ],
+      "to": "impactstunlow",
+      "target_animation": "all_impct_light_frnt_low",
+      "stun_link": {
+        "from": "impactstunlow",
+        "to": "stun",
+        "time": [
+          14,
+          17
+        ],
+        "blending": 3
+      }
+    }
+  ],
+  "blockers": [
+    "All endattack links require oppposestun; the prototype has no stun state.",
+    "Most links also require grabdistance; distance-to-grab semantics are not recovered.",
+    "Target animations m0x_end_attack_0x are not in any current candidate GLB.",
+    "The only recovered stun entries are gated by healthzero (a lethal hit), so wiring grab finishers to them would misrepresent normal stun."
+  ],
+  "note": "Derived metadata only; no original binary payload is included."
+}

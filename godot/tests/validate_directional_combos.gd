@@ -72,6 +72,9 @@ func _run() -> void:
     if not _validate_subsequence_skips(player):
         quit(1)
         return
+    if not _validate_subsequence_order(player):
+        quit(1)
+        return
     print("DIRECTIONAL_COMBO_VALIDATION=" + JSON.stringify({
         "sequences": [[
             "up+a -> in+a -> in+a => highpunch3",
@@ -190,6 +193,37 @@ func _validate_subsequence_skips(player: PortFighter) -> bool:
     player.record_standing_combo_press("a")
     if String(player.get("_standing_combo_pending_attack")) != "high_punch":
         push_error("Ordered subsequence with an extra plain attack did not match AAA")
+        return false
+    return true
+
+
+func _validate_subsequence_order(player: PortFighter) -> bool:
+    # Leading extra presses are skipped, but a shorter run must not be promoted
+    # to the longer sequence: a,a,b,b selects lowpunch1, not highpunch1.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch for the order check")
+        return false
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
+        push_error("A,a,a after two leading b presses did not select highpunch1")
+        return false
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not restart the low punch for the order check")
+        return false
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("b")
+    if String(player.get("_standing_combo_pending_attack")) != "punch":
+        push_error("a,a,b,b did not select lowpunch1")
         return false
     return true
 
