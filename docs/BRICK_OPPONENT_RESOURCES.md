@@ -131,7 +131,7 @@ SHA-256 `4a6d4532b42d6cbee3016b849befc2dc98c089e72fa4cfe291d9550f059412e3`
 下有 48 个不同；`rotation_xyzw_unverified` 和 `scale` 分量无超过该阈值的
 差异。这里比较的是解析器所报告的字段，不代表静态变换空间、绑定矩阵或
 动画轨道应用语义已经验证。**名称和父链一致不证明重定向可播放或与原版一致**；
-严格配对检查继续保留，正常对战的 Brick 击倒入口仍未接通。
+严格配对检查继续保留。后续候选入口及其验证范围见下节。
 
 索引比较复现命令（实际执行退出码 0）：
 
@@ -148,6 +148,50 @@ py -3.12 -X utf8 -B tools\compare_animation_bindings.py `
 封装为可复用命令，不能替代原生变换链或视觉对照。
 
 Validation: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q` (201 tests, 1 skipped; exit 0).
+
+## Brick 候选倒地入口
+
+只读解析 `thai.set` 的动作数组，`idle`、`movefwd`、`lowpunch3`、
+`lowkick3` 的 `impactable` 窗口分别为 `[0,120]`、`[0,21]`、`[0,38]`、
+`[0,41]`，覆盖各自动画的完整档案时长。原型限定 Bruce 的 `faceupattack`
+对这四种映射动作产生非致命、非格挡的 hard/low/frontal 命中时，若 Brick
+反应与倒地 clip 均通过检查，播放候选 `impacthardfrontlow`，选择窗口
+`[20,23]` 的第 20 帧进入 Brick 的 `facedownidle`。移动视觉使用 `movefwd`
+候选片段，逻辑状态仍是 idle；入口只检查动作和阶段，不检查源帧。
+第 20 帧是原型状态计时选择，与 GLB 采样时间的精确对应尚未经过原版对照。
+
+当前 idle/move 没有独立的玩法源帧计时器；attack 的 `state_time` 是各阶段
+剩余时间，GLB 播放器又独立推进。因此不能将视觉播放位置或阶段倒计时
+直接当成原生 `TimeWindowCheck` 的帧值，也没有实现该检查。上述档案窗口
+覆盖完整动作只是采用状态门控的候选依据，不构成边界复现。新增测试分别
+覆盖 idle/move 候选视觉循环的开头、末尾及回绕，以及 punch/kick 各阶段
+通过真实计时器推进的切换前后；这验证原型在这些时刻接受入口，不证明
+原版成员窗口端点或两套时钟同步。若要实现并验证原生帧窗口，还需恢复
+动作切换、循环及源帧时钟的对应关系，并对照原生运行时。
+
+反应和倒地 clip 缺失、无效时维持普通受击回退；格挡走 blockstun，
+致命走当前 ko。Brick 倒地时不启用 Bruce 起身、倒地反击或倒地受击行为。
+组链接 `TimeWindowCheck` 已对其他组做静态追踪，尚未单独核实该入口的完整
+运行路径；跨骨架变换、原版优先级、真实位移及逐帧视觉均未验收。
+
+2026-10-30，本机 Godot 4.7.2 headless 执行以下命令，均退出码 0：
+
+```powershell
+$godot = "$env:LOCALAPPDATA\BruceLee-PC-Port\godot-portable-773280yg\Godot_v4.7.2-stable_win64_console.exe"
+$bruce = "$env:LOCALAPPDATA\BruceLee-PC-Port\attacktofloor-candidate-20261030\bruce_candidate_23.glb"
+$brick = "$env:LOCALAPPDATA\BruceLee-PC-Port\brick-retarget-candidate-20261030\brick_candidate_6.glb"
+& $godot --headless --path godot --editor --quit
+& $godot --headless --path godot --script res://tests/validate_brick_ground_entry.gd -- $bruce $brick
+& $godot --headless --path godot --script res://tests/validate_faceup_attack.gd -- $bruce $brick
+& $godot --headless --path godot --script res://tests/validate_ground_pose.gd -- $bruce $brick
+& $godot --headless --path godot --script res://tests/smoke_test.gd
+python -B -X utf8 -m unittest discover -s tests -p 'test*.py' -q
+```
+
+Python 测试共 216 项，跳过 1 项，退出码 0。这些检查只验证当前本机候选资源
+与原型行为，不证明原版逐帧等价。
+同日增加循环和阶段切换检查后，重新执行上述 `validate_brick_ground_entry.gd`
+命令，退出码 0。
 
 逐轨道身份检查使用 `tools/audit_animation_retarget.py`，接收上述同一 ANM、
 Bruce Skl 和 Brick Skl 三个路径。它以完整节点类型和父链匹配，拒绝缺失、
