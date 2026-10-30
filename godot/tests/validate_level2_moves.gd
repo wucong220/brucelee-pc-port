@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 ## Validate the level-2 normal attack transitions on the 34-clip candidate.
 
 func _initialize() -> void:
@@ -49,6 +49,9 @@ func _run() -> void:
     if not _validate_low_punch2_fail_closed(player):
         quit(1)
         return
+    if not _validate_level3_progression(player):
+        quit(1)
+        return
     print("LEVEL2_MOVE_VALIDATION=" + JSON.stringify({
         "level2": ["high_punch2", "high_kick2", "low_kick2"],
         "low_punch2": "fail-closed: m01_pnch_low_02 rejected by the wavelet converter",
@@ -61,6 +64,35 @@ func _run() -> void:
     scene.queue_free()
     await process_frame
     quit(0)
+
+
+func _validate_level3_progression(player: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("high_punch"):
+        push_error("Could not start high_punch for the level-3 check")
+        return false
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
+    if not player._try_begin_pending_standing_combo():
+        push_error("high_punch2 did not start")
+        return false
+    if player.attack_kind != "high_punch2":
+        push_error("Expected high_punch2 before level 3: " + player.attack_kind)
+        return false
+    player.record_standing_combo_press("a", ["up"])
+    player.record_standing_combo_press("a", ["in"])
+    player.record_standing_combo_press("a", ["in"])
+    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
+    if not player._try_begin_pending_standing_combo():
+        push_error("high_punch2 did not progress to high_punch3")
+        return false
+    if player.attack_kind != "high_punch3":
+        push_error("Level 3 selected " + player.attack_kind)
+        return false
+    return true
 
 
 func _validate_transition(

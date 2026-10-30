@@ -192,6 +192,10 @@ const CANDOBASICATTACK_WINDOWS: Dictionary = {
     "low_punch3": [33, 81],
     "low_kick3": [26, 56],
     "high_kick3": [30, 51],
+    "high_punch2": [32, 81],
+    "low_punch2": [20, 65],
+    "high_kick2": [28, 95],
+    "low_kick2": [17, 27],
 }
 const BRUCE_ATTACK_METADATA: Dictionary = {
     "punch": {
