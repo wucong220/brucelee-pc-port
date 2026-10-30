@@ -244,6 +244,10 @@ Godot 导入后重采样为 24 个键；这些时间不等于已验证的原版�
 验证：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
 共 216 项、其中 1 项跳过，退出码 0。
 
-`validate_ground_pose.gd` 使用本机 Bruce 23 段及 Brick 6 段候选，退出码 0；该测试注入状态，正常对战触发尚未实现。
+`validate_ground_pose.gd` 使用本机 Bruce 23 段及 Brick 5 段候选，退出码 0；
+测试通过真实 `main.gd` 按键回调验证 `K,L,L` 前缀缓存和候选
+`attacktofloor` 的启动、伤害、退出与负例。`validate_brick_ground_entry.gd`
+使用 Brick 6 段候选验证受限受击链。两者都不证明原版组链接优先级、
+Android 物理键位、逐帧视觉或完整击倒行为。
 
 审查后 Godot 采样检查重跑退出码 0；候选采样时间分别约为 0、0.348182、0.696364、0.766 秒。

@@ -213,7 +213,7 @@ WINDOWS_EXE_VALIDATION=PASS
 
 `facedowngetup` 播放 `all_getup_facedwn`，动画半径 25，并在第 16 帧回到普通 idle 的第 0 帧。档案窗口是 `[16, 19]`，linking frame 为 0。不继续进入 `facedownattack`。这不是完整 knockdown。
 
-`facedownko`、`impactfacedown` 和 `facedownattack` 已用只读的 `read_archive_resource`、`_parse_set` 和 `_animation_metadata` 从 `adreno_200/set/brucelee.set` 核对，字段见 [`bruce_facedown_followups.json`](../reports/bruce_facedown_followups.json)。`facedownko` 使用已经加载的 `all_idle_face_down`，半径 100，循环 45 帧，不接受起身，也不应用这次致命攻击的原型 push。缺这条倒地 clip 时仍走站立 `ko`。`impactfacedown` 在仓库外 16 段 `bruce_candidate_facedown_impact.glb` 通过现有轨道检查后播放：动画 `all_impct_facedwn`，半径 80，不循环，第 11 帧回到 `facedownidle` 第 0 帧。触发限于 `facedownidle` 的 `impact` + `oppattackheightlow`，且本次伤害不会把血量降到 0；血量降到 0 仍走现有 `ko`。中高度攻击没有这条链接，仍走原来的站立反应。这段不应用原型 push。GLB SHA-256 是 `1952340a02fa64f779ace554a0d15647ea679ee9e6599dc115c3ccfa3a107705`。原始 ANM 和 GLB 留在仓库外。`facedownko` 使用 `all_idle_face_down.anm`，半径 100，45 帧，30 fps；`defeated` 和 `receivedamage` 的窗口都是 `[0, 45]`，第 45 帧连回自身。`impactfacedown` 是档案里的倒地受击动作名，使用 `all_impct_facedwn.anm`，半径 80，11 帧，30 fps；`receivedamage` 窗口是 `[0, 11]`，第 11 帧进入 `facedownidle`。`facedownattack` 使用 `all_getup_facedwn_attack.anm`，半径 45，35 帧，30 fps；候选运行时从 `facedownidle` 播放，攻击参数为第 6 到 9 帧一次 6 点伤害、半径 120、`rarm/medium/hard/frontal`，第 32 帧回到 `idle`。这只是候选 clip 播放和已恢复字段接入，尚缺原版逐帧录像验收、完整命中盒、受击窗口与物理键位。同 set 里的 `impactfaceup`、`impacttofloor`、`attacktofloor`、`faceupko`、`faceupattack`、`faceupidle` 和 `faceupgetup` 已用同一只读路径核对，字段见 [`bruce_faceup_fields.json`](../reports/bruce_faceup_fields.json)。其中 `impacttofloor`、`faceupidle`、受限的 `faceupgetup/faceupattack`、`impactfaceup` 和受限的 `faceupko` 已在下面 PC 候选路径接入；`attacktofloor` 仍是证据记录。
+`facedownko`、`impactfacedown` 和 `facedownattack` 已用只读的 `read_archive_resource`、`_parse_set` 和 `_animation_metadata` 从 `adreno_200/set/brucelee.set` 核对，字段见 [`bruce_facedown_followups.json`](../reports/bruce_facedown_followups.json)。`facedownko` 使用已经加载的 `all_idle_face_down`，半径 100，循环 45 帧，不接受起身，也不应用这次致命攻击的原型 push。缺这条倒地 clip 时仍走站立 `ko`。`impactfacedown` 在仓库外 16 段 `bruce_candidate_facedown_impact.glb` 通过现有轨道检查后播放：动画 `all_impct_facedwn`，半径 80，不循环，第 11 帧回到 `facedownidle` 第 0 帧。触发限于 `facedownidle` 的 `impact` + `oppattackheightlow`，且本次伤害不会把血量降到 0；血量降到 0 仍走现有 `ko`。中高度攻击没有这条链接，仍走原来的站立反应。这段不应用原型 push。GLB SHA-256 是 `1952340a02fa64f779ace554a0d15647ea679ee9e6599dc115c3ccfa3a107705`。原始 ANM 和 GLB 留在仓库外。`facedownko` 使用 `all_idle_face_down.anm`，半径 100，45 帧，30 fps；`defeated` 和 `receivedamage` 的窗口都是 `[0, 45]`，第 45 帧连回自身。`impactfacedown` 是档案里的倒地受击动作名，使用 `all_impct_facedwn.anm`，半径 80，11 帧，30 fps；`receivedamage` 窗口是 `[0, 11]`，第 11 帧进入 `facedownidle`。`facedownattack` 使用 `all_getup_facedwn_attack.anm`，半径 45，35 帧，30 fps；候选运行时从 `facedownidle` 播放，攻击参数为第 6 到 9 帧一次 6 点伤害、半径 120、`rarm/medium/hard/frontal`，第 32 帧回到 `idle`。这只是候选 clip 播放和已恢复字段接入，尚缺原版逐帧录像验收、完整命中盒、受击窗口与物理键位。同 set 里的 `impactfaceup`、`impacttofloor`、`attacktofloor`、`faceupko`、`faceupattack`、`faceupidle` 和 `faceupgetup` 已用同一只读路径核对，字段见 [`bruce_faceup_fields.json`](../reports/bruce_faceup_fields.json)。其中 `impacttofloor`、`faceupidle`、受限的 `faceupgetup/faceupattack`、`impactfaceup`、受限的 `faceupko` 和显式输入的 `attacktofloor` 已在下面 PC 候选路径接入。
 
 character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨道仍播放。12 段硬受击 GLB 不含这三条返回 clip，因此仍在退出帧之后回到普通 idle。
 
@@ -259,8 +259,9 @@ character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨�
 [`FIGHTING_SET_FINDINGS.md`](FIGHTING_SET_FINDINGS.md) 的
 `attacktofloor` 入口证据。这是特定静态控制流的结论，不是所有组链接的普遍
 语义，也还没有证明原始 set 数组顺序会原样进入运行时向量。完整分组成员
-覆盖和运行时优先级仍未接入，本节仍只保留受限的 `faceupidle` 来向；
-`attacktofloor` 继续关闭。
+覆盖和运行时优先级仍未接入，本节仍只保留受限的 `faceupidle` 来向。
+`attacktofloor` 另由下面的显式候选输入路径进入，不表示这里已恢复原版
+`candobasicattacks` 的完整成员覆盖或链接优先级。
 `validate_faceup_impact.gd` 验证上述候选条件、第 21/48
 帧边界、循环、半径、缺失 clip、致命命中的降级路径，以及普通和致命攻击
 进入 `faceupidle` 时不会改走通用受击或 KO；它不证明原版逐帧视觉、完整
@@ -368,7 +369,7 @@ SHA-256 是
 改写既有输入和攻击链。这些测试不证明原版逐帧视觉、完整命中盒、blending
 或 draw-level 行为。
 
-## 地面姿态与 `attacktofloor` 素材候选
+## 地面姿态与 `attacktofloor` 候选路径
 
 本地已生成两个新的候选 GLB，均在仓库及同步目录之外：
 
@@ -393,21 +394,45 @@ Brick 的新增 `all_idle_face_down_forbigguy.anm` 为 45 帧、30 fps，SHA-256
 目前 Brick 只开放这两个动作的姿态查询。相同视觉 clip 的 `faceupidle`
 和 `faceupko` 是各自独立的源动作映射。
 
+候选运行时只在 Bruce 为站立 `idle/idle2`、Brick 的
+`current_source_pose()` 为 `laying`、且 Bruce 候选 GLB 含
+`m01_attack_to_floor` 和返回用的 `m01_idle_02` 时接受 `bcc` 或 `bdd`。
+PC 原型把这两个序列映射为 `K,L,L` 和 `K,U,U`。输入处理器把 `b`、`bc`
+作为待完成前缀缓存，只有完整序列才进入 `attacktofloor`；如果目标不是
+laying，第一次 `K` 仍走普通踢。`b` 前缀超过原型输入窗口后不会自动转成
+普通踢，这是当前原型的已知取舍。
+
+进入后从源动画第 9 帧开始播放非循环的 `m01_attack_to_floor`，在第
+`[18,23]` 帧至多造成一次 6 点伤害。攻击半径是 60，impact 属性为
+`lleg/normal/low/frontal`。档案中的直接出边是 `[80,90] -> idle2`；候选
+运行时选择最早的第 80 帧进入 `m01_idle_02`，这个具体切换帧仍待原生运行时
+验证。躺地对手即使按住格挡键也不能使用站立格挡，因此该攻击按未格挡命中
+计算。缺少 clip、对手不在 laying、距离过远或位于身后时不会启动或命中；
+致命命中继续进入 Brick 自己的 `facedownko`。
+
+这里的第 9 帧来自 link 的 `entry_frame=9`，只作为候选入口位置。已识别的
+`from_group` 控制流可能改用来源组成员记录的第三项决定切换时机，因此原版
+是否真的在第 9 帧切入仍未证明；`blending=6` 也尚未实现或逐帧验证。
+
 以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
 
 ```powershell
 & $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
-& $GodotExe --headless --path godot --script res://tests/validate_faceup_impact.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
-& $GodotExe --headless --path godot --script res://tests/validate_faceup_attack.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
-& $GodotExe --headless --path godot --script res://tests/validate_faceup_getup.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_brick_ground_entry.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_6.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_faceup_impact.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_6.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_faceup_attack.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_6.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_faceup_getup.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_6.glb"
 & $GodotExe --headless --path godot --script res://tests/smoke_test.gd
 py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
-# 198 tests, 1 skipped
+# 217 tests, 1 skipped; all commands above exit 0
 git diff --check
 ```
 
-地面姿态测试通过人工设置候选状态来验证 Brick clip、循环、半径 75、
-缺 clip 返回未知、Bruce clip 非循环和定位到第 9 帧。它没有验证正常对战
-中的 Brick 击倒入口、起身、原版动画逐帧视觉、战斗链接顺序或 blending。
-`attacktofloor` 尚无正常对战触发、伤害及退出行为；在来源组成员窗口、
-链接顺序和目标反应等证据闭合前不能把素材播放当作招式已完成。
+`validate_ground_pose.gd` 通过真实的 `main.gd` 按键回调验证 `K,L,L`
+前缀缓存、完整序列、clip 选择、第 9 帧定位、第 `[18,23]` 帧一次伤害、
+第 80 帧进入 `idle2`、`idle/idle2` 来源、通过真实按键回调执行的
+`K,L,L`/`K,U,U`、攻击或返回 clip 缺失、距离、朝向、躺地格挡和致命命中。
+其他地面链测试使用含 Brick 受击 clip 的 6 段候选。这些测试证明候选运行时
+路径已接通，不证明原版
+`candobasicattacks` 的 84 个来源成员、链接检查顺序、`entry_frame=9` 与
+`blending=6` 的运行时时序、物理键位、逐帧视觉、目标反应链或完整命中盒。

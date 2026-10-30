@@ -364,13 +364,19 @@ func _unhandled_key_input(event: InputEvent) -> void:
             player.record_virtual_press("a")
             player.request_attack("punch")
         KEY_K:
-            player.record_virtual_press("b")
-            player.request_attack("kick")
+            if (player.try_attack_to_floor_press("b")
+                    == PortFighter.AttackToFloorInputResult.IGNORED):
+                player.record_virtual_press("b")
+                player.request_attack("kick")
         KEY_L:
-            player.record_virtual_press("c")
-            player.request_attack("heavy")
+            if (player.try_attack_to_floor_press("c")
+                    == PortFighter.AttackToFloorInputResult.IGNORED):
+                player.record_virtual_press("c")
+                player.request_attack("heavy")
         KEY_U:
-            player.record_virtual_press("d")
+            if (player.try_attack_to_floor_press("d")
+                    == PortFighter.AttackToFloorInputResult.IGNORED):
+                player.record_virtual_press("d")
         KEY_R:
             _reset_match()
 

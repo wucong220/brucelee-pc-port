@@ -6,7 +6,7 @@
   "set_resource_id": "f3d1549105ba342bc17b86a33b3834a0",
   "set_pakd_offset": 21016054,
   "method": "Read-only kdf_fighting_set.read_archive_resource and kdf_combat_reactions._parse_set plus _animation_metadata. This report stores no original bytes.",
-  "status": "证据记录；impacttofloor、faceupidle、受限 faceupgetup/faceupattack、impactfaceup 与 faceupko 已在 PC 候选路径接入，attacktofloor 仍仅保留档案证据",
+  "status": "证据记录；impacttofloor、faceupidle、受限 faceupgetup/faceupattack、impactfaceup、受限 faceupko 与显式输入的 attacktofloor 已在 PC 候选路径接入；原始组链接语义仍未验证",
   "candidate_runtime": {
     "impacttofloor": "仅在 facedowngetup [5,11] 或 facedownattack [24,31] 受到非致命、非格挡的低段 impact 时触发；从源动画第 21 帧起播，第 48 帧进入 faceupidle。",
     "faceupidle": "循环播放 45 帧；受到非致命、非格挡低段 impact 且 all_impct_faceup 存在时进入 impactfaceup；伤害会使血量归零且 all_idle_face_up 存在时优先进入 faceupko；在源帧 [10,45] 接受候选水平 move_axis.x 并在 all_getup_faceup 存在时进入 faceupgetup；在源帧 [0,45] 接受 aaa/abb/bcc/bdd 抽象序列并在 all_getup_faceup_attack 存在时进入 faceupattack。",
@@ -14,7 +14,8 @@
     "faceupattack": "播放 38 帧、半径 45 的非循环 all_getup_faceup_attack；第 [9,14] 帧至多造成一次 6 点伤害，攻击半径 90，属性为 larm/low/hard/frontal；候选运行时选择第 37 帧回到 idle。第 [24,31] 帧只会进入已验证的非致命、非格挡低段 impacttofloor 路径；canblock [27,38] 只作为保护性格挡门控，完整格挡反应、普通受击和 KO 出边仍封闭。",
     "impactfaceup": "播放 11 帧、30 fps、半径 80 的非循环 all_impct_faceup；只从 faceupidle 的非致命、非格挡低段 impact 进入，第 11 帧回到 faceupidle 第 0 帧，不应用原型 push，播放期间不接受新输入或受击出口。",
     "faceupko": "复用 all_idle_face_up，独立状态半径 100；只从 faceupidle 的 healthzero 条件进入，45 帧循环，不接受起身或攻击输入，也不对自己应用致命攻击的原型 push。",
-    "candidate_glb": {
+    "attacktofloor": "显式 PC 候选入口。Bruce 在 idle/idle2 且对手报告 laying 时接受 K,L,L 或 K,U,U 映射的 bcc/bdd；b 与 bc 前缀先缓存。启动要求候选同时含 m01_attack_to_floor 和 m01_idle_02。进入后从候选源帧 9 播放，第 [18,23] 帧至多造成一次 6 点伤害，攻击半径 60、属性 lleg/normal/low/frontal，并在候选选择的最早退出帧 80 进入 idle2。原始组链接第三项时序、links 32/33 对 87/89 的优先级、blending、物理键位和目标反应链仍未验证。",
+    "faceup_reaction_candidate_glb": {
       "path": "C:\\Users\\Lenovo\\AppData\\Local\\BruceLee-PC-Port\\faceup-reaction-candidate-20261030\\bruce_candidate_faceup_reaction.glb",
       "sha256": "1d1870d3918a92a39fd0f4f17eaabf6b4b43d984db0bf26a6d5f5a85f2ce39a5",
       "bytes": 1055068,
@@ -23,6 +24,14 @@
         "m01_attack_to_floor"
       ],
       "impact_animation_layout": "11 frames x 26 bonerot offsets decoded as candidate frame-major Q14 quaternions; native runtime layout remains unverified"
+    },
+    "attacktofloor_candidate_glb": {
+      "path": "C:\\Users\\Lenovo\\AppData\\Local\\BruceLee-PC-Port\\attacktofloor-candidate-20261030\\bruce_candidate_23.glb",
+      "sha256": "b29ab5e9590b905bc2a5241532cff3e644e13c70906bb8b37930170360b5cb36",
+      "bytes": 1152908,
+      "animation_count": 23,
+      "required_attack_clip": "m01_attack_to_floor",
+      "required_return_clip": "m01_idle_02"
     },
     "requires_clips": [
       "all_stunned_fall",
@@ -37,7 +46,7 @@
       "原版 Android 物理键位及三维 keysequence 运行时匹配",
       "faceupattack 未验证的普通受击与 KO 出边",
       "impactfaceup/faceupko 的完整原版分组优先级、blending 与逐帧行为",
-      "attacktofloor 的正常对战入口；仓库外 23 段候选包含所需 clip，Brick 可在受限候选受击链中进入 laying"
+      "attacktofloor 的原版 candobasicattacks 入口；当前仅实现显式 PC 候选输入路径"
     ]
   },
   "actions": {
@@ -1828,8 +1837,8 @@
     ],
     "set_action_named_ko": false,
     "direct_from_checked_or_runtime_actions": [],
-    "result": "入口候选已定位；attacktofloor 仍未运行时接入",
-    "reason": "没有一条直接 link 从已核对的已实现动作进入这七个目标。impacttofloor 和 attacktofloor 是 from_group link；ELF 控制流表明 TimeWindowCheck 的 group 分支使用当前动画在来源组中的成员窗口，不读取 link 的 [0,0] 时间值。attacktofloor 另有已经定位的 oppposelaying、三条输入和延迟切换语义，但 84 个来源成员及正常对战中 attacktofloor 入口尚未闭合；仓库外 23 段候选包含所需 clip，Brick 可经受限候选受击链进入 laying。",
+    "result": "入口候选已定位；attacktofloor 已有显式 PC 候选输入路径，原始组链接入口仍未闭合",
+    "reason": "没有一条直接 link 从已核对的已实现动作进入这七个目标。impacttofloor 和 attacktofloor 是 from_group link；ELF 控制流表明 TimeWindowCheck 的 group 分支使用当前动画在来源组中的成员窗口，不读取 link 的 [0,0] 时间值。attacktofloor 另有已经定位的 oppposelaying、三条输入和延迟切换语义；仓库外 23 段候选和受限 Brick 受击链使显式 PC 候选路径可以运行，但 84 个来源成员、原始链接顺序和正常对战的组链接入口仍未闭合。",
     "impactablefromground": {
       "member_count": 13,
       "members": [
@@ -1988,7 +1997,13 @@
   },
   "attacktofloor_entry_evidence": {
     "evidence_level": "STATIC_VERIFIED_SPECIFIC_CONTROL_FLOW",
-    "runtime_status": "NOT_IMPLEMENTED",
+    "runtime_status": "CANDIDATE_RUNTIME_PATH_IMPLEMENTED_ORIGINAL_GROUP_ENTRY_UNVERIFIED",
+    "candidate_runtime_assets": {
+      "bruce_glb": "C:\\Users\\Lenovo\\AppData\\Local\\BruceLee-PC-Port\\attacktofloor-candidate-20261030\\bruce_candidate_23.glb",
+      "bruce_glb_sha256": "b29ab5e9590b905bc2a5241532cff3e644e13c70906bb8b37930170360b5cb36",
+      "brick_ground_glb": "C:\\Users\\Lenovo\\AppData\\Local\\BruceLee-PC-Port\\brick-retarget-candidate-20261030\\brick_candidate_6.glb",
+      "brick_ground_glb_sha256": "96d05e9652b7ecde39bbb698062e4f2041df4a928aad41d2e866ecf7857528b2"
+    },
     "incoming_link_indices": [
       32,
       33
@@ -2022,8 +2037,8 @@
     "transition_timing": "输入与条件在组成员窗口内匹配后，FollowLink 将该成员记录第三项与当前帧比较；若第三项大于当前帧，则把 link 和该值存入 fighter+0xf0/+0xf4，BasicUpdate 达到该值后执行目标动作。第三项的业务语义及运行时是否被修改尚未验证，不能认定为窗口结束帧。",
     "link_order": "UserControlUpdate 按当前动画 links 向量的索引升序检查；解析出的 set 中 attacktofloor 位于第 32/33 项，相同 basic-combo 序列到 lowkick1/highkick1 的链接位于第 87/89 项。若原始 set 数组顺序原样进入运行时向量，attacktofloor 会先匹配；该顺序保持关系尚未独立证明。",
     "remaining_blockers": [
-      "历史 22 段候选缺少 m01_attack_to_floor；仓库外 23 段候选已包含该 clip，仍需加载该候选",
-      "Brick 的 laying 仅由受限候选受击链接入，attacktofloor 尚未接入正常对战",
+      "仓库外 23 段候选已包含并加载 m01_attack_to_floor；22 段历史候选仍保持缺 clip 的负例",
+      "当前已有显式 PC 候选输入路径；原始 from_group 入口和 links 32/33 的运行时时序仍未闭合",
       "尚未覆盖 candobasicattacks 的全部 84 个成员",
       "原版 blending=6、entry_frame=9、逐帧视觉与物理键位映射未实测",
       "尚未独立证明解析 set 数组到运行时 links 向量的顺序保持",
@@ -2031,11 +2046,10 @@
     ],
     "native_verifier": "tools/native_attacktofloor_links.py"
   },
-  "not_implemented": [
-    "attacktofloor"
-  ],
+  "not_implemented": [],
   "original_behavior_uncertainties": [
     "impactfaceup 的完整原版分组优先级、blending 与逐帧行为仍待验证",
-    "faceupko 的完整原版分组优先级、blending 与逐帧行为仍待验证"
+    "faceupko 的完整原版分组优先级、blending 与逐帧行为仍待验证",
+    "attacktofloor 的原始 from_group 入口、links 32/33 优先级、blending 与逐帧行为仍待验证"
   ]
 }
