@@ -49,6 +49,9 @@ func _run() -> void:
     if not _validate_grab_range(player, defender):
         quit(1)
         return
+    if not _validate_blocked_base_rejects_grab(player, defender):
+        quit(1)
+        return
     print("GRAB_VALIDATION=" + JSON.stringify({
         "grabs": ["grab1", "grab2"],
         "candidate_bytes": 3164064,
@@ -146,5 +149,28 @@ func _validate_candidate_identity(path: String) -> bool:
     var document: Variant = JSON.parse_string(bytes.slice(20, 20 + json_length).get_string_from_utf8())
     if not document is Dictionary or not document.has("animations") or document["animations"].size() != 44:
         push_error("Candidate animation count mismatch")
+        return false
+    return true
+
+
+func _validate_blocked_base_rejects_grab(player: PortFighter, defender: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    player.rage = 70.0
+    player.facing = 1.0
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.guard_held = true
+    player.opponent = defender
+    if not player.request_attack("punch"):
+        return false
+    player.record_standing_combo_press("a", ["left"])
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player._try_begin_pending_standing_combo():
+        push_error("Grab started after a blocked base attack")
+        return false
+    if player.attack_kind == "grab1":
+        push_error("Blocked base attack changed into grab1")
         return false
     return true
