@@ -1,0 +1,754 @@
+{
+  "schema_version": 1,
+  "source": "adreno_200/set/brucelee.set (sha256 860b6dac...)",
+  "action_count": 42,
+  "actions": [
+    {
+      "name": "idle",
+      "anim": "m01_idle_04",
+      "cats": [
+        "idle"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove"
+      ]
+    },
+    {
+      "name": "stepfwd",
+      "anim": "m01_stepfwd",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks"
+      ]
+    },
+    {
+      "name": "stepback",
+      "anim": "m01_stepbck",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks"
+      ]
+    },
+    {
+      "name": "moveback",
+      "anim": "m01_movebck",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks"
+      ]
+    },
+    {
+      "name": "stepright",
+      "anim": "m01_steprht",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "canblock",
+        "impactable",
+        "candocounter",
+        "candobasicattacks",
+        "canmove"
+      ]
+    },
+    {
+      "name": "stepleft",
+      "anim": "m01_steplft",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "canblock",
+        "impactable",
+        "candocounter",
+        "candobasicattacks",
+        "canmove"
+      ]
+    },
+    {
+      "name": "skipback",
+      "anim": "m01_skipbck",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove"
+      ]
+    },
+    {
+      "name": "skipfwd",
+      "anim": "m01_skipfwd",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candobasicattacks",
+        "canmove"
+      ]
+    },
+    {
+      "name": "highpunch1",
+      "anim": "m01_pnch_high_01",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "combolevel1",
+        "candobasicattacks",
+        "canmove",
+        "candocounter"
+      ]
+    },
+    {
+      "name": "highpunch2",
+      "anim": "m01_pnch_high_02",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candobasicattacks",
+        "canmove",
+        "candocounter",
+        "combolevel2",
+        "combolevel3",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "highpunch3",
+      "anim": "m01_pnch_high_03",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 8.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candobasicattacks",
+        "canmove",
+        "candocounter",
+        "combolevel3"
+      ]
+    },
+    {
+      "name": "lowpunch1",
+      "anim": "m01_pnch_low_01",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "combolevel1",
+        "candobasicattacks",
+        "candocounter",
+        "canmove",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "lowpunch2",
+      "anim": "m01_pnch_low_02",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candobasicattacks",
+        "candocounter",
+        "canmove",
+        "combolevel3",
+        "canblock2",
+        "combolevel2"
+      ]
+    },
+    {
+      "name": "lowpunch3",
+      "anim": "m01_pnch_low_03",
+      "cats": [
+        "attack"
+      ],
+      "pose": "crouch",
+      "rage": 10.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "highkick1",
+      "anim": "m01_kick_high_01",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "combolevel1",
+        "candobasicattacks",
+        "candocounter",
+        "canmove",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "highkick2",
+      "anim": "m01_kick_high_02",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candobasicattacks",
+        "canmove",
+        "candocounter",
+        "combolevel2",
+        "combolevel3",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "highkick3",
+      "anim": "m01_sp_kick_jump_01",
+      "cats": [
+        "attack"
+      ],
+      "pose": "jump",
+      "rage": 10.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove",
+        "impactablefromair"
+      ]
+    },
+    {
+      "name": "lowkick1",
+      "anim": "m01_kick_low_01",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "combolevel1",
+        "candobasicattacks",
+        "candocounter",
+        "canmove",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "lowkick2",
+      "anim": "m01_kick_low_02",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candobasicattacks",
+        "candocounter",
+        "canmove",
+        "combolevel3",
+        "canblock2",
+        "combolevel2"
+      ]
+    },
+    {
+      "name": "lowkick3",
+      "anim": "m01_kick_low_03",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 10.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "parryhigh",
+      "anim": "m01_parry_high",
+      "cats": [
+        "block",
+        "counter"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candobasicattacks",
+        "canmove",
+        "candocounter"
+      ]
+    },
+    {
+      "name": "grab1",
+      "anim": "m01_grab_01",
+      "cats": [
+        "attack",
+        "grab"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 3,
+      "groups": []
+    },
+    {
+      "name": "idle2",
+      "anim": "m01_idle_02",
+      "cats": [
+        "idle"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove"
+      ]
+    },
+    {
+      "name": "idle3",
+      "anim": "m01_idle_03",
+      "cats": [
+        "idle"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove"
+      ]
+    },
+    {
+      "name": "specialpunchhighhit",
+      "anim": "m01_sp_pnch_high",
+      "cats": [
+        "attack",
+        "special"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 3,
+      "groups": []
+    },
+    {
+      "name": "parrylow",
+      "anim": "m01_kick_low_02",
+      "cats": [
+        "block",
+        "counter"
+      ],
+      "pose": "stand",
+      "rage": 30.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove"
+      ]
+    },
+    {
+      "name": "attacktofloor",
+      "anim": "m01_attack_to_floor",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": 5.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canmove",
+        "candobasicattacks",
+        "canblock",
+        "candocounter"
+      ]
+    },
+    {
+      "name": "specialpunchlowmiss",
+      "anim": "m01_sp_pnch_low_fail",
+      "cats": [
+        "attack"
+      ],
+      "pose": "crouch",
+      "rage": -66.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove",
+        "impactablefromground"
+      ]
+    },
+    {
+      "name": "specialkickhigh",
+      "anim": "m01_kck_front_step",
+      "cats": [
+        "attack",
+        "special"
+      ],
+      "pose": "jump",
+      "rage": -33.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "specialkicklowmiss",
+      "anim": "m01_sp_kick_low_fail",
+      "cats": [
+        "attack"
+      ],
+      "pose": "crouch",
+      "rage": -66.0,
+      "impacts": 0,
+      "groups": [
+        "candobasicattacks",
+        "impactable",
+        "canblock",
+        "candocounter",
+        "canmove",
+        "impactablefromground",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "endattack1",
+      "anim": "m01_end_attack_01",
+      "cats": [
+        "attack",
+        "endmove"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 1,
+      "groups": []
+    },
+    {
+      "name": "endattack2",
+      "anim": "m01_end_attack_02",
+      "cats": [
+        "attack",
+        "endmove"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 1,
+      "groups": [
+        "impactable"
+      ]
+    },
+    {
+      "name": "grab2",
+      "anim": "m01_grab_02",
+      "cats": [
+        "attack",
+        "grab"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 2,
+      "groups": []
+    },
+    {
+      "name": "specialpunchlowhit",
+      "anim": "m01_sp_pnch_low",
+      "cats": [
+        "attack",
+        "special"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 1,
+      "groups": []
+    },
+    {
+      "name": "specialpunchlowimpact",
+      "anim": "m01_sp_pnch_low_impct",
+      "cats": [],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "receivedamage"
+      ]
+    },
+    {
+      "name": "specialkicklowhit",
+      "anim": "m01_sp_kick_low",
+      "cats": [
+        "attack",
+        "special"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 1,
+      "groups": []
+    },
+    {
+      "name": "specialkicklowimpact",
+      "anim": "m01_sp_kick_low_impact",
+      "cats": [],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "receivedamage"
+      ]
+    },
+    {
+      "name": "moveleft",
+      "anim": "m01_moverht",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks"
+      ]
+    },
+    {
+      "name": "moveright",
+      "anim": "m01_movelft",
+      "cats": [
+        "movement"
+      ],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks"
+      ]
+    },
+    {
+      "name": "specialpunchhighmiss",
+      "anim": "m01_sp_pnch_high_fail",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": -66.0,
+      "impacts": 1,
+      "groups": [
+        "impactable",
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove",
+        "canblock2"
+      ]
+    },
+    {
+      "name": "specialpunchhighimpact",
+      "anim": "m01_sp_pnch_high_impct",
+      "cats": [],
+      "pose": "stand",
+      "rage": 0.0,
+      "impacts": 0,
+      "groups": [
+        "receivedamage"
+      ]
+    },
+    {
+      "name": "parryattack",
+      "anim": "m01_pnch_high_03",
+      "cats": [
+        "attack"
+      ],
+      "pose": "stand",
+      "rage": -33.0,
+      "impacts": 1,
+      "groups": [
+        "canblock",
+        "candocounter",
+        "candobasicattacks",
+        "canmove",
+        "impactable"
+      ]
+    }
+  ],
+  "implemented": {
+    "lowpunch1": "punch (站立 A)",
+    "lowkick1": "kick (站立 B)",
+    "highpunch1": "high_punch (AAA)",
+    "highkick1": "high_kick (BCC)",
+    "highpunch3": "high_punch3 (上+A→内+A×2)",
+    "lowpunch3": "low_punch3 (下+A→外+B→外+A)",
+    "lowkick3": "low_kick3 (下+B→外+D×2)",
+    "highkick3": "high_kick3 (上+B→内+C×2)",
+    "specialkickhigh": "special_kick_high (背向+B→朝向+C×2，怒气 33)",
+    "attacktofloor": "attacktofloor（倒地追击）"
+  },
+  "partial": {
+    "facedownattack": "候选倒地攻击状态已实现（非 m01 条目）"
+  },
+  "missing_groups": {
+    "普通攻击第 2 段（combolevel1）": [
+      "highpunch2",
+      "lowpunch2",
+      "highkick2",
+      "lowkick2"
+    ],
+    "必杀技（两段式）": [
+      "specialpunchlowmiss",
+      "specialpunchlowhit",
+      "specialpunchlowimpact",
+      "specialpunchhighmiss",
+      "specialpunchhighhit",
+      "specialpunchhighimpact",
+      "specialkicklowmiss",
+      "specialkicklowhit",
+      "specialkicklowimpact"
+    ],
+    "格挡反击": [
+      "parryhigh",
+      "parrylow",
+      "parryattack"
+    ],
+    "抓取": [
+      "grab1",
+      "grab2",
+      "grab1miss",
+      "grab2miss"
+    ],
+    "抓取终结": [
+      "endattack1",
+      "endattack2"
+    ],
+    "其他": [
+      "idle3"
+    ]
+  },
+  "notes": [
+    "highpunch2/lowpunch2/highkick2/lowkick2 由 combolevel1 组的同一 keysequence 触发，依赖连段等级状态，不是单纯方向变体；keystatus 里带 down pressed/released。",
+    "specialpunchlow/high 与 specialkicklow 是 miss->hit 两段式，需要 grabdistance、oppposestand、oppnotblocking。",
+    "parryhigh 由 candocounter 组 + countertime+ragethird 触发，parryhigh 在 [9,10] 连到 parryattack。",
+    "grab1/grab2 需要 grabdistance+oppposestand+oppnotblocking；endattack1/2 需要 oppposestun+grabdistance。",
+    "部分必杀/受击动画可能被转换器 wavelet 解析拒绝，需要逐个验证，不能假定全部可打包。"
+  ]
+}

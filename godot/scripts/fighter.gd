@@ -22,6 +22,7 @@ const CANDIDATE_CLIPS: Dictionary = {
     "low_punch3": "m01_pnch_low_03",
     "low_kick3": "m01_kick_low_03",
     "high_kick3": "m01_sp_kick_jump_01",
+    "special_kick_high": "m01_kck_front_step",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -55,6 +56,7 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_pnch_low_03": 40.0,
     "m01_kick_low_03": 50.0,
     "m01_sp_kick_jump_01": 60.0,
+    "m01_kck_front_step": 65.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
     "all_impct_light_frnt_high": 40.0,
@@ -142,6 +144,10 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
 }
 const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
 const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.5
+const RAGE_MAX: float = 100.0
+const RAGE_GAIN_PER_HIT: float = 10.0
+# Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
+const SPECIAL_RAGE_COSTS: Dictionary = {"special_kick_high": 33.0}
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.
@@ -154,6 +160,7 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3"},
     {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3"},
     {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3"},
+    {"steps": [["out", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_high"},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
@@ -258,6 +265,17 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "height": "high",
         "strength": "hard",
         "direction": "fromright",
+    },
+    "special_kick_high": {
+        "source_action": "specialkickhigh",
+        "animation": "m01_kck_front_step",
+        "frame_count": 57,
+        "damage": 12.0,
+        "radius": 115.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal",
     },
 }
 
@@ -557,6 +575,8 @@ var last_reaction_exit_frame: int = -1
 var last_reaction_clip_implemented: bool = false
 var facing: float = 1.0
 var combo_hits: int = 0
+var rage: float = 0.0
+var _special_stepback_origin: bool = false
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
 var candidate_animation_clip: String = ""
@@ -1257,7 +1277,8 @@ func _try_load_candidate_visual() -> void:
             _candidate_skeleton_parent = _candidate_skeleton.get_parent()
     for action: String in [
             "move", "ko", "high_punch", "high_kick",
-            "high_punch3", "low_punch3", "low_kick3", "high_kick3"]:
+            "high_punch3", "low_punch3", "low_kick3", "high_kick3",
+            "special_kick_high"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2111,6 +2132,8 @@ func record_standing_combo_press(
         var token: String = String(modifier)
         if not tokens.has(token):
             tokens.append(token)
+    if tokens.size() == 2 and tokens.has("out") and tokens.has("b"):
+        _special_stepback_origin = true
     _standing_combo_input_history.append({"tokens": tokens, "time": _time})
     var matched_attack: String = _matching_standing_combo_attack()
     if matched_attack.is_empty():
@@ -2155,6 +2178,7 @@ func _clear_standing_combo_input_history() -> void:
 
 
 func _clear_standing_combo_state() -> void:
+    _special_stepback_origin = false
     _clear_standing_combo_input_history()
     _standing_combo_pending_attack = ""
     _standing_combo_pending_source_sequence = -1
@@ -2236,10 +2260,17 @@ func _try_begin_pending_standing_combo() -> bool:
         return false
     if not _candobasicattack_window_contains_current_frame():
         return false
+    var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
+            _standing_combo_pending_attack, 0.0))
+    if special_cost > 0.0 and (rage < special_cost or not _special_stepback_origin):
+        _clear_standing_combo_state()
+        return false
     if not supports_attack(_standing_combo_pending_attack):
         _clear_standing_combo_state()
         return false
     var next_attack: String = _standing_combo_pending_attack
+    if special_cost > 0.0:
+        rage = maxf(0.0, rage - special_cost)
     var target_action: String = _candidate_action_for_attack(next_attack)
     _clear_standing_combo_state()
     state = "startup"
@@ -2266,7 +2297,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high":
             return kind
     return ""
 
@@ -2391,7 +2422,7 @@ func _try_attack_to_floor_contact() -> void:
     ):
         return
     _attack_connected = true
-    combo_hits += 1
+    _register_landed_hit(ATTACK_TO_FLOOR_DAMAGE, blocked)
     combat_hit.emit(self, opponent, "attacktofloor", ATTACK_TO_FLOOR_DAMAGE, blocked)
 
 
@@ -2507,10 +2538,11 @@ func _try_facedown_attack_contact() -> void:
         FACEDOWN_ATTACK_IMPACT, blocked
     )
     _attack_connected = true
-    opponent.receive_hit(
+    if not opponent.receive_hit(
         FACEDOWN_ATTACK_DAMAGE, blocked, 0.0, facing, reaction
-    )
-    combo_hits += 1
+    ):
+        return
+    _register_landed_hit(FACEDOWN_ATTACK_DAMAGE, blocked)
     combat_hit.emit(
         self, opponent, "facedownattack", FACEDOWN_ATTACK_DAMAGE, blocked
     )
@@ -2537,13 +2569,20 @@ func _try_faceup_attack_contact() -> void:
     if opponent._accepts_brick_faceup_candidate(FACEUP_ATTACK_DAMAGE, blocked):
         reaction = BRICK_FRONT_LOW_REACTION.duplicate(true)
     _attack_connected = true
-    opponent.receive_hit(
+    if not opponent.receive_hit(
         FACEUP_ATTACK_DAMAGE, blocked, 0.0, facing, reaction
-    )
-    combo_hits += 1
+    ):
+        return
+    _register_landed_hit(FACEUP_ATTACK_DAMAGE, blocked)
     combat_hit.emit(
         self, opponent, "faceupattack", FACEUP_ATTACK_DAMAGE, blocked
     )
+
+
+func _register_landed_hit(damage: float, blocked: bool) -> void:
+    combo_hits += 1
+    if damage > 0.0 and not blocked:
+        rage = minf(RAGE_MAX, rage + RAGE_GAIN_PER_HIT)
 
 
 func _try_attack_contact() -> void:
@@ -2582,7 +2621,7 @@ func _try_attack_contact() -> void:
             and not accepts_faceup_ko):
         return
     # Mark contact before emitting signals, including a guarded hit.
-    _attack_connected = true
+    var accepted: bool = true
     # Ground states only accept the verified low-impact paths. Other hits keep
     # their existing reaction path, except the face-up states protected above.
     if accepts_faceup_ko:
@@ -2594,10 +2633,13 @@ func _try_attack_contact() -> void:
     elif opponent._accepts_facedown_low_impact(impact_height, blocked, damage):
         opponent.begin_facedown_impact(damage)
     else:
-        opponent.receive_hit(
+        accepted = opponent.receive_hit(
             damage, blocked, float(details["push"]), facing, reaction
         )
-    combo_hits += 1
+    if not accepted:
+        return
+    _attack_connected = true
+    _register_landed_hit(damage, blocked)
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
 
 
@@ -2950,6 +2992,7 @@ func reset_fighter(start_position: Vector3) -> void:
     last_reaction_clip_implemented = false
     guard_held = false
     combo_hits = 0
+    rage = 0.0
     if candidate_loaded:
         if _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
@@ -3001,7 +3044,7 @@ func _animate_candidate() -> void:
         elif attack_kind in ["kick", "heavy"]:
             requested = "kick"
         elif attack_kind in ["high_punch", "high_kick", "high_punch3", "low_punch3",
-                "low_kick3", "high_kick3"]:
+                "low_kick3", "high_kick3", "special_kick_high"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented

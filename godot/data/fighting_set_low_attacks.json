@@ -22,7 +22,8 @@
       "m01_pnch_high_03": 60.0,
       "m01_pnch_low_03": 40.0,
       "m01_kick_low_03": 50.0,
-      "m01_sp_kick_jump_01": 60.0
+      "m01_sp_kick_jump_01": 60.0,
+      "m01_kck_front_step": 65.0
     }
   },
   "reaction_profiles": {
@@ -208,6 +209,23 @@
         "height": "high",
         "strength": "hard",
         "direction": "fromright"
+      }
+    },
+    "special_kick_high": {
+      "source_action": "specialkickhigh",
+      "animation": "m01_kck_front_step",
+      "animation_frame_count": 57,
+      "startup_frames": 11,
+      "active_frames": 5,
+      "recovery_frames": 41,
+      "damage": 12.0,
+      "prototype_push": 0.35,
+      "source_impact": {
+        "attack_radius": 115.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal"
       }
     }
   },
