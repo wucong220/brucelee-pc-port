@@ -674,17 +674,14 @@ func _handle_fighter_attack_input(
 
 func _standing_combo_modifiers(fighter: PortFighter) -> Array:
     var modifiers: Array = []
+    # Read the live action state only. Sampling fighter.move_axis here would
+    # reuse the previous physics frame when a direction has just been released.
     var vertical: float = Input.get_axis(
         PrototypeControls.MOVE_UP, PrototypeControls.MOVE_DOWN
     )
     var horizontal: float = Input.get_axis(
         PrototypeControls.MOVE_LEFT, PrototypeControls.MOVE_RIGHT
     )
-    # Headless input tests cannot set the OS action state; fall back to the
-    # fighter's last sampled move axis when no live axis is pressed.
-    if absf(vertical) < 0.01 and absf(horizontal) < 0.01:
-        vertical = fighter.move_axis.y
-        horizontal = fighter.move_axis.x
     if vertical < -0.5:
         modifiers.append("up")
     elif vertical > 0.5:
