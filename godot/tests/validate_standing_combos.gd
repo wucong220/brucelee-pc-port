@@ -158,6 +158,22 @@ func _run() -> void:
         quit(1)
         return
 
+    if not _validate_heavy_pending_rejected(player, opponent):
+        quit(1)
+        return
+    if not _validate_hit_cancels_pending(player, opponent):
+        quit(1)
+        return
+    if not _validate_pending_replacement(player, opponent):
+        quit(1)
+        return
+    if not _validate_same_action_replay(player, opponent):
+        quit(1)
+        return
+    if not _validate_low_combo_damage(player, opponent):
+        quit(1)
+        return
+
     print("STANDING_COMBO_VALIDATION=" + JSON.stringify({
         "aaa": "highpunch1",
         "abb": "lowpunch1",
@@ -170,6 +186,10 @@ func _run() -> void:
         "standing_combo_hits": 2,
         "input_window_seconds": PortFighter.STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS,
         "candobasicattack_windows": PortFighter.CANDOBASICATTACK_WINDOWS,
+        "pending_binding": "bound to the matching attack instance; Heavy and hits cancel it",
+        "pending_priority": "last completed sequence wins (prototype choice, native link priority unverified)",
+        "same_action_replay": "ABB/BDD restart the clip even when visual blending is enabled",
+        "low_combo_damage": {"abb": 90.0, "bdd": 90.0},
     }))
     await scene._await_combat_audio_idle()
     scene._stop_combat_audio()
@@ -178,6 +198,203 @@ func _run() -> void:
     scene.queue_free()
     await process_frame
     quit(0)
+
+func _validate_heavy_pending_rejected(
+        player: PortFighter,
+        opponent: PortFighter
+) -> bool:
+    # Heavy has no recovered source window. Pressing A during it must not queue
+    # a standing combo that could fire in a later attack.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("heavy"):
+        push_error("Could not start the heavy attack")
+        return false
+    for _index: int in 3:
+        player.record_standing_combo_press("a")
+    if not String(player.get("_standing_combo_pending_attack")).is_empty():
+        push_error("Heavy attack buffered a standing combo match")
+        return false
+    player._advance_timed_states(10.0)
+    if player.state != "idle":
+        push_error("Heavy attack did not return to idle: " + player.state)
+        return false
+    if not player.request_attack("punch"):
+        push_error("Could not start the follow-up low punch")
+        return false
+    player._advance_timed_states(22.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player._try_begin_pending_standing_combo():
+        push_error("A stale Heavy-era combo fired in a later attack")
+        return false
+    if player.attack_kind != "punch":
+        push_error("Follow-up attack changed kind without a pending combo")
+        return false
+    return true
+
+
+func _validate_hit_cancels_pending(
+        player: PortFighter,
+        opponent: PortFighter
+) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch before the hit interrupt")
+        return false
+    for _index: int in 3:
+        player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
+        push_error("AAA did not queue highpunch1 before the hit interrupt")
+        return false
+    player.receive_hit(5.0, false, 0.0, 1.0)
+    if player.state != "hitstun":
+        push_error("The defending fighter did not enter hitstun")
+        return false
+    if not String(player.get("_standing_combo_pending_attack")).is_empty():
+        push_error("A hit did not cancel the pending standing combo")
+        return false
+    return true
+
+
+func _validate_pending_replacement(
+        player: PortFighter,
+        opponent: PortFighter
+) -> bool:
+    # Prototype priority is last-completed-wins; the behavior is explicit here
+    # instead of depending on an implicit overwrite.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch for the priority check")
+        return false
+    for _index: int in 3:
+        player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
+        push_error("AAA did not queue highpunch1 for the priority check")
+        return false
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("b")
+    if String(player.get("_standing_combo_pending_attack")) != "punch":
+        push_error("The last completed sequence did not replace the earlier pending entry")
+        return false
+    return true
+
+
+func _validate_same_action_replay(
+        player: PortFighter,
+        opponent: PortFighter
+) -> bool:
+    # ABB re-enters lowpunch1. With visual blending enabled the transition must
+    # still restart the clip instead of keeping the previous playback position.
+    player.candidate_visual_blending_enabled = true
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        player.candidate_visual_blending_enabled = false
+        push_error("Could not start the low punch for the blending check")
+        return false
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("b")
+    if String(player.get("_standing_combo_pending_attack")) != "punch":
+        player.candidate_visual_blending_enabled = false
+        push_error("ABB did not queue lowpunch1 for the blending check")
+        return false
+    player._advance_timed_states(22.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._animate_candidate()
+    var animation: AnimationPlayer = player.get("_candidate_animation")
+    if animation == null or not animation.is_playing():
+        player.candidate_visual_blending_enabled = false
+        push_error("The low punch clip is not playing before the same-action transition")
+        return false
+    animation.seek(1.0, true)
+    var transitioned: bool = player._try_begin_pending_standing_combo()
+    player._animate_candidate()
+    var position: float = animation.current_animation_position
+    var action: String = String(player.get("_candidate_action"))
+    player.candidate_visual_blending_enabled = false
+    if not transitioned:
+        push_error("Same-action ABB did not transition inside the frame-22 window")
+        return false
+    if position > 0.05:
+        push_error("Same-action combo kept the previous clip position: " + str(position))
+        return false
+    if action != "punch":
+        push_error("Same-action combo changed the candidate action: " + action)
+        return false
+    return true
+
+
+func _validate_low_combo_damage(
+        player: PortFighter,
+        opponent: PortFighter
+) -> bool:
+    if not _run_low_combo_damage(
+        player, opponent, "punch", 22, ["a", "b", "b"],
+        "impactlightfrontmid", "ABB -> lowpunch1"
+    ):
+        return false
+    return _run_low_combo_damage(
+        player, opponent, "kick", 31, ["b", "d", "d"],
+        "impactlightfrontlow", "BDD -> lowkick1"
+    )
+
+
+func _run_low_combo_damage(
+        player: PortFighter,
+        opponent: PortFighter,
+        initial_attack: String,
+        transition_frame: int,
+        keys: Array,
+        expected_reaction: String,
+        label: String
+) -> bool:
+    player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(0.25, 1.20, 0.0))
+    player.facing = 1.0
+    player._time = 0.0
+    player.record_standing_combo_press(String(keys[0]))
+    if not player.request_attack(initial_attack):
+        push_error("Could not start the initial attack for " + label)
+        return false
+    for index: int in range(1, keys.size()):
+        player.record_standing_combo_press(String(keys[index]))
+    if String(player.get("_standing_combo_pending_attack")).is_empty():
+        push_error(label + " did not queue its follow-up attack")
+        return false
+    player._advance_timed_states(
+        float(player.ATTACKS[initial_attack]["startup"]) + 0.001
+    )
+    if opponent.health >= 100.0:
+        push_error(label + " first attack did not connect")
+        return false
+    var frame_delta: float = float(transition_frame) - player._current_attack_source_frame()
+    if frame_delta > 0.0:
+        player._advance_timed_states(frame_delta / PortFighter.SOURCE_FRAME_RATE)
+    if not player._try_begin_pending_standing_combo():
+        push_error(label + " did not reach its source window")
+        return false
+    player._advance_timed_states(
+        float(player.ATTACKS[player.attack_kind]["startup"]) + 0.001
+    )
+    if (absf(opponent.health - 90.0) > 0.001
+            or player.combo_hits != 2
+            or opponent.last_reaction_source_action != expected_reaction):
+        push_error(("%s did not connect twice with the expected reaction: health=%s"
+                + " reaction=%s combo_hits=%s") % [
+                    label,
+                    opponent.health,
+                    opponent.last_reaction_source_action,
+                    player.combo_hits,
+                ])
+        return false
+    return true
+
 
 func _validate_player_input_route(
         scene: Node,

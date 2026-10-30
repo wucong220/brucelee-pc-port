@@ -53,6 +53,13 @@ highpunch 第 `[17,101]` 帧和 highkick 第 `[33,73]` 帧。目标 clip 未加�
 Android 物理键位尚未恢复。源值及限制见
 [`reports/basic_attack_combo_evidence.json`](../reports/basic_attack_combo_evidence.json)。
 
+已匹配但尚未执行的连段绑定到当时那次攻击：攻击结束、切到别的动作、受到命中
+或格挡、以及 Heavy 攻击都会取消它，因此旧输入不会在后续攻击里突然生效。
+Heavy 没有已恢复的来源窗口，不缓存连段输入。同一动作的连段（`ABB -> lowpunch1`、
+`BDD -> lowkick1`）即使开启 `BRUCELEE_CANDIDATE_VISUAL_BLENDING=1` 也会从第 0 帧
+重播，避免逻辑已重开而画面停在上一段。两条连段同时匹配时，后完成匹配的那条
+替换先前的待执行项；这是原型选择，原版 link 优先级尚未恢复。
+
 命令：
 
 ```powershell

@@ -141,6 +141,9 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"keys": ["b", "d", "d"], "attack": "kick"},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
+    # idle/idle2 are recorded group memberships only. The transition path only
+    # evaluates windows while the current attack is in startup/active/recovery,
+    # so those two entries cannot be reached at runtime.
     "idle": [0, 140],
     "idle2": [0, 43],
     "punch": [22, 69],
@@ -455,6 +458,12 @@ var _ground_attack_input_history: Array[Dictionary] = []
 var _ground_attack_input_owner: String = ""
 var _standing_combo_input_history: Array[Dictionary] = []
 var _standing_combo_pending_attack: String = ""
+# A matched sequence belongs to the attack that was running when it completed.
+# The pending entry is only valid while that exact attack instance is still the
+# current one; native link priority and the member record's third field remain
+# unverified, so this binding is a prototype safety rule.
+var _standing_combo_pending_source_sequence: int = -1
+var _standing_combo_pending_source_kind: String = ""
 var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
 var last_reaction_animation: String = ""
@@ -1604,7 +1613,7 @@ func _enter_locomotion_state(next_state: String) -> void:
     state_time = 0.0
     attack_kind = ""
     _clear_ground_attack_input_history()
-    _clear_standing_combo_input_history()
+    _clear_standing_combo_state()
     _clear_reaction_tracking()
     if (candidate_visual_blending_enabled
             and previous_state == "attacktofloor"
@@ -1996,20 +2005,34 @@ func record_virtual_press(virtual_key: String) -> bool:
 func record_standing_combo_press(virtual_key: String) -> bool:
     # Prototype-only sequence path for the recovered candobasicattacks links.
     # Physical key status, exact key-event lifetime and link scheduling remain
-    # unverified.
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            or virtual_key not in ["a", "b", "c", "d"]
-            or state not in ["idle", "idle2", "startup", "active", "recovery"]):
-        _clear_standing_combo_input_history()
+    # unverified. Only an attack with a recovered source window may buffer
+    # sequence input, so Heavy (no source window) never accumulates a match.
+    if not _accepts_standing_combo_input(virtual_key):
+        _clear_standing_combo_state()
         return false
     _prune_standing_combo_input_history()
     _standing_combo_input_history.append({"key": virtual_key, "time": _time})
     var matched_attack: String = _matching_standing_combo_attack()
     if matched_attack.is_empty():
         return false
+    # Prototype priority: the most recently completed sequence replaces an
+    # earlier pending one. Native link priority is not recovered yet.
     _standing_combo_pending_attack = matched_attack
+    _standing_combo_pending_source_sequence = attack_sequence
+    _standing_combo_pending_source_kind = attack_kind
     _clear_standing_combo_input_history()
     return _try_begin_pending_standing_combo()
+
+
+func _accepts_standing_combo_input(virtual_key: String) -> bool:
+    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+            or virtual_key not in ["a", "b", "c", "d"]
+            or state not in ["idle", "idle2", "startup", "active", "recovery"]):
+        return false
+    if state in ["startup", "active", "recovery"]:
+        if attack_kind == "heavy" or not CANDOBASICATTACK_WINDOWS.has(attack_kind):
+            return false
+    return true
 
 
 func _clear_standing_combo_input_history() -> void:
@@ -2019,6 +2042,8 @@ func _clear_standing_combo_input_history() -> void:
 func _clear_standing_combo_state() -> void:
     _clear_standing_combo_input_history()
     _standing_combo_pending_attack = ""
+    _standing_combo_pending_source_sequence = -1
+    _standing_combo_pending_source_kind = ""
 
 
 func _prune_standing_combo_input_history() -> void:
@@ -2071,26 +2096,53 @@ func _candobasicattack_window_contains_current_frame() -> bool:
 func _try_begin_pending_standing_combo() -> bool:
     if _standing_combo_pending_attack.is_empty():
         return false
+    # The pending entry is bound to the attack that was current when the
+    # sequence completed. Ending that attack, switching to another one, being
+    # interrupted, or holding it in a Heavy attack cancels the entry instead of
+    # reusing the old input in a later attack.
+    if (state not in ["startup", "active", "recovery"]
+            or attack_kind == "heavy"
+            or attack_kind != _standing_combo_pending_source_kind
+            or attack_sequence != _standing_combo_pending_source_sequence):
+        _clear_standing_combo_state()
+        return false
     if not _candobasicattack_window_contains_current_frame():
         return false
     if not supports_attack(_standing_combo_pending_attack):
         _clear_standing_combo_state()
         return false
     var next_attack: String = _standing_combo_pending_attack
-    _standing_combo_pending_attack = ""
+    var target_action: String = _candidate_action_for_attack(next_attack)
+    _clear_standing_combo_state()
     state = "startup"
     state_time = float(ATTACKS[next_attack]["startup"])
     attack_kind = next_attack
     attack_sequence += 1
     _attack_connected = false
-    _clear_standing_combo_input_history()
+    # Re-blending a clip into itself would keep the previous playback position:
+    # _play_candidate_action() returns early when the same action is still
+    # playing. Same-action transitions therefore restart from frame 0.
     if (candidate_visual_blending_enabled
+            and target_action != _candidate_action
             and _candidate_animation != null
             and _candidate_animation.is_playing()):
         _queue_candidate_visual_blend(2.0 / SOURCE_FRAME_RATE)
     else:
         _restart_candidate_action()
     return true
+
+
+func _candidate_action_for_attack(kind: String) -> String:
+    match kind:
+        "punch":
+            return "punch"
+        "kick", "heavy":
+            return "kick"
+        "high_punch":
+            return "high_punch"
+        "high_kick":
+            return "high_kick"
+    return ""
 
 
 func _clear_ground_attack_input_history() -> void:
@@ -2688,6 +2740,8 @@ func receive_hit(
         return false
     var position_before: float = position.x
     _attack_connected = false
+    # Being hit cancels a sequence that matched during the interrupted attack.
+    _clear_standing_combo_state()
     if blocked:
         health = maxf(0.0, health - amount * 0.12)
         state = "blockstun"
