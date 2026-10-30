@@ -63,6 +63,14 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 第 26 帧回到 `faceupidle`。这些仍是候选运行时行为，不是 Android 物理键位、
 原版输入时钟或逐帧视觉验收。
 
+必杀技（原型怒气）：本地 31 段候选加载后，`背向+B → 朝向+C → 朝向+C`
+触发 `specialkickhigh`（`m01_kck_front_step`，57 帧、伤害 12、攻击半径 115、
+`lleg/high/hard/frontal`、命中帧 `[11,15]`、第 53–57 帧回 `idle3`）。
+原型怒气槽 0–100：每次未格挡命中 +10，`ragethird` 门槛 33，发动扣 33；
+原生怒气刻度与获取规则未恢复。`hard/high/frontal` 的专用受击动画
+`all_impct_hard_frnt_high` 目前无法被打包，因此该反应保持 fail-closed（伤害生效、
+不伪造受击动作）。
+
 已实现来源窗口为 lowpunch 第 `[22,69]` 帧、lowkick 第 `[31,86]` 帧、
 highpunch 第 `[17,101]` 帧和 highkick 第 `[33,73]` 帧。目标 clip 未加载时
 转换保持关闭，普通攻击路径继续工作。0.5 秒期限是 PC 原型选择；

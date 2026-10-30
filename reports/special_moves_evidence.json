@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "source_archive": {
+    "path": "adreno_200/set/brucelee.set",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c"
+  },
+  "rage_model_candidates": {
+    "conditions_seen": ["ragethird", "rage2thirds"],
+    "action_rage_values_seen": {"highkick3": 10.0, "specialkickhigh": -33.0, "specialpunchlowmiss": -66.0, "specialkicklowmiss": -66.0},
+    "prototype_proposal": "0..100 meter, +10 on each landed attack, ragethird requires >=33, rage2thirds requires >=66; the exact native scale and gain rules are unverified."
+  },
+  "special_moves": {
+    "specialkickhigh": {
+      "trigger": {
+        "from": "stepback",
+        "keysequence": [["pressright", "pressb"], ["pressright", "pressc"], ["pressright", "pressc"]],
+        "conditions": ["ragethird"],
+        "time": [0, 19],
+        "blending": 3
+      },
+      "animation": "m01_kck_front_step",
+      "animation_sha256": "604efe53b69d5646128783c3f2be9d07e9ff4c4cbfde86a270c5db730fd33288",
+      "animation_frame_count": 57,
+      "animation_radius": 65.0,
+      "damage_time": [11, 15],
+      "damage": 12,
+      "attack_radius": 115.0,
+      "body_part": "lleg",
+      "height": "high",
+      "strength": "hard",
+      "direction": "frontal",
+      "return_link": {"to": "idle3", "time": [53, 57], "blending": 4}
+    },
+    "specialpunchlow": {
+      "trigger": {
+        "from_group": "combolevel3",
+        "keysequence": [["pressdown", "pressright", "pressa"], ["pressout", "pressright", "pressa"], ["pressout", "pressright", "pressa"]],
+        "conditions": ["rage2thirds"]
+      },
+      "miss_action": "specialpunchlowmiss",
+      "miss_animation": "m01_sp_pnch_low_fail",
+      "miss_animation_sha256": "d35bbf532230fd27a05e1b078414085e1aff0df0d1ac300a8ef6b59e291e6d92",
+      "miss_frame_count": 33,
+      "hit_link": {"conditions": ["grabdistance", "oppnotblocking", "oppposestand"], "time": [8, 9]},
+      "hit_action": "specialpunchlowhit",
+      "hit_animation": "m01_sp_pnch_low",
+      "hit_animation_sha256": "a9934b04adb26f73b767a2cf926b8b3b40ff0945f7a34534ad7c34d5f050c96a",
+      "hit_frame_count": 178,
+      "hit_damage_time": [5, 15],
+      "hit_damage": 15,
+      "hit_attack_radius": 45.0,
+      "hit_body_part": "larm",
+      "hit_height": "high",
+      "hit_strength": "hard",
+      "hit_direction": "frontal",
+      "miss_return": {"to": "idle", "time": [22, 25]},
+      "hit_return": {"to": "idle", "time": [178, 178]}
+    },
+    "specialpunchhigh": {
+      "trigger": {
+        "from_group": "combolevel3",
+        "keysequence": [["pressleft", "pressright", "pressa"], ["pressleft", "pressright", "pressa"], ["pressleft", "pressright", "pressa"]],
+        "conditions": ["rage2thirds"]
+      },
+      "miss_action": "specialpunchhighmiss",
+      "miss_animation": "m01_sp_pnch_high_fail",
+      "miss_animation_sha256": "f4a03d1ef145d39a6478b4b57620161acacb0f168d18cfb22e95188fd3df8d47",
+      "miss_frame_count": 122,
+      "hit_link": {"conditions": ["grabdistance", "oppposestand", "oppnotblocking"], "time": [6, 7]},
+      "hit_action": "specialpunchhighhit",
+      "hit_animation": "m01_sp_pnch_high",
+      "hit_animation_sha256": "56b695e39856c31cfbb5e8d147012833aaa8402887b431344d08a46a5594e114",
+      "hit_frame_count": 80,
+      "miss_return": {"to": "idle2", "time": [116, 122]},
+      "hit_return": {"to": "idle", "time": [80, 80]}
+    }
+  },
+  "other_notes": [
+    "specialkickhigh is the simplest single-clip special: one animation, one rage threshold, one return link.",
+    "specialpunchlow/high are two-stage (miss -> hit) and need grabdistance plus opponent stand/not-blocking checks.",
+    "The native rage scale, gain source and combo-level-3 state are not recovered; any meter implementation is a prototype choice.",
+    "Animations m01_kck_front_step and the m01_sp_* set are not in the current candidate GLBs and must be added locally."
+  ],
+  "candidate_assets": {
+    "special_kick_high_clip": "m01_kck_front_step.anm",
+    "special_kick_high_clip_sha256": "604efe53b69d5646128783c3f2be9d07e9ff4c4cbfde86a270c5db730fd33288",
+    "candidate_31_with_hair": {
+      "bytes": 1733604,
+      "sha256": "e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64",
+      "clip_count": 31,
+      "location": "outside the repository"
+    },
+    "converter_limitation": "all_impct_hard_frnt_high.anm (the hard/high/frontal reaction, 35 frames, SHA-256 01941c60a9840ff9824933008e4f40bb6998b6f5b293a3f9682e6b85e9880232) is rejected by the candidate converter with 'wavelet initial channel array or first node is invalid', so that reaction clip cannot be bundled yet."
+  }
+}

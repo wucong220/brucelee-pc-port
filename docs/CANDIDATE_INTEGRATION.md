@@ -432,6 +432,13 @@ Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 已恢复的眩晕入口只有
 `impactstunhigh/low`，且都带 `healthzero`（致命一击）条件，不能当作普通眩晕。
 
+必杀技（`specialkickhigh`）已接入原型：本地 31 段带头候选（1,733,604 字节，
+SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
+加入 `m01_kck_front_step` 后，由原型怒气槽和 `背向+B → 朝向+C → 朝向+C`
+触发，伤害 12、半径 115。专用 `hard/high/frontal` 受击动画
+`all_impct_hard_frnt_high` 被转换器以 wavelet 错误拒绝，故该反应 fail-closed。
+完整证据见 `reports/special_moves_evidence.json`。
+
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
 `[31,86]`、`[17,101]` 和 `[33,73]`；四个 `*_3` 目标窗口为 `[33,81]`、
 `[26,56]`、`[21,85]` 和 `[30,51]`。从首键起算的原型输入期限为 0.5 秒。
