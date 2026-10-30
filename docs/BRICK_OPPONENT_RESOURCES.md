@@ -163,3 +163,5 @@ Bruce Skl 和 Brick Skl 三个路径。它以完整节点类型和父链匹配�
 Review follow-up: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q` (207 tests, 1 skipped; exit 0, including 4 local untracked retarget-audit tests).
 
 合并 main 后复测：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，共 208 项、其中 1 项跳过，退出码 0。
+
+PR 审查补充异常父链后：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，共 209 项、其中 1 项跳过，退出码 0。

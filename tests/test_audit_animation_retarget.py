@@ -71,6 +71,20 @@ class AuditRetargetTests(unittest.TestCase):
         with self.assertRaises(KdfError):
             audit(binding(), self.source, target)
 
+    def test_rejects_missing_parent_and_source_hierarchy_errors(self):
+        for mutation in ('missing_parent', 'source_duplicate', 'source_cycle'):
+            source, target = deepcopy(self.source), deepcopy(self.target)
+            if mutation == 'missing_parent':
+                target['nodes'][-1]['parentid'] = 999
+            elif mutation == 'source_duplicate':
+                duplicate = deepcopy(source['nodes'][-1])
+                duplicate['nodeid'] = 4
+                source['nodes'].append(duplicate)
+            else:
+                source['nodes'][1]['parentid'] = 2
+            with self.subTest(mutation=mutation), self.assertRaises(KdfError):
+                audit(binding(), source, target)
+
 
 if __name__ == '__main__':
     unittest.main()
