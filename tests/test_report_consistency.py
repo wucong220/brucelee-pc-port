@@ -18,6 +18,7 @@ class TestReportConsistency(unittest.TestCase):
     }
     EXPECTED_DIRECTIONAL = {"highpunch3", "lowpunch3", "lowkick3", "highkick3"}
     EXPECTED_STUN_LINKS = [209, 210, 211]
+    EXPECTED_STUN_LINK_INDICES = [287, 288, 288]
 
     @classmethod
     def setUpClass(cls):
@@ -43,8 +44,13 @@ class TestReportConsistency(unittest.TestCase):
 
     def test_grab_stun_entries_are_gated_by_healthzero(self):
         entries = self.grab["stun_entry_evidence"]
+        self.assertEqual(self.grab["stun_entry_count"], len(entries))
         self.assertEqual([entry["source_index"] for entry in entries],
                          self.EXPECTED_STUN_LINKS)
+        self.assertEqual(
+            [entry["stun_link"]["source_index"] for entry in entries],
+            self.EXPECTED_STUN_LINK_INDICES,
+        )
         for entry in entries:
             with self.subTest(target=entry["to"]):
                 self.assertIn("healthzero", entry["conditions"])
