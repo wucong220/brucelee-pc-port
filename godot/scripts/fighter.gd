@@ -50,6 +50,17 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
 const IDLE2_CLIP: String = "m01_idle_02"
 const FACEDOWN_IDLE_CLIP: String = "all_idle_face_down"
 const BRICK_FACEDOWN_IDLE_CLIP: String = "all_idle_face_down_forbigguy"
+const BRICK_FRONT_LOW_CLIP: String = "all_impct_hard_frnt_low"
+const BRICK_FRONT_LOW_REACTION: Dictionary = {
+    "source_action": "impacthardfrontlow",
+    "animation": BRICK_FRONT_LOW_CLIP,
+    "animation_radius": 80.0,
+    # The source gives [20,23]; frame 20 is a prototype choice.
+    "exit_start_frame": 20,
+    "animation_duration_frames": 23,
+    "return_action": "facedownidle",
+    "clip_implemented": false,
+}
 const FACEDOWN_GETUP_CLIP: String = "all_getup_facedwn"
 const IDLE2_DURATION_FRAMES: int = 43
 const FACEDOWN_IDLE_DURATION_FRAMES: int = 45
@@ -1086,7 +1097,7 @@ func _try_load_candidate_visual() -> void:
             FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
             FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP,
             FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP,
-            ATTACK_TO_FLOOR_CLIP,
+            ATTACK_TO_FLOOR_CLIP, BRICK_FRONT_LOW_CLIP,
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
@@ -1094,6 +1105,13 @@ func _try_load_candidate_visual() -> void:
             if matched_return.is_empty():
                 continue
             var return_clip: Animation = _candidate_animation.get_animation(matched_return)
+            if return_clip_name in [BRICK_FRONT_LOW_CLIP, BRICK_FACEDOWN_IDLE_CLIP]:
+                var expected_length: float = (
+                    23.0 / SOURCE_FRAME_RATE if return_clip_name == BRICK_FRONT_LOW_CLIP
+                    else 45.0 / SOURCE_FRAME_RATE
+                )
+                if not _valid_brick_ground_clip(return_clip, expected_length):
+                    continue
             if _prepare_candidate_reaction(return_clip):
                 _candidate_clip_paths[return_clip_name] = matched_return
     var idle: Animation = _candidate_animation.get_animation(_candidate_clip_paths["idle"])
@@ -1345,6 +1363,26 @@ func _align_candidate_attack_timings() -> void:
         ATTACKS[action] = details
 
 
+func _valid_brick_ground_clip(clip: Animation, expected_length: float) -> bool:
+    if clip == null or absf(clip.length - expected_length) > 0.002:
+        return false
+    var animation_root: Node = _candidate_animation.get_node_or_null(_candidate_animation.root_node)
+    if animation_root == null or _candidate_skeleton == null:
+        return false
+    var bone_tracks: int = 0
+    for track: int in clip.get_track_count():
+        var path: NodePath = clip.track_get_path(track)
+        if clip.track_get_key_count(track) == 0:
+            return false
+        if path.get_subname_count() > 0:
+            if (path.get_subname_count() != 1
+                    or animation_root.get_node_or_null(path) != _candidate_skeleton
+                    or _candidate_skeleton.find_bone(String(path.get_subname(0))) < 0):
+                return false
+            bone_tracks += 1
+    return bone_tracks > 0
+
+
 func _prepare_candidate_reaction(clip: Animation) -> bool:
     var animation_root: Node = _candidate_animation.get_node_or_null(_candidate_animation.root_node)
     if animation_root == null:
@@ -1442,6 +1480,12 @@ func _verified_post_hit_return_state() -> String:
         last_reaction_clip_implemented
         and _candidate_clip_paths.has(last_reaction_animation)
     )
+    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+            and last_reaction_source_action == "impacthardfrontlow"
+            and last_reaction_animation == BRICK_FRONT_LOW_CLIP
+            and reaction_clip_ready
+            and _candidate_clip_paths.has(BRICK_FACEDOWN_IDLE_CLIP)):
+        return "facedownidle"
     if (reaction_clip_ready
             and return_action == "idle2"
             and _candidate_clip_paths.has(IDLE2_CLIP)):
@@ -1462,7 +1506,8 @@ func _advance_return_state(delta: float) -> void:
     if state == "facedownidle":
         var before: float = state_time
         state_time += maxf(delta, 0.0)
-        if _facedown_getup_requested(before, state_time):
+        if (attack_config_path != BRICK_ATTACK_CONFIG_PATH
+                and _facedown_getup_requested(before, state_time)):
             _begin_facedown_getup()
             return
         _wrap_return_loop(FACEDOWN_IDLE_DURATION_FRAMES)
@@ -1611,6 +1656,7 @@ func _begin_faceup_getup() -> void:
 func _accepts_facedown_low_impact(impact_height: String, blocked: bool, damage: float) -> bool:
     return (
         state == "facedownidle"
+        and attack_config_path != BRICK_ATTACK_CONFIG_PATH
         and not blocked
         and impact_height == "low"
         and health - damage > 0.0
@@ -1747,7 +1793,8 @@ func record_virtual_press(virtual_key: String) -> bool:
     # physical-key mapping is not yet proven, so main.gd supplies a/b/c/d from
     # explicit keyboard bindings and this method only reproduces the recovered
     # three-item sequences as prototype input events.
-    if state not in ["facedownidle", "faceupidle"]:
+    if (state not in ["facedownidle", "faceupidle"]
+            or attack_config_path == BRICK_ATTACK_CONFIG_PATH):
         _clear_ground_attack_input_history()
         return false
     if virtual_key not in ["a", "b", "c", "d"]:
@@ -1928,6 +1975,8 @@ func _try_faceup_attack_contact() -> void:
     var reaction: Dictionary = opponent.reaction_for_incoming(
         FACEUP_ATTACK_IMPACT, blocked
     )
+    if opponent._accepts_brick_faceup_candidate(FACEUP_ATTACK_DAMAGE, blocked):
+        reaction = BRICK_FRONT_LOW_REACTION.duplicate(true)
     _attack_connected = true
     opponent.receive_hit(
         FACEUP_ATTACK_DAMAGE, blocked, 0.0, facing, reaction
@@ -2068,6 +2117,9 @@ func _stored_animation_radius(animation: String) -> float:
 
 
 func _profile_for_animation(animation: String) -> Dictionary:
+    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+            and animation == BRICK_FRONT_LOW_CLIP):
+        return BRICK_FRONT_LOW_REACTION
     for group_value: Variant in [REACTION_PROFILES, EXACT_REACTIONS]:
         if not group_value is Dictionary:
             continue
@@ -2132,6 +2184,27 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     if String(impact.get("strength", "")) != "normal":
         return {}
     return _reaction_profile_for_impact(impact, blocked)
+
+
+func _accepts_brick_faceup_candidate(damage: float, blocked: bool) -> bool:
+    # The mapped Thai idle, movefwd, lowpunch3 and lowkick3 have impactable
+    # windows covering their complete source clips. Playback timing is candidate.
+    var mapped_state: bool = false
+    if state == "idle":
+        var moving: bool = absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001
+        mapped_state = _candidate_clip_paths.has("move" if moving else "idle")
+    if state in ["startup", "active", "recovery"]:
+        mapped_state = (attack_kind in ["punch", "kick"] and ATTACKS.has(attack_kind)
+            and _candidate_clip_paths.has(attack_kind))
+    return (
+        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        and candidate_loaded
+        and mapped_state
+        and not blocked
+        and health - damage > 0.0
+        and _candidate_clip_paths.has(BRICK_FRONT_LOW_CLIP)
+        and _candidate_clip_paths.has(BRICK_FACEDOWN_IDLE_CLIP)
+    )
 
 
 func _matching_exact_reaction(impact: Dictionary, blocked: bool) -> Dictionary:
@@ -2221,7 +2294,9 @@ func receive_hit(
         last_reaction_exit_frame = -1
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
-    if health <= 0.0 and state_before == "facedownidle" and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP):
+    if (health <= 0.0 and state_before == "facedownidle"
+            and attack_config_path != BRICK_ATTACK_CONFIG_PATH
+            and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)):
         # brucelee.set lists healthzero before the low-impact link. Do not play
         # impactfacedown or apply the standing prototype push.
         position.x = position_before
