@@ -10,6 +10,15 @@ def _load(name):
 
 
 class TestReportConsistency(unittest.TestCase):
+    EXPECTED_ENDATTACK = {
+        "endattack1", "endattack2", "endattack brick", "endattack chief",
+        "endattack johnson", "endattack ken", "endattack loming",
+        "endattack master", "endattack shenlo", "endattack sinfu",
+        "endattack smallboy",
+    }
+    EXPECTED_DIRECTIONAL = {"highpunch3", "lowpunch3", "lowkick3", "highkick3"}
+    EXPECTED_STUN_LINKS = [209, 210, 211]
+
     @classmethod
     def setUpClass(cls):
         cls.inventory = _load("candobasicattacks_group_inventory.json")
@@ -20,7 +29,9 @@ class TestReportConsistency(unittest.TestCase):
         inventory_links = {
             link["source_index"]: link for link in self.inventory["links"]
         }
-        self.assertGreater(len(self.grab["links"]), 0)
+        self.assertEqual({link["to"] for link in self.grab["links"]},
+                         self.EXPECTED_ENDATTACK)
+        self.assertEqual(len(self.grab["links"]), 11)
         for link in self.grab["links"]:
             with self.subTest(link=link["to"]):
                 source = inventory_links[link["source_index"]]
@@ -29,19 +40,24 @@ class TestReportConsistency(unittest.TestCase):
                 self.assertEqual(source["keysequence"], link["keysequence"])
                 self.assertEqual(source["entry_frame"], link["entry_frame"])
                 self.assertEqual(source["blending"], link["blending"])
-                self.assertTrue(link["to"].startswith("endattack"))
 
     def test_grab_stun_entries_are_gated_by_healthzero(self):
-        self.assertGreater(self.grab["stun_entry_count"], 0)
-        for entry in self.grab["stun_entry_evidence"]:
+        entries = self.grab["stun_entry_evidence"]
+        self.assertEqual([entry["source_index"] for entry in entries],
+                         self.EXPECTED_STUN_LINKS)
+        for entry in entries:
             with self.subTest(target=entry["to"]):
                 self.assertIn("healthzero", entry["conditions"])
                 self.assertIn(entry["to"], ("impactstunhigh", "impactstunlow"))
                 self.assertIsNotNone(entry["stun_link"])
+                self.assertEqual(entry["stun_link"]["from"], entry["to"])
                 self.assertEqual(entry["stun_link"]["to"], "stun")
+                self.assertIsInstance(entry["stun_link"]["source_index"], int)
 
     def test_directional_actions_match_inventory_members(self):
         members = {item["name"]: item for item in self.inventory["members"]}
+        self.assertEqual(set(self.directional["actions"]),
+                         self.EXPECTED_DIRECTIONAL)
         for name, action in self.directional["actions"].items():
             with self.subTest(action=name):
                 member = members[name]
@@ -53,12 +69,15 @@ class TestReportConsistency(unittest.TestCase):
                     action["damage_time"][0] < action["damage_time"][1], True
                 )
 
-    def test_directional_reaction_link_matches_source_group(self):
+    def test_directional_reaction_matches_reaction_evidence(self):
         reaction = self.directional["reaction"]
         self.assertEqual(reaction["trigger"]["from_group"], "impactable")
         self.assertIn("oppattackstrengthhard", reaction["trigger"]["conditions"])
         self.assertIn("oppattackheighthigh", reaction["trigger"]["conditions"])
         self.assertIn("oppattackdirfromright", reaction["trigger"]["conditions"])
+        self.assertEqual(reaction["source_action"], "impacthardrighthigh")
+        self.assertEqual(reaction["animation"], "all_impct_hard_rht_high")
+        self.assertEqual(reaction["animation_radius"], 80.0)
         self.assertEqual(reaction["return_link"]["to"], "faceupidle")
 
 
