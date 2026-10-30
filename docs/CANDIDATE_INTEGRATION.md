@@ -397,18 +397,30 @@ Brick 的新增 `all_idle_face_down_forbigguy.anm` 为 45 帧、30 fps，SHA-256
 候选运行时只在 Bruce 为站立 `idle/idle2`、Brick 的
 `current_source_pose()` 为 `laying`、且 Bruce 候选 GLB 含
 `m01_attack_to_floor` 和返回用的 `m01_idle_02` 时接受 `bcc` 或 `bdd`。
-PC 原型把这两个序列映射为 `K,L,L` 和 `K,U,U`。输入处理器把 `b`、`bc`
-作为待完成前缀缓存，只有完整序列才进入 `attacktofloor`；如果目标不是
-laying，第一次 `K` 仍走普通踢。`b` 前缀超过原型输入窗口后不会自动转成
-普通踢，这是当前原型的已知取舍。
+PC 原型把这两个序列映射为 `K,L,L` 和 `K,U,U`。输入处理器使用严格前缀
+状态机，只接受 `b -> bc -> bcc` 或 `b -> bd -> bdd`；任何非前缀输入都会
+清空该链并回退到普通输入路径。超时、来源状态从 `idle` 切到 `idle2`（或
+反向）以及 `reset_fighter()` 后都不能复用旧历史。如果目标不是 laying，
+第一次 `K` 仍走普通踢。`b` 前缀超过原型输入窗口后不会自动转成普通踢，
+这是当前原型的已知取舍。
 
 进入后从源动画第 9 帧开始播放非循环的 `m01_attack_to_floor`，在第
 `[18,23]` 帧至多造成一次 6 点伤害。攻击半径是 60，impact 属性为
 `lleg/normal/low/frontal`。档案中的直接出边是 `[80,90] -> idle2`；候选
 运行时选择最早的第 80 帧进入 `m01_idle_02`，这个具体切换帧仍待原生运行时
 验证。躺地对手即使按住格挡键也不能使用站立格挡，因此该攻击按未格挡命中
-计算。缺少 clip、对手不在 laying、距离过远或位于身后时不会启动或命中；
+计算。缺少 clip、入口时对手不在 laying、距离过远或位于身后时不会启动；
 致命命中继续进入 Brick 自己的 `facedownko`。
+
+接触时没有额外要求目标仍处于 laying：已识别的原生控制流支持 laying 只作为
+入口条件，没有发现 impact 时重新查询 pose 的证据。接触合同的核心仍是目标
+`AnimationDescr` 的 `ReceiveDamage` 组与 impact 高水位，但当前
+`receive_hit()` 只是候选黑名单实现，不能据此宣称完整原生组矩阵、优先级或
+高水位语义已经恢复。`facedownko`、`faceupidle`、`faceupgetup`、
+`faceupattack`、`impactfaceup` 和 `faceupko` 等显式不可受击状态返回
+`false`。`attacktofloor` 只有在返回 `true` 后才设置 `_attack_connected`、
+增加 `combo_hits` 并发出 `combat_hit`；拒绝时保持未连接，使窗口内后续接触
+仍可重新查询，同时拒绝本身不会产生任何命中记账。
 
 这里的第 9 帧来自 link 的 `entry_frame=9`，只作为候选入口位置。已识别的
 `from_group` 控制流可能改用来源组成员记录的第三项决定切换时机，因此原版
@@ -432,6 +444,13 @@ git diff --check
 前缀缓存、完整序列、clip 选择、第 9 帧定位、第 `[18,23]` 帧一次伤害、
 第 80 帧进入 `idle2`、`idle/idle2` 来源、通过真实按键回调执行的
 `K,L,L`/`K,U,U`、攻击或返回 clip 缺失、距离、朝向、躺地格挡和致命命中。
+它另验证 `c` 不能作为初始前缀、`b,c,d,c` 不会匹配 `b,c,c`、非前缀输入
+立即清空历史、超时或状态变化或重置后历史不复用。接触侧验证目标在启动后
+进入 `faceupgetup` 时，整个 `[18,23]` 窗口持续拒绝仍不会改变血量、目标
+状态/时间/位置、连接、combo 或事件；第 18 帧拒绝后第 19 帧恢复
+`facedownidle` 时只重试并命中一次。表驱动测试还覆盖 `22.999`、`23`、
+`23.001` 边界，以及 `receive_hit()` 当前所有显式 false 状态在直接调用和
+`attacktofloor` 接触路径上都不修改目标快照或攻击者记账。
 其他地面链测试使用含 Brick 受击 clip 的 6 段候选。这些测试证明候选运行时
 路径已接通，不证明原版
 `candobasicattacks` 的 84 个来源成员、链接检查顺序、`entry_frame=9` 与

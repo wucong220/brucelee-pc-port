@@ -121,6 +121,12 @@ enum AttackToFloorInputResult {
     STARTED,
 }
 
+enum AttackToFloorSequenceMatch {
+    NO_MATCH,
+    PREFIX,
+    COMPLETE,
+}
+
 # Each key is a recovered source action, not an ANM header pose. Values were
 # read from brucelee.set; idle and facedownidle were also checked in thai.set.
 # The prototype currently maps these state names one-to-one to source actions.
@@ -1880,28 +1886,67 @@ func try_attack_to_floor_press(
     # Prototype-only mapping for recovered b/c/d sequences. Native key status,
     # source-frame clocks, link order and deferred third-value timing remain unverified.
     if (state not in ["idle", "idle2"] or attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            or virtual_key not in ["b", "c", "d"]
-            or not _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP)
+            or virtual_key not in ["b", "c", "d"]):
+        _clear_ground_attack_input_history()
+        return AttackToFloorInputResult.IGNORED
+    if (not _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP)
             or not _candidate_clip_paths.has(IDLE2_CLIP)):
+        _clear_ground_attack_input_history()
         return AttackToFloorInputResult.IGNORED
     if opponent == null or not is_instance_valid(opponent) or opponent.current_source_pose() != "laying":
         _clear_ground_attack_input_history()
         return AttackToFloorInputResult.IGNORED
     _prune_ground_attack_input_history()
-    if _ground_attack_input_owner != "attacktofloor":
+    var input_owner: String = "attacktofloor:" + state
+    if _ground_attack_input_owner != input_owner:
         _clear_ground_attack_input_history()
-        _ground_attack_input_owner = "attacktofloor"
+        _ground_attack_input_owner = input_owner
     _ground_attack_input_history.append({"key": virtual_key, "time": _time})
-    if not _matches_specific_sequences(ATTACK_TO_FLOOR_SEQUENCES):
-        for event_value: Variant in _ground_attack_input_history:
-            var event: Dictionary = event_value
-            if String(event["key"]) == "b":
-                return AttackToFloorInputResult.BUFFERED
-        # c/d without a preceding b is an ordinary heavy/virtual input.
-        _clear_ground_attack_input_history()
-        return AttackToFloorInputResult.IGNORED
-    _begin_attack_to_floor()
-    return AttackToFloorInputResult.STARTED
+    var match_state: AttackToFloorSequenceMatch = _specific_sequence_match_state(
+        ATTACK_TO_FLOOR_SEQUENCES
+    )
+    if match_state == AttackToFloorSequenceMatch.COMPLETE:
+        _begin_attack_to_floor()
+        return AttackToFloorInputResult.STARTED
+    if match_state == AttackToFloorSequenceMatch.PREFIX:
+        return AttackToFloorInputResult.BUFFERED
+    # A non-prefix input discards the whole chain. A leading b can begin a new
+    # chain; c/d falls back to their ordinary input path.
+    _clear_ground_attack_input_history()
+    if virtual_key == "b":
+        _ground_attack_input_owner = input_owner
+        _ground_attack_input_history.append({"key": "b", "time": _time})
+        return AttackToFloorInputResult.BUFFERED
+    return AttackToFloorInputResult.IGNORED
+
+
+func _specific_sequence_match_state(sequences: Array) -> AttackToFloorSequenceMatch:
+    if _ground_attack_input_history.is_empty():
+        return AttackToFloorSequenceMatch.NO_MATCH
+    var observed: Array[String] = []
+    for event_value: Variant in _ground_attack_input_history:
+        if not event_value is Dictionary:
+            return AttackToFloorSequenceMatch.NO_MATCH
+        var event: Dictionary = event_value
+        observed.append(String(event.get("key", "")))
+    var has_prefix: bool = false
+    for sequence_value: Variant in sequences:
+        var sequence: Array = sequence_value
+        if observed.size() > sequence.size():
+            continue
+        var matches_prefix: bool = true
+        for index: int in range(observed.size()):
+            if observed[index] != String(sequence[index]):
+                matches_prefix = false
+                break
+        if not matches_prefix:
+            continue
+        if observed.size() == sequence.size():
+            return AttackToFloorSequenceMatch.COMPLETE
+        has_prefix = true
+    if has_prefix:
+        return AttackToFloorSequenceMatch.PREFIX
+    return AttackToFloorSequenceMatch.NO_MATCH
 
 
 func record_attack_to_floor_press(virtual_key: String) -> bool:
@@ -1928,24 +1973,13 @@ func _try_attack_to_floor_contact() -> void:
         return
     var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
     var reaction: Dictionary = opponent.reaction_for_incoming(ATTACK_TO_FLOOR_IMPACT, blocked)
+    if not opponent.receive_hit(
+        ATTACK_TO_FLOOR_DAMAGE, blocked, 0.0, facing, reaction
+    ):
+        return
     _attack_connected = true
-    opponent.receive_hit(ATTACK_TO_FLOOR_DAMAGE, blocked, 0.0, facing, reaction)
     combo_hits += 1
     combat_hit.emit(self, opponent, "attacktofloor", ATTACK_TO_FLOOR_DAMAGE, blocked)
-
-
-func _matches_specific_sequences(sequences: Array) -> bool:
-    for sequence_value: Variant in sequences:
-        var sequence: Array = sequence_value
-        var required: int = sequence.size() - 1
-        for event_index: int in range(_ground_attack_input_history.size() - 1, -1, -1):
-            var event: Dictionary = _ground_attack_input_history[event_index]
-            if String(event["key"]) != String(sequence[required]):
-                continue
-            required -= 1
-            if required < 0:
-                return true
-    return false
 
 
 func _matches_ground_attack_sequence() -> bool:
@@ -2369,7 +2403,7 @@ func receive_hit(
         push: float,
         direction: float,
         reaction: Dictionary = {}
-) -> void:
+) -> bool:
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
@@ -2377,7 +2411,7 @@ func receive_hit(
         "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
         "impactfaceup", "faceupko",
     ]:
-        return
+        return false
     var state_before: String = state
     var position_before: float = position.x
     _attack_connected = false
@@ -2420,6 +2454,8 @@ func receive_hit(
         # A second hit of the same type must start the reaction again.
         _candidate_animation.stop()
         _candidate_action = ""
+    return true
+
 
 func reset_fighter(start_position: Vector3) -> void:
     global_position = start_position
