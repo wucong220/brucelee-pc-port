@@ -160,19 +160,20 @@ func _validate_blocked_base_rejects_grab(player: PortFighter, defender: PortFigh
     player.facing = 1.0
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
     player.opponent = defender
-    # First attack lands unblocked, setting the landed flag true.
     if not player.request_attack("punch"):
         return false
     player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
     if not bool(player.get("_attack_hit_landed")):
         push_error("Unblocked base hit did not set the landed flag")
         return false
-    # Finish the first attack and start a second, blocked one.
     player._advance_timed_states(60.0 / PortFighter.SOURCE_FRAME_RATE)
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
     defender.guard_held = true
     player.opponent = defender
     if not player.request_attack("punch"):
+        return false
+    if bool(player.get("_attack_hit_landed")):
+        push_error("Starting a new attack did not clear the landed flag")
         return false
     player.record_standing_combo_press("a", ["left"])
     player.record_standing_combo_press("a")
@@ -183,11 +184,5 @@ func _validate_blocked_base_rejects_grab(player: PortFighter, defender: PortFigh
         return false
     if player.attack_kind == "grab1":
         push_error("Blocked base attack changed into grab1")
-        return false
-    # Release guard and let blockstun finish; the stale landed flag must not survive.
-    defender.guard_held = false
-    player._advance_timed_states(30.0 / PortFighter.SOURCE_FRAME_RATE)
-    if player._try_begin_pending_standing_combo():
-        push_error("Grab fired after blockstun ended using a stale landed flag")
         return false
     return true

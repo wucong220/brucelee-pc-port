@@ -2788,6 +2788,7 @@ func request_attack(kind: String) -> bool:
     attack_kind = kind
     attack_sequence += 1
     _attack_connected = false
+    _attack_hit_landed = false
     _multi_impact_applied.clear()
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
