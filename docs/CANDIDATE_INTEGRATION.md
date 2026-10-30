@@ -400,9 +400,11 @@ SHA-256 是
 （1,664,540 字节，SHA-256
 `451cba9eb3c3751bec9dd1053112e55062cf967b1c8a18a390f2f2b4d1f0777d`），
 含四个 `*_03`/`m01_sp_kick_jump_01` 攻击动画和
-`all_impct_hard_rht_high`。该候选未带头发：本机 `--rigid-attachment` 要求
-唯一的 Skl 对象节点，而当前 Skl 的 `object_static_transforms` 只有 3 个对象
-节点、没有 `head`，与既有 25 段候选的构建路径不同。
+`all_impct_hard_rht_high`。`--rigid-attachment` 现在也接受唯一的骨骼节点；
+带头发的 30 段候选为 1,671,840 字节、SHA-256
+`83770ad905f2a8b5231c2bf3024946e033649b98a4a868884f76689630a97d47`，
+头发节点挂在 `head` 骨骼下。无头发的 30 段候选（1,664,540 字节，
+`451cba9e…0777d`）仍保留作对照。
 
 加载该候选时，四条方向链接已接入运行时：`up+a -> in+a -> in+a` 触发
 `highpunch3`，`down+a -> out+b -> out+a` 触发 `lowpunch3`，
