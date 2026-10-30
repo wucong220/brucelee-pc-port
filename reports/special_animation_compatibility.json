@@ -19,10 +19,10 @@
   "rejected_by_converter": {},
   "not_yet_extracted": [],
   "implications": [
-    "specialpunchlow now has miss m01_sp_pnch_low_fail and hit m01_sp_pnch_low available; implementation is pending.",
-    "specialpunchhigh has all three clips available: miss m01_sp_pnch_high_fail, hit m01_sp_pnch_high, impact m01_sp_pnch_high_impct.",
-    "lowpunch2 is now enabled: m01_pnch_low_02 decodes through the empty-approximation rule and is included in the 35-clip candidate.",
-    "The hard/high/frontal reaction all_impct_hard_frnt_high is now convertible; wiring it into the reaction table is pending."
+    "specialpunchlow is implemented: miss m01_sp_pnch_low_fail to hit m01_sp_pnch_low, 15 damage.",
+    "specialpunchhigh has all three clips available; multi-impact damage and simultaneous left+right input remain unimplemented.",
+    "lowpunch2 is enabled and in the 35-clip candidate.",
+    "all_impct_hard_frnt_high is convertible; the exact reaction is configured but the clip flag is false."
   ],
   "notes": [
     "The structural empty-root rule decodes these clips: zero first-node word with no room for a tree means the approximation contributes no nodes; its channel array is still decoded.",

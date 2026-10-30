@@ -29,7 +29,10 @@
       "m01_kick_high_02": 60.0,
       "m01_kick_low_02": 50.0,
       "m01_sp_kick_low_fail": 25.0,
-      "m01_sp_kick_low": 25.0
+      "m01_sp_kick_low": 25.0,
+      "m01_sp_pnch_low_fail": 25.0,
+      "m01_sp_pnch_low": 25.0,
+      "all_impct_hard_frnt_high": 80.0
     }
   },
   "reaction_profiles": {
@@ -335,6 +338,40 @@
         "strength": "hard",
         "direction": "frontal"
       }
+    },
+    "special_punch_low_miss": {
+      "source_action": "specialpunchlowmiss",
+      "animation": "m01_sp_pnch_low_fail",
+      "animation_frame_count": 33,
+      "startup_frames": 8,
+      "active_frames": 2,
+      "recovery_frames": 23,
+      "damage": 0.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 25.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "special_punch_low_hit": {
+      "source_action": "specialpunchlowhit",
+      "animation": "m01_sp_pnch_low",
+      "animation_frame_count": 178,
+      "startup_frames": 5,
+      "active_frames": 10,
+      "recovery_frames": 163,
+      "damage": 15.0,
+      "prototype_push": 0.35,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal"
+      }
     }
   },
   "exact_reactions": {
@@ -376,6 +413,20 @@
         "animation_radius": 80.0,
         "exit_start_frame": 26,
         "animation_duration_frames": 29,
+        "linking_frame": 0,
+        "return_action": "faceupidle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      {
+        "strength": "hard",
+        "height": "high",
+        "direction": "frontal",
+        "source_action": "impacthardfronthigh",
+        "animation": "all_impct_hard_frnt_high",
+        "animation_radius": 80.0,
+        "exit_start_frame": 23,
+        "animation_duration_frames": 35,
         "linking_frame": 0,
         "return_action": "faceupidle",
         "return_implemented": true,

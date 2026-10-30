@@ -33,6 +33,9 @@ class TestFightingConfig(unittest.TestCase):
                 "m01_pnch_low_02": 40.0,
                 "m01_pnch_high_02": 45.0,
                 "m01_sp_kick_low": 25.0,
+                "m01_sp_pnch_low": 25.0,
+                "all_impct_hard_frnt_high": 80.0,
+                "m01_sp_pnch_low_fail": 25.0,
                 "m01_sp_kick_low_fail": 25.0,
                 "all_impct_light_frnt_low": 40.0,
                 "all_impct_light_frnt_mid": 40.0,
@@ -97,6 +100,7 @@ class TestFightingConfig(unittest.TestCase):
             "special_kick_high", "high_punch2", "low_punch2",
             "high_kick2", "low_kick2",
             "special_kick_low_miss", "special_kick_low_hit",
+            "special_punch_low_miss", "special_punch_low_hit",
         })
         self.assertEqual(attacks["punch"]["source_action"], "lowpunch1")
         self.assertEqual(attacks["kick"]["source_action"], "lowkick1")
@@ -237,6 +241,7 @@ class TestFightingConfig(unittest.TestCase):
             "impacthardfrontmid",
             "impacthardrightlow",
             "impacthardrighthigh",
+            "impacthardfronthigh",
         ])
         self.assertEqual(exact["hit"][0]["exit_start_frame"], 27)
         self.assertEqual(exact["hit"][0]["animation_duration_frames"], 30)
