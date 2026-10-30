@@ -46,6 +46,23 @@
 - `BCC -> highkick1`
 - `BDD -> lowkick1`
 
+加载仓库外 30 段候选时，另有四条带方向修饰键的已恢复链接：
+
+| 输入（原型） | 目标 |
+|---|---|
+| 上 + J，然后 朝向对手 + J 两次 | `highpunch3` |
+| 下 + J，然后 背向对手 + K，再 背向对手 + J | `lowpunch3` |
+| 下 + K，然后 背向对手 + U 两次 | `lowkick3` |
+| 上 + K，然后 朝向对手 + L 两次 | `highkick3` |
+
+方向修饰键是 PC 原型映射：`W/S` 产生上/下，`A/D` 相对角色朝向换算成
+朝向/背向对手的 `in/out`。每一步必须与按键集合完全一致，因此普通 `AAA`
+不会吞掉带方向的输入。四条新攻击的源窗口分别为 `[21,85]`、`[33,81]`、
+`[26,56]`、`[30,51]`；`highpunch3` 和 `highkick3` 的 `hard/high/fromright`
+impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
+第 26 帧回到 `faceupidle`。这些仍是候选运行时行为，不是 Android 物理键位、
+原版输入时钟或逐帧视觉验收。
+
 已实现来源窗口为 lowpunch 第 `[22,69]` 帧、lowkick 第 `[31,86]` 帧、
 highpunch 第 `[17,101]` 帧和 highkick 第 `[33,73]` 帧。目标 clip 未加载时
 转换保持关闭，普通攻击路径继续工作。0.5 秒期限是 PC 原型选择；

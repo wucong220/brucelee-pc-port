@@ -23,6 +23,10 @@ class TestFightingConfig(unittest.TestCase):
                 "m01_kick_low_01": 50.0,
                 "m01_pnch_high_01": 45.0,
                 "m01_kick_high_01": 60.0,
+                "m01_pnch_high_03": 60.0,
+                "m01_pnch_low_03": 40.0,
+                "m01_kick_low_03": 50.0,
+                "m01_sp_kick_jump_01": 60.0,
                 "all_impct_light_frnt_low": 40.0,
                 "all_impct_light_frnt_mid": 40.0,
                 "all_impct_light_frnt_high": 40.0,
@@ -80,7 +84,10 @@ class TestFightingConfig(unittest.TestCase):
             },
         })
         attacks = data["attacks"]
-        self.assertEqual(set(attacks), {"punch", "kick", "high_punch", "high_kick"})
+        self.assertEqual(set(attacks), {
+            "punch", "kick", "high_punch", "high_kick",
+            "high_punch3", "low_punch3", "low_kick3", "high_kick3",
+        })
         self.assertEqual(attacks["punch"]["source_action"], "lowpunch1")
         self.assertEqual(attacks["kick"]["source_action"], "lowkick1")
         self.assertEqual(attacks["high_punch"]["source_action"], "highpunch1")
@@ -133,6 +140,36 @@ class TestFightingConfig(unittest.TestCase):
             "strength": "normal",
             "direction": "frontal",
         })
+        directional = {
+            "high_punch3": ("highpunch3", "m01_pnch_high_03", 85, (5, 4, 76), 6.0, {
+                "attack_radius": 70.0, "body_part": "larm", "height": "high",
+                "strength": "hard", "direction": "fromright",
+            }),
+            "low_punch3": ("lowpunch3", "m01_pnch_low_03", 81, (8, 4, 69), 7.0, {
+                "attack_radius": 75.0, "body_part": "larm", "height": "medium",
+                "strength": "hard", "direction": "frontal",
+            }),
+            "low_kick3": ("lowkick3", "m01_kick_low_03", 56, (8, 3, 45), 5.0, {
+                "attack_radius": 70.0, "body_part": "lleg", "height": "medium",
+                "strength": "normal", "direction": "frontal",
+            }),
+            "high_kick3": ("highkick3", "m01_sp_kick_jump_01", 51, (10, 4, 37), 8.0, {
+                "attack_radius": 80.0, "body_part": "lleg", "height": "high",
+                "strength": "hard", "direction": "fromright",
+            }),
+        }
+        for action, (source, animation, frames, timing, damage, impact) in directional.items():
+            with self.subTest(action=action):
+                self.assertEqual(attacks[action]["source_action"], source)
+                self.assertEqual(attacks[action]["animation"], animation)
+                self.assertEqual(attacks[action]["animation_frame_count"], frames)
+                self.assertEqual(
+                    [attacks[action][key] for key in (
+                        "startup_frames", "active_frames", "recovery_frames")],
+                    list(timing),
+                )
+                self.assertEqual(attacks[action]["damage"], damage)
+                self.assertEqual(attacks[action]["source_impact"], impact)
         for action in attacks.values():
             self.assertNotIn("prototype_range", action)
         geometry = data["source_geometry"]
@@ -189,6 +226,7 @@ class TestFightingConfig(unittest.TestCase):
         self.assertEqual([item["source_action"] for item in exact["hit"]], [
             "impacthardfrontmid",
             "impacthardrightlow",
+            "impacthardrighthigh",
         ])
         self.assertEqual(exact["hit"][0]["exit_start_frame"], 27)
         self.assertEqual(exact["hit"][0]["animation_duration_frames"], 30)
@@ -201,6 +239,13 @@ class TestFightingConfig(unittest.TestCase):
         self.assertEqual(exact["hit"][1]["return_action"], "facedownidle")
         self.assertFalse(exact["hit"][1]["return_implemented"])
         self.assertFalse(exact["hit"][1]["clip_implemented"])
+        self.assertEqual(exact["hit"][2]["exit_start_frame"], 26)
+        self.assertEqual(exact["hit"][2]["animation_duration_frames"], 29)
+        self.assertEqual(exact["hit"][2]["animation_radius"], 80.0)
+        self.assertEqual(exact["hit"][2]["animation"], "all_impct_hard_rht_high")
+        self.assertEqual(exact["hit"][2]["return_action"], "faceupidle")
+        self.assertTrue(exact["hit"][2]["return_implemented"])
+        self.assertFalse(exact["hit"][2]["clip_implemented"])
         self.assertEqual(exact["block"][0]["source_action"], "highblockhard")
         self.assertEqual(exact["block"][0]["exit_start_frame"], 11)
         self.assertEqual(exact["block"][0]["animation_duration_frames"], 14)

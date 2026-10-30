@@ -51,9 +51,15 @@
 > 连段扩展准备（2026-10-30）：`candobasicattacks` 的 84 个成员和 21 条链接已由
 > `tools/kdf_combo_group_inventory.py` 只读导出到
 > `reports/candobasicattacks_group_inventory.json`。候选动画上限从 25 提高到 32，
-> 仓库外 29 段仅身体候选（含四个 `*_03`/`m01_sp_kick_jump_01`）已通过连段、
-> 地面姿态和视觉混合测试；方向修饰键、抓取距离和 `hard/high/fromright`
-> 受击档仍未闭合，所以四条方向链接尚未接入。
+> 仓库外 30 段仅身体候选（含四个 `*_03`/`m01_sp_kick_jump_01` 与
+> `all_impct_hard_rht_high`）已通过方向连段、地面姿态和视觉混合测试。
+>
+> 方向连段接入（2026-10-30）：四条第 83–90 项来源链接已接入原型：上+J →
+> 朝向+J×2 触发 `highpunch3`，下+J → 背向+K → 背向+J 触发 `lowpunch3`，
+> 下+K → 背向+U×2 触发 `lowkick3`，上+K → 朝向+L×2 触发 `highkick3`。
+> `hard/high/fromright` 的 `impacthardrighthigh` 受击动作、半径 80 和第 26 帧
+> 返回 `faceupidle` 已按源链接加入配置。方向修饰键是 PC 原型映射；抓取类
+> `endattack*` 链接、原版输入时钟和逐帧视觉仍未恢复。
 
 ## 实现分层（避免混合研究与正式运行时代码）
 

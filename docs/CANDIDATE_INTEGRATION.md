@@ -395,31 +395,38 @@ SHA-256 是
 
 完整 84 个成员和 21 条来源链接已导出到
 `reports/candobasicattacks_group_inventory.json`，生成命令见
-[`FIGHTING_SET_FINDINGS.md`](FIGHTING_SET_FINDINGS.md)。其余链接需要
-方向修饰键（`pressup/pressdown/pressin/pressout`）、抓取距离状态，或
-`m01_*_03` 与 `m01_sp_*` 动画。`tools/character_to_gltf.py` 的候选动画上限
-已从 25 提高到 32；仓库外另构建了一个 29 段、仅身体网格的验证候选
-（1,623,948 字节，SHA-256
-`45a6a2cf10bb9a143aefc96106eadea0dc9aada53b732d0f892e7ac2c408052c`），
-含 `m01_pnch_high_03`、`m01_pnch_low_03`、`m01_kick_low_03`、
-`m01_sp_kick_jump_01`，并已用 `validate_standing_combos`、`validate_ground_pose`
-和 `validate_candidate_visual_blending` 跑通。该候选未带头发：本机
-`--rigid-attachment` 要求唯一的 Skl 对象节点，而当前 Skl 的
-`object_static_transforms` 只有 3 个对象节点、没有 `head`，与既有 25 段候选的
-构建路径不同。方向链接仍**没有**接入运行时：`highpunch3` 和 `highkick3` 的 impact 是
-`hard/high/fromright`，而 `exact_reactions.hit` 目前只覆盖
-`hard/medium/frontal` 与 `hard/low/fromright`，直接放行会让这两招落到普通
-`high` 受击档；`pressup/pressdown/pressin/pressout` 修饰键和抓取距离语义也
-仍未恢复。
+[`FIGHTING_SET_FINDINGS.md`](FIGHTING_SET_FINDINGS.md)。`tools/character_to_gltf.py`
+的候选动画上限已从 25 提高到 32；仓库外构建了 30 段、仅身体网格的验证候选
+（1,664,540 字节，SHA-256
+`451cba9eb3c3751bec9dd1053112e55062cf967b1c8a18a390f2f2b4d1f0777d`），
+含四个 `*_03`/`m01_sp_kick_jump_01` 攻击动画和
+`all_impct_hard_rht_high`。该候选未带头发：本机 `--rigid-attachment` 要求
+唯一的 Skl 对象节点，而当前 Skl 的 `object_static_transforms` 只有 3 个对象
+节点、没有 `head`，与既有 25 段候选的构建路径不同。
+
+加载该候选时，四条方向链接已接入运行时：`up+a -> in+a -> in+a` 触发
+`highpunch3`，`down+a -> out+b -> out+a` 触发 `lowpunch3`，
+`down+b -> out+d -> out+d` 触发 `lowkick3`，`up+b -> in+c -> in+c` 触发
+`highkick3`。每步要求按键集合完全一致，避免普通 `AAA` 吞掉带方向输入。
+`highpunch3`/`highkick3` 的 `hard/high/fromright` impact 由新恢复的
+`impacthardrighthigh`（`all_impct_hard_rht_high`，半径 80，第 26 帧返回
+`faceupidle`）驱动；`lowpunch3` 仍用已恢复的 `impacthardfrontmid`，
+`lowkick3` 用 normal/medium/frontal 档。25 段候选缺这些 clip 时四条链保持关闭。
+方向修饰键是 PC 原型映射（上/下取移动轴，朝向/背向按角色朝向换算），不是
+Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
-`[31,86]`、`[17,101]` 和 `[33,73]`。从首键起算的原型输入期限为 0.5 秒。
+`[31,86]`、`[17,101]` 和 `[33,73]`；四个 `*_3` 目标窗口为 `[33,81]`、
+`[26,56]`、`[21,85]` 和 `[30,51]`。从首键起算的原型输入期限为 0.5 秒。
 来源组共 84 个成员，尚未全部覆盖；成员记录第三项的切换时序、link
 优先级、blending、原版输入时钟、Android 物理键位和逐帧视觉仍未验证。
 `validate_standing_combos.gd` 使用真实 25 段 GLB 检查四条窗口、普通低段到
 目标的转换、来源动画选择、两段实际命中与高段 reaction，并覆盖
 `highpunch1`/`highkick1` 作为后续来源时的窗口起点（第 17、33 帧）与提前一帧
-不得转换。源值和限制见 `reports/basic_attack_combo_evidence.json`。
+不得转换。`validate_directional_combos.gd` 使用 30 段候选检查四条方向链的
+窗口起点、目标动画、`highpunch3` 的 6 点伤害与 `impacthardrighthigh`
+反应，以及 `hard/high/fromright` 在第 26 帧回到 `faceupidle`。源值和限制见
+`reports/basic_attack_combo_evidence.json`。
 
 匹配后的待执行连段与当时那次攻击绑定：攻击结束、切换动作、受到命中或格挡、
 以及 Heavy 攻击都会取消它，旧输入不会跨攻击生效；`idle/idle2` 的组窗口只作为

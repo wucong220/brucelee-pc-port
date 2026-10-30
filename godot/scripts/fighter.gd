@@ -18,6 +18,10 @@ const CANDIDATE_CLIPS: Dictionary = {
     "kick": "m01_kick_low_01",
     "high_punch": "m01_pnch_high_01",
     "high_kick": "m01_kick_high_01",
+    "high_punch3": "m01_pnch_high_03",
+    "low_punch3": "m01_pnch_low_03",
+    "low_kick3": "m01_kick_low_03",
+    "high_kick3": "m01_sp_kick_jump_01",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -47,6 +51,10 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_kick_low_01": 50.0,
     "m01_pnch_high_01": 45.0,
     "m01_kick_high_01": 60.0,
+    "m01_pnch_high_03": 60.0,
+    "m01_pnch_low_03": 40.0,
+    "m01_kick_low_03": 50.0,
+    "m01_sp_kick_jump_01": 60.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
     "all_impct_light_frnt_high": 40.0,
@@ -134,11 +142,18 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
 }
 const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
 const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.5
+# Each sequence is a list of simultaneous-token steps, matching the native
+# keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
+# prototype input layer and are not recovered Android physical keys.
 const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
-    {"keys": ["a", "a", "a"], "attack": "high_punch"},
-    {"keys": ["a", "b", "b"], "attack": "punch"},
-    {"keys": ["b", "c", "c"], "attack": "high_kick"},
-    {"keys": ["b", "d", "d"], "attack": "kick"},
+    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch"},
+    {"steps": [["a"], ["b"], ["b"]], "attack": "punch"},
+    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick"},
+    {"steps": [["b"], ["d"], ["d"]], "attack": "kick"},
+    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3"},
+    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3"},
+    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3"},
+    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3"},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
@@ -150,6 +165,10 @@ const CANDOBASICATTACK_WINDOWS: Dictionary = {
     "kick": [31, 86],
     "high_punch": [17, 101],
     "high_kick": [33, 73],
+    "high_punch3": [21, 85],
+    "low_punch3": [33, 81],
+    "low_kick3": [26, 56],
+    "high_kick3": [30, 51],
 }
 const BRUCE_ATTACK_METADATA: Dictionary = {
     "punch": {
@@ -160,6 +179,8 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "radius": 70.0,
         "body_part": "larm",
         "height": "medium",
+        "strength": "normal",
+        "direction": "frontal",
     },
     "kick": {
         "source_action": "lowkick1",
@@ -169,6 +190,8 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "radius": 70.0,
         "body_part": "lleg",
         "height": "low",
+        "strength": "normal",
+        "direction": "frontal",
     },
     "high_punch": {
         "source_action": "highpunch1",
@@ -178,6 +201,8 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "radius": 70.0,
         "body_part": "larm",
         "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
     },
     "high_kick": {
         "source_action": "highkick1",
@@ -187,6 +212,52 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "radius": 75.0,
         "body_part": "lleg",
         "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "high_punch3": {
+        "source_action": "highpunch3",
+        "animation": "m01_pnch_high_03",
+        "frame_count": 85,
+        "damage": 6.0,
+        "radius": 70.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "fromright",
+    },
+    "low_punch3": {
+        "source_action": "lowpunch3",
+        "animation": "m01_pnch_low_03",
+        "frame_count": 81,
+        "damage": 7.0,
+        "radius": 75.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "hard",
+        "direction": "frontal",
+    },
+    "low_kick3": {
+        "source_action": "lowkick3",
+        "animation": "m01_kick_low_03",
+        "frame_count": 56,
+        "damage": 5.0,
+        "radius": 70.0,
+        "body_part": "lleg",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "high_kick3": {
+        "source_action": "highkick3",
+        "animation": "m01_sp_kick_jump_01",
+        "frame_count": 51,
+        "damage": 8.0,
+        "radius": 80.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "hard",
+        "direction": "fromright",
     },
 }
 
@@ -251,6 +322,7 @@ const RETURN_ANIMATION_RADII: Dictionary = {
     "all_idle_face_down_forbigguy": 75.0,
     "all_getup_facedwn": 25.0,
     "all_impct_facedwn": 80.0,
+    "all_impct_hard_rht_high": 80.0,
     "all_getup_facedwn_attack": 45.0,
     "all_stunned_fall": 75.0,
     "all_idle_face_up": 75.0,
@@ -413,6 +485,20 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "linking_frame": 0,
             "return_action": "facedownidle",
             "return_implemented": false,
+            "clip_implemented": false,
+        },
+        {
+            "strength": "hard",
+            "height": "high",
+            "direction": "fromright",
+            "source_action": "impacthardrighthigh",
+            "animation": "all_impct_hard_rht_high",
+            "animation_radius": 80.0,
+            "exit_start_frame": 26,
+            "animation_duration_frames": 29,
+            "linking_frame": 0,
+            "return_action": "faceupidle",
+            "return_implemented": true,
             "clip_implemented": false,
         },
     ],
@@ -744,8 +830,8 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         if (absf(float(impact["attack_radius"]) - float(expected["radius"])) > 0.001
                 or String(impact["body_part"]) != expected_body_part
                 or String(impact["height"]) != expected_height
-                or String(impact["strength"]) != "normal"
-                or String(impact["direction"]) != "frontal"):
+                or String(impact["strength"]) != String(expected["strength"])
+                or String(impact["direction"]) != String(expected["direction"])):
             return _reject_attack_config(
                 action + " impact does not match the recovered reaction profile"
             )
@@ -1169,7 +1255,9 @@ func _try_load_candidate_visual() -> void:
         if skeleton_nodes.size() == 1:
             _candidate_skeleton = skeleton_nodes[0] as Skeleton3D
             _candidate_skeleton_parent = _candidate_skeleton.get_parent()
-    for action: String in ["move", "ko", "high_punch", "high_kick"]:
+    for action: String in [
+            "move", "ko", "high_punch", "high_kick",
+            "high_punch3", "low_punch3", "low_kick3", "high_kick3"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -1653,6 +1741,10 @@ func _verified_post_hit_return_state() -> String:
             and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)
             and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP)):
         return "facedownidle"
+    if (reaction_clip_ready
+            and return_action == "faceupidle"
+            and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)):
+        return "faceupidle"
     return "idle"
 
 
@@ -2002,7 +2094,10 @@ func record_virtual_press(virtual_key: String) -> bool:
     return true
 
 
-func record_standing_combo_press(virtual_key: String) -> bool:
+func record_standing_combo_press(
+        virtual_key: String,
+        modifiers: Array = []
+) -> bool:
     # Prototype-only sequence path for the recovered candobasicattacks links.
     # Physical key status, exact key-event lifetime and link scheduling remain
     # unverified. Only an attack with a recovered source window may buffer
@@ -2011,7 +2106,12 @@ func record_standing_combo_press(virtual_key: String) -> bool:
         _clear_standing_combo_state()
         return false
     _prune_standing_combo_input_history()
-    _standing_combo_input_history.append({"key": virtual_key, "time": _time})
+    var tokens: Array = [virtual_key]
+    for modifier: Variant in modifiers:
+        var token: String = String(modifier)
+        if not tokens.has(token):
+            tokens.append(token)
+    _standing_combo_input_history.append({"tokens": tokens, "time": _time})
     var matched_attack: String = _matching_standing_combo_attack()
     if matched_attack.is_empty():
         return false
@@ -2071,16 +2171,29 @@ func _prune_standing_combo_input_history() -> void:
 
 func _matching_standing_combo_attack() -> String:
     for entry: Dictionary in STANDING_COMBO_SEQUENCES:
-        var keys: Array = entry["keys"]
-        var required: int = keys.size() - 1
+        var steps: Array = entry["steps"]
+        var required: int = steps.size() - 1
         for event_index: int in range(_standing_combo_input_history.size() - 1, -1, -1):
             var event: Dictionary = _standing_combo_input_history[event_index]
-            if String(event["key"]) != String(keys[required]):
+            if not _event_satisfies_step(event, steps[required]):
                 continue
             required -= 1
             if required < 0:
                 return String(entry["attack"])
     return ""
+
+
+func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
+    var tokens: Array = event.get("tokens", [])
+    var required_tokens: Array = step if step is Array else [step]
+    # A step must match the pressed token set exactly. Otherwise the plain
+    # a/a/a sequence would also consume up+a presses and shadow highpunch3.
+    if tokens.size() != required_tokens.size():
+        return false
+    for token: Variant in required_tokens:
+        if not tokens.has(String(token)):
+            return false
+    return true
 
 
 func _current_attack_source_frame() -> float:
@@ -2889,10 +3002,9 @@ func _animate_candidate() -> void:
             requested = "punch"
         elif attack_kind in ["kick", "heavy"]:
             requested = "kick"
-        elif attack_kind == "high_punch":
-            requested = "high_punch"
-        elif attack_kind == "high_kick":
-            requested = "high_kick"
+        elif attack_kind in ["high_punch", "high_kick", "high_punch3", "low_punch3",
+                "low_kick3", "high_kick3"]:
+            requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented
             and _candidate_clip_paths.has(last_reaction_animation)):
