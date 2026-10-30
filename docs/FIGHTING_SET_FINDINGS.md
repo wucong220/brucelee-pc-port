@@ -881,8 +881,17 @@ duration 相联系。`FollowLink` 的 `0x1A8298` 在它随后对原 fighter
 这与 `SKL_ANM_FORMAT_FINDINGS.md` 先前将 `duration` 解释为解码样本数的
 静态分析相互印证。此结论限于记录的资源更新和类型匹配路径，不能推定所有
 运行时数据均有效，也不能据此确定每次切换使用哪个动作的 duration。
-进入对象 `+0x18` 的
-来源同样未闭合。
+另一个乘法输入也有了受路径限制的来源：`CAnimRes::UpdateProperties`
+通过 `gid_framerate`（GOT 槽 `0x603EC4`）读取整数，在已识别的有效
+分支调用 `__aeabi_uidiv`，将 `duration * 1000 / framerate` 的整数商
+写入 `CAnimRes+0x40`；属性读取失败时该分支使用除数 30。随后
+`CAnimPlayer::SetSource` 把 `CAnimRes+0x40` 和 `+0x3C` 放入
+`CTimeController`，调用 `Init` 后将该对象复制到播放器 `+0x14`，
+其中原 `+0x40` 值进入 `CAnimPlayer+0x18`。`CFadePlayer::Init`
+在前一层指针非空时从其关联播放器 `+0x18` 取数与过渡参数相乘。
+这是静态的、带条件的字段来源，不能把乘数直接称为帧率。
+两侧是否属于同一动画、数据在队列中是否保持一致、整数溢出和零除数
+的运行时行为仍未核实，也不能仅据此宣称 Godot 的混合时间已经等同原版。
 
 目前只确认 `blending / unsigned([fighter+0x30])` 的静态计算及其
 参数传递；**不能据此确认结果以秒为单位**。下表的 `6/30` 和 `10/30`
@@ -1048,3 +1057,7 @@ git diff --check
 189 条指令、18 个 PLT、4 个动态重定位和 3 个字符串，退出码 0；
 全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
 退出码 0。
+
+补充资源时间长度和播放器字段来源后，同一校验命令核对 249 条指令、
+20 个 PLT、5 个动态重定位和 3 个字符串，退出码 0；全量 Python
+测试 223 项、跳过 1 项，退出码 0；`git diff --check` 退出码 0。

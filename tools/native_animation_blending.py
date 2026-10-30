@@ -238,6 +238,70 @@ _WORDS = {
     0x00416E10: 0xEAFFFECE,
     0x00416F84: 0x001E6BE4,
     0x00416F8C: 0x000065D4,
+    # CAnimRes calculates integer duration_ms = duration * 1000 / framerate
+    # on the identified path, defaulting the divisor to 30 on failure.
+    0x0041695C: 0xE596303C,
+    0x00416960: 0xE3A02FFA,
+    0x00416968: 0xE0020392,
+    0x00416970: 0xE58D2004,
+    0x004169AC: 0xE59FB5DC,
+    0x004169F4: 0xE794000B,
+    0x004169FC: 0xE5908000,
+    0x00416A00: 0xE1530008,
+    0x00416A20: 0xE3580000,
+    0x00416A24: 0x0AFFFFE3,
+    0x00416A74: 0x05931004,
+    0x00416A78: 0x1A0000E5,
+    0x00416A7C: 0xE59D0004,
+    0x00416A80: 0xEBF432A9,
+    0x00416A84: 0xE5860040,
+    0x00416E14: 0xE3A0101E,
+    0x00416E18: 0xE59D0004,
+    0x00416E1C: 0xEBF431C2,
+    0x00416E20: 0xE5860040,
+    0x00416F90: 0x00006AAC,
+    # SetSource copies the CAnimRes duration_ms through CTimeController into
+    # CAnimPlayer+0x18. Init leaves that controller input word unchanged.
+    0x003F943C: 0xE92D4FF0,
+    0x003F9454: 0xE1A04000,
+    0x003F9530: 0xE28D804C,
+    0x003F9534: 0xE5932040,
+    0x003F9538: 0xE1A00008,
+    0x003F9540: 0xE58D2050,
+    0x003F9544: 0xE593303C,
+    0x003F9548: 0xE58D3054,
+    0x003F954C: 0xEBF4BDC5,
+    0x003F9550: 0xE1A0C008,
+    0x003F9554: 0xE28DE01C,
+    0x003F9560: 0xE8BC000F,
+    0x003F9568: 0xE8A8000F,
+    0x003F9574: 0xE89C0007,
+    0x003F9578: 0xE8880007,
+    0x003F959C: 0xE284C014,
+    0x003F95B4: 0xE8BE000F,
+    0x003F95B8: 0xE8AC000F,
+    0x003F95BC: 0xE89E0007,
+    0x003F95C0: 0xE88C0007,
+    0x004139C8: 0xE990000C,
+    0x004139CC: 0xE3530000,
+    0x004139D0: 0x12433001,
+    0x004139D4: 0x15803008,
+    0x004139D8: 0xE3520000,
+    0x004139DC: 0xCE062A90,
+    0x004139E0: 0xCD9F7A0A,
+    0x004139E4: 0xDD9F7A0A,
+    0x004139E8: 0xCEF87AE6,
+    0x004139EC: 0xEE063A90,
+    0x004139F0: 0xE5802010,
+    0x004139F4: 0xCE877A27,
+    0x004139F8: 0xEEF87A66,
+    0x004139FC: 0xED807A05,
+    0x00413A00: 0xED9F7A02,
+    0x00413A04: 0xEEC77A27,
+    0x00413A08: 0xEDC07A06,
+    0x00413A0C: 0xE12FFF1E,
+    0x003FCD58: 0xE59D4098,
+    0x003FCED4: 0xE5943000,
     # CFighter::SetAnimation receives that float and copies it to +8 of the
     # anmTransitionInfo passed into gfxAnimation::AddTransition.
     0x001A6EA0: 0xEDDD9A5B,  # vldr s19, [caller stack, #0x16c]
@@ -254,6 +318,7 @@ _STRINGS = {
 _DYN_RELOCATIONS = {
     0x00602990: "_ZZN3krm3dtl6TypeIdINS_3anm8CAnimResEEEjvE5sType",
     0x006039EC: "_ZN3krm3anm12gid_durationE",
+    0x00603EC4: "_ZN3krm3anm13gid_framerateE",
     0x00603B60: "_ZTVN3krm3gfx8CScnAnimE",
     0x005F9170: (
         "_ZN3krm3gfx8CScnAnim13AddTransitionERKNS_3res7CResRefERKNS_"
@@ -262,6 +327,16 @@ _DYN_RELOCATIONS = {
 }
 
 _PLT = {
+    0x0012352C: (
+        0x005FEF40,
+        "__aeabi_uidiv",
+        (0xE28FC604, 0xE28CCADB, 0xE5BCFA0C),
+    ),
+    0x00128C68: (
+        0x00600C54,
+        "_ZN3krm3anm15CTimeController4InitEv",
+        (0xE28FC604, 0xE28CCAD7, 0xE5BCFFE4),
+    ),
     0x00128ADC: (
         0x00600BD0,
         "_ZN3krm8CFighter18FindAnimationIndexENS_3krt10HashStringINS1_10CHStrMgrNSEEE",
