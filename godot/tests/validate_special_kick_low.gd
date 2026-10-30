@@ -71,9 +71,9 @@ func _start_sequence(player: PortFighter, rage: float) -> bool:
     if not player.request_attack("punch"):
         push_error("Could not start the fallback punch")
         return false
-    player.record_standing_combo_press("b", ["left"])
-    player.record_standing_combo_press("c", ["in"])
-    player.record_standing_combo_press("c", ["in"])
+    player.record_standing_combo_press("b", ["out", "left"])
+    player.record_standing_combo_press("c", ["in", "right"])
+    player.record_standing_combo_press("c", ["in", "right"])
     if String(player.get("_standing_combo_pending_attack")) != "special_kick_low_miss":
         push_error("Sequence did not queue special_kick_low_miss")
         return false

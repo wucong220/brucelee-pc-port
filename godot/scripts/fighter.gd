@@ -2231,8 +2231,7 @@ func record_standing_combo_press(
         var token: String = String(modifier)
         if not tokens.has(token):
             tokens.append(token)
-    if (tokens.size() == 2 and tokens.has("b")
-            and (tokens.has("out") or tokens.has("left"))):
+    if tokens.has("b") and (tokens.has("out") or tokens.has("left")):
         _special_stepback_origin = true
     _standing_combo_input_history.append({"tokens": tokens, "time": _time})
     var matched_attack: String = _matching_standing_combo_attack()
@@ -2325,6 +2324,11 @@ func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
         effective.erase("left")
     if not required_tokens.has("right"):
         effective.erase("right")
+    if required_tokens.has("left") or required_tokens.has("right"):
+        # Absolute side steps take precedence over the facing-relative in/out
+        # token, which the same keyboard input also produces.
+        effective.erase("in")
+        effective.erase("out")
     # A step must match the pressed token set exactly. Otherwise the plain
     # a/a/a sequence would also consume up+a presses and shadow highpunch3.
     if effective.size() != required_tokens.size():
