@@ -2025,7 +2025,11 @@ func record_standing_combo_press(virtual_key: String) -> bool:
 
 
 func _accepts_standing_combo_input(virtual_key: String) -> bool:
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+    # Guard rejects attack requests, so it must also reject combo history.
+    # Otherwise a press made while guarding becomes the first key of a later
+    # sequence.
+    if (guard_held
+            or attack_config_path == BRICK_ATTACK_CONFIG_PATH
             or virtual_key not in ["a", "b", "c", "d"]
             or state not in ["idle", "idle2", "startup", "active", "recovery"]):
         return false
@@ -2302,6 +2306,10 @@ func _physics_process(delta: float) -> void:
         facing = 1.0 if opponent.global_position.x >= global_position.x else -1.0
     # Turn the torso toward the opponent (local 'front' is +X).
     rotation.y = 0.0 if facing > 0.0 else PI
+    if guard_held:
+        # Raising guard between two presses must not keep a partial sequence or
+        # a matched-but-unexecuted combo alive.
+        _clear_standing_combo_state()
     _advance_timed_states(delta)
     _try_begin_pending_standing_combo()
     if state == "active" and not _attack_connected:

@@ -32,11 +32,31 @@ _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
 # four *_03 / m01_sp_* attacks that the group inventory lists. The cap stays
 # explicit so an accidental unbounded import is rejected.
 _MAX_ANIMATION_FILES = 32
+# Raising the per-file count must not leave the total input unbounded. 32 files
+# at the 16 MiB per-file cap would otherwise allow about 512 MiB of animation
+# input, so the sum of the declared ANM sizes is capped separately.
+_MAX_TOTAL_ANIMATION_BYTES = 64 * 1024 * 1024
 _MAX_RIGID_ATTACHMENTS = 16
 
 
 class GltfExportError(ValueError):
     """Inputs cannot be represented by the candidate GLB exporter profile."""
+
+
+def _check_animation_total_bytes(
+        sources, limit: int = _MAX_TOTAL_ANIMATION_BYTES) -> int:
+    """Reject an animation set whose declared sizes exceed the total budget."""
+    total = 0
+    for source in sources:
+        try:
+            total += Path(source).stat().st_size
+        except OSError:
+            # A missing file is reported later when the binding opens it.
+            continue
+        if total > limit:
+            raise GltfExportError(
+                'candidate animation input exceeds the total size limit')
+    return total
 
 
 def _safe_output_path(path: Path) -> Path:
@@ -423,6 +443,7 @@ def convert_file(mesh_source: Path, destination: Path, *,
                 'candidate animation requires the expected Skl reference and SHA-256')
         from kdf_animation_binding import bind_animation
 
+        _check_animation_total_bytes(animation_sources)
         with skeleton_source.open('rb') as file:
             skeleton_raw = file.read(_MAX_ANIMATION_BYTES + 1)
         if len(skeleton_raw) > _MAX_ANIMATION_BYTES:

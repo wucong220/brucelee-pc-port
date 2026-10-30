@@ -6,7 +6,11 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from character_to_gltf import GltfExportError, convert_file
+from character_to_gltf import (
+    GltfExportError,
+    _check_animation_total_bytes,
+    convert_file,
+)
 from test_kdf_mesh import mesh_fixture
 
 
@@ -23,6 +27,35 @@ class TestGltfPublication(unittest.TestCase):
                     ],
                 )
             self.assertFalse((root / 'candidate.glb').exists())
+
+    def test_thirty_two_animations_pass_the_count_limit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            try:
+                convert_file(
+                    root / 'missing.mesh',
+                    root / 'candidate.glb',
+                    animation_sources=[
+                        root / f'animation-{index}.anm' for index in range(32)
+                    ],
+                )
+            except (GltfExportError, FileNotFoundError) as exc:
+                self.assertNotIn('too many candidate', str(exc))
+            else:
+                self.fail('a missing Mesh must still be rejected')
+            self.assertFalse((root / 'candidate.glb').exists())
+
+    def test_total_animation_bytes_are_capped(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            sources = []
+            for index in range(2):
+                source = root / f'animation-{index}.anm'
+                source.write_bytes(b'012345')
+                sources.append(source)
+            with self.assertRaisesRegex(GltfExportError, 'total size limit'):
+                _check_animation_total_bytes(sources, limit=10)
+            self.assertEqual(_check_animation_total_bytes(sources, limit=12), 12)
 
     def test_output_in_project_or_known_sync_folder_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:

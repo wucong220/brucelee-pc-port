@@ -65,6 +65,7 @@ class TestComboGroupInventory(unittest.TestCase):
         ]
         selected = collect_links(links, "candobasicattacks")
         self.assertEqual([item["to"] for item in selected], ["highpunch1", "lowkick1"])
+        self.assertEqual([item["source_index"] for item in selected], [1, 2])
         self.assertEqual(selected[0]["blending"], 2)
 
     def test_link_without_key_sequence_is_rejected(self):

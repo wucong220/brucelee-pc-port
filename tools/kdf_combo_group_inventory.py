@@ -80,7 +80,7 @@ def collect_links(links: list[dict], group: str) -> list[dict]:
     if not group:
         raise GroupInventoryError('group must be a non-empty name')
     selected = []
-    for link in links:
+    for index, link in enumerate(links):
         if not isinstance(link, dict) or link.get('from_group') != group:
             continue
         target = link.get('to')
@@ -90,6 +90,7 @@ def collect_links(links: list[dict], group: str) -> list[dict]:
         if not isinstance(keysequence, list):
             raise GroupInventoryError(f'{group} -> {target} link has no key sequence')
         selected.append({
+            'source_index': index,
             'to': target,
             'keysequence': keysequence,
             'conditions': link.get('conditions', []),
@@ -97,7 +98,9 @@ def collect_links(links: list[dict], group: str) -> list[dict]:
             'blending': link.get('blending'),
             'input_reset': link.get('input_reset'),
         })
-    selected.sort(key=lambda item: (item['to'], json.dumps(item['keysequence'])))
+    # Keep the original links order: it is the order the native runtime would
+    # scan, so it stays available as evidence for the unrecovered link priority.
+    selected.sort(key=lambda item: item['source_index'])
     return selected
 
 
@@ -154,7 +157,7 @@ def main() -> int:
         if len(text.encode('utf-8')) > _MAX_REPORT_BYTES:
             raise GroupInventoryError('report exceeds the size limit')
         args.out.parent.mkdir(parents=True, exist_ok=True)
-        args.out.write_text(text + '\n', encoding='utf-8')
+        args.out.write_text(text + '\n', encoding='utf-8', newline='\n')
     except (OSError, KeyError, KdfError, ValueError) as exc:
         print(f'error: {exc}', file=sys.stderr)
         return 1

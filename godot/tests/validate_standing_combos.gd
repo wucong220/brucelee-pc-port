@@ -170,6 +170,12 @@ func _run() -> void:
     if not _validate_same_action_replay(player, opponent):
         quit(1)
         return
+    if not _validate_guard_cancels_combo(player, opponent):
+        quit(1)
+        return
+    if not _validate_blocked_hit_cancels_pending(player, opponent):
+        quit(1)
+        return
     if not _validate_low_combo_damage(player, opponent):
         quit(1)
         return
@@ -291,29 +297,48 @@ func _validate_same_action_replay(
         player: PortFighter,
         opponent: PortFighter
 ) -> bool:
-    # ABB re-enters lowpunch1. With visual blending enabled the transition must
-    # still restart the clip instead of keeping the previous playback position.
+    # ABB and BDD both re-enter the current action. With visual blending
+    # enabled the transition must still restart the clip from frame 0.
+    var cases: Array[Dictionary] = [
+        {"initial": "punch", "keys": ["a", "b", "b"], "frame": 22, "action": "punch"},
+        {"initial": "kick", "keys": ["b", "d", "d"], "frame": 31, "action": "kick"},
+    ]
+    for entry: Dictionary in cases:
+        if not _run_same_action_replay(player, opponent, entry):
+            return false
+    return true
+
+
+func _run_same_action_replay(
+        player: PortFighter,
+        opponent: PortFighter,
+        entry: Dictionary
+) -> bool:
+    var initial: String = String(entry["initial"])
+    var keys: Array = entry["keys"]
+    var frame: int = int(entry["frame"])
+    var expected_action: String = String(entry["action"])
+    var label: String = "".join(keys).to_upper()
     player.candidate_visual_blending_enabled = true
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
     player._time = 0.0
-    if not player.request_attack("punch"):
+    if not player.request_attack(initial):
         player.candidate_visual_blending_enabled = false
-        push_error("Could not start the low punch for the blending check")
+        push_error("Could not start " + initial + " for the blending check")
         return false
-    player.record_standing_combo_press("a")
-    player.record_standing_combo_press("b")
-    player.record_standing_combo_press("b")
-    if String(player.get("_standing_combo_pending_attack")) != "punch":
+    for key: String in keys:
+        player.record_standing_combo_press(key)
+    if String(player.get("_standing_combo_pending_attack")) != expected_action:
         player.candidate_visual_blending_enabled = false
-        push_error("ABB did not queue lowpunch1 for the blending check")
+        push_error(label + " did not queue its same-action target")
         return false
-    player._advance_timed_states(22.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._advance_timed_states(float(frame) / PortFighter.SOURCE_FRAME_RATE)
     player._animate_candidate()
     var animation: AnimationPlayer = player.get("_candidate_animation")
     if animation == null or not animation.is_playing():
         player.candidate_visual_blending_enabled = false
-        push_error("The low punch clip is not playing before the same-action transition")
+        push_error(label + " clip is not playing before the transition")
         return false
     animation.seek(1.0, true)
     var transitioned: bool = player._try_begin_pending_standing_combo()
@@ -322,13 +347,70 @@ func _validate_same_action_replay(
     var action: String = String(player.get("_candidate_action"))
     player.candidate_visual_blending_enabled = false
     if not transitioned:
-        push_error("Same-action ABB did not transition inside the frame-22 window")
+        push_error(label + " did not transition inside its source window")
         return false
     if position > 0.05:
-        push_error("Same-action combo kept the previous clip position: " + str(position))
+        push_error(label + " kept the previous clip position: " + str(position))
         return false
-    if action != "punch":
-        push_error("Same-action combo changed the candidate action: " + action)
+    if action != expected_action:
+        push_error(label + " changed the candidate action to " + action)
+        return false
+    return true
+
+
+func _validate_guard_cancels_combo(
+        player: PortFighter,
+        opponent: PortFighter
+) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    player._time = 0.0
+    player.guard_held = true
+    if player.record_standing_combo_press("a"):
+        push_error("A guarded attack press was accepted as combo input")
+        player.guard_held = false
+        return false
+    player.guard_held = false
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch after releasing guard")
+        return false
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) == "high_punch":
+        push_error("A guard-era press still completed the AAA sequence")
+        return false
+    # Guard raised between two presses must also drop a partial history.
+    player.record_standing_combo_press("b")
+    player.guard_held = true
+    player._physics_process(0.0)
+    player.guard_held = false
+    if not (player.get("_standing_combo_input_history") as Array).is_empty():
+        push_error("Raising guard did not clear the partial combo history")
+        return false
+    return true
+
+
+func _validate_blocked_hit_cancels_pending(
+        player: PortFighter,
+        opponent: PortFighter
+) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch before the block interrupt")
+        return false
+    for _index: int in 3:
+        player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
+        push_error("AAA did not queue highpunch1 before the block interrupt")
+        return false
+    player.receive_hit(5.0, true, 0.0, 1.0)
+    if player.state != "blockstun":
+        push_error("The defending fighter did not enter blockstun")
+        return false
+    if not String(player.get("_standing_combo_pending_attack")).is_empty():
+        push_error("A blocked hit did not cancel the pending standing combo")
         return false
     return true
 

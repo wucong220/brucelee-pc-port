@@ -854,6 +854,7 @@
   ],
   "links": [
     {
+      "source_index": 32,
       "to": "attacktofloor",
       "keysequence": [
         [
@@ -874,6 +875,7 @@
       "input_reset": "true"
     },
     {
+      "source_index": 33,
       "to": "attacktofloor",
       "keysequence": [
         [
@@ -894,209 +896,7 @@
       "input_reset": "true"
     },
     {
-      "to": "endattack brick",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun",
-        "grabdistance"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
-      "to": "endattack chief",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun",
-        "grabdistance"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
-      "to": "endattack johnson",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun",
-        "grabdistance"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
-      "to": "endattack ken",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun",
-        "grabdistance"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
-      "to": "endattack loming",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
-      "to": "endattack master",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
-      "to": "endattack shenlo",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
-      "to": "endattack sinfu",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
-      "to": "endattack smallboy",
-      "keysequence": [
-        [
-          "pressup",
-          "pressright",
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [
-        "oppposestun",
-        "grabdistance"
-      ],
-      "entry_frame": 0,
-      "blending": 6,
-      "input_reset": null
-    },
-    {
+      "source_index": 34,
       "to": "endattack1",
       "keysequence": [
         [
@@ -1120,6 +920,7 @@
       "input_reset": null
     },
     {
+      "source_index": 35,
       "to": "endattack2",
       "keysequence": [
         [
@@ -1143,24 +944,219 @@
       "input_reset": null
     },
     {
-      "to": "highkick1",
+      "source_index": 36,
+      "to": "endattack brick",
       "keysequence": [
         [
-          "pressb"
+          "pressup",
+          "pressright",
+          "pressa"
         ],
         [
-          "pressc"
+          "pressa"
         ],
         [
-          "pressc"
+          "pressa"
         ]
       ],
-      "conditions": [],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
       "entry_frame": 0,
-      "blending": 2,
-      "input_reset": "true"
+      "blending": 6,
+      "input_reset": null
     },
     {
+      "source_index": 37,
+      "to": "endattack chief",
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null
+    },
+    {
+      "source_index": 38,
+      "to": "endattack johnson",
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null
+    },
+    {
+      "source_index": 39,
+      "to": "endattack ken",
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null
+    },
+    {
+      "source_index": 40,
+      "to": "endattack loming",
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null
+    },
+    {
+      "source_index": 41,
+      "to": "endattack master",
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null
+    },
+    {
+      "source_index": 42,
+      "to": "endattack shenlo",
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null
+    },
+    {
+      "source_index": 43,
+      "to": "endattack sinfu",
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null
+    },
+    {
+      "source_index": 44,
+      "to": "endattack smallboy",
+      "keysequence": [
+        [
+          "pressup",
+          "pressright",
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ]
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null
+    },
+    {
+      "source_index": 83,
       "to": "highkick3",
       "keysequence": [
         [
@@ -1182,24 +1178,7 @@
       "input_reset": "true"
     },
     {
-      "to": "highpunch1",
-      "keysequence": [
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ],
-        [
-          "pressa"
-        ]
-      ],
-      "conditions": [],
-      "entry_frame": 0,
-      "blending": 2,
-      "input_reset": "true"
-    },
-    {
+      "source_index": 84,
       "to": "highpunch3",
       "keysequence": [
         [
@@ -1221,16 +1200,20 @@
       "input_reset": "true"
     },
     {
-      "to": "lowkick1",
+      "source_index": 85,
+      "to": "lowpunch3",
       "keysequence": [
         [
+          "pressdown",
+          "pressa"
+        ],
+        [
+          "pressout",
           "pressb"
         ],
         [
-          "pressd"
-        ],
-        [
-          "pressd"
+          "pressout",
+          "pressa"
         ]
       ],
       "conditions": [],
@@ -1239,6 +1222,7 @@
       "input_reset": "true"
     },
     {
+      "source_index": 86,
       "to": "lowkick3",
       "keysequence": [
         [
@@ -1260,6 +1244,26 @@
       "input_reset": "true"
     },
     {
+      "source_index": 87,
+      "to": "lowkick1",
+      "keysequence": [
+        [
+          "pressb"
+        ],
+        [
+          "pressd"
+        ],
+        [
+          "pressd"
+        ]
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true"
+    },
+    {
+      "source_index": 88,
       "to": "lowpunch1",
       "keysequence": [
         [
@@ -1278,18 +1282,35 @@
       "input_reset": "true"
     },
     {
-      "to": "lowpunch3",
+      "source_index": 89,
+      "to": "highkick1",
       "keysequence": [
         [
-          "pressdown",
-          "pressa"
-        ],
-        [
-          "pressout",
           "pressb"
         ],
         [
-          "pressout",
+          "pressc"
+        ],
+        [
+          "pressc"
+        ]
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true"
+    },
+    {
+      "source_index": 90,
+      "to": "highpunch1",
+      "keysequence": [
+        [
+          "pressa"
+        ],
+        [
+          "pressa"
+        ],
+        [
           "pressa"
         ]
       ],
