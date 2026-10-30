@@ -158,6 +158,10 @@ func _run_export_self_test() -> void:
         "opponent_textures_loaded": computer.candidate_textures_loaded,
         "opponent_texture_reason": computer.candidate_texture_reason,
     }))
+    await _await_combat_audio_idle()
+    _stop_combat_audio()
+    await get_tree().process_frame
+    await get_tree().process_frame
     get_tree().quit(0)
 
 func _build_environment() -> void:
@@ -333,6 +337,29 @@ func _play_hit_audio(action: String, blocked: bool) -> void:
     player.finished.connect(player.queue_free)
     combat_audio.add_child(player)
     player.play()
+
+func _stop_combat_audio() -> void:
+    if is_instance_valid(combat_audio):
+        for child: Node in combat_audio.get_children():
+            var player: AudioStreamPlayer = child as AudioStreamPlayer
+            if player != null:
+                player.stop()
+                player.stream = null
+    _candidate_audio.clear()
+    _candidate_audio_error.clear()
+
+
+func _await_combat_audio_idle(timeout_seconds: float = 2.0) -> void:
+    if not is_instance_valid(combat_audio):
+        return
+    var deadline: int = Time.get_ticks_msec() + int(timeout_seconds * 1000.0)
+    while combat_audio.get_child_count() > 0 and Time.get_ticks_msec() < deadline:
+        await get_tree().process_frame
+
+
+func _exit_tree() -> void:
+    _stop_combat_audio()
+    combat_audio = null
 
 func _process(_delta: float) -> void:
     _update_fight_camera()
