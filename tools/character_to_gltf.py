@@ -28,10 +28,10 @@ _UNSIGNED_BYTE = 5121
 _UNSIGNED_SHORT = 5123
 _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
 # This slice adds the recovered highpunch1/highkick1 clips to the 23-clip
-# Bruce candidate used by the ground-reaction prototype. Keep the limit at the
-# exact number needed by this path; other actions remain excluded.
-# Keep the limit explicit so an accidental unbounded import is rejected.
-_MAX_ANIMATION_FILES = 25
+# Bruce candidate used by the ground-reaction prototype, plus headroom for the
+# four *_03 / m01_sp_* attacks that the group inventory lists. The cap stays
+# explicit so an accidental unbounded import is rejected.
+_MAX_ANIMATION_FILES = 32
 _MAX_RIGID_ATTACHMENTS = 16
 
 

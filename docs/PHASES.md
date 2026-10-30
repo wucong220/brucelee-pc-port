@@ -47,6 +47,13 @@
 > 先前者，这是原型策略，原版 link 优先级仍未恢复。`idle`/`idle2` 的组窗口只作
 > 来源组记录，运行时在攻击状态之外不评估。新增四条回归检查，并分别用回退修复
 > 的负向副本确认它们会失败。
+>
+> 连段扩展准备（2026-10-30）：`candobasicattacks` 的 84 个成员和 21 条链接已由
+> `tools/kdf_combo_group_inventory.py` 只读导出到
+> `reports/candobasicattacks_group_inventory.json`。候选动画上限从 25 提高到 32，
+> 仓库外 29 段仅身体候选（含四个 `*_03`/`m01_sp_kick_jump_01`）已通过连段、
+> 地面姿态和视觉混合测试；方向修饰键、抓取距离和 `hard/high/fromright`
+> 受击档仍未闭合，所以四条方向链接尚未接入。
 
 ## 实现分层（避免混合研究与正式运行时代码）
 

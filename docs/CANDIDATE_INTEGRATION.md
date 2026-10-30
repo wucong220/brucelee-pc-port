@@ -397,8 +397,20 @@ SHA-256 是
 `reports/candobasicattacks_group_inventory.json`，生成命令见
 [`FIGHTING_SET_FINDINGS.md`](FIGHTING_SET_FINDINGS.md)。其余链接需要
 方向修饰键（`pressup/pressdown/pressin/pressout`）、抓取距离状态，或
-`m01_*_03` 与 `m01_sp_*` 动画；这些动画不在当前 25 段候选内，且
-`tools/character_to_gltf.py` 目前把候选动画限制为 25 段，所以尚未接入。
+`m01_*_03` 与 `m01_sp_*` 动画。`tools/character_to_gltf.py` 的候选动画上限
+已从 25 提高到 32；仓库外另构建了一个 29 段、仅身体网格的验证候选
+（1,623,948 字节，SHA-256
+`45a6a2cf10bb9a143aefc96106eadea0dc9aada53b732d0f892e7ac2c408052c`），
+含 `m01_pnch_high_03`、`m01_pnch_low_03`、`m01_kick_low_03`、
+`m01_sp_kick_jump_01`，并已用 `validate_standing_combos`、`validate_ground_pose`
+和 `validate_candidate_visual_blending` 跑通。该候选未带头发：本机
+`--rigid-attachment` 要求唯一的 Skl 对象节点，而当前 Skl 的
+`object_static_transforms` 只有 3 个对象节点、没有 `head`，与既有 25 段候选的
+构建路径不同。方向链接仍**没有**接入运行时：`highpunch3` 和 `highkick3` 的 impact 是
+`hard/high/fromright`，而 `exact_reactions.hit` 目前只覆盖
+`hard/medium/frontal` 与 `hard/low/fromright`，直接放行会让这两招落到普通
+`high` 受击档；`pressup/pressdown/pressin/pressout` 修饰键和抓取距离语义也
+仍未恢复。
 
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
 `[31,86]`、`[17,101]` 和 `[33,73]`。从首键起算的原型输入期限为 0.5 秒。
