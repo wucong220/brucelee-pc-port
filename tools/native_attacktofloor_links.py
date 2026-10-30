@@ -6,7 +6,9 @@ import argparse
 import hashlib
 import struct
 import sys
+from collections.abc import Mapping
 from pathlib import Path
+from typing import TypeVar
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from native_hierarchy_links import HierarchyLinkError, file_offset
@@ -85,6 +87,26 @@ _STRINGS = {
     0x005BDD0C: b"pose\x00",
 }
 
+_Value = TypeVar("_Value")
+
+
+def _verify_map(
+    expected: Mapping[int, _Value],
+    actual: Mapping[int, _Value],
+    description: str,
+) -> None:
+    for address, expected_value in expected.items():
+        if address not in actual:
+            raise HierarchyLinkError(
+                f"{description} at 0x{address:08x} is missing"
+            )
+        actual_value = actual[address]
+        if actual_value != expected_value:
+            raise HierarchyLinkError(
+                f"{description} at 0x{address:08x} is {actual_value!r}, "
+                f"expected {expected_value!r}"
+            )
+
 
 def _dynamic_symbols(elf: bytes) -> dict[int, str]:
     e_shoff = struct.unpack_from("<I", elf, 32)[0]
@@ -137,29 +159,24 @@ def verify_bytes(elf: bytes) -> None:
         raise HierarchyLinkError(
             "ELF SHA-256 does not match the recorded libdefault.so"
         )
-    for address, expected in _WORDS.items():
-        actual = struct.unpack_from("<I", elf, file_offset(elf, address))[0]
-        if actual != expected:
-            raise HierarchyLinkError(
-                f"instruction 0x{address:08x} is 0x{actual:08x}, "
-                f"expected 0x{expected:08x}"
-            )
+    actual_words = {
+        address: struct.unpack_from("<I", elf, file_offset(elf, address))[0]
+        for address in _WORDS
+    }
+    _verify_map(_WORDS, actual_words, "instruction")
+
     symbols = _dynamic_symbols(elf)
-    for address, expected in _RELOCATIONS.items():
-        actual = symbols.get(address)
-        if actual != expected:
-            raise HierarchyLinkError(
-                f"relocation 0x{address:08x} is {actual!r}, "
-                f"expected {expected!r}"
-            )
+    _verify_map(
+        _RELOCATIONS,
+        {address: symbols[address] for address in _RELOCATIONS if address in symbols},
+        "relocation",
+    )
+
+    actual_strings = {}
     for address, expected in _STRINGS.items():
         offset = file_offset(elf, address)
-        actual = elf[offset:offset + len(expected)]
-        if actual != expected:
-            raise HierarchyLinkError(
-                f"literal at 0x{address:08x} is {actual!r}, "
-                f"expected {expected!r}"
-            )
+        actual_strings[address] = elf[offset:offset + len(expected)]
+    _verify_map(_STRINGS, actual_strings, "literal")
 
 
 def main() -> int:
