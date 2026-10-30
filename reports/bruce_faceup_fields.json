@@ -2019,7 +2019,7 @@
     "entry_frame": 9,
     "blending": 6,
     "input_reset": true,
-    "transition_timing": "输入与条件在组成员窗口内匹配后，若尚未到该成员组窗口结束帧，FollowLink 把 link 和结束帧存入 fighter+0xf0/+0xf4；BasicUpdate 到结束帧后才执行目标动作。",
+    "transition_timing": "输入与条件在组成员窗口内匹配后，FollowLink 将该成员记录第三项与当前帧比较；若第三项大于当前帧，则把 link 和该值存入 fighter+0xf0/+0xf4，BasicUpdate 达到该值后执行目标动作。第三项的业务语义及运行时是否被修改尚未验证，不能认定为窗口结束帧。",
     "link_order": "UserControlUpdate 按当前动画 links 向量的索引升序检查；解析出的 set 中 attacktofloor 位于第 32/33 项，相同 basic-combo 序列到 lowkick1/highkick1 的链接位于第 87/89 项。若原始 set 数组顺序原样进入运行时向量，attacktofloor 会先匹配；该顺序保持关系尚未独立证明。",
     "remaining_blockers": [
       "当前 22 段候选 GLB 明确排除 m01_attack_to_floor",

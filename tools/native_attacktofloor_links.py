@@ -42,16 +42,16 @@ _WORDS = {
     0x001A1FCC: 0xE59100D0,  # direct path reads link end
     0x001A8040: 0xE5D13008,  # FollowLink reads group flag
     0x001A8048: 0xE3530000,  # compare group flag
-    0x001A8104: 0xE1530002,  # compare current frame with group-window end
-    0x001A8108: 0x858430F4,  # defer transition end at fighter+0xf4
+    0x001A8104: 0xE1530002,  # compare group member third value with current frame
+    0x001A8108: 0x858430F4,  # store deferred transition frame at fighter+0xf4
     0x001A810C: 0x858450F0,  # defer selected link at fighter+0xf0
     0x001A8110: 0x8A00007D,  # return before executing the group link
     0x001A83BC: 0xE59420F0,  # BasicUpdate reads pending link
     0x001A83C0: 0xE3520000,  # check pending link
     0x001A83C8: 0xE5941034,  # read current frame
-    0x001A83CC: 0xE59430F4,  # read deferred end
+    0x001A83CC: 0xE59430F4,  # read deferred frame
     0x001A83D0: 0xE1510003,  # compare current frame with deferred end
-    0x001A83D4: 0x2A000066,  # execute transition once the end is reached
+    0x001A83D4: 0x2A000066,  # execute transition once the deferred frame is reached
     0x001A8574: 0xE5923004,  # delayed link execution begins here
     0x001A3B2C: 0xE59F3544,  # CheckConditions loads OppPoseLaying GOT offset
     0x001A3B30: 0xE7943003,  # resolve OppPoseLaying GID

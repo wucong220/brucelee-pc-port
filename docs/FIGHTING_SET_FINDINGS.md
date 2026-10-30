@@ -535,9 +535,17 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 `attacktofloor` 就一定触发”，也没有运行时实测。
 
 输入与条件通过后，`FollowLink` 并不会总在当帧切换：对组链接，它在
-`0x1A80F0–0x1A8110` 比较当前帧和组窗口结束帧，尚未到结束时把 link 与
-结束帧写入 `fighter+0xF0/+0xF4`；`BasicUpdate` 在
-`0x1A83BC–0x1A83D4` 等到结束后才从 `0x1A8574` 执行目标动作。
+`0x1A80F0–0x1A8110` 比较当前帧与同一组成员记录的第三项；该值大于当前帧时
+把 link 与该值写入 `fighter+0xF0/+0xF4`，`BasicUpdate` 在
+`0x1A83BC–0x1A83D4` 达到保存值后从 `0x1A8574` 执行目标动作。解析代码
+`0x22E474–0x22E6A4` 将成员第二项的窗口存入描述对象 `+0x44` 数组，
+`0x22E6C8–0x22E7B0` 读取第三项，并在 `0x2320D4–0x2320D8` 存入
+`+0x58` 数组。第三项不是已证实的窗口结束帧；其业务语义及运行时是否被修改
+尚未验证。此前将该值称为窗口结束帧的结论撤销。
+本机只读反汇编核对上述读取路径，退出码 0；`py -3.12 -X utf8 -B
+ tools/native_attacktofloor_links.py <local-libdefault.so>` 校验 62 条指令、
+2 个重定位和 1 个字面量，退出码 0。`py -3.12 -X utf8 -B -m unittest
+ discover -s tests -p "test*.py" -q`：216 项、跳过 1 项，退出码 0。
 `UserControlUpdate` 从当前动画 links 向量索引 0 开始升序检查。解析出的
 `brucelee.set` 中，`attacktofloor` 的 links 是第 32/33 项，相同 basic-combo
 序列到 `lowkick1/highkick1` 的 links 是第 87/89 项。若原始 set 数组顺序
