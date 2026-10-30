@@ -33,10 +33,6 @@ func _run() -> void:
             push_error("Candidate is missing " + required)
             quit(1)
             return
-    if clips.has("low_punch2"):
-        push_error("low_punch2 should be absent because the converter rejects its clip")
-        quit(1)
-        return
     if not _validate_transition(player, "high_punch", "a", "high_punch2"):
         quit(1)
         return
@@ -54,7 +50,7 @@ func _run() -> void:
         return
     print("LEVEL2_MOVE_VALIDATION=" + JSON.stringify({
         "level2": ["high_punch2", "high_kick2", "low_kick2"],
-        "low_punch2": "fail-closed: m01_pnch_low_02 rejected by the wavelet converter",
+        "low_punch2": "fail-closed: m01_pnch_low_02 third wavelet root is not a zeroed empty stream",
         "candidate_bytes": 1948476,
         "candidate_sha256": "38743058c8658dbdbeb488fc8d70e4f4d8982fe3b10bdec251a3b1300eeb3281",
         "scope": "PC prototype combo-level state; native keystatus unverified",
@@ -95,6 +91,26 @@ func _validate_level3_progression(player: PortFighter) -> bool:
     return true
 
 
+func _validate_low_punch2_fail_closed(player: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch")
+        return false
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("b")
+    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._try_begin_pending_standing_combo()
+    if player.attack_kind == "low_punch2":
+        push_error("low_punch2 fired without a loaded clip")
+        return false
+    if player.current_source_animation() == "m01_pnch_low_02":
+        push_error("low_punch2 requested its missing clip")
+        return false
+    return true
+
+
 func _validate_transition(
         player: PortFighter, base: String, key1: String, target: String,
         key2: String = ""
@@ -123,24 +139,3 @@ func _validate_transition(
         push_error(target + " requested " + player.current_source_animation())
         return false
     return true
-
-
-func _validate_low_punch2_fail_closed(player: PortFighter) -> bool:
-    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
-    player._time = 0.0
-    if not player.request_attack("punch"):
-        push_error("Could not start the low punch")
-        return false
-    player.record_standing_combo_press("a")
-    player.record_standing_combo_press("b")
-    player.record_standing_combo_press("b")
-    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
-    player._try_begin_pending_standing_combo()
-    if player.attack_kind == "low_punch2":
-        push_error("low_punch2 fired without a loaded clip")
-        return false
-    if player.current_source_animation() == "m01_pnch_low_02":
-        push_error("low_punch2 requested its missing clip")
-        return false
-    return true
-

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "source_set": "adreno_200/set/brucelee.set",
+  "purpose": "Which recovered Bruce special/reaction animations the candidate converter can currently bundle.",
+  "tested_with": "py -3.12 -X utf8 -B tools/character_to_gltf.py <body> --skeleton <Skl> --include-object-transforms --expected-skeleton-sha256 4a6d4532... <30-clip base> --animation <clip>",
+  "convertible": [
+    "m01_sp_pnch_high_fail",
+    "m01_sp_pnch_high",
+    "m01_sp_pnch_high_impct",
+    "m01_sp_pnch_low"
+  ],
+  "rejected_by_converter": {
+    "m01_pnch_low_02": "wavelet initial channel array or first node is invalid",
+    "m01_sp_pnch_low_fail": "wavelet initial channel array or first node is invalid",
+    "m01_sp_pnch_low_impct": "wavelet initial channel array or first node is invalid",
+    "all_impct_hard_frnt_high": "wavelet initial channel array or first node is invalid"
+  },
+  "not_yet_extracted": [
+    "m01_sp_kick_low_fail",
+    "m01_sp_kick_low",
+    "m01_sp_kick_low_impact"
+  ],
+  "implications": [
+    "specialpunchlow cannot be completed because its miss clip m01_sp_pnch_low_fail is rejected; the hit clip converts.",
+    "specialpunchhigh has all three clips available: miss m01_sp_pnch_high_fail, hit m01_sp_pnch_high, impact m01_sp_pnch_high_impct.",
+    "lowpunch2 remains fail-closed until m01_pnch_low_02 is decoded.",
+    "The hard/high/frontal reaction all_impct_hard_frnt_high remains unavailable for the same reason."
+  ]
+}

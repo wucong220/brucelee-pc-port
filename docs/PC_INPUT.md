@@ -72,12 +72,21 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 `all_impct_hard_frnt_high` 目前无法被打包，因此该反应保持 fail-closed（伤害生效、
 不伪造受击动作）。
 
+必杀技下段踢（原型）：`背向?不，左侧+B → 朝向+C → 朝向+C`（PC 原型用
+`left` 代表原版 `stepleft`，`in` 代表 `pressright`）在怒气 `rage2thirds`（≥66）
+时进入 `special_kick_low_miss`（`m01_sp_kick_low_fail`，50 帧）。若第 14–16 帧内
+对手在 0.62 世界单位的原型抓取距离内、站立且未格挡，则切到
+`special_kick_low_hit`（`m01_sp_kick_low`，39 帧，伤害 15、攻击半径 45、
+`larm/high/hard/frontal`）；否则保持 miss 并回 idle。`hard/high/frontal`
+专用受击动画仍不可用，反应 fail-closed。
+
 普通攻击第 2 段（连段等级 1）：在基础 `A/A/A`、`A/B/B`、`B/C/C`、`B/D/D`
 命中后，再用同一按键序列会转到对应第 2 段（`high_punch2`、`low_punch2`、
 `high_kick2`、`low_kick2`）。原型用当前攻击种类表示 `combolevel1`；
 原版 `keystatus` 的 down pressed/released 尚未复刻。`low_punch2` 的动画
-`m01_pnch_low_02` 被转换器以 wavelet 错误拒绝，因此该招 fail-closed（不加载、
-不可发动），其余三段可用。第 3 段仍从第 2 段按原方向序列衔接。
+`m01_pnch_low_02` 目前仍无法安全解码（其第三个 root 不是简单的全零空流，
+不能靠跳过 root 猜测），因此该招 fail-closed（不加载、不可发动），其余三段可用。
+第 3 段仍从第 2 段按原方向序列衔接。
 
 已实现来源窗口为 lowpunch 第 `[22,69]` 帧、lowkick 第 `[31,86]` 帧、
 highpunch 第 `[17,101]` 帧和 highkick 第 `[33,73]` 帧。目标 clip 未加载时
