@@ -37,6 +37,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "parry_attack": "m01_pnch_high_03",
     "grab1": "m01_grab_01",
     "grab2": "m01_grab_02",
+    "endattack1": "m01_end_attack_01",
+    "endattack2": "m01_end_attack_02",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -84,6 +86,8 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_parry_high": 40.0,
     "m01_grab_01": 40.0,
     "m01_grab_02": 25.0,
+    "m01_end_attack_01": 45.0,
+    "m01_end_attack_02": 45.0,
     "all_impct_hard_frnt_high": 80.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
@@ -200,6 +204,8 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
 }
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
 const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
+const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
+const NON_CONTACT_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.
@@ -226,6 +232,8 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["up", "a"], ["up", "a"], ["up", "a"]], "attack": "special_punch_high_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
     {"steps": [["left", "a"], ["a"], ["a"]], "attack": "grab1", "from_attack": "punch"},
     {"steps": [["left", "b"], ["c"], ["c"]], "attack": "grab2", "from_attack": "kick"},
+    {"steps": [["up", "in", "b"], ["a"], ["a"]], "attack": "endattack1", "from_attack_in": ["grab1", "grab2"]},
+    {"steps": [["up", "in", "a"], ["c"], ["c"]], "attack": "endattack2", "from_attack_in": ["grab1", "grab2"]},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
@@ -241,6 +249,8 @@ const CANDOBASICATTACK_WINDOWS: Dictionary = {
     "low_punch3": [33, 81],
     "low_kick3": [26, 56],
     "high_kick3": [30, 51],
+    "grab1": [45, 150],
+    "grab2": [4, 180],
     "high_punch2": [32, 81],
     "low_punch2": [20, 65],
     "high_kick2": [28, 95],
@@ -498,6 +508,28 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "body_part": "larm",
         "height": "high",
         "strength": "normal",
+        "direction": "frontal",
+    },
+    "endattack1": {
+        "source_action": "endattack1",
+        "animation": "m01_end_attack_01",
+        "frame_count": 377,
+        "damage": 0.0,
+        "radius": 65.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "endattack2": {
+        "source_action": "endattack2",
+        "animation": "m01_end_attack_02",
+        "frame_count": 235,
+        "damage": 0.0,
+        "radius": 75.0,
+        "body_part": "rleg",
+        "height": "high",
+        "strength": "hard",
         "direction": "frontal",
     },
 }
@@ -816,6 +848,7 @@ var rage: float = 0.0
 var _special_stepback_origin: bool = false
 var _multi_impact_applied: Array = []
 var _attack_hit_landed: bool = false
+var _grab_connected: bool = false
 var _parry_press_times: Array = []
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
@@ -1544,7 +1577,8 @@ func _try_load_candidate_visual() -> void:
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
-            "parry_high", "parry_attack", "grab1", "grab2"]:
+            "parry_high", "parry_attack", "grab1", "grab2",
+            "endattack1", "endattack2"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2430,6 +2464,7 @@ func record_parry_press() -> bool:
     attack_sequence += 1
     _attack_connected = false
     _attack_hit_landed = false
+    _grab_connected = false
     _multi_impact_applied.clear()
     state = "startup"
     state_time = float(ATTACKS["parry_high"]["startup"])
@@ -2604,6 +2639,21 @@ func _try_begin_pending_standing_combo() -> bool:
         if grab_distance > PROTOTYPE_GRAB_DISTANCE:
             _clear_standing_combo_state()
             return false
+    if ENDATTACK_ATTACKS.has(_standing_combo_pending_attack):
+        if not _grab_connected:
+            _clear_standing_combo_state()
+            return false
+        if (opponent == null or not is_instance_valid(opponent)
+                or opponent.guard_held
+                or opponent.state not in ["hitstun", "idle", "idle2"]):
+            _clear_standing_combo_state()
+            return false
+        var end_distance: float = Vector2(
+            opponent.global_position.x - global_position.x,
+            opponent.global_position.z - global_position.z).length()
+        if end_distance > PROTOTYPE_GRAB_DISTANCE:
+            _clear_standing_combo_state()
+            return false
     if not supports_attack(_standing_combo_pending_attack):
         _clear_standing_combo_state()
         return false
@@ -2636,7 +2686,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_attack", "grab1", "grab2":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_attack", "grab1", "grab2", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -2789,6 +2839,7 @@ func request_attack(kind: String) -> bool:
     attack_sequence += 1
     _attack_connected = false
     _attack_hit_landed = false
+    _grab_connected = false
     _multi_impact_applied.clear()
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
@@ -2807,6 +2858,7 @@ func _physics_process(delta: float) -> void:
     _advance_timed_states(delta)
     _try_begin_pending_standing_combo()
     if (state == "active" and ATTACKS.has(attack_kind)
+            and not NON_CONTACT_ATTACKS.has(attack_kind)
             and Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty()
             and not _attack_connected
             and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
@@ -2840,7 +2892,7 @@ func _advance_timed_states(delta: float) -> void:
     var remaining: float = delta
     while (remaining > 0.0
             and state in ["startup", "active", "recovery", "hitstun", "blockstun"]):
-        if state == "active" and ATTACKS.has(attack_kind):
+        if state == "active" and ATTACKS.has(attack_kind) and not NON_CONTACT_ATTACKS.has(attack_kind):
             if not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty():
                 _try_multi_impact_contacts()
             elif (not _attack_connected
@@ -2924,6 +2976,7 @@ func _begin_chained_attack(kind: String) -> void:
     attack_sequence += 1
     _attack_connected = false
     _attack_hit_landed = false
+    _grab_connected = false
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
     _restart_candidate_action()
@@ -3008,6 +3061,8 @@ func _register_landed_hit(damage: float, blocked: bool) -> void:
     combo_hits += 1
     if damage > 0.0 and not blocked:
         _attack_hit_landed = true
+        if GRAB_ATTACKS.has(attack_kind):
+            _grab_connected = true
         rage = minf(RAGE_MAX, rage + RAGE_GAIN_PER_HIT)
 
 
@@ -3421,6 +3476,7 @@ func reset_fighter(start_position: Vector3) -> void:
     combo_hits = 0
     rage = 0.0
     _attack_hit_landed = false
+    _grab_connected = false
     _multi_impact_applied.clear()
     _parry_press_times.clear()
     if candidate_loaded:
@@ -3479,7 +3535,8 @@ func _animate_candidate() -> void:
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",
                 "special_punch_high_miss", "special_punch_high_hit",
-                "parry_high", "parry_attack", "grab1", "grab2"]:
+                "parry_high", "parry_attack", "grab1", "grab2",
+                "endattack1", "endattack2"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented

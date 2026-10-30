@@ -454,6 +454,9 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 `e155bec24771ea60724b09fbfee1620bd887d7226a2730aba5a6578e892c6d73`，
 新增 `m01_grab_01`、`m01_grab_02`。`grab1miss/grab2miss` 的 `m02_grab_01`
 属于 Ken 骨架，未打包。
+抓取终结使用 46 段带头候选：3,964,068 字节，SHA-256
+`de6819927bf7cb642e2f95e802b283c5ec06a181c37f54f5321c8468802310dd`，
+新增 `m01_end_attack_01`、`m01_end_attack_02`；原版 impact 伤害为 0，仅作动画候选。
 下段拳必杀与 hard/high/frontal 反应使用 40 段带头候选：2,453,728 字节，SHA-256
 `77ead1783187b738554a99655cb42cd9f27ca32e47782553dc6e31356c6d58ca`，
 新增 `m01_sp_pnch_low_fail`、`m01_sp_pnch_low`、`all_impct_hard_frnt_high`。
