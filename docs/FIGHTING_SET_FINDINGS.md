@@ -723,6 +723,156 @@ py -3.12 -X utf8 -B tools/native_root_motion.py `
 本次修改的回归检查：`py -3.12 -X utf8 -B -m unittest discover -s tests -p
 "test*.py" -q`，126 项通过，退出码 0；`git diff --check`，退出码 0。
 
+## 动画过渡混合控制流
+
+以下结论只适用于 SHA-256 为
+`1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70`
+的本地 `libdefault.so`。它们来自静态 ARM 指令、函数符号和 PLT/GOT
+重定位，尚未通过原版运行时内存、录像或 GPU 输出对照。
+
+已闭合的实际消费链为：
+
+```text
+CFadeQueue::UpdateOutput
+  -> CFadePlayer::UpdateOutput
+  -> CAnimPlayer::BlendOutput
+  -> CAnimPlayer::CopyBlendFrames
+  -> CAnimProvider::BuildFrame
+```
+
+根变换另走：
+
+```text
+CFadePlayer::GetRootOutput
+  -> CRootPlayerBase::BlendOutput
+  -> CRootPlayerBase::GetOutput
+```
+
+`CAnimLayer::AddTransition` 的两套重载不是这条 fighter 动画队列的直接末端；
+此前把下一阶段工作集中在 `CAnimLayer::UpdateOutput` 的方向已纠正。
+
+证据等级和边界如下：
+
+- `STATIC_VERIFIED`：`CFadeQueue::UpdateOutput` `0x3FE128` 读取
+  `[this+0x84]`，空值直接返回，非空时 `0x3FE134` 尾调用
+  `CFadePlayer::UpdateOutput`。
+- `STATIC_VERIFIED`：`CFadePlayer::UpdateOutput` `0x3FC768` 读取
+  `[this+8]`；空值分支在 `0x3FC8A8` 调用
+  `CAnimPlayer::CopyOutput`。非空分支先在 `0x3FC780` 递归更新前一层，
+  计算 fade 权重，并在 `0x3FC8A0` 调用
+  `CAnimPlayer::BlendOutput(float)`。
+- `STATIC_VERIFIED`：`CAnimPlayer::BlendOutput` `0x3F8EEC–0x3F8F10`
+  对权重 `< 0`、`= 1`、`> 1` 分流；`0x3F8FC8` 调用
+  `CopyBlendFrames`，`0x3F8FFC` 在权重至少为 1 时尾调用 `CopyOutput`。
+- `STATIC_VERIFIED`：`CopyBlendFrames` 的 `0x3F7A08` 调用
+  `CAnimProvider::BuildFrame(float)`。实际骨骼帧会经过该入口，但这里不证明
+  每一条骨骼、位置、旋转和缩放轨道采用相同的插值方式。
+- `STATIC_VERIFIED`：`CRootPlayerBase::BlendOutput` `0x407E5C–0x407E98`
+  确认权重 `< 0` 时不修改旧输出，权重 `>= 1` 时复制当前输出，权重在
+  `(0,1)` 时进入浮点混合；`0x407EC8–0x407ED0` 使用当前值乘权重、旧值乘
+  `1-weight`。权重 `1` 选择新动画，权重 `0` 保持旧动画。
+- `STATIC_SUPPORTED`：`CFadePlayer::Init` 在 `0x3FCED8–0x3FCEE4`
+  从上一级对象的 `+0x18` 读取整数并转为 float，再读取
+  `anmTransitionInfo+8`；`0x3FCEFC–0x3FCF08` 相乘、向无符号整数转换并
+  传给 `CFadeController`。已知 ANM `framerate` 字段和函数签名为该解释提供
+  支撑，但尚未通过运行时检查两个输入字段的身份。
+- `STATIC_SUPPORTED`：正权重区间的帧数计算还包含 `fabs` 和
+  `zlibm_floor` 调用。具体浮点位、半帧舍入、每条轨道的采样规则，以及
+  Godot 中的对应结果仍为 `UNVERIFIED`。
+
+`CLinkDescr::ParseFromKDF` 的字段归属也已逐段核对。PC-relative 字符串
+计算结果分别是：`0x1C40B4–0x1C40C4 -> linking_frame`、
+`0x1C41F0–0x1C4200 -> entry_frame`、
+`0x1C4498–0x1C44AC -> blending`。因此不能沿字段偏移把
+`CLinkDescr+0xD4` 误认成 blending；当前核对结果为：
+
+- `linking_frame` 写入 `CLinkDescr+0xD4`。
+- `entry_frame` 写入 `CLinkDescr+0xD8`。
+- `blending` 写入 `CLinkDescr+0xDC`；节点缺失时
+  `0x1C45E8` 提供默认值 `6`，存在时 `0x1C47D8–0x1C4820` 读取
+  KDF 整数并回到 `0x1C45F0` 写入该字段。
+
+从 link 到 transition 的静态数据流现为：
+
+```text
+CLinkDescr+0xDC
+  -> CFighter::FollowLink 0x1A8294
+  -> float(blending) / float(CFighter+0x30)
+  -> CFighter::SetAnimation fifth float argument
+  -> anmTransitionInfo+8
+  -> CFadePlayer::Init 再乘进入对象+0x18的 framerate
+```
+
+- `STATIC_VERIFIED`：`CFighter::FollowLink` 在
+  `0x1A8294–0x1A82B4` 读取 `[link+0xDC]` 和 `[fighter+0x30]`，
+  两者转 float 后执行 `vdiv`，把商写为 `SetAnimation` 的第五参数。
+  同段 `0x1A82A0` 另读 `entry_frame=[link+0xD8]`，不是 blending。
+- `STATIC_VERIFIED`：`CFighter::SetAnimation` 在 `0x1A6EA0` 接收该
+  float，在 `0x1A7214` 写入 `transitionInfo+8`，并在 `0x1A722C`
+  把该 transition object 传给
+  `gfxAnimation::AddTransition`。
+- `STATIC_SUPPORTED`：`CFadePlayer::Init` 使用的进入对象 `+0x18`
+  framerate 与 `CFighter+0x30` 是同一业务值；当前只确认两处均有
+  “帧率乘除”的数据流，尚未追到使两个字段相等的构造/赋值点。
+- `UNVERIFIED`：`gfxAnimation::AddTransition` 在 `0x3802F8–0x380300`
+  通过 vtable `+0x18` 虚调用消费 transition object；该虚调用目标尚未
+  逐层绑定到 `CFadePlayer::Init`，`vcvt.u32.f32` 的浮点舍入模式及
+  `zlibm_floor` 后的逐帧结果也没有运行时对照。
+
+因此现在有强静态依据认为档案 `blending` 是在 fighter framerate 下归一化
+到秒、随后还原成帧计数的候选配置；例如 `blending=6`、framerate 为 `30`
+时，传出的 transition 时长是 `0.2` 秒。它仍不能直接宣称为原版实际播放
+的 6 个混合帧：同一业务 framerate 的身份、固定点/浮点舍入、虚调用目标
+和逐帧视觉尚未闭合。Godot 实验应使用独立候选名，例如
+`config_blending / fighter_framerate` 秒，并明确这不是原版运行时验收。
+
+只读复核命令：
+
+```powershell
+py -3.12 -X utf8 -B tools\native_animation_blending.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+```
+
+本机输出为
+`verified 72 animation-blending words and 12 PLT relocations with 3 property strings`，
+退出码 0。
+校验器同时绑定 ELF SHA-256、代表性指令、PLT stub、GOT 槽和重定位符号；
+它证明这些静态事实来自同一个二进制，不能证明原版运行时视觉或 Godot
+当前已实现该混合。
+
+### Godot 候选视觉混合实验
+
+当前 Godot 原型已接入默认关闭的候选视觉混合。设置
+`BRUCELEE_CANDIDATE_VISUAL_BLENDING=1` 后，仅在下列三条逐项核对的切换上
+使用带证据的候选时长：
+
+| 切换 | 档案 `blending` | 候选时长 |
+|---|---:|---:|
+| Bruce `idle/idle2 -> attacktofloor` | 6 | `6 / 30 = 0.2s` |
+| Bruce `attacktofloor -> idle2` | 10 | `10 / 30 = 0.333…s` |
+| Brick `facedownidle -> impactfacedown` | 6 | `6 / 30 = 0.2s` |
+
+`godot/scripts/fighter.gd` 只把候选时长传给 Godot 4.7.2
+`AnimationPlayer.play(..., custom_blend)`。逻辑状态、命中窗口、伤害、KO
+优先级、输入门控、状态退出帧和缺 clip 失败保护仍由原候选代码决定；混合
+不会延长旧状态，也不会让旧状态继续接收输入或伤害。开关关闭时仍调用原来的
+无混合 `play()`。
+
+`godot/tests/validate_candidate_visual_blending.gd` 使用真实 23 段 Bruce
+GLB 和 7 段 Brick GLB 逐骨骼采样。本机通过结果显示：
+
+- 两段切换调用后立即采样的姿态距离均为 `0`，即旧姿势没有被瞬间替换；
+- 0.1–0.15 秒时出现非零中间姿态；
+- 混合结束后 Bruce 选择 `m01_idle_02`，Brick 选择
+  `all_impct_facedwn`；
+- 同一测试同时确认 Brick 仍扣除 6 点生命、保持 `impactfacedown`、
+  半径 85，且两名角色没有共用骨架。
+
+该实验的边界是
+`STATIC_SUPPORTED duration normalization; candidate visual interpolation;
+native runtime unverified`。Godot 的 `custom_blend` 权重曲线、帧率身份、
+`AddTransition` 虚调用目标和原版逐帧视觉仍未证明一致。
+
 ## 全量 impact 聚合
 
 使用完整外层 ZIP 和 `--inventory` 模式重新只读解析后，200 个动作、108 个

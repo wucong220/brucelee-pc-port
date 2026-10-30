@@ -122,7 +122,8 @@ $validationEnvironmentNames = @(
     "BRUCELEE_PLAYER_GLB",
     "BRUCELEE_PLAYER_TEXTURE_ROOT",
     "BRUCELEE_OPPONENT_GLB",
-    "BRUCELEE_OPPONENT_TEXTURE_ROOT"
+    "BRUCELEE_OPPONENT_TEXTURE_ROOT",
+    "BRUCELEE_CANDIDATE_VISUAL_BLENDING"
 )
 $savedValidationEnvironment = @{}
 foreach ($name in $validationEnvironmentNames) {
@@ -166,6 +167,11 @@ try {
             & $GodotExe --headless --path $godotProject `
                 --script res://tests/validate_dual_fighter_candidates.gd `
                 -- $dualArgs
+        }
+        Invoke-Checked "Candidate visual blending" {
+            & $GodotExe --headless --path $godotProject `
+                --script res://tests/validate_candidate_visual_blending.gd `
+                -- $CandidateGlb $OpponentGlb
         }
     }
     Invoke-Checked "Candidate bounds and scale" {
@@ -224,6 +230,11 @@ try {
                 & $GodotExe --headless --main-pack $packPath `
                     --script res://tests/validate_dual_fighter_candidates.gd `
                     -- $dualArgs
+            }
+            Invoke-Checked "Packed candidate visual blending" {
+                & $GodotExe --headless --main-pack $packPath `
+                    --script res://tests/validate_candidate_visual_blending.gd `
+                    -- $CandidateGlb $OpponentGlb
             }
         }
         Invoke-Checked "Packed candidate bounds and scale" {

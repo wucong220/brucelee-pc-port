@@ -34,6 +34,7 @@ func _run() -> void:
         ])
         quit(1)
         return
+    brick.candidate_visual_blending_enabled = true
     if (not _check_candidate_clip(brick)
             or not _check_nonlethal_reaction(player, brick)
             or not _check_frame_boundary(player, brick)
@@ -107,6 +108,17 @@ func _check_nonlethal_reaction(player: PortFighter, brick: PortFighter) -> bool:
             "expected": brick._candidate_clip_paths[PortFighter.FACEDOWN_IMPACT_CLIP],
             "pose": brick.current_source_pose(),
         }))
+        return false
+    var expected_blend_seconds: float = (
+        float(PortFighter.CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES)
+                / PortFighter.SOURCE_FRAME_RATE
+    )
+    if (absf(brick.candidate_visual_blend_seconds_last - expected_blend_seconds) > 0.000001
+            or brick.candidate_visual_blend_source_action_last
+                    != PortFighter.BRICK_FACEDOWN_IDLE_CLIP
+            or brick.candidate_visual_blend_target_action_last
+                    != PortFighter.FACEDOWN_IMPACT_CLIP):
+        push_error("impactfacedown did not apply its Thai-link candidate visual blend")
         return false
     player._advance_timed_states(5.0 / PortFighter.SOURCE_FRAME_RATE)
     if (absf(brick.health - (health_before - PortFighter.ATTACK_TO_FLOOR_DAMAGE)) > 0.001
@@ -233,6 +245,7 @@ func _start_attack(player: PortFighter, brick: PortFighter) -> bool:
     player.reset_fighter(Vector3.ZERO)
     brick.reset_fighter(Vector3(0.25, 1.2, 0.0))
     brick._enter_locomotion_state("facedownidle")
+    brick._animate_candidate()
     player.facing = 1.0
     if (player.try_attack_to_floor_press("b")
             != PortFighter.AttackToFloorInputResult.BUFFERED

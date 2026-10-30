@@ -26,6 +26,9 @@ const BRICK_CLIPS: Dictionary = {
 const SOURCE_FRAME_RATE: float = 30.0
 const SOURCE_CHARACTER_HEIGHT: float = CANDIDATE_SOURCE_HEIGHT
 const WORLD_CHARACTER_HEIGHT: float = CANDIDATE_HEIGHT
+const CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES: int = 6
+const CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES: int = 10
+const CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES: int = 6
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
@@ -412,6 +415,11 @@ var candidate_texture_root: String = ""
 var candidate_clips: Dictionary = CANDIDATE_CLIPS.duplicate(true)
 var candidate_material_profile: String = "body_hair"
 var candidate_scale_attack_timing: bool = false
+var candidate_visual_blending_enabled: bool = false
+var candidate_visual_blend_pending_seconds: float = 0.0
+var candidate_visual_blend_seconds_last: float = 0.0
+var candidate_visual_blend_source_action_last: String = ""
+var candidate_visual_blend_target_action_last: String = ""
 var _time: float = 0.0
 var _body: MeshInstance3D
 var _left_arm: MeshInstance3D
@@ -460,6 +468,8 @@ func configure_attack_config(path: String) -> void:
 
 
 func _ready() -> void:
+    if OS.get_environment("BRUCELEE_CANDIDATE_VISUAL_BLENDING") == "1":
+        candidate_visual_blending_enabled = true
     if not _load_attack_definitions():
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
     collision_layer = 2
@@ -1233,6 +1243,10 @@ func _reset_candidate_derived_state() -> void:
     candidate_texture_error = ""
     candidate_texture_reason = ""
     _candidate_action = ""
+    candidate_visual_blend_pending_seconds = 0.0
+    candidate_visual_blend_seconds_last = 0.0
+    candidate_visual_blend_source_action_last = ""
+    candidate_visual_blend_target_action_last = ""
     _candidate_clip_paths.clear()
     _candidate_animation = null
     _candidate_character = null
@@ -1452,10 +1466,25 @@ func _play_candidate_action(action: String, start_frame: int = 0) -> void:
     if _candidate_animation == null or not _candidate_clip_paths.has(action):
         return
     if _candidate_action == action and _candidate_animation.is_playing():
+        candidate_visual_blend_pending_seconds = 0.0
         return
+    var previous_action: String = _candidate_action
+    var blend_seconds: float = candidate_visual_blend_pending_seconds
+    var blend_applied: bool = (
+        candidate_visual_blending_enabled
+        and blend_seconds > 0.0
+        and _candidate_animation.is_playing()
+    )
     _candidate_action = action
     candidate_animation_clip = _candidate_clip_paths[action]
-    _candidate_animation.play(candidate_animation_clip)
+    candidate_visual_blend_pending_seconds = 0.0
+    candidate_visual_blend_seconds_last = blend_seconds if blend_applied else 0.0
+    candidate_visual_blend_source_action_last = previous_action if blend_applied else ""
+    candidate_visual_blend_target_action_last = action if blend_applied else ""
+    if blend_applied:
+        _candidate_animation.play(candidate_animation_clip, blend_seconds)
+    else:
+        _candidate_animation.play(candidate_animation_clip)
     if start_frame > 0:
         _candidate_animation.seek(
             float(start_frame) / SOURCE_FRAME_RATE, true
@@ -1496,15 +1525,37 @@ func _restart_candidate_action() -> void:
     if _candidate_animation != null:
         _candidate_animation.stop()
     _candidate_action = ""
+    candidate_visual_blend_pending_seconds = 0.0
+
+
+func _queue_candidate_visual_blend(seconds: float) -> void:
+    if (candidate_visual_blending_enabled
+            and is_finite(seconds)
+            and seconds > 0.0):
+        candidate_visual_blend_pending_seconds = seconds
+    else:
+        candidate_visual_blend_pending_seconds = 0.0
 
 
 func _enter_locomotion_state(next_state: String) -> void:
+    var previous_state: String = state
     state = next_state
     state_time = 0.0
     attack_kind = ""
     _clear_ground_attack_input_history()
     _clear_reaction_tracking()
-    _restart_candidate_action()
+    if (candidate_visual_blending_enabled
+            and previous_state == "attacktofloor"
+            and next_state == "idle2"
+            and _candidate_action == ATTACK_TO_FLOOR_CLIP
+            and _candidate_animation != null
+            and _candidate_animation.is_playing()):
+        _queue_candidate_visual_blend(
+            float(CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES)
+                    / SOURCE_FRAME_RATE
+        )
+    else:
+        _restart_candidate_action()
 
 
 func _verified_post_hit_return_state() -> String:
@@ -1820,6 +1871,7 @@ func begin_facedown_impact(amount: float) -> void:
     if _candidate_animation != null:
         _candidate_animation.stop()
         _candidate_action = ""
+    candidate_visual_blend_pending_seconds = 0.0
 
 
 func begin_faceup_impact(amount: float) -> void:
@@ -1966,13 +2018,22 @@ func record_attack_to_floor_press(virtual_key: String) -> bool:
 
 
 func _begin_attack_to_floor() -> void:
+    var previous_state: String = state
     state = "attacktofloor"
     state_time = float(ATTACK_TO_FLOOR_ENTRY_FRAME) / SOURCE_FRAME_RATE
     attack_kind = "attacktofloor"
     attack_sequence += 1
     _attack_connected = false
     _clear_ground_attack_input_history()
-    _restart_candidate_action()
+    if (candidate_visual_blending_enabled
+            and previous_state in ["idle", "idle2"]
+            and _candidate_animation != null
+            and _candidate_animation.is_playing()):
+        _queue_candidate_visual_blend(
+            float(CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES) / SOURCE_FRAME_RATE
+        )
+    else:
+        _restart_candidate_action()
 
 
 func _try_attack_to_floor_contact() -> void:
@@ -2502,7 +2563,16 @@ func receive_hit(
         state = "impactfacedown"
         state_time = 0.0
         combo_hits = 0
-        _restart_candidate_action()
+        if (candidate_visual_blending_enabled
+                and _candidate_action == BRICK_FACEDOWN_IDLE_CLIP
+                and _candidate_animation != null
+                and _candidate_animation.is_playing()):
+            _queue_candidate_visual_blend(
+                float(CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES)
+                        / SOURCE_FRAME_RATE
+            )
+        else:
+            _restart_candidate_action()
     elif health <= 0.0:
         state = "ko"
         combat_ko.emit(self)
@@ -2510,6 +2580,7 @@ func receive_hit(
         # A second hit of the same type must start the reaction again.
         _candidate_animation.stop()
         _candidate_action = ""
+        candidate_visual_blend_pending_seconds = 0.0
     return true
 
 
@@ -2536,6 +2607,10 @@ func reset_fighter(start_position: Vector3) -> void:
         if _candidate_animation != null:
             _candidate_animation.stop()
         _candidate_action = ""
+        candidate_visual_blend_pending_seconds = 0.0
+        candidate_visual_blend_seconds_last = 0.0
+        candidate_visual_blend_source_action_last = ""
+        candidate_visual_blend_target_action_last = ""
         candidate_animation_clip = ""
         _animate_candidate()
 

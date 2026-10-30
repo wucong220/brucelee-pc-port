@@ -70,6 +70,19 @@
 这些序列和帧值是候选运行时行为，不是已经实测的原版输入优先级或 Android
 键位。
 
+可在启动前启用默认关闭的候选视觉混合：
+
+```powershell
+$env:BRUCELEE_CANDIDATE_VISUAL_BLENDING = "1"
+```
+
+当前只对三条有档案值的切换启用：Bruce
+`idle/idle2 → attacktofloor`（6/30 秒）、Bruce
+`attacktofloor → idle2`（10/30 秒）和 Brick
+`facedownidle → impactfacedown`（6/30 秒）。它只影响骨骼视觉，不改变状态时间、
+命中、伤害、KO、输入或缺 clip 回退。Godot 的混合曲线和原版运行时视觉仍未
+验证，详见 `docs/FIGHTING_SET_FINDINGS.md`。
+
 ### 导出 EXE
 
 首先在 Godot 编辑器 `Editor → Manage Export Templates` 安装与 Godot 版本对应的 Windows 导出模板，然后执行：

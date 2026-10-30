@@ -51,6 +51,7 @@ func _run() -> void:
 
 
 func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter) -> bool:
+    player.candidate_visual_blending_enabled = false
     if not player._candidate_clip_paths.has(PortFighter.ATTACK_TO_FLOOR_CLIP):
         push_error("attacktofloor candidate clip failed loading")
         return false
@@ -98,6 +99,9 @@ func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter
     player._animate_candidate()
     if player.candidate_animation_clip != player._candidate_clip_paths[PortFighter.IDLE2_CLIP]:
         push_error("attacktofloor idle2 return did not select m01_idle_02")
+        return false
+    if player.candidate_visual_blend_seconds_last != 0.0:
+        push_error("default-off attacktofloor return applied a visual blend")
         return false
     # Standing opponent keeps the ordinary kick path; the target action is the gate.
     brick._enter_locomotion_state("idle")
@@ -217,6 +221,58 @@ func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter
         if absf(brick.health - (health - expected_damage)) > 0.001:
             push_error("attacktofloor contact escaped candidate gate: " + case_name)
             return false
+    if not _check_candidate_visual_blending(player, brick):
+        return false
+    return true
+
+
+func _check_candidate_visual_blending(player: PortFighter, brick: PortFighter) -> bool:
+    player.reset_fighter(Vector3.ZERO)
+    brick.reset_fighter(Vector3(0.25, 1.2, 0.0))
+    brick._enter_locomotion_state("facedownidle")
+    player._animate_candidate()
+    player.candidate_visual_blending_enabled = true
+
+    player._begin_attack_to_floor()
+    var attack_blend_seconds: float = (
+        float(PortFighter.CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES)
+                / PortFighter.SOURCE_FRAME_RATE
+    )
+    if (not is_finite(player.candidate_visual_blend_pending_seconds)
+            or absf(player.candidate_visual_blend_pending_seconds - attack_blend_seconds) > 0.000001):
+        push_error("attacktofloor entry did not queue its source blending duration")
+        return false
+    player._animate_candidate()
+    if (absf(player.candidate_visual_blend_seconds_last - attack_blend_seconds) > 0.000001
+            or player.candidate_visual_blend_target_action_last
+                    != PortFighter.ATTACK_TO_FLOOR_CLIP):
+        push_error("attacktofloor entry did not apply its candidate visual blend")
+        return false
+
+    player.state_time = (
+        (float(PortFighter.ATTACK_TO_FLOOR_EXIT_START_FRAME) - 0.001)
+                / PortFighter.SOURCE_FRAME_RATE
+    )
+    player._advance_timed_states(0.002)
+    if player.state != "idle2" or player.state_time != 0.0:
+        push_error("candidate visual blending changed the attacktofloor logic exit")
+        return false
+    var return_blend_seconds: float = (
+        float(PortFighter.CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES)
+                / PortFighter.SOURCE_FRAME_RATE
+    )
+    if (not is_finite(player.candidate_visual_blend_pending_seconds)
+            or absf(player.candidate_visual_blend_pending_seconds - return_blend_seconds) > 0.000001):
+        push_error("attacktofloor idle2 return did not queue its source blending duration")
+        return false
+    player._animate_candidate()
+    if (absf(player.candidate_visual_blend_seconds_last - return_blend_seconds) > 0.000001
+            or player.candidate_visual_blend_source_action_last
+                    != PortFighter.ATTACK_TO_FLOOR_CLIP
+            or player.candidate_visual_blend_target_action_last != PortFighter.IDLE2_CLIP):
+        push_error("attacktofloor idle2 return did not apply its candidate visual blend")
+        return false
+    player.candidate_visual_blending_enabled = false
     return true
 
 
