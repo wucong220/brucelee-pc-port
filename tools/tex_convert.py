@@ -96,6 +96,10 @@ def _validate_mip_layout(
 
     mip_matches = _property_matches(container, strings, 'mips')
     if not mip_matches:
+        if pixel_format == 'r8g8b8':
+            # Both observed r8g8b8 samples carry a one-element mips descriptor;
+            # accepting a missing descriptor would widen the profile silently.
+            raise TextureError('observed r8g8b8 profile requires mips metadata')
         if group_count != 1:
             raise TextureError('multi-section texture is missing mips metadata')
         mip_count = 1

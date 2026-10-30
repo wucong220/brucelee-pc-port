@@ -227,6 +227,19 @@ class TestTextureConversion(unittest.TestCase):
         with self.assertRaisesRegex(TextureError, 'descriptor 0 marker'):
             parse_texture(broken)
 
+    def test_r8g8b8_requires_mips_metadata(self):
+        width = height = 2
+        pixels = bytes(range(width * height * 3))
+        missing = kdf_texture(
+            width,
+            height,
+            (pixels,),
+            texture_format='r8g8b8',
+            include_mips=False,
+        )
+        with self.assertRaisesRegex(TextureError, 'requires mips metadata'):
+            parse_texture(missing)
+
     def test_full_size_rgba_mip_chain_extracts_first_level(self):
         width = height = 1024
         groups = direct_mip_groups(width, height, 11)
