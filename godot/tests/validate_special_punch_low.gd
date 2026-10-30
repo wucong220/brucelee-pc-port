@@ -46,9 +46,12 @@ func _run() -> void:
     if not _validate_miss_branch(player, defender):
         quit(1)
         return
+    if not _validate_input_mapping(scene, player):
+        quit(1)
+        return
     print("SPECIAL_PUNCH_LOW_VALIDATION=" + JSON.stringify({
         "special": "specialpunchlow",
-        "input": "down+in+a -> out+in+a -> out+in+a",
+        "input": "down+a -> out+a -> out+a (pressright folded into out)",
         "rage_gate": 66.0,
         "hit_damage": 15.0,
         "reaction": "impacthardfronthigh",
@@ -71,9 +74,9 @@ func _start_sequence(player: PortFighter, rage: float) -> bool:
     if not player.request_attack("high_punch3"):
         push_error("Could not start the level-3 attack")
         return false
-    player.record_standing_combo_press("a", ["down", "in"])
-    player.record_standing_combo_press("a", ["out", "in"])
-    player.record_standing_combo_press("a", ["out", "in"])
+    player.record_standing_combo_press("a", ["down"])
+    player.record_standing_combo_press("a", ["out"])
+    player.record_standing_combo_press("a", ["out"])
     if String(player.get("_standing_combo_pending_attack")) != "special_punch_low_miss":
         push_error("Sequence did not queue special_punch_low_miss")
         return false
@@ -138,5 +141,22 @@ func _validate_miss_branch(player: PortFighter, defender: PortFighter) -> bool:
         return false
     if not is_equal_approx(defender.health, 100.0):
         push_error("The missed special damaged the defender: " + str(defender.health))
+        return false
+    return true
+
+
+func _validate_input_mapping(scene: Node, player: PortFighter) -> bool:
+    player.facing = 1.0
+    Input.action_press("prototype_move_down")
+    var down_modifiers: Array = scene._standing_combo_modifiers(player)
+    Input.action_release("prototype_move_down")
+    if not down_modifiers.has("down"):
+        push_error("Real down input did not produce the down token")
+        return false
+    Input.action_press("prototype_move_left")
+    var out_modifiers: Array = scene._standing_combo_modifiers(player)
+    Input.action_release("prototype_move_left")
+    if not out_modifiers.has("out"):
+        push_error("Real away input did not produce the out token")
         return false
     return true

@@ -204,7 +204,7 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3", "from_attack": "high_kick2"},
     {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "from_attack": "low_kick2"},
     {"steps": [["left", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_low_miss", "from_attack": "punch"},
-    {"steps": [["down", "in", "a"], ["out", "in", "a"], ["out", "in", "a"]], "attack": "special_punch_low_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
+    {"steps": [["down", "a"], ["out", "a"], ["out", "a"]], "attack": "special_punch_low_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only

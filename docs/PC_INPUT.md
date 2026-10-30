@@ -80,7 +80,7 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 `larm/high/hard/frontal`）；否则保持 miss 并回 idle。`hard/high/frontal`
 专用受击动画仍不可用，反应 fail-closed。
 
-必杀技下段拳（原型）：第 3 段攻击后，`下+朝向+A → 背向+朝向+A → 背向+朝向+A`
+必杀技下段拳（原型）：第 3 段攻击后，`下+A → 背向+A → 背向+A`（PC 原型把原版 pressright 折叠为背向）
 在 `rage2thirds`（≥66）时进入 `special_punch_low_miss`（`m01_sp_pnch_low_fail`，33 帧，无伤害）。
 第 8–9 帧内对手在 0.62 世界单位、站立不格挡则切到 `special_punch_low_hit`
 （`m01_sp_pnch_low`，178 帧，伤害 15、攻击半径 45、`larm/high/hard/frontal`）。
