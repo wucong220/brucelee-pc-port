@@ -169,6 +169,12 @@ func _validate_rejected_hit_grants_no_rage(player: PortFighter) -> bool:
                 + " health=" + str(defender.health) + " state=" + defender.state
                 + " brick=" + str(defender.attack_config_path == PortFighter.BRICK_ATTACK_CONFIG_PATH))
         return false
+    if not is_equal_approx(defender.health, 100.0):
+        push_error("The rejected hit still damaged Brick: " + str(defender.health))
+        return false
+    if defender.state != "facedownidle":
+        push_error("The rejected hit changed Brick state to " + defender.state)
+        return false
     defender.queue_free()
     return true
 
