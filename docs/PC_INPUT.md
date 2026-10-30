@@ -76,8 +76,8 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 命中后，再用同一按键序列会转到对应第 2 段（`high_punch2`、`low_punch2`、
 `high_kick2`、`low_kick2`）。原型用当前攻击种类表示 `combolevel1`；
 原版 `keystatus` 的 down pressed/released 尚未复刻。`low_punch2` 的动画
-`m01_pnch_low_02` 被转换器以 wavelet 错误拒绝，因此该招 fail-closed（不加载、
-不可发动），其余三段可用。第 3 段仍从第 2 段按原方向序列衔接。
+`m01_pnch_low_02` 现在可以解码：wavelet 里存在一个未使用的全零 third root，
+允许跳过该 root 后成功打包。第 3 段仍从第 2 段按原方向序列衔接。
 
 已实现来源窗口为 lowpunch 第 `[22,69]` 帧、lowkick 第 `[31,86]` 帧、
 highpunch 第 `[17,101]` 帧和 highkick 第 `[33,73]` 帧。目标 clip 未加载时
