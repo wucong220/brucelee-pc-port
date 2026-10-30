@@ -2922,6 +2922,7 @@ func _begin_chained_attack(kind: String) -> void:
     attack_kind = kind
     attack_sequence += 1
     _attack_connected = false
+    _attack_hit_landed = false
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
     _restart_candidate_action()
@@ -3418,6 +3419,7 @@ func reset_fighter(start_position: Vector3) -> void:
     guard_held = false
     combo_hits = 0
     rage = 0.0
+    _attack_hit_landed = false
     _multi_impact_applied.clear()
     _parry_press_times.clear()
     if candidate_loaded:
