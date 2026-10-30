@@ -512,6 +512,32 @@ class TestKdfMesh(unittest.TestCase):
                     (0.0, 0.0, -4.0), strict=True):
                 self.assertAlmostEqual(delta, expected, places=5)
 
+    def test_rigid_attachment_can_target_a_bone(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            body = folder / 'body.mesh'
+            hair = folder / 'hair.mesh'
+            skeleton_source = folder / 'hero.skl'
+            output = folder / 'bone.glb'
+            body.write_bytes(mesh_fixture(single_bone=True))
+            hair.write_bytes(mesh_fixture(skinned=False))
+            skeleton_source.write_bytes(object_skeleton_fixture())
+            convert_glb(
+                body, output,
+                skeleton_source=skeleton_source,
+                validate_rest_pose=False,
+                include_object_transforms=True,
+                rigid_attachments=[(hair, 'bone_a')])
+            gltf, _binary = read_glb(output)
+            names = {node['name']: index for index, node in enumerate(gltf['nodes'])}
+            attachment = gltf['nodes'][names['hair_rigid_attachment']]
+            self.assertIn(names['hair_rigid_attachment'],
+                          gltf['nodes'][names['bone_a']]['children'])
+            self.assertNotIn('skin', attachment)
+            self.assertNotIn('matrix', attachment)
+            self.assertEqual(attachment['extras']['targetNodeName'], 'bone_a')
+            self.assertEqual(attachment['extras']['status'], 'candidate')
+
     def test_rigid_attachment_errors_do_not_write_output(self):
         with tempfile.TemporaryDirectory() as temp:
             folder = Path(temp)
@@ -534,8 +560,6 @@ class TestKdfMesh(unittest.TestCase):
                  'rigid_attachments': [(rigid, 'missing')]},
                 {'skeleton_source': skeleton_source, 'include_object_transforms': True,
                  'rigid_attachments': [(rigid, 'OBJECT_A')]},
-                {'skeleton_source': skeleton_source, 'include_object_transforms': True,
-                 'rigid_attachments': [(rigid, 'bone_a')]},
                 {'skeleton_source': skeleton_source, 'include_object_transforms': True,
                  'rigid_attachments': [(skinned, 'object_a')]},
                 {'skeleton_source': skeleton_source, 'include_object_transforms': True,

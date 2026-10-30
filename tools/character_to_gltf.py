@@ -422,13 +422,14 @@ def convert_file(mesh_source: Path, destination: Path, *,
             raise GltfExportError('rigid attachment Mesh or object node name is invalid')
         source = Path(source)
         matches = [node for node in skeleton['nodes'] if node['name'] == node_name]
-        if len(matches) != 1 or matches[0]['type'] != 'object':
+        if len(matches) != 1 or matches[0]['type'] not in ('object', 'bone'):
             raise GltfExportError(
-                f'rigid attachment target {node_name!r} must match one unique Skl object node')
-        object_transforms = skeleton.get('object_static_transforms') or []
-        if sum(value['nodeid'] == matches[0]['nodeid'] for value in object_transforms) != 1:
-            raise GltfExportError(
-                f'rigid attachment target {node_name!r} has no unique object transform')
+                f'rigid attachment target {node_name!r} must match one unique Skl object or bone node')
+        if matches[0]['type'] == 'object':
+            object_transforms = skeleton.get('object_static_transforms') or []
+            if sum(value['nodeid'] == matches[0]['nodeid'] for value in object_transforms) != 1:
+                raise GltfExportError(
+                    f'rigid attachment target {node_name!r} has no unique object transform')
         attachment_mesh = inspect_mesh_file(
             source, include_vertices=True, include_indices=True)
         if attachment_mesh['skeleton'] is not None:
