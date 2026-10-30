@@ -2772,7 +2772,8 @@ func _try_multi_impact_contacts() -> void:
                 + opponent.source_radius_for_current_animation()) * source_units_to_world
         if distance > reach or dx * facing < -0.1:
             continue
-        var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+        var blocked: bool = opponent.guard_held and (
+            opponent._can_block_current_hit() or opponent.state == "blockstun")
         var reaction: Dictionary = opponent.reaction_for_incoming(impact, blocked)
         var damage: float = float(impact["damage"])
         _multi_impact_applied.append(index)

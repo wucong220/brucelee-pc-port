@@ -46,6 +46,9 @@ func _run() -> void:
     if not _validate_miss_branch(player, defender):
         quit(1)
         return
+    if not _validate_all_blocked(player, defender):
+        quit(1)
+        return
     if not _validate_input_mapping(scene, player):
         quit(1)
         return
@@ -150,5 +153,34 @@ func _validate_input_mapping(scene: Node, player: PortFighter) -> bool:
     Input.action_release("prototype_move_up")
     if not up_modifiers.has("up"):
         push_error("Real up input did not produce the up token")
+        return false
+    return true
+
+
+func _validate_all_blocked(player: PortFighter, defender: PortFighter) -> bool:
+    if not _start_sequence(player, 70.0):
+        return false
+    defender.reset_fighter(Vector3(-1.7, 1.20, 0.0))
+    player.facing = 1.0
+    player.opponent = defender
+    if not player._try_begin_pending_standing_combo():
+        push_error("The blocked special did not start")
+        return false
+    for _i: int in range(20):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        if player.attack_kind == "special_punch_high_hit":
+            break
+    if player.attack_kind != "special_punch_high_hit":
+        push_error("The blocked special did not chain: " + player.attack_kind)
+        return false
+    defender.guard_held = true
+    for _i: int in range(70):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    var expected: float = 100.0 - 21.0 * 0.12
+    if absf(defender.health - expected) > 0.01:
+        push_error("Blocked multi impacts did not chip all three: " + str(defender.health))
+        return false
+    if not is_zero_approx(player.rage - 4.0):
+        push_error("Blocked multi impacts granted rage: " + str(player.rage))
         return false
     return true
