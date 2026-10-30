@@ -485,6 +485,8 @@ EXE 的资源和拳击自检也通过，退出码均为 0。修订版 Windows De
 & $GodotExe --headless --path godot --script res://tests/validate_fight_camera.gd
 & $GodotExe --headless --path godot --script res://tests/validate_camera_candidate_bounds.gd -- $BruceGlb $BrickGlb
 & $GodotExe --headless --path godot --script res://tests/validate_camera_candidate_bounds.gd -- $BruceGlb $BrickGlb --reverse
+& $GodotExe --headless --path godot --script res://tests/validate_candidate_bounds_space.gd -- $BruceGlb $BrickGlb
+& $GodotExe --headless --path godot --script res://tests/validate_camera_physics.gd
 & $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- $BruceGlb $BrickGlb
 & $GodotExe --headless --path godot --script res://tests/smoke_test.gd
 py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
@@ -507,6 +509,22 @@ Brick 动作分别采样开始、中间、接近末尾，在正反朝向、上�
 每个朝向现检查 54 个姿态，退出码均为 0。近似范围测试另沿连续分离和
 交换位置的轨迹检查构图边距及相机单步位移。这些都不是全部动作逐帧、
 混合姿态或 GPU 像素对照，也不能证明高速操作的镜头舒适度。
+
+进一步检查了 CPU 包围盒的坐标空间：候选 Bruce 和 Brick 的非对称踢击
+姿态分别旋转 180°，世界包围盒按预期翻转；再沿 x/z 平移时，包围盒
+按相同位移平移，两次模型检查退出码 0。此结果支持上述正反朝向采样的
+坐标解释，不证明所有姿态或 GPU 渲染完全一致；该测试在单独导出的 PCK
+中也通过，退出码 0。
+
+`validate_camera_physics.gd` 让两名角色通过实际 `CharacterBody3D`
+物理更新向两侧和纵深分离，分别在 60/120 物理更新频率和宽屏/竖向
+视口检查近似边界及镜头位移，退出码 0。测试仅覆盖该条路径，不是完整
+对战的舒适度验收；同一测试在单独导出的 PCK 中通过，退出码 0。
+镜头目前仍未实现阻尼平滑。
+
+修订版 Windows EXE 的实际窗口中已确认普通对战画面、F2 进入练习和
+`K,L,L` 命中；这次窗口拖拽未能成功改变窗口尺寸，因此窄窗口的 GUI
+显示仍未经过人工验证，不能把上述模拟视口测试当成 GUI 验收。
 
 以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
 
