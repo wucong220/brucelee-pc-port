@@ -851,6 +851,19 @@ framerate，并据此把商解释为秒，证据不足。该字段还出现在
 `+8` 指针非空且其 `+0x10` 与所比较的类型值相等时，
 `0x1A718C–0x1A7198` 才从该指针所指对象的 `+0x3C` 读取并写入
 `[fighter+0x30]`。空指针或类型不匹配分支不能假设得到有效对象。
+静态指令中，指针为零时 `0x1A7164` 条件读取 `[0+0x3C]`；
+类型不匹配时 `0x1A7190` 把 `r2` 设为零，而 `0x1A7194` 随后无条件
+读取 `[r2+0x3C]`。这不是安全跳过的证据；实际运行中是否可达、
+内存映射及后果均未验证。
+在这之前，`SetAnimation` 的 `0x1A6F9C` 经 PLT `0x128ADC`
+调用 `FindAnimationIndex`，`0x1A6FA8` 保存返回的索引，
+`0x1A6FD0` 把它写到 `[fighter+0x2C]`，`0x1A7150–0x1A7154`
+将同一索引传给 `GetActiveSetAnimation`。因此在这些调用正常返回、
+资源已更新且类型匹配的情况下，`+0x30` 与本次设置的动作对应资源的
+duration 相联系。`FollowLink` 的 `0x1A8298` 在它随后对原 fighter
+的 `SetAnimation` 调用之前读取该字段；若它自上一次成功设置后没有被
+其他路径写入，则除数保留的是上一次设置的值，而非本次调用新写入的值。
+目前没有完成对所有可能写入或别名的枚举，不能无条件认定具体切换的除数。
 `GetActiveSetAnimation` 本体 `0x1A00D0–0x1A00F8` 在
 `[fighter+0x135]` 为零时用 `+0xD4` 的表和 `+0xD8` 的步长按参数索引；
 非零时使用 `[fighter+0x7C]` 并经 PLT `0x126CF4` 调用
@@ -882,7 +895,7 @@ py -3.12 -X utf8 -B tools\native_animation_blending.py `
   'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
 ```
 
-本机输出为
+早期版本的本机输出为
 `verified 114 animation-blending words and 15 PLT relocations, 2 dynamic relocations and 3 property strings`，
 退出码 0。
 校验器同时绑定 ELF SHA-256、代表性指令、PLT stub、GOT 槽和重定位符号；
@@ -940,7 +953,7 @@ py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q
 git diff --check
 ```
 
-- 原生校验器：114 条指令、15 个 PLT 重定位、2 个 vtable 动态重定位和
+- 当时的原生校验器：114 条指令、15 个 PLT 重定位、2 个 vtable 动态重定位和
   3 个属性字符串通过，退出码 0。
 - Python：223 项通过、1 项跳过，退出码 0。
 - 真实 Bruce 23 段/Brick 7 段 Godot 混合测试连续 5 次通过；三次完成姿态
@@ -950,8 +963,9 @@ git diff --check
 - `git diff --check` 退出码 0。
 
 该实验的边界是
-`STATIC_SUPPORTED duration normalization; candidate visual interpolation;
-native runtime unverified`。Godot 的 `custom_blend` 权重曲线、帧率身份、
+`STATIC_VERIFIED duration-field provenance on the matching path;
+candidate visual interpolation; native transition time units unverified`。
+Godot 的 `custom_blend` 权重曲线、字段身份、
 过渡记录复制后的字段语义和原版逐帧视觉仍未证明一致。
 
 ## 全量 impact 聚合
@@ -1029,3 +1043,8 @@ git diff --check
 校验命令核对 179 条指令、17 个 PLT、4 个动态重定位和 3 个字符串，
 退出码 0；全量 Python 测试 223 项、跳过 1 项，退出码 0；
 `git diff --check` 退出码 0。
+
+绑定动作索引赋值及 `FollowLink` 的延迟路径后，同一校验命令核对
+189 条指令、18 个 PLT、4 个动态重定位和 3 个字符串，退出码 0；
+全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
+退出码 0。

@@ -157,6 +157,13 @@ _WORDS = {
     # alternate branches must not be assumed to yield a valid pointer.
     0x001A7150: 0xE1A01008,
     0x001A7154: 0xEBFE1098,  # bl CFighter::GetActiveSetAnimation
+    # SetAnimation stores the index returned by FindAnimationIndex and uses
+    # that same index when looking up the associated animation resource.
+    0x001A6F9C: 0xEBFE06CE,
+    0x001A6FA8: 0xE1A08000,
+    0x001A6FD0: 0xE584802C,
+    0x001A6FDC: 0xE594102C,
+    0x001A6FF8: 0xEBFE10EF,
     0x001A6EC4: 0xE59F5460,  # GOT base literal
     0x001A6ECC: 0xE08F5005,
     0x001A7158: 0xE5903008,
@@ -192,6 +199,11 @@ _WORDS = {
     0x001A8228: 0xE5C2E135,
     0x001A8240: 0xEBFDF1C3,
     0x001A8278: 0xE1A00004,
+    0x001A80E8: 0xE594102C,
+    0x001A8100: 0xE5942034,
+    0x001A8108: 0x858430F4,
+    0x001A810C: 0x858450F0,
+    0x001A8110: 0x8A00007D,
     # CAnimRes::UpdateProperties identifies gid_duration and writes its
     # integer value, or zero on the recorded failure branch, to +0x3c.
     0x00416814: 0xE92D4FF0,
@@ -250,6 +262,11 @@ _DYN_RELOCATIONS = {
 }
 
 _PLT = {
+    0x00128ADC: (
+        0x00600BD0,
+        "_ZN3krm8CFighter18FindAnimationIndexENS_3krt10HashStringINS1_10CHStrMgrNSEEE",
+        (0xE28FC604, 0xE28CCAD8, 0xE5BCF0EC),
+    ),
     0x00126CF4: (
         0x006001D8,
         "_ZN3krm8CFighter31GetInternalFightingSetAnimationEj",
