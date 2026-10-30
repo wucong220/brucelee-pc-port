@@ -1,0 +1,141 @@
+{
+  "status": "STATIC_SUPPORTED_CANDIDATE_RUNTIME",
+  "scope": "Thai-set direct low-impact link from facedownidle; no native runtime black-box frame-scheduler validation",
+  "archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "set_path": "adreno_200/set/thai.set",
+    "set_sha256": "1afe220f7ef590fb136334a5efab251bd30dc90474101f6135f5ab5afbcee586",
+    "set_pakd_offset": 31343689
+  },
+  "actions": {
+    "facedownidle": {
+      "record": 91,
+      "pose": "laying",
+      "animation": "adreno_200/animation/all_idle_face_down_forbigguy.anm",
+      "animation_radius": 75.0,
+      "duration_frames": 45,
+      "framerate": 30,
+      "groups": []
+    },
+    "impactfacedown": {
+      "record": 92,
+      "pose": "laying",
+      "animation": "adreno_200/animation/all_impct_facedwn.anm",
+      "animation_sha256": "2b13ac06d8bbbf11ac1cdc72868a21f757fca06dfe1e284380aecb0f1a756d1c",
+      "resource_id": "4d52c01b1e167d87e31f5b61853c6b90",
+      "pakd_offset": 57510854,
+      "animation_radius": 85.0,
+      "duration_frames": 11,
+      "framerate": 30,
+      "groups": {
+        "receivedamage": [
+          0,
+          11
+        ],
+        "impactable": [
+          0,
+          11
+        ]
+      }
+    },
+    "facedownko": {
+      "record": 75,
+      "pose": "laying",
+      "animation": "adreno_200/animation/all_idle_face_down_forbigguy.anm",
+      "animation_radius": 100.0,
+      "duration_frames": 45,
+      "framerate": 30,
+      "groups": {
+        "defeated": [
+          0,
+          45
+        ],
+        "receivedamage": [
+          0,
+          45
+        ]
+      }
+    }
+  },
+  "links": [
+    {
+      "index": 87,
+      "from": "facedownidle",
+      "to": "facedownko",
+      "record": 13012,
+      "conditions": [
+        "healthzero"
+      ],
+      "time": [
+        0,
+        45
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0
+    },
+    {
+      "index": 88,
+      "from": "facedownidle",
+      "to": "impactfacedown",
+      "record": 13013,
+      "conditions": [
+        "impact",
+        "oppattackheightlow"
+      ],
+      "time": [
+        0,
+        45
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 6
+    },
+    {
+      "index": 182,
+      "from": "impactfacedown",
+      "to": "facedownidle",
+      "time": [
+        11,
+        11
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0
+    }
+  ],
+  "attack_to_floor_impact_match": {
+    "strength": "normal",
+    "height": "low",
+    "direction": "frontal",
+    "body_part": "lleg",
+    "reason": "Thai link 88 consumes impact and oppattackheightlow; strength, direction and body_part are not conditions on that edge."
+  },
+  "candidate_asset": {
+    "path": "%LOCALAPPDATA%/BruceLee-PC-Port/brick-facedown-impact-candidate-20261030/brick_candidate_7.glb",
+    "sha256": "386426dcbc3c421806f6570077ac7be80cbadc63136636b861e2f16ae2f2dc7f",
+    "bytes": 452804,
+    "animation_names": [
+      "m03_idle_01",
+      "m03_pnch_low_01",
+      "m03_kck_low_01",
+      "m03_movefwd",
+      "all_idle_face_down_forbigguy",
+      "all_impct_hard_frnt_low",
+      "all_impct_facedwn"
+    ]
+  },
+  "implementation_boundary": {
+    "runtime_state": "impactfacedown",
+    "runtime_radius": 85.0,
+    "exit_frame_candidate": 11,
+    "return_state": "facedownidle",
+    "push": 0.0,
+    "nonlethal_missing_clip": "fail closed in facedownidle without damage or combat_hit",
+    "lethal_priority": "facedownko",
+    "unverified": [
+      "complete native frame scheduler",
+      "runtime preservation of the parsed link-vector order",
+      "exact world-space displacement and root-motion mapping",
+      "per-frame visual parity"
+    ]
+  }
+}
