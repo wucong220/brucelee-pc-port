@@ -102,3 +102,49 @@ py -3.12 -X utf8 -B tools\opponent_resource_inventory.py `
 `opponent_textures_loaded=false`。材质加载器已支持 Brick 的单身体纹理组；
 只有在三个 `body_*` PNG 全部存在并通过测试后，才可把运行时纹理标为已加载。
 对手低段攻击已经使用上面的 `thai.set` 帧数、伤害和半径。视觉接入仍然不代表完整 Thai set、AI、knockdown 或原版逐帧画面已经恢复。
+
+## 正面低段硬受击与跨骨架候选（2026-10-30）
+
+只读解析 `adreno_200/set/thai.set`（SHA-256
+`1afe220f7ef590fb136334a5efab251bd30dc90474101f6135f5ab5afbcee586`，
+PAKD offset `31343689`）：action 数组第 71 项 `impacthardfrontlow` 的 binary
+直接引用 `animation/all_impct_hard_frnt_low.anm`，pose `laying`，radius 80。
+link 143 的条件为 `impact`、`oppattackstrengthhard`、
+`oppattackheightlow`、`oppattackdirfrontal`，来源组是 `impactable`；link 178
+在 `[20,23]` 连到 `facedownidle`。link 63 在同一窗口以 `healthzero` 连到
+`facedownko`；两个出口的原生优先级尚未在运行时验证。档案中的 link 不是
+当前 Godot 正常对战已实现这些转换的证明。
+
+目标 ANM 的 SHA-256 为
+`c38c0b8c3445ec9f4f237c9a882ed960ce6c7b0e333dbdd9e127742d33ff1647`，
+其 `anmheader` 引用 `skeletons/bl_brucelee_01_high.skl`。以 Bruce Skl
+SHA-256 `4a6d4532b42d6cbee3016b849befc2dc98c089e72fa4cfe291d9550f059412e3`
+和 Brick Skl SHA-256
+`61fd6723c532499fb94071b0f3ba809feeab623995531ccf31eac00ac57db942`
+做只读候选索引比较：61 条轨道中 60 条同索引指向相同名称和类型；
+`bonerot` offset 28 在 Bruce 指向 `r eyeball`，在 Brick 指向
+`l eyebrow 02`。因此直接用相同索引绑定会错绑该轨道。Brick 的 `r eyeball`
+确实存在，旋转索引是 15；Bruce 的是 28。
+
+进一步按节点名称只读比较，动画涉及的 50 个不同名称在两套骨架中均唯一，
+并且完整父节点名称链一致。对应节点的静态 `position` 分量在阈值 `1e-5`
+下有 48 个不同；`rotation_xyzw_unverified` 和 `scale` 分量无超过该阈值的
+差异。这里比较的是解析器所报告的字段，不代表静态变换空间、绑定矩阵或
+动画轨道应用语义已经验证。**名称和父链一致不证明重定向可播放或与原版一致**；
+严格配对检查继续保留，正常对战的 Brick 击倒入口仍未接通。
+
+索引比较复现命令（实际执行退出码 0）：
+
+```powershell
+py -3.12 -X utf8 -B tools\compare_animation_bindings.py `
+  "$env:LOCALAPPDATA\BruceLee-PC-Port\brick-frontlow-anm-20261030\adreno_200\animation\all_impct_hard_frnt_low.anm" `
+  "$env:LOCALAPPDATA\BruceLee-PC-Port\validation-f0c9a3a-20261029\adreno_200\skeletons\bl_brucelee_01_High.Skl" `
+  "$env:LOCALAPPDATA\BruceLee-PC-Port\brick-opponent-inventory-20261030\adreno_200\skeletons\BL_Brick_Davis_01_High.Skl"
+```
+
+50 节点比较由 `kdf_skeleton.inspect_file` 和 `kdf_animation_binding.bind_animation`
+在内存中读取以上三个本机文件，按 `nodeid` 追踪 `parentid` 并按名称比较
+`static_transforms` 与 `object_static_transforms`；执行退出码 0。此项结果暂未
+封装为可复用命令，不能替代原生变换链或视觉对照。
+
+Validation: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q` (201 tests, 1 skipped; exit 0).
