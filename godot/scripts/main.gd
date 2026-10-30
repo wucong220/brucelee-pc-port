@@ -452,6 +452,35 @@ func _update_fight_camera() -> void:
     fight_camera.global_position = target + Vector3(0.0, distance * 0.42, distance)
     fight_camera.look_at(target, Vector3.UP)
 
+var _parry_input_was_pressed: bool = false
+
+
+func _sync_guard_state(pressed: bool) -> void:
+    if pressed and not player.guard_held:
+        player.begin_guard()
+    elif not pressed and player.guard_held:
+        player.end_guard()
+    player.guard_held = pressed
+
+
+func _update_parry_input() -> void:
+    var down_pressed: bool = Input.is_action_pressed("prototype_move_down")
+    var toward_action: String = ("prototype_move_right"
+            if player.facing >= 0.0 else "prototype_move_left")
+    var toward_pressed: bool = Input.is_action_pressed(toward_action)
+    var pressed: bool = down_pressed and toward_pressed
+    if (pressed and not _parry_input_was_pressed
+            and player.guard_held
+            and player.state in ["idle", "idle2"]
+            and computer.state in ["startup", "active"]):
+        var distance: float = Vector2(
+            player.position.x - computer.position.x,
+            player.position.z - computer.position.z).length()
+        if distance <= computer.attack_reach_world(computer.attack_kind, player):
+            player.record_parry_press()
+    _parry_input_was_pressed = pressed
+
+
 func _physics_process(delta: float) -> void:
     if hud == null:
         return
@@ -477,7 +506,8 @@ func _physics_process(delta: float) -> void:
         PrototypeControls.MOVE_DOWN,
         0.2
     )
-    player.guard_held = Input.is_action_pressed(PrototypeControls.GUARD)
+    _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
+    _update_parry_input()
     if training_mode:
         computer.move_axis = Vector2.ZERO
         computer.guard_held = false
@@ -588,7 +618,7 @@ func _unhandled_input(event: InputEvent) -> void:
     # Input events can arrive before the next _process tick updates guard_held.
     # Refresh the guard state here so a press in the same frame as the guard
     # key cannot be accepted from a stale snapshot.
-    player.guard_held = Input.is_action_pressed(PrototypeControls.GUARD)
+    _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
     # Guard presses cancel a matched combo in the same input event; a tap that
     # is released before the next physics tick would otherwise keep it alive.
     if event.is_action_pressed(PrototypeControls.GUARD):
