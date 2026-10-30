@@ -376,23 +376,24 @@ SHA-256 是
 | 候选 | 动画数 | 字节 | SHA-256 |
 |---|---:|---:|---|
 | `bruce_candidate_23.glb` | 23 | 1,152,908 | `b29ab5e9590b905bc2a5241532cff3e644e13c70906bb8b37930170360b5cb36` |
-| `brick_candidate_5.glb` | 5 | 360,296 | `69ca3a11a3e886d120741689258dcf70b0740bdcdbfb80a9ade4a1117c6e5053` |
+| `brick_candidate_7.glb` | 7 | 452,804 | `386426dcbc3c421806f6570077ac7be80cbadc63136636b861e2f16ae2f2dc7f` |
 
 Bruce 的新增 `m01_attack_to_floor.anm` 为 90 帧、30 fps，SHA-256
 `43aa3e5fa464b6227295a05b96ee34eca219c4ffb954c05412777fdc02acd0fa`。
 Brick 的新增 `all_idle_face_down_forbigguy.anm` 为 45 帧、30 fps，SHA-256
 `9e4c1e6f2463574541cb83010903d1cb5aa2e4fbe7a51cc07f494ef75d24bcc8`；
-它与 Brick 自身的 Skl 引用和 SHA-256 配对。两个 ANM 均从用户本地
-`data.zpak` 只读取得，原始文件和派生 GLB 均不提交。
+它与 Brick 自身的 Skl 引用和 SHA-256 配对。候选另含从 Bruce Skl 重定向到
+Brick Skl 的 `all_impct_hard_frnt_low` 与 `all_impct_facedwn`。上述 ANM
+均从用户本地 `data.zpak` 只读取得，原始文件和派生 GLB 均不提交。
 
 `current_source_pose()` 根据候选状态所对应的源动作字段返回 `stand` 或
 `laying`，缺少已加载的候选 clip 或来源动作尚未映射时返回空字符串。
 它不是 ANM header 中数值 `pose=1` 的解释；`brucelee.set` 的
 `faceupidle`、`facedownidle`、`impacttofloor` 等动作字段为 `laying`，
 `faceupgetup`、`facedowngetup`、`attacktofloor` 为 `stand`；
-`thai.set` 的 `idle` 和 `facedownidle` 分别为 `stand` 和 `laying`。
-目前 Brick 只开放这两个动作的姿态查询。相同视觉 clip 的 `faceupidle`
-和 `faceupko` 是各自独立的源动作映射。
+`thai.set` 的 `idle`、`facedownidle` 和 `impactfacedown` 分别为 `stand`、
+`laying` 和 `laying`。目前 Brick 只开放这三个动作的姿态查询。相同视觉 clip
+的 `faceupidle` 和 `faceupko` 是各自独立的源动作映射。
 
 候选运行时只在 Bruce 为站立 `idle/idle2`、Brick 的
 `current_source_pose()` 为 `laying`、且 Bruce 候选 GLB 含
@@ -411,7 +412,13 @@ PC 原型把这两个序列映射为 `K,L,L` 和 `K,U,U`。输入处理器使用
 验证。躺地对手即使按住格挡键也不能使用站立格挡，因此该攻击按未格挡命中
 计算。缺少 clip 或入口时对手不在 laying 时不会启动；距离过远或位于身后
 仍会照常进入 `attacktofloor`，但接触阶段因距离/朝向门控而不命中。致命命中
-继续进入 Brick 自己的 `facedownko`。
+继续进入 Brick 自己的 `facedownko`。非致命低段命中在 Brick 的
+`facedownidle` 上进入 Thai set 直接链接的 `impactfacedown`：加载
+`all_impct_facedwn` 时按候选第 11 帧返回 `facedownidle`，使用 `thai.set`
+动作记录 92 的动画半径 85，不应用原型 push。缺该 clip 时保持
+`facedownidle`，不回退到 Bruce 的通用 `impactlightfrontlow`，也不扣血或发出
+假命中事件。档案中的 `strength`、`direction` 和 `body_part` 不是该低段
+入边条件，因此不会用 `lleg` 选择反应。
 
 接触时没有额外要求目标仍处于 laying：已识别的原生控制流支持 laying 只作为
 入口条件，没有发现 impact 时重新查询 pose 的证据。接触合同的核心仍是目标
@@ -430,7 +437,8 @@ PC 原型把这两个序列映射为 `K,L,L` 和 `K,U,U`。输入处理器使用
 以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
 
 ```powershell
-& $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_7.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_brick_facedown_impact.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_7.glb"
 & $GodotExe --headless --path godot --script res://tests/validate_brick_ground_entry.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_6.glb"
 & $GodotExe --headless --path godot --script res://tests/validate_faceup_impact.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_6.glb"
 & $GodotExe --headless --path godot --script res://tests/validate_faceup_attack.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_6.glb"
@@ -454,7 +462,9 @@ git diff --check
 `facedownidle` 时只重试并命中一次。表驱动测试还覆盖 `22.999`、`23`、
 `23.001` 边界，以及 `receive_hit()` 当前所有显式 false 状态在直接调用和
 `attacktofloor` 接触路径上都不修改目标快照或攻击者记账。
-其他地面链测试使用含 Brick 受击 clip 的 6 段候选。这些测试证明候选运行时
-路径已接通，不证明原版
+`validate_brick_facedown_impact.gd` 使用 Brick 7 段候选验证非致命低段进入
+`impactfacedown`、半径 85、第 11 帧返回、格挡键不改变躺地结果、致命
+`facedownko` 优先、缺 clip 时 fail closed，以及中段 impact 不误入该边。
+其他地面链测试继续使用 6 段候选。这些测试证明候选运行时路径已接通，不证明原版
 `candobasicattacks` 的 84 个来源成员、链接检查顺序、`entry_frame=9` 与
-`blending=6` 的运行时时序、物理键位、逐帧视觉、目标反应链或完整命中盒。
+`blending=6` 的运行时时序、物理键位、逐帧视觉、完整目标反应图或完整命中盒。

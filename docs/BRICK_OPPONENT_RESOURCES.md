@@ -170,7 +170,8 @@ Validation: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`
 动作切换、循环及源帧时钟的对应关系，并对照原生运行时。
 
 反应和倒地 clip 缺失、无效时维持普通受击回退；格挡走 blockstun，
-致命走当前 ko。Brick 倒地时不启用 Bruce 起身、倒地反击或倒地受击行为。
+致命走当前 ko。Brick 倒地时不启用 Bruce 的起身或倒地反击；后续证据已接通
+其自身的低段 `impactfacedown` 候选反应，见下节。
 组链接 `TimeWindowCheck` 已对其他组做静态追踪，尚未单独核实该入口的完整
 运行路径；跨骨架变换、原版优先级、真实位移及逐帧视觉均未验收。
 
@@ -180,11 +181,12 @@ Validation: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`
 ```powershell
 $godot = "$env:LOCALAPPDATA\BruceLee-PC-Port\godot-portable-773280yg\Godot_v4.7.2-stable_win64_console.exe"
 $bruce = "$env:LOCALAPPDATA\BruceLee-PC-Port\attacktofloor-candidate-20261030\bruce_candidate_23.glb"
-$brick = "$env:LOCALAPPDATA\BruceLee-PC-Port\brick-retarget-candidate-20261030\brick_candidate_6.glb"
+$brick = "$env:LOCALAPPDATA\BruceLee-PC-Port\brick-facedown-impact-candidate-20261030\brick_candidate_7.glb"
 & $godot --headless --path godot --editor --quit
 & $godot --headless --path godot --script res://tests/validate_brick_ground_entry.gd -- $bruce $brick
 & $godot --headless --path godot --script res://tests/validate_faceup_attack.gd -- $bruce $brick
 & $godot --headless --path godot --script res://tests/validate_ground_pose.gd -- $bruce $brick
+& $godot --headless --path godot --script res://tests/validate_brick_facedown_impact.gd -- $bruce $brick
 & $godot --headless --path godot --script res://tests/smoke_test.gd
 python -B -X utf8 -m unittest discover -s tests -p 'test*.py' -q
 ```
@@ -247,10 +249,29 @@ Godot 导入后重采样为 24 个键；这些时间不等于已验证的原版�
 该阶段验证：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
 共 216 项、其中 1 项跳过，退出码 0；后续完整测试已增至 217 项、跳过 1 项。
 
-`validate_ground_pose.gd` 使用本机 Bruce 23 段及 Brick 5 段候选，退出码 0；
+`validate_ground_pose.gd` 使用本机 Bruce 23 段及 Brick 7 段候选，退出码 0；
 测试通过真实 `main.gd` 按键回调验证 `K,L,L` 前缀缓存和候选
 `attacktofloor` 的启动、伤害、退出与负例。`validate_brick_ground_entry.gd`
 使用 Brick 6 段候选验证受限受击链。两者都不证明原版组链接优先级、
 Android 物理键位、逐帧视觉或完整击倒行为。
 
 审查后 Godot 采样检查重跑退出码 0；候选采样时间分别约为 0、0.348182、0.696364、0.766 秒。
+
+## 七段 Brick 候选与倒地低段反应（2026-10-30）
+
+`thai.set` 的动作记录 91、92 和 75 分别给出 `facedownidle`、
+`impactfacedown` 和 `facedownko`。前者半径 75、45 帧；`impactfacedown`
+使用 `all_impct_facedwn`，半径 85、11 帧；`facedownko` 复用
+`all_idle_face_down_forbigguy`，半径 100、45 帧。links 索引 87 的
+`healthzero` 在解析顺序中位于索引 88 的
+`impact + oppattackheightlow` 之前；索引 182 在 `[11,11]` 从
+`impactfacedown` 回到 `facedownidle`。解析顺序和原生向量升序遍历分别有
+静态证据，但装载器跨完整对象模型保持顺序尚未做运行时黑盒验证。完整字段见
+[`brick_facedown_impact_evidence.json`](../reports/brick_facedown_impact_evidence.json)。
+
+仓库外 `brick_candidate_7.glb` 为 452804 字节，SHA-256
+`386426dcbc3c421806f6570077ac7be80cbadc63136636b861e2f16ae2f2dc7f`，
+包含前述 5 条 Brick 原生配对动画、跨骨架 `all_impct_hard_frnt_low` 和
+`all_impct_facedwn`。`validate_brick_facedown_impact.gd` 验证逻辑状态、
+半径、第 11 帧返回、致命优先、缺 clip fail closed 和零位移；它不验证原版
+逐帧视觉、完整帧调度或根位移换算。

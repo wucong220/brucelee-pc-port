@@ -69,6 +69,18 @@ const FACEDOWN_GETUP_WINDOW_END: int = 45
 const FACEDOWN_GETUP_EXIT_FRAME: int = 16
 const FACEDOWN_IMPACT_CLIP: String = "all_impct_facedwn"
 const FACEDOWN_IMPACT_EXIT_FRAME: int = 11
+const BRICK_FACEDOWN_IMPACT_RADIUS: float = 85.0
+const BRICK_FACEDOWN_IMPACT_REACTION: Dictionary = {
+    "source_action": "impactfacedown",
+    "animation": FACEDOWN_IMPACT_CLIP,
+    "animation_radius": BRICK_FACEDOWN_IMPACT_RADIUS,
+    # thai.set link 88 runs over facedownidle [0,45]. The impact clip's
+    # return link 182 reaches facedownidle at frame 11.
+    "exit_start_frame": FACEDOWN_IMPACT_EXIT_FRAME,
+    "animation_duration_frames": 11,
+    "return_action": "facedownidle",
+    "clip_implemented": false,
+}
 const FACEDOWN_KO_RADIUS: float = 100.0
 const FACEDOWN_ATTACK_CLIP: String = "all_getup_facedwn_attack"
 const FACEDOWN_ATTACK_DURATION_FRAMES: int = 35
@@ -2221,9 +2233,9 @@ func current_source_animation() -> String:
 func current_source_pose() -> String:
     if not candidate_loaded or not SOURCE_ACTION_POSES.has(state):
         return ""
-    # Only these two actions currently have Brick-specific candidate mappings.
+    # Only these actions currently have Brick-specific candidate mappings.
     if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            and state not in ["idle", "facedownidle"]):
+            and state not in ["idle", "facedownidle", "impactfacedown"]):
         return ""
     var animation: String = current_source_animation()
     # A logical state that lacks its validated visual clip must not report a
@@ -2247,6 +2259,11 @@ func _facedown_idle_clip() -> String:
 
 
 func _stored_animation_radius(animation: String) -> float:
+    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+            and animation == FACEDOWN_IMPACT_CLIP):
+        # thai.set action 92 uses radius 85. The Bruce set uses 80 for the
+        # same animation, so this value is character-config specific.
+        return BRICK_FACEDOWN_IMPACT_RADIUS
     if source_animation_radii.has(animation) and _is_number(source_animation_radii[animation]):
         return float(source_animation_radii[animation])
     if RETURN_ANIMATION_RADII.has(animation) and _is_number(RETURN_ANIMATION_RADII[animation]):
@@ -2323,6 +2340,8 @@ func attack_reach_world(kind: String, target: PortFighter = null) -> float:
 
 
 func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
+    if _is_brick_facedown_low_impact(impact, blocked):
+        return BRICK_FACEDOWN_IMPACT_REACTION.duplicate(true)
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
         return exact
@@ -2330,6 +2349,23 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     if String(impact.get("strength", "")) != "normal":
         return {}
     return _reaction_profile_for_impact(impact, blocked)
+
+
+func _is_brick_facedown_low_impact(impact: Dictionary, blocked: bool) -> bool:
+    return (
+        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        and state == "facedownidle"
+        and not blocked
+        and String(impact.get("height", "")) == "low"
+    )
+
+
+func _is_brick_facedown_impact_reaction(reaction: Dictionary) -> bool:
+    return (
+        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        and String(reaction.get("source_action", "")) == "impactfacedown"
+        and String(reaction.get("animation", "")) == FACEDOWN_IMPACT_CLIP
+    )
 
 
 func _accepts_brick_faceup_candidate(damage: float, blocked: bool) -> bool:
@@ -2413,6 +2449,18 @@ func receive_hit(
     ]:
         return false
     var state_before: String = state
+    var brick_facedown_impact: bool = (
+        state_before == "facedownidle"
+        and not blocked
+        and _is_brick_facedown_impact_reaction(reaction)
+    )
+    # thai.set has no defensible generic fallback for a nonlethal low hit while
+    # Brick is lying. Keep that state fail closed if the reaction clip is not
+    # loaded. Lethal links are handled by the higher-priority healthzero edge.
+    if (brick_facedown_impact
+            and health - amount > 0.0
+            and not _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP)):
+        return false
     var position_before: float = position.x
     _attack_connected = false
     if blocked:
@@ -2447,6 +2495,14 @@ func receive_hit(
         # impactfacedown or apply the standing prototype push.
         position.x = position_before
         _begin_facedown_ko()
+    elif brick_facedown_impact:
+        # Thai link 88 selects impactfacedown directly. It has no damageable
+        # source group, so the transition must happen in the same hit update.
+        position.x = position_before
+        state = "impactfacedown"
+        state_time = 0.0
+        combo_hits = 0
+        _restart_candidate_action()
     elif health <= 0.0:
         state = "ko"
         combat_ko.emit(self)
