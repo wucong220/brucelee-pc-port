@@ -99,6 +99,13 @@ func _validate_endattack1(player: PortFighter, defender: PortFighter) -> bool:
     if absf(defender.health - health_before) > 0.001:
         push_error("Endattack1 invented damage: " + str(defender.health))
         return false
+    if not bool(player.get("_grab_connected")):
+        push_error("Successful grab did not keep the grab-connected flag")
+        return false
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    if bool(player.get("_grab_connected")):
+        push_error("reset_fighter did not clear the grab-connected flag")
+        return false
     return true
 
 

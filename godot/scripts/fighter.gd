@@ -3476,6 +3476,7 @@ func reset_fighter(start_position: Vector3) -> void:
     combo_hits = 0
     rage = 0.0
     _attack_hit_landed = false
+    _grab_connected = false
     _multi_impact_applied.clear()
     _parry_press_times.clear()
     if candidate_loaded:
