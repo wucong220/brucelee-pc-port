@@ -160,7 +160,7 @@ func _run_export_self_test() -> void:
     }))
     await _await_combat_audio_idle()
     _stop_combat_audio()
-    await get_tree().process_frame
+    await get_tree().create_timer(0.1).timeout
     await get_tree().process_frame
     get_tree().quit(0)
 
@@ -345,6 +345,8 @@ func _stop_combat_audio() -> void:
             if player != null:
                 player.stop()
                 player.stream = null
+                if not player.is_queued_for_deletion():
+                    player.queue_free()
     _candidate_audio.clear()
     _candidate_audio_error.clear()
 

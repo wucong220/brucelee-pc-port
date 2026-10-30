@@ -73,9 +73,27 @@ func _run() -> void:
         push_error("Finished candidate sound players were not released")
         quit(1)
         return
+    scene.set("_candidate_audio", streams)
+    scene._on_hit(player, opponent, "punch", 5.0, false)
+    await process_frame
+    if combat_audio.get_child_count() != 1:
+        push_error("Early-stop test did not start one candidate sound")
+        quit(1)
+        return
+    scene._stop_combat_audio()
+    await create_timer(0.15).timeout
+    await process_frame
+    if combat_audio.get_child_count() != 0:
+        push_error("Early-stopped candidate sound player was not released")
+        quit(1)
+        return
+    if not scene.get("_candidate_audio").is_empty():
+        push_error("Early stop did not clear candidate audio resources")
+        quit(1)
+        return
     scene.set("_candidate_audio", {})
     streams.clear()
-    await process_frame
+    await create_timer(0.1).timeout
     await process_frame
     print("CANDIDATE_AUDIO_VALIDATION=passed")
     quit(0)
