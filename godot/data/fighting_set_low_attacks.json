@@ -35,7 +35,9 @@
       "all_impct_hard_frnt_high": 80.0,
       "m01_sp_pnch_high_fail": 40.0,
       "m01_sp_pnch_high": 25.0,
-      "m01_parry_high": 40.0
+      "m01_parry_high": 40.0,
+      "m01_grab_01": 40.0,
+      "m01_grab_02": 25.0
     }
   },
   "reaction_profiles": {
@@ -481,6 +483,104 @@
         "strength": "hard",
         "direction": "frontal"
       }
+    },
+    "grab1": {
+      "source_action": "grab1",
+      "animation": "m01_grab_01",
+      "animation_frame_count": 150,
+      "startup_frames": 45,
+      "active_frames": 77,
+      "recovery_frames": 28,
+      "damage": 20.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "multi_impacts": [
+        {
+          "damage": 6.0,
+          "damage_time": [
+            45,
+            46
+          ],
+          "attack_radius": 45.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "normal",
+          "direction": "frontal"
+        },
+        {
+          "damage": 5.0,
+          "damage_time": [
+            71,
+            73
+          ],
+          "attack_radius": 45.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "hard",
+          "direction": "frontal"
+        },
+        {
+          "damage": 9.0,
+          "damage_time": [
+            121,
+            122
+          ],
+          "attack_radius": 45.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "hard",
+          "direction": "frontal"
+        }
+      ]
+    },
+    "grab2": {
+      "source_action": "grab2",
+      "animation": "m01_grab_02",
+      "animation_frame_count": 180,
+      "startup_frames": 4,
+      "active_frames": 72,
+      "recovery_frames": 104,
+      "damage": 20.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "multi_impacts": [
+        {
+          "damage": 5.0,
+          "damage_time": [
+            4,
+            5
+          ],
+          "attack_radius": 45.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "normal",
+          "direction": "frontal"
+        },
+        {
+          "damage": 15.0,
+          "damage_time": [
+            75,
+            76
+          ],
+          "attack_radius": 45.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "hard",
+          "direction": "frontal"
+        }
+      ]
     }
   },
   "exact_reactions": {

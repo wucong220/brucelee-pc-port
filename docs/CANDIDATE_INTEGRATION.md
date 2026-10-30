@@ -450,6 +450,10 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 格挡反击使用 42 段带头候选：2,727,612 字节，SHA-256
 `7771893136ca4cba7a25284ccd1c0cb95f982b1344ab5ef870574760dadc43cf`，
 新增 `m01_parry_high`；`parry_attack` 复用已有的 `m01_pnch_high_03`。
+抓取使用 44 段带头候选：3,164,064 字节，SHA-256
+`e155bec24771ea60724b09fbfee1620bd887d7226a2730aba5a6578e892c6d73`，
+新增 `m01_grab_01`、`m01_grab_02`。`grab1miss/grab2miss` 的 `m02_grab_01`
+属于 Ken 骨架，未打包。
 下段拳必杀与 hard/high/frontal 反应使用 40 段带头候选：2,453,728 字节，SHA-256
 `77ead1783187b738554a99655cb42cd9f27ca32e47782553dc6e31356c6d58ca`，
 新增 `m01_sp_pnch_low_fail`、`m01_sp_pnch_low`、`all_impct_hard_frnt_high`。

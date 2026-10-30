@@ -35,6 +35,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "special_punch_high_hit": "m01_sp_pnch_high",
     "parry_high": "m01_parry_high",
     "parry_attack": "m01_pnch_high_03",
+    "grab1": "m01_grab_01",
+    "grab2": "m01_grab_02",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -80,6 +82,8 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_sp_pnch_high_fail": 40.0,
     "m01_sp_pnch_high": 25.0,
     "m01_parry_high": 40.0,
+    "m01_grab_01": 40.0,
+    "m01_grab_02": 25.0,
     "all_impct_hard_frnt_high": 80.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
@@ -176,6 +180,8 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "special_kick_low_miss": 66.0,
     "special_punch_low_miss": 66.0,
     "special_punch_high_miss": 66.0,
+    "grab1": 66.0,
+    "grab2": 66.0,
 }
 const SPECIAL_CHAIN_MISSES: Dictionary = {
     "special_kick_low_miss": "special_kick_low_hit",
@@ -193,6 +199,7 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
     "special_punch_high_miss": [6, 7],
 }
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
+const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.
@@ -217,6 +224,8 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["left", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_low_miss", "from_attack": "punch"},
     {"steps": [["down", "a"], ["out", "a"], ["out", "a"]], "attack": "special_punch_low_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
     {"steps": [["up", "a"], ["up", "a"], ["up", "a"]], "attack": "special_punch_high_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
+    {"steps": [["left", "a"], ["a"], ["a"]], "attack": "grab1", "from_attack": "punch"},
+    {"steps": [["left", "b"], ["c"], ["c"]], "attack": "grab2", "from_attack": "kick"},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
@@ -467,6 +476,28 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "body_part": "larm",
         "height": "high",
         "strength": "hard",
+        "direction": "frontal",
+    },
+    "grab1": {
+        "source_action": "grab1",
+        "animation": "m01_grab_01",
+        "frame_count": 150,
+        "damage": 20.0,
+        "radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "grab2": {
+        "source_action": "grab2",
+        "animation": "m01_grab_02",
+        "frame_count": 180,
+        "damage": 20.0,
+        "radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
         "direction": "frontal",
     },
 }
@@ -1512,7 +1543,7 @@ func _try_load_candidate_visual() -> void:
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
-            "parry_high", "parry_attack"]:
+            "parry_high", "parry_attack", "grab1", "grab2"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2556,6 +2587,18 @@ func _try_begin_pending_standing_combo() -> bool:
             and not _special_stepback_origin):
         _clear_standing_combo_state()
         return false
+    if GRAB_ATTACKS.has(_standing_combo_pending_attack):
+        if (opponent == null or not is_instance_valid(opponent)
+                or opponent.guard_held
+                or opponent.state not in ["idle", "idle2"]):
+            _clear_standing_combo_state()
+            return false
+        var grab_distance: float = Vector2(
+            opponent.global_position.x - global_position.x,
+            opponent.global_position.z - global_position.z).length()
+        if grab_distance > PROTOTYPE_GRAB_DISTANCE:
+            _clear_standing_combo_state()
+            return false
     if not supports_attack(_standing_combo_pending_attack):
         _clear_standing_combo_state()
         return false
@@ -2588,7 +2631,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_attack":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_attack", "grab1", "grab2":
             return kind
     return ""
 
@@ -3427,7 +3470,7 @@ func _animate_candidate() -> void:
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",
                 "special_punch_high_miss", "special_punch_high_hit",
-                "parry_high", "parry_attack"]:
+                "parry_high", "parry_attack", "grab1", "grab2"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented
