@@ -171,6 +171,10 @@ func _run() -> void:
         "input_window_seconds": PortFighter.STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS,
         "candobasicattack_windows": PortFighter.CANDOBASICATTACK_WINDOWS,
     }))
+    await scene._await_combat_audio_idle()
+    scene._stop_combat_audio()
+    await create_timer(0.1).timeout
+    await process_frame
     scene.queue_free()
     await process_frame
     quit(0)
