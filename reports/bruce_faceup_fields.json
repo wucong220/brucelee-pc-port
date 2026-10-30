@@ -32,12 +32,12 @@
       "all_impct_faceup"
     ],
     "not_established": [
-      "incoming group link time=[0,0] 的语义",
+      "candobasicattacks 84 个成员在当前原型中的完整状态覆盖",
       "完整分组优先级与逐帧原版行为",
       "原版 Android 物理键位及三维 keysequence 运行时匹配",
       "faceupattack 未验证的普通受击与 KO 出边",
       "impactfaceup/faceupko 的完整原版分组优先级、blending 与逐帧行为",
-      "attacktofloor 的运行时接入"
+      "attacktofloor 所需 m01_attack_to_floor clip 和对手 pose=laying 状态"
     ]
   },
   "actions": {
@@ -1828,8 +1828,8 @@
     ],
     "set_action_named_ko": false,
     "direct_from_checked_or_runtime_actions": [],
-    "result": "不能实现",
-    "reason": "没有一条直接 link 从已核对的已实现动作进入这七个目标。impacttofloor 和 attacktofloor 只有分组 link，time 都是 [0, 0]，组内同时包含未实现动作，不能确定成从 facedownidle、facedownko、站立受击/格挡、idle 或 ko 进入。",
+    "result": "入口候选已定位；attacktofloor 仍未运行时接入",
+    "reason": "没有一条直接 link 从已核对的已实现动作进入这七个目标。impacttofloor 和 attacktofloor 是 from_group link；ELF 控制流表明 TimeWindowCheck 的 group 分支使用当前动画在来源组中的成员窗口，不读取 link 的 [0,0] 时间值。attacktofloor 另有已经定位的 oppposelaying、三条输入和延迟切换语义，但 84 个来源成员、所需 clip 与对手 laying 状态尚未闭合。",
     "impactablefromground": {
       "member_count": 13,
       "members": [
@@ -1986,9 +1986,56 @@
       ]
     }
   },
+  "attacktofloor_entry_evidence": {
+    "evidence_level": "STATIC_VERIFIED_SPECIFIC_CONTROL_FLOW",
+    "runtime_status": "NOT_IMPLEMENTED",
+    "incoming_link_indices": [
+      32,
+      33
+    ],
+    "from_group": "candobasicattacks",
+    "group_member_count": 84,
+    "time": [
+      0,
+      0
+    ],
+    "source_window_semantics": "在已识别的 TimeWindowCheck 分支中，from_group link 使用当前动画中同名组成员自身的开始/结束帧，并包含端点；该分支不读取 link 的 [0,0]。该结论不扩展到尚未逐项核对的其他组链接路径。",
+    "conditions": [
+      "oppposelaying"
+    ],
+    "condition_semantics": "静态数据流支持 oppposelaying 条件读取对手当前动画的 pose 字段并与 gid_laying 比较；这不等价于“处于 laying 必然触发 attacktofloor”，也没有运行时实测。",
+    "keysequence": [
+      [
+        "pressb",
+        "pressc",
+        "pressc"
+      ],
+      [
+        "pressb",
+        "pressd",
+        "pressd"
+      ]
+    ],
+    "entry_frame": 9,
+    "blending": 6,
+    "input_reset": true,
+    "transition_timing": "输入与条件在组成员窗口内匹配后，若尚未到该成员组窗口结束帧，FollowLink 把 link 和结束帧存入 fighter+0xf0/+0xf4；BasicUpdate 到结束帧后才执行目标动作。",
+    "link_order": "UserControlUpdate 按当前动画 links 向量的索引升序检查；解析出的 set 中 attacktofloor 位于第 32/33 项，相同 basic-combo 序列到 lowkick1/highkick1 的链接位于第 87/89 项。若原始 set 数组顺序原样进入运行时向量，attacktofloor 会先匹配；该顺序保持关系尚未独立证明。",
+    "remaining_blockers": [
+      "当前 22 段候选 GLB 明确排除 m01_attack_to_floor",
+      "当前正常对战没有对手 pose=laying 状态",
+      "尚未覆盖 candobasicattacks 的全部 84 个成员",
+      "原版 blending=6、entry_frame=9、逐帧视觉与物理键位映射未实测",
+      "尚未独立证明解析 set 数组到运行时 links 向量的顺序保持",
+      "尚未逐帧验证当前原型同时处理多个链接时的优先级"
+    ],
+    "native_verifier": "tools/native_attacktofloor_links.py"
+  },
   "not_implemented": [
-    "impactfaceup",
-    "attacktofloor",
-    "faceupko"
+    "attacktofloor"
+  ],
+  "original_behavior_uncertainties": [
+    "impactfaceup 的完整原版分组优先级、blending 与逐帧行为仍待验证",
+    "faceupko 的完整原版分组优先级、blending 与逐帧行为仍待验证"
   ]
 }
