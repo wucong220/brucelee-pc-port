@@ -32,7 +32,9 @@ func _run() -> void:
         ])
         quit(1)
         return
-    if (not _check_brick(brick) or not _check_bruce(player)
+    if (not _check_contextual_controls(scene, player, brick)
+            or not _check_training(scene, player, brick)
+            or not _check_brick(brick) or not _check_bruce(player)
             or not _check_attack_to_floor_input_resets(player, brick)
             or not _check_attack_to_floor_repeated_rejection(player, brick)
             or not _check_attack_to_floor_rejected_then_accepted(player, brick)
@@ -48,6 +50,91 @@ func _run() -> void:
         "scope": "candidate attacktofloor input path; original timing and link priority unverified",
     }))
     quit(0)
+
+
+func _check_contextual_controls(scene: Node, player: PortFighter, brick: PortFighter) -> bool:
+    player.reset_fighter(Vector3.ZERO)
+    brick.reset_fighter(Vector3(0.25, 1.2, 0.0))
+    if scene._contextual_controls() != "":
+        push_error("Ground controls appeared while both fighters were standing")
+        return false
+    brick._enter_locomotion_state("facedownidle")
+    if not scene._contextual_controls().contains("K L L / K U U"):
+        push_error("Downed-opponent controls were not shown")
+        return false
+    scene._physics_process(0.0)
+    var hud: PortHUD = scene.get("hud")
+    if not hud.context_hint.text.contains("K L L / K U U"):
+        push_error("Downed-opponent controls did not reach the HUD")
+        return false
+    player._enter_locomotion_state("facedownidle")
+    var text: String = scene._contextual_controls()
+    if not text.contains("A/D: get up") or not text.contains("J J J"):
+        push_error("Face-down controls were not shown")
+        return false
+    player._enter_locomotion_state("faceupidle")
+    text = scene._contextual_controls()
+    if not text.contains("A/D: get up") or not text.contains("J J J"):
+        push_error("Face-up controls were not shown")
+        return false
+    var clips: Dictionary = player.get("_candidate_clip_paths")
+    var attack_path: Variant = clips[PortFighter.FACEUP_ATTACK_CLIP]
+    clips.erase(PortFighter.FACEUP_ATTACK_CLIP)
+    text = scene._contextual_controls()
+    clips[PortFighter.FACEUP_ATTACK_CLIP] = attack_path
+    if text.contains("Ground attack") or not text.contains("A/D: get up"):
+        push_error("Controls advertised an unavailable ground attack")
+        return false
+    scene.set("done", true)
+    if scene._contextual_controls() != "":
+        push_error("Controls remained visible after the round ended")
+        return false
+    scene.set("done", false)
+    player.reset_fighter(Vector3.ZERO)
+    brick.reset_fighter(Vector3(0.25, 1.2, 0.0))
+    return true
+
+
+func _check_training(scene: Node, player: PortFighter, brick: PortFighter) -> bool:
+    var clips: Dictionary = brick.get("_candidate_clip_paths")
+    var impact_path: Variant = clips[PortFighter.FACEDOWN_IMPACT_CLIP]
+    clips.erase(PortFighter.FACEDOWN_IMPACT_CLIP)
+    _press_key(scene, KEY_F2)
+    clips[PortFighter.FACEDOWN_IMPACT_CLIP] = impact_path
+    if scene.get("training_mode"):
+        push_error("Training started without the required Brick impact clip")
+        return false
+    _press_key(scene, KEY_F2)
+    if not scene.get("training_mode"):
+        push_error("Training did not start with candidate animations available")
+        return false
+    var hud: PortHUD = scene.get("hud")
+    for attempt: int in range(10):
+        if (player.state != "idle" or brick.state != "facedownidle"
+                or player.health != 100.0 or brick.health != 100.0):
+            push_error("Training reset retained state on attempt %d" % attempt)
+            return false
+        player.candidate_visual_blending_enabled = (attempt % 2 == 1)
+        for key: int in [KEY_K, KEY_L, KEY_L]:
+            _press_key(scene, key)
+        if player.state != "attacktofloor":
+            push_error("Training attack did not start on attempt %d" % attempt)
+            return false
+        player._advance_timed_states(18.01 / PortFighter.SOURCE_FRAME_RATE)
+        if absf(brick.health - 94.0) > 0.001 or not hud.center_message.text.contains("TRAINING HIT"):
+            push_error("Training did not record exactly one hit on attempt %d" % attempt)
+            return false
+        player._advance_timed_states(5.0 / PortFighter.SOURCE_FRAME_RATE)
+        if absf(brick.health - 94.0) > 0.001:
+            push_error("Training applied duplicate damage")
+            return false
+        _press_key(scene, KEY_R)
+    _press_key(scene, KEY_F2)
+    if (scene.get("training_mode") or player.state != "idle"
+            or brick.state != "idle" or absf(player.position.x + 2.0) > 0.001):
+        push_error("Training exit did not restore the normal match")
+        return false
+    return true
 
 
 func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter) -> bool:

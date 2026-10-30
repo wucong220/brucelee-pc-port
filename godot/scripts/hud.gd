@@ -6,6 +6,7 @@ var opponent_bar: ProgressBar
 var hint: Label
 var center_message: Label
 var footer: Label
+var context_hint: Label
 
 func _ready() -> void:
     var screen: Control = Control.new()
@@ -52,8 +53,20 @@ func _ready() -> void:
     footer.offset_bottom = -12
     footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     footer.add_theme_font_size_override("font_size", 17)
-    footer.text = "A/D move  W/S sidestep  J/K/L/U = a/b/c/d  SHIFT guard  R restart"
+    footer.text = "A/D move  W/S sidestep  J/K/L/U = a/b/c/d  SHIFT guard  R restart  F2 training"
     screen.add_child(footer)
+    context_hint = Label.new()
+    context_hint.anchor_top = 1.0
+    context_hint.anchor_bottom = 1.0
+    context_hint.anchor_right = 1.0
+    context_hint.offset_left = 15
+    context_hint.offset_right = -15
+    context_hint.offset_top = -94
+    context_hint.offset_bottom = -65
+    context_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    context_hint.add_theme_font_size_override("font_size", 18)
+    context_hint.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
+    screen.add_child(context_hint)
     center_message = hint
 
 func _add_label(parent: Node, value: String, font_size: int) -> void:
@@ -103,3 +116,6 @@ func set_health(player_health: float, enemy_health: float) -> void:
 
 func show_message(value: String) -> void:
     center_message.text = value
+
+func set_context_hint(value: String) -> void:
+    context_hint.text = value

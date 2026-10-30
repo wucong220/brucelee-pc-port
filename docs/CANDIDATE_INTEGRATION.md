@@ -432,7 +432,33 @@ PC 原型把这两个序列映射为 `K,L,L` 和 `K,U,U`。输入处理器使用
 
 这里的第 9 帧来自 link 的 `entry_frame=9`，只作为候选入口位置。已识别的
 `from_group` 控制流可能改用来源组成员记录的第三项决定切换时机，因此原版
-是否真的在第 9 帧切入仍未证明；`blending=6` 也尚未实现或逐帧验证。
+是否真的在第 9 帧切入仍未证明；`blending=6` 的原版时间和曲线尚未
+验证。当前可选视觉混合使用实验时长，不能视为原版混合的实现。
+
+### 地面操作的屏幕提示
+
+原型现在根据角色状态和已加载的候选 clip 显示地面操作：Bruce 躺地时提示
+起身和支持的攻击组合；对手躺地且 Bruce 可进入候选攻击时提示 `K,L,L` /
+`K,U,U`。提示属于 PC 原型的辅助界面，不是原版 UI 或键位的还原。
+缺少相应 clip 或回合结束时不会显示对应提示。
+
+按 F2 进入或退出原型倒地追击练习：Brick 初始倒地且不会受普通 AI 控制，
+玩家使用 `K,L,L` 或 `K,U,U` 追击，命中后按 R 重新练习。进入前检查双方
+候选资源及所需动作；这是供玩家反复体验的新增练习，不是原版模式。
+
+2026-10-30 在 Godot 4.7.2、本机 23 段 Bruce / 7 段 Brick 候选资源上执行：
+
+```powershell
+& $GodotExe --headless --path godot --editor --quit
+& $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- $BruceGlb $BrickGlb
+& $GodotExe --headless --path godot --script res://tests/smoke_test.gd
+py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
+git diff --check
+```
+
+以上退出码均为 0；Python 223 项通过、1 项跳过。地面测试覆盖提示出现、
+状态变化、缺动作及回合结束，并在混合开启和关闭的情况下连续练习 10 次，
+检查单次伤害、重试及退出普通对战；不替代图形界面的人工目视检查。
 
 以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
 
