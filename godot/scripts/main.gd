@@ -14,6 +14,7 @@ var ai_guard_sequence: int = -1
 var ai_guard_decision: bool = false
 var done: bool = false
 var training_mode: bool = false
+var training_completed: bool = false
 var elapsed: float = 0.0
 var notice_timer: float = 0.0
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -271,6 +272,7 @@ func _reset_match() -> void:
         computer._enter_locomotion_state("facedownidle")
         computer._animate_candidate()
     done = false
+    training_completed = false
     elapsed = 0.0
     ai_timer = 0.75
     ai_guard_sequence = -1
@@ -287,7 +289,7 @@ func _physics_process(delta: float) -> void:
         notice_timer -= delta
         if notice_timer <= 0.0 and not done:
             hud.show_message("")
-    if done:
+    if done or training_completed:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         return
@@ -303,7 +305,7 @@ func _physics_process(delta: float) -> void:
         _think_ai(delta)
 
 func _contextual_controls() -> String:
-    if done:
+    if done or training_completed:
         return ""
     var clips: Dictionary = player.get("_candidate_clip_paths")
     if player.state in ["facedownidle", "faceupidle"]:
@@ -313,16 +315,16 @@ func _contextual_controls() -> String:
                 if player.state == "facedownidle" else PortFighter.FACEUP_ATTACK_CLIP)
         var options: Array[String] = []
         if clips.has(getup_clip):
-            options.append("A/D: get up after a short delay")
+            options.append("A/D: get up when available")
         if clips.has(attack_clip):
-            options.append("Ground attack: J J J / J K K / K L L / K U U")
+            options.append("Ground attack, press in order: J J J / J K K / K L L / K U U")
         return "   |   ".join(options)
     if (player.state in ["idle", "idle2"]
             and is_instance_valid(computer)
             and computer.current_source_pose() == "laying"
             and clips.has(PortFighter.ATTACK_TO_FLOOR_CLIP)
             and clips.has(PortFighter.IDLE2_CLIP)):
-        return "Downed opponent: K L L / K U U  (close range)"
+        return "Downed opponent: press K L L / K U U in order (close range)"
     return ""
 
 func _think_ai(delta: float) -> void:
@@ -391,6 +393,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
         return
     if done and key_event.keycode not in [KEY_R, KEY_F2]:
         return
+    if training_completed and key_event.keycode not in [KEY_R, KEY_F2]:
+        return
     match key_event.keycode:
         KEY_J:
             player.record_virtual_press("a")
@@ -432,10 +436,13 @@ func _training_available() -> bool:
             and computer_clips.has(PortFighter.FACEDOWN_IMPACT_CLIP))
 
 func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damage: float, blocked: bool) -> void:
-    if done:
+    if done or training_completed:
         return
-    if training_mode and attacker == player and action == "attacktofloor" and not blocked:
-        hud.show_message("TRAINING HIT · R TO RETRY")
+    if (training_mode and attacker == player and defender == computer
+            and action == "attacktofloor" and damage > 0.0 and not blocked
+            and defender.state == "impactfacedown"):
+        training_completed = true
+        hud.show_message("TRAINING HIT · R RETRY · F2 EXIT")
         notice_timer = 0.0
         return
     if blocked:
@@ -447,6 +454,8 @@ func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damag
     notice_timer = 0.30
 
 func _on_ko(fighter: PortFighter) -> void:
+    if training_completed:
+        return
     done = true
     if fighter == computer:
         hud.show_message("YOU WIN!  ·  R TO RESTART")

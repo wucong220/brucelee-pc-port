@@ -109,9 +109,18 @@ func _check_training(scene: Node, player: PortFighter, brick: PortFighter) -> bo
         push_error("Training did not start with candidate animations available")
         return false
     var hud: PortHUD = scene.get("hud")
+    scene._on_hit(player, player, "attacktofloor", 6.0, false)
+    scene._on_hit(player, brick, "attacktofloor", 0.0, false)
+    scene._on_hit(player, brick, "attacktofloor", 6.0, true)
+    scene._on_hit(player, brick, "attacktofloor", 6.0, false)
+    if scene.get("training_completed"):
+        push_error("Training completed without the required target, damage and reaction")
+        return false
+    _press_key(scene, KEY_R)
     for attempt: int in range(10):
         if (player.state != "idle" or brick.state != "facedownidle"
-                or player.health != 100.0 or brick.health != 100.0):
+                or player.health != 100.0 or brick.health != 100.0
+                or scene.get("training_completed")):
             push_error("Training reset retained state on attempt %d" % attempt)
             return false
         player.candidate_visual_blending_enabled = (attempt % 2 == 1)
@@ -121,8 +130,16 @@ func _check_training(scene: Node, player: PortFighter, brick: PortFighter) -> bo
             push_error("Training attack did not start on attempt %d" % attempt)
             return false
         player._advance_timed_states(18.01 / PortFighter.SOURCE_FRAME_RATE)
-        if absf(brick.health - 94.0) > 0.001 or not hud.center_message.text.contains("TRAINING HIT"):
+        if (absf(brick.health - 94.0) > 0.001 or not scene.get("training_completed")
+                or not hud.center_message.text.contains("TRAINING HIT")):
             push_error("Training did not record exactly one hit on attempt %d" % attempt)
+            return false
+        var completed_message: String = hud.center_message.text
+        scene._on_hit(brick, player, "punch", 5.0, false)
+        scene._on_ko(player)
+        _press_key(scene, KEY_J)
+        if hud.center_message.text != completed_message or scene.get("done"):
+            push_error("Training completion message was overwritten")
             return false
         player._advance_timed_states(5.0 / PortFighter.SOURCE_FRAME_RATE)
         if absf(brick.health - 94.0) > 0.001:
