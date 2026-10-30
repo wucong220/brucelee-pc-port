@@ -43,6 +43,9 @@ func _run() -> void:
     if not await _validate_blocked_hit_grants_no_rage(player):
         quit(1)
         return
+    if not await _validate_rejected_hit_grants_no_rage(player):
+        quit(1)
+        return
     if not await _validate_special_hit(player, opponent):
         quit(1)
         return
@@ -128,6 +131,43 @@ func _validate_blocked_hit_grants_no_rage(player: PortFighter) -> bool:
     )
     if not is_zero_approx(player.rage):
         push_error("A blocked hit granted rage: " + str(player.rage))
+        return false
+    if defender.state != "blockstun":
+        push_error("The blocked hit did not enter blockstun: " + defender.state)
+        return false
+    if defender.health >= 100.0:
+        push_error("The blocked hit did not chip health: " + str(defender.health))
+        return false
+    defender.queue_free()
+    return true
+
+
+func _validate_rejected_hit_grants_no_rage(player: PortFighter) -> bool:
+    var defender: PortFighter = load("res://scripts/fighter.gd").new()
+    defender.configure_attack_config(PortFighter.BRICK_ATTACK_CONFIG_PATH)
+    root.add_child(defender)
+    await process_frame
+    player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
+    defender.reset_fighter(Vector3(0.25, 1.20, 0.0))
+    defender.state = "facedownidle"
+    defender.health = 100.0
+    # Simulate a build without the facedown impact clip so receive_hit rejects
+    # the nonlethal low hit instead of transitioning.
+    defender.get("_candidate_clip_paths").erase(PortFighter.FACEDOWN_IMPACT_CLIP)
+    player.opponent = defender
+    player.facing = 1.0
+    player._time = 0.0
+    player.rage = 0.0
+    if not player.request_attack("kick"):
+        push_error("Could not start the rejected-hit check")
+        return false
+    player._advance_timed_states(
+        float(player.ATTACKS["kick"]["startup"]) + 0.001
+    )
+    if not is_zero_approx(player.rage):
+        push_error("A rejected Brick facedown hit granted rage: " + str(player.rage)
+                + " health=" + str(defender.health) + " state=" + defender.state
+                + " brick=" + str(defender.attack_config_path == PortFighter.BRICK_ATTACK_CONFIG_PATH))
         return false
     defender.queue_free()
     return true
