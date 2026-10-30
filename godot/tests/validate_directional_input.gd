@@ -135,6 +135,9 @@ func _validate_direction_isolation(scene: Node, player: PortFighter) -> bool:
     _release_movement()
     scene._unhandled_input(_key(KEY_J))
     var history: Array = player.get("_standing_combo_input_history")
+    if history.is_empty():
+        push_error("The released-direction press did not record any input history")
+        return false
     if not history.is_empty():
         var tokens: Array = history[0].get("tokens", [])
         if tokens.has("up"):

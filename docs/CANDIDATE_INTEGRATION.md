@@ -411,7 +411,8 @@ SHA-256 是
 `highpunch3`/`highkick3` 的 `hard/high/fromright` impact 由新恢复的
 `impacthardrighthigh`（`all_impct_hard_rht_high`，半径 80，第 26 帧返回
 `faceupidle`）驱动；`lowpunch3` 仍用已恢复的 `impacthardfrontmid`，
-`lowkick3` 用 normal/medium/frontal 档。25 段候选缺这些 clip 时四条链保持关闭。
+`lowkick3` 用 normal/medium/frontal 档。源值、动画哈希、窗口与候选哈希见
+`reports/directional_combo_evidence.json`。25 段候选缺这些 clip 时四条链保持关闭。
 方向修饰键是 PC 原型映射（上/下取移动轴，朝向/背向按角色朝向换算），不是
 Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 

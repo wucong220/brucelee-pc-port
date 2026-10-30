@@ -69,6 +69,9 @@ func _run() -> void:
     if not _validate_faceup_return(player):
         quit(1)
         return
+    if not _validate_subsequence_skips(player):
+        quit(1)
+        return
     print("DIRECTIONAL_COMBO_VALIDATION=" + JSON.stringify({
         "sequences": [[
             "up+a -> in+a -> in+a => highpunch3",
@@ -79,6 +82,7 @@ func _run() -> void:
         "high_punch3_damage": 6.0,
         "high_punch3_reaction": "impacthardrighthigh",
         "hard_high_fromright_return": "faceupidle",
+        "input_policy": "ordered subsequence: unrelated plain attacks between steps are skipped",
         "modifier_mapping": "up/down from move axes, in/out toward/away from opponent",
         "scope": "PC prototype modifiers; native physical keys and input clock unverified",
     }))
@@ -167,6 +171,25 @@ func _validate_self_replay(player: PortFighter, entry: Dictionary) -> bool:
         return false
     if not still_playing:
         push_error(target + " replay did not leave the clip playing")
+        return false
+    return true
+
+
+func _validate_subsequence_skips(player: PortFighter) -> bool:
+    # Prototype policy: the match is an ordered subsequence, so unrelated
+    # plain attacks between the three steps are skipped. This test records the
+    # policy explicitly instead of leaving it implicit.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch for the subsequence check")
+        return false
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("c")
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
+        push_error("Ordered subsequence with an extra plain attack did not match AAA")
         return false
     return true
 
