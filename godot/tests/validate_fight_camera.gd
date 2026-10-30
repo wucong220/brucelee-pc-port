@@ -30,7 +30,7 @@ func _run() -> void:
         [Vector3(-6.8, 1.2, -3.0), Vector3(-6.3, 1.2, -3.0)],
     ]
     var tested_viewports: Array[Vector2] = []
-    for window_size: Vector2i in [Vector2i(1280, 720), Vector2i(800, 600)]:
+    for window_size: Vector2i in [Vector2i(1280, 720), Vector2i(800, 600), Vector2i(480, 900)]:
         root.size = window_size
         root.content_scale_size = window_size
         await process_frame
@@ -56,6 +56,49 @@ func _run() -> void:
                                     % [point, projected, viewport_size])
                             quit(1)
                             return
+        # Move continuously through separation, depth offset and exchanged sides.
+        # Resets intentionally snap and are not included in this continuity check.
+        var endpoints: Array = [
+            [Vector3(-0.25, 1.2, 0.0), Vector3(0.25, 1.2, 0.0)],
+            [Vector3(-6.8, 1.2, -3.0), Vector3(6.8, 1.2, 3.0)],
+            [Vector3(6.8, 1.2, -3.0), Vector3(-6.8, 1.2, 3.0)],
+        ]
+        var previous_camera: Vector3 = Vector3.ZERO
+        var has_previous: bool = false
+        for segment: int in range(endpoints.size() - 1):
+            for step: int in range(241):
+                var fraction: float = float(step) / 240.0
+                player.global_position = endpoints[segment][0].lerp(
+                    endpoints[segment + 1][0], fraction
+                )
+                opponent.global_position = endpoints[segment][1].lerp(
+                    endpoints[segment + 1][1], fraction
+                )
+                scene._update_fight_camera()
+                if has_previous and camera.global_position.distance_to(previous_camera) > 0.3:
+                    push_error("Camera moved discontinuously during a continuous trajectory")
+                    quit(1)
+                    return
+                previous_camera = camera.global_position
+                has_previous = true
+                for fighter_position: Vector3 in [player.global_position, opponent.global_position]:
+                    for x_offset: float in [-0.85, 0.85]:
+                        for height: float in [0.0, 2.2]:
+                            var point: Vector3 = Vector3(
+                                fighter_position.x + x_offset, height, fighter_position.z
+                            )
+                            var projected: Vector2 = camera.unproject_position(point)
+                            if (camera.is_position_behind(point)
+                                    or projected.x < viewport_size.x * 0.05
+                                    or projected.x > viewport_size.x * 0.95
+                                    or projected.y < viewport_size.y * 0.10
+                                    or projected.y > viewport_size.y * 0.90):
+                                push_error("Fighter left camera margin during trajectory")
+                                quit(1)
+                                return
+    root.size = Vector2i(1280, 720)
+    root.content_scale_size = Vector2i(1280, 720)
+    await process_frame
     player.global_position = Vector3(-0.25, 1.2, 0.0)
     opponent.global_position = Vector3(0.25, 1.2, 0.0)
     scene._update_fight_camera()

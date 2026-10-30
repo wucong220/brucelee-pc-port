@@ -472,7 +472,8 @@ EXE 的资源和拳击自检也通过，退出码均为 0。修订版 Windows De
 ### 候选双人镜头
 
 原型镜头现在跟随双方的 x/z 中点，根据横向和纵向间距调整距离，保持固定
-观察方向。近距离人物比旧固定镜头更大；回合重置时立即定位新构图。
+观察方向；视口窄于 4:3 时进一步拉远，避免人物左右出画。近距离人物比
+旧固定镜头更大；回合重置时立即定位新构图。
 命中和训练提示移到血条下方，避免覆盖场中角色。这些都是 PC 原型的视觉
 选择，不代表原版镜头参数。当前以固定高度及横向余量近似角色范围，不是
 逐帧蒙皮模型边界；快速移动舒适度和所有姿态仍需进一步验证。
@@ -482,6 +483,8 @@ EXE 的资源和拳击自检也通过，退出码均为 0。修订版 Windows De
 ```powershell
 & $GodotExe --headless --path godot --editor --quit
 & $GodotExe --headless --path godot --script res://tests/validate_fight_camera.gd
+& $GodotExe --headless --path godot --script res://tests/validate_camera_candidate_bounds.gd -- $BruceGlb $BrickGlb
+& $GodotExe --headless --path godot --script res://tests/validate_camera_candidate_bounds.gd -- $BruceGlb $BrickGlb --reverse
 & $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- $BruceGlb $BrickGlb
 & $GodotExe --headless --path godot --script res://tests/smoke_test.gd
 py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
@@ -489,10 +492,21 @@ git diff --check
 ```
 
 以上退出码均为 0；Python 223 项通过、1 项跳过。镜头测试用
-1280×720 与 800×600 视口，覆盖近距离、两侧边界、最大 x/z 间距和换边，
+1280×720、800×600 与 480×900 视口，覆盖近距离、两侧边界、最大 x/z 间距和换边，
 检查近似角色范围的投影边距与近距离放大比例；同一镜头测试和地面测试
 也在导出的 PCK 中通过（退出码 0）。Windows EXE 实际进入练习并完成一次
 追击，确认人物更清晰且成功提示不覆盖角色。
+
+补充验证：原始算法在 480×900 视口的近似范围测试中出现水平出界，
+加入窄视口距离调整后通过。CPU 蒙皮包围盒测试对 7 段 Bruce 和 4 段
+Brick 动作分别采样开始、中间、接近末尾，在正反朝向、上述三种视口和
+近距离及两种最大距离站位检查投影边距，两次运行各检查 33 个姿态，
+随后根据 ChatGPT 的审查建议增加攻击关键帧和 Brick 倒地受击逐帧抽样：
+`m01_attack_to_floor` 检查第 9、17–19、22–24、79–81 帧，
+`all_impct_facedwn` 检查第 0–10 帧（候选片段长度不足以采样第 11 帧）。
+每个朝向现检查 54 个姿态，退出码均为 0。近似范围测试另沿连续分离和
+交换位置的轨迹检查构图边距及相机单步位移。这些都不是全部动作逐帧、
+混合姿态或 GPU 像素对照，也不能证明高速操作的镜头舒适度。
 
 以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
 

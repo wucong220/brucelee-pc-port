@@ -294,6 +294,10 @@ func _update_fight_camera() -> void:
     var z_separation: float = absf(player.global_position.z - computer.global_position.z)
     # These are prototype framing choices, not measurements of the original camera.
     var distance: float = 7.0 + maxf(0.0, x_separation - 6.0) * 0.5 + z_separation * 0.65
+    var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+    if viewport_size.x > 0.0 and viewport_size.y > 0.0:
+        var aspect: float = viewport_size.x / viewport_size.y
+        distance *= maxf(1.0, (4.0 / 3.0) / aspect)
     var target: Vector3 = Vector3(center.x, 1.0, center.z)
     fight_camera.global_position = target + Vector3(0.0, distance * 0.42, distance)
     fight_camera.look_at(target, Vector3.UP)
