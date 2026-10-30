@@ -10,6 +10,9 @@ var player: PortFighter
 var computer: PortFighter
 var hud: PortHUD
 var fight_camera: Camera3D
+var combat_audio: Node
+var _candidate_audio: Dictionary = {}
+var _candidate_audio_error: Dictionary = {}
 var ai_timer: float = 0.0
 var ai_guard_sequence: int = -1
 var ai_guard_decision: bool = false
@@ -24,6 +27,7 @@ func _ready() -> void:
     rng.seed = 0xB17E
     _build_environment()
     _build_fighters()
+    _build_combat_audio()
     hud = PortHUD.new()
     add_child(hud)
     _reset_match()
@@ -282,6 +286,50 @@ func _reset_match() -> void:
     hud.show_message("TRAINING · K L L / K U U" if training_mode else "ROUND 1 · FIGHT")
     _update_fight_camera()
 
+func _build_combat_audio() -> void:
+    combat_audio = Node.new()
+    combat_audio.name = "CombatAudio"
+    add_child(combat_audio)
+    var audio_root: String = OS.get_environment("BRUCELEE_AUDIO_ROOT")
+    if audio_root.is_empty():
+        var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+        if local_app_data.is_empty():
+            return
+        audio_root = local_app_data.path_join(
+            "BruceLee-PC-Port/candidate-sfx-20261030/adreno_200/sounds/sfx"
+        )
+    for event: String in ["punch", "kick", "block"]:
+        var audio_names: Dictionary = {
+            "punch": "Punch_Body_Light_1.wav",
+            "kick": "Kick_Body_Light_1.wav",
+            "block": "Block_Arms_2.wav",
+        }
+        var filename: String = String(audio_names[event])
+        var path: String = audio_root.path_join(filename)
+        var error: String = CandidatePathGuard.external_path_error(
+            path, "candidate audio"
+        )
+        if not error.is_empty():
+            _candidate_audio_error[event] = error
+            continue
+        var stream: AudioStream = AudioStreamWAV.load_from_file(path)
+        if stream == null:
+            _candidate_audio_error[event] = "candidate audio failed to load: " + path
+            continue
+        _candidate_audio[event] = stream
+
+func _play_hit_audio(action: String, blocked: bool) -> void:
+    var event: String = (
+        "block" if blocked else ("punch" if action == "punch" else "kick")
+    )
+    if not _candidate_audio.has(event):
+        return
+    var player: AudioStreamPlayer = AudioStreamPlayer.new()
+    player.stream = _candidate_audio[event]
+    player.finished.connect(player.queue_free)
+    combat_audio.add_child(player)
+    player.play()
+
 func _process(_delta: float) -> void:
     _update_fight_camera()
 
@@ -460,6 +508,7 @@ func _training_available() -> bool:
 func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damage: float, blocked: bool) -> void:
     if done or training_completed:
         return
+    _play_hit_audio(action, blocked)
     if (training_mode and attacker == player and defender == computer
             and action == "attacktofloor" and damage > 0.0 and not blocked
             and defender.state == "impactfacedown"):

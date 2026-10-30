@@ -526,6 +526,23 @@ Brick 动作分别采样开始、中间、接近末尾，在正反朝向、上�
 `K,L,L` 命中；这次窗口拖拽未能成功改变窗口尺寸，因此窄窗口的 GUI
 显示仍未经过人工验证，不能把上述模拟视口测试当成 GUI 验收。
 
+### 候选本地战斗音效
+
+原型可从自有数据包提取的本地 WAV 加载拳、踢和格挡反馈。使用
+`BRUCELEE_AUDIO_ROOT` 指定外部 `sounds/sfx` 目录，或放在
+`%LOCALAPPDATA%\BruceLee-PC-Port\candidate-sfx-20261030\adreno_200\sounds\sfx`。
+三个候选文件分别是 `Punch_Body_Light_1.wav`、`Kick_Body_Light_1.wav`
+和 `Block_Arms_2.wav`。目录须在仓库外；缺失或加载失败时静默继续，
+不回退到打包占位音频。文件可加载只证明格式可用；选择、音量、变体、
+声道和完整播放触发规则仍是候选实现，不是原版音效规则闭合。
+
+从用户提供的 `data.zpak`（SHA-256
+`364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c`）
+只读导出三个 WAV，本地解析均为单声道、32000 Hz、16 位。导出目录位于
+仓库外，文件哈希保留在该目录而音频不提交。`validate_candidate_audio.gd`
+用真实外部目录加载三项文件，检查缺失音效静默失败，并触发拳击和格挡
+播放器；源码及单独导出的 PCK 测试退出码均为 0。
+
 以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
 
 ```powershell
