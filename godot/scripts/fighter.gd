@@ -2383,6 +2383,7 @@ func record_standing_combo_press(
 
 func record_parry_press() -> bool:
     if state not in ["idle", "idle2"]:
+        _parry_press_times.clear()
         return false
     _parry_press_times = _parry_press_times.filter(
         func(value: float) -> bool: return _time - value <= 0.5)
@@ -2412,6 +2413,7 @@ func begin_guard() -> void:
 
 func end_guard() -> void:
     guard_held = false
+    _parry_press_times.clear()
 
 
 func _accepts_standing_combo_input(virtual_key: String) -> bool:
@@ -2837,8 +2839,18 @@ func _try_multi_impact_contacts() -> void:
 func _try_special_chain() -> void:
     if attack_kind == "parry_high":
         var parry_frame: float = _current_attack_source_frame()
-        if parry_frame + 0.0001 >= 9.0 and parry_frame <= 10.0001:
-            _begin_chained_attack("parry_attack")
+        if parry_frame + 0.0001 < 9.0 or parry_frame > 10.0001:
+            return
+        if (opponent == null or not is_instance_valid(opponent)
+                or opponent.state not in ["startup", "active"]):
+            return
+        var distance: float = Vector2(
+            opponent.global_position.x - global_position.x,
+            opponent.global_position.z - global_position.z).length()
+        var reach: float = opponent.attack_reach_world(opponent.attack_kind, self)
+        if reach <= 0.0 or distance > reach:
+            return
+        _begin_chained_attack("parry_attack")
         return
     if not SPECIAL_CHAIN_MISSES.has(attack_kind):
         return
@@ -3252,6 +3264,7 @@ func receive_hit(
         direction: float,
         reaction: Dictionary = {}
 ) -> bool:
+    _parry_press_times.clear()
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
