@@ -29,6 +29,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "low_kick2": "m01_kick_low_02",
     "special_kick_low_miss": "m01_sp_kick_low_fail",
     "special_kick_low_hit": "m01_sp_kick_low",
+    "special_punch_low_miss": "m01_sp_pnch_low_fail",
+    "special_punch_low_hit": "m01_sp_pnch_low",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -69,6 +71,9 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_kick_low_02": 50.0,
     "m01_sp_kick_low_fail": 25.0,
     "m01_sp_kick_low": 25.0,
+    "m01_sp_pnch_low_fail": 25.0,
+    "m01_sp_pnch_low": 25.0,
+    "all_impct_hard_frnt_high": 80.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
     "all_impct_light_frnt_high": 40.0,
@@ -162,9 +167,20 @@ const RAGE_GAIN_PER_HIT: float = 10.0
 const SPECIAL_RAGE_COSTS: Dictionary = {
     "special_kick_high": 33.0,
     "special_kick_low_miss": 66.0,
+    "special_punch_low_miss": 66.0,
 }
-const SPECIAL_CHAIN_MISSES: Dictionary = {"special_kick_low_miss": "special_kick_low_hit"}
-const SPECIAL_CHAIN_WINDOW: Dictionary = {"special_kick_low_miss": [14, 16]}
+const SPECIAL_CHAIN_MISSES: Dictionary = {
+    "special_kick_low_miss": "special_kick_low_hit",
+    "special_punch_low_miss": "special_punch_low_hit",
+}
+const SPECIAL_REQUIRES_STEPBACK: Dictionary = {
+    "special_kick_high": true,
+    "special_kick_low_miss": true,
+}
+const SPECIAL_CHAIN_WINDOW: Dictionary = {
+    "special_kick_low_miss": [14, 16],
+    "special_punch_low_miss": [8, 9],
+}
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
@@ -188,6 +204,7 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3", "from_attack": "high_kick2"},
     {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "from_attack": "low_kick2"},
     {"steps": [["left", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_low_miss", "from_attack": "punch"},
+    {"steps": [["down", "in", "a"], ["out", "in", "a"], ["out", "in", "a"]], "attack": "special_punch_low_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
@@ -367,6 +384,28 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "source_action": "specialkicklowhit",
         "animation": "m01_sp_kick_low",
         "frame_count": 39,
+        "damage": 15.0,
+        "radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal",
+    },
+    "special_punch_low_miss": {
+        "source_action": "specialpunchlowmiss",
+        "animation": "m01_sp_pnch_low_fail",
+        "frame_count": 33,
+        "damage": 0.0,
+        "radius": 25.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "special_punch_low_hit": {
+        "source_action": "specialpunchlowhit",
+        "animation": "m01_sp_pnch_low",
+        "frame_count": 178,
         "damage": 15.0,
         "radius": 45.0,
         "body_part": "larm",
@@ -611,6 +650,20 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "animation_radius": 80.0,
             "exit_start_frame": 26,
             "animation_duration_frames": 29,
+            "linking_frame": 0,
+            "return_action": "faceupidle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        {
+            "strength": "hard",
+            "height": "high",
+            "direction": "frontal",
+            "source_action": "impacthardfronthigh",
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 80.0,
+            "exit_start_frame": 23,
+            "animation_duration_frames": 35,
             "linking_frame": 0,
             "return_action": "faceupidle",
             "return_implemented": true,
@@ -1377,7 +1430,8 @@ func _try_load_candidate_visual() -> void:
             "high_punch3", "low_punch3", "low_kick3", "high_kick3",
             "special_kick_high",
             "high_punch2", "low_punch2", "high_kick2", "low_kick2",
-            "special_kick_low_miss", "special_kick_low_hit"]:
+            "special_kick_low_miss", "special_kick_low_hit",
+            "special_punch_low_miss", "special_punch_low_hit"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2296,7 +2350,15 @@ func _matching_standing_combo_attack() -> String:
     for require_source: bool in [true, false]:
         for entry: Dictionary in STANDING_COMBO_SEQUENCES:
             var from_attack: String = String(entry.get("from_attack", ""))
-            if require_source and from_attack != attack_kind:
+            var from_attack_in: Array = entry.get("from_attack_in", [])
+            if require_source:
+                if not from_attack.is_empty() and from_attack != attack_kind:
+                    continue
+                if not from_attack_in.is_empty() and not from_attack_in.has(attack_kind):
+                    continue
+                if from_attack.is_empty() and from_attack_in.is_empty():
+                    continue
+            if not require_source and (not from_attack.is_empty() or not from_attack_in.is_empty()):
                 continue
             if require_source and not supports_attack(String(entry["attack"])):
                 continue
@@ -2381,7 +2443,12 @@ func _try_begin_pending_standing_combo() -> bool:
         return false
     var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
             _standing_combo_pending_attack, 0.0))
-    if special_cost > 0.0 and (rage < special_cost or not _special_stepback_origin):
+    if special_cost > 0.0 and rage < special_cost:
+        _clear_standing_combo_state()
+        return false
+    if (special_cost > 0.0
+            and SPECIAL_REQUIRES_STEPBACK.has(_standing_combo_pending_attack)
+            and not _special_stepback_origin):
         _clear_standing_combo_state()
         return false
     if not supports_attack(_standing_combo_pending_attack):
@@ -2416,7 +2483,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit":
             return kind
     return ""
 
@@ -3196,7 +3263,8 @@ func _animate_candidate() -> void:
         elif attack_kind in ["high_punch", "high_kick", "high_punch3", "low_punch3",
                 "low_kick3", "high_kick3", "special_kick_high",
                 "high_punch2", "low_punch2", "high_kick2", "low_kick2",
-                "special_kick_low_miss", "special_kick_low_hit"]:
+                "special_kick_low_miss", "special_kick_low_hit",
+                "special_punch_low_miss", "special_punch_low_hit"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented

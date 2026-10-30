@@ -55,7 +55,7 @@ func _run() -> void:
         "rage_gate": 33.0,
         "damage": 12.0,
         "attack_radius": 115.0,
-        "reaction": "fail-closed empty; hard/high/frontal reaction clip unsupported by the converter",
+        "reaction": "impacthardfronthigh; clip not bundled",
         "scope": "PC prototype rage meter; native rage scale unverified",
     }))
     await create_timer(0.1).timeout
@@ -217,11 +217,8 @@ func _validate_special_hit(player: PortFighter, opponent: PortFighter) -> bool:
     if absf(defender.health - 88.0) > 0.001:
         push_error("The special damage was not 12: " + str(defender.health))
         return false
-    # The hard/high/frontal reaction clip cannot be bundled yet, so the native
-    # reaction link is fail-closed (empty) rather than silently downgraded.
-    if not defender.last_reaction_source_action.is_empty():
-        push_error("The special reaction unexpectedly mapped to "
-                + defender.last_reaction_source_action)
+    if defender.last_reaction_source_action != "impacthardfronthigh":
+        push_error("The special reaction mapped to " + defender.last_reaction_source_action)
         return false
     if absf(player.rage - 17.0) > 0.001:
         push_error("A landed special did not grant 10 rage: " + str(player.rage))
