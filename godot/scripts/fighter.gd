@@ -2266,10 +2266,8 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch":
-            return "high_punch"
-        "high_kick":
-            return "high_kick"
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3":
+            return kind
     return ""
 
 

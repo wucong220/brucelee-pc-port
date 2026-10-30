@@ -60,6 +60,9 @@ func _run() -> void:
         if not _validate_sequence(player, entry):
             quit(1)
             return
+        if not _validate_self_replay(player, entry):
+            quit(1)
+            return
     if not await _validate_high_reaction(player, opponent):
         quit(1)
         return
@@ -119,6 +122,47 @@ func _validate_sequence(player: PortFighter, entry: Dictionary) -> bool:
         return false
     if player.current_source_animation() != String(entry["animation"]):
         push_error(target + " requested " + player.current_source_animation())
+        return false
+    return true
+
+
+func _validate_self_replay(player: PortFighter, entry: Dictionary) -> bool:
+    # Each new attack is also a candobasicattacks member. Re-entering the same
+    # action must restart the clip even with visual blending enabled.
+    player.candidate_visual_blending_enabled = true
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    var target: String = String(entry["target"])
+    var steps: Array = entry["steps"]
+    if not player.request_attack(target):
+        player.candidate_visual_blending_enabled = false
+        push_error("Could not start " + target + " as its own source")
+        return false
+    for step: Array in steps:
+        player.record_standing_combo_press(String(step[1]), step.slice(0, 1))
+    if String(player.get("_standing_combo_pending_attack")) != target:
+        player.candidate_visual_blending_enabled = false
+        push_error(target + " did not queue its own replay")
+        return false
+    var window: Array = PortFighter.CANDOBASICATTACK_WINDOWS[target]
+    player._advance_timed_states(float(window[0]) / PortFighter.SOURCE_FRAME_RATE)
+    player._animate_candidate()
+    var animation: AnimationPlayer = player.get("_candidate_animation")
+    if animation == null or not animation.is_playing():
+        player.candidate_visual_blending_enabled = false
+        push_error(target + " clip is not playing before its replay")
+        return false
+    animation.seek(1.0, true)
+    var transitioned: bool = player._try_begin_pending_standing_combo()
+    player._animate_candidate()
+    var position: float = animation.current_animation_position
+    var action: String = String(player.get("_candidate_action"))
+    player.candidate_visual_blending_enabled = false
+    if not transitioned:
+        push_error(target + " did not replay at its own window start")
+        return false
+    if position > 0.05 or action != target:
+        push_error(target + " replay kept position %s or action %s" % [position, action])
         return false
     return true
 
