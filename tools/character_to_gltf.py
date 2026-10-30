@@ -352,10 +352,21 @@ def convert_file(mesh_source: Path, destination: Path, *,
                  animation_sources: Iterable[Path] | None = None,
                  expected_skeleton_reference: str | None = None,
                  expected_skeleton_sha256: str | None = None,
+                 retarget_animations: Iterable[tuple[Path, str]] | None = None,
+                 retarget_source_skeleton: Path | None = None,
+                 retarget_source_reference: str | None = None,
+                 retarget_source_sha256: str | None = None,
+                 retarget_target_sha256: str | None = None,
                  rigid_attachments: Iterable[tuple[Path, str]] | None = None) -> dict:
     animation_sources = list(animation_sources or [])
-    if len(animation_sources) > _MAX_ANIMATION_FILES:
+    retarget_animations = list(retarget_animations or [])
+    if len(animation_sources) + len(retarget_animations) > _MAX_ANIMATION_FILES:
         raise GltfExportError('too many candidate animation files')
+    retarget_options = (retarget_source_skeleton, retarget_source_reference,
+                        retarget_source_sha256, retarget_target_sha256)
+    if bool(retarget_animations) != all(retarget_options) or (
+            not retarget_animations and any(retarget_options)):
+        raise GltfExportError('retargeting requires animations and all source/target identity options')
     rigid_attachments = list(islice(rigid_attachments or (), _MAX_RIGID_ATTACHMENTS + 1))
     if len(rigid_attachments) > _MAX_RIGID_ATTACHMENTS:
         raise GltfExportError('too many candidate rigid attachments')
@@ -430,6 +441,37 @@ def convert_file(mesh_source: Path, destination: Path, *,
                 expected_reference=expected_skeleton_reference,
                 expected_skeleton_sha256=expected_skeleton_sha256)
             bound_animations.append((source.stem, bound))
+
+    if retarget_animations:
+        if skeleton is None or mesh['skeleton'] is None or not include_object_transforms:
+            raise GltfExportError('retargeting requires a skinned Mesh, Skl and object transforms')
+        if skeleton['sha256'] != retarget_target_sha256:
+            raise GltfExportError('retarget target Skl SHA-256 does not match')
+        from kdf_animation_binding import bind_animation
+        from kdf_skeleton import inspect_skeleton
+        from retarget_animation_binding import retarget_candidate
+
+        with Path(retarget_source_skeleton).open('rb') as file:
+            source_raw = file.read(_MAX_ANIMATION_BYTES + 1)
+        if len(source_raw) > _MAX_ANIMATION_BYTES:
+            raise GltfExportError('retarget source Skl exceeds size limit')
+        source_skeleton = inspect_skeleton(source_raw)
+        for source, expected_animation_hash in retarget_animations:
+            source = Path(source)
+            with source.open('rb') as file:
+                animation_raw = file.read(_MAX_ANIMATION_BYTES + 1)
+            if len(animation_raw) > _MAX_ANIMATION_BYTES:
+                raise GltfExportError('retarget ANM exceeds size limit')
+            bound = bind_animation(
+                animation_raw, source_raw, expected_reference=retarget_source_reference,
+                expected_skeleton_sha256=retarget_source_sha256)
+            candidate = retarget_candidate(
+                bound, source_skeleton, skeleton,
+                expected_animation_sha256=expected_animation_hash,
+                expected_source_sha256=retarget_source_sha256,
+                expected_target_sha256=retarget_target_sha256,
+                expected_reference=retarget_source_reference)
+            bound_animations.append((source.stem, candidate))
 
     skl_global = None
     skl_by_name = None
@@ -692,7 +734,8 @@ def convert_file(mesh_source: Path, destination: Path, *,
         from gltf_animation import build_animations
 
         animations = build_animations(
-            builder, accessors, node_index_by_id, skeleton, bound_animations)
+            builder, accessors, node_index_by_id, skeleton, bound_animations,
+            allow_experimental_retarget=bool(retarget_animations))
 
     gltf = {
         'asset': {
@@ -779,6 +822,14 @@ def main() -> int:
         '--expected-skeleton-sha256',
         help='expected SHA-256 of the matching Skl from that record')
     parser.add_argument(
+        '--retarget-animation', nargs=2, action='append', default=[],
+        metavar=('ANM', 'SHA256'),
+        help='explicit experimental cross-skeleton ANM and expected hash; repeatable')
+    parser.add_argument('--retarget-source-skeleton', type=Path)
+    parser.add_argument('--retarget-source-reference')
+    parser.add_argument('--retarget-source-sha256')
+    parser.add_argument('--retarget-target-sha256')
+    parser.add_argument(
         '--rigid-attachment', nargs=2, action='append', default=[],
         metavar=('MESH', 'NODE'),
         help='candidate unskinned Mesh attached to an exactly named Skl object; repeatable')
@@ -790,6 +841,11 @@ def main() -> int:
             animation_sources=args.animation,
             expected_skeleton_reference=args.expected_skeleton_reference,
             expected_skeleton_sha256=args.expected_skeleton_sha256,
+            retarget_animations=args.retarget_animation,
+            retarget_source_skeleton=args.retarget_source_skeleton,
+            retarget_source_reference=args.retarget_source_reference,
+            retarget_source_sha256=args.retarget_source_sha256,
+            retarget_target_sha256=args.retarget_target_sha256,
             rigid_attachments=args.rigid_attachment)
     except (OSError, KdfError, GltfExportError) as exc:
         print(f'error: {exc}', file=sys.stderr)
