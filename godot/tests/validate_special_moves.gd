@@ -37,6 +37,9 @@ func _run() -> void:
     if not _validate_insufficient_rage(player):
         quit(1)
         return
+    if not _validate_backstep_gate(player):
+        quit(1)
+        return
     if not await _validate_special_hit(player, opponent):
         quit(1)
         return
@@ -75,6 +78,29 @@ func _validate_insufficient_rage(player: PortFighter) -> bool:
         return false
     if player.attack_kind != "punch":
         push_error("The failed special changed the current attack")
+        return false
+    return true
+
+
+func _validate_backstep_gate(player: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    player.rage = 40.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the plain attack for the backstep check")
+        return false
+    # The same key pattern without the backstep first press must not select the
+    # special; b,c,c is the unrelated high kick sequence.
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("c", ["in"])
+    player.record_standing_combo_press("c", ["in"])
+    if String(player.get("_standing_combo_pending_attack")) == "special_kick_high":
+        push_error("The special matched without a backstep first press")
+        return false
+    player._advance_timed_states(22.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._try_begin_pending_standing_combo()
+    if player.attack_kind == "special_kick_high":
+        push_error("The special fired without a backstep first press")
         return false
     return true
 

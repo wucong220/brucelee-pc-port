@@ -66,7 +66,8 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 必杀技（原型怒气）：本地 31 段候选加载后，`背向+B → 朝向+C → 朝向+C`
 触发 `specialkickhigh`（`m01_kck_front_step`，57 帧、伤害 12、攻击半径 115、
 `lleg/high/hard/frontal`、命中帧 `[11,15]`、第 53–57 帧回 `idle3`）。
-原型怒气槽 0–100：每次未格挡命中 +10，`ragethird` 门槛 33，发动扣 33；
+没有 `背向+B` 这一步的同一按键模式不会选中必杀（原型用背向起手代表原版
+`stepback`）。原型怒气槽 0–100：每次未格挡命中 +10，`ragethird` 门槛 33，发动扣 33；
 原生怒气刻度与获取规则未恢复。`hard/high/frontal` 的专用受击动画
 `all_impct_hard_frnt_high` 目前无法被打包，因此该反应保持 fail-closed（伤害生效、
 不伪造受击动作）。

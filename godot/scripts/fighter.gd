@@ -576,6 +576,7 @@ var last_reaction_clip_implemented: bool = false
 var facing: float = 1.0
 var combo_hits: int = 0
 var rage: float = 0.0
+var _special_stepback_origin: bool = false
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
 var candidate_animation_clip: String = ""
@@ -2131,6 +2132,8 @@ func record_standing_combo_press(
         var token: String = String(modifier)
         if not tokens.has(token):
             tokens.append(token)
+    if tokens.size() == 2 and tokens.has("out") and tokens.has("b"):
+        _special_stepback_origin = true
     _standing_combo_input_history.append({"tokens": tokens, "time": _time})
     var matched_attack: String = _matching_standing_combo_attack()
     if matched_attack.is_empty():
@@ -2175,6 +2178,7 @@ func _clear_standing_combo_input_history() -> void:
 
 
 func _clear_standing_combo_state() -> void:
+    _special_stepback_origin = false
     _clear_standing_combo_input_history()
     _standing_combo_pending_attack = ""
     _standing_combo_pending_source_sequence = -1
@@ -2258,7 +2262,7 @@ func _try_begin_pending_standing_combo() -> bool:
         return false
     var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
             _standing_combo_pending_attack, 0.0))
-    if special_cost > 0.0 and rage < special_cost:
+    if special_cost > 0.0 and (rage < special_cost or not _special_stepback_origin):
         _clear_standing_combo_state()
         return false
     if not supports_attack(_standing_combo_pending_attack):
@@ -2418,7 +2422,7 @@ func _try_attack_to_floor_contact() -> void:
     ):
         return
     _attack_connected = true
-    combo_hits += 1
+    _register_landed_hit(ATTACK_TO_FLOOR_DAMAGE, blocked)
     combat_hit.emit(self, opponent, "attacktofloor", ATTACK_TO_FLOOR_DAMAGE, blocked)
 
 
@@ -2537,7 +2541,7 @@ func _try_facedown_attack_contact() -> void:
     opponent.receive_hit(
         FACEDOWN_ATTACK_DAMAGE, blocked, 0.0, facing, reaction
     )
-    combo_hits += 1
+    _register_landed_hit(FACEDOWN_ATTACK_DAMAGE, blocked)
     combat_hit.emit(
         self, opponent, "facedownattack", FACEDOWN_ATTACK_DAMAGE, blocked
     )
@@ -2567,10 +2571,16 @@ func _try_faceup_attack_contact() -> void:
     opponent.receive_hit(
         FACEUP_ATTACK_DAMAGE, blocked, 0.0, facing, reaction
     )
-    combo_hits += 1
+    _register_landed_hit(FACEUP_ATTACK_DAMAGE, blocked)
     combat_hit.emit(
         self, opponent, "faceupattack", FACEUP_ATTACK_DAMAGE, blocked
     )
+
+
+func _register_landed_hit(damage: float, blocked: bool) -> void:
+    combo_hits += 1
+    if damage > 0.0 and not blocked:
+        rage = minf(RAGE_MAX, rage + RAGE_GAIN_PER_HIT)
 
 
 func _try_attack_contact() -> void:
@@ -2624,9 +2634,7 @@ func _try_attack_contact() -> void:
         opponent.receive_hit(
             damage, blocked, float(details["push"]), facing, reaction
         )
-    combo_hits += 1
-    if not blocked:
-        rage = minf(RAGE_MAX, rage + RAGE_GAIN_PER_HIT)
+    _register_landed_hit(damage, blocked)
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
 
 
