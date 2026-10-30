@@ -4,11 +4,13 @@ extends Node3D
 
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
+const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 
 var player: PortFighter
 var computer: PortFighter
 var hud: PortHUD
+var prototype_menu: PortPrototypeMenu
 var fight_camera: Camera3D
 var combat_audio: Node
 var _candidate_audio: Dictionary = {}
@@ -19,6 +21,9 @@ var ai_guard_decision: bool = false
 var done: bool = false
 var training_mode: bool = false
 var training_completed: bool = false
+var main_menu_enabled: bool = false
+var main_menu_active: bool = false
+var menu_paused: bool = false
 var elapsed: float = 0.0
 var notice_timer: float = 0.0
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -30,8 +35,15 @@ func _ready() -> void:
     _build_combat_audio()
     hud = PortHUD.new()
     add_child(hud)
+    prototype_menu = PortPrototypeMenu.new()
+    add_child(prototype_menu)
+    prototype_menu.command_requested.connect(_on_menu_command)
+    var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
+    main_menu_enabled = false if export_self_test else _should_show_main_menu()
     _reset_match()
-    if OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1":
+    if main_menu_enabled:
+        _open_main_menu()
+    if export_self_test:
         call_deferred("_run_export_self_test")
 
 
@@ -290,6 +302,61 @@ func _reset_match() -> void:
     hud.show_message("TRAINING · K L L / K U U" if training_mode else "ROUND 1 · FIGHT")
     _update_fight_camera()
 
+func _should_show_main_menu() -> bool:
+    var setting: String = OS.get_environment("BRUCELEE_MAIN_MENU")
+    if setting == "1":
+        return true
+    if setting == "0":
+        return false
+    return not OS.has_feature("editor")
+
+func _open_main_menu() -> void:
+    main_menu_active = true
+    menu_paused = false
+    player.move_axis = Vector2.ZERO
+    computer.move_axis = Vector2.ZERO
+    hud.visible = false
+    prototype_menu.show_main_menu()
+    get_tree().paused = true
+
+func _open_pause_menu() -> void:
+    menu_paused = true
+    player.move_axis = Vector2.ZERO
+    computer.move_axis = Vector2.ZERO
+    hud.visible = true
+    prototype_menu.show_pause_menu()
+    get_tree().paused = true
+
+func _leave_menu() -> void:
+    main_menu_active = false
+    menu_paused = false
+    hud.visible = true
+    prototype_menu.hide_menu()
+    get_tree().paused = false
+
+func _on_menu_command(command: String) -> void:
+    match command:
+        "fight":
+            training_mode = false
+            _leave_menu()
+            _reset_match()
+        "training":
+            if _training_available():
+                training_mode = true
+                _leave_menu()
+                _reset_match()
+            else:
+                prototype_menu.show_error("TRAINING NEEDS CANDIDATE ANIMATIONS")
+        "resume":
+            _leave_menu()
+        "restart":
+            _leave_menu()
+            _reset_match()
+        "main_menu":
+            _open_main_menu()
+        "quit":
+            get_tree().quit()
+
 func _build_combat_audio() -> void:
     combat_audio = Node.new()
     combat_audio.name = "CombatAudio"
@@ -387,6 +454,10 @@ func _physics_process(delta: float) -> void:
     if hud == null:
         return
     hud.set_health(player.health, computer.health)
+    if main_menu_active or menu_paused:
+        player.move_axis = Vector2.ZERO
+        computer.move_axis = Vector2.ZERO
+        return
     hud.set_context_hint(_contextual_controls())
     if notice_timer > 0.0:
         notice_timer -= delta
@@ -493,6 +564,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
         return
     var key_event: InputEventKey = event as InputEventKey
     if not key_event.pressed or key_event.echo:
+        return
+    if prototype_menu != null and prototype_menu.handle_key_event(key_event):
+        return
+    if key_event.keycode == KEY_ESCAPE:
+        _open_pause_menu()
         return
     if done and key_event.keycode not in [KEY_R, KEY_F2]:
         return

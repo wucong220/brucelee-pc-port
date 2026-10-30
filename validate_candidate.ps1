@@ -123,7 +123,9 @@ $validationEnvironmentNames = @(
     "BRUCELEE_PLAYER_TEXTURE_ROOT",
     "BRUCELEE_OPPONENT_GLB",
     "BRUCELEE_OPPONENT_TEXTURE_ROOT",
-    "BRUCELEE_CANDIDATE_VISUAL_BLENDING"
+    "BRUCELEE_CANDIDATE_VISUAL_BLENDING",
+    "BRUCELEE_MAIN_MENU",
+    "BRUCELEE_MAINMENU_PATH"
 )
 $savedValidationEnvironment = @{}
 foreach ($name in $validationEnvironmentNames) {
@@ -171,6 +173,11 @@ try {
         Invoke-Checked "Candidate visual blending" {
             & $GodotExe --headless --path $godotProject `
                 --script res://tests/validate_candidate_visual_blending.gd `
+                -- $CandidateGlb $OpponentGlb
+        }
+        Invoke-Checked "Prototype main and pause menu" {
+            & $GodotExe --headless --path $godotProject `
+                --script res://tests/validate_prototype_menu.gd `
                 -- $CandidateGlb $OpponentGlb
         }
     }
@@ -234,6 +241,11 @@ try {
             Invoke-Checked "Packed candidate visual blending" {
                 & $GodotExe --headless --main-pack $packPath `
                     --script res://tests/validate_candidate_visual_blending.gd `
+                    -- $CandidateGlb $OpponentGlb
+            }
+            Invoke-Checked "Packed prototype main and pause menu" {
+                & $GodotExe --headless --main-pack $packPath `
+                    --script res://tests/validate_prototype_menu.gd `
                     -- $CandidateGlb $OpponentGlb
             }
         }
