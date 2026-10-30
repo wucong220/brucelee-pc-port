@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Convert supported decoded Bruce Lee .tex CTX3 files to local RGBA PNGs.
 
-The supported profile extracts the base level from observed r8g8b8a8 and
-standard ATC RGB mip-packed payloads. Input archives and binary resources remain
-read-only.
+The supported profile expands observed r8g8b8 and r8g8b8a8 payloads, and
+extracts the base level from standard ATC RGB mip-packed payloads. Input
+archives and binary resources remain read-only.
 """
 from __future__ import annotations
 
@@ -23,6 +23,10 @@ from kdf_data import KdfError as KdfContainerError, parse_container
 _MAX_RESOURCE_BYTES = 16 * 1024 * 1024
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _PIXEL_FORMATS = {
+    # Both observed r8g8b8 files store 0x00640000 in the descriptor's upper
+    # bits. The business meaning of the decoded value 50 is not yet known, so
+    # validate the complete observed marker instead of presenting it as stride.
+    'r8g8b8': {'kind': 'direct', 'stride': 3, 'descriptor_marker': 0x00640000},
     'r8g8b8a8': {'kind': 'direct', 'stride': 4},
     'atc_rgb': {'kind': 'atc_rgb', 'stride': 8},
 }
@@ -108,7 +112,14 @@ def _validate_mip_layout(
             raise TextureError('texture mips metadata level count is out of bounds')
         if mips_value['second'] != 1:
             raise TextureError('texture mips metadata profile word is unsupported')
-        if mip_count != expected_levels:
+        if pixel_format == 'r8g8b8':
+            # The two observed r8g8b8 backgrounds declare a one-element mips
+            # array even though only the 512x512 base section is stored.
+            if mip_count != 1:
+                raise TextureError(
+                    'observed r8g8b8 profile requires exactly one mip descriptor'
+                )
+        elif mip_count != expected_levels:
             raise TextureError(
                 f'texture mips metadata declares {mip_count} levels; '
                 f'{width}x{height} requires {expected_levels}'
@@ -145,12 +156,21 @@ def _validate_mip_layout(
             descriptor = record['first']
             if descriptor >> 28 != 4:
                 raise TextureError(f'texture mip descriptor {level} has an invalid tag')
-            stride = (descriptor & 0x0fff0000) >> 21
-            if stride != spec['stride']:
-                raise TextureError(
-                    f'texture mip descriptor {level} stride is {stride}; '
-                    f'expected {spec["stride"]}'
-                )
+            descriptor_upper = descriptor & 0x0fff0000
+            if 'descriptor_marker' in spec:
+                if descriptor_upper != spec['descriptor_marker']:
+                    raise TextureError(
+                        f'texture mip descriptor {level} marker is '
+                        f'0x{descriptor_upper:08x}; expected '
+                        f'0x{spec["descriptor_marker"]:08x}'
+                    )
+            else:
+                stride = descriptor_upper >> 21
+                if stride != spec['stride']:
+                    raise TextureError(
+                        f'texture mip descriptor {level} stride is {stride}; '
+                        f'expected {spec["stride"]}'
+                    )
             encoded_elements = descriptor & 0xffff
             if elements <= 0xffff:
                 elements_valid = encoded_elements == elements
@@ -261,8 +281,21 @@ def _decode_atc_rgb(encoded: bytes, width: int, height: int) -> bytes:
     return bytes(pixels)
 
 
+def _expand_rgb_to_rgba(encoded: bytes) -> bytes:
+    """Expand tightly packed RGB pixels to opaque RGBA."""
+    if len(encoded) % 3:
+        raise TextureError('r8g8b8 payload length is not divisible by three')
+    pixels = bytearray((len(encoded) // 3) * 4)
+    target = 0
+    for source in range(0, len(encoded), 3):
+        pixels[target:target + 3] = encoded[source:source + 3]
+        pixels[target + 3] = 255
+        target += 4
+    return bytes(pixels)
+
+
 def parse_texture(raw: bytes) -> dict:
-    """Return validated metadata and decoded bottom-up RGBA base-level pixels."""
+    """Return validated metadata, decoded RGBA pixels, and observed row order."""
     if len(raw) > _MAX_RESOURCE_BYTES:
         raise TextureError('decoded texture exceeds inspection size limit')
     try:
@@ -303,6 +336,9 @@ def parse_texture(raw: bytes) -> dict:
     if pixel_format == 'atc_rgb':
         pixels = _decode_atc_rgb(base_payload, width, height)
         pixel_decoding = 'block_decoded'
+    elif pixel_format == 'r8g8b8':
+        pixels = _expand_rgb_to_rgba(base_payload)
+        pixel_decoding = 'rgb_expanded'
     else:
         pixels = base_payload
         pixel_decoding = 'direct'
@@ -322,7 +358,7 @@ def parse_texture(raw: bytes) -> dict:
         'output_pixel_format': 'r8g8b8a8',
         'pixel_decoding': pixel_decoding,
         **mip_layout,
-        'orientation': 'bottom_up',
+        'orientation': 'top_down' if pixel_format == 'r8g8b8' else 'bottom_up',
         'pixels': pixels,
     }
 
@@ -395,12 +431,19 @@ def _write_atomic_exclusive(target: Path, data: bytes) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def convert_file(source: Path, destination: Path, *, flip_vertical: bool = True) -> dict:
+def convert_file(
+        source: Path,
+        destination: Path,
+        *,
+        flip_vertical: bool | None = None,
+) -> dict:
     with source.open('rb') as file:
         raw = file.read(_MAX_RESOURCE_BYTES + 1)
     if len(raw) > _MAX_RESOURCE_BYTES:
         raise TextureError('decoded texture exceeds inspection size limit')
     texture = parse_texture(raw)
+    if flip_vertical is None:
+        flip_vertical = texture['orientation'] == 'bottom_up'
     png = encode_png_rgba(texture['width'], texture['height'], texture['pixels'],
                           flip_vertical=flip_vertical)
     target = _safe_output_path(destination)
@@ -425,7 +468,11 @@ def main() -> int:
                         help='preserve the stored row order')
     args = parser.parse_args()
     try:
-        result = convert_file(args.source, args.output, flip_vertical=not args.no_flip)
+        result = convert_file(
+            args.source,
+            args.output,
+            flip_vertical=False if args.no_flip else None,
+        )
     except (OSError, TextureError) as exc:
         print(f'error: {exc}', file=sys.stderr)
         return 1
