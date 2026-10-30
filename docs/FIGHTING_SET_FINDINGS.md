@@ -555,8 +555,9 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 
 `candobasicattacks` 有 84 个成员。当前候选只记录了 9 个已实现动作的组窗口。
 仓库外 23 段候选已加入 `m01_attack_to_floor`；Brick 的本地 6 段候选已接入受限非致命受击链，可进入
-`facedownidle` 并报告 `pose=laying`；完整 Brick 击倒行为尚未恢复。所以这组静态证据确认了入口候选与运行时序，仍不足以
-把 `attacktofloor` 当作可在正常游玩中触发的完整行为。可用
+`facedownidle` 并报告 `pose=laying`；完整 Brick 击倒行为尚未恢复。当前原型已通过显式
+`bcc/bdd` PC 输入接入候选 `attacktofloor`，但这组静态证据仍不足以把
+`attacktofloor` 当作已经复现原版组链接语义的完整行为。可用
 `py -3.12 -X utf8 -B tools\native_attacktofloor_links.py <local-libdefault.so>`
 会对该脚本指定的 SHA-256、107 条相关指令、2 个 GOT 重定位和 `pose` 字符串
 做一致性校验。新增校验覆盖窗口与第三项数组读取、成员索引选择、值暂存及四字节写入等关键指令；

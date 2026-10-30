@@ -33,7 +33,7 @@
 15. `brucelee.set` 的 396 条战斗 links、normal 正面受击映射、格挡映射、反应动作返回窗口及对应 ANM 时长已只读导出到 `reports/reaction_action_inventory.json`。Godot 的 `hitstun/blockstun` 已按 reaction return frame 配置驱动，并保留 `CANDIDATE` 边界；`push` 仍使用原型规则。
 16. reaction root-motion 取证已导出 `positions` 逐帧值、轨道存在性和 ANM 哈希到 `reports/reaction_root_motion_inventory.json`，并由 16 条原生变换链指令校验。当前尚未把任何坐标轴映射为 Godot `push`。
 17. 玩家 Bruce 和电脑 Brick 已分别加载独立候选 GLB、动作映射与动画节点；Brick 可使用 `m03_*` idle/punch/kick/movefwd。Brick 的 diffuse/normal `atc_rgb` 与 material `r8g8b8a8` 1024×1024 mip 链已可由转换器解码基础层；原版 fighting set、命中参数、reaction、AI 和逐像素视觉仍未恢复；候选动画的未验证角色位移轨道已禁用。
-18. 受限候选路径已接入 `impacttofloor -> faceupidle -> faceupgetup/faceupattack -> idle`：`impacttofloor` 只在 Bruce 处于 `facedowngetup [5,11]` 或 `facedownattack [24,31]` 的 `impactablefromground` 窗口，受到非致命、非格挡的低段命中，且候选 GLB 含所需 clip 时触发；它从源动画第 21 帧起播，第 48 帧进入循环 `faceupidle`。候选 GLB 还含 `all_getup_faceup` 时，`faceupidle` 在源帧 `[10,45]` 接受水平 `move_axis.x` 进入 24 帧、半径 40 的 `faceupgetup`，并在候选选定的源帧 20 进入普通 idle。档案的 `idle` 链接窗口是 `[20,24]`，所以第 20 帧只是确定性候选选择，不是原版实际切换帧的证明。21 段候选含 `all_getup_faceup_attack` 时，`faceupidle` 在源帧 `[0,45]` 接受 `aaa/abb/bcc/bdd` 四条抽象序列，进入 38 帧、半径 45 的非循环 `faceupattack`；第 `[9,14]` 帧至多造成一次 6 点伤害，攻击半径 90、属性为 `larm/low/hard/frontal`，候选运行时选择第 37 帧回 idle。它在 `[24,31]` 仅接受已验证的非致命、非格挡低段 `impacttofloor` 路径；`canblock [27,38]` 只用作格挡门控，避免该窗口内的格挡低段误入倒地链，完整格挡反应、普通受击和 KO 出边仍封闭。22 段候选含 `all_impct_faceup` 时，`faceupidle` 受到非致命、非格挡低段 impact 会播放 11 帧、半径 80 的非循环 `impactfaceup`，第 11 帧回到 `faceupidle`；伤害会使血量归零时优先进入复用 `all_idle_face_up` 的独立 `faceupko`，半径 100、45 帧循环，不接受起身或攻击输入。两者均不应用原型 push；中高段非致命、格挡、缺 clip 及 `faceupattack/faceupgetup` 的未闭合来向继续 fail closed。`attacktofloor` 仍未接入。
+18. 受限候选路径已接入 `impacttofloor -> faceupidle -> faceupgetup/faceupattack -> idle`：`impacttofloor` 只在 Bruce 处于 `facedowngetup [5,11]` 或 `facedownattack [24,31]` 的 `impactablefromground` 窗口，受到非致命、非格挡的低段命中，且候选 GLB 含所需 clip 时触发；它从源动画第 21 帧起播，第 48 帧进入循环 `faceupidle`。候选 GLB 还含 `all_getup_faceup` 时，`faceupidle` 在源帧 `[10,45]` 接受水平 `move_axis.x` 进入 24 帧、半径 40 的 `faceupgetup`，并在候选选定的源帧 20 进入普通 idle。档案的 `idle` 链接窗口是 `[20,24]`，所以第 20 帧只是确定性候选选择，不是原版实际切换帧的证明。21 段候选含 `all_getup_faceup_attack` 时，`faceupidle` 在源帧 `[0,45]` 接受 `aaa/abb/bcc/bdd` 四条抽象序列，进入 38 帧、半径 45 的非循环 `faceupattack`；第 `[9,14]` 帧至多造成一次 6 点伤害，攻击半径 90、属性为 `larm/low/hard/frontal`，候选运行时选择第 37 帧回 idle。它在 `[24,31]` 仅接受已验证的非致命、非格挡低段 `impacttofloor` 路径；`canblock [27,38]` 只用作格挡门控，避免该窗口内的格挡低段误入倒地链，完整格挡反应、普通受击和 KO 出边仍封闭。22 段候选含 `all_impct_faceup` 时，`faceupidle` 受到非致命、非格挡低段 impact 会播放 11 帧、半径 80 的非循环 `impactfaceup`，第 11 帧回到 `faceupidle`；伤害会使血量归零时优先进入复用 `all_idle_face_up` 的独立 `faceupko`，半径 100、45 帧循环，不接受起身或攻击输入。两者均不应用原型 push；中高段非致命、格挡、缺 clip 及 `faceupattack/faceupgetup` 的未闭合来向继续 fail closed。23 段候选另含 `m01_attack_to_floor`：Bruce 在 `idle/idle2`、Brick 报告 `laying` 时，原型把 `K,L,L` 或 `K,U,U` 映射为 `bcc/bdd`，从源动画第 9 帧进入，第 `[18,23]` 帧至多造成一次 6 点伤害，半径 60、属性 `lleg/normal/low/frontal`；档案直接出边为 `[80,90] -> idle2`，候选选择最早的第 80 帧进入 `m01_idle_02`。输入前缀会先缓存，避免第一个 `b` 被普通踢提前消费；完整原版组成员窗口、链接优先级、blending、物理键位和目标反应链仍未验证。
 
 ## 立即运行 Windows PC 原型
 
@@ -62,6 +62,13 @@
 `pressa/pressb/pressc/pressd`。测得的四条序列
 `aaa`、`abb`、`bcc`、`bdd` 可输入 `facedownattack`；这是为了测试原版
 链接而采用的 PC 映射，尚未证明原版 Android 的物理键位。
+
+当对手处于候选 `facedownidle` 且 Bruce 为站立 `idle/idle2` 时，
+`K,L,L` 或 `K,U,U` 会尝试进入候选 `attacktofloor`。第一次 `b` 会作为
+输入前缀缓存；超过原型输入窗口后不会自动转成普通踢。Bruce 候选必须同时
+含 `m01_attack_to_floor` 和返回用的 `m01_idle_02`，否则该路径保持关闭。
+这些序列和帧值是候选运行时行为，不是已经实测的原版输入优先级或 Android
+键位。
 
 ### 导出 EXE
 

@@ -103,6 +103,30 @@ const FACEUP_IMPACT_EXIT_FRAME: int = 11
 const FACEUP_KO_RADIUS: float = 100.0
 const ATTACK_TO_FLOOR_CLIP: String = "m01_attack_to_floor"
 const ATTACK_TO_FLOOR_DURATION_FRAMES: int = 90
+const ATTACK_TO_FLOOR_ENTRY_FRAME: int = 9
+const ATTACK_TO_FLOOR_EXIT_START_FRAME: int = 80
+const ATTACK_TO_FLOOR_DAMAGE_START_FRAME: int = 18
+const ATTACK_TO_FLOOR_DAMAGE_END_FRAME: int = 23
+const ATTACK_TO_FLOOR_DAMAGE: float = 6.0
+const ATTACK_TO_FLOOR_RADIUS: float = 60.0
+const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
+    "strength": "normal", "height": "low", "direction": "frontal",
+    "body_part": "lleg", "attack_radius": ATTACK_TO_FLOOR_RADIUS,
+}
+const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
+
+enum AttackToFloorInputResult {
+    IGNORED,
+    BUFFERED,
+    STARTED,
+}
+
+enum AttackToFloorSequenceMatch {
+    NO_MATCH,
+    PREFIX,
+    COMPLETE,
+}
+
 # Each key is a recovered source action, not an ANM header pose. Values were
 # read from brucelee.set; idle and facedownidle were also checked in thai.set.
 # The prototype currently maps these state names one-to-one to source actions.
@@ -1568,6 +1592,20 @@ func _advance_return_state(delta: float) -> void:
         if _reached_source_frame(state_time, FACEUP_GETUP_EXIT_FRAME):
             _enter_locomotion_state("idle")
         return
+    if state == "attacktofloor":
+        var before: float = state_time
+        var after: float = before + maxf(delta, 0.0)
+        if (_attack_connected == false
+                and _source_frame_window_intersects(
+                    before, after, ATTACK_TO_FLOOR_DAMAGE_START_FRAME,
+                    ATTACK_TO_FLOOR_DAMAGE_END_FRAME)):
+            _try_attack_to_floor_contact()
+        state_time = after
+        if _reached_source_frame(state_time, ATTACK_TO_FLOOR_EXIT_START_FRAME):
+            # The recovered direct edge is idle2 [80,90]. Frame 80 is the
+            # deterministic earliest-frame candidate; native timing is unverified.
+            _enter_locomotion_state("idle2")
+        return
     if state == "faceupattack":
         var before: float = state_time
         var after: float = before + maxf(delta, 0.0)
@@ -1842,6 +1880,108 @@ func _prune_ground_attack_input_history() -> void:
         _clear_ground_attack_input_history()
 
 
+func try_attack_to_floor_press(
+        virtual_key: String
+) -> AttackToFloorInputResult:
+    # Prototype-only mapping for recovered b/c/d sequences. Native key status,
+    # source-frame clocks, link order and deferred third-value timing remain unverified.
+    if (state not in ["idle", "idle2"] or attack_config_path == BRICK_ATTACK_CONFIG_PATH
+            or virtual_key not in ["b", "c", "d"]):
+        _clear_ground_attack_input_history()
+        return AttackToFloorInputResult.IGNORED
+    if (not _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP)
+            or not _candidate_clip_paths.has(IDLE2_CLIP)):
+        _clear_ground_attack_input_history()
+        return AttackToFloorInputResult.IGNORED
+    if opponent == null or not is_instance_valid(opponent) or opponent.current_source_pose() != "laying":
+        _clear_ground_attack_input_history()
+        return AttackToFloorInputResult.IGNORED
+    _prune_ground_attack_input_history()
+    var input_owner: String = "attacktofloor:" + state
+    if _ground_attack_input_owner != input_owner:
+        _clear_ground_attack_input_history()
+        _ground_attack_input_owner = input_owner
+    _ground_attack_input_history.append({"key": virtual_key, "time": _time})
+    var match_state: AttackToFloorSequenceMatch = _specific_sequence_match_state(
+        ATTACK_TO_FLOOR_SEQUENCES
+    )
+    if match_state == AttackToFloorSequenceMatch.COMPLETE:
+        _begin_attack_to_floor()
+        return AttackToFloorInputResult.STARTED
+    if match_state == AttackToFloorSequenceMatch.PREFIX:
+        return AttackToFloorInputResult.BUFFERED
+    # A non-prefix input discards the whole chain. A leading b can begin a new
+    # chain; c/d falls back to their ordinary input path.
+    _clear_ground_attack_input_history()
+    if virtual_key == "b":
+        _ground_attack_input_owner = input_owner
+        _ground_attack_input_history.append({"key": "b", "time": _time})
+        return AttackToFloorInputResult.BUFFERED
+    return AttackToFloorInputResult.IGNORED
+
+
+func _specific_sequence_match_state(sequences: Array) -> AttackToFloorSequenceMatch:
+    if _ground_attack_input_history.is_empty():
+        return AttackToFloorSequenceMatch.NO_MATCH
+    var observed: Array[String] = []
+    for event_value: Variant in _ground_attack_input_history:
+        if not event_value is Dictionary:
+            return AttackToFloorSequenceMatch.NO_MATCH
+        var event: Dictionary = event_value
+        observed.append(String(event.get("key", "")))
+    var has_prefix: bool = false
+    for sequence_value: Variant in sequences:
+        var sequence: Array = sequence_value
+        if observed.size() > sequence.size():
+            continue
+        var matches_prefix: bool = true
+        for index: int in range(observed.size()):
+            if observed[index] != String(sequence[index]):
+                matches_prefix = false
+                break
+        if not matches_prefix:
+            continue
+        if observed.size() == sequence.size():
+            return AttackToFloorSequenceMatch.COMPLETE
+        has_prefix = true
+    if has_prefix:
+        return AttackToFloorSequenceMatch.PREFIX
+    return AttackToFloorSequenceMatch.NO_MATCH
+
+
+func record_attack_to_floor_press(virtual_key: String) -> bool:
+    return try_attack_to_floor_press(virtual_key) == AttackToFloorInputResult.STARTED
+
+
+func _begin_attack_to_floor() -> void:
+    state = "attacktofloor"
+    state_time = float(ATTACK_TO_FLOOR_ENTRY_FRAME) / SOURCE_FRAME_RATE
+    attack_kind = "attacktofloor"
+    attack_sequence += 1
+    _attack_connected = false
+    _clear_ground_attack_input_history()
+    _restart_candidate_action()
+
+
+func _try_attack_to_floor_contact() -> void:
+    if (opponent == null or not is_instance_valid(opponent)
+            or opponent.state in ["ko", "facedownko", "faceupko"]):
+        return
+    var dx: float = opponent.global_position.x - global_position.x
+    var dz: float = opponent.global_position.z - global_position.z
+    if Vector2(dx, dz).length() > attack_reach_world("attacktofloor", opponent) or dx * facing < -0.1:
+        return
+    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var reaction: Dictionary = opponent.reaction_for_incoming(ATTACK_TO_FLOOR_IMPACT, blocked)
+    if not opponent.receive_hit(
+        ATTACK_TO_FLOOR_DAMAGE, blocked, 0.0, facing, reaction
+    ):
+        return
+    _attack_connected = true
+    combo_hits += 1
+    combat_hit.emit(self, opponent, "attacktofloor", ATTACK_TO_FLOOR_DAMAGE, blocked)
+
+
 func _matches_ground_attack_sequence() -> bool:
     # InputSequenceCheck scans the event vector backwards and skips entries
     # that do not match the current required key. This is an ordered
@@ -1900,6 +2040,7 @@ func _advance_timed_states(delta: float) -> void:
         "idle2", "facedownidle", "facedownko", "facedowngetup",
         "impactfacedown", "facedownattack", "impacttofloor", "faceupidle",
         "faceupgetup", "faceupattack", "impactfaceup", "faceupko",
+        "attacktofloor",
     ]:
         _advance_return_state(delta)
         return
@@ -2159,6 +2300,11 @@ func attack_reach_world(kind: String, target: PortFighter = null) -> float:
         if target != null:
             facedown_source_reach += target.source_radius_for_current_animation()
         return facedown_source_reach * source_units_to_world
+    if kind == "attacktofloor":
+        var source_reach: float = ATTACK_TO_FLOOR_RADIUS * radius_scale
+        if target != null:
+            source_reach += target.source_radius_for_current_animation()
+        return source_reach * source_units_to_world
     if kind == "faceupattack":
         var faceup_source_reach: float = FACEUP_ATTACK_RADIUS * radius_scale
         if target != null:
@@ -2257,7 +2403,7 @@ func receive_hit(
         push: float,
         direction: float,
         reaction: Dictionary = {}
-) -> void:
+) -> bool:
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
@@ -2265,7 +2411,7 @@ func receive_hit(
         "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
         "impactfaceup", "faceupko",
     ]:
-        return
+        return false
     var state_before: String = state
     var position_before: float = position.x
     _attack_connected = false
@@ -2296,8 +2442,7 @@ func receive_hit(
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
     if (health <= 0.0 and state_before == "facedownidle"
-            and attack_config_path != BRICK_ATTACK_CONFIG_PATH
-            and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)):
+            and _candidate_clip_paths.has(_facedown_idle_clip())):
         # brucelee.set lists healthzero before the low-impact link. Do not play
         # impactfacedown or apply the standing prototype push.
         position.x = position_before
@@ -2309,6 +2454,8 @@ func receive_hit(
         # A second hit of the same type must start the reaction again.
         _candidate_animation.stop()
         _candidate_action = ""
+    return true
+
 
 func reset_fighter(start_position: Vector3) -> void:
     global_position = start_position
@@ -2367,6 +2514,7 @@ func _animate_candidate() -> void:
         - _candidate_source_min_y * _candidate_visual_scale
     )
     var requested: String = "idle"
+    var start_frame: int = 0
     if state in ["startup", "active", "recovery"]:
         if attack_kind == "punch":
             requested = "punch"
@@ -2414,15 +2562,13 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "attacktofloor" and _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP):
         requested = ATTACK_TO_FLOOR_CLIP
+        start_frame = ATTACK_TO_FLOOR_ENTRY_FRAME
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "idle" and _candidate_clip_paths.has("move") and (
             absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001
     ):
         requested = "move"
-    var start_frame: int = (
-        int(state_time * SOURCE_FRAME_RATE + 0.0001)
-        if requested == FACEUP_IMPACT_TO_FLOOR_CLIP
-        else 0
-    )
+    if requested == FACEUP_IMPACT_TO_FLOOR_CLIP:
+        start_frame = int(state_time * SOURCE_FRAME_RATE + 0.0001)
     _play_candidate_action(requested, start_frame)
