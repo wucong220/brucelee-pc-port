@@ -447,6 +447,9 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 上段拳多段必杀使用 41 段带头候选：2,654,468 字节，SHA-256
 `513880b9d1e90fefd6a9e868980a4a30081e5c2cdeec98df7a04184d97eba009`，
 新增 `m01_sp_pnch_high_fail`、`m01_sp_pnch_high`。转换器动画上限已提升到 44。
+格挡反击使用 42 段带头候选：2,727,612 字节，SHA-256
+`7771893136ca4cba7a25284ccd1c0cb95f982b1344ab5ef870574760dadc43cf`，
+新增 `m01_parry_high`；`parry_attack` 复用已有的 `m01_pnch_high_03`。
 下段拳必杀与 hard/high/frontal 反应使用 40 段带头候选：2,453,728 字节，SHA-256
 `77ead1783187b738554a99655cb42cd9f27ca32e47782553dc6e31356c6d58ca`，
 新增 `m01_sp_pnch_low_fail`、`m01_sp_pnch_low`、`all_impct_hard_frnt_high`。

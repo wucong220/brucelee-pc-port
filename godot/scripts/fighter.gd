@@ -33,6 +33,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "special_punch_low_hit": "m01_sp_pnch_low",
     "special_punch_high_miss": "m01_sp_pnch_high_fail",
     "special_punch_high_hit": "m01_sp_pnch_high",
+    "parry_high": "m01_parry_high",
+    "parry_attack": "m01_pnch_high_03",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -77,6 +79,7 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_sp_pnch_low": 25.0,
     "m01_sp_pnch_high_fail": 40.0,
     "m01_sp_pnch_high": 25.0,
+    "m01_parry_high": 40.0,
     "all_impct_hard_frnt_high": 80.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
@@ -178,6 +181,7 @@ const SPECIAL_CHAIN_MISSES: Dictionary = {
     "special_kick_low_miss": "special_kick_low_hit",
     "special_punch_low_miss": "special_punch_low_hit",
     "special_punch_high_miss": "special_punch_high_hit",
+    "parry_high": "parry_attack",
 }
 const SPECIAL_REQUIRES_STEPBACK: Dictionary = {
     "special_kick_high": true,
@@ -441,6 +445,28 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "body_part": "larm",
         "height": "high",
         "strength": "normal",
+        "direction": "frontal",
+    },
+    "parry_high": {
+        "source_action": "parryhigh",
+        "animation": "m01_parry_high",
+        "frame_count": 62,
+        "damage": 0.0,
+        "radius": 40.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "parry_attack": {
+        "source_action": "parryattack",
+        "animation": "m01_pnch_high_03",
+        "frame_count": 85,
+        "damage": 10.0,
+        "radius": 75.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "hard",
         "direction": "frontal",
     },
 }
@@ -758,6 +784,7 @@ var combo_hits: int = 0
 var rage: float = 0.0
 var _special_stepback_origin: bool = false
 var _multi_impact_applied: Array = []
+var _parry_press_times: Array = []
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
 var candidate_animation_clip: String = ""
@@ -1484,7 +1511,8 @@ func _try_load_candidate_visual() -> void:
             "high_punch2", "low_punch2", "high_kick2", "low_kick2",
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
-            "special_punch_high_miss", "special_punch_high_hit"]:
+            "special_punch_high_miss", "special_punch_high_hit",
+            "parry_high", "parry_attack"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2353,6 +2381,26 @@ func record_standing_combo_press(
     return _try_begin_pending_standing_combo()
 
 
+func record_parry_press() -> bool:
+    _parry_press_times = _parry_press_times.filter(
+        func(value: float) -> bool: return _time - value <= 0.5)
+    _parry_press_times.append(_time)
+    if _parry_press_times.size() < 3:
+        return false
+    _parry_press_times.clear()
+    if rage < 33.0:
+        return false
+    rage -= 33.0
+    attack_kind = "parry_high"
+    attack_sequence += 1
+    _attack_connected = false
+    _multi_impact_applied.clear()
+    state = "startup"
+    state_time = float(ATTACKS["parry_high"]["startup"])
+    _restart_candidate_action()
+    return true
+
+
 func begin_guard() -> void:
     # Guard press must cancel a matched combo immediately. Waiting for the next
     # physics frame loses a rapid press-and-release tap entirely.
@@ -2536,7 +2584,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_attack":
             return kind
     return ""
 
@@ -2785,6 +2833,11 @@ func _try_multi_impact_contacts() -> void:
 
 
 func _try_special_chain() -> void:
+    if attack_kind == "parry_high":
+        var parry_frame: float = _current_attack_source_frame()
+        if parry_frame + 0.0001 >= 9.0 and parry_frame <= 10.0001:
+            _begin_chained_attack("parry_attack")
+        return
     if not SPECIAL_CHAIN_MISSES.has(attack_kind):
         return
     var window: Array = SPECIAL_CHAIN_WINDOW[attack_kind]
@@ -3302,6 +3355,7 @@ func reset_fighter(start_position: Vector3) -> void:
     combo_hits = 0
     rage = 0.0
     _multi_impact_applied.clear()
+    _parry_press_times.clear()
     if candidate_loaded:
         if _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
@@ -3357,7 +3411,8 @@ func _animate_candidate() -> void:
                 "high_punch2", "low_punch2", "high_kick2", "low_kick2",
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",
-                "special_punch_high_miss", "special_punch_high_hit"]:
+                "special_punch_high_miss", "special_punch_high_hit",
+                "parry_high", "parry_attack"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented

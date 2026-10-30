@@ -80,6 +80,13 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 `larm/high/hard/frontal`）；否则保持 miss 并回 idle。`hard/high/frontal`
 专用受击动画仍不可用，反应 fail-closed。
 
+格挡反击（原型方向输入）：按住防御，在对手 `startup/active` 时用
+`下+朝向` 连续三次（0.5 秒内，每次按下沿）触发 `parry_high`
+（`m01_parry_high`，62 帧，无伤害），消耗 33 怒气。第 9–10 帧自动切到
+`parry_attack`（复用 `m01_pnch_high_03`，85 帧，伤害 10、攻击半径 75、
+`larm/high/hard/frontal`，窗口 `[4,8]`）。原版是纯方向 `down+right×3`，
+PC 原型增加了“按住防御且对手正在攻击”的前置条件。
+
 必杀技上段拳（原型多点命中）：第 3 段攻击后，`上+A → 上+A → 上+A`
 （原版 `pressleft+pressright+A`，PC 用上+A×3 代表双手蓄力）在 `rage2thirds`
 时进入 `special_punch_high_miss`（`m01_sp_pnch_high_fail`，122 帧，无伤害）。

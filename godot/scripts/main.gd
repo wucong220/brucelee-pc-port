@@ -452,6 +452,22 @@ func _update_fight_camera() -> void:
     fight_camera.global_position = target + Vector3(0.0, distance * 0.42, distance)
     fight_camera.look_at(target, Vector3.UP)
 
+var _parry_input_was_pressed: bool = false
+
+
+func _update_parry_input() -> void:
+    var down_pressed: bool = Input.is_action_pressed("prototype_move_down")
+    var toward_action: String = ("prototype_move_right"
+            if player.facing >= 0.0 else "prototype_move_left")
+    var toward_pressed: bool = Input.is_action_pressed(toward_action)
+    var pressed: bool = down_pressed and toward_pressed
+    if (pressed and not _parry_input_was_pressed
+            and player.guard_held
+            and computer.state in ["startup", "active"]):
+        player.record_parry_press()
+    _parry_input_was_pressed = pressed
+
+
 func _physics_process(delta: float) -> void:
     if hud == null:
         return
@@ -478,6 +494,7 @@ func _physics_process(delta: float) -> void:
         0.2
     )
     player.guard_held = Input.is_action_pressed(PrototypeControls.GUARD)
+    _update_parry_input()
     if training_mode:
         computer.move_axis = Vector2.ZERO
         computer.guard_held = false
