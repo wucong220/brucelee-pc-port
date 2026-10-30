@@ -436,7 +436,7 @@ Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 加入 `m01_kck_front_step` 后，由原型怒气槽和 `背向+B → 朝向+C → 朝向+C`
 触发，伤害 12、半径 115。专用 `hard/high/frontal` 受击动画
-`all_impct_hard_frnt_high` 被转换器以 wavelet 错误拒绝，故该反应 fail-closed。
+`all_impct_hard_frnt_high` 现在可被转换器解码（空近似层规则），但尚未接入受击反应表，故仍 fail-closed。
 完整证据见 `reports/special_moves_evidence.json`。
 
 普通攻击第 2 段使用 35 段带头候选：2,020,448 字节，SHA-256
