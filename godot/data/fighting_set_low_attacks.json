@@ -37,7 +37,9 @@
       "m01_sp_pnch_high": 25.0,
       "m01_parry_high": 40.0,
       "m01_grab_01": 40.0,
-      "m01_grab_02": 25.0
+      "m01_grab_02": 25.0,
+      "m01_end_attack_01": 45.0,
+      "m01_end_attack_02": 45.0
     }
   },
   "reaction_profiles": {
@@ -581,6 +583,40 @@
           "direction": "frontal"
         }
       ]
+    },
+    "endattack1": {
+      "source_action": "endattack1",
+      "animation": "m01_end_attack_01",
+      "animation_frame_count": 377,
+      "startup_frames": 1,
+      "active_frames": 0,
+      "recovery_frames": 376,
+      "damage": 0.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "endattack2": {
+      "source_action": "endattack2",
+      "animation": "m01_end_attack_02",
+      "animation_frame_count": 235,
+      "startup_frames": 1,
+      "active_frames": 0,
+      "recovery_frames": 234,
+      "damage": 0.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "rleg",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal"
+      }
     }
   },
   "exact_reactions": {
