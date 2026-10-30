@@ -32,6 +32,9 @@ func _run() -> void:
     if not _exercise(player, brick):
         quit(1)
         return
+    if not _check_candidate_timing(player, brick):
+        quit(1)
+        return
     print("BRICK_GROUND_ENTRY_CANDIDATE=passed")
     quit(0)
 
@@ -159,4 +162,73 @@ func _exercise(player: PortFighter, brick: PortFighter) -> bool:
             return false
         if case_name not in ["guard", "lethal"] and brick.state != "hitstun":
             return false
+    return true
+
+
+func _check_candidate_timing(player: PortFighter, brick: PortFighter) -> bool:
+    # Idle has no gameplay frame clock: test the visual loop separately from
+    # the state predicate, without interpreting its playback time as native time.
+    for action: String in ["idle", "move"]:
+        if not _reset(player, brick):
+            return false
+        brick.move_axis = Vector2(1.0, 0.0) if action == "move" else Vector2.ZERO
+        brick._animate_candidate()
+        var animation: AnimationPlayer = brick.get("_candidate_animation")
+        var clip_path: String = brick._candidate_clip_paths[action]
+        var clip: Animation = animation.get_animation(clip_path)
+        if String(animation.current_animation) != clip_path or clip.loop_mode != Animation.LOOP_LINEAR:
+            push_error("Wrong candidate loop: " + action)
+            return false
+        for playback_time: float in [0.0, clip.length - 0.001]:
+            animation.seek(playback_time, true)
+            if (absf(animation.current_animation_position - playback_time) > 0.0001
+                    or not brick._accepts_brick_faceup_candidate(6.0, false)):
+                push_error("Candidate loop boundary failed: " + action)
+                return false
+        animation.advance(0.002)
+        if (animation.current_animation_position > 0.01
+                or not brick._accepts_brick_faceup_candidate(6.0, false)):
+            push_error("Candidate loop wrap failed: " + action)
+            return false
+
+    # Attack state_time is a phase countdown, so exercise real phase transitions
+    # instead of assigning a fictitious absolute source frame.
+    for kind: String in ["punch", "kick"]:
+        if not _reset(player, brick) or not brick.request_attack(kind):
+            return false
+        player.position.x = -5.0
+        for phase: String in ["startup", "active", "recovery"]:
+            if brick.state != phase:
+                push_error("Unexpected phase before boundary: " + phase)
+                return false
+            var remaining: float = brick.state_time
+            if remaining <= 0.001:
+                return false
+            brick._advance_timed_states(remaining - 0.001)
+            if brick.state != phase or not brick._accepts_brick_faceup_candidate(6.0, false):
+                push_error("Candidate rejected phase end: " + kind + " " + phase)
+                return false
+            brick._advance_timed_states(0.002)
+            var expected: String = (
+                "active" if phase == "startup"
+                else ("recovery" if phase == "active" else "idle")
+            )
+            if brick.state != expected or not brick._accepts_brick_faceup_candidate(6.0, false):
+                push_error("Candidate rejected phase transition: " + kind + " " + phase)
+                return false
+        var timings: Dictionary = brick.ATTACKS[kind]
+        var elapsed: float = 0.0
+        for phase: String in ["startup", "active", "recovery"]:
+            elapsed += float(timings[phase])
+            for side: float in [-0.001, 0.001]:
+                if not _reset(player, brick) or not brick.request_attack(kind):
+                    return false
+                player.position.x = -5.0
+                brick._advance_timed_states(elapsed + side)
+                player.position.x = 0.0
+                player._try_faceup_attack_contact()
+                if brick.last_reaction_source_action != "impacthardfrontlow":
+                    push_error("Contact failed at phase transition: %s %s %s" % [
+                        kind, phase, side])
+                    return false
     return true

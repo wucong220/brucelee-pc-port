@@ -2188,7 +2188,8 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
 
 func _accepts_brick_faceup_candidate(damage: float, blocked: bool) -> bool:
     # The mapped Thai idle, movefwd, lowpunch3 and lowkick3 have impactable
-    # windows covering their complete source clips. Playback timing is candidate.
+    # windows covering their complete source clips. This gates logical states
+    # only; it does not reproduce native TimeWindowCheck or sample GLB time.
     var mapped_state: bool = false
     if state == "idle":
         var moving: bool = absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001

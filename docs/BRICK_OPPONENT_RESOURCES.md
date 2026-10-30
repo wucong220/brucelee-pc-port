@@ -157,8 +157,17 @@ Validation: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`
 对这四种映射动作产生非致命、非格挡的 hard/low/frontal 命中时，若 Brick
 反应与倒地 clip 均通过检查，播放候选 `impacthardfrontlow`，选择窗口
 `[20,23]` 的第 20 帧进入 Brick 的 `facedownidle`。移动视觉使用 `movefwd`
-候选片段，逻辑状态仍是 idle；攻击各阶段使用同一动作窗口。第 20 帧
-是原型状态计时选择，与 GLB 采样时间的精确对应尚未经过原版对照。
+候选片段，逻辑状态仍是 idle；入口只检查动作和阶段，不检查源帧。
+第 20 帧是原型状态计时选择，与 GLB 采样时间的精确对应尚未经过原版对照。
+
+当前 idle/move 没有独立的玩法源帧计时器；attack 的 `state_time` 是各阶段
+剩余时间，GLB 播放器又独立推进。因此不能将视觉播放位置或阶段倒计时
+直接当成原生 `TimeWindowCheck` 的帧值，也没有实现该检查。上述档案窗口
+覆盖完整动作只是采用状态门控的候选依据，不构成边界复现。新增测试分别
+覆盖 idle/move 候选视觉循环的开头、末尾及回绕，以及 punch/kick 各阶段
+通过真实计时器推进的切换前后；这验证原型在这些时刻接受入口，不证明
+原版成员窗口端点或两套时钟同步。若要实现并验证原生帧窗口，还需恢复
+动作切换、循环及源帧时钟的对应关系，并对照原生运行时。
 
 反应和倒地 clip 缺失、无效时维持普通受击回退；格挡走 blockstun，
 致命走当前 ko。Brick 倒地时不启用 Bruce 起身、倒地反击或倒地受击行为。
@@ -181,6 +190,8 @@ python -B -X utf8 -m unittest discover -s tests -p 'test*.py' -q
 
 Python 测试共 216 项，跳过 1 项，退出码 0。这些检查只验证当前本机候选资源
 与原型行为，不证明原版逐帧等价。
+同日增加循环和阶段切换检查后，重新执行上述 `validate_brick_ground_entry.gd`
+命令，退出码 0。
 
 逐轨道身份检查使用 `tools/audit_animation_retarget.py`，接收上述同一 ANM、
 Bruce Skl 和 Brick Skl 三个路径。它以完整节点类型和父链匹配，拒绝缺失、
