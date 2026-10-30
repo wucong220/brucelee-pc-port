@@ -60,6 +60,12 @@
 > `hard/high/fromright` 的 `impacthardrighthigh` 受击动作、半径 80 和第 26 帧
 > 返回 `faceupidle` 已按源链接加入配置。方向修饰键是 PC 原型映射；抓取类
 > `endattack*` 链接、原版输入时钟和逐帧视觉仍未恢复。
+>
+> 方向输入集成（2026-10-30）：`main.gd` 的属性修饰键在没有实时轴输入时回退到
+> 角色上一帧的 `move_axis`，使无界面测试能通过真实输入分发路径驱动四条方向
+> 连段；新增 `validate_directional_input.gd` 验证四条链和“方向按键不会完成普通
+> AAA”的隔离。抓取类链接经取证需要 `oppposestun`、`grabdistance` 与
+> `m0x_end_attack_0x` 动画，当前原型无眩晕/抓取状态，保持关闭。
 
 ## 实现分层（避免混合研究与正式运行时代码）
 

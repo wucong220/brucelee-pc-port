@@ -415,6 +415,14 @@ SHA-256 是
 方向修饰键是 PC 原型映射（上/下取移动轴，朝向/背向按角色朝向换算），不是
 Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 
+抓取类链接的取证结果：`endattack1`/`endattack2` 的目标动画是
+`m01_end_attack_01`/`m01_end_attack_02`（姿态 stand，半径 45），按键序列为
+`pressup+pressright+pressb -> pressa -> pressa` 和
+`pressup+pressright+pressa -> pressc -> pressc`；其余 `endattack <对手名>`
+指向 `m0x_end_attack_0x`，多数还带 `grabdistance`。这些链接都要求
+`oppposestun`（对手处于眩晕），目前原型没有眩晕状态、抓取距离判定和对应
+终结动画，因此保持关闭；不是输入层缺失，而是缺少状态与资产证据。
+
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
 `[31,86]`、`[17,101]` 和 `[33,73]`；四个 `*_3` 目标窗口为 `[33,81]`、
 `[26,56]`、`[21,85]` 和 `[30,51]`。从首键起算的原型输入期限为 0.5 秒。

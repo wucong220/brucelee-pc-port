@@ -157,12 +157,16 @@ func _validate_self_replay(player: PortFighter, entry: Dictionary) -> bool:
     player._animate_candidate()
     var position: float = animation.current_animation_position
     var action: String = String(player.get("_candidate_action"))
+    var still_playing: bool = animation.is_playing()
     player.candidate_visual_blending_enabled = false
     if not transitioned:
         push_error(target + " did not replay at its own window start")
         return false
     if position > 0.05 or action != target:
         push_error(target + " replay kept position %s or action %s" % [position, action])
+        return false
+    if not still_playing:
+        push_error(target + " replay did not leave the clip playing")
         return false
     return true
 
@@ -175,6 +179,7 @@ func _validate_high_reaction(player: PortFighter, opponent: PortFighter) -> bool
     root.add_child(defender)
     await process_frame
     var impact: Dictionary = player.ATTACKS["high_punch3"]["source_impact"]
+    var expected_damage: float = float(player.ATTACKS["high_punch3"]["damage"])
     var reaction: Dictionary = defender.reaction_for_incoming(impact, false)
     if (String(reaction.get("source_action", "")) != "impacthardrighthigh"
             or String(reaction.get("animation", "")) != "all_impct_hard_rht_high"
@@ -183,10 +188,11 @@ func _validate_high_reaction(player: PortFighter, opponent: PortFighter) -> bool
                 + JSON.stringify(reaction))
         defender.queue_free()
         return false
-    defender.receive_hit(6.0, false, 0.0, 1.0, reaction)
+    defender.receive_hit(expected_damage, false, 0.0, 1.0, reaction)
     var accepted: bool = (
         defender.state == "hitstun"
         and defender.last_reaction_source_action == "impacthardrighthigh"
+        and absf(defender.health - (100.0 - expected_damage)) <= 0.001
     )
     defender.queue_free()
     if not accepted:
