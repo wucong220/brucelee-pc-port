@@ -387,6 +387,23 @@ func _validate_guard_cancels_combo(
     if not (player.get("_standing_combo_input_history") as Array).is_empty():
         push_error("Raising guard did not clear the partial combo history")
         return false
+    # A matched pending combo must also be dropped when guard is raised.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch for the guarded pending check")
+        return false
+    for _index: int in 3:
+        player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
+        push_error("AAA did not queue highpunch1 before raising guard")
+        return false
+    player.guard_held = true
+    player._physics_process(0.0)
+    player.guard_held = false
+    if not String(player.get("_standing_combo_pending_attack")).is_empty():
+        push_error("Raising guard did not clear the pending combo")
+        return false
     return true
 
 

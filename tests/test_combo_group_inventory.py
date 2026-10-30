@@ -56,15 +56,17 @@ class TestComboGroupInventory(unittest.TestCase):
     def test_links_are_filtered_and_sorted(self):
         links = [
             {"from_group": "canblock", "to": "all_block_low", "keysequence": []},
-            {"from_group": "candobasicattacks", "to": "highpunch1",
-             "keysequence": [["pressa"], ["pressa"], ["pressa"]],
-             "conditions": [], "entry_frame": 0, "blending": 2},
             {"from_group": "candobasicattacks", "to": "lowkick1",
              "keysequence": [["pressb"], ["pressd"], ["pressd"]],
              "conditions": [], "entry_frame": 0, "blending": 2},
+            {"from_group": "candobasicattacks", "to": "highpunch1",
+             "keysequence": [["pressa"], ["pressa"], ["pressa"]],
+             "conditions": [], "entry_frame": 0, "blending": 2},
         ]
         selected = collect_links(links, "candobasicattacks")
-        self.assertEqual([item["to"] for item in selected], ["highpunch1", "lowkick1"])
+        # The input order is lowkick1 then highpunch1, which differs from an
+        # alphabetical sort, so this only passes when source order is kept.
+        self.assertEqual([item["to"] for item in selected], ["lowkick1", "highpunch1"])
         self.assertEqual([item["source_index"] for item in selected], [1, 2])
         self.assertEqual(selected[0]["blending"], 2)
 

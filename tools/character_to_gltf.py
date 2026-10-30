@@ -43,9 +43,10 @@ class GltfExportError(ValueError):
     """Inputs cannot be represented by the candidate GLB exporter profile."""
 
 
-def _check_animation_total_bytes(
-        sources, limit: int = _MAX_TOTAL_ANIMATION_BYTES) -> int:
+def _check_animation_total_bytes(sources, limit: int | None = None) -> int:
     """Reject an animation set whose declared sizes exceed the total budget."""
+    if limit is None:
+        limit = _MAX_TOTAL_ANIMATION_BYTES
     total = 0
     for source in sources:
         try:
@@ -380,6 +381,11 @@ def convert_file(mesh_source: Path, destination: Path, *,
     retarget_animations = list(retarget_animations or [])
     if len(animation_sources) + len(retarget_animations) > _MAX_ANIMATION_FILES:
         raise GltfExportError('too many candidate animation files')
+    # The total budget covers both paths; retarget animations used to bypass a
+    # check that only looked at animation_sources.
+    _check_animation_total_bytes(
+        list(animation_sources)
+        + [source for source, _expected in retarget_animations])
     retarget_options = (retarget_source_skeleton, retarget_source_reference,
                         retarget_source_sha256, retarget_target_sha256)
     if bool(retarget_animations) != all(retarget_options) or (
@@ -443,7 +449,6 @@ def convert_file(mesh_source: Path, destination: Path, *,
                 'candidate animation requires the expected Skl reference and SHA-256')
         from kdf_animation_binding import bind_animation
 
-        _check_animation_total_bytes(animation_sources)
         with skeleton_source.open('rb') as file:
             skeleton_raw = file.read(_MAX_ANIMATION_BYTES + 1)
         if len(skeleton_raw) > _MAX_ANIMATION_BYTES:

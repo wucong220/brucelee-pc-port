@@ -57,6 +57,29 @@ class TestGltfPublication(unittest.TestCase):
                 _check_animation_total_bytes(sources, limit=10)
             self.assertEqual(_check_animation_total_bytes(sources, limit=12), 12)
 
+    def test_retarget_animations_count_toward_the_total_limit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            sources = []
+            for index in range(2):
+                source = root / f'retarget-{index}.anm'
+                source.write_bytes(b'012345')
+                sources.append(source)
+            with patch('character_to_gltf._MAX_TOTAL_ANIMATION_BYTES', 10):
+                with self.assertRaisesRegex(GltfExportError, 'total size limit'):
+                    convert_file(
+                        root / 'missing.mesh',
+                        root / 'candidate.glb',
+                        retarget_animations=[
+                            (sources[0], 'a'), (sources[1], 'b')
+                        ],
+                        retarget_source_skeleton=root / 'source.skl',
+                        retarget_source_reference='skeletons/source.skl',
+                        retarget_source_sha256='a' * 64,
+                        retarget_target_sha256='b' * 64,
+                    )
+            self.assertFalse((root / 'candidate.glb').exists())
+
     def test_output_in_project_or_known_sync_folder_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

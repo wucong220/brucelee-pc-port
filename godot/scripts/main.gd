@@ -585,6 +585,10 @@ func _unhandled_input(event: InputEvent) -> void:
         or event.is_action_pressed(PrototypeControls.TOGGLE_TRAINING)
     ):
         return
+    # Input events can arrive before the next _process tick updates guard_held.
+    # Refresh the guard state here so a press in the same frame as the guard
+    # key cannot be accepted from a stale snapshot.
+    player.guard_held = Input.is_action_pressed(PrototypeControls.GUARD)
     if _handle_fighter_attack_input(
         player,
         event,
