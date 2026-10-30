@@ -554,6 +554,14 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 待运行时验证的顺序条件。
 
 `candobasicattacks` 有 84 个成员。当前候选只记录了 9 个已实现动作的组窗口。
+完整成员窗口和 21 条来源链接已由
+`py -3.12 -X utf8 -B tools/kdf_combo_group_inventory.py --archive <data.zpak>
+--out reports/candobasicattacks_group_inventory.json` 只读导出；报告只含成员名、
+动画 basename、姿态、`[start, end]` 窗口、成员记录第三项、链接按键序列、
+`entry_frame` 和 `blending`，不含原始二进制。84 个成员中只有 4 条简单
+`pressa/pressb/pressc/pressd` 链已接入运行时；`highpunch3`、`lowkick3`、
+`lowpunch3`、`highkick3` 和抓取类 `endattack*` 链接需要方向修饰键、额外
+`m01_*_03` / `m01_sp_*` 动画和 25 段候选上限之外的新候选，尚未实现。
 仓库外 23 段候选已加入 `m01_attack_to_floor`；Brick 的本地 6 段候选已接入受限非致命受击链，可进入
 `facedownidle` 并报告 `pose=laying`；完整 Brick 击倒行为尚未恢复。当前原型已通过显式
 `bcc/bdd` PC 输入接入候选 `attacktofloor`，但这组静态证据仍不足以把

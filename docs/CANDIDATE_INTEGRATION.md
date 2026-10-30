@@ -393,6 +393,13 @@ SHA-256 是
 - `bcc -> highkick1`
 - `bdd -> lowkick1`
 
+完整 84 个成员和 21 条来源链接已导出到
+`reports/candobasicattacks_group_inventory.json`，生成命令见
+[`FIGHTING_SET_FINDINGS.md`](FIGHTING_SET_FINDINGS.md)。其余链接需要
+方向修饰键（`pressup/pressdown/pressin/pressout`）、抓取距离状态，或
+`m01_*_03` 与 `m01_sp_*` 动画；这些动画不在当前 25 段候选内，且
+`tools/character_to_gltf.py` 目前把候选动画限制为 25 段，所以尚未接入。
+
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
 `[31,86]`、`[17,101]` 和 `[33,73]`。从首键起算的原型输入期限为 0.5 秒。
 来源组共 84 个成员，尚未全部覆盖；成员记录第三项的切换时序、link
