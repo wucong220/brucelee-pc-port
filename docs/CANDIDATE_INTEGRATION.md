@@ -424,7 +424,10 @@ Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 `oppposestun`（对手处于眩晕），目前原型没有眩晕状态、抓取距离判定和对应
 终结动画，因此保持关闭；不是输入层缺失，而是缺少状态与资产证据。11 条
 `endattack*` 链接的目标动画、半径、按键序列与条件见
-`reports/grab_finisher_evidence.json`；已恢复的眩晕入口只有
+`reports/grab_finisher_evidence.json`（含原始 links 索引、动作记录号和动画
+序号，生成命令
+`py -3.12 -X utf8 -B tools/kdf_grab_finisher_evidence.py --archive <data.zpak> --out reports/grab_finisher_evidence.json`）；
+已恢复的眩晕入口只有
 `impactstunhigh/low`，且都带 `healthzero`（致命一击）条件，不能当作普通眩晕。
 
 lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
