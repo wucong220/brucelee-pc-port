@@ -35,6 +35,8 @@ class TestFightingConfig(unittest.TestCase):
                 "m01_sp_kick_low": 25.0,
                 "m01_sp_pnch_low": 25.0,
                 "all_impct_hard_frnt_high": 80.0,
+                "m01_sp_pnch_high": 25.0,
+                "m01_sp_pnch_high_fail": 40.0,
                 "m01_sp_pnch_low_fail": 25.0,
                 "m01_sp_kick_low_fail": 25.0,
                 "all_impct_light_frnt_low": 40.0,
@@ -101,6 +103,7 @@ class TestFightingConfig(unittest.TestCase):
             "high_kick2", "low_kick2",
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
+            "special_punch_high_miss", "special_punch_high_hit",
         })
         self.assertEqual(attacks["punch"]["source_action"], "lowpunch1")
         self.assertEqual(attacks["kick"]["source_action"], "lowkick1")

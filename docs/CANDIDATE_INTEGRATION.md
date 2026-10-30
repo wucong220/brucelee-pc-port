@@ -444,6 +444,9 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 包含全部四段 `m01_pnch_high_02`、`m01_pnch_low_02`、`m01_kick_high_02`、
 `m01_kick_low_02`。`m01_pnch_low_02` 的第三个 approximation root 首节点为 0
 且没有放树的余地，是空近似层；按结构跳过即可解码。转换器动画上限 40。
+上段拳多段必杀使用 41 段带头候选：2,654,468 字节，SHA-256
+`513880b9d1e90fefd6a9e868980a4a30081e5c2cdeec98df7a04184d97eba009`，
+新增 `m01_sp_pnch_high_fail`、`m01_sp_pnch_high`。转换器动画上限已提升到 44。
 下段拳必杀与 hard/high/frontal 反应使用 40 段带头候选：2,453,728 字节，SHA-256
 `77ead1783187b738554a99655cb42cd9f27ca32e47782553dc6e31356c6d58ca`，
 新增 `m01_sp_pnch_low_fail`、`m01_sp_pnch_low`、`all_impct_hard_frnt_high`。

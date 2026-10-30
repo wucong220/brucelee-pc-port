@@ -31,6 +31,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "special_kick_low_hit": "m01_sp_kick_low",
     "special_punch_low_miss": "m01_sp_pnch_low_fail",
     "special_punch_low_hit": "m01_sp_pnch_low",
+    "special_punch_high_miss": "m01_sp_pnch_high_fail",
+    "special_punch_high_hit": "m01_sp_pnch_high",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -73,6 +75,8 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_sp_kick_low": 25.0,
     "m01_sp_pnch_low_fail": 25.0,
     "m01_sp_pnch_low": 25.0,
+    "m01_sp_pnch_high_fail": 40.0,
+    "m01_sp_pnch_high": 25.0,
     "all_impct_hard_frnt_high": 80.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
@@ -168,10 +172,12 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "special_kick_high": 33.0,
     "special_kick_low_miss": 66.0,
     "special_punch_low_miss": 66.0,
+    "special_punch_high_miss": 66.0,
 }
 const SPECIAL_CHAIN_MISSES: Dictionary = {
     "special_kick_low_miss": "special_kick_low_hit",
     "special_punch_low_miss": "special_punch_low_hit",
+    "special_punch_high_miss": "special_punch_high_hit",
 }
 const SPECIAL_REQUIRES_STEPBACK: Dictionary = {
     "special_kick_high": true,
@@ -180,6 +186,7 @@ const SPECIAL_REQUIRES_STEPBACK: Dictionary = {
 const SPECIAL_CHAIN_WINDOW: Dictionary = {
     "special_kick_low_miss": [14, 16],
     "special_punch_low_miss": [8, 9],
+    "special_punch_high_miss": [6, 7],
 }
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
 # Each sequence is a list of simultaneous-token steps, matching the native
@@ -205,6 +212,7 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "from_attack": "low_kick2"},
     {"steps": [["left", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_low_miss", "from_attack": "punch"},
     {"steps": [["down", "a"], ["out", "a"], ["out", "a"]], "attack": "special_punch_low_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
+    {"steps": [["up", "a"], ["up", "a"], ["up", "a"]], "attack": "special_punch_high_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
@@ -411,6 +419,28 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "body_part": "larm",
         "height": "high",
         "strength": "hard",
+        "direction": "frontal",
+    },
+    "special_punch_high_miss": {
+        "source_action": "specialpunchhighmiss",
+        "animation": "m01_sp_pnch_high_fail",
+        "frame_count": 122,
+        "damage": 0.0,
+        "radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "special_punch_high_hit": {
+        "source_action": "specialpunchhighhit",
+        "animation": "m01_sp_pnch_high",
+        "frame_count": 80,
+        "damage": 21.0,
+        "radius": 70.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
         "direction": "frontal",
     },
 }
@@ -727,6 +757,7 @@ var facing: float = 1.0
 var combo_hits: int = 0
 var rage: float = 0.0
 var _special_stepback_origin: bool = false
+var _multi_impact_applied: Array = []
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
 var candidate_animation_clip: String = ""
@@ -1005,7 +1036,28 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             return _reject_attack_config(
                 action + " impact does not match the recovered reaction profile"
             )
+        var multi_impacts: Array = []
+        if entry.has("multi_impacts"):
+            if not entry["multi_impacts"] is Array:
+                return _reject_attack_config(action + " multi_impacts is not an array")
+            for multi_value: Variant in entry["multi_impacts"]:
+                if not multi_value is Dictionary:
+                    return _reject_attack_config(action + " multi impact is not an object")
+                var multi_impact: Dictionary = multi_value
+                for key: String in ["damage", "damage_time", "attack_radius", "body_part", "height", "strength", "direction"]:
+                    if not multi_impact.has(key):
+                        return _reject_attack_config(action + " multi impact lacks " + key)
+                var timing_value: Variant = multi_impact["damage_time"]
+                if (not timing_value is Array or timing_value.size() != 2
+                        or not _is_number(timing_value[0]) or not _is_number(timing_value[1])
+                        or float(timing_value[0]) < 0.0
+                        or float(timing_value[1]) < float(timing_value[0])):
+                    return _reject_attack_config(action + " multi impact timing is invalid")
+                if not _is_number(multi_impact["damage"]) or not _is_number(multi_impact["attack_radius"]):
+                    return _reject_attack_config(action + " multi impact values are non-numeric")
+                multi_impacts.append(multi_impact.duplicate(true))
         result[action] = {
+            "multi_impacts": multi_impacts,
             "startup": float(startup_frames) / SOURCE_FRAME_RATE,
             "active": float(active_frames) / SOURCE_FRAME_RATE,
             "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
@@ -1431,7 +1483,8 @@ func _try_load_candidate_visual() -> void:
             "special_kick_high",
             "high_punch2", "low_punch2", "high_kick2", "low_kick2",
             "special_kick_low_miss", "special_kick_low_hit",
-            "special_punch_low_miss", "special_punch_low_hit"]:
+            "special_punch_low_miss", "special_punch_low_hit",
+            "special_punch_high_miss", "special_punch_high_hit"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2483,7 +2536,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit":
             return kind
     return ""
 
@@ -2635,6 +2688,7 @@ func request_attack(kind: String) -> bool:
     attack_kind = kind
     attack_sequence += 1
     _attack_connected = false
+    _multi_impact_applied.clear()
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
     return true
@@ -2651,7 +2705,9 @@ func _physics_process(delta: float) -> void:
         _clear_standing_combo_state()
     _advance_timed_states(delta)
     _try_begin_pending_standing_combo()
-    if (state == "active" and not _attack_connected
+    if (state == "active" and ATTACKS.has(attack_kind)
+            and Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty()
+            and not _attack_connected
             and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
@@ -2683,15 +2739,50 @@ func _advance_timed_states(delta: float) -> void:
     var remaining: float = delta
     while (remaining > 0.0
             and state in ["startup", "active", "recovery", "hitstun", "blockstun"]):
-        if (state == "active" and not _attack_connected
-                and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
-            _try_attack_contact()
+        if state == "active" and ATTACKS.has(attack_kind):
+            if not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty():
+                _try_multi_impact_contacts()
+            elif (not _attack_connected
+                    and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
+                _try_attack_contact()
         _try_special_chain()
         if remaining < state_time:
             state_time -= remaining
             return
         remaining -= maxf(state_time, 0.0)
         _advance_state()
+
+func _try_multi_impact_contacts() -> void:
+    var details: Dictionary = ATTACKS[attack_kind]
+    var impacts: Array = details.get("multi_impacts", [])
+    var frame: float = _current_attack_source_frame()
+    for index: int in range(impacts.size()):
+        if _multi_impact_applied.has(index):
+            continue
+        var impact: Dictionary = impacts[index]
+        var timing: Array = impact["damage_time"]
+        if frame + 0.0001 < float(timing[0]) or frame > float(timing[1]) + 0.0001:
+            continue
+        if opponent == null or not is_instance_valid(opponent):
+            return
+        var dx: float = opponent.global_position.x - global_position.x
+        var dz: float = opponent.global_position.z - global_position.z
+        var distance: float = Vector2(dx, dz).length()
+        var reach: float = (float(impact["attack_radius"]) * radius_scale
+                + opponent.source_radius_for_current_animation()) * source_units_to_world
+        if distance > reach or dx * facing < -0.1:
+            continue
+        var blocked: bool = opponent.guard_held and (
+            opponent._can_block_current_hit() or opponent.state == "blockstun")
+        var reaction: Dictionary = opponent.reaction_for_incoming(impact, blocked)
+        var damage: float = float(impact["damage"])
+        _multi_impact_applied.append(index)
+        if not opponent.receive_hit(damage, blocked, 0.0, facing, reaction):
+            continue
+        _attack_connected = true
+        _register_landed_hit(damage, blocked)
+        combat_hit.emit(self, opponent, attack_kind, damage, blocked)
+
 
 func _try_special_chain() -> void:
     if not SPECIAL_CHAIN_MISSES.has(attack_kind):
@@ -3210,6 +3301,7 @@ func reset_fighter(start_position: Vector3) -> void:
     guard_held = false
     combo_hits = 0
     rage = 0.0
+    _multi_impact_applied.clear()
     if candidate_loaded:
         if _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
@@ -3264,7 +3356,8 @@ func _animate_candidate() -> void:
                 "low_kick3", "high_kick3", "special_kick_high",
                 "high_punch2", "low_punch2", "high_kick2", "low_kick2",
                 "special_kick_low_miss", "special_kick_low_hit",
-                "special_punch_low_miss", "special_punch_low_hit"]:
+                "special_punch_low_miss", "special_punch_low_hit",
+                "special_punch_high_miss", "special_punch_high_hit"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented

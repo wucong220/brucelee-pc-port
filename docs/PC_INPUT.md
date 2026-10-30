@@ -80,6 +80,14 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 `larm/high/hard/frontal`）；否则保持 miss 并回 idle。`hard/high/frontal`
 专用受击动画仍不可用，反应 fail-closed。
 
+必杀技上段拳（原型多点命中）：第 3 段攻击后，`上+A → 上+A → 上+A`
+（原版 `pressleft+pressright+A`，PC 用上+A×3 代表双手蓄力）在 `rage2thirds`
+时进入 `special_punch_high_miss`（`m01_sp_pnch_high_fail`，122 帧，无伤害）。
+第 6–7 帧内对手在 0.62 世界单位、站立不格挡则切到 `special_punch_high_hit`
+（`m01_sp_pnch_high`，80 帧），三段伤害窗口 `[3,7]` 4、`[17,22]` 4、`[43,49]` 13，
+总计 21；最后一段 `hard/high/frontal` 精确反应为 `impacthardfronthigh`。
+发动扣 66 怒气。
+
 必杀技下段拳（原型）：第 3 段攻击后，`下+A → 背向+A → 背向+A`（PC 原型把原版 pressright 折叠为背向）
 在 `rage2thirds`（≥66）时进入 `special_punch_low_miss`（`m01_sp_pnch_low_fail`，33 帧，无伤害）。
 第 8–9 帧内对手在 0.62 世界单位、站立不格挡则切到 `special_punch_low_hit`
