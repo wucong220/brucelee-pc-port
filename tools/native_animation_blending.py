@@ -39,6 +39,16 @@ _WORDS = {
     0x003807E4: 0xE5845010,  # str zero, [CScnAnim+0x10]
     0x00380BF0: 0xE5965010,  # ldr r5, [CScnAnim+0x10]
     0x00380BF8: 0x0A000064,  # beq allocate queue
+    0x00380B7C: 0xE1A08003,  # transition-info argument
+    0x00380B80: 0xE1A0A002,  # source-info argument
+    0x00380B84: 0xE1A07001,  # resource-reference argument
+    0x00380BFC: 0xE5973000,
+    0x00380C08: 0xE1530002,
+    0x00380C10: 0x0A000005,
+    0x00380C14: 0xE5972004,
+    0x00380C18: 0xE58D300C,
+    0x00380C1C: 0xE58D2010,
+    0x00380C64: 0xE28D100C,  # resource reference at start of queued record
     0x00380C48: 0xE5953068,  # ldr r3, [queue+0x68] transition table
     0x00380C58: 0xE595C070,  # ldr ip, [queue+0x70] record count
     0x00380C68: 0xE5950074,  # ldr r0, [queue+0x74] record storage
@@ -182,6 +192,21 @@ _WORDS = {
     0x001A7190: 0x13A02000,
     0x001A7194: 0xE592203C,
     0x001A7198: 0xE5842030,
+    # Reuse the active resource reference, when non-null, to construct the
+    # reference passed to gfxAnimation::AddTransition.
+    0x001A71B0: 0xE3A02000,
+    0x001A71B4: 0xE58D2100,
+    0x001A71BC: 0xE5963008,
+    0x001A71C4: 0xE58D2104,
+    0x001A71CC: 0xE1530002,
+    0x001A71D0: 0x0A000005,
+    0x001A71D4: 0xE596200C,
+    0x001A71D8: 0xE58D3100,
+    0x001A71DC: 0xE58D2104,
+    0x001A71E0: 0xE5932030,
+    0x001A71E4: 0xE2822001,
+    0x001A71E8: 0xE5832030,
+    0x001A71F4: 0xE28D1C01,
     0x001A732C: 0x00456544,
     0x001A7330: 0x00005578,
     # GetActiveSetAnimation either indexes the fighter's table or delegates
