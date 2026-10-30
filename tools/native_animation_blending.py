@@ -119,12 +119,12 @@ _WORDS = {
     0x003F90D4: 0x3F800000,  # 1.0
     # The blended frame path reaches CAnimProvider::BuildFrame.
     0x003F7A08: 0xEBF4D1E0,  # bl CAnimProvider::BuildFrame
-    # CFadePlayer::Init computes framerate times transition duration and
-    # converts the positive result to an unsigned integer.
+    # CFadePlayer::Init multiplies an object field by transitionInfo+8 and
+    # converts the product to an unsigned integer; field semantics remain open.
     0x003FCED8: 0xED937A06,  # vldr s14, [r3, #0x18]
-    0x003FCEDC: 0xEEB87AC7,  # vcvt.f32.s32 framerate
+    0x003FCEDC: 0xEEB87AC7,  # vcvt.f32.s32 object field
     0x003FCEE4: 0xEDD27A02,  # vldr s15, [transition_info, #8]
-    0x003FCEFC: 0xEE677A27,  # vmul.f32 framerate, duration
+    0x003FCEFC: 0xEE677A27,  # vmul.f32 object field, transition parameter
     0x003FCF00: 0xEEFC7AE7,  # vcvt.u32.f32 product
     0x003FCF04: 0xEE173A90,  # vmov integer product
     0x003FCF08: 0xEBF48B44,  # bl CFadeController constructor
@@ -142,16 +142,90 @@ _WORDS = {
     0x001C47F0: 0xEBFD7280,  # bl CHStrMgr::GetItem
     0x001C4818: 0xE59D303C,  # ldr r3, [sp, #0x3c]
     0x001C4820: 0xE5934004,  # ldr r4, [r3, #4]
-    # CFighter::FollowLink converts blending / fighter-framerate into the
-    # float parameter of SetAnimation and reads entry_frame for the uint arg.
+    # CFighter::FollowLink divides blending by fighter+0x30 for the
+    # float parameter of SetAnimation; the denominator semantics remain open.
     0x001A8294: 0xED957A37,  # vldr s14, [link, #0xDC]
     0x001A8298: 0xEDD47A0C,  # vldr s15, [fighter, #0x30]
     0x001A829C: 0xEEB87A47,  # vcvt.f32.u32 blending
     0x001A82A0: 0xE59530D8,  # ldr r3, [link, #0xD8] entry_frame
-    0x001A82AC: 0xEEF87A67,  # vcvt.f32.u32 fighter framerate
-    0x001A82B0: 0xEEC77A27,  # vdiv.f32 blending / framerate
+    0x001A82AC: 0xEEF87A67,  # vcvt.f32.u32 fighter field
+    0x001A82B0: 0xEEC77A27,  # vdiv.f32 blending / fighter field
     0x001A82B4: 0xEDCD7A01,  # vstr s15, [sp, #4] fifth argument
     0x001A82B8: 0xEBFDF1A5,  # bl CFighter::SetAnimation
+    # On the non-null, matching-type path, SetAnimation obtains the active
+    # animation record and copies its +0x3c field to fighter+0x30. The
+    # alternate branches must not be assumed to yield a valid pointer.
+    0x001A7150: 0xE1A01008,
+    0x001A7154: 0xEBFE1098,  # bl CFighter::GetActiveSetAnimation
+    0x001A6EC4: 0xE59F5460,  # GOT base literal
+    0x001A6ECC: 0xE08F5005,
+    0x001A7158: 0xE5903008,
+    0x001A715C: 0xE1A06000,
+    0x001A7160: 0xE3530000,
+    0x001A716C: 0x0A00000D,
+    0x001A7170: 0xE59F11B8,  # CAnimRes type-id GOT offset
+    0x001A7174: 0xE5932010,
+    0x001A717C: 0xE7951001,
+    0x001A7188: 0xE1510002,
+    0x001A718C: 0x01A02003,
+    0x001A7190: 0x13A02000,
+    0x001A7194: 0xE592203C,
+    0x001A7198: 0xE5842030,
+    0x001A732C: 0x00456544,
+    0x001A7330: 0x00005578,
+    # GetActiveSetAnimation either indexes the fighter's table or delegates
+    # to the internal-fighting-set accessor on the object at fighter+0x7c.
+    0x001A00D0: 0xE5D03135,
+    0x001A00D4: 0xE1A02001,
+    0x001A00D8: 0xE3530000,
+    0x001A00DC: 0x1A000004,
+    0x001A00E0: 0xE59010D8,
+    0x001A00E4: 0xE59030D4,
+    0x001A00E8: 0xE0020291,
+    0x001A00EC: 0xE7930002,
+    0x001A00F0: 0xE12FFF1E,
+    0x001A00F4: 0xE590007C,
+    0x001A00F8: 0xEAFE1AFD,
+    # FollowLink may first set animation on the object at fighter+0x7c.
+    # The later divisor and SetAnimation call use the original fighter.
+    0x001A8200: 0xE594207C,
+    0x001A8228: 0xE5C2E135,
+    0x001A8240: 0xEBFDF1C3,
+    0x001A8278: 0xE1A00004,
+    # CAnimRes::UpdateProperties identifies gid_duration and writes its
+    # integer value, or zero on the recorded failure branch, to +0x3c.
+    0x00416814: 0xE92D4FF0,
+    0x00416818: 0xE5919000,
+    0x0041681C: 0xE59F4760,
+    0x0041682C: 0xE08F4004,
+    0x00416830: 0xE1A06000,
+    0x00416874: 0xE59FB710,
+    0x004168C8: 0xE794000B,
+    0x004168D0: 0xE5908000,
+    0x004168D4: 0xE1530008,
+    0x004168D8: 0x13A08000,
+    0x004168DC: 0x03A08001,
+    0x004168F4: 0xE3580000,
+    0x004168F8: 0x0AFFFFE3,
+    0x00416918: 0xE28D7030,
+    0x0041691C: 0xE1A01009,
+    0x00416920: 0xE1A00007,
+    0x00416924: 0xEBF43480,
+    0x00416928: 0xE59D3030,
+    0x0041692C: 0xE3530000,
+    0x00416930: 0x0A000135,
+    0x00416934: 0xE59D3034,
+    0x00416938: 0xE3530000,
+    0x0041693C: 0x0A000132,
+    0x00416940: 0xE5932000,
+    0x00416944: 0xE312020F,
+    0x00416948: 0x05933004,
+    0x0041694C: 0x1A00012E,
+    0x00416950: 0xE586303C,
+    0x00416E0C: 0xE3A03000,
+    0x00416E10: 0xEAFFFECE,
+    0x00416F84: 0x001E6BE4,
+    0x00416F8C: 0x000065D4,
     # CFighter::SetAnimation receives that float and copies it to +8 of the
     # anmTransitionInfo passed into gfxAnimation::AddTransition.
     0x001A6EA0: 0xEDDD9A5B,  # vldr s19, [caller stack, #0x16c]
@@ -166,6 +240,8 @@ _STRINGS = {
 }
 
 _DYN_RELOCATIONS = {
+    0x00602990: "_ZZN3krm3dtl6TypeIdINS_3anm8CAnimResEEEjvE5sType",
+    0x006039EC: "_ZN3krm3anm12gid_durationE",
     0x00603B60: "_ZTVN3krm3gfx8CScnAnimE",
     0x005F9170: (
         "_ZN3krm3gfx8CScnAnim13AddTransitionERKNS_3res7CResRefERKNS_"
@@ -174,6 +250,16 @@ _DYN_RELOCATIONS = {
 }
 
 _PLT = {
+    0x00126CF4: (
+        0x006001D8,
+        "_ZN3krm8CFighter31GetInternalFightingSetAnimationEj",
+        (0xE28FC604, 0xE28CCAD9, 0xE5BCF4DC),
+    ),
+    0x0012B3BC: (
+        0x00601970,
+        "_ZN3krm8CFighter21GetActiveSetAnimationEj",
+        (0xE28FC604, 0xE28CCAD6, 0xE5BCF5AC),
+    ),
     0x00120538: (
         0x005FDF44,
         "_ZN3krm12gfxAnimation13AddTransitionERKNS_3res7CResRefERKNS_"

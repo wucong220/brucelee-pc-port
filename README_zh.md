@@ -80,8 +80,8 @@ $env:BRUCELEE_CANDIDATE_VISUAL_BLENDING = "1"
 `idle/idle2 → attacktofloor`（6/30 秒）、Bruce
 `attacktofloor → idle2`（10/30 秒）和 Brick
 `facedownidle → impactfacedown`（6/30 秒）。它只影响骨骼视觉，不改变状态时间、
-命中、伤害、KO、输入或缺 clip 回退。Godot 的混合曲线和原版运行时视觉仍未
-验证，详见 `docs/FIGHTING_SET_FINDINGS.md`。
+命中、伤害、KO、输入或缺 clip 回退。这些秒数是实验参数，原版字段的单位与换算尚未确认；Godot 的混合曲线和
+原版运行时视觉仍未验证，详见 `docs/FIGHTING_SET_FINDINGS.md`。
 
 ### 导出 EXE
 

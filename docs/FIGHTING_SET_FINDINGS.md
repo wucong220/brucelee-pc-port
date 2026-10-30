@@ -774,8 +774,8 @@ CFadePlayer::GetRootOutput
 - `STATIC_SUPPORTED`：`CFadePlayer::Init` 在 `0x3FCED8–0x3FCEE4`
   从上一级对象的 `+0x18` 读取整数并转为 float，再读取
   `anmTransitionInfo+8`；`0x3FCEFC–0x3FCF08` 相乘、向无符号整数转换并
-  传给 `CFadeController`。已知 ANM `framerate` 字段和函数签名为该解释提供
-  支撑，但尚未通过运行时检查两个输入字段的身份。
+  传给 `CFadeController`。该对象字段及过渡参数的具体单位、业务身份
+  尚未确认。
 - `STATIC_SUPPORTED`：正权重区间的帧数计算还包含 `fabs` 和
   `zlibm_floor` 调用。具体浮点位、半帧舍入、每条轨道的采样规则，以及
   Godot 中的对应结果仍为 `UNVERIFIED`。
@@ -800,7 +800,7 @@ CLinkDescr+0xDC
   -> float(blending) / float(CFighter+0x30)
   -> CFighter::SetAnimation fifth float argument
   -> anmTransitionInfo+8
-  -> CFadePlayer::Init 再乘进入对象+0x18的 framerate
+  -> CFadePlayer::Init 再乘进入对象+0x18的整数（字段语义未确认）
 ```
 
 - `STATIC_VERIFIED`：`CFighter::FollowLink` 在
@@ -831,25 +831,50 @@ CLinkDescr+0xDC
   player 发布到 `[queue+0x84]`。对应 PLT stub、GOT 重定位和符号分别为
   `0x122D64 → 0x5FECA8`、`0x1236A0 → 0x5FEFBC`、
   `0x126118 → 0x5FFDE4`。
-- `STATIC_SUPPORTED`：`CFadePlayer::Init` 使用的进入对象 `+0x18`
-  framerate 与 `CFighter+0x30` 是同一业务值；当前只确认两处均有
-  “帧率乘除”的数据流，尚未追到使两个字段相等的构造/赋值点。
+- `UNVERIFIED`：`CFadePlayer::Init` 使用的进入对象 `+0x18` 与
+  `CFighter+0x30` 的字段语义及二者是否相同，均未独立确认。
 - `STATIC_SUPPORTED`：新增 transition 记录被
   `UpdateTime → ActiveNext` 消费并把同一业务 transition 对象交给
   `CFadePlayer::Init`。当前已经绑定各函数和 vtable/PLT 边，但尚未用
   原生运行时证明每个实际 fighter 动作都走该表、记录字段在复制后不失真，
-  也未确认两个 framerate 字段恒等。
+  也未确认两个字段的语义或它们是否恒等。
 - `UNVERIFIED`：`vcvt.u32.f32` 的浮点舍入模式及
   `zlibm_floor` 后的逐帧结果没有运行时对照；Godot
   `custom_blend` 的权重曲线也尚未和原版比较。
 
-因此现在有强静态依据认为档案 `blending` 是在 fighter framerate 下归一化
-到秒、随后还原成帧计数的候选配置；例如 `blending=6`、framerate 为 `30`
-时，传出的 transition 时长是 `0.2` 秒。它仍不能直接宣称为原版实际播放
-的 6 个混合帧：同一业务 framerate 的身份、固定点/浮点舍入和逐帧视觉
-尚未闭合。Godot 实验应使用独立候选名，例如
-`config_blending / fighter_framerate` 秒，并明确这不是原版运行时验收。
+**字段解释更正（2026-10-30）**：此前将 `[fighter+0x30]` 称为
+framerate，并据此把商解释为秒，证据不足。该字段还出现在
+`UpdatePositionWithRootDisplacement` 的边界比较：`0x1A1934–0x1A1940`
+比较 `[fighter+0x34]` 与 `[fighter+0x30]-1`。此外，在已识别的
+`SetAnimation` 路径中，`0x1A7154` 调用 `GetActiveSetAnimation`；
+对应 PLT `0x12B3BC` 和重定位 `0x601970` 已按符号核验。返回对象的
+`+8` 指针非空且其 `+0x10` 与所比较的类型值相等时，
+`0x1A718C–0x1A7198` 才从该指针所指对象的 `+0x3C` 读取并写入
+`[fighter+0x30]`。空指针或类型不匹配分支不能假设得到有效对象。
+`GetActiveSetAnimation` 本体 `0x1A00D0–0x1A00F8` 在
+`[fighter+0x135]` 为零时用 `+0xD4` 的表和 `+0xD8` 的步长按参数索引；
+非零时使用 `[fighter+0x7C]` 并经 PLT `0x126CF4` 调用
+`GetInternalFightingSetAnimation`（重定位 `0x6001D8`）。
+`FollowLink` 另有分支在 `0x1A8200–0x1A8240` 对
+`[fighter+0x7C]` 对象调用 `SetAnimation`，随后在 `0x1A8298`
+读取原 fighter 的 `+0x30`，`0x1A82B8` 再对原 fighter 调用
+`SetAnimation`。该顺序不单独证明原 fighter 的字段一定来自哪一个动作，
+也不排除其他调用的间接作用。
+进一步核对 GOT 和 `.rel.dyn` 后，类型比较使用的槽 `0x602990` 指向
+`TypeId<CAnimRes>::sType`；因此在指针有效、类型匹配的路径上，读取的是
+`CAnimRes+0x3C`。`CAnimRes::UpdateProperties` `0x416874–0x416950`
+通过槽 `0x6039EC` 的 `gid_duration` 选择属性，在整数值有效的路径将
+该值写入 `CAnimRes+0x3C`；`0x416E0C–0x416E10` 则把零送到同一写入点。
+这与 `SKL_ANM_FORMAT_FINDINGS.md` 先前将 `duration` 解释为解码样本数的
+静态分析相互印证。此结论限于记录的资源更新和类型匹配路径，不能推定所有
+运行时数据均有效，也不能据此确定每次切换使用哪个动作的 duration。
+进入对象 `+0x18` 的
+来源同样未闭合。
 
+目前只确认 `blending / unsigned([fighter+0x30])` 的静态计算及其
+参数传递；**不能据此确认结果以秒为单位**。下表的 `6/30` 和 `10/30`
+仅是 Godot 实验沿用的固定候选参数，不是已证实的原版时间换算；后续
+需要追踪两个字段的赋值来源和原版运行时行为。
 只读复核命令：
 
 ```powershell
@@ -868,7 +893,7 @@ py -3.12 -X utf8 -B tools\native_animation_blending.py `
 
 当前 Godot 原型已接入默认关闭的候选视觉混合。设置
 `BRUCELEE_CANDIDATE_VISUAL_BLENDING=1` 后，仅在下列三条逐项核对的切换上
-使用带证据的候选时长：
+使用固定候选时长（不宣称为原版换算）：
 
 | 切换 | 档案 `blending` | 候选时长 |
 |---|---:|---:|
@@ -973,3 +998,34 @@ py -3.12 tools\kdf_fighting_set.py `
 
 这些数值仍是配置层原始数据。攻击半径、部位、高度、强度、方向和帧窗口
 如何进入运行时碰撞、受击和表现系统，仍按前文证据等级判断。
+
+
+字段语义更正后的本机验证（2026-10-30）：
+
+```powershell
+py -3.12 -X utf8 -B tools\native_animation_blending.py <本机libdefault.so>
+# exit 0: 114 words, 15 PLT, 2 dynamic relocations, 3 strings
+py -3.12 -X utf8 -B tools\native_root_motion.py <本机libdefault.so>
+# exit 0: 56 words, 5 PLT
+py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
+# exit 0: 223 tests, 1 skipped
+git diff --check
+# exit 0
+```
+
+这些验证只覆盖校验器与既有测试；它们不确定字段语义，也不是原版运行时对照。
+
+补充 `GetActiveSetAnimation` 调用及条件分支后，再次运行上述
+`native_animation_blending.py` 命令：127 条指令、16 个 PLT、2 个
+动态重定位、3 个字符串，退出码 0；全量 Python 测试 223 项、
+跳过 1 项，退出码 0；`git diff --check` 退出码 0。
+
+再补充 `GetActiveSetAnimation` 本体和 `FollowLink` 的调用顺序后，
+同一校验命令核对 142 条指令、17 个 PLT、2 个动态重定位和 3 个
+字符串，退出码 0；上述全量 Python 测试再次为 223 项、跳过 1 项，
+退出码 0；`git diff --check` 退出码 0。
+
+绑定 `CAnimRes` 类型及 `gid_duration` 的资源属性写入后，同一
+校验命令核对 179 条指令、17 个 PLT、4 个动态重定位和 3 个字符串，
+退出码 0；全量 Python 测试 223 项、跳过 1 项，退出码 0；
+`git diff --check` 退出码 0。
