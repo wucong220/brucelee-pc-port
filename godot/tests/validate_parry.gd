@@ -54,6 +54,9 @@ func _run() -> void:
     if not _validate_history_clear(player):
         quit(1)
         return
+    if not _validate_release_wiring(scene, player):
+        quit(1)
+        return
     print("PARRY_VALIDATION=" + JSON.stringify({
         "parry": "parryhigh -> parryattack",
         "input": "guard + down+toward x3 within 0.5s while opponent attacks",
@@ -196,5 +199,19 @@ func _validate_history_clear(player: PortFighter) -> bool:
     var history: Array = player.get("_parry_press_times")
     if not history.is_empty():
         push_error("end_guard did not clear parry history")
+        return false
+    return true
+
+
+func _validate_release_wiring(scene: Node, player: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    scene._sync_guard_state(true)
+    player.record_parry_press()
+    player._time += 0.1
+    player.record_parry_press()
+    scene._sync_guard_state(false)
+    var history: Array = player.get("_parry_press_times")
+    if not history.is_empty():
+        push_error("Releasing guard through the real input path did not clear history")
         return false
     return true
