@@ -65,10 +65,14 @@ _WORDS = {
     0x003FDB7C: 0xE3530000,
     0x003FDB80: 0x0A000031,
     0x003FDBA0: 0xE1A07000,  # save constructed CFadePlayer
+    0x003FDBA8: 0xE594C084,  # previous active player from queue+0x84
     0x003FDBAC: 0xE1A02005,
     0x003FDBB0: 0xE2853008,
     0x003FDBB4: 0xE2841008,
     0x003FDBB8: 0xE1A00007,
+    0x003FDBBC: 0xE98D1040,  # seventh argument at caller sp+8 is previous
+    0x003FDBC0: 0xE2855014,
+    0x003FDBC4: 0xE58D5000,
     0x003FDBC8: 0xEBF49465,  # bl CFadePlayer::Init
     0x003FDBCC: 0xE5847084,  # publish active player at queue+0x84
     # CFadeQueue::UpdateOutput forwards its active player to CFadePlayer.
@@ -238,8 +242,8 @@ _WORDS = {
     0x00416E10: 0xEAFFFECE,
     0x00416F84: 0x001E6BE4,
     0x00416F8C: 0x000065D4,
-    # CAnimRes calculates integer duration_ms = duration * 1000 / framerate
-    # on the identified path, defaulting the divisor to 30 on failure.
+    # CAnimRes divides the low 32 bits of duration*1000 by framerate on the
+    # identified path, using 30 when attribute reading takes the fallback.
     0x0041695C: 0xE596303C,
     0x00416960: 0xE3A02FFA,
     0x00416968: 0xE0020392,
@@ -301,6 +305,10 @@ _WORDS = {
     0x00413A08: 0xEDC07A06,
     0x00413A0C: 0xE12FFF1E,
     0x003FCD58: 0xE59D4098,
+    0x003FCD20: 0xE92D4FF0,  # save 9 registers (36 bytes)
+    0x003FCD3C: 0xE24DD06C,  # additional 108-byte stack frame
+    0x003FCECC: 0xE5854008,  # keep previous player
+    0x003FCED0: 0x0A000011,  # skip multiply when previous is absent
     0x003FCED4: 0xE5943000,
     # CFighter::SetAnimation receives that float and copies it to +8 of the
     # anmTransitionInfo passed into gfxAnimation::AddTransition.

@@ -883,12 +883,25 @@ duration 相联系。`FollowLink` 的 `0x1A8298` 在它随后对原 fighter
 运行时数据均有效，也不能据此确定每次切换使用哪个动作的 duration。
 另一个乘法输入也有了受路径限制的来源：`CAnimRes::UpdateProperties`
 通过 `gid_framerate`（GOT 槽 `0x603EC4`）读取整数，在已识别的有效
-分支调用 `__aeabi_uidiv`，将 `duration * 1000 / framerate` 的整数商
-写入 `CAnimRes+0x40`；属性读取失败时该分支使用除数 30。随后
+分支调用 `__aeabi_uidiv`，将
+`unsigned_32(duration * 1000) / unsigned_32(framerate)` 的无符号整数商
+写入 `CAnimRes+0x40`；属性读取失败时该分支使用除数 30。这里乘积
+仅保留低 32 位，整数除法会截断，不能把结果等同于无限精度浮点计算。
+属性存在但数值为零时能否安全处理尚未确认，不能把失败时回退 30
+解释为所有无效值都回退。随后
 `CAnimPlayer::SetSource` 把 `CAnimRes+0x40` 和 `+0x3C` 放入
 `CTimeController`，调用 `Init` 后将该对象复制到播放器 `+0x14`，
 其中原 `+0x40` 值进入 `CAnimPlayer+0x18`。`CFadePlayer::Init`
 在前一层指针非空时从其关联播放器 `+0x18` 取数与过渡参数相乘。
+`CFadeQueue::ActiveNext` 的 `0x3FDBA8` 先取
+`[queue+0x84]`，`0x3FDBBC` 将其放到调用者 `sp+8`，
+作为 `CFadePlayer::Init` 的第七参数；新建的 player 在调用返回后
+才于 `0x3FDBCC` 写回 `queue+0x84`。`Init` 保存九个寄存器并分配
+`0x6C` 字节后，`0x3FCD58` 从 `sp+0x98` 取到该参数；
+非空路径把它存入新 player 的 `+8`，随后在 `0x3FCED4–D8`
+读取其关联播放器的 `+0x18`。这表明该乘数沿已识别路径来自队列中
+**替换前**的 player；队列此前的完整历史和该 player 与 fighter
+的资源身份仍需独立确认。
 这是静态的、带条件的字段来源，不能把乘数直接称为帧率。
 两侧是否属于同一动画、数据在队列中是否保持一致、整数溢出和零除数
 的运行时行为仍未核实，也不能仅据此宣称 Godot 的混合时间已经等同原版。
@@ -1061,3 +1074,8 @@ git diff --check
 补充资源时间长度和播放器字段来源后，同一校验命令核对 249 条指令、
 20 个 PLT、5 个动态重定位和 3 个字符串，退出码 0；全量 Python
 测试 223 项、跳过 1 项，退出码 0；`git diff --check` 退出码 0。
+
+补充队列旧 player 到 `Init` 第七参数的传递后，同一校验命令核对
+257 条指令、20 个 PLT、5 个动态重定位和 3 个字符串，退出码 0；
+全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
+退出码 0。
