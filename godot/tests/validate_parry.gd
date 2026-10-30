@@ -45,6 +45,9 @@ func _run() -> void:
     if not _validate_parry_attack(player, defender):
         quit(1)
         return
+    if not _validate_rejected_parry(scene, player, computer):
+        quit(1)
+        return
     print("PARRY_VALIDATION=" + JSON.stringify({
         "parry": "parryhigh -> parryattack",
         "input": "guard + down+toward x3 within 0.5s while opponent attacks",
@@ -68,6 +71,9 @@ func _validate_parry(scene: Node, player: PortFighter, computer: PortFighter) ->
     player.rage = 40.0
     player.guard_held = true
     player.facing = 1.0
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
+    computer.global_position = Vector3(-1.7, 1.20, 0.0)
+    computer.attack_kind = "punch"
     computer.state = "startup"
     for _i: int in range(3):
         Input.action_press("prototype_move_down")
@@ -105,5 +111,41 @@ func _validate_parry_attack(player: PortFighter, defender: PortFighter) -> bool:
         return false
     if defender.last_reaction_source_action != "impacthardfronthigh":
         push_error("Parry attack reaction was " + defender.last_reaction_source_action)
+        return false
+    return true
+
+
+func _press_parry(scene: Node) -> void:
+    Input.action_press("prototype_move_down")
+    Input.action_press("prototype_move_right")
+    scene._update_parry_input()
+    Input.action_release("prototype_move_down")
+    Input.action_release("prototype_move_right")
+    scene._update_parry_input()
+
+
+func _validate_rejected_parry(scene: Node, player: PortFighter, computer: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    player.rage = 40.0
+    player.guard_held = true
+    player.facing = 1.0
+    computer.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    computer.attack_kind = "punch"
+    computer.state = "startup"
+    for _i: int in range(3):
+        _press_parry(scene)
+        player._time += 0.1
+    if player.attack_kind == "parry_high":
+        push_error("Parry fired with the attacker out of reach")
+        return false
+    computer.global_position = Vector3(-1.7, 1.20, 0.0)
+    player.state = "hitstun"
+    player.rage = 40.0
+    for _i: int in range(3):
+        _press_parry(scene)
+        player._time += 0.1
+    if player.attack_kind == "parry_high":
+        push_error("Parry fired from hitstun")
         return false
     return true

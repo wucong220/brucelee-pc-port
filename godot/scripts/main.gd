@@ -463,8 +463,13 @@ func _update_parry_input() -> void:
     var pressed: bool = down_pressed and toward_pressed
     if (pressed and not _parry_input_was_pressed
             and player.guard_held
+            and player.state in ["idle", "idle2"]
             and computer.state in ["startup", "active"]):
-        player.record_parry_press()
+        var distance: float = Vector2(
+            player.position.x - computer.position.x,
+            player.position.z - computer.position.z).length()
+        if distance <= computer.attack_reach_world(computer.attack_kind, player):
+            player.record_parry_press()
     _parry_input_was_pressed = pressed
 
 

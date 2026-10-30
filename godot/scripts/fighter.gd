@@ -2382,6 +2382,8 @@ func record_standing_combo_press(
 
 
 func record_parry_press() -> bool:
+    if state not in ["idle", "idle2"]:
+        return false
     _parry_press_times = _parry_press_times.filter(
         func(value: float) -> bool: return _time - value <= 0.5)
     _parry_press_times.append(_time)
