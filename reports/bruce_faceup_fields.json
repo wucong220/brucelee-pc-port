@@ -37,7 +37,7 @@
       "原版 Android 物理键位及三维 keysequence 运行时匹配",
       "faceupattack 未验证的普通受击与 KO 出边",
       "impactfaceup/faceupko 的完整原版分组优先级、blending 与逐帧行为",
-      "attacktofloor 所需 m01_attack_to_floor clip 和对手 pose=laying 状态"
+      "attacktofloor 的正常对战入口；仓库外 23 段候选包含所需 clip，Brick 可在受限候选受击链中进入 laying"
     ]
   },
   "actions": {
@@ -1829,7 +1829,7 @@
     "set_action_named_ko": false,
     "direct_from_checked_or_runtime_actions": [],
     "result": "入口候选已定位；attacktofloor 仍未运行时接入",
-    "reason": "没有一条直接 link 从已核对的已实现动作进入这七个目标。impacttofloor 和 attacktofloor 是 from_group link；ELF 控制流表明 TimeWindowCheck 的 group 分支使用当前动画在来源组中的成员窗口，不读取 link 的 [0,0] 时间值。attacktofloor 另有已经定位的 oppposelaying、三条输入和延迟切换语义，但 84 个来源成员、所需 clip 与对手 laying 状态尚未闭合。",
+    "reason": "没有一条直接 link 从已核对的已实现动作进入这七个目标。impacttofloor 和 attacktofloor 是 from_group link；ELF 控制流表明 TimeWindowCheck 的 group 分支使用当前动画在来源组中的成员窗口，不读取 link 的 [0,0] 时间值。attacktofloor 另有已经定位的 oppposelaying、三条输入和延迟切换语义，但 84 个来源成员及正常对战中 attacktofloor 入口尚未闭合；仓库外 23 段候选包含所需 clip，Brick 可经受限候选受击链进入 laying。",
     "impactablefromground": {
       "member_count": 13,
       "members": [
@@ -2019,11 +2019,11 @@
     "entry_frame": 9,
     "blending": 6,
     "input_reset": true,
-    "transition_timing": "输入与条件在组成员窗口内匹配后，若尚未到该成员组窗口结束帧，FollowLink 把 link 和结束帧存入 fighter+0xf0/+0xf4；BasicUpdate 到结束帧后才执行目标动作。",
+    "transition_timing": "输入与条件在组成员窗口内匹配后，FollowLink 将该成员记录第三项与当前帧比较；若第三项大于当前帧，则把 link 和该值存入 fighter+0xf0/+0xf4，BasicUpdate 达到该值后执行目标动作。第三项的业务语义及运行时是否被修改尚未验证，不能认定为窗口结束帧。",
     "link_order": "UserControlUpdate 按当前动画 links 向量的索引升序检查；解析出的 set 中 attacktofloor 位于第 32/33 项，相同 basic-combo 序列到 lowkick1/highkick1 的链接位于第 87/89 项。若原始 set 数组顺序原样进入运行时向量，attacktofloor 会先匹配；该顺序保持关系尚未独立证明。",
     "remaining_blockers": [
-      "当前 22 段候选 GLB 明确排除 m01_attack_to_floor",
-      "当前正常对战没有对手 pose=laying 状态",
+      "历史 22 段候选缺少 m01_attack_to_floor；仓库外 23 段候选已包含该 clip，仍需加载该候选",
+      "Brick 的 laying 仅由受限候选受击链接入，attacktofloor 尚未接入正常对战",
       "尚未覆盖 candobasicattacks 的全部 84 个成员",
       "原版 blending=6、entry_frame=9、逐帧视觉与物理键位映射未实测",
       "尚未独立证明解析 set 数组到运行时 links 向量的顺序保持",

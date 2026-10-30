@@ -30,6 +30,10 @@ _WORDS = {
     0x001A1F00: 0xE5D13008,  # TimeWindowCheck reads group flag
     0x001A1F04: 0xE3530000,  # compare group flag
     0x001A1F08: 0x0A00002D,  # direct path when flag is zero
+    0x001A1F94: 0xE5901048,  # window array stride
+    0x001A1F98: 0xE5903044,  # window array base
+    0x001A1F9C: 0xE0090991,  # member index times stride
+    0x001A1FA0: 0xE0831009,  # member window address
     0x001A1FA4: 0xE7933009,  # group path reads member window start
     0x001A1FA8: 0xE1520003,  # compare current frame with start
     0x001A1FAC: 0x3A000009,  # current frame before start fails
@@ -42,16 +46,21 @@ _WORDS = {
     0x001A1FCC: 0xE59100D0,  # direct path reads link end
     0x001A8040: 0xE5D13008,  # FollowLink reads group flag
     0x001A8048: 0xE3530000,  # compare group flag
-    0x001A8104: 0xE1530002,  # compare current frame with group-window end
-    0x001A8108: 0x858430F4,  # defer transition end at fighter+0xf4
+    0x001A80F0: 0xE590205C,  # third-value array stride
+    0x001A80F4: 0xE5903058,  # third-value array base
+    0x001A80F8: 0xE0090992,  # member index times stride
+    0x001A80FC: 0xE7933009,  # read member third value
+    0x001A8100: 0xE5942034,  # current frame
+    0x001A8104: 0xE1530002,  # compare group member third value with current frame
+    0x001A8108: 0x858430F4,  # store deferred transition frame at fighter+0xf4
     0x001A810C: 0x858450F0,  # defer selected link at fighter+0xf0
     0x001A8110: 0x8A00007D,  # return before executing the group link
     0x001A83BC: 0xE59420F0,  # BasicUpdate reads pending link
     0x001A83C0: 0xE3520000,  # check pending link
     0x001A83C8: 0xE5941034,  # read current frame
-    0x001A83CC: 0xE59430F4,  # read deferred end
+    0x001A83CC: 0xE59430F4,  # read deferred frame
     0x001A83D0: 0xE1510003,  # compare current frame with deferred end
-    0x001A83D4: 0x2A000066,  # execute transition once the end is reached
+    0x001A83D4: 0x2A000066,  # execute transition once the deferred frame is reached
     0x001A8574: 0xE5923004,  # delayed link execution begins here
     0x001A3B2C: 0xE59F3544,  # CheckConditions loads OppPoseLaying GOT offset
     0x001A3B30: 0xE7943003,  # resolve OppPoseLaying GID
@@ -66,6 +75,42 @@ _WORDS = {
     0x001A3E54: 0xE7942002,  # resolve gid_laying
     0x001A3E5C: 0xE5928000,  # load laying GID value
     0x001A3E74: 0xE1570008,  # compare animation pose with gid_laying
+    0x0022E498: 0xE3520001,  # group tuple must contain index 1
+    0x0022E4A8: 0xE2800001,  # select tuple index 1
+    0x0022E4AC: 0xE0932180,  # calculate selected element
+    0x0022E4CC: 0xEBFBD596,  # obtain window tuple
+    0x0022E51C: 0xEBFBD582,  # obtain window element 0
+    0x0022E52C: 0xE5934004,  # first window value into r4
+    0x0022E5A8: 0xE3520001,  # window tuple must contain index 1
+    0x0022E5B8: 0xE2800001,  # select window index 1
+    0x0022E5DC: 0xEBFBD552,  # obtain window element 1
+    0x0022E5E4: 0xE5932004,  # second window value into r2
+    0x0022E5EC: 0xE58D427C,  # stage first window value
+    0x0022E5F0: 0xE58D2280,  # stage second window value
+    0x0022E690: 0xE5950044,  # window array base
+    0x0022E69C: 0xE0200C9E,  # calculate append destination
+    0x0022E6A4: 0xE593F004,  # dispatch element copy
+    0x0022E6D0: 0x0A000E15,  # missing tuple takes default path
+    0x0022E6EC: 0xE3520002,  # group tuple must contain index 2
+    0x0022E6FC: 0xE2800002,  # select tuple index 2
+    0x0022E700: 0xE0932180,  # calculate selected element
+    0x0022E720: 0xEBFBD501,  # obtain third tuple element
+    0x0022E728: 0xE3530000,  # test element availability
+    0x0022E72C: 0x0A000E00,  # absent value takes default path
+    0x0022E778: 0xE2800002,  # select tuple index 2 again
+    0x0022E79C: 0xEBFBD4E2,  # obtain value for append
+    0x0022E7A8: 0xE5921004,  # read parsed third value
+    0x0022E7B0: 0xE58D15AC,  # stage third value
+    0x0022E7C4: 0xE593100C,  # element stride
+    0x0022E7D0: 0xE0010091,  # append index times stride
+    0x0022E7D4: 0xE5953058,  # third-value array base
+    0x0022E7E4: 0xE3520004,  # four-byte element case
+    0x0022E7E8: 0x0A000E39,  # branch to four-byte store
+    0x00231F40: 0xE58D75AC,  # stage default value from r7
+    0x002320D4: 0xE59D25AC,  # load staged third value
+    0x002320D8: 0xE7832001,  # store third value in array
+    0x002320F0: 0xE59D25AC,  # load staged value, alternate append
+    0x002320F4: 0xE7832001,  # store value, alternate append
     0x0022EBB8: 0xE51F1550,  # CAnimationDescr::ParseFromKDF loads pose key base
     0x0022EBC8: 0xE08F1001,  # resolve pose key string
     0x0022EBD0: 0xE2811038,  # select exact "pose" literal

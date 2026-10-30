@@ -535,9 +535,17 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 `attacktofloor` 就一定触发”，也没有运行时实测。
 
 输入与条件通过后，`FollowLink` 并不会总在当帧切换：对组链接，它在
-`0x1A80F0–0x1A8110` 比较当前帧和组窗口结束帧，尚未到结束时把 link 与
-结束帧写入 `fighter+0xF0/+0xF4`；`BasicUpdate` 在
-`0x1A83BC–0x1A83D4` 等到结束后才从 `0x1A8574` 执行目标动作。
+`0x1A80F0–0x1A8110` 比较当前帧与同一组成员记录的第三项；该值大于当前帧时
+把 link 与该值写入 `fighter+0xF0/+0xF4`，`BasicUpdate` 在
+`0x1A83BC–0x1A83D4` 达到保存值后从 `0x1A8574` 执行目标动作。解析代码
+`0x22E474–0x22E6A4` 将成员第二项的窗口存入描述对象 `+0x44` 数组，
+`0x22E6C8–0x22E7B0` 读取第三项，并在 `0x2320D4–0x2320D8` 存入
+`+0x58` 数组。第三项不是已证实的窗口结束帧；其业务语义及运行时是否被修改
+尚未验证。此前将该值称为窗口结束帧的结论撤销。
+本机只读反汇编核对上述读取路径，退出码 0；`py -3.12 -X utf8 -B
+ tools/native_attacktofloor_links.py <local-libdefault.so>` 校验 107 条指令、
+2 个重定位和 1 个字面量，退出码 0。`py -3.12 -X utf8 -B -m unittest
+ discover -s tests -p "test*.py" -q`：217 项、跳过 1 项，退出码 0。
 `UserControlUpdate` 从当前动画 links 向量索引 0 开始升序检查。解析出的
 `brucelee.set` 中，`attacktofloor` 的 links 是第 32/33 项，相同 basic-combo
 序列到 `lowkick1/highkick1` 的 links 是第 87/89 项。若原始 set 数组顺序
@@ -546,14 +554,15 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 待运行时验证的顺序条件。
 
 `candobasicattacks` 有 84 个成员。当前候选只记录了 9 个已实现动作的组窗口。
-仓库外 23 段候选已加入 `m01_attack_to_floor`；Brick 的本地 5 段候选在
-测试注入 `facedownidle` 时可报告 `pose=laying`，但正常对战仍没有完整的
-Brick 击倒入口。所以这组静态证据确认了入口候选与运行时序，仍不足以
+仓库外 23 段候选已加入 `m01_attack_to_floor`；Brick 的本地 6 段候选已接入受限非致命受击链，可进入
+`facedownidle` 并报告 `pose=laying`；完整 Brick 击倒行为尚未恢复。所以这组静态证据确认了入口候选与运行时序，仍不足以
 把 `attacktofloor` 当作可在正常游玩中触发的完整行为。可用
 `py -3.12 -X utf8 -B tools\native_attacktofloor_links.py <local-libdefault.so>`
-会对该脚本指定的 SHA-256、62 条相关指令、2 个 GOT 重定位和 `pose` 字符串
-做一致性校验。它只证明给定 ELF 与这里记录的静态取证一致，不是通用反汇编
-证明，也不能替代运行时逐帧验证。
+会对该脚本指定的 SHA-256、107 条相关指令、2 个 GOT 重定位和 `pose` 字符串
+做一致性校验。新增校验覆盖窗口与第三项数组读取、成员索引选择、值暂存及四字节写入等关键指令；
+合成输入的失配测试验证了其中 15 个关键位置的修改会被拒绝。校验并未覆盖完整解析
+控制流或所有间接调用实现；它只证明给定 ELF 与记录的指令、重定位和字面量一致，
+不是通用反汇编证明，也不能替代运行时逐帧验证。
 
 | 反应动作 | 返回 `idle` 窗口 | ANM 总时长 |
 |---|---:|---:|

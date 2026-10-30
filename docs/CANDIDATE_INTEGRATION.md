@@ -255,7 +255,7 @@ character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨�
 
 在已识别的 `TimeWindowCheck` 与后续调用控制流中，ELF 静态证据支持
 `from_group` link 使用当前动画在来源组 `candobasicattacks` 中的成员窗口，
-而非 link 的 `time=[0,0]`；匹配后的切换可以延迟到该成员窗口结束，详见
+而非 link 的 `time=[0,0]`；匹配后的切换可能延迟到成员记录第三项指定的帧，该字段语义仍待验证，详见
 [`FIGHTING_SET_FINDINGS.md`](FIGHTING_SET_FINDINGS.md) 的
 `attacktofloor` 入口证据。这是特定静态控制流的结论，不是所有组链接的普遍
 语义，也还没有证明原始 set 数组顺序会原样进入运行时向量。完整分组成员
