@@ -149,4 +149,19 @@ py -3.12 -X utf8 -B tools\compare_animation_bindings.py `
 
 Validation: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q` (201 tests, 1 skipped; exit 0).
 
+逐轨道身份检查使用 `tools/audit_animation_retarget.py`，接收上述同一 ANM、
+Bruce Skl 和 Brick Skl 三个路径。它以完整节点类型和父链匹配，拒绝缺失、
+重复路径、重复目标通道和冲突的目标通道索引，不输出轨道值或修改资产。
+实际资源执行退出码 0：61 条轨道均有唯一候选目标，仅 `bonerot` 的
+`r eyeball` 从源索引 28 映射到目标索引 15。这是身份审计，不是动画重定向
+或变换空间验证；此工具不会生成 GLB。调用方式可将上述索引比较命令的工具名
+替换为 `tools/audit_animation_retarget.py`。
+
+验证命令：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
+共 206 项、其中 1 项跳过，退出码 0（基于本分支及本地新工具）。
+
 Review follow-up: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q` (207 tests, 1 skipped; exit 0, including 4 local untracked retarget-audit tests).
+
+合并 main 后复测：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，共 208 项、其中 1 项跳过，退出码 0。
+
+PR 审查补充异常父链后：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，共 209 项、其中 1 项跳过，退出码 0。
