@@ -2588,9 +2588,12 @@ func _try_begin_pending_standing_combo() -> bool:
         _clear_standing_combo_state()
         return false
     if GRAB_ATTACKS.has(_standing_combo_pending_attack):
+        if not _attack_connected:
+            _clear_standing_combo_state()
+            return false
         if (opponent == null or not is_instance_valid(opponent)
                 or opponent.guard_held
-                or opponent.state not in ["idle", "idle2"]):
+                or opponent.state not in ["idle", "idle2", "hitstun"]):
             _clear_standing_combo_state()
             return false
         var grab_distance: float = Vector2(
