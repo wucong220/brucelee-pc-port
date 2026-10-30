@@ -41,12 +41,17 @@ def mip_descriptor(
     if texture_format == 'atc_rgb':
         elements = block_element_count(width, height, level)
         stride = 8
+        descriptor_upper = stride << 21
+    elif texture_format == 'r8g8b8':
+        level_width, level_height = level_dimensions(width, height, level + 1)[level]
+        elements = level_width * level_height
+        descriptor_upper = 0x00640000
     else:
         level_width, level_height = level_dimensions(width, height, level + 1)[level]
         elements = level_width * level_height
-        stride = 4
+        descriptor_upper = 4 << 21
     encoded_elements = elements if elements <= 0xffff else 0
-    return (0x40000000 | (stride << 21) | encoded_elements, level)
+    return (0x40000000 | descriptor_upper | encoded_elements, level)
 
 
 def kdf_texture(
@@ -167,6 +172,73 @@ class TestTextureConversion(unittest.TestCase):
         self.assertEqual(result['data_offset_count'], 1)
         self.assertEqual(result['data_header_bytes'], 236)
         self.assertEqual(result['mip_count'], 1)
+
+    def test_r8g8b8_is_expanded_to_opaque_rgba(self):
+        width = height = 256
+        pixels = bytes((1, 2, 3)) * (width * height)
+        raw = kdf_texture(
+            width,
+            height,
+            (pixels,),
+            texture_format='r8g8b8',
+            include_mips=True,
+        )
+        result = parse_texture(raw)
+        self.assertEqual(result['pixel_format'], 'r8g8b8')
+        self.assertEqual(result['output_pixel_format'], 'r8g8b8a8')
+        self.assertEqual(result['pixel_decoding'], 'rgb_expanded')
+        self.assertEqual(result['orientation'], 'top_down')
+        self.assertEqual(result['base_level_bytes'], width * height * 3)
+        self.assertEqual(rgba_values(result['pixels'][:12]), [
+            (1, 2, 3, 255),
+            (1, 2, 3, 255),
+            (1, 2, 3, 255),
+        ])
+
+    def test_r8g8b8_default_keeps_observed_top_down_row_order(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / 'sample.bin'
+            output = root / 'sample.png'
+            source.write_bytes(kdf_texture(
+                256,
+                256,
+                (bytes((1, 2, 3)) * (256 * 256),),
+                texture_format='r8g8b8',
+                include_mips=True,
+            ))
+            with patch.object(tex_convert, '_PROJECT_ROOT', root / 'project'):
+                result = convert_file(source, output)
+            self.assertFalse(result['vertical_flip'])
+            self.assertEqual(result['orientation'], 'top_down')
+
+    def test_r8g8b8_requires_the_observed_descriptor_marker(self):
+        width = height = 2
+        pixels = bytes(range(width * height * 3))
+        broken = kdf_texture(
+            width,
+            height,
+            (pixels,),
+            texture_format='r8g8b8',
+            include_mips=True,
+            record_mutator=lambda records: records.__setitem__(
+                25, (0x40600000, 0)),
+        )
+        with self.assertRaisesRegex(TextureError, 'descriptor 0 marker'):
+            parse_texture(broken)
+
+    def test_r8g8b8_requires_mips_metadata(self):
+        width = height = 2
+        pixels = bytes(range(width * height * 3))
+        missing = kdf_texture(
+            width,
+            height,
+            (pixels,),
+            texture_format='r8g8b8',
+            include_mips=False,
+        )
+        with self.assertRaisesRegex(TextureError, 'requires mips metadata'):
+            parse_texture(missing)
 
     def test_full_size_rgba_mip_chain_extracts_first_level(self):
         width = height = 1024
