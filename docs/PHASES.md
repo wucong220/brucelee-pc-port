@@ -27,7 +27,9 @@
 > 控制流支持 `from_group` 使用当前动作在 `candobasicattacks` 中的成员窗口，
 > 不读取该 link 的时间字段，并可把匹配后的切换延迟到成员窗口结束；
 > `attacktofloor` 的入口仍受完整成员覆盖、候选 clip、来源数组到运行时向量
-> 的顺序以及对手 `pose=laying` 状态限制。
+> 的顺序以及正常对战中对手 `pose=laying` 的进入路径限制。仓库外的
+> 23 段 Bruce 候选和 5 段 Brick 候选已验证素材加载及测试注入的姿态查询；
+> 这不代表 `attacktofloor` 或 Brick 击倒已接入正常对战。
 
 ## 实现分层（避免混合研究与正式运行时代码）
 

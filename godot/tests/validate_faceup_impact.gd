@@ -33,6 +33,9 @@ func _run() -> void:
     if not _check_clips(player):
         quit(1)
         return
+    if not _check_source_poses(player):
+        quit(1)
+        return
     if not _check_windows(player):
         quit(1)
         return
@@ -80,8 +83,8 @@ func _run() -> void:
 func _check_clips(player: PortFighter) -> bool:
     var animation: AnimationPlayer = player.get("_candidate_animation")
     var clip_count: int = animation.get_animation_list().size() if animation != null else 0
-    if clip_count not in [19, 20, 21, 22]:
-        push_error("Face-up GLB must expose 19, 20, 21, or 22 candidate clips")
+    if clip_count not in [19, 20, 21, 22, 23]:
+        push_error("Face-up GLB must expose 19 through 23 candidate clips")
         return false
     if clip_count >= 20 and not _has_clip(
         animation, PortFighter.FACEUP_GETUP_CLIP
@@ -101,12 +104,14 @@ func _check_clips(player: PortFighter) -> bool:
         push_error("22-clip face-up extension is missing "
             + PortFighter.FACEUP_IMPACT_CLIP)
         return false
-    for excluded_name: String in [
-        "m01_attack_to_floor",
-    ]:
-        if _has_clip(animation, excluded_name):
-            push_error("Face-up candidate must not include " + excluded_name)
-            return false
+    var has_attack_to_floor: bool = _has_clip(
+        animation, PortFighter.ATTACK_TO_FLOOR_CLIP
+    )
+    if (clip_count == 23) != has_attack_to_floor:
+        push_error(
+            "m01_attack_to_floor must appear exactly on the 23-clip extension"
+        )
+        return false
     if not _check_clip(
         player,
         PortFighter.FACEUP_IMPACT_TO_FLOOR_CLIP,
@@ -121,13 +126,85 @@ func _check_clips(player: PortFighter) -> bool:
         Animation.LOOP_LINEAR,
     ):
         return false
-    if clip_count == 22:
-        return _check_clip(
+    if clip_count >= 22 and not _check_clip(
             player,
             PortFighter.FACEUP_IMPACT_CLIP,
             PortFighter.FACEUP_IMPACT_DURATION_FRAMES,
             Animation.LOOP_NONE,
+    ):
+        return false
+    if clip_count == 23:
+        return _check_clip(
+            player,
+            PortFighter.ATTACK_TO_FLOOR_CLIP,
+            PortFighter.ATTACK_TO_FLOOR_DURATION_FRAMES,
+            Animation.LOOP_NONE,
         )
+    return true
+
+
+func _check_source_poses(player: PortFighter) -> bool:
+    var cases: Array = [
+        ["idle", "stand", "m01_idle_01"],
+        ["facedownidle", "laying", "all_idle_face_down"],
+        ["facedowngetup", "stand", "all_getup_facedwn"],
+        ["facedownattack", "laying", "all_getup_facedwn_attack"],
+        ["impactfacedown", "laying", "all_impct_facedwn"],
+        ["impacttofloor", "laying", "all_stunned_fall"],
+        ["faceupidle", "laying", "all_idle_face_up"],
+        ["faceupgetup", "stand", "all_getup_faceup"],
+        ["faceupattack", "laying", "all_getup_faceup_attack"],
+        ["impactfaceup", "laying", "all_impct_faceup"],
+        ["faceupko", "laying", "all_idle_face_up"],
+    ]
+    for case_value: Variant in cases:
+        var values: Array = case_value
+        player.reset_fighter(Vector3.ZERO)
+        player.state = String(values[0])
+        var actual_animation: String = player.current_source_animation()
+        var actual_pose: String = player.current_source_pose()
+        var clip_key: String = "idle" if player.state == "idle" else String(values[2])
+        var expected_pose: String = (
+            String(values[1]) if player._candidate_clip_paths.has(clip_key) else ""
+        )
+        if actual_animation != String(values[2]) or actual_pose != expected_pose:
+            push_error("Source pose mismatch: " + JSON.stringify({
+                "state": values[0],
+                "expected_animation": values[2],
+                "actual_animation": actual_animation,
+                "expected_pose": expected_pose,
+                "actual_pose": actual_pose,
+            }))
+            return false
+
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "attacktofloor"
+    var expected_attack_to_floor_pose: String = (
+        "stand"
+        if player._candidate_clip_paths.has(PortFighter.ATTACK_TO_FLOOR_CLIP)
+        else ""
+    )
+    if player.current_source_pose() != expected_attack_to_floor_pose:
+        push_error("attacktofloor pose did not follow its validated clip")
+        return false
+
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "facedownidle"
+    var saved: String = String(player._candidate_clip_paths[PortFighter.FACEDOWN_IDLE_CLIP])
+    player._candidate_clip_paths.erase(PortFighter.FACEDOWN_IDLE_CLIP)
+    var missing_clip_pose: String = player.current_source_pose()
+    player._candidate_clip_paths[PortFighter.FACEDOWN_IDLE_CLIP] = saved
+    if not missing_clip_pose.is_empty():
+        push_error("A logical laying state without its clip reported laying")
+        return false
+
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "hitstun"
+    player.last_reaction_animation = "unverified_reaction"
+    if not player.current_source_pose().is_empty():
+        push_error("An unmapped source animation reported a source pose")
+        return false
+    player.reset_fighter(Vector3.ZERO)
     return true
 
 
