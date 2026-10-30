@@ -165,3 +165,13 @@ Review follow-up: `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.p
 合并 main 后复测：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，共 208 项、其中 1 项跳过，退出码 0。
 
 PR 审查补充异常父链后：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，共 209 项、其中 1 项跳过，退出码 0。
+
+候选映射构造器 `tools/retarget_animation_binding.py` 要求调用方明确提供 ANM、
+源 Skl、目标 Skl 的 SHA-256 和源引用，先检查来源配对状态，再运行逐轨道
+身份审计；它保留原始轨道值并产生单独的目标索引记录，不修改来源记录。
+真实资源内存调用退出码 0：61 条轨道，`r eyeball` 的目标旋转索引为 15，
+所有轨道值与来源逐项相同。本功能还没有接入 GLB 导出、Godot 播放或正常战斗；
+不是对变换空间或原生行为的验证。
+
+验证：`py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`，
+共 212 项、其中 1 项跳过，退出码 0。
