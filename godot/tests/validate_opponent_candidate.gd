@@ -2,11 +2,16 @@ extends SceneTree
 ## Validate a locally generated opponent GLB without integrating it into combat.
 
 
-const EXPECTED_ANIMATIONS: Array[String] = [
+const REQUIRED_ANIMATIONS: Array[String] = [
     "m03_idle_01",
     "m03_pnch_low_01",
     "m03_kck_low_01",
     "m03_movefwd",
+]
+const OPTIONAL_REACTION_ANIMATIONS: Array[String] = [
+    "all_idle_face_down_forbigguy",
+    "all_impct_facedwn",
+    "all_impct_hard_frnt_low",
 ]
 
 
@@ -61,16 +66,22 @@ func _run() -> void:
     for name: StringName in player.get_animation_list():
         actual_names.append(String(name))
     actual_names.sort()
-    var expected_names: Array[String] = EXPECTED_ANIMATIONS.duplicate()
-    expected_names.sort()
-    if actual_names != expected_names:
-        push_error("Opponent animation names differ: " + JSON.stringify(actual_names))
-        quit(1)
-        return
-
+    var allowed_names: Array[String] = REQUIRED_ANIMATIONS.duplicate()
+    allowed_names.append_array(OPTIONAL_REACTION_ANIMATIONS)
+    for required_name: String in REQUIRED_ANIMATIONS:
+        if required_name not in actual_names:
+            push_error("Opponent animation set lacks " + required_name + ": "
+                    + JSON.stringify(actual_names))
+            quit(1)
+            return
+    for actual_name: String in actual_names:
+        if actual_name not in allowed_names:
+            push_error("Opponent animation set has an unexpected clip: " + actual_name)
+            quit(1)
+            return
     player.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
     var report: Array[Dictionary] = []
-    for animation_name: String in EXPECTED_ANIMATIONS:
+    for animation_name: String in actual_names:
         var animation: Animation = player.get_animation(animation_name)
         player.play(animation_name)
         player.seek(0.0, true)

@@ -27,18 +27,37 @@ _FLOAT = 5126
 _UNSIGNED_BYTE = 5121
 _UNSIGNED_SHORT = 5123
 _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
-# This face-up slice adds all_stunned_fall, all_idle_face_up,
-# all_getup_faceup, all_getup_faceup_attack, all_impct_faceup, and
-# m01_attack_to_floor to the existing 17-clip Bruce candidate. Keep the limit
-# at the exact number needed by this prototype path; the remaining face-up
-# actions are not included.
-# Keep the limit explicit so an accidental unbounded import is rejected.
-_MAX_ANIMATION_FILES = 23
+# This slice adds the recovered highpunch1/highkick1 clips to the 23-clip
+# Bruce candidate used by the ground-reaction prototype, plus headroom for the
+# four *_03 / m01_sp_* attacks that the group inventory lists. The cap stays
+# explicit so an accidental unbounded import is rejected.
+_MAX_ANIMATION_FILES = 32
+# Raising the per-file count must not leave the total input unbounded. 32 files
+# at the 16 MiB per-file cap would otherwise allow about 512 MiB of animation
+# input, so the sum of the declared ANM sizes is capped separately.
+_MAX_TOTAL_ANIMATION_BYTES = 64 * 1024 * 1024
 _MAX_RIGID_ATTACHMENTS = 16
 
 
 class GltfExportError(ValueError):
     """Inputs cannot be represented by the candidate GLB exporter profile."""
+
+
+def _check_animation_total_bytes(sources, limit: int | None = None) -> int:
+    """Reject an animation set whose declared sizes exceed the total budget."""
+    if limit is None:
+        limit = _MAX_TOTAL_ANIMATION_BYTES
+    total = 0
+    for source in sources:
+        try:
+            total += Path(source).stat().st_size
+        except OSError:
+            # A missing file is reported later when the binding opens it.
+            continue
+        if total > limit:
+            raise GltfExportError(
+                'candidate animation input exceeds the total size limit')
+    return total
 
 
 def _safe_output_path(path: Path) -> Path:
@@ -362,6 +381,11 @@ def convert_file(mesh_source: Path, destination: Path, *,
     retarget_animations = list(retarget_animations or [])
     if len(animation_sources) + len(retarget_animations) > _MAX_ANIMATION_FILES:
         raise GltfExportError('too many candidate animation files')
+    # The total budget covers both paths; retarget animations used to bypass a
+    # check that only looked at animation_sources.
+    _check_animation_total_bytes(
+        list(animation_sources)
+        + [source for source, _expected in retarget_animations])
     retarget_options = (retarget_source_skeleton, retarget_source_reference,
                         retarget_source_sha256, retarget_target_sha256)
     if bool(retarget_animations) != all(retarget_options) or (

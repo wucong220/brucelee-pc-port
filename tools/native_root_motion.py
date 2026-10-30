@@ -16,10 +16,10 @@ from native_draw_path import _dynamic_symbols
 _SHA256 = "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70"
 _WORDS = {
     0x001A83B0: 0xEBFDDBAA,  # bl CFighter::UpdatePositionWithRootDisplacement
-    0x001A1934: 0xE5903030,  # ldr r3,[fighter,#0x30] final frame
-    0x001A1938: 0xE5902034,  # ldr r2,[fighter,#0x34] current frame
+    0x001A1934: 0xE5903030,  # ldr r3,[fighter,#0x30] bound, semantics unconfirmed
+    0x001A1938: 0xE5902034,  # ldr r2,[fighter,#0x34] comparison field
     0x001A193C: 0xE2433001,  # sub r3,r3,#1
-    0x001A1940: 0xE1520003,  # cmp current frame, final frame - 1
+    0x001A1940: 0xE1520003,  # cmp comparison field, bound - 1
     0x001A1954: 0x2A0000CB,  # bhs: skip the update
     0x001A1958: 0xE2805F4F,  # add r5,fighter,#0x13c scene object
     0x001A196C: 0xEBFE0169,  # bl gfxScnObj::GetFrame

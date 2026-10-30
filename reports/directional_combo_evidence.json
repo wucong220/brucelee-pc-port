@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "source_archive": {
+    "path": "adreno_200/set/brucelee.set",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c"
+  },
+  "actions": {
+    "highpunch3": {
+      "animation": "m01_pnch_high_03",
+      "animation_sha256": "cb41bed04d724dc8c76515c0e710ded9efacc0dbebeab391596e45e94ed15a65",
+      "animation_frame_count": 85,
+      "animation_radius": 60.0,
+      "damage_time": [5, 8],
+      "damage": 6,
+      "attack_radius": 70.0,
+      "body_part": "larm",
+      "height": "high",
+      "strength": "hard",
+      "direction": "fromright",
+      "candobasicattacks_window": [21, 85]
+    },
+    "lowpunch3": {
+      "animation": "m01_pnch_low_03",
+      "animation_sha256": "de65c019439b50f383fd9b5841473f48ea354a32f740a180e344358b28b85184",
+      "animation_frame_count": 81,
+      "animation_radius": 40.0,
+      "damage_time": [8, 11],
+      "damage": 7,
+      "attack_radius": 75.0,
+      "body_part": "larm",
+      "height": "medium",
+      "strength": "hard",
+      "direction": "frontal",
+      "candobasicattacks_window": [33, 81]
+    },
+    "lowkick3": {
+      "animation": "m01_kick_low_03",
+      "animation_sha256": "b8a915054101c4bf85aef3821517cd9f2820a0cbb8811ff53daab96a5f63a6a5",
+      "animation_frame_count": 56,
+      "animation_radius": 50.0,
+      "damage_time": [8, 10],
+      "damage": 5,
+      "attack_radius": 70.0,
+      "body_part": "lleg",
+      "height": "medium",
+      "strength": "normal",
+      "direction": "frontal",
+      "candobasicattacks_window": [26, 56]
+    },
+    "highkick3": {
+      "animation": "m01_sp_kick_jump_01",
+      "animation_sha256": "e47aa8ed0bca8121479675cc531418186d548484c009529041319f3112fda80f",
+      "animation_frame_count": 51,
+      "animation_radius": 60.0,
+      "damage_time": [10, 13],
+      "damage": 8,
+      "attack_radius": 80.0,
+      "body_part": "lleg",
+      "height": "high",
+      "strength": "hard",
+      "direction": "fromright",
+      "candobasicattacks_window": [30, 51]
+    }
+  },
+  "reaction": {
+    "trigger": {
+      "from_group": "impactable",
+      "conditions": ["impact", "oppattackstrengthhard", "oppattackheighthigh", "oppattackdirfromright"],
+      "to": "impacthardrighthigh"
+    },
+    "source_action": "impacthardrighthigh",
+    "animation": "all_impct_hard_rht_high",
+    "animation_sha256": "f265d026d435348586dede7c750422f6281a5356a73e000b8c061921aecd73fd",
+    "animation_radius": 80.0,
+    "animation_frame_count": 29,
+    "return_link": {"to": "faceupidle", "time": [26, 29], "blending": 3}
+  },
+  "prototype_sequences": [
+    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "target": "highpunch3"},
+    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "target": "lowpunch3"},
+    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "target": "lowkick3"},
+    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "target": "highkick3"}
+  ],
+  "candidate": {
+    "clip_count": 30,
+    "bytes": 1664540,
+    "sha256": "451cba9eb3c3751bec9dd1053112e55062cf967b1c8a18a390f2f2b4d1f0777d",
+    "location": "outside the repository",
+    "hair": "absent; the rigid attachment target requires a unique Skl object node and this Skl has no head object transform"
+  },
+  "unverified": [
+    "The prototype direction tokens up/down/in/out are PC mappings, not recovered Android physical keys.",
+    "The 0.5 second input horizon and ordered-subsequence skipping are prototype policies.",
+    "Native link priority, the member record third field and frame-by-frame visuals remain unverified.",
+    "The 30-clip candidate is body-only and was checked by hash, not independently re-decoded from the archive in review."
+  ]
+}

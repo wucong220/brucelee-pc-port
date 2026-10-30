@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "source_archive": {
+    "path": "adreno_200/set/brucelee.set",
+    "resource_id": "f3d1549105ba342bc17b86a33b3834a0",
+    "pakd_offset": 21016054,
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c"
+  },
+  "actions": {
+    "highpunch1": {
+      "source_record": 14,
+      "animation": "m01_pnch_high_01",
+      "animation_frame_count": 101,
+      "animation_sha256": "cd14253de0476aeff5e4132ad216177f444b55ed926692bd748bcad6aeac2f73",
+      "animation_radius": 45.0,
+      "damage_time": [
+        4,
+        7
+      ],
+      "damage": 5,
+      "attack_radius": 70.0,
+      "body_part": "larm",
+      "height": "high",
+      "strength": "normal",
+      "direction": "frontal"
+    },
+    "highkick1": {
+      "source_record": 20,
+      "animation": "m01_kick_high_01",
+      "animation_frame_count": 73,
+      "animation_sha256": "116bb542d8c9c2a6ec50ed8131e40d21118b41d2a355123a6c48fb51c0d84f4e",
+      "animation_radius": 60.0,
+      "damage_time": [
+        7,
+        10
+      ],
+      "damage": 6,
+      "attack_radius": 75.0,
+      "body_part": "lleg",
+      "height": "high",
+      "strength": "normal",
+      "direction": "frontal"
+    },
+    "lowpunch1": {
+      "source_record": 17,
+      "animation": "m01_pnch_low_01",
+      "damage_time": [
+        5,
+        8
+      ],
+      "damage": 5,
+      "attack_radius": 70.0,
+      "body_part": "larm",
+      "height": "medium",
+      "strength": "normal",
+      "direction": "frontal"
+    },
+    "lowkick1": {
+      "source_record": 23,
+      "animation": "m01_kick_low_01",
+      "damage_time": [
+        7,
+        10
+      ],
+      "damage": 5,
+      "attack_radius": 70.0,
+      "body_part": "lleg",
+      "height": "low",
+      "strength": "normal",
+      "direction": "frontal"
+    }
+  },
+  "candobasicattacks_implemented_windows": {
+    "idle": [
+      0,
+      140
+    ],
+    "idle2": [
+      0,
+      43
+    ],
+    "lowpunch1": [
+      22,
+      69
+    ],
+    "lowkick1": [
+      31,
+      86
+    ],
+    "highpunch1": [
+      17,
+      101
+    ],
+    "highkick1": [
+      33,
+      73
+    ]
+  },
+  "prototype_sequences": [
+    {
+      "keys": [
+        "pressa",
+        "pressa",
+        "pressa"
+      ],
+      "target": "highpunch1"
+    },
+    {
+      "keys": [
+        "pressa",
+        "pressb",
+        "pressb"
+      ],
+      "target": "lowpunch1"
+    },
+    {
+      "keys": [
+        "pressb",
+        "pressc",
+        "pressc"
+      ],
+      "target": "highkick1"
+    },
+    {
+      "keys": [
+        "pressb",
+        "pressd",
+        "pressd"
+      ],
+      "target": "lowkick1"
+    }
+  ],
+  "runtime_scope": {
+    "candidate_clip_count": 25,
+    "candidate_glb_sha256": "384e1a20e41ff5a996fc3e4b71ac4a47957aae3fae5d9576f49736904d64eda9",
+    "transition_gate": "The source frame of the current attack must be inside that animation's recovered candobasicattacks window.",
+    "window_scope": "Only the attack-state windows are evaluated at runtime. The idle/idle2 entries above are recorded group memberships and are unreachable through the transition path.",
+    "prototype_input_horizon_seconds": 0.5,
+    "physical_key_mapping": "J/K/L/U to pressa/pressb/pressc/pressd is prototype-only.",
+    "candidate_asset_location": "kept outside the repository"
+  },
+  "prototype_runtime_rules": {
+    "pending_binding": "A matched sequence is bound to the attack instance that was current when it matched. Attack end, attack switch, hit/block interruption and Heavy attacks cancel it.",
+    "heavy_buffering": "Heavy has no recovered source window, so it does not buffer sequence input.",
+    "same_action_replay": "ABB and BDD target the current action; with visual blending enabled the clip still restarts from frame 0.",
+    "pending_priority": "Last completed sequence replaces an earlier pending one. This is a prototype choice; native link priority is not recovered.",
+    "negative_controls": "Removing the Heavy guard, the hit cancel, the same-action restart or the replacement rule each makes validate_standing_combos.gd exit 1."
+  },
+  "unverified": [
+    "The recovered candobasicattacks group has 84 members; this file records only the source windows used by the implemented prototype actions.",
+    "The 0.5 second input horizon is a prototype gate, not a recovered native timing value.",
+    "The original Android physical key mapping is not recovered.",
+    "Link priority, group-member third-field transition timing, blending, and frame-by-frame visual parity remain unverified.",
+    "The ordered-subsequence match skips non-matching keys, mirroring the prototype ground-attack scanner; native InputSequenceCheck semantics for standing links are not confirmed.",
+    "No native runtime comparison or original-game recording comparison has been performed."
+  ]
+}

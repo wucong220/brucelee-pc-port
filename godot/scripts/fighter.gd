@@ -16,6 +16,12 @@ const CANDIDATE_CLIPS: Dictionary = {
     "idle": "m01_idle_01",
     "punch": "m01_pnch_low_01",
     "kick": "m01_kick_low_01",
+    "high_punch": "m01_pnch_high_01",
+    "high_kick": "m01_kick_high_01",
+    "high_punch3": "m01_pnch_high_03",
+    "low_punch3": "m01_pnch_low_03",
+    "low_kick3": "m01_kick_low_03",
+    "high_kick3": "m01_sp_kick_jump_01",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -26,6 +32,9 @@ const BRICK_CLIPS: Dictionary = {
 const SOURCE_FRAME_RATE: float = 30.0
 const SOURCE_CHARACTER_HEIGHT: float = CANDIDATE_SOURCE_HEIGHT
 const WORLD_CHARACTER_HEIGHT: float = CANDIDATE_HEIGHT
+const CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES: int = 6
+const CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES: int = 10
+const CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES: int = 6
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
@@ -40,6 +49,12 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_idle_01": 25.0,
     "m01_pnch_low_01": 40.0,
     "m01_kick_low_01": 50.0,
+    "m01_pnch_high_01": 45.0,
+    "m01_kick_high_01": 60.0,
+    "m01_pnch_high_03": 60.0,
+    "m01_pnch_low_03": 40.0,
+    "m01_kick_low_03": 50.0,
+    "m01_sp_kick_jump_01": 60.0,
     "all_impct_light_frnt_low": 40.0,
     "all_impct_light_frnt_mid": 40.0,
     "all_impct_light_frnt_high": 40.0,
@@ -126,6 +141,125 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
     "body_part": "lleg", "attack_radius": ATTACK_TO_FLOOR_RADIUS,
 }
 const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
+const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.5
+# Each sequence is a list of simultaneous-token steps, matching the native
+# keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
+# prototype input layer and are not recovered Android physical keys.
+const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
+    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch"},
+    {"steps": [["a"], ["b"], ["b"]], "attack": "punch"},
+    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick"},
+    {"steps": [["b"], ["d"], ["d"]], "attack": "kick"},
+    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3"},
+    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3"},
+    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3"},
+    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3"},
+]
+const CANDOBASICATTACK_WINDOWS: Dictionary = {
+    # idle/idle2 are recorded group memberships only. The transition path only
+    # evaluates windows while the current attack is in startup/active/recovery,
+    # so those two entries cannot be reached at runtime.
+    "idle": [0, 140],
+    "idle2": [0, 43],
+    "punch": [22, 69],
+    "kick": [31, 86],
+    "high_punch": [17, 101],
+    "high_kick": [33, 73],
+    "high_punch3": [21, 85],
+    "low_punch3": [33, 81],
+    "low_kick3": [26, 56],
+    "high_kick3": [30, 51],
+}
+const BRUCE_ATTACK_METADATA: Dictionary = {
+    "punch": {
+        "source_action": "lowpunch1",
+        "animation": "m01_pnch_low_01",
+        "frame_count": 69,
+        "damage": 5.0,
+        "radius": 70.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "kick": {
+        "source_action": "lowkick1",
+        "animation": "m01_kick_low_01",
+        "frame_count": 86,
+        "damage": 5.0,
+        "radius": 70.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "high_punch": {
+        "source_action": "highpunch1",
+        "animation": "m01_pnch_high_01",
+        "frame_count": 101,
+        "damage": 5.0,
+        "radius": 70.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "high_kick": {
+        "source_action": "highkick1",
+        "animation": "m01_kick_high_01",
+        "frame_count": 73,
+        "damage": 6.0,
+        "radius": 75.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "high_punch3": {
+        "source_action": "highpunch3",
+        "animation": "m01_pnch_high_03",
+        "frame_count": 85,
+        "damage": 6.0,
+        "radius": 70.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "fromright",
+    },
+    "low_punch3": {
+        "source_action": "lowpunch3",
+        "animation": "m01_pnch_low_03",
+        "frame_count": 81,
+        "damage": 7.0,
+        "radius": 75.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "hard",
+        "direction": "frontal",
+    },
+    "low_kick3": {
+        "source_action": "lowkick3",
+        "animation": "m01_kick_low_03",
+        "frame_count": 56,
+        "damage": 5.0,
+        "radius": 70.0,
+        "body_part": "lleg",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "high_kick3": {
+        "source_action": "highkick3",
+        "animation": "m01_sp_kick_jump_01",
+        "frame_count": 51,
+        "damage": 8.0,
+        "radius": 80.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "hard",
+        "direction": "fromright",
+    },
+}
 
 enum AttackToFloorInputResult {
     IGNORED,
@@ -188,6 +322,7 @@ const RETURN_ANIMATION_RADII: Dictionary = {
     "all_idle_face_down_forbigguy": 75.0,
     "all_getup_facedwn": 25.0,
     "all_impct_facedwn": 80.0,
+    "all_impct_hard_rht_high": 80.0,
     "all_getup_facedwn_attack": 45.0,
     "all_stunned_fall": 75.0,
     "all_idle_face_up": 75.0,
@@ -352,6 +487,20 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "return_implemented": false,
             "clip_implemented": false,
         },
+        {
+            "strength": "hard",
+            "height": "high",
+            "direction": "fromright",
+            "source_action": "impacthardrighthigh",
+            "animation": "all_impct_hard_rht_high",
+            "animation_radius": 80.0,
+            "exit_start_frame": 26,
+            "animation_duration_frames": 29,
+            "linking_frame": 0,
+            "return_action": "faceupidle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
     ],
     "block": [
         {
@@ -393,6 +542,14 @@ var attack_sequence: int = 0
 var _attack_connected: bool = false
 var _ground_attack_input_history: Array[Dictionary] = []
 var _ground_attack_input_owner: String = ""
+var _standing_combo_input_history: Array[Dictionary] = []
+var _standing_combo_pending_attack: String = ""
+# A matched sequence belongs to the attack that was running when it completed.
+# The pending entry is only valid while that exact attack instance is still the
+# current one; native link priority and the member record's third field remain
+# unverified, so this binding is a prototype safety rule.
+var _standing_combo_pending_source_sequence: int = -1
+var _standing_combo_pending_source_kind: String = ""
 var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
 var last_reaction_animation: String = ""
@@ -412,6 +569,11 @@ var candidate_texture_root: String = ""
 var candidate_clips: Dictionary = CANDIDATE_CLIPS.duplicate(true)
 var candidate_material_profile: String = "body_hair"
 var candidate_scale_attack_timing: bool = false
+var candidate_visual_blending_enabled: bool = false
+var candidate_visual_blend_pending_seconds: float = 0.0
+var candidate_visual_blend_seconds_last: float = 0.0
+var candidate_visual_blend_source_action_last: String = ""
+var candidate_visual_blend_target_action_last: String = ""
 var _time: float = 0.0
 var _body: MeshInstance3D
 var _left_arm: MeshInstance3D
@@ -460,6 +622,8 @@ func configure_attack_config(path: String) -> void:
 
 
 func _ready() -> void:
+    if OS.get_environment("BRUCELEE_CANDIDATE_VISUAL_BLENDING") == "1":
+        candidate_visual_blending_enabled = true
     if not _load_attack_definitions():
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
     collision_layer = 2
@@ -527,7 +691,7 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
     if typeof(archive_value) == TYPE_STRING and String(archive_value) == "thai.set":
         return _parse_thai_mapped_attack_config(config)
     var schema_value: Variant = config.get("schema_version")
-    if not _is_number(schema_value) or float(schema_value) != 3.0:
+    if not _is_number(schema_value) or float(schema_value) != 4.0:
         return _reject_attack_config("unsupported schema version")
     if typeof(config.get("source_archive")) != TYPE_STRING or String(config.get("source_archive")) != "brucelee.set":
         return _reject_attack_config("unexpected source archive")
@@ -592,7 +756,7 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
     if not configured_attacks is Dictionary:
         return _reject_attack_config("attacks is not an object")
     var result: Dictionary = {}
-    for action: String in ["punch", "kick"]:
+    for action: String in BRUCE_ATTACK_METADATA:
         var entry_value: Variant = configured_attacks.get(action)
         if not entry_value is Dictionary:
             return _reject_attack_config(action + " is not an object")
@@ -626,9 +790,10 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             return _reject_attack_config(action + " frame counts are not integers")
         if typeof(entry["source_action"]) != TYPE_STRING or typeof(entry["animation"]) != TYPE_STRING:
             return _reject_attack_config(action + " source identifiers are not strings")
-        var expected_source: String = "lowpunch1" if action == "punch" else "lowkick1"
-        var expected_animation: String = "m01_pnch_low_01" if action == "punch" else "m01_kick_low_01"
-        var expected_frame_count: int = 69 if action == "punch" else 86
+        var expected: Dictionary = BRUCE_ATTACK_METADATA[action]
+        var expected_source: String = String(expected["source_action"])
+        var expected_animation: String = String(expected["animation"])
+        var expected_frame_count: int = int(expected["frame_count"])
         if String(entry["source_action"]) != expected_source:
             return _reject_attack_config(action + " source action is not " + expected_source)
         if String(entry["animation"]) != expected_animation:
@@ -637,7 +802,8 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             return _reject_attack_config(action + " animation frame count is not " + str(expected_frame_count))
         var damage: float = float(entry["damage"])
         var push: float = float(entry["prototype_push"])
-        if damage < 0.0 or push < 0.0:
+        if (damage < 0.0 or push < 0.0
+                or absf(damage - float(expected["damage"])) > 0.001):
             return _reject_attack_config(action + " has invalid numeric values")
         var impact_value: Variant = entry["source_impact"]
         if not impact_value is Dictionary:
@@ -659,13 +825,13 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             return _reject_attack_config(action + " strength is invalid")
         if String(impact["direction"]) not in ["frontal", "fromleft", "fromright", "fromabove"]:
             return _reject_attack_config(action + " direction is invalid")
-        var expected_body_part: String = "larm" if action == "punch" else "lleg"
-        var expected_height: String = "medium" if action == "punch" else "low"
-        if (absf(float(impact["attack_radius"]) - 70.0) > 0.001
+        var expected_body_part: String = String(expected["body_part"])
+        var expected_height: String = String(expected["height"])
+        if (absf(float(impact["attack_radius"]) - float(expected["radius"])) > 0.001
                 or String(impact["body_part"]) != expected_body_part
                 or String(impact["height"]) != expected_height
-                or String(impact["strength"]) != "normal"
-                or String(impact["direction"]) != "frontal"):
+                or String(impact["strength"]) != String(expected["strength"])
+                or String(impact["direction"]) != String(expected["direction"])):
             return _reject_attack_config(
                 action + " impact does not match the recovered reaction profile"
             )
@@ -1089,7 +1255,9 @@ func _try_load_candidate_visual() -> void:
         if skeleton_nodes.size() == 1:
             _candidate_skeleton = skeleton_nodes[0] as Skeleton3D
             _candidate_skeleton_parent = _candidate_skeleton.get_parent()
-    for action: String in ["move", "ko"]:
+    for action: String in [
+            "move", "ko", "high_punch", "high_kick",
+            "high_punch3", "low_punch3", "low_kick3", "high_kick3"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -1233,6 +1401,10 @@ func _reset_candidate_derived_state() -> void:
     candidate_texture_error = ""
     candidate_texture_reason = ""
     _candidate_action = ""
+    candidate_visual_blend_pending_seconds = 0.0
+    candidate_visual_blend_seconds_last = 0.0
+    candidate_visual_blend_source_action_last = ""
+    candidate_visual_blend_target_action_last = ""
     _candidate_clip_paths.clear()
     _candidate_animation = null
     _candidate_character = null
@@ -1452,10 +1624,25 @@ func _play_candidate_action(action: String, start_frame: int = 0) -> void:
     if _candidate_animation == null or not _candidate_clip_paths.has(action):
         return
     if _candidate_action == action and _candidate_animation.is_playing():
+        candidate_visual_blend_pending_seconds = 0.0
         return
+    var previous_action: String = _candidate_action
+    var blend_seconds: float = candidate_visual_blend_pending_seconds
+    var blend_applied: bool = (
+        candidate_visual_blending_enabled
+        and blend_seconds > 0.0
+        and _candidate_animation.is_playing()
+    )
     _candidate_action = action
     candidate_animation_clip = _candidate_clip_paths[action]
-    _candidate_animation.play(candidate_animation_clip)
+    candidate_visual_blend_pending_seconds = 0.0
+    candidate_visual_blend_seconds_last = blend_seconds if blend_applied else 0.0
+    candidate_visual_blend_source_action_last = previous_action if blend_applied else ""
+    candidate_visual_blend_target_action_last = action if blend_applied else ""
+    if blend_applied:
+        _candidate_animation.play(candidate_animation_clip, blend_seconds)
+    else:
+        _candidate_animation.play(candidate_animation_clip)
     if start_frame > 0:
         _candidate_animation.seek(
             float(start_frame) / SOURCE_FRAME_RATE, true
@@ -1465,7 +1652,7 @@ func _play_candidate_action(action: String, start_frame: int = 0) -> void:
 func supports_attack(kind: String) -> bool:
     if not ATTACKS.has(kind):
         return false
-    if candidate_loaded and not candidate_clips.has(kind):
+    if candidate_loaded and not _candidate_clip_paths.has(kind):
         return false
     return true
 
@@ -1496,15 +1683,38 @@ func _restart_candidate_action() -> void:
     if _candidate_animation != null:
         _candidate_animation.stop()
     _candidate_action = ""
+    candidate_visual_blend_pending_seconds = 0.0
+
+
+func _queue_candidate_visual_blend(seconds: float) -> void:
+    if (candidate_visual_blending_enabled
+            and is_finite(seconds)
+            and seconds > 0.0):
+        candidate_visual_blend_pending_seconds = seconds
+    else:
+        candidate_visual_blend_pending_seconds = 0.0
 
 
 func _enter_locomotion_state(next_state: String) -> void:
+    var previous_state: String = state
     state = next_state
     state_time = 0.0
     attack_kind = ""
     _clear_ground_attack_input_history()
+    _clear_standing_combo_state()
     _clear_reaction_tracking()
-    _restart_candidate_action()
+    if (candidate_visual_blending_enabled
+            and previous_state == "attacktofloor"
+            and next_state == "idle2"
+            and _candidate_action == ATTACK_TO_FLOOR_CLIP
+            and _candidate_animation != null
+            and _candidate_animation.is_playing()):
+        _queue_candidate_visual_blend(
+            float(CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES)
+                    / SOURCE_FRAME_RATE
+        )
+    else:
+        _restart_candidate_action()
 
 
 func _verified_post_hit_return_state() -> String:
@@ -1531,6 +1741,10 @@ func _verified_post_hit_return_state() -> String:
             and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)
             and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP)):
         return "facedownidle"
+    if (reaction_clip_ready
+            and return_action == "faceupidle"
+            and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)):
+        return "faceupidle"
     return "idle"
 
 
@@ -1820,6 +2034,7 @@ func begin_facedown_impact(amount: float) -> void:
     if _candidate_animation != null:
         _candidate_animation.stop()
         _candidate_action = ""
+    candidate_visual_blend_pending_seconds = 0.0
 
 
 func begin_faceup_impact(amount: float) -> void:
@@ -1877,6 +2092,183 @@ func record_virtual_press(virtual_key: String) -> bool:
     _clear_ground_attack_input_history()
     _restart_candidate_action()
     return true
+
+
+func record_standing_combo_press(
+        virtual_key: String,
+        modifiers: Array = []
+) -> bool:
+    # Prototype-only sequence path for the recovered candobasicattacks links.
+    # Physical key status, exact key-event lifetime and link scheduling remain
+    # unverified. Only an attack with a recovered source window may buffer
+    # sequence input, so Heavy (no source window) never accumulates a match.
+    if not _accepts_standing_combo_input(virtual_key):
+        _clear_standing_combo_state()
+        return false
+    _prune_standing_combo_input_history()
+    var tokens: Array = [virtual_key]
+    for modifier: Variant in modifiers:
+        var token: String = String(modifier)
+        if not tokens.has(token):
+            tokens.append(token)
+    _standing_combo_input_history.append({"tokens": tokens, "time": _time})
+    var matched_attack: String = _matching_standing_combo_attack()
+    if matched_attack.is_empty():
+        return false
+    # Prototype priority: the most recently completed sequence replaces an
+    # earlier pending one. Native link priority is not recovered yet.
+    _standing_combo_pending_attack = matched_attack
+    _standing_combo_pending_source_sequence = attack_sequence
+    _standing_combo_pending_source_kind = attack_kind
+    _clear_standing_combo_input_history()
+    return _try_begin_pending_standing_combo()
+
+
+func begin_guard() -> void:
+    # Guard press must cancel a matched combo immediately. Waiting for the next
+    # physics frame loses a rapid press-and-release tap entirely.
+    guard_held = true
+    _clear_standing_combo_state()
+
+
+func end_guard() -> void:
+    guard_held = false
+
+
+func _accepts_standing_combo_input(virtual_key: String) -> bool:
+    # Guard rejects attack requests, so it must also reject combo history.
+    # Otherwise a press made while guarding becomes the first key of a later
+    # sequence.
+    if (guard_held
+            or attack_config_path == BRICK_ATTACK_CONFIG_PATH
+            or virtual_key not in ["a", "b", "c", "d"]
+            or state not in ["idle", "idle2", "startup", "active", "recovery"]):
+        return false
+    if state in ["startup", "active", "recovery"]:
+        if attack_kind == "heavy" or not CANDOBASICATTACK_WINDOWS.has(attack_kind):
+            return false
+    return true
+
+
+func _clear_standing_combo_input_history() -> void:
+    _standing_combo_input_history.clear()
+
+
+func _clear_standing_combo_state() -> void:
+    _clear_standing_combo_input_history()
+    _standing_combo_pending_attack = ""
+    _standing_combo_pending_source_sequence = -1
+    _standing_combo_pending_source_kind = ""
+
+
+func _prune_standing_combo_input_history() -> void:
+    if _standing_combo_input_history.is_empty():
+        return
+    var first_time: float = float(_standing_combo_input_history.front()["time"])
+    if _time > first_time + STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS:
+        _clear_standing_combo_input_history()
+
+
+func _matching_standing_combo_attack() -> String:
+    for entry: Dictionary in STANDING_COMBO_SEQUENCES:
+        var steps: Array = entry["steps"]
+        var required: int = steps.size() - 1
+        for event_index: int in range(_standing_combo_input_history.size() - 1, -1, -1):
+            var event: Dictionary = _standing_combo_input_history[event_index]
+            if not _event_satisfies_step(event, steps[required]):
+                continue
+            required -= 1
+            if required < 0:
+                return String(entry["attack"])
+    return ""
+
+
+func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
+    var tokens: Array = event.get("tokens", [])
+    var required_tokens: Array = step if step is Array else [step]
+    # A step must match the pressed token set exactly. Otherwise the plain
+    # a/a/a sequence would also consume up+a presses and shadow highpunch3.
+    if tokens.size() != required_tokens.size():
+        return false
+    for token: Variant in required_tokens:
+        if not tokens.has(String(token)):
+            return false
+    return true
+
+
+func _current_attack_source_frame() -> float:
+    if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
+        return -1.0
+    if attack_kind == "heavy":
+        return -1.0
+    var details: Dictionary = ATTACKS[attack_kind]
+    var remaining_frames: float = state_time * SOURCE_FRAME_RATE
+    if state == "startup":
+        remaining_frames += (
+            float(details["active"]) + float(details["recovery"])
+        ) * SOURCE_FRAME_RATE
+    elif state == "active":
+        remaining_frames += float(details["recovery"]) * SOURCE_FRAME_RATE
+    return float(details["animation_frame_count"]) - remaining_frames
+
+
+func _candobasicattack_window_contains_current_frame() -> bool:
+    if not CANDOBASICATTACK_WINDOWS.has(attack_kind):
+        return false
+    var window: Array = CANDOBASICATTACK_WINDOWS[attack_kind]
+    var frame: float = _current_attack_source_frame()
+    return (frame + 0.0001 >= float(window[0])
+            and frame <= float(window[1]) + 0.0001)
+
+
+func _try_begin_pending_standing_combo() -> bool:
+    if _standing_combo_pending_attack.is_empty():
+        return false
+    # The pending entry is bound to the attack that was current when the
+    # sequence completed. Ending that attack, switching to another one, being
+    # interrupted, or holding it in a Heavy attack cancels the entry instead of
+    # reusing the old input in a later attack.
+    if (state not in ["startup", "active", "recovery"]
+            or attack_kind == "heavy"
+            or attack_kind != _standing_combo_pending_source_kind
+            or attack_sequence != _standing_combo_pending_source_sequence):
+        _clear_standing_combo_state()
+        return false
+    if not _candobasicattack_window_contains_current_frame():
+        return false
+    if not supports_attack(_standing_combo_pending_attack):
+        _clear_standing_combo_state()
+        return false
+    var next_attack: String = _standing_combo_pending_attack
+    var target_action: String = _candidate_action_for_attack(next_attack)
+    _clear_standing_combo_state()
+    state = "startup"
+    state_time = float(ATTACKS[next_attack]["startup"])
+    attack_kind = next_attack
+    attack_sequence += 1
+    _attack_connected = false
+    # Re-blending a clip into itself would keep the previous playback position:
+    # _play_candidate_action() returns early when the same action is still
+    # playing. Same-action transitions therefore restart from frame 0.
+    if (candidate_visual_blending_enabled
+            and target_action != _candidate_action
+            and _candidate_animation != null
+            and _candidate_animation.is_playing()):
+        _queue_candidate_visual_blend(2.0 / SOURCE_FRAME_RATE)
+    else:
+        _restart_candidate_action()
+    return true
+
+
+func _candidate_action_for_attack(kind: String) -> String:
+    match kind:
+        "punch":
+            return "punch"
+        "kick", "heavy":
+            return "kick"
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3":
+            return kind
+    return ""
 
 
 func _clear_ground_attack_input_history() -> void:
@@ -1966,13 +2358,22 @@ func record_attack_to_floor_press(virtual_key: String) -> bool:
 
 
 func _begin_attack_to_floor() -> void:
+    var previous_state: String = state
     state = "attacktofloor"
     state_time = float(ATTACK_TO_FLOOR_ENTRY_FRAME) / SOURCE_FRAME_RATE
     attack_kind = "attacktofloor"
     attack_sequence += 1
     _attack_connected = false
     _clear_ground_attack_input_history()
-    _restart_candidate_action()
+    if (candidate_visual_blending_enabled
+            and previous_state in ["idle", "idle2"]
+            and _candidate_animation != null
+            and _candidate_animation.is_playing()):
+        _queue_candidate_visual_blend(
+            float(CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES) / SOURCE_FRAME_RATE
+        )
+    else:
+        _restart_candidate_action()
 
 
 func _try_attack_to_floor_contact() -> void:
@@ -2027,7 +2428,12 @@ func _physics_process(delta: float) -> void:
         facing = 1.0 if opponent.global_position.x >= global_position.x else -1.0
     # Turn the torso toward the opponent (local 'front' is +X).
     rotation.y = 0.0 if facing > 0.0 else PI
+    if guard_held:
+        # Raising guard between two presses must not keep a partial sequence or
+        # a matched-but-unexecuted combo alive.
+        _clear_standing_combo_state()
     _advance_timed_states(delta)
+    _try_begin_pending_standing_combo()
     if state == "active" and not _attack_connected:
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
@@ -2199,7 +2605,8 @@ func current_source_animation() -> String:
     if (state in ["hitstun", "blockstun"]
             and not last_reaction_animation.is_empty()):
         return last_reaction_animation
-    if state in ["startup", "active", "recovery"] and attack_kind in ["punch", "kick"]:
+    if (state in ["startup", "active", "recovery"]
+            and attack_kind != "heavy" and ATTACKS.has(attack_kind)):
         return String(ATTACKS[attack_kind]["animation"])
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return CANDIDATE_CLIPS["kick"]
@@ -2463,6 +2870,8 @@ func receive_hit(
         return false
     var position_before: float = position.x
     _attack_connected = false
+    # Being hit cancels a sequence that matched during the interrupted attack.
+    _clear_standing_combo_state()
     if blocked:
         health = maxf(0.0, health - amount * 0.12)
         state = "blockstun"
@@ -2502,7 +2911,16 @@ func receive_hit(
         state = "impactfacedown"
         state_time = 0.0
         combo_hits = 0
-        _restart_candidate_action()
+        if (candidate_visual_blending_enabled
+                and _candidate_action == BRICK_FACEDOWN_IDLE_CLIP
+                and _candidate_animation != null
+                and _candidate_animation.is_playing()):
+            _queue_candidate_visual_blend(
+                float(CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES)
+                        / SOURCE_FRAME_RATE
+            )
+        else:
+            _restart_candidate_action()
     elif health <= 0.0:
         state = "ko"
         combat_ko.emit(self)
@@ -2510,6 +2928,7 @@ func receive_hit(
         # A second hit of the same type must start the reaction again.
         _candidate_animation.stop()
         _candidate_action = ""
+        candidate_visual_blend_pending_seconds = 0.0
     return true
 
 
@@ -2523,6 +2942,7 @@ func reset_fighter(start_position: Vector3) -> void:
     attack_kind = ""
     _attack_connected = false
     _clear_ground_attack_input_history()
+    _clear_standing_combo_state()
     last_reaction_group = ""
     last_reaction_source_action = ""
     last_reaction_animation = ""
@@ -2536,6 +2956,10 @@ func reset_fighter(start_position: Vector3) -> void:
         if _candidate_animation != null:
             _candidate_animation.stop()
         _candidate_action = ""
+        candidate_visual_blend_pending_seconds = 0.0
+        candidate_visual_blend_seconds_last = 0.0
+        candidate_visual_blend_source_action_last = ""
+        candidate_visual_blend_target_action_last = ""
         candidate_animation_clip = ""
         _animate_candidate()
 
@@ -2576,6 +3000,9 @@ func _animate_candidate() -> void:
             requested = "punch"
         elif attack_kind in ["kick", "heavy"]:
             requested = "kick"
+        elif attack_kind in ["high_punch", "high_kick", "high_punch3", "low_punch3",
+                "low_kick3", "high_kick3"]:
+            requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented
             and _candidate_clip_paths.has(last_reaction_animation)):

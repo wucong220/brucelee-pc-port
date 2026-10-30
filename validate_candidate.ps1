@@ -122,7 +122,10 @@ $validationEnvironmentNames = @(
     "BRUCELEE_PLAYER_GLB",
     "BRUCELEE_PLAYER_TEXTURE_ROOT",
     "BRUCELEE_OPPONENT_GLB",
-    "BRUCELEE_OPPONENT_TEXTURE_ROOT"
+    "BRUCELEE_OPPONENT_TEXTURE_ROOT",
+    "BRUCELEE_CANDIDATE_VISUAL_BLENDING",
+    "BRUCELEE_MAIN_MENU",
+    "BRUCELEE_MAINMENU_PATH"
 )
 $savedValidationEnvironment = @{}
 foreach ($name in $validationEnvironmentNames) {
@@ -146,6 +149,10 @@ try {
     Invoke-Checked "Prototype smoke" {
         & $GodotExe --headless --path $godotProject --script res://tests/smoke_test.gd
     }
+    Invoke-Checked "Prototype controller input" {
+        & $GodotExe --headless --path $godotProject `
+            --script res://tests/validate_controller_input.gd
+    }
     Invoke-Checked "Prototype AI guard" {
         & $GodotExe --headless --path $godotProject --script res://tests/validate_ai_guard.gd
     }
@@ -166,6 +173,16 @@ try {
             & $GodotExe --headless --path $godotProject `
                 --script res://tests/validate_dual_fighter_candidates.gd `
                 -- $dualArgs
+        }
+        Invoke-Checked "Candidate visual blending" {
+            & $GodotExe --headless --path $godotProject `
+                --script res://tests/validate_candidate_visual_blending.gd `
+                -- $CandidateGlb $OpponentGlb
+        }
+        Invoke-Checked "Prototype main and pause menu" {
+            & $GodotExe --headless --path $godotProject `
+                --script res://tests/validate_prototype_menu.gd `
+                -- $CandidateGlb $OpponentGlb
         }
     }
     Invoke-Checked "Candidate bounds and scale" {
@@ -202,6 +219,10 @@ try {
             & $GodotExe --headless --main-pack $packPath `
                 --script res://tests/smoke_test.gd
         }
+        Invoke-Checked "Packed prototype controller input" {
+            & $GodotExe --headless --main-pack $packPath `
+                --script res://tests/validate_controller_input.gd
+        }
         Invoke-Checked "Packed prototype AI guard" {
             & $GodotExe --headless --main-pack $packPath `
                 --script res://tests/validate_ai_guard.gd
@@ -224,6 +245,16 @@ try {
                 & $GodotExe --headless --main-pack $packPath `
                     --script res://tests/validate_dual_fighter_candidates.gd `
                     -- $dualArgs
+            }
+            Invoke-Checked "Packed candidate visual blending" {
+                & $GodotExe --headless --main-pack $packPath `
+                    --script res://tests/validate_candidate_visual_blending.gd `
+                    -- $CandidateGlb $OpponentGlb
+            }
+            Invoke-Checked "Packed prototype main and pause menu" {
+                & $GodotExe --headless --main-pack $packPath `
+                    --script res://tests/validate_prototype_menu.gd `
+                    -- $CandidateGlb $OpponentGlb
             }
         }
         Invoke-Checked "Packed candidate bounds and scale" {

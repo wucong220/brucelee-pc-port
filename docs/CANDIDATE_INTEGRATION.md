@@ -369,6 +369,88 @@ SHA-256 是
 改写既有输入和攻击链。这些测试不证明原版逐帧视觉、完整命中盒、blending
 或 draw-level 行为。
 
+## 站立基础连段与高拳脚
+
+本机 25 段 Bruce 候选在已有 23 段基础上加入 `m01_pnch_high_01` 和
+`m01_kick_high_01`，文件 SHA-256 为
+`384e1a20e41ff5a996fc3e4b71ac4a47957aae3fae5d9576f49736904d64eda9`。
+两个 ANM 的 SHA-256 分别为
+`cd14253de0476aeff5e4132ad216177f444b55ed926692bd748bcad6aeac2f73`
+和 `116bb542d8c9c2a6ec50ed8131e40d21118b41d2a355123a6c48fb51c0d84f4e`；
+文件只保留在仓库外。
+
+`brucelee.set` 的动作记录给出 `highpunch1` 为 101 帧、半径 45，动作记录
+14 的 impact 为 5 点、半径 70、`larm/high/normal/frontal`，伤害时间
+`[4,7]`；`highkick1` 为 73 帧、半径 60，动作记录 20 的 impact 为 6 点、
+半径 75、`lleg/high/normal/frontal`，伤害时间 `[7,10]`。Godot 状态机把
+这些值转换成完整启动/活跃/恢复时序，并继续使用候选高度换算。
+
+原型站立输入为 `J/K/L/U -> a/b/c/d`。当前实现只在当前动作的来源帧进入
+自己的 `candobasicattacks` 窗口时转换：
+
+- `aaa -> highpunch1`
+- `abb -> lowpunch1`
+- `bcc -> highkick1`
+- `bdd -> lowkick1`
+
+完整 84 个成员和 21 条来源链接已导出到
+`reports/candobasicattacks_group_inventory.json`，生成命令见
+[`FIGHTING_SET_FINDINGS.md`](FIGHTING_SET_FINDINGS.md)。`tools/character_to_gltf.py`
+的候选动画上限已从 25 提高到 32；仓库外构建了 30 段、仅身体网格的验证候选
+（1,664,540 字节，SHA-256
+`451cba9eb3c3751bec9dd1053112e55062cf967b1c8a18a390f2f2b4d1f0777d`），
+含四个 `*_03`/`m01_sp_kick_jump_01` 攻击动画和
+`all_impct_hard_rht_high`。该候选未带头发：本机 `--rigid-attachment` 要求
+唯一的 Skl 对象节点，而当前 Skl 的 `object_static_transforms` 只有 3 个对象
+节点、没有 `head`，与既有 25 段候选的构建路径不同。
+
+加载该候选时，四条方向链接已接入运行时：`up+a -> in+a -> in+a` 触发
+`highpunch3`，`down+a -> out+b -> out+a` 触发 `lowpunch3`，
+`down+b -> out+d -> out+d` 触发 `lowkick3`，`up+b -> in+c -> in+c` 触发
+`highkick3`。每步要求按键集合完全一致，避免普通 `AAA` 吞掉带方向输入。
+`highpunch3`/`highkick3` 的 `hard/high/fromright` impact 由新恢复的
+`impacthardrighthigh`（`all_impct_hard_rht_high`，半径 80，第 26 帧返回
+`faceupidle`）驱动；`lowpunch3` 仍用已恢复的 `impacthardfrontmid`，
+`lowkick3` 用 normal/medium/frontal 档。源值、动画哈希、窗口与候选哈希见
+`reports/directional_combo_evidence.json`。25 段候选缺这些 clip 时四条链保持关闭。
+方向修饰键是 PC 原型映射（上/下取移动轴，朝向/背向按角色朝向换算），不是
+Android 物理键位；抓取类 `endattack*` 链接仍未接入。
+
+抓取类链接的取证结果：`endattack1`/`endattack2` 的目标动画是
+`m01_end_attack_01`/`m01_end_attack_02`（姿态 stand，半径 45），按键序列为
+`pressup+pressright+pressb -> pressa -> pressa` 和
+`pressup+pressright+pressa -> pressc -> pressc`；其余 `endattack <对手名>`
+指向 `m0x_end_attack_0x`，多数还带 `grabdistance`。这些链接都要求
+`oppposestun`（对手处于眩晕），目前原型没有眩晕状态、抓取距离判定和对应
+终结动画，因此保持关闭；不是输入层缺失，而是缺少状态与资产证据。11 条
+`endattack*` 链接的目标动画、半径、按键序列与条件见
+`reports/grab_finisher_evidence.json`（含原始 links 索引、动作记录号和动画
+序号，生成命令
+`py -3.12 -X utf8 -B tools/kdf_grab_finisher_evidence.py --archive <data.zpak> --out reports/grab_finisher_evidence.json`）；
+已恢复的眩晕入口只有
+`impactstunhigh/low`，且都带 `healthzero`（致命一击）条件，不能当作普通眩晕。
+
+lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
+`[31,86]`、`[17,101]` 和 `[33,73]`；四个 `*_3` 目标窗口为 `[33,81]`、
+`[26,56]`、`[21,85]` 和 `[30,51]`。从首键起算的原型输入期限为 0.5 秒。
+来源组共 84 个成员，尚未全部覆盖；成员记录第三项的切换时序、link
+优先级、blending、原版输入时钟、Android 物理键位和逐帧视觉仍未验证。
+`validate_standing_combos.gd` 使用真实 25 段 GLB 检查四条窗口、普通低段到
+目标的转换、来源动画选择、两段实际命中与高段 reaction，并覆盖
+`highpunch1`/`highkick1` 作为后续来源时的窗口起点（第 17、33 帧）与提前一帧
+不得转换。`validate_directional_combos.gd` 使用 30 段候选检查四条方向链的
+窗口起点、目标动画、`highpunch3` 的 6 点伤害与 `impacthardrighthigh`
+反应，以及 `hard/high/fromright` 在第 26 帧回到 `faceupidle`。源值和限制见
+`reports/basic_attack_combo_evidence.json`。
+
+匹配后的待执行连段与当时那次攻击绑定：攻击结束、切换动作、受到命中或格挡、
+以及 Heavy 攻击都会取消它，旧输入不会跨攻击生效；`idle/idle2` 的组窗口只作为
+来源组记录，当前运行时在攻击状态之外不评估。`ABB`/`BDD` 与当前动作同名，
+开启候选视觉混合时也会从第 0 帧重播，因为 `_play_candidate_action()` 对同名
+动作会提前返回而保留旧进度。两条序列同时匹配时，后完成者替换先前者；这是
+原型策略，不是已恢复的原版 link 优先级。测试用负向对照验证了 Heavy 缓存、
+受击取消、同名动作重播和优先级替换四条路径。
+
 ## 地面姿态与 `attacktofloor` 候选路径
 
 本地已生成两个新的候选 GLB，均在仓库及同步目录之外：
@@ -432,7 +514,126 @@ PC 原型把这两个序列映射为 `K,L,L` 和 `K,U,U`。输入处理器使用
 
 这里的第 9 帧来自 link 的 `entry_frame=9`，只作为候选入口位置。已识别的
 `from_group` 控制流可能改用来源组成员记录的第三项决定切换时机，因此原版
-是否真的在第 9 帧切入仍未证明；`blending=6` 也尚未实现或逐帧验证。
+是否真的在第 9 帧切入仍未证明；`blending=6` 的原版时间和曲线尚未
+验证。当前可选视觉混合使用实验时长，不能视为原版混合的实现。
+
+### 地面操作的屏幕提示
+
+原型现在根据角色状态和已加载的候选 clip 显示地面操作：Bruce 躺地时提示
+起身和支持的攻击组合；对手躺地且 Bruce 可进入候选攻击时提示 `K,L,L` /
+`K,U,U`。提示属于 PC 原型的辅助界面，不是原版 UI 或键位的还原。
+缺少相应 clip 或回合结束时不会显示对应提示。
+
+按 F2 进入或退出原型倒地追击练习：Brick 初始倒地且不会受普通 AI 控制，
+玩家使用 `K,L,L` 或 `K,U,U` 追击，命中后按 R 重新练习。进入前检查双方
+候选资源及所需动作；这是供玩家反复体验的新增练习，不是原版模式。
+完成判定要求玩家以倒地追击对 Brick 造成正伤害，且 Brick 进入倒地受击；
+成功提示与输入保持锁定，直到 R 重试或 F2 退出。
+
+2026-10-30 在 Godot 4.7.2、本机 23 段 Bruce / 7 段 Brick 候选资源上执行：
+
+```powershell
+& $GodotExe --headless --path godot --editor --quit
+& $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- $BruceGlb $BrickGlb
+& $GodotExe --headless --path godot --script res://tests/smoke_test.gd
+py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
+git diff --check
+```
+
+以上退出码均为 0；Python 223 项通过、1 项跳过。地面测试覆盖提示出现、
+状态变化、缺动作及回合结束，并在混合开启和关闭的情况下连续练习 10 次，
+检查单次伤害、重试及退出普通对战；不替代图形界面的人工目视检查。
+
+审查修订后重新运行同一 Godot 编辑器检查及地面验证，退出码均为 0。
+地面验证增加了错误目标、零伤害、格挡、错误受击状态、成功消息保持和
+重试后清除完成状态的检查。同一测试在修订版导出 PCK 中通过，Windows
+EXE 的资源和拳击自检也通过，退出码均为 0。修订版 Windows Demo 的实际
+操作确认了 F2 进入、`K,L,L` 命中、完成提示保持、R 重试和 F2 返回；
+当时的固定镜头下角色偏小，随后做了下述镜头调整。
+
+### 候选双人镜头
+
+原型镜头现在跟随双方的 x/z 中点，根据横向和纵向间距调整距离，保持固定
+观察方向；视口窄于 4:3 时进一步拉远，避免人物左右出画。近距离人物比
+旧固定镜头更大；回合重置时立即定位新构图。
+命中和训练提示移到血条下方，避免覆盖场中角色。这些都是 PC 原型的视觉
+选择，不代表原版镜头参数。当前以固定高度及横向余量近似角色范围，不是
+逐帧蒙皮模型边界；快速移动舒适度和所有姿态仍需进一步验证。
+
+2026-10-30 使用 Godot 4.7.2 执行：
+
+```powershell
+& $GodotExe --headless --path godot --editor --quit
+& $GodotExe --headless --path godot --script res://tests/validate_fight_camera.gd
+& $GodotExe --headless --path godot --script res://tests/validate_camera_candidate_bounds.gd -- $BruceGlb $BrickGlb
+& $GodotExe --headless --path godot --script res://tests/validate_camera_candidate_bounds.gd -- $BruceGlb $BrickGlb --reverse
+& $GodotExe --headless --path godot --script res://tests/validate_candidate_bounds_space.gd -- $BruceGlb $BrickGlb
+& $GodotExe --headless --path godot --script res://tests/validate_camera_physics.gd
+& $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- $BruceGlb $BrickGlb
+& $GodotExe --headless --path godot --script res://tests/smoke_test.gd
+py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
+git diff --check
+```
+
+以上退出码均为 0；Python 223 项通过、1 项跳过。镜头测试用
+1280×720、800×600 与 480×900 视口，覆盖近距离、两侧边界、最大 x/z 间距和换边，
+检查近似角色范围的投影边距与近距离放大比例；同一镜头测试和地面测试
+也在导出的 PCK 中通过（退出码 0）。Windows EXE 实际进入练习并完成一次
+追击，确认人物更清晰且成功提示不覆盖角色。
+
+补充验证：原始算法在 480×900 视口的近似范围测试中出现水平出界，
+加入窄视口距离调整后通过。CPU 蒙皮包围盒测试对 7 段 Bruce 和 4 段
+Brick 动作分别采样开始、中间、接近末尾，在正反朝向、上述三种视口和
+近距离及两种最大距离站位检查投影边距，两次运行各检查 33 个姿态，
+随后根据 ChatGPT 的审查建议增加攻击关键帧和 Brick 倒地受击逐帧抽样：
+`m01_attack_to_floor` 检查第 9、17–19、22–24、79–81 帧，
+`all_impct_facedwn` 检查第 0–10 帧（候选片段长度不足以采样第 11 帧）。
+每个朝向现检查 54 个姿态，退出码均为 0。近似范围测试另沿连续分离和
+交换位置的轨迹检查构图边距及相机单步位移。这些都不是全部动作逐帧、
+混合姿态或 GPU 像素对照，也不能证明高速操作的镜头舒适度。
+
+进一步检查了 CPU 包围盒的坐标空间：候选 Bruce 和 Brick 的非对称踢击
+姿态分别旋转 180°，世界包围盒按预期翻转；再沿 x/z 平移时，包围盒
+按相同位移平移，两次模型检查退出码 0。此结果支持上述正反朝向采样的
+坐标解释，不证明所有姿态或 GPU 渲染完全一致；该测试在单独导出的 PCK
+中也通过，退出码 0。
+
+`validate_camera_physics.gd` 让两名角色通过实际 `CharacterBody3D`
+物理更新向两侧和纵深分离，分别在 60/120 物理更新频率和宽屏/竖向
+视口检查近似边界及镜头位移，退出码 0。测试仅覆盖该条路径，不是完整
+对战的舒适度验收；同一测试在单独导出的 PCK 中通过，退出码 0。
+镜头目前仍未实现阻尼平滑。
+
+修订版 Windows EXE 通过 `--resolution` 实际启动并检查了 `800x600` 和
+`480x900` 两种窗口：两者均确认普通对战画面、F2 进入练习和 `K,L,L`
+命中提示。`480x900` 会出现上下黑边并明显缩小角色，但双方角色和反馈文字
+没有被左右裁切；`800x600` 构图正常。这只验证当前候选资源和上述两条固定
+窗口路径，不代表任意窗口比例、高速移动舒适度或所有动画混合姿态均通过。
+
+### 候选本地战斗音效
+
+原型可从自有数据包提取的本地 WAV 加载拳、踢和格挡反馈。使用
+`BRUCELEE_AUDIO_ROOT` 指定外部 `sounds/sfx` 目录，或放在
+`%LOCALAPPDATA%\BruceLee-PC-Port\candidate-sfx-20261030\adreno_200\sounds\sfx`。
+三个候选文件分别是 `Punch_Body_Light_1.wav`、`Kick_Body_Light_1.wav`
+和 `Block_Arms_2.wav`。目录须在仓库外；缺失或加载失败时静默继续，
+不回退到打包占位音频。当前只有 `punch`、`kick` 和格挡反馈使用候选文件；
+`attacktofloor`、`facedownattack`、`faceupattack`、`heavy` 等尚无音效映射
+证据的动作保持静默，避免把踢击声误用于未知攻击。文件可加载只证明格式可用；
+选择、音量、变体、声道和完整播放触发规则仍是候选实现，不是原版音效规则闭合。
+`BRUCELEE_AUDIO_ROOT` 是外部本地资源覆盖入口；仓库边界检查不能证明 WAV
+确实来自某个固定数据包或固定哈希，也无意充当沙箱或来源认证机制。
+
+从用户提供的 `data.zpak`（SHA-256
+`364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c`）
+只读导出三个 WAV，本地解析均为单声道、32000 Hz、16 位。导出目录位于
+仓库外，文件哈希保留在该目录而音频不提交。`validate_candidate_audio.gd`
+用真实外部目录加载三项文件，检查缺失音效静默失败、未知攻击动作不误用音效，
+并触发拳击和格挡播放器，等待自然播放结束后确认播放器已自动释放；随后提前
+停止一个仍在播放的实例，确认节点和资源字典均被清理。源码及单独导出的 PCK
+测试退出码均为 0。场景退出时还会停止仍在播放的播放器、解除 stream 引用、
+排队释放节点并清空音频字典；Windows EXE 带音效和无音效两条 verbose 自检
+均无 `ObjectDB` 或音频对象泄漏，退出码均为 0。
 
 以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
 

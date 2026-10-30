@@ -554,6 +554,16 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 待运行时验证的顺序条件。
 
 `candobasicattacks` 有 84 个成员。当前候选只记录了 9 个已实现动作的组窗口。
+完整成员窗口和 21 条来源链接已由
+`py -3.12 -X utf8 -B tools/kdf_combo_group_inventory.py --archive <data.zpak>
+--out reports/candobasicattacks_group_inventory.json` 只读导出；报告只含成员名、
+动画 basename、姿态、`[start, end]` 窗口、成员记录第三项、链接按键序列、
+`entry_frame` 和 `blending`，不含原始二进制。每条链接另带 `source_index`，
+即它在原始 links 数组中的位置，并按该顺序输出，作为尚未恢复的 link priority
+证据。84 个成员中只有 4 条简单
+`pressa/pressb/pressc/pressd` 链已接入运行时；`highpunch3`、`lowkick3`、
+`lowpunch3`、`highkick3` 和抓取类 `endattack*` 链接需要方向修饰键、额外
+`m01_*_03` / `m01_sp_*` 动画和 25 段候选上限之外的新候选，尚未实现。
 仓库外 23 段候选已加入 `m01_attack_to_floor`；Brick 的本地 6 段候选已接入受限非致命受击链，可进入
 `facedownidle` 并报告 `pose=laying`；完整 Brick 击倒行为尚未恢复。当前原型已通过显式
 `bcc/bdd` PC 输入接入候选 `attacktofloor`，但这组静态证据仍不足以把
@@ -723,6 +733,302 @@ py -3.12 -X utf8 -B tools/native_root_motion.py `
 本次修改的回归检查：`py -3.12 -X utf8 -B -m unittest discover -s tests -p
 "test*.py" -q`，126 项通过，退出码 0；`git diff --check`，退出码 0。
 
+## 动画过渡混合控制流
+
+以下结论只适用于 SHA-256 为
+`1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70`
+的本地 `libdefault.so`。它们来自静态 ARM 指令、函数符号和 PLT/GOT
+重定位，尚未通过原版运行时内存、录像或 GPU 输出对照。
+
+已闭合的实际消费链为：
+
+```text
+CFadeQueue::UpdateOutput
+  -> CFadePlayer::UpdateOutput
+  -> CAnimPlayer::BlendOutput
+  -> CAnimPlayer::CopyBlendFrames
+  -> CAnimProvider::BuildFrame
+```
+
+根变换另走：
+
+```text
+CFadePlayer::GetRootOutput
+  -> CRootPlayerBase::BlendOutput
+  -> CRootPlayerBase::GetOutput
+```
+
+`CAnimLayer::AddTransition` 的两套重载不是这条 fighter 动画队列的直接末端；
+此前把下一阶段工作集中在 `CAnimLayer::UpdateOutput` 的方向已纠正。
+
+证据等级和边界如下：
+
+- `STATIC_VERIFIED`：`CFadeQueue::UpdateOutput` `0x3FE128` 读取
+  `[this+0x84]`，空值直接返回，非空时 `0x3FE134` 尾调用
+  `CFadePlayer::UpdateOutput`。
+- `STATIC_VERIFIED`：`CFadePlayer::UpdateOutput` `0x3FC768` 读取
+  `[this+8]`；空值分支在 `0x3FC8A8` 调用
+  `CAnimPlayer::CopyOutput`。非空分支先在 `0x3FC780` 递归更新前一层，
+  计算 fade 权重，并在 `0x3FC8A0` 调用
+  `CAnimPlayer::BlendOutput(float)`。
+- `STATIC_VERIFIED`：`CAnimPlayer::BlendOutput` `0x3F8EEC–0x3F8F10`
+  对权重 `< 0`、`= 1`、`> 1` 分流；`0x3F8FC8` 调用
+  `CopyBlendFrames`，`0x3F8FFC` 在权重至少为 1 时尾调用 `CopyOutput`。
+- `STATIC_VERIFIED`：`CopyBlendFrames` 的 `0x3F7A08` 调用
+  `CAnimProvider::BuildFrame(float)`。实际骨骼帧会经过该入口，但这里不证明
+  每一条骨骼、位置、旋转和缩放轨道采用相同的插值方式。
+- `STATIC_VERIFIED`：`CRootPlayerBase::BlendOutput` `0x407E5C–0x407E98`
+  确认权重 `< 0` 时不修改旧输出，权重 `>= 1` 时复制当前输出，权重在
+  `(0,1)` 时进入浮点混合；`0x407EC8–0x407ED0` 使用当前值乘权重、旧值乘
+  `1-weight`。权重 `1` 选择新动画，权重 `0` 保持旧动画。
+- `STATIC_SUPPORTED`：`CFadePlayer::Init` 在 `0x3FCED8–0x3FCEE4`
+  从上一级对象的 `+0x18` 读取整数并转为 float，再读取
+  `anmTransitionInfo+8`；`0x3FCEFC–0x3FCF08` 相乘、向无符号整数转换并
+  传给 `CFadeController`。该对象字段及过渡参数的具体单位、业务身份
+  尚未确认。
+- `STATIC_SUPPORTED`：正权重区间的帧数计算还包含 `fabs` 和
+  `zlibm_floor` 调用。具体浮点位、半帧舍入、每条轨道的采样规则，以及
+  Godot 中的对应结果仍为 `UNVERIFIED`。
+
+`CLinkDescr::ParseFromKDF` 的字段归属也已逐段核对。PC-relative 字符串
+计算结果分别是：`0x1C40B4–0x1C40C4 -> linking_frame`、
+`0x1C41F0–0x1C4200 -> entry_frame`、
+`0x1C4498–0x1C44AC -> blending`。因此不能沿字段偏移把
+`CLinkDescr+0xD4` 误认成 blending；当前核对结果为：
+
+- `linking_frame` 写入 `CLinkDescr+0xD4`。
+- `entry_frame` 写入 `CLinkDescr+0xD8`。
+- `blending` 写入 `CLinkDescr+0xDC`；节点缺失时
+  `0x1C45E8` 提供默认值 `6`，存在时 `0x1C47D8–0x1C4820` 读取
+  KDF 整数并回到 `0x1C45F0` 写入该字段。
+
+从 link 到 transition 的静态数据流现为：
+
+```text
+CLinkDescr+0xDC
+  -> CFighter::FollowLink 0x1A8294
+  -> float(blending) / float(CFighter+0x30)
+  -> CFighter::SetAnimation fifth float argument
+  -> anmTransitionInfo+8
+  -> CFadePlayer::Init 再乘进入对象+0x18的整数（字段语义未确认）
+```
+
+- `STATIC_VERIFIED`：`CFighter::FollowLink` 在
+  `0x1A8294–0x1A82B4` 读取 `[link+0xDC]` 和 `[fighter+0x30]`，
+  两者转 float 后执行 `vdiv`，把商写为 `SetAnimation` 的第五参数。
+  同段 `0x1A82A0` 另读 `entry_frame=[link+0xD8]`，不是 blending。
+- `STATIC_VERIFIED`：`CFighter::SetAnimation` 在 `0x1A6EA0` 接收该
+  float，在 `0x1A7214` 写入 `transitionInfo+8`，并在 `0x1A722C`
+  把该 transition object 传给
+  `gfxAnimation::AddTransition`。
+- `STATIC_VERIFIED`：`gfxAnimation::C1` `0x380174` 保存
+  `CScnAnim` 引用；`gfxAnimation::AddTransition` `0x3802F8–0x380300`
+  读取对象 vptr，并调用 vtable `+0x18`。`CScnAnim::C1`
+  `0x3807B0–0x3807CC` 从 GOT 取得 `_ZTVN3krm3gfx8CScnAnimE`
+  后写入 `vptr=_ZTV+8`；对应 `.rel.dyn` `0x603B60` 指向该 vtable，
+  而 vtable slot `0x5F9170` 的 `.rel.dyn` 指向
+  `CScnAnim::AddTransition` `0x380B64`。
+- `STATIC_VERIFIED`：`CScnAnim::AddTransition` 在
+  `0x380BF0–0x380BF8` 检查 `[CScnAnim+0x10]`，空值时分配
+  `0x88` 字节并调用 `CFadeQueue::C1`，再保存到该字段。
+  `0x380C48–0x380C78` 把 source/transition 记录写入
+  `CFadeQueue+0x68` 表中的下一项，并更新 `+0x70` 数量。
+- `STATIC_VERIFIED`：`CFadeQueue::C1` 初始化记录表和
+  `[queue+0x84]`；`CFadeQueue::UpdateTime` `0x3FDD78–0x3FDD88`
+  在待处理数量非零时调用 `CFadeQueue::ActiveNext`。
+- `STATIC_VERIFIED`：`CFadeQueue::ActiveNext` 构造
+  `CFadePlayer`，在 `0x3FDBC8` 调用 `CFadePlayer::Init`，随后把新
+  player 发布到 `[queue+0x84]`。对应 PLT stub、GOT 重定位和符号分别为
+  `0x122D64 → 0x5FECA8`、`0x1236A0 → 0x5FEFBC`、
+  `0x126118 → 0x5FFDE4`。
+- `UNVERIFIED`：`CFadePlayer::Init` 使用的进入对象 `+0x18` 与
+  `CFighter+0x30` 的字段语义及二者是否相同，均未独立确认。
+- `STATIC_SUPPORTED`：新增 transition 记录被
+  `UpdateTime → ActiveNext` 消费并把同一业务 transition 对象交给
+  `CFadePlayer::Init`。当前已经绑定各函数和 vtable/PLT 边，但尚未用
+  原生运行时证明每个实际 fighter 动作都走该表、记录字段在复制后不失真，
+  也未确认两个字段的语义或它们是否恒等。
+- `UNVERIFIED`：`vcvt.u32.f32` 的浮点舍入模式及
+  `zlibm_floor` 后的逐帧结果没有运行时对照；Godot
+  `custom_blend` 的权重曲线也尚未和原版比较。
+
+**字段解释更正（2026-10-30）**：此前将 `[fighter+0x30]` 称为
+framerate，并据此把商解释为秒，证据不足。该字段还出现在
+`UpdatePositionWithRootDisplacement` 的边界比较：`0x1A1934–0x1A1940`
+比较 `[fighter+0x34]` 与 `[fighter+0x30]-1`。此外，在已识别的
+`SetAnimation` 路径中，`0x1A7154` 调用 `GetActiveSetAnimation`；
+对应 PLT `0x12B3BC` 和重定位 `0x601970` 已按符号核验。返回对象的
+`+8` 指针非空且其 `+0x10` 与所比较的类型值相等时，
+`0x1A718C–0x1A7198` 才从该指针所指对象的 `+0x3C` 读取并写入
+`[fighter+0x30]`。空指针或类型不匹配分支不能假设得到有效对象。
+静态指令中，指针为零时 `0x1A7164` 条件读取 `[0+0x3C]`；
+类型不匹配时 `0x1A7190` 把 `r2` 设为零，而 `0x1A7194` 随后无条件
+读取 `[r2+0x3C]`。这不是安全跳过的证据；实际运行中是否可达、
+内存映射及后果均未验证。
+在同一次 `SetAnimation` 的非空资源路径中，`0x1A7158–0x1A715C`
+读取并保存 `GetActiveSetAnimation` 返回的引用对象；其 `+8` 指针
+参与前述类型匹配和 duration 读取。随后 `0x1A71BC–0x1A71E8`
+把该引用对象的 `+8/+0xC` 两字复制到栈上的资源引用并增加引用计数，
+`0x1A71F4–0x1A722C` 把这个引用传给 `gfxAnimation::AddTransition`。
+`CScnAnim::AddTransition` 在 `0x380B84` 保存该参数，在
+`0x380BFC–0x380C1C` 把非空引用复制到局部过渡记录的开头，
+再于 `0x380C64–0x380C78` 调用记录的虚复制函数。
+这将同次动作设置中 fighter 字段和入队引用的来源关联到同一返回对象；
+记录的虚复制结果、不同帧的调度、历史过渡是否已完成及最终旧 player
+与当前 fighter 的实际身份仍须确认，不能据此约分计算原版最终混合时间。
+继续追踪记录类型：`CFadeQueue::C1` 在 `0x3FE32C–0x3FE330`
+对队列 `+0x68` 调用 `CTransQueue::C1`。后者通过 GOT `0x6034BC`
+取得 `svector<CTransQueue::TInfo>::gInfo`，并在正常 guard 初始化路径
+设置元素步长 `0x20`；`gInfo+4` 的动态重定位指向
+`TInfo::createcopy` `0x413D28`。该函数在资源指针非空时复制前两字、
+增加引用计数，并复制其后的 source 和 transition 字段。
+因此在描述符正常初始化并走该虚复制路径时，入队记录保留了资源引用。
+`ActiveNext` 通过 `GetTimeCorrection` 从队列首项构造临时记录；
+`0x413F48–0x413F94` 首先复制非空资源引用和其他记录字段。
+有旧动画状态时随后调用 `CorrectTransTime` 和 `CorrectFadeTime`；
+这两个函数的完整指令范围已核对，它们修正时间字段，没有直接写入
+记录开头的资源引用两字；其中对外调用 `zlibm_fabs` 接收数值参数。
+在非空、有效记录及这些调用正常返回的路径上，临时记录中的资源引用
+因此保持不变。`ActiveNext` 之后把该临时记录地址作为资源引用参数
+传给新 `CFadePlayer::Init`；在已识别的 `SetSource` 分支中，
+`Init` 又将该参数传给新 `CAnimPlayer::SetSource`。
+这仍不证明异步队列在某次具体战斗切换中没有其他待处理记录，也不证明
+新建 player 在下一次切换时一定就是 fighter 当前动作的播放器。
+在这之前，`SetAnimation` 的 `0x1A6F9C` 经 PLT `0x128ADC`
+调用 `FindAnimationIndex`，`0x1A6FA8` 保存返回的索引，
+`0x1A6FD0` 把它写到 `[fighter+0x2C]`，`0x1A7150–0x1A7154`
+将同一索引传给 `GetActiveSetAnimation`。因此在这些调用正常返回、
+资源已更新且类型匹配的情况下，`+0x30` 与本次设置的动作对应资源的
+duration 相联系。`FollowLink` 的 `0x1A8298` 在它随后对原 fighter
+的 `SetAnimation` 调用之前读取该字段；若它自上一次成功设置后没有被
+其他路径写入，则除数保留的是上一次设置的值，而非本次调用新写入的值。
+目前没有完成对所有可能写入或别名的枚举，不能无条件认定具体切换的除数。
+`GetActiveSetAnimation` 本体 `0x1A00D0–0x1A00F8` 在
+`[fighter+0x135]` 为零时用 `+0xD4` 的表和 `+0xD8` 的步长按参数索引；
+非零时使用 `[fighter+0x7C]` 并经 PLT `0x126CF4` 调用
+`GetInternalFightingSetAnimation`（重定位 `0x6001D8`）。
+`FollowLink` 另有分支在 `0x1A8200–0x1A8240` 对
+`[fighter+0x7C]` 对象调用 `SetAnimation`，随后在 `0x1A8298`
+读取原 fighter 的 `+0x30`，`0x1A82B8` 再对原 fighter 调用
+`SetAnimation`。该顺序不单独证明原 fighter 的字段一定来自哪一个动作，
+也不排除其他调用的间接作用。
+进一步核对 GOT 和 `.rel.dyn` 后，类型比较使用的槽 `0x602990` 指向
+`TypeId<CAnimRes>::sType`；因此在指针有效、类型匹配的路径上，读取的是
+`CAnimRes+0x3C`。`CAnimRes::UpdateProperties` `0x416874–0x416950`
+通过槽 `0x6039EC` 的 `gid_duration` 选择属性，在整数值有效的路径将
+该值写入 `CAnimRes+0x3C`；`0x416E0C–0x416E10` 则把零送到同一写入点。
+这与 `SKL_ANM_FORMAT_FINDINGS.md` 先前将 `duration` 解释为解码样本数的
+静态分析相互印证。此结论限于记录的资源更新和类型匹配路径，不能推定所有
+运行时数据均有效，也不能据此确定每次切换使用哪个动作的 duration。
+另一个乘法输入也有了受路径限制的来源：`CAnimRes::UpdateProperties`
+通过 `gid_framerate`（GOT 槽 `0x603EC4`）读取整数，在已识别的有效
+分支调用 `__aeabi_uidiv`，将
+`unsigned_32(duration * 1000) / unsigned_32(framerate)` 的无符号整数商
+写入 `CAnimRes+0x40`；属性读取失败时该分支使用除数 30。这里乘积
+仅保留低 32 位，整数除法会截断，不能把结果等同于无限精度浮点计算。
+属性存在但数值为零时能否安全处理尚未确认，不能把失败时回退 30
+解释为所有无效值都回退。随后
+`CAnimPlayer::SetSource` 把 `CAnimRes+0x40` 和 `+0x3C` 放入
+`CTimeController`，调用 `Init` 后将该对象复制到播放器 `+0x14`，
+其中原 `+0x40` 值进入 `CAnimPlayer+0x18`。`CFadePlayer::Init`
+在前一层指针非空时从其关联播放器 `+0x18` 取数与过渡参数相乘。
+`CFadeQueue::ActiveNext` 的 `0x3FDBA8` 先取
+`[queue+0x84]`，`0x3FDBBC` 将其放到调用者 `sp+8`，
+作为 `CFadePlayer::Init` 的第七参数；新建的 player 在调用返回后
+才于 `0x3FDBCC` 写回 `queue+0x84`。`Init` 保存九个寄存器并分配
+`0x6C` 字节后，`0x3FCD58` 从 `sp+0x98` 取到该参数；
+非空路径把它存入新 player 的 `+8`，随后在 `0x3FCED4–D8`
+读取其关联播放器的 `+0x18`。这表明该乘数沿已识别路径来自队列中
+**替换前**的 player；队列此前的完整历史和该 player 与 fighter
+的资源身份仍需独立确认。
+这是静态的、带条件的字段来源，不能把乘数直接称为帧率。
+两侧是否属于同一动画、数据在队列中是否保持一致、整数溢出和零除数
+的运行时行为仍未核实，也不能仅据此宣称 Godot 的混合时间已经等同原版。
+
+目前只确认 `blending / unsigned([fighter+0x30])` 的静态计算及其
+参数传递；**不能据此确认结果以秒为单位**。下表的 `6/30` 和 `10/30`
+仅是 Godot 实验沿用的固定候选参数，不是已证实的原版时间换算；后续
+需要追踪两个字段的赋值来源和原版运行时行为。
+只读复核命令：
+
+```powershell
+py -3.12 -X utf8 -B tools\native_animation_blending.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+```
+
+早期版本的本机输出为
+`verified 114 animation-blending words and 15 PLT relocations, 2 dynamic relocations and 3 property strings`，
+退出码 0。
+校验器同时绑定 ELF SHA-256、代表性指令、PLT stub、GOT 槽和重定位符号；
+它证明这些静态事实来自同一个二进制，不能证明原版运行时视觉或 Godot
+当前已实现该混合。
+
+### Godot 候选视觉混合实验
+
+当前 Godot 原型已接入默认关闭的候选视觉混合。设置
+`BRUCELEE_CANDIDATE_VISUAL_BLENDING=1` 后，仅在下列三条逐项核对的切换上
+使用固定候选时长（不宣称为原版换算）：
+
+| 切换 | 档案 `blending` | 候选时长 |
+|---|---:|---:|
+| Bruce `idle/idle2 -> attacktofloor` | 6 | `6 / 30 = 0.2s` |
+| Bruce `attacktofloor -> idle2` | 10 | `10 / 30 = 0.333…s` |
+| Brick `facedownidle -> impactfacedown` | 6 | `6 / 30 = 0.2s` |
+
+`godot/scripts/fighter.gd` 只把候选时长传给 Godot 4.7.2
+`AnimationPlayer.play(..., custom_blend)`。逻辑状态、命中窗口、伤害、KO
+优先级、输入门控、状态退出帧和缺 clip 失败保护仍由原候选代码决定；混合
+不会延长旧状态，也不会让旧状态继续接收输入或伤害。开关关闭时仍调用原来的
+无混合 `play()`。
+
+`godot/tests/validate_candidate_visual_blending.gd` 使用真实 23 段 Bruce
+GLB 和 7 段 Brick GLB 逐骨骼采样。本机通过结果显示：
+
+- 两段切换调用后立即采样的姿态距离均为 `0`，即旧姿势没有被瞬间替换；
+- 0.1–0.15 秒时出现非零中间姿态；
+- 混合结束后，Bruce 的两段切换和 Brick 的倒地受击均在相同动画时间位置
+  独立播放目标 clip，逐骨比较位置、旋转和缩放；完成姿态与目标姿态的误差
+  必须低于 `0.01`；
+- 混合结束后 Bruce 选择 `m01_idle_02`，Brick 选择
+  `all_impct_facedwn`；
+- 同一测试同时确认 Brick 仍扣除 6 点生命、保持 `impactfacedown`、
+  半径 85，且两名角色没有共用骨架；
+- 在 Brick 的混合尚未结束时调用 `reset_fighter()`，随后再次从同一
+  `facedownidle` 触发 `impactfacedown`，旧 pending/上次混合记录必须清零，
+  新一轮混合仍须到达目标姿态，并且第二次命中只能把生命从重置后的 100
+  扣到 94，不能沿用或重复上一轮伤害。
+
+本轮补强后的验证命令和结果：
+
+```powershell
+py -3.12 -X utf8 -B tools\native_animation_blending.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q
+.\validate_candidate.ps1 `
+  -CandidateGlb '<external>\bruce-candidate.glb' `
+  -TextureRoot '<external>\player-textures' `
+  -OpponentGlb '<external>\brick-candidate.glb' `
+  -OpponentTextureRoot '<external>\brick-textures' `
+  -GodotExe '<external>\Godot_v4.7.2-stable_win64_console.exe' `
+  -ExpectReactionClips
+git diff --check
+```
+
+- 当时的原生校验器：114 条指令、15 个 PLT 重定位、2 个 vtable 动态重定位和
+  3 个属性字符串通过，退出码 0。
+- Python：223 项通过、1 项跳过，退出码 0。
+- 真实 Bruce 23 段/Brick 7 段 Godot 混合测试连续 5 次通过；三次完成姿态
+  的独立目标误差均为 `0.0`，reset 后重新受击仍从 100 扣到 94。
+- 未打包及 packed PCK 的候选验证均完成，最终输出
+  `CANDIDATE_VALIDATION=PASS`，退出码 0。
+- `git diff --check` 退出码 0。
+
+该实验的边界是
+`STATIC_VERIFIED duration-field provenance on the matching path;
+candidate visual interpolation; native transition time units unverified`。
+Godot 的 `custom_blend` 权重曲线、字段身份、
+过渡记录复制后的字段语义和原版逐帧视觉仍未证明一致。
+
 ## 全量 impact 聚合
 
 使用完整外层 ZIP 和 `--inventory` 模式重新只读解析后，200 个动作、108 个
@@ -767,3 +1073,62 @@ py -3.12 tools\kdf_fighting_set.py `
 
 这些数值仍是配置层原始数据。攻击半径、部位、高度、强度、方向和帧窗口
 如何进入运行时碰撞、受击和表现系统，仍按前文证据等级判断。
+
+
+字段语义更正后的本机验证（2026-10-30）：
+
+```powershell
+py -3.12 -X utf8 -B tools\native_animation_blending.py <本机libdefault.so>
+# exit 0: 114 words, 15 PLT, 2 dynamic relocations, 3 strings
+py -3.12 -X utf8 -B tools\native_root_motion.py <本机libdefault.so>
+# exit 0: 56 words, 5 PLT
+py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
+# exit 0: 223 tests, 1 skipped
+git diff --check
+# exit 0
+```
+
+这些验证只覆盖校验器与既有测试；它们不确定字段语义，也不是原版运行时对照。
+
+补充 `GetActiveSetAnimation` 调用及条件分支后，再次运行上述
+`native_animation_blending.py` 命令：127 条指令、16 个 PLT、2 个
+动态重定位、3 个字符串，退出码 0；全量 Python 测试 223 项、
+跳过 1 项，退出码 0；`git diff --check` 退出码 0。
+
+再补充 `GetActiveSetAnimation` 本体和 `FollowLink` 的调用顺序后，
+同一校验命令核对 142 条指令、17 个 PLT、2 个动态重定位和 3 个
+字符串，退出码 0；上述全量 Python 测试再次为 223 项、跳过 1 项，
+退出码 0；`git diff --check` 退出码 0。
+
+绑定 `CAnimRes` 类型及 `gid_duration` 的资源属性写入后，同一
+校验命令核对 179 条指令、17 个 PLT、4 个动态重定位和 3 个字符串，
+退出码 0；全量 Python 测试 223 项、跳过 1 项，退出码 0；
+`git diff --check` 退出码 0。
+
+绑定动作索引赋值及 `FollowLink` 的延迟路径后，同一校验命令核对
+189 条指令、18 个 PLT、4 个动态重定位和 3 个字符串，退出码 0；
+全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
+退出码 0。
+
+补充资源时间长度和播放器字段来源后，同一校验命令核对 249 条指令、
+20 个 PLT、5 个动态重定位和 3 个字符串，退出码 0；全量 Python
+测试 223 项、跳过 1 项，退出码 0；`git diff --check` 退出码 0。
+
+补充队列旧 player 到 `Init` 第七参数的传递后，同一校验命令核对
+257 条指令、20 个 PLT、5 个动态重定位和 3 个字符串，退出码 0；
+全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
+退出码 0。
+
+补充动作资源引用到过渡记录的传递后，同一校验命令核对 280 条指令、
+20 个 PLT、5 个动态重定位和 3 个字符串，退出码 0；全量 Python
+测试 223 项、跳过 1 项，退出码 0；`git diff --check` 退出码 0。
+
+补充队列记录复制函数及取出时的初始复制后，同一校验命令核对
+359 条指令、22 个 PLT、7 个动态重定位和 3 个字符串，退出码 0；
+全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
+退出码 0。
+
+补充完整时间修正函数及 `Init → SetSource` 传参后，同一校验命令
+核对 552 条指令、26 个 PLT、7 个动态重定位和 3 个字符串，退出码 0；
+全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
+退出码 0。

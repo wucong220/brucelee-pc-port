@@ -1,6 +1,6 @@
 # Bruce Lee: Dragon Warrior → Windows 原生 PC 移植工程
 
-> **阶段：P0 取证 + P1 可玩的独立战斗原型 + P2 PAK 解析完成 + P3 资源格式恢复进行中**<br>
+> **阶段：P0 取证 + P1 可玩的独立战斗原型 + P2 PAK 解析完成 + P3/P4 资源与战斗恢复进行中 + P5 菜单完成一部分 + P6 PC 输入与发行准备进行中**<br>
 > **当前不是原版游戏的完整移植**。原型使用程序生成的占位人物、擂台和自写战斗规则，不包含原始游戏资产，不包含从 ARM 二进制提取的源码。它能作为逐步接入原版资源和逆向玩法的 PC 工程基础。
 
 真实候选模型、纹理、动画和战斗状态的本地集成方式、测试命令与边界见
@@ -15,7 +15,7 @@
 1. APK 中 `lib/armeabi/libdefault.so` 为 **ARM ELF32**，保留 `.symtab` 和大量 C++ 符号。提取并生成 **454 条候选函数符号清单** `evidence/candidate_symbols.csv`（类别：资源、战斗、动画、输入）。
 2. 外部 `data.zpak` 是 ZIP；包含 `Core.pakh`、`Core.pakd000` 和 `metadata.xml`。实际解析器已在完整原包中验证 2144 条索引、417 个目录节点和 2265 条文件路径，尾部 CRC 为 `0xeee1e38a`。
 3. `Core.pakd000` 的 2144 个跨块连续 zlib 流已全部读取，共解码 325,791,952 字节；物理偏移、存储长度、解码长度和目录标识全部一致。早期“第 5 个流截断”的判断已纠正。详情见 `docs/PAK_DECODE_FINDINGS.md`。
-4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、3 种攻击、格挡、受击状态、血量、回合重开、简易对手 AI。
+4. 创建 Godot 4.7.x 兼容的 3D PC 战斗场景原型：人物对战、双向移动/侧移、低/高拳脚与原型重击、格挡、受击状态、血量、回合重开、简易对手 AI。
 5. 提供 PowerShell `build_windows.ps1` 和 `validate_windows_exe.ps1`；已使用
    Godot 4.7.2 Windows Export Templates 生成并在仓库外验证原生 Windows
    EXE/PCK，非安卓模拟器。
@@ -34,6 +34,7 @@
 16. reaction root-motion 取证已导出 `positions` 逐帧值、轨道存在性和 ANM 哈希到 `reports/reaction_root_motion_inventory.json`，并由 16 条原生变换链指令校验。当前尚未把任何坐标轴映射为 Godot `push`。
 17. 玩家 Bruce 和电脑 Brick 已分别加载独立候选 GLB、动作映射与动画节点；Brick 可使用 `m03_*` idle/punch/kick/movefwd。Brick 的 diffuse/normal `atc_rgb` 与 material `r8g8b8a8` 1024×1024 mip 链已可由转换器解码基础层；原版 fighting set、命中参数、reaction、AI 和逐像素视觉仍未恢复；候选动画的未验证角色位移轨道已禁用。
 18. 受限候选路径已接入 `impacttofloor -> faceupidle -> faceupgetup/faceupattack -> idle`：`impacttofloor` 只在 Bruce 处于 `facedowngetup [5,11]` 或 `facedownattack [24,31]` 的 `impactablefromground` 窗口，受到非致命、非格挡的低段命中，且候选 GLB 含所需 clip 时触发；它从源动画第 21 帧起播，第 48 帧进入循环 `faceupidle`。候选 GLB 还含 `all_getup_faceup` 时，`faceupidle` 在源帧 `[10,45]` 接受水平 `move_axis.x` 进入 24 帧、半径 40 的 `faceupgetup`，并在候选选定的源帧 20 进入普通 idle。档案的 `idle` 链接窗口是 `[20,24]`，所以第 20 帧只是确定性候选选择，不是原版实际切换帧的证明。21 段候选含 `all_getup_faceup_attack` 时，`faceupidle` 在源帧 `[0,45]` 接受 `aaa/abb/bcc/bdd` 四条抽象序列，进入 38 帧、半径 45 的非循环 `faceupattack`；第 `[9,14]` 帧至多造成一次 6 点伤害，攻击半径 90、属性为 `larm/low/hard/frontal`，候选运行时选择第 37 帧回 idle。它在 `[24,31]` 仅接受已验证的非致命、非格挡低段 `impacttofloor` 路径；`canblock [27,38]` 只用作格挡门控，避免该窗口内的格挡低段误入倒地链，完整格挡反应、普通受击和 KO 出边仍封闭。22 段候选含 `all_impct_faceup` 时，`faceupidle` 受到非致命、非格挡低段 impact 会播放 11 帧、半径 80 的非循环 `impactfaceup`，第 11 帧回到 `faceupidle`；伤害会使血量归零时优先进入复用 `all_idle_face_up` 的独立 `faceupko`，半径 100、45 帧循环，不接受起身或攻击输入。两者均不应用原型 push；中高段非致命、格挡、缺 clip 及 `faceupattack/faceupgetup` 的未闭合来向继续 fail closed。23 段候选另含 `m01_attack_to_floor`：Bruce 在 `idle/idle2`、Brick 报告 `laying` 时，原型把 `K,L,L` 或 `K,U,U` 映射为 `bcc/bdd`，从源动画第 9 帧进入，第 `[18,23]` 帧至多造成一次 6 点伤害，半径 60、属性 `lleg/normal/low/frontal`；档案直接出边为 `[80,90] -> idle2`，候选选择最早的第 80 帧进入 `m01_idle_02`。输入前缀会先缓存，避免第一个 `b` 被普通踢提前消费；完整原版组成员窗口、链接优先级、blending、物理键位和目标反应链仍未验证。
+19. 25 段 Bruce 候选已接入四条 `candobasicattacks` 站立连段：`aaa -> highpunch1`、`abb -> lowpunch1`、`bcc -> highkick1`、`bdd -> lowkick1`。新增高拳为 101 帧、伤害 5、半径 70、`larm/high/normal/frontal`；高踢为 73 帧、伤害 6、半径 75、`lleg/high/normal/frontal`。转换只会在当前攻击自己的来源窗口内发生，已实现窗口为 lowpunch `[22,69]`、lowkick `[31,86]`、highpunch `[17,101]`、highkick `[33,73]`。PC 原型用 `J/K/L/U` 产生抽象 `a/b/c/d`，并以从首键起算的 0.5 秒原型输入期限限制序列；这些都不是原版物理键位或计时证据。匹配后的待执行连段绑定到当时那次攻击，攻击结束/切换/受击/格挡和 Heavy 都会取消，旧输入不会跨攻击生效；`ABB`/`BDD` 与当前动作同名，开启视觉混合时仍从第 0 帧重播。两条序列同时匹配时后完成者替换先前者，这是原型策略。`candobasicattacks` 共 84 个成员，目前只实现本文件记录的窗口，完整成员覆盖、链接顺序和 blending 仍未验证。源记录与测试边界见 `reports/basic_attack_combo_evidence.json`；84 个成员窗口与 21 条链接见 `reports/candobasicattacks_group_inventory.json`。加载仓库外 30 段候选时另有四条方向连段（`highpunch3`、`lowpunch3`、`lowkick3`、`highkick3`），方向修饰键是 PC 原型映射；`hard/high/fromright` 已按源链接接到 `impacthardrighthigh` 并在第 26 帧返回 `faceupidle`，抓取类链接仍未接入。
 
 ## 立即运行 Windows PC 原型
 
@@ -47,16 +48,54 @@
 
 ### 控制
 
-| 按键 | 功能 |
-|---|---|
-| A / D | 左右移动 |
-| W / S | 侧向移动 |
-| J | 快拳 |
-| K | 踢击 |
-| L | 重击 |
-| U | 原型虚拟键 d |
-| Shift（按住） | 格挡 |
-| R | 重新开始对战 |
+| 键盘 | 手柄 | 功能 |
+|---|---|---|
+| A / D | 左摇杆左右或十字键左右 | 左右移动 |
+| W / S | 左摇杆上下或十字键上下 | 侧向移动 |
+| J | A | 快拳 |
+| K | X | 踢击 |
+| L | Y | 重击 |
+| U | B | 原型虚拟键 d |
+| Shift（按住） | LB 或 RB（按住） | 格挡 |
+| R | Back | 重新开始对战 |
+| F2 | L3 或 MISC1 | 切换倒地追击练习与普通对战 |
+| Esc | Start | 打开或恢复暂停菜单 |
+
+菜单可用键盘方向键或 W/S、十字键选择；Enter/J 或手柄 A 确认，
+Esc 或手柄 B/Start 从暂停菜单恢复。上述键位是 PC 原型默认值，不是已经恢复的
+原版 Android 物理键位。部分手柄可能没有 MISC1，此时使用 L3；设备名、轴向和
+按键编号仍取决于 Windows 与 Godot 的手柄映射。当前实现只验证合成事件触发的
+动作、状态和菜单路径，尚未逐一实测各种真实手柄。
+实现和验证边界见 [`docs/PC_INPUT.md`](docs/PC_INPUT.md)。
+
+站立时，原型把 `J/K/L/U` 映射为抽象 `a/b/c/d`。在当前攻击的来源帧
+进入已恢复的 `candobasicattacks` 窗口后，输入 `AAA`、`ABB`、`BCC` 或
+`BDD` 会分别转入高拳、低拳、高踢或低踢；候选 GLB 缺少目标动作时保持
+普通攻击路径。序列从首键起算最多保留 0.5 秒，这是一个 PC 原型门限。
+完整 84 个组成员、原版输入期限、链接优先级、blending 和 Android 物理键位
+仍未恢复。源记录见
+[`reports/basic_attack_combo_evidence.json`](reports/basic_attack_combo_evidence.json)。
+
+本地音效为可选输入：设置 `BRUCELEE_AUDIO_ROOT` 指向自有数据包提取出的
+`sounds/sfx` 目录；未设置时尝试本机默认的
+`%LOCALAPPDATA%\BruceLee-PC-Port\candidate-sfx-20261030\adreno_200\sounds\sfx`。
+当前只把轻拳和踢击候选文件用于 `punch`、`kick`，格挡候选文件用于格挡反馈；
+`attacktofloor`、地面攻击和重击等尚无映射证据的动作保持静默。文件可用
+不等于已经证明原版事件映射。该目录必须位于仓库之外，音频不会写入 PCK。
+路径检查只阻止从仓库内部加载，并不验证 WAV 来自某个特定数据包；该环境变量
+仍是供自有本地资源使用的候选覆盖入口。
+
+练习模式是 PC 原型新增的辅助功能：Brick 从倒地状态开始，输入 `K,L,L`
+或 `K,U,U` 练习追击，命中后按 R 重试。练习需要加载包含相应动作的本地
+Bruce 和 Brick 候选资源；缺少时游戏会提示无法进入。再次按 F2 回到普通对战。
+
+导出版 EXE 默认先显示 PC 原型主菜单，可选择普通对战、倒地追击训练或退出；
+对战中按 `Esc` 打开暂停菜单，可继续、重开、返回主菜单或退出。编辑器内的自动
+验证默认仍直接进入战斗，可用 `BRUCELEE_MAIN_MENU=1` 强制显示菜单、
+`BRUCELEE_MAIN_MENU=0` 强制关闭。菜单背景默认尝试从仓库外读取
+`%LOCALAPPDATA%\BruceLee-PC-Port\p5-menu-assets-20261030\mainmenu_default.png`，
+也可用 `BRUCELEE_MAINMENU_PATH` 指定。背景缺失时使用程序生成的纯色底；
+这些选项、键位和布局都是 PC 原型功能，不是已经恢复的原版菜单规则。
 
 在 `facedownidle` 状态下，原型把 `J/K/L/U` 依次映射为抽象
 `pressa/pressb/pressc/pressd`。测得的四条序列
@@ -69,6 +108,19 @@
 含 `m01_attack_to_floor` 和返回用的 `m01_idle_02`，否则该路径保持关闭。
 这些序列和帧值是候选运行时行为，不是已经实测的原版输入优先级或 Android
 键位。
+
+可在启动前启用默认关闭的候选视觉混合：
+
+```powershell
+$env:BRUCELEE_CANDIDATE_VISUAL_BLENDING = "1"
+```
+
+当前只对三条有档案值的切换启用：Bruce
+`idle/idle2 → attacktofloor`（6/30 秒）、Bruce
+`attacktofloor → idle2`（10/30 秒）和 Brick
+`facedownidle → impactfacedown`（6/30 秒）。它只影响骨骼视觉，不改变状态时间、
+命中、伤害、KO、输入或缺 clip 回退。这些秒数是实验参数，原版字段的单位与换算尚未确认；Godot 的混合曲线和
+原版运行时视觉仍未验证，详见 `docs/FIGHTING_SET_FINDINGS.md`。
 
 ### 导出 EXE
 
