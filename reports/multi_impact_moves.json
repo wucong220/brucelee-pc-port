@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "source": "adreno_200/set/brucelee.set",
+  "purpose": "Moves that need more than one damage window in a single action. The current prototype keeps one source_impact per attack, so these are not implementable without a multi-impact damage path.",
+  "moves": {
+    "specialpunchhigh": {
+      "trigger": {"from_group": "combolevel3", "keysequence": [["pressleft", "pressright", "pressa"], ["pressleft", "pressright", "pressa"], ["pressleft", "pressright", "pressa"]], "conditions": ["rage2thirds"]},
+      "miss_animation": "m01_sp_pnch_high_fail",
+      "hit_animation": "m01_sp_pnch_high",
+      "hit_frame_count": 80,
+      "impacts": [
+        {"damage": 4, "damage_time": [3, 7], "body_part": "larm", "height": "high", "strength": "normal", "direction": "frontal", "attack_radius": 70.0},
+        {"damage": 4, "damage_time": [17, 22], "body_part": "rarm", "height": "high", "strength": "normal", "direction": "frontal", "attack_radius": 70.0},
+        {"damage": 13, "damage_time": [43, 49], "body_part": "larm", "height": "high", "strength": "hard", "direction": "frontal", "attack_radius": 75.0}
+      ]
+    },
+    "grab1": {
+      "trigger": {"from": "stepright", "keysequence": [["pressleft", "pressa"], ["pressa"], ["pressa"]], "conditions": ["rage2thirds"]},
+      "miss_animation": "m02_grab_01",
+      "hit_animation": "m01_grab_01",
+      "hit_frame_count": 150,
+      "hit_link": {"conditions": ["grabdistance", "oppposestand", "oppnotblocking"], "time": [8, 9]},
+      "impacts": [
+        {"damage": 6, "damage_time": [45, 46], "body_part": "larm", "height": "high", "strength": "normal", "direction": "frontal", "attack_radius": 45.0},
+        {"damage": 5, "damage_time": [71, 73], "body_part": "larm", "height": "high", "strength": "hard", "direction": "frontal", "attack_radius": 45.0},
+        {"damage": 9, "damage_time": [121, 122], "body_part": "larm", "height": "high", "strength": "hard", "direction": "frontal", "attack_radius": 45.0}
+      ]
+    },
+    "grab2": {
+      "trigger": {"from": "stepleft", "keysequence": [["pressleft", "pressb"], ["pressc"], ["pressc"]], "conditions": ["rage2thirds"]},
+      "miss_animation": "m02_grab_01",
+      "hit_animation": "m01_grab_02",
+      "hit_frame_count": 180,
+      "hit_link": {"conditions": ["grabdistance", "oppposestand", "oppnotblocking"], "time": [8, 9]},
+      "impacts": [
+        {"damage": 5, "damage_time": [4, 5], "body_part": "larm", "height": "high", "strength": "normal", "direction": "frontal", "attack_radius": 45.0},
+        {"damage": 15, "damage_time": [75, 76], "body_part": "larm", "height": "high", "strength": "hard", "direction": "frontal", "attack_radius": 45.0}
+      ]
+    }
+  },
+  "blockers": [
+    "specialpunchhigh trigger requires pressleft+pressright simultaneously, which a keyboard cannot produce as two absolute directions; needs a documented prototype binding.",
+    "grab1/grab2 hit stages have 3 and 2 damage windows respectively.",
+    "The current ATTACKS model has one source_impact and one contact per attack sequence."
+  ]
+}

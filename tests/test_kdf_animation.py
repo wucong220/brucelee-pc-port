@@ -16,6 +16,7 @@ from kdf_animation import (
     inspect_animation,
 )
 from kdf_data import KdfError
+from kdf_wavelet import _stream_bounds
 
 
 HEADER_VALUES = {
@@ -476,3 +477,20 @@ class TestKdfAnimation(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
+
+
+class TestWaveletEmptyRoot(unittest.TestCase):
+    def test_empty_approximation_root_is_skipped(self):
+        # Root word 0 with first == end: channel array but no tree nodes.
+        internal, leaf = _stream_bounds((1, 0, 0, 0, 0), 1, 3, 4, 1)
+        self.assertEqual(internal, {})
+        self.assertEqual(leaf, {})
+
+    def test_zero_root_with_room_for_a_tree_is_rejected(self):
+        with self.assertRaisesRegex(KdfError, 'initial channel array'):
+            _stream_bounds((1, 0, 5), 1, 3, 4, 1)
+
+    def test_zero_root_with_room_but_no_tree_is_rejected(self):
+        # first=5 < end=8, so a tree could exist; a zero first-node word is invalid.
+        with self.assertRaisesRegex(KdfError, 'initial channel array'):
+            _stream_bounds((1, 0, 0, 0, 0, 0, 0, 0), 1, 3, 4, 1)

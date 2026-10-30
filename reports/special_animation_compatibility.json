@@ -7,23 +7,25 @@
     "m01_sp_pnch_high_fail",
     "m01_sp_pnch_high",
     "m01_sp_pnch_high_impct",
-    "m01_sp_pnch_low"
-  ],
-  "rejected_by_converter": {
-    "m01_pnch_low_02": "wavelet initial channel array or first node is invalid",
-    "m01_sp_pnch_low_fail": "wavelet initial channel array or first node is invalid",
-    "m01_sp_pnch_low_impct": "wavelet initial channel array or first node is invalid",
-    "all_impct_hard_frnt_high": "wavelet initial channel array or first node is invalid"
-  },
-  "not_yet_extracted": [
+    "m01_sp_pnch_low",
+    "m01_pnch_low_02",
+    "m01_sp_pnch_low_fail",
+    "m01_sp_pnch_low_impct",
     "m01_sp_kick_low_fail",
     "m01_sp_kick_low",
-    "m01_sp_kick_low_impact"
+    "m01_sp_kick_low_impact",
+    "all_impct_hard_frnt_high"
   ],
+  "rejected_by_converter": {},
+  "not_yet_extracted": [],
   "implications": [
-    "specialpunchlow cannot be completed because its miss clip m01_sp_pnch_low_fail is rejected; the hit clip converts.",
+    "specialpunchlow now has miss m01_sp_pnch_low_fail and hit m01_sp_pnch_low available; implementation is pending.",
     "specialpunchhigh has all three clips available: miss m01_sp_pnch_high_fail, hit m01_sp_pnch_high, impact m01_sp_pnch_high_impct.",
-    "lowpunch2 remains fail-closed until m01_pnch_low_02 is decoded.",
-    "The hard/high/frontal reaction all_impct_hard_frnt_high remains unavailable for the same reason."
+    "lowpunch2 is now enabled: m01_pnch_low_02 decodes through the empty-approximation rule and is included in the 35-clip candidate.",
+    "The hard/high/frontal reaction all_impct_hard_frnt_high is now convertible; wiring it into the reaction table is pending."
+  ],
+  "notes": [
+    "The structural empty-root rule decodes these clips: zero first-node word with no room for a tree means the approximation contributes no nodes; its channel array is still decoded.",
+    "m01_sp_kick_low* were extracted and verified convertible during the special kick low work."
   ]
 }

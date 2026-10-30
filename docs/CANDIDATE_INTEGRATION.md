@@ -436,14 +436,14 @@ Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 加入 `m01_kck_front_step` 后，由原型怒气槽和 `背向+B → 朝向+C → 朝向+C`
 触发，伤害 12、半径 115。专用 `hard/high/frontal` 受击动画
-`all_impct_hard_frnt_high` 被转换器以 wavelet 错误拒绝，故该反应 fail-closed。
+`all_impct_hard_frnt_high` 现在可被转换器解码（空近似层规则），但尚未接入受击反应表，故仍 fail-closed。
 完整证据见 `reports/special_moves_evidence.json`。
 
-普通攻击第 2 段使用 34 段带头候选：1,948,476 字节，SHA-256
-`38743058c8658dbdbeb488fc8d70e4f4d8982fe3b10bdec251a3b1300eeb3281`，
-包含 `m01_pnch_high_02`、`m01_kick_high_02`、`m01_kick_low_02`；
-`m01_pnch_low_02` 的第三个 wavelet root 不是简单的全零空流，无法安全解码，
-`low_punch2` 保持 fail-closed。转换器动画上限已从 32 提升到 40。
+普通攻击第 2 段使用 35 段带头候选：2,020,448 字节，SHA-256
+`fbd4174f919e2a2afae18788c867c82fc736cdd035c0baabf8f8cfe4f19d9dc6`，
+包含全部四段 `m01_pnch_high_02`、`m01_pnch_low_02`、`m01_kick_high_02`、
+`m01_kick_low_02`。`m01_pnch_low_02` 的第三个 approximation root 首节点为 0
+且没有放树的余地，是空近似层；按结构跳过即可解码。转换器动画上限 40。
 下段踢必杀使用 36 段带头候选：2,041,584 字节，SHA-256
 `5a597d2151ac3b2f93e7ad455ab9d43d0a0836585134a014dad17c6c7bd5ba75`，
 新增 `m01_sp_kick_low_fail`、`m01_sp_kick_low`。

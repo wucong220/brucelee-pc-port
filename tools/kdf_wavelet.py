@@ -71,6 +71,11 @@ def _stream_bounds(
     for ordinal, root in enumerate(root_offsets):
         end = root_offsets[ordinal + 1] if ordinal + 1 < roots else len(words)
         first = root + 1 + (channels * element_bytes + 3) // 4
+        if words[root] == 0 and first == end:
+            # A zero first-node index with no room for a tree means this
+            # approximation is empty: its channel array exists but no nodes
+            # follow. Do not require zero channel words.
+            continue
         if first >= end or words[root] != first:
             raise KdfError('wavelet initial channel array or first node is invalid')
         pending = [(first, first_mask)]

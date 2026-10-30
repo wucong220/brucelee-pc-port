@@ -1,5 +1,5 @@
 extends SceneTree
-## Validate the level-2 normal attack transitions on the 34-clip candidate.
+## Validate the level-2 normal attack transitions on the 35-clip candidate.
 
 func _initialize() -> void:
     call_deferred("_run")
@@ -8,7 +8,7 @@ func _initialize() -> void:
 func _run() -> void:
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if args.size() != 1:
-        push_error("Expected the 34-clip Bruce candidate GLB")
+        push_error("Expected the 35-clip Bruce candidate GLB")
         quit(1)
         return
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
@@ -28,12 +28,15 @@ func _run() -> void:
         quit(1)
         return
     var clips: Dictionary = player.get("_candidate_clip_paths")
-    for required: String in ["high_punch2", "high_kick2", "low_kick2"]:
+    for required: String in ["high_punch2", "low_punch2", "high_kick2", "low_kick2"]:
         if not clips.has(required):
             push_error("Candidate is missing " + required)
             quit(1)
             return
     if not _validate_transition(player, "high_punch", "a", "high_punch2"):
+        quit(1)
+        return
+    if not _validate_transition(player, "punch", "a", "low_punch2", "b"):
         quit(1)
         return
     if not _validate_transition(player, "high_kick", "b", "high_kick2", "c"):
@@ -42,17 +45,14 @@ func _run() -> void:
     if not _validate_transition(player, "kick", "b", "low_kick2", "d"):
         quit(1)
         return
-    if not _validate_low_punch2_fail_closed(player):
-        quit(1)
-        return
     if not _validate_level3_progression(player):
         quit(1)
         return
     print("LEVEL2_MOVE_VALIDATION=" + JSON.stringify({
-        "level2": ["high_punch2", "high_kick2", "low_kick2"],
-        "low_punch2": "fail-closed: m01_pnch_low_02 third wavelet root is not a zeroed empty stream",
-        "candidate_bytes": 1948476,
-        "candidate_sha256": "38743058c8658dbdbeb488fc8d70e4f4d8982fe3b10bdec251a3b1300eeb3281",
+        "level2": ["high_punch2", "low_punch2", "high_kick2", "low_kick2"],
+        "wavelet_note": "empty approximation root: first node word 0 and no room for a tree",
+        "candidate_bytes": 2020448,
+        "candidate_sha256": "fbd4174f919e2a2afae18788c867c82fc736cdd035c0baabf8f8cfe4f19d9dc6",
         "scope": "PC prototype combo-level state; native keystatus unverified",
     }))
     await create_timer(0.1).timeout
@@ -87,26 +87,6 @@ func _validate_level3_progression(player: PortFighter) -> bool:
         return false
     if player.attack_kind != "high_punch3":
         push_error("Level 3 selected " + player.attack_kind)
-        return false
-    return true
-
-
-func _validate_low_punch2_fail_closed(player: PortFighter) -> bool:
-    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
-    player._time = 0.0
-    if not player.request_attack("punch"):
-        push_error("Could not start the low punch")
-        return false
-    player.record_standing_combo_press("a")
-    player.record_standing_combo_press("b")
-    player.record_standing_combo_press("b")
-    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
-    player._try_begin_pending_standing_combo()
-    if player.attack_kind == "low_punch2":
-        push_error("low_punch2 fired without a loaded clip")
-        return false
-    if player.current_source_animation() == "m01_pnch_low_02":
-        push_error("low_punch2 requested its missing clip")
         return false
     return true
 
