@@ -16,7 +16,6 @@ from kdf_animation import (
     inspect_animation,
 )
 from kdf_data import KdfError
-from kdf_wavelet import _stream_bounds
 
 
 HEADER_VALUES = {
@@ -477,10 +476,3 @@ class TestKdfAnimation(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
-
-class TestWaveletZeroRoot(unittest.TestCase):
-    def test_unused_zeroed_approximation_root_is_skipped(self):
-        # m01_pnch_low_02 carries a zeroed third root with no channel array.
-        internal, leaf = _stream_bounds((1, 0), 1, 3, 4, 1)
-        self.assertEqual(internal, {})
-        self.assertEqual(leaf, {})

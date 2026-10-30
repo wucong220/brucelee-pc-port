@@ -71,11 +71,6 @@ def _stream_bounds(
     for ordinal, root in enumerate(root_offsets):
         end = root_offsets[ordinal + 1] if ordinal + 1 < roots else len(words)
         first = root + 1 + (channels * element_bytes + 3) // 4
-        if words[root] == 0:
-            # Some animations carry an unused zeroed approximation root, seen in
-            # m01_pnch_low_02. It has no channel array, so it contributes no
-            # stream bounds.
-            continue
         if first >= end or words[root] != first:
             raise KdfError('wavelet initial channel array or first node is invalid')
         pending = [(first, first_mask)]
