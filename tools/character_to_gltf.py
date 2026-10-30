@@ -31,7 +31,7 @@ _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
 # Bruce candidate used by the ground-reaction prototype, plus headroom for the
 # four *_03 / m01_sp_* attacks that the group inventory lists. The cap stays
 # explicit so an accidental unbounded import is rejected.
-_MAX_ANIMATION_FILES = 32
+_MAX_ANIMATION_FILES = 40
 # Raising the per-file count must not leave the total input unbounded. 32 files
 # at the 16 MiB per-file cap would otherwise allow about 512 MiB of animation
 # input, so the sum of the declared ANM sizes is capped separately.

@@ -23,7 +23,11 @@
       "m01_pnch_low_03": 40.0,
       "m01_kick_low_03": 50.0,
       "m01_sp_kick_jump_01": 60.0,
-      "m01_kck_front_step": 65.0
+      "m01_kck_front_step": 65.0,
+      "m01_pnch_high_02": 45.0,
+      "m01_pnch_low_02": 40.0,
+      "m01_kick_high_02": 60.0,
+      "m01_kick_low_02": 50.0
     }
   },
   "reaction_profiles": {
@@ -226,6 +230,74 @@
         "height": "high",
         "strength": "hard",
         "direction": "frontal"
+      }
+    },
+    "high_punch2": {
+      "source_action": "highpunch2",
+      "animation": "m01_pnch_high_02",
+      "animation_frame_count": 81,
+      "startup_frames": 6,
+      "active_frames": 3,
+      "recovery_frames": 72,
+      "damage": 5.0,
+      "prototype_push": 0.3,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "fromleft"
+      }
+    },
+    "low_punch2": {
+      "source_action": "lowpunch2",
+      "animation": "m01_pnch_low_02",
+      "animation_frame_count": 65,
+      "startup_frames": 5,
+      "active_frames": 4,
+      "recovery_frames": 56,
+      "damage": 6.0,
+      "prototype_push": 0.3,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "high_kick2": {
+      "source_action": "highkick2",
+      "animation": "m01_kick_high_02",
+      "animation_frame_count": 95,
+      "startup_frames": 8,
+      "active_frames": 3,
+      "recovery_frames": 84,
+      "damage": 5.0,
+      "prototype_push": 0.35,
+      "source_impact": {
+        "attack_radius": 80.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "normal",
+        "direction": "fromleft"
+      }
+    },
+    "low_kick2": {
+      "source_action": "lowkick2",
+      "animation": "m01_kick_low_02",
+      "animation_frame_count": 27,
+      "startup_frames": 7,
+      "active_frames": 4,
+      "recovery_frames": 16,
+      "damage": 5.0,
+      "prototype_push": 0.3,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "normal",
+        "direction": "fromleft"
       }
     }
   },
