@@ -253,9 +253,14 @@ character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨�
 未加载 22 段候选所需依赖时，该状态的普通、格挡和致命命中都被明确
 忽略，角色保持循环；这是候选降级行为，不是原版受击规则。
 
-这没有解释原版 incoming link 的 `time=[0,0]` 或完整分组优先级，也没有
-接入完整 `impactfaceup`、`faceupko` 分组或 `attacktofloor`；本节的
-受限 `faceupidle` 来向详见后面的 22 段候选。
+在已识别的 `TimeWindowCheck` 与后续调用控制流中，ELF 静态证据支持
+`from_group` link 使用当前动画在来源组 `candobasicattacks` 中的成员窗口，
+而非 link 的 `time=[0,0]`；匹配后的切换可以延迟到该成员窗口结束，详见
+[`FIGHTING_SET_FINDINGS.md`](FIGHTING_SET_FINDINGS.md) 的
+`attacktofloor` 入口证据。这是特定静态控制流的结论，不是所有组链接的普遍
+语义，也还没有证明原始 set 数组顺序会原样进入运行时向量。完整分组成员
+覆盖和运行时优先级仍未接入，本节仍只保留受限的 `faceupidle` 来向；
+`attacktofloor` 继续关闭。
 `validate_faceup_impact.gd` 验证上述候选条件、第 21/48
 帧边界、循环、半径、缺失 clip、致命命中的降级路径，以及普通和致命攻击
 进入 `faceupidle` 时不会改走通用受击或 KO；它不证明原版逐帧视觉、完整

@@ -501,10 +501,58 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 `TimeWindowCheck`、`InputSequenceCheck`、`InputStatusCheck`、`CheckConditions`，
 四项均通过才调用 `FollowLink`。`TimeWindowCheck` 在
 `0x1A1FA8–0x1A1FBC` 对当前动画帧执行包含端点的闭区间比较，因此配置中的
-`time=[start,end]` 可限定为候选帧窗口。空向量路径也已闭合：
+`time=[start,end]` 在直接 `from` link 上可限定为候选帧窗口。空向量路径也已闭合：
 `InputSequenceCheck`、`InputStatusCheck` 和 `CheckConditions` 在 size 小于等于
 0 时均返回成功。因此带空 keysequence/keystatus/conditions 的返回 link，只需
 `TimeWindowCheck` 命中即可进入 `FollowLink`。反应动作的返回 links 为：
+
+在已识别的 `TimeWindowCheck` 控制流中，`from_group` link 使用另一条分支。`CLinkDescr` 构造器
+`0x1BFC38` 把 `+8` 组标志清零；`ParseFromKDF` 的 `from_group` 路径
+`0x1C266C–0x1C2670` 写 1，直接 `from` 路径 `0x1C2834–0x1C2838`
+写 0。`TimeWindowCheck` 在 `0x1A1F00–0x1A1F08` 读取该标志；为 1 时，
+它从当前动画的组表中找到与 link 同名、即 `candobasicattacks` 的成员，
+再用成员自身的开始/结束帧在 `0x1A1FA4–0x1A1FBC` 做包含端点的比较。
+该分支不读取 link 的 `+0xCC/+0xD0` 时间字段。因此，在已识别的这个分支中，
+`attacktofloor` 档案里的 `time=[0,0]` 不能解释为该分组入口只允许字面第 0
+帧；门控来自当前来源动作自己的 `candobasicattacks` 成员窗口。这里不把该
+结论外推到尚未逐项核对的其他组链接路径。
+
+这里仍需保留精确边界：`ParseFromKDF` 在 `0x1C409C–0x1C40B8` 遇到两个相等
+端点时会把内部结束值写成 10000，否则写 0；但 `from_group` 分支在上述
+窗口检查中完全绕过这两个字段。该解析行为不改变当前分组入口结论。
+
+`brucelee.set` 的两条 `attacktofloor` incoming link 是原始 links 数组第
+32、33 项，均为 `from_group=candobasicattacks`、空 key status、输入分别为
+`pressb,pressc,pressc` 和 `pressb,pressd,pressd`，另要求
+`oppposelaying`，进入帧 9、blending 6、input reset。`CheckConditions`
+在 `0x1A3B2C` 经 GOT 重定位比较
+`gid_OppPoseLaying`，进入 `0x1A3E38` 后通过对手
+`fighter+0x7C` 取得当前动画，读取 `CAnimationDescr+0xAC`；`0x1A3E4C`
+经 GOT 重定位取得 `gid_laying`，在 `0x1A3E74` 比较。`CAnimationDescr`
+的 `pose` 属性在 `0x22EBB8–0x22EBD4` 查询，并在 `0x22EC5C`
+保存到 `+0xAC`。这些静态数据流支持该条件读取对手当前动画的静态 `pose`
+字段并与 `laying` 比较；目前没有静态证据表明“对手只要处于 laying，
+`attacktofloor` 就一定触发”，也没有运行时实测。
+
+输入与条件通过后，`FollowLink` 并不会总在当帧切换：对组链接，它在
+`0x1A80F0–0x1A8110` 比较当前帧和组窗口结束帧，尚未到结束时把 link 与
+结束帧写入 `fighter+0xF0/+0xF4`；`BasicUpdate` 在
+`0x1A83BC–0x1A83D4` 等到结束后才从 `0x1A8574` 执行目标动作。
+`UserControlUpdate` 从当前动画 links 向量索引 0 开始升序检查。解析出的
+`brucelee.set` 中，`attacktofloor` 的 links 是第 32/33 项，相同 basic-combo
+序列到 `lowkick1/highkick1` 的 links 是第 87/89 项。若原始 set 数组顺序
+原样进入运行时向量，`attacktofloor` 会先匹配，无条件踢招也不能先消费输入；
+但“解析数组到运行时向量的顺序保持不变”尚未独立证明，所以这里只把它列为
+待运行时验证的顺序条件。
+
+`candobasicattacks` 有 84 个成员。当前候选只记录了 9 个已实现动作的组窗口，
+22 段候选 GLB 又明确排除 `m01_attack_to_floor`，正常对战的对手也还没有
+`pose=laying` 状态。所以这组静态证据确认了入口候选与运行时序，仍不足以
+把 `attacktofloor` 当作可在正常游玩中触发的完整行为。可用
+`py -3.12 -X utf8 -B tools\native_attacktofloor_links.py <local-libdefault.so>`
+会对该脚本指定的 SHA-256、62 条相关指令、2 个 GOT 重定位和 `pose` 字符串
+做一致性校验。它只证明给定 ELF 与这里记录的静态取证一致，不是通用反汇编
+证明，也不能替代运行时逐帧验证。
 
 | 反应动作 | 返回 `idle` 窗口 | ANM 总时长 |
 |---|---:|---:|
