@@ -49,6 +49,7 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
 }
 const IDLE2_CLIP: String = "m01_idle_02"
 const FACEDOWN_IDLE_CLIP: String = "all_idle_face_down"
+const BRICK_FACEDOWN_IDLE_CLIP: String = "all_idle_face_down_forbigguy"
 const FACEDOWN_GETUP_CLIP: String = "all_getup_facedwn"
 const IDLE2_DURATION_FRAMES: int = 43
 const FACEDOWN_IDLE_DURATION_FRAMES: int = 45
@@ -89,6 +90,27 @@ const FACEUP_IMPACT_CLIP: String = "all_impct_faceup"
 const FACEUP_IMPACT_DURATION_FRAMES: int = 11
 const FACEUP_IMPACT_EXIT_FRAME: int = 11
 const FACEUP_KO_RADIUS: float = 100.0
+const ATTACK_TO_FLOOR_CLIP: String = "m01_attack_to_floor"
+const ATTACK_TO_FLOOR_DURATION_FRAMES: int = 90
+# Each key is a recovered source action, not an ANM header pose. Values were
+# read from brucelee.set; idle and facedownidle were also checked in thai.set.
+# The prototype currently maps these state names one-to-one to source actions.
+const SOURCE_ACTION_POSES: Dictionary = {
+    "idle": "stand",
+    "idle2": "stand",
+    "facedownidle": "laying",
+    "facedownko": "laying",
+    "facedowngetup": "stand",
+    "impactfacedown": "laying",
+    "facedownattack": "laying",
+    "impacttofloor": "laying",
+    "faceupidle": "laying",
+    "faceupgetup": "stand",
+    "faceupattack": "laying",
+    "impactfaceup": "laying",
+    "faceupko": "laying",
+    "attacktofloor": "stand",
+}
 # UserControlUpdate expires a whole input vector based on the last event's
 # +500 clock value. The clock unit is not proven, so this is an explicit PC
 # prototype lifetime and must not be presented as the original timing.
@@ -116,6 +138,7 @@ const FACEUP_ATTACK_IMPACT: Dictionary = {
 const RETURN_ANIMATION_RADII: Dictionary = {
     "m01_idle_02": 40.0,
     "all_idle_face_down": 75.0,
+    "all_idle_face_down_forbigguy": 75.0,
     "all_getup_facedwn": 25.0,
     "all_impct_facedwn": 80.0,
     "all_getup_facedwn_attack": 45.0,
@@ -1059,10 +1082,11 @@ func _try_load_candidate_visual() -> void:
     # enter one only after the same candidate track check used above.
     if _candidate_skeleton != null:
         for return_clip_name: String in [
-            IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
+            IDLE2_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
             FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
             FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP,
             FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP,
+            ATTACK_TO_FLOOR_CLIP,
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
@@ -1080,7 +1104,7 @@ func _try_load_candidate_visual() -> void:
         )
         move.loop_mode = Animation.LOOP_LINEAR
     for looping_return: String in [
-        IDLE2_CLIP, FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
+        IDLE2_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
     ]:
         if not _candidate_clip_paths.has(looping_return):
             continue
@@ -1118,6 +1142,11 @@ func _try_load_candidate_visual() -> void:
             _candidate_clip_paths[FACEUP_ATTACK_CLIP]
         )
         faceup_attack_clip.loop_mode = Animation.LOOP_NONE
+    if _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP):
+        var attack_to_floor_clip: Animation = _candidate_animation.get_animation(
+            _candidate_clip_paths[ATTACK_TO_FLOOR_CLIP]
+        )
+        attack_to_floor_clip.loop_mode = Animation.LOOP_NONE
     for action: String in _candidate_clip_paths:
         _disable_candidate_character_position_tracks(
             _candidate_animation.get_animation(_candidate_clip_paths[action])
@@ -1975,7 +2004,7 @@ func current_source_animation() -> String:
     if state == "idle2":
         return IDLE2_CLIP
     if state == "facedownidle" or state == "facedownko":
-        return FACEDOWN_IDLE_CLIP
+        return _facedown_idle_clip()
     if state == "facedowngetup":
         return FACEDOWN_GETUP_CLIP
     if state == "impactfacedown":
@@ -1994,13 +2023,37 @@ func current_source_animation() -> String:
         return FACEUP_GETUP_CLIP
     if state == "faceupattack":
         return FACEUP_ATTACK_CLIP
+    if state == "attacktofloor":
+        return ATTACK_TO_FLOOR_CLIP
     return _owner_idle_animation()
+
+
+func current_source_pose() -> String:
+    if not candidate_loaded or not SOURCE_ACTION_POSES.has(state):
+        return ""
+    # Only these two actions currently have Brick-specific candidate mappings.
+    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+            and state not in ["idle", "facedownidle"]):
+        return ""
+    var animation: String = current_source_animation()
+    # A logical state that lacks its validated visual clip must not report a
+    # source pose. This keeps downstream checks fail-closed.
+    var clip_key: String = "idle" if state == "idle" else animation
+    if not _candidate_clip_paths.has(clip_key):
+        return ""
+    return String(SOURCE_ACTION_POSES[state])
 
 
 func _owner_idle_animation() -> String:
     if candidate_clips.has("idle"):
         return String(candidate_clips["idle"])
     return String(CANDIDATE_CLIPS["idle"])
+
+
+func _facedown_idle_clip() -> String:
+    if attack_config_path == BRICK_ATTACK_CONFIG_PATH:
+        return BRICK_FACEDOWN_IDLE_CLIP
+    return FACEDOWN_IDLE_CLIP
 
 
 func _stored_animation_radius(animation: String) -> float:
@@ -2253,10 +2306,8 @@ func _animate_candidate() -> void:
         requested = "ko"
     elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
         requested = IDLE2_CLIP
-    elif state == "facedownidle" and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP):
-        requested = FACEDOWN_IDLE_CLIP
-    elif state == "facedownko" and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP):
-        requested = FACEDOWN_IDLE_CLIP
+    elif state in ["facedownidle", "facedownko"] and _candidate_clip_paths.has(_facedown_idle_clip()):
+        requested = _facedown_idle_clip()
     elif state == "facedowngetup" and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP):
         requested = FACEDOWN_GETUP_CLIP
     elif state == "impactfacedown" and _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP):
@@ -2283,6 +2334,10 @@ func _animate_candidate() -> void:
         requested = FACEUP_GETUP_CLIP
     elif state == "faceupattack" and _candidate_clip_paths.has(FACEUP_ATTACK_CLIP):
         requested = FACEUP_ATTACK_CLIP
+        if _candidate_action != requested and _candidate_character != null:
+            _candidate_character.position = _candidate_character_rest_position
+    elif state == "attacktofloor" and _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP):
+        requested = ATTACK_TO_FLOOR_CLIP
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "idle" and _candidate_clip_paths.has("move") and (

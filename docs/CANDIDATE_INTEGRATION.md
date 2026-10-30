@@ -367,3 +367,47 @@ SHA-256 是
 `validate_faceup_getup.gd` 也以同一 22 段 GLB 回归，确认新增动作没有
 改写既有输入和攻击链。这些测试不证明原版逐帧视觉、完整命中盒、blending
 或 draw-level 行为。
+
+## 地面姿态与 `attacktofloor` 素材候选
+
+本地已生成两个新的候选 GLB，均在仓库及同步目录之外：
+
+| 候选 | 动画数 | 字节 | SHA-256 |
+|---|---:|---:|---|
+| `bruce_candidate_23.glb` | 23 | 1,152,908 | `b29ab5e9590b905bc2a5241532cff3e644e13c70906bb8b37930170360b5cb36` |
+| `brick_candidate_5.glb` | 5 | 360,296 | `69ca3a11a3e886d120741689258dcf70b0740bdcdbfb80a9ade4a1117c6e5053` |
+
+Bruce 的新增 `m01_attack_to_floor.anm` 为 90 帧、30 fps，SHA-256
+`43aa3e5fa464b6227295a05b96ee34eca219c4ffb954c05412777fdc02acd0fa`。
+Brick 的新增 `all_idle_face_down_forbigguy.anm` 为 45 帧、30 fps，SHA-256
+`9e4c1e6f2463574541cb83010903d1cb5aa2e4fbe7a51cc07f494ef75d24bcc8`；
+它与 Brick 自身的 Skl 引用和 SHA-256 配对。两个 ANM 均从用户本地
+`data.zpak` 只读取得，原始文件和派生 GLB 均不提交。
+
+`current_source_pose()` 根据候选状态所对应的源动作字段返回 `stand` 或
+`laying`，缺少已加载的候选 clip 或来源动作尚未映射时返回空字符串。
+它不是 ANM header 中数值 `pose=1` 的解释；`brucelee.set` 的
+`faceupidle`、`facedownidle`、`impacttofloor` 等动作字段为 `laying`，
+`faceupgetup`、`facedowngetup`、`attacktofloor` 为 `stand`；
+`thai.set` 的 `idle` 和 `facedownidle` 分别为 `stand` 和 `laying`。
+目前 Brick 只开放这两个动作的姿态查询。相同视觉 clip 的 `faceupidle`
+和 `faceupko` 是各自独立的源动作映射。
+
+以下验证通过，退出码均为 0；`$candidateDir` 指本机未同步的候选输出目录：
+
+```powershell
+& $GodotExe --headless --path godot --script res://tests/validate_ground_pose.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_faceup_impact.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_faceup_attack.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
+& $GodotExe --headless --path godot --script res://tests/validate_faceup_getup.gd -- "$candidateDir/bruce_candidate_23.glb" "$candidateDir/brick_candidate_5.glb"
+& $GodotExe --headless --path godot --script res://tests/smoke_test.gd
+py -3.12 -X utf8 -B -m unittest discover -s tests -p 'test*.py' -q
+# 198 tests, 1 skipped
+git diff --check
+```
+
+地面姿态测试通过人工设置候选状态来验证 Brick clip、循环、半径 75、
+缺 clip 返回未知、Bruce clip 非循环和定位到第 9 帧。它没有验证正常对战
+中的 Brick 击倒入口、起身、原版动画逐帧视觉、战斗链接顺序或 blending。
+`attacktofloor` 尚无正常对战触发、伤害及退出行为；在来源组成员窗口、
+链接顺序和目标反应等证据闭合前不能把素材播放当作招式已完成。

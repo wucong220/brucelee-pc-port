@@ -545,9 +545,10 @@ Godot 候选原型从 `godot/data/fighting_set_low_attacks.json` 读取两招的
 但“解析数组到运行时向量的顺序保持不变”尚未独立证明，所以这里只把它列为
 待运行时验证的顺序条件。
 
-`candobasicattacks` 有 84 个成员。当前候选只记录了 9 个已实现动作的组窗口，
-22 段候选 GLB 又明确排除 `m01_attack_to_floor`，正常对战的对手也还没有
-`pose=laying` 状态。所以这组静态证据确认了入口候选与运行时序，仍不足以
+`candobasicattacks` 有 84 个成员。当前候选只记录了 9 个已实现动作的组窗口。
+仓库外 23 段候选已加入 `m01_attack_to_floor`；Brick 的本地 5 段候选在
+测试注入 `facedownidle` 时可报告 `pose=laying`，但正常对战仍没有完整的
+Brick 击倒入口。所以这组静态证据确认了入口候选与运行时序，仍不足以
 把 `attacktofloor` 当作可在正常游玩中触发的完整行为。可用
 `py -3.12 -X utf8 -B tools\native_attacktofloor_links.py <local-libdefault.so>`
 会对该脚本指定的 SHA-256、62 条相关指令、2 个 GOT 重定位和 `pose` 字符串
