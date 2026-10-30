@@ -811,19 +811,43 @@ CLinkDescr+0xDC
   float，在 `0x1A7214` 写入 `transitionInfo+8`，并在 `0x1A722C`
   把该 transition object 传给
   `gfxAnimation::AddTransition`。
+- `STATIC_VERIFIED`：`gfxAnimation::C1` `0x380174` 保存
+  `CScnAnim` 引用；`gfxAnimation::AddTransition` `0x3802F8–0x380300`
+  读取对象 vptr，并调用 vtable `+0x18`。`CScnAnim::C1`
+  `0x3807B0–0x3807CC` 从 GOT 取得 `_ZTVN3krm3gfx8CScnAnimE`
+  后写入 `vptr=_ZTV+8`；对应 `.rel.dyn` `0x603B60` 指向该 vtable，
+  而 vtable slot `0x5F9170` 的 `.rel.dyn` 指向
+  `CScnAnim::AddTransition` `0x380B64`。
+- `STATIC_VERIFIED`：`CScnAnim::AddTransition` 在
+  `0x380BF0–0x380BF8` 检查 `[CScnAnim+0x10]`，空值时分配
+  `0x88` 字节并调用 `CFadeQueue::C1`，再保存到该字段。
+  `0x380C48–0x380C78` 把 source/transition 记录写入
+  `CFadeQueue+0x68` 表中的下一项，并更新 `+0x70` 数量。
+- `STATIC_VERIFIED`：`CFadeQueue::C1` 初始化记录表和
+  `[queue+0x84]`；`CFadeQueue::UpdateTime` `0x3FDD78–0x3FDD88`
+  在待处理数量非零时调用 `CFadeQueue::ActiveNext`。
+- `STATIC_VERIFIED`：`CFadeQueue::ActiveNext` 构造
+  `CFadePlayer`，在 `0x3FDBC8` 调用 `CFadePlayer::Init`，随后把新
+  player 发布到 `[queue+0x84]`。对应 PLT stub、GOT 重定位和符号分别为
+  `0x122D64 → 0x5FECA8`、`0x1236A0 → 0x5FEFBC`、
+  `0x126118 → 0x5FFDE4`。
 - `STATIC_SUPPORTED`：`CFadePlayer::Init` 使用的进入对象 `+0x18`
   framerate 与 `CFighter+0x30` 是同一业务值；当前只确认两处均有
   “帧率乘除”的数据流，尚未追到使两个字段相等的构造/赋值点。
-- `UNVERIFIED`：`gfxAnimation::AddTransition` 在 `0x3802F8–0x380300`
-  通过 vtable `+0x18` 虚调用消费 transition object；该虚调用目标尚未
-  逐层绑定到 `CFadePlayer::Init`，`vcvt.u32.f32` 的浮点舍入模式及
-  `zlibm_floor` 后的逐帧结果也没有运行时对照。
+- `STATIC_SUPPORTED`：新增 transition 记录被
+  `UpdateTime → ActiveNext` 消费并把同一业务 transition 对象交给
+  `CFadePlayer::Init`。当前已经绑定各函数和 vtable/PLT 边，但尚未用
+  原生运行时证明每个实际 fighter 动作都走该表、记录字段在复制后不失真，
+  也未确认两个 framerate 字段恒等。
+- `UNVERIFIED`：`vcvt.u32.f32` 的浮点舍入模式及
+  `zlibm_floor` 后的逐帧结果没有运行时对照；Godot
+  `custom_blend` 的权重曲线也尚未和原版比较。
 
 因此现在有强静态依据认为档案 `blending` 是在 fighter framerate 下归一化
 到秒、随后还原成帧计数的候选配置；例如 `blending=6`、framerate 为 `30`
 时，传出的 transition 时长是 `0.2` 秒。它仍不能直接宣称为原版实际播放
-的 6 个混合帧：同一业务 framerate 的身份、固定点/浮点舍入、虚调用目标
-和逐帧视觉尚未闭合。Godot 实验应使用独立候选名，例如
+的 6 个混合帧：同一业务 framerate 的身份、固定点/浮点舍入和逐帧视觉
+尚未闭合。Godot 实验应使用独立候选名，例如
 `config_blending / fighter_framerate` 秒，并明确这不是原版运行时验收。
 
 只读复核命令：
@@ -834,7 +858,7 @@ py -3.12 -X utf8 -B tools\native_animation_blending.py `
 ```
 
 本机输出为
-`verified 72 animation-blending words and 12 PLT relocations with 3 property strings`，
+`verified 114 animation-blending words and 15 PLT relocations, 2 dynamic relocations and 3 property strings`，
 退出码 0。
 校验器同时绑定 ELF SHA-256、代表性指令、PLT stub、GOT 槽和重定位符号；
 它证明这些静态事实来自同一个二进制，不能证明原版运行时视觉或 Godot
@@ -863,15 +887,47 @@ GLB 和 7 段 Brick GLB 逐骨骼采样。本机通过结果显示：
 
 - 两段切换调用后立即采样的姿态距离均为 `0`，即旧姿势没有被瞬间替换；
 - 0.1–0.15 秒时出现非零中间姿态；
+- 混合结束后，Bruce 的两段切换和 Brick 的倒地受击均在相同动画时间位置
+  独立播放目标 clip，逐骨比较位置、旋转和缩放；完成姿态与目标姿态的误差
+  必须低于 `0.01`；
 - 混合结束后 Bruce 选择 `m01_idle_02`，Brick 选择
   `all_impct_facedwn`；
 - 同一测试同时确认 Brick 仍扣除 6 点生命、保持 `impactfacedown`、
-  半径 85，且两名角色没有共用骨架。
+  半径 85，且两名角色没有共用骨架；
+- 在 Brick 的混合尚未结束时调用 `reset_fighter()`，随后再次从同一
+  `facedownidle` 触发 `impactfacedown`，旧 pending/上次混合记录必须清零，
+  新一轮混合仍须到达目标姿态，并且第二次命中只能把生命从重置后的 100
+  扣到 94，不能沿用或重复上一轮伤害。
+
+本轮补强后的验证命令和结果：
+
+```powershell
+py -3.12 -X utf8 -B tools\native_animation_blending.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q
+.\validate_candidate.ps1 `
+  -CandidateGlb '<external>\bruce-candidate.glb' `
+  -TextureRoot '<external>\player-textures' `
+  -OpponentGlb '<external>\brick-candidate.glb' `
+  -OpponentTextureRoot '<external>\brick-textures' `
+  -GodotExe '<external>\Godot_v4.7.2-stable_win64_console.exe' `
+  -ExpectReactionClips
+git diff --check
+```
+
+- 原生校验器：114 条指令、15 个 PLT 重定位、2 个 vtable 动态重定位和
+  3 个属性字符串通过，退出码 0。
+- Python：223 项通过、1 项跳过，退出码 0。
+- 真实 Bruce 23 段/Brick 7 段 Godot 混合测试连续 5 次通过；三次完成姿态
+  的独立目标误差均为 `0.0`，reset 后重新受击仍从 100 扣到 94。
+- 未打包及 packed PCK 的候选验证均完成，最终输出
+  `CANDIDATE_VALIDATION=PASS`，退出码 0。
+- `git diff --check` 退出码 0。
 
 该实验的边界是
 `STATIC_SUPPORTED duration normalization; candidate visual interpolation;
 native runtime unverified`。Godot 的 `custom_blend` 权重曲线、帧率身份、
-`AddTransition` 虚调用目标和原版逐帧视觉仍未证明一致。
+过渡记录复制后的字段语义和原版逐帧视觉仍未证明一致。
 
 ## 全量 impact 聚合
 

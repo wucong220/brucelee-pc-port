@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from native_draw_path import _dynamic_symbols
-from native_hierarchy_links import HierarchyLinkError, file_offset
+from native_hierarchy_links import HierarchyLinkError, _section, file_offset
 from native_root_motion import _plt_target
 
 
@@ -21,6 +21,56 @@ _SHA256 = "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70"
 # transition-duration multiplication.  The parser, FollowLink and SetAnimation
 # instructions also bind the fighting-set "blending" value to transitionInfo+8.
 _WORDS = {
+    # gfxAnimation stores a CScnAnim reference and dispatches AddTransition
+    # through that object's vtable slot +0x18.
+    0x00380174: 0xE5801000,  # str r1, [gfxAnimation]
+    0x003802B0: 0xE590C000,  # ldr ip, [gfxAnimation]
+    0x003802F8: 0xE59CC000,  # ldr ip, [ip] object vptr
+    0x003802FC: 0xE1A0E00F,  # mov lr, pc
+    0x00380300: 0xE59CF018,  # ldr pc, [ip, #0x18]
+    # CScnAnim's constructor installs the vtable and initializes its queue
+    # pointer to null. AddTransition lazily allocates CFadeQueue (+0x10).
+    0x003807A0: 0xE59F3048,
+    0x003807A4: 0xE59F2048,
+    0x003807A8: 0xE08F3003,
+    0x003807B0: 0xE7932002,
+    0x003807BC: 0xE2822008,  # add r2, r2, #8 vtable object pointer
+    0x003807CC: 0xE5842000,  # str vptr, [CScnAnim]
+    0x003807E4: 0xE5845010,  # str zero, [CScnAnim+0x10]
+    0x00380BF0: 0xE5965010,  # ldr r5, [CScnAnim+0x10]
+    0x00380BF8: 0x0A000064,  # beq allocate queue
+    0x00380C48: 0xE5953068,  # ldr r3, [queue+0x68] transition table
+    0x00380C58: 0xE595C070,  # ldr ip, [queue+0x70] record count
+    0x00380C68: 0xE5950074,  # ldr r0, [queue+0x74] record storage
+    0x00380C6C: 0xE5852070,  # increment record count
+    0x00380C70: 0xE0200C9E,  # locate next record by checked stride
+    0x00380C78: 0xE593F004,  # virtual copy transition record
+    0x00380D90: 0xE3A01002,
+    0x00380D94: 0xE3A00088,  # mov r0, #0x88 CFadeQueue size
+    0x00380D98: 0xEBF67642,  # bl allocator
+    0x00380DA0: 0xEBF694DC,  # bl CFadeQueue::C1
+    0x00380DA4: 0xE5865010,  # store queue at CScnAnim+0x10
+    # CFadeQueue::C1 initializes the transition-record count and active player
+    # slots, then CFadeQueue::UpdateTime calls ActiveNext when records exist.
+    0x003FE32C: 0xE4803068,  # initialize queue storage at +0x68
+    0x003FE334: 0xE5846084,  # initialize active player at +0x84
+    0x003FDD78: 0xE5953070,  # ldr r3, [queue+0x70] record count
+    0x003FDD7C: 0xE3530000,  # cmp record count, #0
+    0x003FDD80: 0x0AFFFFEE,  # skip ActiveNext when empty
+    0x003FDD88: 0xEBF49644,  # bl CFadeQueue::ActiveNext
+    # ActiveNext creates a CFadePlayer from the queued state and calls Init
+    # before publishing it as the queue's current active player.
+    0x003FDADC: 0xE92D4FF0,
+    0x003FDB78: 0xE5943048,  # ldr r3, [queue+0x48] queued state
+    0x003FDB7C: 0xE3530000,
+    0x003FDB80: 0x0A000031,
+    0x003FDBA0: 0xE1A07000,  # save constructed CFadePlayer
+    0x003FDBAC: 0xE1A02005,
+    0x003FDBB0: 0xE2853008,
+    0x003FDBB4: 0xE2841008,
+    0x003FDBB8: 0xE1A00007,
+    0x003FDBC8: 0xEBF49465,  # bl CFadePlayer::Init
+    0x003FDBCC: 0xE5847084,  # publish active player at queue+0x84
     # CFadeQueue::UpdateOutput forwards its active player to CFadePlayer.
     0x003FE128: 0xE5900084,  # ldr r0, [r0, #0x84]
     0x003FE12C: 0xE3500000,  # cmp r0, #0
@@ -115,6 +165,14 @@ _STRINGS = {
     0x005BB10C: b"blending\0",
 }
 
+_DYN_RELOCATIONS = {
+    0x00603B60: "_ZTVN3krm3gfx8CScnAnimE",
+    0x005F9170: (
+        "_ZN3krm3gfx8CScnAnim13AddTransitionERKNS_3res7CResRefERKNS_"
+        "13anmSourceInfoERKNS_17anmTransitionInfoE"
+    ),
+}
+
 _PLT = {
     0x00120538: (
         0x005FDF44,
@@ -126,6 +184,22 @@ _PLT = {
         0x005FE384,
         "_ZN3krm3krt8CHStrMgr7GetItemEPKcb",
         (0xE28FC604, 0xE28CCADD, 0xE5BCF184),
+    ),
+    0x00122D64: (
+        0x005FECA8,
+        "_ZN3krm3anm11CFadePlayer4InitEPNS0_14CFadeQueueBaseERKNS_3res7CResRefERKNS_"
+        "13anmSourceInfoERKNS_17anmTransitionInfoERKNS_10CPropTableEPS1_",
+        (0xE28FC604, 0xE28CCADB, 0xE5BCFF3C),
+    ),
+    0x001236A0: (
+        0x005FEFBC,
+        "_ZN3krm3anm10CFadeQueue10ActiveNextEv",
+        (0xE28FC604, 0xE28CCADB, 0xE5BCF914),
+    ),
+    0x00126118: (
+        0x005FFDE4,
+        "_ZN3krm3anm10CFadeQueueC1Ev",
+        (0xE28FC604, 0xE28CCAD9, 0xE5BCFCC4),
     ),
     0x00124954: (
         0x005FF5F8,
@@ -180,6 +254,30 @@ _PLT = {
 }
 
 
+def _dynamic_relocation_symbols(elf: bytes) -> dict[int, str]:
+    """Resolve .rel.dyn entries, including vtable slots."""
+    rel_off, rel_size, _link, _entsize, _names = _section(elf, b".rel.dyn")
+    dynsym_off, _size, _dynsym_link, dynsym_entsize, _names = _section(
+        elf, b".dynsym"
+    )
+    dynstr_off = _section(elf, b".dynstr")[0]
+    if dynsym_entsize < 16 or rel_size % 8:
+        raise HierarchyLinkError(
+            "unexpected dynamic symbol or relocation layout"
+        )
+    result = {}
+    for index in range(rel_size // 8):
+        address, info = struct.unpack_from("<II", elf, rel_off + index * 8)
+        name_off = struct.unpack_from(
+            "<I", elf, dynsym_off + (info >> 8) * dynsym_entsize
+        )[0]
+        end = elf.index(b"\x00", dynstr_off + name_off)
+        result[address] = elf[dynstr_off + name_off : end].decode(
+            "ascii", "replace"
+        )
+    return result
+
+
 def verify_bytes(elf: bytes) -> None:
     """Authenticate the recorded ELF and its blending evidence."""
     if hashlib.sha256(elf).hexdigest() != _SHA256:
@@ -212,6 +310,15 @@ def verify_bytes(elf: bytes) -> None:
         ):
             raise HierarchyLinkError(f"PLT or relocation mismatch at 0x{address:08x}")
 
+    dynamic_relocations = _dynamic_relocation_symbols(elf)
+    for address, expected in _DYN_RELOCATIONS.items():
+        actual = dynamic_relocations.get(address)
+        if actual != expected:
+            raise HierarchyLinkError(
+                f"dynamic relocation 0x{address:08x} is {actual!r}, "
+                f"expected {expected!r}"
+            )
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -224,7 +331,8 @@ def main() -> int:
         return 1
     print(
         f"verified {len(_WORDS)} animation-blending words and "
-        f"{len(_PLT)} PLT relocations with {len(_STRINGS)} property strings"
+        f"{len(_PLT)} PLT relocations, {len(_DYN_RELOCATIONS)} dynamic "
+        f"relocations and {len(_STRINGS)} property strings"
     )
     return 0
 

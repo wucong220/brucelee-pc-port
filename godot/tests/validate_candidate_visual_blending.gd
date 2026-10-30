@@ -53,11 +53,20 @@ func _run() -> void:
     var player_entry_mid: PackedFloat32Array = _snapshot(player_skeleton)
     await create_timer(0.15).timeout
     var player_entry_end: PackedFloat32Array = _snapshot(player_skeleton)
+    var player_entry_target: PackedFloat32Array = _independent_target_snapshot(
+        player._candidate_animation,
+        player.candidate_visual_blend_target_action_last,
+        player._candidate_animation.current_animation_position,
+        player_skeleton,
+    )
     var player_entry_immediate_difference: float = _difference(
         player_idle, player_entry_immediate
     )
     var player_entry_mid_difference: float = _difference(player_idle, player_entry_mid)
     var player_entry_end_difference: float = _difference(player_idle, player_entry_end)
+    var player_entry_target_difference: float = _difference(
+        player_entry_end, player_entry_target
+    )
     if (player.state != "attacktofloor"
             or player.candidate_visual_blend_source_action_last != "idle"
             or player.candidate_visual_blend_target_action_last
@@ -66,9 +75,11 @@ func _run() -> void:
             or not is_finite(player_entry_immediate_difference)
             or not is_finite(player_entry_mid_difference)
             or not is_finite(player_entry_end_difference)
+            or not is_finite(player_entry_target_difference)
             or player_entry_immediate_difference > 0.01
             or player_entry_mid_difference <= 0.001
-            or player_entry_end_difference <= player_entry_mid_difference):
+            or player_entry_end_difference <= player_entry_mid_difference
+            or player_entry_target_difference > 0.01):
         push_error("Bruce idle -> attacktofloor did not perform the expected visual blend: "
                 + JSON.stringify({
                     "state": player.state,
@@ -78,6 +89,7 @@ func _run() -> void:
                     "immediate": player_entry_immediate_difference,
                     "mid": player_entry_mid_difference,
                     "end": player_entry_end_difference,
+                    "target_error": player_entry_target_difference,
                 }))
         quit(1)
         return
@@ -96,11 +108,20 @@ func _run() -> void:
     var player_exit_mid: PackedFloat32Array = _snapshot(player_skeleton)
     await create_timer(0.25).timeout
     var player_exit_end: PackedFloat32Array = _snapshot(player_skeleton)
+    var player_exit_target: PackedFloat32Array = _independent_target_snapshot(
+        player._candidate_animation,
+        player.candidate_visual_blend_target_action_last,
+        player._candidate_animation.current_animation_position,
+        player_skeleton,
+    )
     var player_exit_immediate_difference: float = _difference(
         player_exit_old, player_exit_immediate
     )
     var player_exit_mid_difference: float = _difference(player_exit_old, player_exit_mid)
     var player_exit_end_difference: float = _difference(player_exit_old, player_exit_end)
+    var player_exit_target_difference: float = _difference(
+        player_exit_end, player_exit_target
+    )
     if (player.state != "idle2"
             or player.state_time != 0.0
             or player.candidate_visual_blend_source_action_last
@@ -111,9 +132,11 @@ func _run() -> void:
             or not is_finite(player_exit_immediate_difference)
             or not is_finite(player_exit_mid_difference)
             or not is_finite(player_exit_end_difference)
+            or not is_finite(player_exit_target_difference)
             or player_exit_immediate_difference > 0.01
             or player_exit_mid_difference <= 0.5
-            or player_exit_end_difference <= player_exit_mid_difference * 0.5):
+            or player_exit_end_difference <= player_exit_mid_difference * 0.5
+            or player_exit_target_difference > 0.01):
         push_error("Bruce attacktofloor -> idle2 did not perform the expected visual blend")
         quit(1)
         return
@@ -137,9 +160,16 @@ func _run() -> void:
     var brick_mid: PackedFloat32Array = _snapshot(brick_skeleton)
     await create_timer(0.15).timeout
     var brick_end: PackedFloat32Array = _snapshot(brick_skeleton)
+    var brick_target: PackedFloat32Array = _independent_target_snapshot(
+        brick._candidate_animation,
+        brick.candidate_visual_blend_target_action_last,
+        brick._candidate_animation.current_animation_position,
+        brick_skeleton,
+    )
     var brick_immediate_difference: float = _difference(brick_old, brick_immediate)
     var brick_mid_difference: float = _difference(brick_old, brick_mid)
     var brick_end_difference: float = _difference(brick_old, brick_end)
+    var brick_target_difference: float = _difference(brick_end, brick_target)
     if (brick.state != "impactfacedown"
             or absf(brick.state_time) > 0.000001
             or absf(brick.health - 94.0) > 0.001
@@ -154,9 +184,11 @@ func _run() -> void:
             or not is_finite(brick_immediate_difference)
             or not is_finite(brick_mid_difference)
             or not is_finite(brick_end_difference)
+            or not is_finite(brick_target_difference)
             or brick_immediate_difference > 0.01
             or brick_mid_difference <= 0.5
-            or brick_end_difference <= 0.5):
+            or brick_end_difference <= 0.5
+            or brick_target_difference > 0.01):
         push_error("Brick facedownidle -> impactfacedown did not perform the expected visual blend: "
                 + JSON.stringify({
                     "state": brick.state,
@@ -170,6 +202,85 @@ func _run() -> void:
                     "immediate": brick_immediate_difference,
                     "mid": brick_mid_difference,
                     "end": brick_end_difference,
+                    "target_error": brick_target_difference,
+                }))
+        quit(1)
+        return
+
+    # Reset while a blend is still active, then trigger the same reaction again.
+    # This covers stale pending metadata and old animation state surviving a
+    # fighter reset in addition to ensuring damage is not accumulated twice.
+    brick.reset_fighter(Vector3.ZERO)
+    brick._enter_locomotion_state("facedownidle")
+    brick._animate_candidate()
+    await create_timer(0.05).timeout
+    brick.receive_hit(6.0, false, 0.0, 1.0, reaction)
+    brick._animate_candidate()
+    await create_timer(0.05).timeout
+    if brick.state != "impactfacedown":
+        push_error("Could not enter impactfacedown before reset lifecycle check")
+        quit(1)
+        return
+    brick.reset_fighter(Vector3.ZERO)
+    if (brick.state != "idle"
+            or absf(brick.health - PortFighter.MAX_HEALTH) > 0.001
+            or brick.candidate_visual_blend_pending_seconds != 0.0
+            or brick.candidate_visual_blend_seconds_last != 0.0
+            or brick.candidate_visual_blend_source_action_last != ""
+            or brick.candidate_visual_blend_target_action_last != ""):
+        push_error("reset_fighter left candidate visual-blend state behind")
+        quit(1)
+        return
+
+    brick._enter_locomotion_state("facedownidle")
+    brick._animate_candidate()
+    await create_timer(0.05).timeout
+    var retry_old: PackedFloat32Array = _snapshot(brick_skeleton)
+    brick.receive_hit(6.0, false, 0.0, 1.0, reaction)
+    brick._animate_candidate()
+    var retry_immediate: PackedFloat32Array = _snapshot(brick_skeleton)
+    await create_timer(0.1).timeout
+    var retry_mid: PackedFloat32Array = _snapshot(brick_skeleton)
+    await create_timer(0.15).timeout
+    var retry_end: PackedFloat32Array = _snapshot(brick_skeleton)
+    var retry_target: PackedFloat32Array = _independent_target_snapshot(
+        brick._candidate_animation,
+        brick.candidate_visual_blend_target_action_last,
+        brick._candidate_animation.current_animation_position,
+        brick_skeleton,
+    )
+    var retry_immediate_difference: float = _difference(
+        retry_old, retry_immediate
+    )
+    var retry_mid_difference: float = _difference(retry_old, retry_mid)
+    var retry_end_difference: float = _difference(retry_old, retry_end)
+    var retry_target_difference: float = _difference(retry_end, retry_target)
+    if (brick.state != "impactfacedown"
+            or absf(brick.health - 94.0) > 0.001
+            or brick.candidate_visual_blend_source_action_last
+                    != PortFighter.BRICK_FACEDOWN_IDLE_CLIP
+            or brick.candidate_visual_blend_target_action_last
+                    != PortFighter.FACEDOWN_IMPACT_CLIP
+            or absf(brick.candidate_visual_blend_seconds_last
+                - 6.0 / PortFighter.SOURCE_FRAME_RATE) > 0.000001
+            or not is_finite(retry_immediate_difference)
+            or not is_finite(retry_mid_difference)
+            or not is_finite(retry_end_difference)
+            or not is_finite(retry_target_difference)
+            or retry_immediate_difference > 0.01
+            or retry_mid_difference <= 0.001
+            or retry_end_difference <= retry_mid_difference
+            or retry_target_difference > 0.01):
+        push_error("Reset during an active blend corrupted the next reaction: "
+                + JSON.stringify({
+                    "state": brick.state,
+                    "health": brick.health,
+                    "source": brick.candidate_visual_blend_source_action_last,
+                    "target": brick.candidate_visual_blend_target_action_last,
+                    "immediate": retry_immediate_difference,
+                    "mid": retry_mid_difference,
+                    "end": retry_end_difference,
+                    "target_error": retry_target_difference,
                 }))
         quit(1)
         return
@@ -179,9 +290,11 @@ func _run() -> void:
             "entry_immediate": player_entry_immediate_difference,
             "entry_mid": player_entry_mid_difference,
             "entry_end": player_entry_end_difference,
+            "entry_target_error": player_entry_target_difference,
             "exit_immediate": player_exit_immediate_difference,
             "exit_mid": player_exit_mid_difference,
             "exit_end": player_exit_end_difference,
+            "exit_target_error": player_exit_target_difference,
             "blend": player.candidate_visual_blend_seconds_last,
             "action": player.candidate_animation_clip,
         },
@@ -189,8 +302,16 @@ func _run() -> void:
             "immediate": brick_immediate_difference,
             "mid": brick_mid_difference,
             "end": brick_end_difference,
+            "target_error": brick_target_difference,
             "blend": brick.candidate_visual_blend_seconds_last,
             "action": brick.candidate_animation_clip,
+            "reset_retry": {
+                "immediate": retry_immediate_difference,
+                "mid": retry_mid_difference,
+                "end": retry_end_difference,
+                "target_error": retry_target_difference,
+                "health": brick.health,
+            },
         },
         "scope": "candidate visual interpolation; native runtime unverified",
     }))
@@ -209,6 +330,18 @@ func _snapshot(skeleton: Skeleton3D) -> PackedFloat32Array:
             scale.x, scale.y, scale.z,
         ]))
     return result
+
+
+func _independent_target_snapshot(
+        animation: AnimationPlayer,
+        clip: String,
+        position: float,
+        skeleton: Skeleton3D
+) -> PackedFloat32Array:
+    animation.stop()
+    animation.play(clip)
+    animation.seek(position, true)
+    return _snapshot(skeleton)
 
 
 func _difference(left: PackedFloat32Array, right: PackedFloat32Array) -> float:
