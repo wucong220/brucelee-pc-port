@@ -173,6 +173,9 @@ func _run() -> void:
     if not _validate_low_combo_damage(player, opponent):
         quit(1)
         return
+    if not _validate_secondary_source(player, opponent):
+        quit(1)
+        return
 
     print("STANDING_COMBO_VALIDATION=" + JSON.stringify({
         "aaa": "highpunch1",
@@ -393,6 +396,47 @@ func _run_low_combo_damage(
                     player.combo_hits,
                 ])
         return false
+    return true
+
+
+func _validate_secondary_source(
+        player: PortFighter,
+        opponent: PortFighter
+) -> bool:
+    # highpunch1 and highkick1 are candobasicattacks members themselves, so the
+    # same sequences must also start from those attacks and respect their own
+    # recovered windows (highpunch 17-101, highkick 33-73).
+    var cases: Array[Dictionary] = [
+        {"attack": "high_punch", "keys": ["a", "a", "a"], "start": 17},
+        {"attack": "high_kick", "keys": ["b", "c", "c"], "start": 33},
+    ]
+    for entry: Dictionary in cases:
+        player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+        opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+        player._time = 0.0
+        var attack: String = String(entry["attack"])
+        if not player.request_attack(attack):
+            push_error("Could not start " + attack + " as a combo source")
+            return false
+        for key: String in entry["keys"]:
+            player.record_standing_combo_press(key)
+        var window: Array = PortFighter.CANDOBASICATTACK_WINDOWS[attack]
+        if player._try_begin_pending_standing_combo():
+            push_error(attack + " transitioned before its window start")
+            return false
+        player._advance_timed_states(
+            float(window[0] - 1) / PortFighter.SOURCE_FRAME_RATE
+        )
+        if player._try_begin_pending_standing_combo():
+            push_error(attack + " transitioned before its window start")
+            return false
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        if not player._try_begin_pending_standing_combo():
+            push_error(attack + " did not transition at its window start")
+            return false
+        if player.attack_kind != attack:
+            push_error(attack + " source selected " + player.attack_kind)
+            return false
     return true
 
 

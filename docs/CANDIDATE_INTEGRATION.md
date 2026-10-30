@@ -405,8 +405,9 @@ lowpunch、lowkick、highpunch、highkick 已实现窗口分别为 `[22,69]`、
 来源组共 84 个成员，尚未全部覆盖；成员记录第三项的切换时序、link
 优先级、blending、原版输入时钟、Android 物理键位和逐帧视觉仍未验证。
 `validate_standing_combos.gd` 使用真实 25 段 GLB 检查四条窗口、普通低段到
-目标的转换、来源动画选择、两段实际命中与高段 reaction。源值和限制见
-`reports/basic_attack_combo_evidence.json`。
+目标的转换、来源动画选择、两段实际命中与高段 reaction，并覆盖
+`highpunch1`/`highkick1` 作为后续来源时的窗口起点（第 17、33 帧）与提前一帧
+不得转换。源值和限制见 `reports/basic_attack_combo_evidence.json`。
 
 匹配后的待执行连段与当时那次攻击绑定：攻击结束、切换动作、受到命中或格挡、
 以及 Heavy 攻击都会取消它，旧输入不会跨攻击生效；`idle/idle2` 的组窗口只作为
