@@ -866,6 +866,24 @@ framerate，并据此把商解释为秒，证据不足。该字段还出现在
 这将同次动作设置中 fighter 字段和入队引用的来源关联到同一返回对象；
 记录的虚复制结果、不同帧的调度、历史过渡是否已完成及最终旧 player
 与当前 fighter 的实际身份仍须确认，不能据此约分计算原版最终混合时间。
+继续追踪记录类型：`CFadeQueue::C1` 在 `0x3FE32C–0x3FE330`
+对队列 `+0x68` 调用 `CTransQueue::C1`。后者通过 GOT `0x6034BC`
+取得 `svector<CTransQueue::TInfo>::gInfo`，并在正常 guard 初始化路径
+设置元素步长 `0x20`；`gInfo+4` 的动态重定位指向
+`TInfo::createcopy` `0x413D28`。该函数在资源指针非空时复制前两字、
+增加引用计数，并复制其后的 source 和 transition 字段。
+因此在描述符正常初始化并走该虚复制路径时，入队记录保留了资源引用。
+`ActiveNext` 通过 `GetTimeCorrection` 从队列首项构造临时记录；
+`0x413F48–0x413F94` 首先复制非空资源引用和其他记录字段。
+有旧动画状态时随后调用 `CorrectTransTime` 和 `CorrectFadeTime`；
+这两个函数的完整指令范围已核对，它们修正时间字段，没有直接写入
+记录开头的资源引用两字；其中对外调用 `zlibm_fabs` 接收数值参数。
+在非空、有效记录及这些调用正常返回的路径上，临时记录中的资源引用
+因此保持不变。`ActiveNext` 之后把该临时记录地址作为资源引用参数
+传给新 `CFadePlayer::Init`；在已识别的 `SetSource` 分支中，
+`Init` 又将该参数传给新 `CAnimPlayer::SetSource`。
+这仍不证明异步队列在某次具体战斗切换中没有其他待处理记录，也不证明
+新建 player 在下一次切换时一定就是 fighter 当前动作的播放器。
 在这之前，`SetAnimation` 的 `0x1A6F9C` 经 PLT `0x128ADC`
 调用 `FindAnimationIndex`，`0x1A6FA8` 保存返回的索引，
 `0x1A6FD0` 把它写到 `[fighter+0x2C]`，`0x1A7150–0x1A7154`
@@ -1094,3 +1112,13 @@ git diff --check
 补充动作资源引用到过渡记录的传递后，同一校验命令核对 280 条指令、
 20 个 PLT、5 个动态重定位和 3 个字符串，退出码 0；全量 Python
 测试 223 项、跳过 1 项，退出码 0；`git diff --check` 退出码 0。
+
+补充队列记录复制函数及取出时的初始复制后，同一校验命令核对
+359 条指令、22 个 PLT、7 个动态重定位和 3 个字符串，退出码 0；
+全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
+退出码 0。
+
+补充完整时间修正函数及 `Init → SetSource` 传参后，同一校验命令
+核对 552 条指令、26 个 PLT、7 个动态重定位和 3 个字符串，退出码 0；
+全量 Python 测试 223 项、跳过 1 项，退出码 0；`git diff --check`
+退出码 0。
