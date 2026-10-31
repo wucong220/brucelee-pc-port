@@ -48,13 +48,21 @@ func _run() -> void:
         {
             "source": "impacthardfronthigh",
             "key": "stun_hard",
+            "from": "stun",
+            "frames": 20,
+            "next": "faceupko",
+        },
+        {
+            "source": "impacthardfronthigh",
+            "key": "stun_hard",
+            "from": "stun2",
             "frames": 20,
             "next": "faceupko",
         },
     ]
     for case: Dictionary in cases:
         player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
-        player.state = "stun"
+        player.state = String(case["from"])
         player.state_time = 0.1
         player.health = 0.0
         var reaction: Dictionary = {
@@ -88,7 +96,7 @@ func _run() -> void:
             return
         ko_seen[0] = false
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
-        "cases": ["impacthard -> faceupko"],
+        "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko"],
         "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()
