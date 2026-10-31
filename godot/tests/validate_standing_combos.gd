@@ -167,6 +167,9 @@ func _run() -> void:
     if not _validate_pending_replacement(player, opponent):
         quit(1)
         return
+    if not _validate_opponent_specific_endattacks_closed(player):
+        quit(1)
+        return
     if not _validate_same_action_replay(player, opponent):
         quit(1)
         return
@@ -263,6 +266,23 @@ func _validate_hit_cancels_pending(
         return false
     if not String(player.get("_standing_combo_pending_attack")).is_empty():
         push_error("A hit did not cancel the pending standing combo")
+        return false
+    return true
+
+
+func _validate_opponent_specific_endattacks_closed(player: PortFighter) -> bool:
+    # Links 36-44 target opponent-specific m0x_end_attack_* animations; the
+    # current Bruce candidate must not silently bind them to a stand-in action.
+    player.facing = 1.0
+    var history: Array[Dictionary] = [
+        {"tokens": ["up", "in", "right", "a"], "time": 0.0},
+        {"tokens": ["a"], "time": 0.0},
+        {"tokens": ["a"], "time": 0.0},
+    ]
+    player.set("_standing_combo_input_history", history)
+    var matched: String = player._matching_standing_combo_attack()
+    if not matched.is_empty():
+        push_error("Opponent-specific endattack input matched " + matched)
         return false
     return true
 
