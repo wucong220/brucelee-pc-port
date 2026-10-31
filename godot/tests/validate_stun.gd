@@ -74,8 +74,8 @@ func _run() -> void:
         return
     for _i: int in range(80):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
-    if player.state != "ko":
-        push_error("stunfall did not finish in ko: " + player.state)
+    if player.state != "faceupko":
+        push_error("stunfall did not finish in faceupko: " + player.state)
         quit(1)
         return
     # Nonlethal and blocked hits must not enter the stun state.
@@ -246,7 +246,7 @@ func _run() -> void:
         quit(1)
         return
     print("STUN_VALIDATION=" + JSON.stringify({
-        "state_chain": ["stun", "stun2", "stunfall", "ko"],
+        "state_chain": ["stun", "stun2", "stunfall", "faceupko"],
         "animation": clips["stun"],
         "scope": "prototype stun path for healthzero normal hits; source impactstun timing is not fully recovered",
     }))

@@ -2139,9 +2139,7 @@ func _advance_stun_state(delta: float) -> void:
         state = "stunfall"
         state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
     else:
-        state = "ko"
-        state_time = 0.0
-        combat_ko.emit(self)
+        _begin_faceup_ko(0.0)
 
 
 func _advance_stun_impact_state(delta: float) -> void:
