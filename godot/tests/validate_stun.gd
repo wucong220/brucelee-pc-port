@@ -46,8 +46,19 @@ func _run() -> void:
         push_error("receive_hit rejected stun fixture")
         quit(1)
         return
+    if player.state != "impactstun":
+        push_error("Lethal normal hit did not enter impactstun: " + player.state)
+        quit(1)
+        return
+    player._animate_candidate()
+    if player.candidate_animation_clip != String(clips["all_impct_light_frnt_high"]):
+        push_error("impactstun did not play all_impct_light_frnt_high")
+        quit(1)
+        return
+    for _i: int in range(14):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stun":
-        push_error("Lethal normal hit did not enter stun: " + player.state)
+        push_error("impactstun did not enter stun: " + player.state)
         quit(1)
         return
     player._animate_candidate()
@@ -82,6 +93,58 @@ func _run() -> void:
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "faceupko":
         push_error("stunfall did not finish in faceupko by frame 79: " + player.state)
+        quit(1)
+        return
+    # Lethal low hit must use the low impactstun entry, not the high clip.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 5.0
+    var low_reaction: Dictionary = {
+        "source_action": "impactlightfrontlow",
+        "animation": "all_impct_light_frnt_low",
+        "exit_start_frame": 13,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+    }
+    if not player.receive_hit(5.0, false, 0.0, 1.0, low_reaction):
+        push_error("low impactstun fixture rejected")
+        quit(1)
+        return
+    if player.state != "impactstun":
+        push_error("low impactstun did not enter impactstun: " + player.state)
+        quit(1)
+        return
+    player._animate_candidate()
+    if player.candidate_animation_clip != String(clips["all_impct_light_frnt_low"]):
+        push_error("low impactstun did not play all_impct_light_frnt_low")
+        quit(1)
+        return
+    for _i: int in range(13):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "impactstun":
+        push_error("low impactstun ended before frame 14: " + player.state)
+        quit(1)
+        return
+    player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "stun":
+        push_error("low impactstun did not enter stun on frame 14: " + player.state)
+        quit(1)
+        return
+    # A lethal medium light hit must skip impactstun and still KO immediately.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 5.0
+    var medium_reaction: Dictionary = {
+        "source_action": "impactlightfrontmid",
+        "animation": "all_impct_light_frnt_mid",
+        "exit_start_frame": 14,
+        "animation_duration_frames": 16,
+        "linking_frame": 0,
+    }
+    if not player.receive_hit(5.0, false, 0.0, 1.0, medium_reaction):
+        push_error("medium lethal hit was rejected")
+        quit(1)
+        return
+    if player.state != "ko":
+        push_error("medium lethal hit did not enter generic ko: " + player.state)
         quit(1)
         return
     # Nonlethal and blocked hits must not enter the stun state.
@@ -227,12 +290,14 @@ func _run() -> void:
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
-    if not player.request_attack("punch"):
+    if not player.request_attack("high_punch"):
         push_error("Stun endmove attack did not start")
         quit(1)
         return
     for _i: int in range(6):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    for _i: int in range(14):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stun":
         push_error("Stun endmove setup did not stun defender: " + defender.state)
@@ -257,12 +322,14 @@ func _run() -> void:
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
-    if not player.request_attack("punch"):
+    if not player.request_attack("high_punch"):
         push_error("Stun2 endmove attack did not start")
         quit(1)
         return
     for _i: int in range(6):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    for _i: int in range(14):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stun":
         push_error("Stun2 endmove setup did not stun defender: " + defender.state)
