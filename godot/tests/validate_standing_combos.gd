@@ -196,7 +196,7 @@ func _run() -> void:
         "input_window_seconds": PortFighter.STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS,
         "candobasicattack_windows": PortFighter.CANDOBASICATTACK_WINDOWS,
         "pending_binding": "bound to the matching attack instance; Heavy and hits cancel it",
-        "pending_priority": "last completed sequence wins (prototype choice, native link priority unverified)",
+        "pending_priority": "lowest recovered source_index wins; current overlap fixture selects punch(88) over high_punch(90)",
         "same_action_replay": "ABB/BDD restart the clip even when visual blending is enabled",
         "low_combo_damage": {"abb": 90.0, "bdd": 90.0},
     }))
@@ -271,24 +271,38 @@ func _validate_pending_replacement(
         player: PortFighter,
         opponent: PortFighter
 ) -> bool:
-    # Prototype priority is last-completed-wins; the behavior is explicit here
-    # instead of depending on an implicit overwrite.
+    # Direct overlap: history a,a,a,b,b matches both highpunch1(90) and
+    # lowpunch1(88), so the recovered lower source_index must win without
+    # relying on a second independent press sequence.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    player.attack_kind = ""
+    player.state = "idle"
+    var history: Array[Dictionary] = []
+    for token: String in ["a", "a", "a", "b", "b"]:
+        history.append({"tokens": [token], "time": 0.0})
+    player.set("_standing_combo_input_history", history)
+    var matched: String = player._matching_standing_combo_attack()
+    if matched != "punch":
+        push_error("Overlapping history selected %s instead of punch(88)" % matched)
+        return false
+    # Independently completed sequences still replace the earlier pending entry.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
     player._time = 0.0
     if not player.request_attack("punch"):
-        push_error("Could not start the low punch for the priority check")
+        push_error("Could not start the low punch for the replacement check")
         return false
     for _index: int in 3:
         player.record_standing_combo_press("a")
     if String(player.get("_standing_combo_pending_attack")) != "high_punch":
-        push_error("AAA did not queue highpunch1 for the priority check")
+        push_error("AAA did not queue highpunch1 for the replacement check")
         return false
     player.record_standing_combo_press("a")
     player.record_standing_combo_press("b")
     player.record_standing_combo_press("b")
     if String(player.get("_standing_combo_pending_attack")) != "punch":
-        push_error("The last completed sequence did not replace the earlier pending entry")
+        push_error("An independently completed sequence did not replace the pending entry")
         return false
     return true
 
