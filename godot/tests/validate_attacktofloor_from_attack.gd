@@ -52,4 +52,31 @@ func _run() -> void:
         "state": player.state,
         "scope": "prototype input path; native deferred priority unverified",
     }))
+    # The same buffered sequence must survive active -> recovery.
+    player.reset_fighter(Vector3(-2.0, 1.2, 0.0))
+    defender.reset_fighter(Vector3(2.0, 1.2, 0.0))
+    defender._enter_locomotion_state("facedownidle")
+    player.opponent = defender
+    if not player.request_attack("grab1"):
+        push_error("Could not start grab1 for cross-phase test")
+        quit(1)
+        return
+    player._advance_timed_states(46.0 / PortFighter.SOURCE_FRAME_RATE)
+    if not player._candobasicattack_window_contains_current_frame():
+        push_error("grab1 is not inside its candobasicattacks window")
+        quit(1)
+        return
+    if player.try_attack_to_floor_press("b") != PortFighter.AttackToFloorInputResult.BUFFERED:
+        push_error("grab1 first attacktofloor key was not buffered")
+        quit(1)
+        return
+    player._advance_timed_states(2.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.BUFFERED:
+        push_error("grab1 second attacktofloor key was lost across phase")
+        quit(1)
+        return
+    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.STARTED:
+        push_error("grab1 attacktofloor did not start after phase change")
+        quit(1)
+        return
     quit(0)
