@@ -1,6 +1,7 @@
 param(
     [string]$GodotExe = "godot",
     [switch]$Debug,
+    [switch]$SelfTest,
     [string]$BuildRoot = "",
     [string]$OutputDir = ""
 )
@@ -33,9 +34,20 @@ $stagingFull = [System.IO.Path]::GetFullPath($staging)
 $projectFull = [System.IO.Path]::GetFullPath($project)
 function Test-PathOverlap([string]$left, [string]$right) {
     $separator = [System.IO.Path]::DirectorySeparatorChar
-    return $left -eq $right -or
-        $left.StartsWith($right + $separator) -or
-        $right.StartsWith($left + $separator)
+    return [string]::Equals($left, $right, [System.StringComparison]::OrdinalIgnoreCase) -or
+        $left.StartsWith($right + $separator, [System.StringComparison]::OrdinalIgnoreCase) -or
+        $right.StartsWith($left + $separator, [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+if ($SelfTest) {
+    if (-not (Test-PathOverlap 'C:\Work\staging' 'c:\work\staging\project')) {
+        throw 'Case-insensitive child overlap was not detected.'
+    }
+    if (Test-PathOverlap 'C:\Work\staging' 'D:\Work\project') {
+        throw 'Unrelated paths were reported as overlapping.'
+    }
+    Write-Host 'PATH_OVERLAP_SELFTEST=passed'
+    exit 0
 }
 if ((Test-PathOverlap $stagingFull $rootFull) -or
         (Test-PathOverlap $stagingFull $sourceFull) -or
