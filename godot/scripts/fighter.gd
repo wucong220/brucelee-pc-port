@@ -3581,12 +3581,18 @@ func receive_hit(
         last_reaction_exit_frame = -1
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
+    var stun_entry_source: String = String(reaction.get("source_action", ""))
+    var stun_entry_clip: String = (
+        "all_impct_light_frnt_low"
+        if stun_entry_source == "impactlightfrontlow"
+        else "all_impct_light_frnt_high"
+    )
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("stun")
-            and String(reaction.get("source_action", "")) in [
+            and _candidate_clip_paths.has(stun_entry_clip)
+            and stun_entry_source in [
                 "impactlightfronthigh", "impactlightfrontlow"
             ]):
-        var stun_entry_source: String = String(reaction.get("source_action", ""))
         # Source impactstun high/low links land at [14,17] before stun; this
         # prototype plays the matching impact reaction for 14 frames first.
         state = "impactstun"
@@ -3594,11 +3600,7 @@ func receive_hit(
         combo_hits = 0
         last_reaction_group = "hit"
         last_reaction_source_action = "impactstun"
-        last_reaction_animation = (
-            "all_impct_light_frnt_low"
-            if stun_entry_source == "impactlightfrontlow"
-            else "all_impct_light_frnt_high"
-        )
+        last_reaction_animation = stun_entry_clip
         last_reaction_exit_frame = STUN_IMPACT_ENTRY_FRAMES
         last_reaction_clip_implemented = true
         return true
