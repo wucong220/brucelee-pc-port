@@ -400,6 +400,37 @@ func _run() -> void:
         push_error("Low kick impactstun did not enter stun: " + defender.state)
         quit(1)
         return
+    # A real high punch must enter impactstun with the high clip.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 100.0
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.health = 5.0
+    player.opponent = defender
+    if not player.request_attack("high_punch"):
+        push_error("High punch setup did not start")
+        quit(1)
+        return
+    for _i: int in range(10):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "impactstun":
+        push_error("High punch did not enter impactstun: " + defender.state)
+        quit(1)
+        return
+    defender._animate_candidate()
+    if defender.candidate_animation_clip != String(clips["all_impct_light_frnt_high"]):
+        push_error("High punch impactstun did not play all_impct_light_frnt_high")
+        quit(1)
+        return
+    var remaining_high_impact: int = int(round(
+        defender.state_time * PortFighter.SOURCE_FRAME_RATE
+    ))
+    for _i: int in range(maxi(remaining_high_impact, 0)):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "stun":
+        push_error("High punch impactstun did not enter stun: " + defender.state)
+        quit(1)
+        return
     print("STUN_VALIDATION=" + JSON.stringify({
         "state_chain": ["stun", "stun2", "stunfall", "faceupko"],
         "animation": clips["stun"],
