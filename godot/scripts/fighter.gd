@@ -2500,9 +2500,9 @@ func record_parry_press(kind: String = "parry_high") -> bool:
     if _parry_press_times.size() < 3:
         return false
     _parry_press_times.clear()
-    if not ATTACKS.has(kind):
+    if not PARRY_RAGE_COSTS.has(kind) or not supports_attack(kind):
         return false
-    var cost: float = float(PARRY_RAGE_COSTS.get(kind, 33.0))
+    var cost: float = float(PARRY_RAGE_COSTS[kind])
     if rage < cost:
         return false
     rage -= cost

@@ -30,7 +30,7 @@ func _run() -> void:
         quit(1)
         return
     var clips: Dictionary = player.get("_candidate_clip_paths")
-    for required: String in ["parry_high", "parry_attack"]:
+    for required: String in ["parry_high", "parry_low", "parry_attack"]:
         if not clips.has(required):
             push_error("Candidate is missing " + required)
             quit(1)
@@ -243,6 +243,16 @@ func _validate_parry_low(scene: Node, player: PortFighter, computer: PortFighter
     if absf(player.rage - 10.0) > 0.001:
         push_error("parry_low did not cost 30 rage: " + str(player.rage))
         return false
+    if player.current_source_animation() != "m01_kick_low_02":
+        push_error("parry_low animation was " + player.current_source_animation())
+        return false
+    var health_before: float = computer.health
     for _i: int in range(30):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.attack_kind == "parry_attack":
+        push_error("parry_low incorrectly chained to parry_attack")
+        return false
+    if absf(computer.health - health_before) > 0.001:
+        push_error("parry_low invented damage")
+        return false
     return true
