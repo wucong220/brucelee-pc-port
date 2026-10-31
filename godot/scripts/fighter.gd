@@ -2695,7 +2695,7 @@ func _try_begin_pending_standing_combo() -> bool:
         if not (ENDATTACK_ATTACKS.has(_standing_combo_pending_attack)
                 and _attack_hit_landed
                 and opponent != null and is_instance_valid(opponent)
-                and opponent.state == "hitstun"):
+                and opponent.state in ["hitstun", "stun", "stun2"]):
             return false
     var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
             _standing_combo_pending_attack, 0.0))
@@ -2728,7 +2728,7 @@ func _try_begin_pending_standing_combo() -> bool:
             return false
         if (opponent == null or not is_instance_valid(opponent)
                 or opponent.guard_held
-                or opponent.state != "hitstun"):
+                or opponent.state not in ["hitstun", "stun", "stun2"]):
             _clear_standing_combo_state()
             return false
         var end_distance: float = Vector2(

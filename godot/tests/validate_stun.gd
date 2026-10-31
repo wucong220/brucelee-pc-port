@@ -99,6 +99,39 @@ func _run() -> void:
         push_error("blocked lethal hit entered stun")
         quit(1)
         return
+    var defender: PortFighter = PortFighter.new()
+    defender.configure("Stun endmove defender", false, Color.CYAN)
+    defender.configure_attack_config(PortFighter.ATTACK_CONFIG_PATH)
+    defender.configure_candidate_asset(args[0], "", PortFighter.CANDIDATE_CLIPS, "body")
+    root.add_child(defender)
+    await process_frame
+    if not defender.candidate_loaded:
+        push_error("Stun endmove defender candidate failed")
+        quit(1)
+        return
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 100.0
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.health = 5.0
+    player.opponent = defender
+    if not player.request_attack("punch"):
+        push_error("Stun endmove attack did not start")
+        quit(1)
+        return
+    for _i: int in range(6):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "stun":
+        push_error("Stun endmove setup did not stun defender: " + defender.state)
+        quit(1)
+        return
+    player.record_standing_combo_press("b", ["up", "in"])
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    if player.attack_kind != "endattack1":
+        push_error("Stun opponent did not accept endattack1: " + player.attack_kind)
+        quit(1)
+        return
     print("STUN_VALIDATION=" + JSON.stringify({
         "state_chain": ["stun", "stun2", "stunfall", "ko"],
         "animation": clips["stun"],
