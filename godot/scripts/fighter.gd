@@ -42,6 +42,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "grab2_miss": "m02_grab_01",
     "endattack1": "m01_end_attack_01",
     "endattack2": "m01_end_attack_02",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -212,6 +214,10 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
     "grab2_miss": [8, 9],
 }
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
+const STUN_CLIP: String = "all_stunned"
+const STUN_FALL_CLIP: String = "all_stunned_fall"
+const STUN_DURATION_FRAMES: int = 61
+const STUN_FALL_DURATION_FRAMES: int = 79
 const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
 const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
 const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
@@ -1628,7 +1634,7 @@ func _try_load_candidate_visual() -> void:
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
-            "endattack1", "endattack2"]:
+            "endattack1", "endattack2", "stun", "stun_fall"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2117,6 +2123,22 @@ func _verified_post_hit_return_state() -> String:
             and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)):
         return "faceupidle"
     return "idle"
+
+
+func _advance_stun_state(delta: float) -> void:
+    state_time -= delta
+    if state_time > 0.0:
+        return
+    if state == "stun":
+        state = "stun2"
+        state_time = float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+    elif state == "stun2":
+        state = "stunfall"
+        state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
+    else:
+        state = "ko"
+        state_time = 0.0
+        combat_ko.emit(self)
 
 
 func _advance_return_state(delta: float) -> void:
@@ -2942,6 +2964,9 @@ func _physics_process(delta: float) -> void:
     _animate_candidate()
 
 func _advance_timed_states(delta: float) -> void:
+    if state in ["stun", "stun2", "stunfall"]:
+        _advance_stun_state(delta)
+        return
     if state in [
         "idle2", "facedownidle", "facedownko", "facedowngetup",
         "impactfacedown", "facedownattack", "impacttofloor", "faceupidle",
@@ -3437,7 +3462,7 @@ func receive_hit(
     # their own evidence-backed transitions.
     if state in [
         "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
-        "impactfaceup", "faceupko",
+        "impactfaceup", "faceupko", "stun", "stun2", "stunfall",
     ]:
         return false
     var state_before: String = state
@@ -3491,6 +3516,20 @@ func receive_hit(
         last_reaction_exit_frame = -1
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
+    if (health <= 0.0 and not blocked
+            and _candidate_clip_paths.has("stun")
+            and String(reaction.get("source_action", "")).begins_with("impactlight")):
+        # Source impactstun links use healthzero plus a normal-strength hit;
+        # this is a prototype state, not a claim that all native stun timing is recovered.
+        state = "stun"
+        state_time = float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+        combo_hits = 0
+        last_reaction_group = ""
+        last_reaction_source_action = ""
+        last_reaction_animation = STUN_CLIP
+        last_reaction_exit_frame = -1
+        last_reaction_clip_implemented = true
+        return true
     if (health <= 0.0 and state_before == "facedownidle"
             and _candidate_clip_paths.has(_facedown_idle_clip())):
         # brucelee.set lists healthzero before the low-impact link. Do not play
@@ -3607,6 +3646,10 @@ func _animate_candidate() -> void:
                 "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
                 "endattack1", "endattack2"]:
             requested = attack_kind
+    elif state in ["stun", "stun2"] and _candidate_clip_paths.has("stun"):
+        requested = "stun"
+    elif state == "stunfall" and _candidate_clip_paths.has("stun_fall"):
+        requested = "stun_fall"
     elif (state in ["hitstun", "blockstun"]
             and last_reaction_clip_implemented
             and _candidate_clip_paths.has(last_reaction_animation)):

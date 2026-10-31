@@ -450,6 +450,11 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 格挡反击使用 42 段带头候选：2,727,612 字节，SHA-256
 `7771893136ca4cba7a25284ccd1c0cb95f982b1344ab5ef870574760dadc43cf`，
 新增 `m01_parry_high`；`parry_attack` 复用已有的 `m01_pnch_high_03`。
+stun 原型状态使用 48 段带头候选：4,087,860 字节，SHA-256
+`d59e91193bdc30af1b3240d78cb32bb1113a405f28557fa749ae68175cbe2b7b`，
+新增 `all_stunned`；`stun`/`stun2` 播 `all_stunned`，`stunfall` 播候选已有的
+`all_stunned_fall`。该状态只在候选确实包含 stun clip 且正常强度命中导致
+healthzero 时进入，是来源 `impactstun` 链的原型近似，未声称完整复刻时序。
 抓取及 endmove 收招使用 47 段带头候选：4,039,952 字节，SHA-256
 `592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0`，
 包含 `m01_grab_01/02`、重定向的 `m02_grab_01`、`m01_end_attack_01/02`。
