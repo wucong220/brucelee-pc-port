@@ -69,8 +69,8 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 没有 `背向+B` 这一步的同一按键模式不会选中必杀（原型用背向起手代表原版
 `stepback`）。原型怒气槽 0–100：每次未格挡命中 +10，`ragethird` 门槛 33，发动扣 33；
 原生怒气刻度与获取规则未恢复。`hard/high/frontal` 的专用受击动画
-`all_impct_hard_frnt_high` 目前无法被打包，因此该反应保持 fail-closed（伤害生效、
-不伪造受击动作）。
+`all_impct_hard_frnt_high` 已放进仓库外 50 段候选；加载该候选时可播放，
+缺 clip 时仍保持 fail-closed（伤害生效、不伪造受击动作）。
 
 必杀技下段踢（原型）：`背向?不，左侧+B → 朝向+C → 朝向+C`（PC 原型用
 `left` 代表原版 `stepleft`，`in` 代表 `pressright`）在怒气 `rage2thirds`（≥66）
@@ -78,7 +78,7 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 对手在 0.62 世界单位的原型抓取距离内、站立且未格挡，则切到
 `special_kick_low_hit`（`m01_sp_kick_low`，39 帧，伤害 15、攻击半径 45、
 `larm/high/hard/frontal`）；否则保持 miss 并回 idle。`hard/high/frontal`
-专用受击动画仍不可用，反应 fail-closed。
+专用受击动画在 50 段候选加载时可播放，缺 clip 时仍 fail-closed。
 
 抓取后的 `endmove` / 收招（候选）：普通攻击命中或抓取成功、对手处于受控/硬直
 且在 0.62 距离内时，`上+朝向+B → A → A` 触发 `endattack1`
@@ -87,6 +87,12 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 `brucelee.set` 的 impact 伤害为 **0**，因此只播放收招动画，不添加伤害。
 原版要求 `oppposestun + grabdistance`；原型用“命中/抓取后的受控状态 + 距离”近似，
 不声称是完整眩晕状态。
+
+眩晕原型（候选）：普通 high/low 攻击使对手 healthzero 时，先播放对应
+`all_impct_light_frnt_high/low` 的 14 帧 `impactstun`，再进入
+`stun → stun2 → stunfall → faceupko`；`stun`/`stun2` 期间可被 endmove 使用。
+`hard` stun-impact 另走 `all_impct_hard_frnt_high → faceupko`。
+这些状态、帧数和 `oppposestun` 等时序仍是 prototype，不是原版逐帧还原。
 
 低段格挡反击（PC 扩展）：与 `parry_high` 共用同一套“按住防御 + 下+朝向 ×3”
 输入，但对手来招高度为 `low` 时触发 `parrylow`（动画 `m01_kick_low_02`，27 帧，
