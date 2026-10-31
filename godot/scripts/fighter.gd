@@ -864,6 +864,36 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "return_implemented": false,
             "clip_implemented": false,
         },
+        {
+            "strength": "brutal",
+            "height": "high",
+            "direction": "fromleft",
+            "source_action": "impactbrutalleft",
+            "animation": "all_impct_spectacular_lft",
+            "animation_radius": 85.0,
+            "entry_frame": 0,
+            "exit_start_frame": 39,
+            "animation_duration_frames": 45,
+            "linking_frame": 0,
+            "return_action": "facedownidle",
+            "return_implemented": false,
+            "clip_implemented": false,
+        },
+        {
+            "strength": "brutal",
+            "height": "high",
+            "direction": "fromright",
+            "source_action": "impactbrutalright",
+            "animation": "all_impct_spectacular_rht",
+            "animation_radius": 25.0,
+            "entry_frame": 0,
+            "exit_start_frame": 41,
+            "animation_duration_frames": 45,
+            "linking_frame": 0,
+            "return_action": "facedownidle",
+            "return_implemented": false,
+            "clip_implemented": false,
+        },
     ],
     "block": [
         {
@@ -3461,8 +3491,9 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
         }
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
-        if (String(exact.get("source_action", "")) == "impactbrutalmid"
-                and not _medium_lethal_impactable()):
+        if (String(exact.get("source_action", "")) in [
+                    "impactbrutalmid", "impactbrutalleft", "impactbrutalright"
+                ] and not _medium_lethal_impactable()):
             return {}
         return exact
     # Hard and brutal attacks have no light-height fallback when the exact link is absent.

@@ -1,0 +1,251 @@
+{
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "resource": "adreno_200/set/brucelee.set"
+  },
+  "actions": {
+    "impactbrutalleft": {
+      "action": {
+        "name": "impactbrutalleft",
+        "binary": {
+          "ordinal": 66,
+          "directory": "animation/",
+          "basename": "all_impct_spectacular_lft",
+          "extension": "anm"
+        },
+        "unique": [],
+        "groups": [
+          [
+            "receivedamage",
+            [
+              0,
+              45
+            ],
+            0
+          ]
+        ],
+        "categories": [],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "laying",
+        "radius": 85.0,
+        "rage": -20.0,
+        "disablecollision": "false",
+        "sounds": [
+          {
+            "file": {
+              "ordinal": 64,
+              "directory": "sounds/sfx/",
+              "basename": "kick_head_heavy_2",
+              "extension": "wav"
+            },
+            "frame": 0,
+            "volume": 0.699999988079071,
+            "unique": "",
+            "is_voice": "false"
+          },
+          {
+            "file": {
+              "ordinal": 46,
+              "directory": "sounds/sfx/",
+              "basename": "fall_3_normal",
+              "extension": "wav"
+            },
+            "frame": 21,
+            "volume": 0.75,
+            "unique": "",
+            "is_voice": "false"
+          }
+        ],
+        "fx": []
+      },
+      "animation": {
+        "resource": "adreno_200/animation/all_impct_spectacular_lft.anm",
+        "sha256": "00b749b6b91cd3d40d3f6fe62c16d44247add55f5742d29c14bc275bc92abafa",
+        "headers": {
+          "firstframe": 0,
+          "duration": 45,
+          "framerate": 30,
+          "version": 7,
+          "pose": 1
+        }
+      }
+    },
+    "impactbrutalright": {
+      "action": {
+        "name": "impactbrutalright",
+        "binary": {
+          "ordinal": 237,
+          "directory": "animation/",
+          "basename": "all_impct_spectacular_rht",
+          "extension": "anm"
+        },
+        "unique": [],
+        "groups": [
+          [
+            "receivedamage",
+            [
+              0,
+              45
+            ],
+            0
+          ]
+        ],
+        "categories": [],
+        "facing": [
+          1,
+          0
+        ],
+        "pose": "laying",
+        "radius": 25.0,
+        "rage": -20.0,
+        "disablecollision": "false",
+        "sounds": [
+          {
+            "file": {
+              "ordinal": 203,
+              "directory": "sounds/sfx/",
+              "basename": "kick_head_heavy_1",
+              "extension": "wav"
+            },
+            "frame": 0,
+            "volume": 0.5,
+            "unique": "",
+            "is_voice": "false"
+          },
+          {
+            "file": {
+              "ordinal": 65,
+              "directory": "sounds/sfx/",
+              "basename": "fall_4_normal",
+              "extension": "wav"
+            },
+            "frame": 22,
+            "volume": 0.5,
+            "unique": "",
+            "is_voice": "false"
+          }
+        ],
+        "fx": []
+      },
+      "animation": {
+        "resource": "adreno_200/animation/all_impct_spectacular_rht.anm",
+        "sha256": "d3eaac48d8e8c9668aef2ea5d8a021babb5e6fe86ec5effa8c3618ef6d8c3dfb",
+        "headers": {
+          "firstframe": 0,
+          "duration": 45,
+          "framerate": 30,
+          "version": 7,
+          "pose": 1
+        }
+      }
+    }
+  },
+  "links": {
+    "235": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impactbrutalleft",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthbrutal",
+        "oppattackheighthigh",
+        "oppattackdirfromleft"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "236": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impactbrutalright",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthbrutal",
+        "oppattackheighthigh",
+        "oppattackdirfromright"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "301": {
+      "unique": [],
+      "from": "impactbrutalleft",
+      "to": "facedownidle",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [],
+      "time": [
+        39,
+        45
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 6
+    },
+    "302": {
+      "unique": [],
+      "from": "impactbrutalright",
+      "to": "facedownidle",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [],
+      "time": [
+        41,
+        45
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 4
+    }
+  }
+}
