@@ -228,14 +228,14 @@ const NON_CONTACT_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true,
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.
 const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
-    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch"},
-    {"steps": [["a"], ["b"], ["b"]], "attack": "punch"},
-    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick"},
-    {"steps": [["b"], ["d"], ["d"]], "attack": "kick"},
-    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3"},
-    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3"},
-    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3"},
-    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3"},
+    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch", "source_index": 90},
+    {"steps": [["a"], ["b"], ["b"]], "attack": "punch", "source_index": 88},
+    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick", "source_index": 89},
+    {"steps": [["b"], ["d"], ["d"]], "attack": "kick", "source_index": 87},
+    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3", "source_index": 84},
+    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3", "source_index": 85},
+    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "source_index": 86},
+    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3", "source_index": 83},
     {"steps": [["out", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_high"},
     {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch2", "from_attack": "high_punch"},
     {"steps": [["a"], ["b"], ["b"]], "attack": "low_punch2", "from_attack": "punch"},
@@ -2621,6 +2621,11 @@ func _prune_standing_combo_input_history() -> void:
 
 
 func _matching_standing_combo_attack() -> String:
+    # Links in candobasicattacks are ordered; lower source_index wins when
+    # several sequences match. The few sequences without a recovered link
+    # carry a high fallback index and retain their declaration order.
+    var best_attack: String = ""
+    var best_index: int = 999999
     for require_source: bool in [true, false]:
         for entry: Dictionary in STANDING_COMBO_SEQUENCES:
             var from_attack: String = String(entry.get("from_attack", ""))
@@ -2646,7 +2651,13 @@ func _matching_standing_combo_attack() -> String:
                     continue
                 required -= 1
                 if required < 0:
-                    return String(entry["attack"])
+                    var index: int = int(entry.get("source_index", 999999))
+                    if best_attack.is_empty() or index < best_index:
+                        best_attack = String(entry["attack"])
+                        best_index = index
+                    break
+        if not best_attack.is_empty():
+            return best_attack
     return ""
 
 
