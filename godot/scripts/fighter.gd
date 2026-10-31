@@ -3517,7 +3517,6 @@ func receive_hit(
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
     if (health <= 0.0 and not blocked
-            and state_before in ["idle", "idle2", "hitstun"]
             and _candidate_clip_paths.has("stun")
             and String(reaction.get("source_action", "")).begins_with("impactlight")):
         # Source impactstun links use healthzero plus a normal-strength hit;
