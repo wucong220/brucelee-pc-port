@@ -661,10 +661,14 @@ Brick 动作分别采样开始、中间、接近末尾，在正反朝向、上�
 `%LOCALAPPDATA%\BruceLee-PC-Port\candidate-sfx-20261030\adreno_200\sounds\sfx`。
 三个候选文件分别是 `Punch_Body_Light_1.wav`、`Kick_Body_Light_1.wav`
 和 `Block_Arms_2.wav`。目录须在仓库外；缺失或加载失败时静默继续，
-不回退到打包占位音频。当前只有 `punch`、`kick` 和格挡反馈使用候选文件；
-`attacktofloor`、`facedownattack`、`faceupattack`、`heavy` 等尚无音效映射
-证据的动作保持静默，避免把踢击声误用于未知攻击。文件可加载只证明格式可用；
-选择、音量、变体、声道和完整播放触发规则仍是候选实现，不是原版音效规则闭合。
+不回退到打包占位音频。当前 `punch`、`high_punch`、`high_punch2`、`high_punch3`、
+`low_punch2`、`low_punch3`、`special_punch_*_hit`、`parry_attack` 使用拳击样本；
+`kick`、`high_kick`、`high_kick2`、`high_kick3`、`low_kick2`、`low_kick3`、
+`special_kick_low_hit`、`special_kick_high` 使用踢击样本。它们只是共享的通用
+body-light 原型音效，不代表原版逐招音效映射。`attacktofloor`、`facedownattack`、
+`faceupattack`、`heavy` 等尚无音效映射证据的动作保持静默，避免把踢击声误用于未知攻击。
+文件可加载只证明格式可用；选择、音量、变体、声道和完整播放触发规则仍是候选实现，
+不是原版音效规则闭合。
 `BRUCELEE_AUDIO_ROOT` 是外部本地资源覆盖入口；仓库边界检查不能证明 WAV
 确实来自某个固定数据包或固定哈希，也无意充当沙箱或来源认证机制。
 

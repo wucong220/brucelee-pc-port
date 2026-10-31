@@ -52,9 +52,13 @@ func _run() -> void:
     await process_frame
     scene._on_hit(player, opponent, "kick", 5.0, true)
     await process_frame
+    scene._on_hit(player, opponent, "high_punch", 5.0, false)
+    await process_frame
+    scene._on_hit(player, opponent, "high_kick", 5.0, true)
+    await process_frame
     scene._on_hit(player, opponent, "attacktofloor", 5.0, false)
     await process_frame
-    if combat_audio.get_child_count() != 2:
+    if combat_audio.get_child_count() != 4:
         push_error("Unsupported attack action should not reuse a candidate sound")
         quit(1)
         return

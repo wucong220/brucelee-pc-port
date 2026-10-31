@@ -395,8 +395,20 @@ func _play_hit_audio(action: String, blocked: bool) -> void:
     var event: String = ""
     if blocked:
         event = "block"
-    elif action in ["punch", "kick"]:
-        event = action
+    elif action in [
+            "punch", "high_punch", "high_punch2", "high_punch3",
+            "low_punch2", "low_punch3", "special_punch_low_hit",
+            "special_punch_high_hit", "parry_attack",
+        ]:
+        # Only generic punch/kick body-light samples are available in the
+        # candidate audio set; use them as prototype hit sounds.
+        event = "punch"
+    elif action in [
+            "kick", "high_kick", "high_kick2", "high_kick3",
+            "low_kick2", "low_kick3", "special_kick_low_hit",
+            "special_kick_high",
+        ]:
+        event = "kick"
     else:
         return
     if not _candidate_audio.has(event):
