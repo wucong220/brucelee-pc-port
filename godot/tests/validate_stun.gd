@@ -186,6 +186,7 @@ func _run() -> void:
     # Source links 209/211 are direction-independent for normal lethal highs/lows.
     for case: Dictionary in [
         {"height": "high", "direction": "fromleft", "clip": "all_impct_light_frnt_high"},
+        {"height": "high", "direction": "fromright", "clip": "all_impct_light_frnt_high"},
         {"height": "low", "direction": "fromleft", "clip": "all_impct_light_frnt_low"},
         {"height": "low", "direction": "fromright", "clip": "all_impct_light_frnt_low"},
     ]:
@@ -208,6 +209,33 @@ func _run() -> void:
             push_error("normal directional lethal did not use the right impactstun clip")
             quit(1)
             return
+    # Cross-direction repeated hit must restart the impactstun animation.
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 10.0
+    var frontal_setup: Dictionary = player.reaction_for_incoming(
+        {"strength": "normal", "height": "high", "direction": "frontal"}, false
+    )
+    if not player.receive_hit(2.0, false, 0.0, 1.0, frontal_setup):
+        push_error("frontal nonlethal setup was rejected")
+        quit(1)
+        return
+    player._animate_candidate()
+    var right_lethal: Dictionary = player.reaction_for_incoming(
+        {"strength": "normal", "height": "high", "direction": "fromright"}, false
+    )
+    if not player.receive_hit(8.0, false, 0.0, 1.0, right_lethal):
+        push_error("right lethal follow-up was rejected")
+        quit(1)
+        return
+    if player.state != "impactstun" or player._candidate_action != "":
+        push_error("cross-direction lethal did not reset the impactstun action")
+        quit(1)
+        return
+    player._animate_candidate()
+    if absf(player._candidate_animation.current_animation_position) > 0.01:
+        push_error("cross-direction lethal did not restart impactstun animation")
+        quit(1)
+        return
     # The source facedowngetup impactable group starts at frame 12.
     for frame: int in [11, 12]:
         player.reset_fighter(Vector3(-2.0, 1.20, 0.0))

@@ -3934,6 +3934,7 @@ func receive_hit(
         last_reaction_animation = stun_entry_clip
         last_reaction_exit_frame = STUN_IMPACT_ENTRY_FRAMES
         last_reaction_clip_implemented = true
+        _restart_candidate_action()
         return true
     if (health <= 0.0 and state_before == "facedownidle"
             and _candidate_clip_paths.has(_facedown_idle_clip())):
