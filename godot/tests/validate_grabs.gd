@@ -1,5 +1,5 @@
 extends SceneTree
-## Validate grab1/grab2 multi-impact attacks on the 44-clip candidate.
+## Validate grab miss -> grab chains on the 47-clip candidate.
 
 func _initialize() -> void:
     call_deferred("_run")
@@ -8,7 +8,7 @@ func _initialize() -> void:
 func _run() -> void:
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if args.size() != 1:
-        push_error("Expected the 44-clip Bruce candidate GLB")
+        push_error("Expected the 47-clip Bruce candidate GLB")
         quit(1)
         return
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
@@ -31,7 +31,7 @@ func _run() -> void:
         quit(1)
         return
     var clips: Dictionary = player.get("_candidate_clip_paths")
-    for required: String in ["grab1", "grab2"]:
+    for required: String in ["grab1_miss", "grab2_miss", "grab1", "grab2"]:
         if not clips.has(required):
             push_error("Candidate is missing " + required)
             quit(1)
@@ -40,23 +40,23 @@ func _run() -> void:
     defender.configure_attack_config(PortFighter.ATTACK_CONFIG_PATH)
     root.add_child(defender)
     await process_frame
-    if not _validate_grab(player, defender, "punch", "a", "a", "grab1", 150):
+    if not _validate_grab(player, defender, "punch", "a", "a", "grab1_miss", "grab1", 150):
         quit(1)
         return
-    if not _validate_grab(player, defender, "kick", "b", "c", "grab2", 180):
+    if not _validate_grab(player, defender, "kick", "b", "c", "grab2_miss", "grab2", 180):
         quit(1)
         return
     if not _validate_grab_range(player, defender):
         quit(1)
         return
-    if not _validate_blocked_base_rejects_grab(player, defender):
+    if not _validate_blocked_grab_rejects_chain(player, defender):
         quit(1)
         return
     print("GRAB_VALIDATION=" + JSON.stringify({
-        "grabs": ["grab1", "grab2"],
-        "candidate_bytes": 3164064,
-        "candidate_sha256": "e155bec24771ea60724b09fbfee1620bd887d7226a2730aba5a6578e892c6d73",
-        "scope": "PC prototype: direct grab when in range; miss animation belongs to the Ken skeleton and is not bundled",
+        "grabs": ["grab1_miss->grab1", "grab2_miss->grab2"],
+        "candidate_bytes": 4039952,
+        "candidate_sha256": "592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0",
+        "scope": "retargeted m02_grab_01 miss animation; chain at frames 8-9 when in range",
     }))
     defender.queue_free()
     await create_timer(0.1).timeout
@@ -66,65 +66,77 @@ func _run() -> void:
     quit(0)
 
 
-func _validate_grab(
-        player: PortFighter, defender: PortFighter, base: String,
-        first_key: String, repeat_key: String, target: String, steps: int
-) -> bool:
+func _start_miss(player: PortFighter, defender: PortFighter, base: String, first_key: String, repeat_key: String) -> bool:
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player._time = 0.0
     player.rage = 70.0
     player.facing = 1.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(2.0, 1.20, 0.0))
     player.opponent = defender
     if not player.request_attack(base):
-        push_error("Could not start " + base)
         return false
     player.record_standing_combo_press(first_key, ["left"])
     player.record_standing_combo_press(repeat_key)
     player.record_standing_combo_press(repeat_key)
-    if String(player.get("_standing_combo_pending_attack")) != target:
-        push_error("Sequence did not queue " + target)
-        return false
     player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
+    return player._try_begin_pending_standing_combo()
+
+
+func _validate_grab(
+        player: PortFighter, defender: PortFighter, base: String,
+        first_key: String, repeat_key: String, miss: String, target: String, steps: int
+) -> bool:
+    if not _start_miss(player, defender, base, first_key, repeat_key):
+        push_error(miss + " did not start")
+        return false
+    if player.attack_kind != miss:
+        push_error("Expected " + miss + ", got " + player.attack_kind)
+        return false
+    if absf(player.rage - 4.0) > 0.001:
+        push_error(miss + " did not consume 66 rage")
+        return false
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
     player.opponent = defender
-    player.facing = 1.0
-    if not player._try_begin_pending_standing_combo():
-        push_error(target + " did not start in range")
-        return false
+    for _j: int in range(9):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.attack_kind != target:
-        push_error("Expected " + target + ", got " + player.attack_kind)
-        return false
-    if absf(player.rage - 14.0) > 0.001:
-        push_error(target + " did not consume 66 rage after the base hit: " + str(player.rage))
+        push_error(miss + " did not chain to " + target + ": " + player.attack_kind)
         return false
     for _i: int in range(steps):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
-    if absf(defender.health - 75.0) > 0.001:
-        push_error(target + " total damage was not 25: " + str(defender.health))
+    if absf(defender.health - 80.0) > 0.001:
+        push_error(target + " total damage was not 20: " + str(defender.health))
         return false
     return true
 
 
 func _validate_grab_range(player: PortFighter, defender: PortFighter) -> bool:
-    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
-    player._time = 0.0
-    player.rage = 70.0
-    if not player.request_attack("punch"):
+    if not _start_miss(player, defender, "punch", "a", "a"):
+        push_error("Far grab miss did not start")
         return false
-    player.record_standing_combo_press("a", ["left"])
-    player.record_standing_combo_press("a")
-    player.record_standing_combo_press("a")
-    if String(player.get("_standing_combo_pending_attack")) != "grab1":
-        push_error("Far grab sequence did not queue grab1")
-        return false
-    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
     defender.reset_fighter(Vector3(2.0, 1.20, 0.0))
     player.opponent = defender
-    if player._try_begin_pending_standing_combo():
-        push_error("Grab fired out of range")
+    for _i: int in range(20):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.attack_kind in ["grab1", "grab2"]:
+        push_error("Grab chained out of range")
         return false
+    if not is_equal_approx(defender.health, 100.0):
+        push_error("Out-of-range grab dealt damage")
+        return false
+    return true
+
+
+func _validate_blocked_grab_rejects_chain(player: PortFighter, defender: PortFighter) -> bool:
+    if not _start_miss(player, defender, "punch", "a", "a"):
+        return false
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.guard_held = true
+    player.opponent = defender
+    for _j: int in range(9):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.attack_kind == "grab1":
-        push_error("Grab changed the attack out of range")
+        push_error("Grab chained into a blocking opponent")
         return false
     return true
 
@@ -136,53 +148,18 @@ func _validate_candidate_identity(path: String) -> bool:
         return false
     var bytes: PackedByteArray = file.get_buffer(file.get_length())
     file.close()
-    if bytes.size() != 3164064:
+    if bytes.size() != 4039952:
         push_error("Candidate size mismatch: " + str(bytes.size()))
         return false
     var hash: HashingContext = HashingContext.new()
     hash.start(HashingContext.HASH_SHA256)
     hash.update(bytes)
-    if hash.finish().hex_encode().to_lower() != "e155bec24771ea60724b09fbfee1620bd887d7226a2730aba5a6578e892c6d73":
+    if hash.finish().hex_encode().to_lower() != "592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0":
         push_error("Candidate SHA-256 mismatch")
         return false
     var json_length: int = bytes.decode_u32(12)
     var document: Variant = JSON.parse_string(bytes.slice(20, 20 + json_length).get_string_from_utf8())
-    if not document is Dictionary or not document.has("animations") or document["animations"].size() != 44:
+    if not document is Dictionary or not document.has("animations") or document["animations"].size() != 47:
         push_error("Candidate animation count mismatch")
-        return false
-    return true
-
-
-func _validate_blocked_base_rejects_grab(player: PortFighter, defender: PortFighter) -> bool:
-    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
-    player._time = 0.0
-    player.rage = 70.0
-    player.facing = 1.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
-    player.opponent = defender
-    if not player.request_attack("punch"):
-        return false
-    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
-    if not bool(player.get("_attack_hit_landed")):
-        push_error("Unblocked base hit did not set the landed flag")
-        return false
-    player._advance_timed_states(60.0 / PortFighter.SOURCE_FRAME_RATE)
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
-    defender.guard_held = true
-    player.opponent = defender
-    if not player.request_attack("punch"):
-        return false
-    if bool(player.get("_attack_hit_landed")):
-        push_error("Starting a new attack did not clear the landed flag")
-        return false
-    player.record_standing_combo_press("a", ["left"])
-    player.record_standing_combo_press("a")
-    player.record_standing_combo_press("a")
-    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
-    if player._try_begin_pending_standing_combo():
-        push_error("Grab started after a blocked base attack")
-        return false
-    if player.attack_kind == "grab1":
-        push_error("Blocked base attack changed into grab1")
         return false
     return true

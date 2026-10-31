@@ -49,8 +49,8 @@ func _run() -> void:
     print("ENDATTACK_VALIDATION=" + JSON.stringify({
         "endattack1": "m01_end_attack_01",
         "source_damage": 0.0,
-        "candidate_bytes": 3964068,
-        "candidate_sha256": "de6819927bf7cb642e2f95e802b283c5ec06a181c37f54f5321c8468802310dd",
+        "candidate_bytes": 4039952,
+        "candidate_sha256": "592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0",
         "scope": "PC prototype: grab leaves the opponent controlled; original impact damage is zero",
     }))
     defender.queue_free()
@@ -66,7 +66,7 @@ func _validate_endattack1(player: PortFighter, defender: PortFighter) -> bool:
     player._time = 0.0
     player.rage = 70.0
     player.facing = 1.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(2.0, 1.20, 0.0))
     player.opponent = defender
     if not player.request_attack("punch"):
         return false
@@ -76,6 +76,13 @@ func _validate_endattack1(player: PortFighter, defender: PortFighter) -> bool:
     player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
     if not player._try_begin_pending_standing_combo():
         push_error("Grab1 did not start")
+        return false
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    player.opponent = defender
+    for _i: int in range(9):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.attack_kind != "grab1":
+        push_error("Grab1 miss did not chain")
         return false
     for _i: int in range(47):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
@@ -114,7 +121,7 @@ func _validate_endattack2(player: PortFighter, defender: PortFighter) -> bool:
     player._time = 0.0
     player.rage = 70.0
     player.facing = 1.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(2.0, 1.20, 0.0))
     player.opponent = defender
     if not player.request_attack("kick"):
         return false
@@ -124,6 +131,13 @@ func _validate_endattack2(player: PortFighter, defender: PortFighter) -> bool:
     player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
     if not player._try_begin_pending_standing_combo():
         push_error("Grab2 did not start")
+        return false
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    player.opponent = defender
+    for _i: int in range(9):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.attack_kind != "grab2":
+        push_error("Grab2 miss did not chain")
         return false
     for _i: int in range(80):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
@@ -166,7 +180,7 @@ func _validate_blocked_grab_rejects_endattack(player: PortFighter, defender: Por
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
     defender.guard_held = true
     player.opponent = defender
-    for _i: int in range(47):
+    for _i: int in range(9):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if bool(player.get("_grab_connected")):
         push_error("A blocked grab set the grab-connected flag")

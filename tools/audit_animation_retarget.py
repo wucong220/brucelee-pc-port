@@ -41,7 +41,7 @@ def _paths(skeleton: dict) -> tuple[dict, dict]:
     return ids, paths
 
 
-def audit(binding: dict, source: dict, target: dict) -> dict:
+def audit(binding: dict, source: dict, target: dict, *, allow_object_track_mismatch: bool = False) -> dict:
     """Identify candidate targets, rejecting ambiguous paths and channel collisions."""
     if binding['skeleton_sha256'] != source['sha256']:
         raise KdfError('binding and source skeleton do not match')
@@ -64,6 +64,15 @@ def audit(binding: dict, source: dict, target: dict) -> dict:
             raise KdfError('source binding does not match skeleton node')
         path = source_paths[item['nodeid']]
         destination = target_by_path.get(path)
+        if destination is None and allow_object_track_mismatch and item['node_type'] == 'object':
+            role = 'hair' if 'hair' in source_node['name'] else (
+                'body' if 'body' in source_node['name'] else None)
+            for target_path, target_node in target_by_path.items():
+                if (role is not None and target_path[-1][0] == 'object'
+                        and role in target_path[-1][1]):
+                    destination = target_node
+                    path = target_path
+                    break
         if destination is None:
             raise KdfError('target skeleton lacks matching typed path')
         index = destination.get(item['index_field'])
@@ -80,12 +89,15 @@ def audit(binding: dict, source: dict, target: dict) -> dict:
         if key in seen:
             raise KdfError('multiple tracks target the same node channel')
         seen.add(key)
-        mappings.append({
+        entry = {
             'track': item['track'], 'channel': item['target'],
             'path': [list(part) for part in path],
             'source_offset': item['offset'], 'target_offset': index,
             'source_nodeid': item['nodeid'], 'target_nodeid': destination['nodeid'],
-        })
+        }
+        if destination['name'] != source_node['name']:
+            entry['target_node_name'] = destination['name']
+        mappings.append(entry)
     if not mappings:
         raise KdfError('no animation tracks to audit')
     return {
