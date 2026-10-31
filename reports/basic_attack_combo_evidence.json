@@ -144,7 +144,7 @@
     "pending_binding": "A matched sequence is bound to the attack instance that was current when it matched. Attack end, attack switch, hit/block interruption and Heavy attacks cancel it.",
     "heavy_buffering": "Heavy has no recovered source window, so it does not buffer sequence input.",
     "same_action_replay": "ABB and BDD target the current action; with visual blending enabled the clip still restarts from frame 0.",
-    "pending_priority": "Last completed sequence replaces an earlier pending one. This is a prototype choice; native link priority is not recovered.",
+    "pending_priority": "Multiple sequences matching the same input history use the recovered lowest source_index (candobasicattacks links 83-90). Independently completed later sequences can still replace a pending entry; deferred native link priority is unverified.",
     "negative_controls": "Removing the Heavy guard, the hit cancel, the same-action restart or the replacement rule each makes validate_standing_combos.gd exit 1."
   },
   "unverified": [

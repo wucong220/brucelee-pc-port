@@ -271,24 +271,20 @@ func _validate_pending_replacement(
         player: PortFighter,
         opponent: PortFighter
 ) -> bool:
-    # Recovery link priority: lowpunch1 (source index 88) must beat
-    # highpunch1 (source index 90) when both overlap in the input history.
+    # Direct overlap: history a,a,a,b,b matches both highpunch1(90) and
+    # lowpunch1(88), so the recovered lower source_index must win without
+    # relying on a second independent press sequence.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
-    player._time = 0.0
-    if not player.request_attack("punch"):
-        push_error("Could not start the low punch for the priority check")
-        return false
-    for _index: int in 3:
-        player.record_standing_combo_press("a")
-    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
-        push_error("AAA did not queue highpunch1 for the priority check")
-        return false
-    player.record_standing_combo_press("a")
-    player.record_standing_combo_press("b")
-    player.record_standing_combo_press("b")
-    if String(player.get("_standing_combo_pending_attack")) != "punch":
-        push_error("The last completed sequence did not replace the earlier pending entry")
+    player.attack_kind = ""
+    player.state = "idle"
+    var history: Array[Dictionary] = []
+    for token: String in ["a", "a", "a", "b", "b"]:
+        history.append({"tokens": [token], "time": 0.0})
+    player.set("_standing_combo_input_history", history)
+    var matched: String = player._matching_standing_combo_attack()
+    if matched != "punch":
+        push_error("Overlapping history selected %s instead of punch(88)" % matched)
         return false
     return true
 
