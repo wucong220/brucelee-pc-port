@@ -39,12 +39,39 @@ function Test-PathOverlap([string]$left, [string]$right) {
         $right.StartsWith($left + $separator, [System.StringComparison]::OrdinalIgnoreCase)
 }
 
+function Test-ReparsePointInPath([string]$path) {
+    $current = [System.IO.Path]::GetFullPath($path)
+    while (-not [string]::IsNullOrWhiteSpace($current)) {
+        $item = Get-Item -LiteralPath $current -Force -ErrorAction SilentlyContinue
+        if ($null -ne $item -and
+                (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0)) {
+            return $true
+        }
+        $parent = Split-Path -Parent $current
+        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $current) {
+            break
+        }
+        $current = $parent
+    }
+    return $false
+}
+
 if ($SelfTest) {
     if (-not (Test-PathOverlap 'C:\Work\staging' 'c:\work\staging\project')) {
         throw 'Case-insensitive child overlap was not detected.'
     }
     if (Test-PathOverlap 'C:\Work\staging' 'D:\Work\project') {
         throw 'Unrelated paths were reported as overlapping.'
+    }
+    $junction = Join-Path $env:TEMP 'brucelee-path-overlap-junction'
+    if (Test-Path $junction) { cmd.exe /c rmdir /q "$junction" | Out-Null }
+    New-Item -ItemType Junction -Path $junction -Target $rootFull | Out-Null
+    try {
+        if (-not (Test-ReparsePointInPath $junction)) {
+            throw 'A junction in the candidate path was not detected.'
+        }
+    } finally {
+        cmd.exe /c rmdir /q "$junction" | Out-Null
     }
     Write-Host 'PATH_OVERLAP_SELFTEST=passed'
     exit 0
@@ -53,6 +80,9 @@ if ((Test-PathOverlap $stagingFull $rootFull) -or
         (Test-PathOverlap $stagingFull $sourceFull) -or
         (Test-PathOverlap $projectFull $sourceFull)) {
     throw 'BuildRoot/staging must not overlap the repository or source project.'
+}
+if ((Test-ReparsePointInPath $BuildRoot) -or (Test-ReparsePointInPath $staging)) {
+    throw 'BuildRoot/staging must not traverse a junction or symlink.'
 }
 if (Test-Path $staging) { Remove-Item -LiteralPath $staging -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $buildDist | Out-Null
