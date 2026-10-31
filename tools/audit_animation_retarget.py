@@ -67,12 +67,15 @@ def audit(binding: dict, source: dict, target: dict, *, allow_object_track_misma
         if destination is None and allow_object_track_mismatch and item['node_type'] == 'object':
             role = 'hair' if 'hair' in source_node['name'] else (
                 'body' if 'body' in source_node['name'] else None)
-            for target_path, target_node in target_by_path.items():
+            matches = [
+                (target_path, target_node)
+                for target_path, target_node in target_by_path.items()
                 if (role is not None and target_path[-1][0] == 'object'
-                        and role in target_path[-1][1]):
-                    destination = target_node
-                    path = target_path
-                    break
+                    and role in target_path[-1][1])
+            ]
+            if len(matches) != 1:
+                raise KdfError('target skeleton has ambiguous or missing object role mapping')
+            path, destination = matches[0]
         if destination is None:
             raise KdfError('target skeleton lacks matching typed path')
         index = destination.get(item['index_field'])
