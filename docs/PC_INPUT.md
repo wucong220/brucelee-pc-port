@@ -89,7 +89,7 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 不声称是完整眩晕状态。
 
 眩晕原型（候选）：普通 high/low 攻击使对手 healthzero 时，先播放对应
-`all_impct_light_frnt_high/low` 的 14 帧 `impactstun`，再进入
+`all_impct_light_frnt_high/low` 的 14 帧 `impactstun`；普通 medium 致命命中在已核实的来源状态窗口内使用 low 动画，再进入
 `stun → stun2 → stunfall → faceupko`；`stun`/`stun2` 期间可被 endmove 使用。
 `hard` 在 `stun/stun2` 且命中未格挡时才会走 `all_impct_hard_frnt_high → stunimpact → faceupko`；
 普通 hard frontal 命中不使用这条眩晕链。
