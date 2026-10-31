@@ -35,6 +35,20 @@ func _run() -> void:
             push_error("Candidate is missing " + required)
             quit(1)
             return
+    for dispatch_case: Dictionary in [
+        {"height": "high", "source": "impactlightfronthigh", "animation": "all_impct_light_frnt_high"},
+        {"height": "low", "source": "impactlightfrontlow", "animation": "all_impct_light_frnt_low"},
+        {"height": "medium", "source": "impactlightfrontmid", "animation": "all_impct_light_frnt_mid"},
+    ]:
+        var dispatched: Dictionary = player.reaction_for_incoming(
+            {"strength": "normal", "height": String(dispatch_case["height"]), "direction": "frontal"},
+            false,
+        )
+        if (String(dispatched.get("source_action", "")) != String(dispatch_case["source"])
+                or String(dispatched.get("animation", "")) != String(dispatch_case["animation"])):
+            push_error("reaction_for_incoming mismatch for " + String(dispatch_case["height"]))
+            quit(1)
+            return
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 5.0
     var reaction: Dictionary = {
