@@ -47,6 +47,7 @@
   - 同时生成 `DragonWarrior_PC_Prototype.pck`，533,804 字节
   - 启动自检：`DragonWarrior_PC_Prototype.exe --headless --quit`，退出码 0；日志仅有未布置的候选音频/HUD/菜单背景资源缺失错误，不是启动失败
   - EXE 内置确定性自检（使用 `BRUCELEE_EXPORT_SELF_TEST=1`、candidate47、Brick candidate7 和对应 texture roots）：退出码 0，输出 `EXPORT_SELF_TEST={"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.55666851997375,"candidate_world_min_y":-0.00497347116470337,"internal_path_rejected":true,"opponent_candidate_loaded":true,"opponent_idle_clip":"m03_idle_01","opponent_texture_reason":"","opponent_textures_loaded":true,"punch_hitstun_frames":14,"punch_target_health":95.0,"reaction_clip":"all_impct_light_frnt_mid"}`
+  - 将 `candidate-sfx-20261030`、`local-assets`、`p5-menu-assets-20261030`、player/brick textures 布置到 `LOCALAPPDATA\BruceLee-PC-Port` 后，`DragonWarrior_PC_Prototype.exe --headless --quit` 退出码 0 且不再出现这些外部资源缺失警告；确定性自检同样退出码 0。布置资源是该 EXE 运行所需的本地外部资源，不进入仓库。
 
 ## 未冒充为已验证
 
