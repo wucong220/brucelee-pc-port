@@ -416,15 +416,16 @@ SHA-256 是
 `lowkick3` 用 normal/medium/frontal 档。源值、动画哈希、窗口与候选哈希见
 `reports/directional_combo_evidence.json`。25 段候选缺这些 clip 时四条链保持关闭。
 方向修饰键是 PC 原型映射（上/下取移动轴，朝向/背向按角色朝向换算），不是
-Android 物理键位；抓取类 `endattack*` 链接仍未接入。
+Android 物理键位；原版完整的抓取类 `endattack*` 链接尚未还原。
 
 抓取类链接的取证结果：`endattack1`/`endattack2` 的目标动画是
 `m01_end_attack_01`/`m01_end_attack_02`（姿态 stand，半径 45），按键序列为
 `pressup+pressright+pressb -> pressa -> pressa` 和
 `pressup+pressright+pressa -> pressc -> pressc`；其余 `endattack <对手名>`
-指向 `m0x_end_attack_0x`，多数还带 `grabdistance`。这些链接都要求
-`oppposestun`（对手处于眩晕），目前原型没有眩晕状态、抓取距离判定和对应
-终结动画，因此保持关闭；不是输入层缺失，而是缺少状态与资产证据。11 条
+指向 `m0x_end_attack_0x`，多数还带 `grabdistance`。这些原版链接都要求
+`oppposestun`（对手处于眩晕）；PC 原型已独立实现 `endattack1/2`，采用受限的
+hitstun/stun/stun2 + 0.62 距离近似，并使用 47 段候选的 `m01_end_attack_01/02`；
+其他对手专属 `endattack <对手名>` 链接仍未接入。11 条
 `endattack*` 链接的目标动画、半径、按键序列与条件见
 `reports/grab_finisher_evidence.json`（含原始 links 索引、动作记录号和动画
 序号，生成命令
