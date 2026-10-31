@@ -242,8 +242,8 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["up", "a"], ["up", "a"], ["up", "a"]], "attack": "special_punch_high_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
     {"steps": [["left", "a"], ["a"], ["a"]], "attack": "grab1_miss", "from_attack": "punch"},
     {"steps": [["left", "b"], ["c"], ["c"]], "attack": "grab2_miss", "from_attack": "kick"},
-    {"steps": [["up", "in", "b"], ["a"], ["a"]], "attack": "endattack1", "from_attack_in": ["grab1", "grab2"]},
-    {"steps": [["up", "in", "a"], ["c"], ["c"]], "attack": "endattack2", "from_attack_in": ["grab1", "grab2"]},
+    {"steps": [["up", "in", "b"], ["a"], ["a"]], "attack": "endattack1", "from_attack_in": ["high_punch", "punch", "kick", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_high", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "grab1", "grab2"]},
+    {"steps": [["up", "in", "a"], ["c"], ["c"]], "attack": "endattack2", "from_attack_in": ["high_punch", "punch", "kick", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_high", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "grab1", "grab2"]},
 ]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
@@ -2686,7 +2686,7 @@ func _try_begin_pending_standing_combo() -> bool:
             _clear_standing_combo_state()
             return false
     if ENDATTACK_ATTACKS.has(_standing_combo_pending_attack):
-        if not _grab_connected:
+        if not (_grab_connected or _attack_hit_landed):
             _clear_standing_combo_state()
             return false
         if (opponent == null or not is_instance_valid(opponent)

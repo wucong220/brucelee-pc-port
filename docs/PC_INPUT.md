@@ -80,11 +80,12 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 `larm/high/hard/frontal`）；否则保持 miss 并回 idle。`hard/high/frontal`
 专用受击动画仍不可用，反应 fail-closed。
 
-抓取终结（候选）：抓取进行中、对手处于受控/硬直且在 0.62 距离内时，
-`上+朝向+B → A → A` 触发 `endattack1`（`m01_end_attack_01`，377 帧），
-`上+朝向+A → C → C` 触发 `endattack2`（`m01_end_attack_02`，235 帧）。
-这两招在 `brucelee.set` 里的 impact 伤害为 **0**，因此只播放终结动画，不添加伤害。
-原版要求 `oppposestun + grabdistance`；原型用“抓取后受控/硬直 + 距离”近似，
+抓取后的 `endmove` / 收招（候选）：普通攻击命中或抓取成功、对手处于受控/硬直
+且在 0.62 距离内时，`上+朝向+B → A → A` 触发 `endattack1`
+（`m01_end_attack_01`，377 帧），`上+朝向+A → C → C` 触发 `endattack2`
+（`m01_end_attack_02`，235 帧）。两招在原版属于 `attack + endmove`，不是独立伤害技；
+`brucelee.set` 的 impact 伤害为 **0**，因此只播放收招动画，不添加伤害。
+原版要求 `oppposestun + grabdistance`；原型用“命中/抓取后的受控状态 + 距离”近似，
 不声称是完整眩晕状态。
 
 低段格挡反击（PC 扩展）：与 `parry_high` 共用同一套“按住防御 + 下+朝向 ×3”
@@ -100,19 +101,6 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 重定向到 Bruce 骨架，作为实验性跨骨架候选打包；不能声称与原版骨骼语义等价。
 `grab1` 分三段 6/5/9（共 20），`grab2` 分两段 5/15（共 20）。
 
-抓取终结（候选）：抓取进行中、对手处于受控/硬直且在 0.62 距离内时，
-`上+朝向+B → A → A` 触发 `endattack1`（`m01_end_attack_01`，377 帧），
-`上+朝向+A → C → C` 触发 `endattack2`（`m01_end_attack_02`，235 帧）。
-这两招在 `brucelee.set` 里的 impact 伤害为 **0**，因此只播放终结动画，不添加伤害。
-原版要求 `oppposestun + grabdistance`；原型用“抓取后受控/硬直 + 距离”近似，
-不声称是完整眩晕状态。
-
-抓取（原型直抓）：基础 `A` 命中后按 `左+A → A → A` 触发 `grab1`；
-基础 `B` 命中后按 `左+B → C → C` 触发 `grab2`。两者要求 `rage2thirds`（≥66）、
-对手在 0.62 世界单位的原型抓取距离内、站立且不格挡；距离不足则 fail-closed。
-`grab1` 分三段 6/5/9（共 20），`grab2` 分两段 5/15（共 20），均复用多段伤害引擎。
-原版 miss 动画 `m02_grab_01` 引用的是 `bl_ken_goodall_01_high.skl`（Ken 骨架），
-未打进 Bruce 候选，因此这里只做“范围内直接抓取”，不伪造 miss 动画。
 
 格挡反击（原型方向输入）：按住防御，在对手 `startup/active` 时用
 `下+朝向` 连续三次（0.5 秒内，每次按下沿）触发 `parry_high`
