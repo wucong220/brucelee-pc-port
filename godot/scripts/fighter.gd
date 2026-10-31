@@ -646,6 +646,13 @@ const RETURN_ANIMATION_RADII: Dictionary = {
     "all_getup_faceup_attack": 45.0,
     "all_impct_faceup": 80.0,
 }
+const REACTION_ROOT_PUSH_SOURCE: Dictionary = {
+    "impactlightfronthigh": 36.86962890625,
+    "impactlightfrontlow": 18.252197265625,
+    "impactlightfrontmid": 22.845458984375,
+}
+
+
 const REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
         "low": {
@@ -3434,6 +3441,14 @@ func receive_hit(
     ]:
         return false
     var state_before: String = state
+    var reaction_root_source: float = float(
+        REACTION_ROOT_PUSH_SOURCE.get(String(reaction.get("source_action", "")), -1.0)
+    )
+    if reaction_root_source >= 0.0:
+        # Source reaction positions are (X horizontal, Y depth, Z up). Their
+        # depth component is the current best evidence for forward displacement;
+        # the exact native push mapping remains unverified.
+        push = reaction_root_source * source_units_to_world
     var brick_facedown_impact: bool = (
         state_before == "facedownidle"
         and not blocked
