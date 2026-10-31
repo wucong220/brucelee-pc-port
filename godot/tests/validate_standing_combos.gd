@@ -196,7 +196,7 @@ func _run() -> void:
         "input_window_seconds": PortFighter.STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS,
         "candobasicattack_windows": PortFighter.CANDOBASICATTACK_WINDOWS,
         "pending_binding": "bound to the matching attack instance; Heavy and hits cancel it",
-        "pending_priority": "last completed sequence wins (prototype choice, native link priority unverified)",
+        "pending_priority": "lowest recovered source_index wins; current overlap fixture selects punch(88) over high_punch(90)",
         "same_action_replay": "ABB/BDD restart the clip even when visual blending is enabled",
         "low_combo_damage": {"abb": 90.0, "bdd": 90.0},
     }))
@@ -271,8 +271,8 @@ func _validate_pending_replacement(
         player: PortFighter,
         opponent: PortFighter
 ) -> bool:
-    # Prototype priority is last-completed-wins; the behavior is explicit here
-    # instead of depending on an implicit overwrite.
+    # Recovery link priority: lowpunch1 (source index 88) must beat
+    # highpunch1 (source index 90) when both overlap in the input history.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
     player._time = 0.0
