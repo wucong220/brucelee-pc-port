@@ -95,6 +95,40 @@ func _run() -> void:
         push_error("stunfall did not finish in faceupko by frame 79: " + player.state)
         quit(1)
         return
+    # Lethal low hit must use the low impactstun entry, not the high clip.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 5.0
+    var low_reaction: Dictionary = {
+        "source_action": "impactlightfrontlow",
+        "animation": "all_impct_light_frnt_low",
+        "exit_start_frame": 13,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+    }
+    if not player.receive_hit(5.0, false, 0.0, 1.0, low_reaction):
+        push_error("low impactstun fixture rejected")
+        quit(1)
+        return
+    if player.state != "impactstun":
+        push_error("low impactstun did not enter impactstun: " + player.state)
+        quit(1)
+        return
+    player._animate_candidate()
+    if player.candidate_animation_clip != String(clips["all_impct_light_frnt_low"]):
+        push_error("low impactstun did not play all_impct_light_frnt_low")
+        quit(1)
+        return
+    for _i: int in range(13):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "impactstun":
+        push_error("low impactstun ended before frame 14: " + player.state)
+        quit(1)
+        return
+    player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "stun":
+        push_error("low impactstun did not enter stun on frame 14: " + player.state)
+        quit(1)
+        return
     # Nonlethal and blocked hits must not enter the stun state.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
@@ -238,7 +272,7 @@ func _run() -> void:
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
-    if not player.request_attack("punch"):
+    if not player.request_attack("high_punch"):
         push_error("Stun endmove attack did not start")
         quit(1)
         return
@@ -270,7 +304,7 @@ func _run() -> void:
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
-    if not player.request_attack("punch"):
+    if not player.request_attack("high_punch"):
         push_error("Stun2 endmove attack did not start")
         quit(1)
         return
