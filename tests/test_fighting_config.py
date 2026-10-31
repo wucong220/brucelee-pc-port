@@ -258,6 +258,10 @@ class TestFightingConfig(unittest.TestCase):
             "impactbrutalmid",
             "impactbrutalleft",
             "impactbrutalright",
+            "impactlightlefthigh",
+            "impactlightrighthigh",
+            "impactlightleftlow",
+            "impactlightrightlow",
         ])
         self.assertEqual(exact["hit"][0]["exit_start_frame"], 27)
         self.assertEqual(exact["hit"][0]["animation_duration_frames"], 30)
@@ -289,6 +293,11 @@ class TestFightingConfig(unittest.TestCase):
         self.assertEqual(exact["hit"][6]["source_action"], "impactbrutalright")
         self.assertEqual(exact["hit"][6]["exit_start_frame"], 41)
         self.assertEqual(exact["hit"][6]["animation_duration_frames"], 45)
+        self.assertEqual(exact["hit"][7]["source_action"], "impactlightlefthigh")
+        self.assertEqual(exact["hit"][7]["animation"], "all_impct_light_lft_high")
+        self.assertEqual(exact["hit"][8]["source_action"], "impactlightrighthigh")
+        self.assertEqual(exact["hit"][9]["source_action"], "impactlightleftlow")
+        self.assertEqual(exact["hit"][10]["source_action"], "impactlightrightlow")
         self.assertEqual(exact["block"][0]["source_action"], "highblockhard")
         self.assertEqual(exact["block"][0]["exit_start_frame"], 11)
         self.assertEqual(exact["block"][0]["animation_duration_frames"], 14)
