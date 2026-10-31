@@ -2850,7 +2850,11 @@ func try_attack_to_floor_press(
         _clear_ground_attack_input_history()
         return AttackToFloorInputResult.IGNORED
     _prune_ground_attack_input_history()
-    var input_owner: String = "attacktofloor:" + state
+    var input_owner: String = (
+        "attacktofloor:attack:" + attack_kind + ":" + str(attack_sequence)
+        if state in ["startup", "active", "recovery"]
+        else "attacktofloor:" + state
+    )
     if _ground_attack_input_owner != input_owner:
         _clear_ground_attack_input_history()
         _ground_attack_input_owner = input_owner
