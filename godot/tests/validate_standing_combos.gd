@@ -273,8 +273,9 @@ func _validate_hit_cancels_pending(
 func _validate_opponent_specific_endattacks_closed(player: PortFighter) -> bool:
     # Links 36-44 target opponent-specific m0x_end_attack_* animations; the
     # current Bruce candidate must not silently bind them to a stand-in action.
+    player.facing = 1.0
     var history: Array[Dictionary] = [
-        {"tokens": ["up", "in", "a"], "time": 0.0},
+        {"tokens": ["up", "in", "right", "a"], "time": 0.0},
         {"tokens": ["a"], "time": 0.0},
         {"tokens": ["a"], "time": 0.0},
     ]
