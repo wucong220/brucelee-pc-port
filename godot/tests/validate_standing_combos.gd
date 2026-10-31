@@ -10,10 +10,32 @@ func _key(keycode: Key) -> InputEventKey:
     event.pressed = true
     return event
 
+func _validate_candidate_identity(path: String) -> bool:
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        push_error("Could not open combo candidate GLB")
+        return false
+    var bytes: PackedByteArray = file.get_buffer(file.get_length())
+    file.close()
+    if bytes.size() != 1336988:
+        push_error("Combo candidate size mismatch: " + str(bytes.size()))
+        return false
+    var hash: HashingContext = HashingContext.new()
+    hash.start(HashingContext.HASH_SHA256)
+    hash.update(bytes)
+    if hash.finish().hex_encode().to_lower() != "384e1a20e41ff5a996fc3e4b71ac4a47957aae3fae5d9576f49736904d64eda9":
+        push_error("Combo candidate SHA-256 mismatch")
+        return false
+    return true
+
+
 func _run() -> void:
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if args.size() != 1:
         push_error("Expected the 25-clip Bruce candidate GLB")
+        quit(1)
+        return
+    if not _validate_candidate_identity(args[0]):
         quit(1)
         return
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
