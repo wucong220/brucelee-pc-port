@@ -45,6 +45,7 @@ const CANDIDATE_CLIPS: Dictionary = {
     "stun": "all_stunned",
     "stun_fall": "all_stunned_fall",
     "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -1640,7 +1641,7 @@ func _try_load_candidate_visual() -> void:
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
             "endattack1", "endattack2", "stun", "stun_fall",
-            "stun_hard"]:
+            "stun_hard", "stun_brutal"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -3419,6 +3420,17 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
         return exact
+    if (not blocked and String(impact.get("strength", "")) == "brutal"
+            and state in ["stun", "stun2"]):
+        # brucelee.set link 134: impactsfromstun + brutal -> stunbrutalimpact,
+        # all_impct_spectacular_lft, then link 133 [40,45] -> facedownko.
+        return {
+            "source_action": "stunbrutalimpact",
+            "animation": "stun_brutal",
+            "exit_start_frame": 40,
+            "animation_duration_frames": 45,
+            "linking_frame": 0,
+        }
     # Hard and brutal attacks have no light-height fallback when the exact link is absent.
     if String(impact.get("strength", "")) != "normal":
         return {}
@@ -3589,6 +3601,10 @@ func receive_hit(
             stun_animation = "stun_hard"
             stun_exit_frame = 20
             stun_next_state = "faceupko"
+        elif stun_source == "stunbrutalimpact":
+            stun_animation = "stun_brutal"
+            stun_exit_frame = 40
+            stun_next_state = "facedownko"
         else:
             return false
         if not _candidate_clip_paths.has(stun_animation):
