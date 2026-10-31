@@ -1,0 +1,152 @@
+{
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "resource": "adreno_200/set/brucelee.set"
+  },
+  "action": {
+    "name": "impacthardfronthigh",
+    "binary": {
+      "ordinal": 63,
+      "directory": "animation/",
+      "basename": "all_impct_hard_frnt_high",
+      "extension": "anm"
+    },
+    "unique": [],
+    "groups": [
+      [
+        "receivedamage",
+        [
+          0,
+          35
+        ],
+        0
+      ]
+    ],
+    "categories": [],
+    "facing": [
+      1,
+      0
+    ],
+    "pose": "laying",
+    "radius": 80.0,
+    "rage": -15.0,
+    "disablecollision": "false",
+    "sounds": [
+      {
+        "file": {
+          "ordinal": 64,
+          "directory": "sounds/sfx/",
+          "basename": "kick_head_heavy_2",
+          "extension": "wav"
+        },
+        "frame": 0,
+        "volume": 0.8999999761581421,
+        "unique": "",
+        "is_voice": "false"
+      },
+      {
+        "file": {
+          "ordinal": 65,
+          "directory": "sounds/sfx/",
+          "basename": "fall_4_normal",
+          "extension": "wav"
+        },
+        "frame": 14,
+        "volume": 0.699999988079071,
+        "unique": "",
+        "is_voice": "false"
+      }
+    ],
+    "fx": []
+  },
+  "links": {
+    "113": {
+      "unique": [],
+      "from": "impacthardfronthigh",
+      "to": "faceupko",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "healthzero"
+      ],
+      "time": [
+        23,
+        29
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 6
+    },
+    "114": {
+      "unique": [],
+      "from": "impacthardfronthigh",
+      "to": "faceupidle",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [],
+      "time": [
+        23,
+        29
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 6
+    },
+    "227": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impacthardfronthigh",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthhard",
+        "oppattackheighthigh",
+        "oppattackdirfrontal"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    }
+  },
+  "animation": {
+    "resource": "adreno_200/animation/all_impct_hard_frnt_high.anm",
+    "sha256": "01941c60a9840ff9824933008e4f40bb6998b6f5b293a3f9682e6b85e9880232",
+    "headers": {
+      "firstframe": 0,
+      "duration": 35,
+      "framerate": 30,
+      "version": 7,
+      "pose": 1
+    }
+  }
+}

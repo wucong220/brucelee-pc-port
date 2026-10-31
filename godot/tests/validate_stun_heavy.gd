@@ -312,6 +312,59 @@ func _run() -> void:
             push_error("hard directional hit did not enter hitstun: " + String(case["source"]))
             quit(1)
             return
+    # Source link 113: hard high frontal lethal hit -> faceupko.
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 5.0
+    var hard_high_lethal: Dictionary = player.reaction_for_incoming(
+        {"strength": "hard", "height": "high", "direction": "frontal"}, false
+    )
+    if not player.receive_hit(5.0, false, 0.0, 1.0, hard_high_lethal):
+        push_error("hard high frontal lethal hit was rejected")
+        quit(1)
+        return
+    if (player.state != "stunimpact"
+            or player.last_reaction_source_action != "impacthardfronthigh"
+            or player.last_reaction_animation != "all_impct_hard_frnt_high"):
+        push_error("hard high frontal lethal path mismatch")
+        quit(1)
+        return
+    for _i: int in range(22):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "stunimpact":
+        push_error("hard high frontal lethal ended before frame 23")
+        quit(1)
+        return
+    player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "faceupko":
+        push_error("hard high frontal lethal did not enter faceupko")
+        quit(1)
+        return
+    # Repeated same high-frontal hit must restart the reaction animation.
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 10.0
+    var repeat_reaction: Dictionary = player.reaction_for_incoming(
+        {"strength": "hard", "height": "high", "direction": "frontal"}, false
+    )
+    if not player.receive_hit(2.0, false, 0.0, 1.0, repeat_reaction):
+        push_error("nonlethal hard high setup was rejected")
+        quit(1)
+        return
+    if clips.has("all_impct_hard_frnt_high"):
+        player._animate_candidate()
+    if not player.receive_hit(8.0, false, 0.0, 1.0, repeat_reaction):
+        push_error("repeated lethal hard high hit was rejected")
+        quit(1)
+        return
+    if player.state != "stunimpact" or player._candidate_action != "":
+        push_error("repeated lethal hard high did not reset the reaction action")
+        quit(1)
+        return
+    if clips.has("all_impct_hard_frnt_high"):
+        player._animate_candidate()
+        if absf(player._candidate_animation.current_animation_position) > 0.01:
+            push_error("repeated lethal hard high did not restart animation")
+            quit(1)
+            return
     # Source links 228/213/214: hard low/medium frontal hits use frontlow.
     player.reset_fighter(Vector3.ZERO)
     player.health = 100.0
@@ -381,7 +434,8 @@ func _run() -> void:
             "brutal high left/right -> impactbrutalleft/right",
             "normal directional light hits",
             "hard directional left/above reactions",
-            "hard frontlow nonlethal/lethal reactions"],
+            "hard frontlow nonlethal/lethal reactions",
+            "hard high frontal lethal faceupko"],
         "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()
