@@ -217,8 +217,10 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
-const STUN_DURATION_FRAMES: int = 61
-const STUN_FALL_DURATION_FRAMES: int = 79
+# Source windows: stun->stun2 and stun2->stunfall [55,61]; stunfall->faceupko [71,79].
+# The PC candidate selects each window start.
+const STUN_DURATION_FRAMES: int = 55
+const STUN_FALL_DURATION_FRAMES: int = 71
 const STUN_IMPACT_ENTRY_FRAMES: int = 14
 const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
 const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
