@@ -1,0 +1,98 @@
+{
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "resource": "adreno_200/set/brucelee.set"
+  },
+  "action": {
+    "name": "highblockbrutal",
+    "binary": {
+      "ordinal": 262,
+      "directory": "animation/",
+      "basename": "all_block_high_brutal",
+      "extension": "anm"
+    },
+    "groups": [
+      [
+        "canblock",
+        [
+          6,
+          20
+        ],
+        0
+      ]
+    ],
+    "facing": [
+      0,
+      20
+    ],
+    "radius": 25.0
+  },
+  "links": {
+    "96": {
+      "unique": [],
+      "from_group": "canblock",
+      "to": "highblockbrutal",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [
+          [
+            "left",
+            "pressed"
+          ]
+        ],
+        [
+          [
+            "left",
+            "pressed"
+          ]
+        ],
+        [
+          [
+            "left",
+            "pressed"
+          ]
+        ]
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthbrutal"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 1
+    },
+    "346": {
+      "unique": [],
+      "from": "highblockbrutal",
+      "to": "idle2",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [],
+      "time": [
+        17,
+        20
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 3,
+      "input_reset": "true"
+    }
+  }
+}

@@ -155,6 +155,12 @@ func _run() -> void:
         push_error("brutal block did not select highblockbrutal")
         quit(1)
         return
+    if (int(brutal_block.get("exit_start_frame", -1)) != 17
+            or int(brutal_block.get("animation_duration_frames", -1)) != 20
+            or String(brutal_block.get("return_action", "")) != "idle2"):
+        push_error("brutal block metadata does not match source [17,20]")
+        quit(1)
+        return
     if not player.receive_hit(2.0, true, 0.0, 1.0, brutal_block):
         push_error("brutal block was rejected")
         quit(1)
