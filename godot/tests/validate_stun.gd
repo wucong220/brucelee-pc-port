@@ -391,7 +391,10 @@ func _run() -> void:
         push_error("Low kick did not enter impactstun: " + defender.state)
         quit(1)
         return
-    for _i: int in range(14):
+    var remaining_impact_frames: int = int(round(
+        defender.state_time * PortFighter.SOURCE_FRAME_RATE
+    ))
+    for _i: int in range(maxi(remaining_impact_frames, 0)):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stun":
         push_error("Low kick impactstun did not enter stun: " + defender.state)
