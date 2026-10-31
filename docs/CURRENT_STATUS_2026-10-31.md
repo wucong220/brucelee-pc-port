@@ -37,6 +37,7 @@
 - reaction push 的轴向/符号与 `oppposestun` 精确时序仍是 prototype，非原版逐帧还原
 - `all_stunned` 的 `stun→stun2`、`stun2→stunfall` 来源窗口为 [55,61]，`stunfall→faceupko` 为 [71,79]；候选选择窗口起点 55/55/71，精确原版调度仍未验证
 - `stun` 现在接受 `impactsfromstun` 的 light/medium/hard/brutal 候选反应（`all_impct_light_frnt_high/low`、`all_impct_crotch`、`all_impct_hard_frnt_high`、`stun_brutal`）；hard → `faceupko`，brutal → `stun_brutal`（`all_impct_spectacular_lft`）后进入 `facedownko`。当前攻击配置仍没有 brutal 来源，该分支由候选50的合成反应测试覆盖。
+- brutal 格挡链接 96/346 已接入 `highblockbrutal`（`all_block_high_brutal`，来源窗口 [17,20] → `idle2`）；当前没有 brutal 攻击来源，使用候选50的合成格挡测试覆盖。
 - `faceupko` 是 KO 终点；`validate_stun.gd` 验证进入 `faceupko`，不是独立 `ko` 候选动画播放
 - `endattack1/2` 不只从 `stun/stun2` 进入；普通 `hitstun` 命中后也可进入，当前实现两者都允许
 
