@@ -3869,6 +3869,20 @@ func receive_hit(
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
     if (health <= 0.0 and not blocked
+            and _candidate_clip_paths.has("all_impct_hard_frnt_high")
+            and last_reaction_source_action == "impacthardfronthigh"):
+        # Source link 113: healthzero -> faceupko at [23,29].
+        state = "stunimpact"
+        state_time = 23.0 / SOURCE_FRAME_RATE
+        combo_hits = 0
+        last_reaction_source_action = "impacthardfronthigh"
+        last_reaction_animation = "all_impct_hard_frnt_high"
+        last_reaction_exit_frame = 23
+        last_reaction_entry_frame = 0
+        last_reaction_clip_implemented = true
+        _stun_impact_next_state = "faceupko"
+        return true
+    if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("all_impct_hard_frnt_low")
             and last_reaction_source_action in [
                 "impacthardfrontlow", "impacthardfrontmid"
