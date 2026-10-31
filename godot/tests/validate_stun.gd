@@ -46,8 +46,19 @@ func _run() -> void:
         push_error("receive_hit rejected stun fixture")
         quit(1)
         return
+    if player.state != "impactstun":
+        push_error("Lethal normal hit did not enter impactstun: " + player.state)
+        quit(1)
+        return
+    player._animate_candidate()
+    if player.candidate_animation_clip != String(clips["all_impct_light_frnt_high"]):
+        push_error("impactstun did not play all_impct_light_frnt_high")
+        quit(1)
+        return
+    for _i: int in range(14):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stun":
-        push_error("Lethal normal hit did not enter stun: " + player.state)
+        push_error("impactstun did not enter stun: " + player.state)
         quit(1)
         return
     player._animate_candidate()
@@ -234,6 +245,8 @@ func _run() -> void:
     for _i: int in range(6):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    for _i: int in range(14):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stun":
         push_error("Stun endmove setup did not stun defender: " + defender.state)
         quit(1)
@@ -263,6 +276,8 @@ func _run() -> void:
         return
     for _i: int in range(6):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    for _i: int in range(14):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stun":
         push_error("Stun2 endmove setup did not stun defender: " + defender.state)

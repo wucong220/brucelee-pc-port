@@ -219,6 +219,7 @@ const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
 const STUN_DURATION_FRAMES: int = 61
 const STUN_FALL_DURATION_FRAMES: int = 79
+const STUN_IMPACT_ENTRY_FRAMES: int = 14
 const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
 const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
 const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
@@ -2128,6 +2129,14 @@ func _verified_post_hit_return_state() -> String:
     return "idle"
 
 
+func _advance_impactstun_state(delta: float) -> void:
+    state_time -= delta
+    if state_time > 0.000001:
+        return
+    state = "stun"
+    state_time = float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+
+
 func _advance_stun_state(delta: float) -> void:
     state_time -= delta
     if state_time > 0.000001:
@@ -2981,6 +2990,9 @@ func _physics_process(delta: float) -> void:
     _animate_candidate()
 
 func _advance_timed_states(delta: float) -> void:
+    if state == "impactstun":
+        _advance_impactstun_state(delta)
+        return
     if state in ["stun", "stun2", "stunfall"]:
         _advance_stun_state(delta)
         return
@@ -3515,7 +3527,7 @@ func receive_hit(
         return true
     if state in [
         "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
-        "impactfaceup", "faceupko", "stun", "stun2", "stunfall", "stunimpact",
+        "impactfaceup", "faceupko", "stun", "stun2", "stunfall", "stunimpact", "impactstun",
     ]:
         return false
     var state_before: String = state
@@ -3572,15 +3584,19 @@ func receive_hit(
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("stun")
             and String(reaction.get("source_action", "")).begins_with("impactlight")):
-        # Source impactstun links use healthzero plus a normal-strength hit;
-        # this is a prototype state, not a claim that all native stun timing is recovered.
-        state = "stun"
-        state_time = float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+        # Source impactstun high/low links land at [14,17] before stun; this
+        # prototype plays the matching impact reaction for 14 frames first.
+        state = "impactstun"
+        state_time = float(STUN_IMPACT_ENTRY_FRAMES) / SOURCE_FRAME_RATE
         combo_hits = 0
-        last_reaction_group = ""
-        last_reaction_source_action = ""
-        last_reaction_animation = STUN_CLIP
-        last_reaction_exit_frame = -1
+        last_reaction_group = "hit"
+        last_reaction_source_action = "impactstun"
+        last_reaction_animation = (
+            "all_impct_light_frnt_low"
+            if String(reaction.get("source_action", "")).contains("low")
+            else "all_impct_light_frnt_high"
+        )
+        last_reaction_exit_frame = STUN_IMPACT_ENTRY_FRAMES
         last_reaction_clip_implemented = true
         return true
     if (health <= 0.0 and state_before == "facedownidle"
@@ -3703,7 +3719,7 @@ func _animate_candidate() -> void:
         requested = "stun"
     elif state == "stunfall" and _candidate_clip_paths.has("stun_fall"):
         requested = "stun_fall"
-    elif (state in ["hitstun", "blockstun", "stunimpact"]
+    elif (state in ["hitstun", "blockstun", "stunimpact", "impactstun"]
             and last_reaction_clip_implemented
             and _candidate_clip_paths.has(last_reaction_animation)):
         requested = last_reaction_animation
