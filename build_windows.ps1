@@ -56,12 +56,34 @@ function Test-ReparsePointInPath([string]$path) {
     return $false
 }
 
+function Test-SubstPath([string]$path, [string[]]$substLines = $null) {
+    if ($null -eq $substLines) {
+        $substLines = @(& cmd.exe /c subst 2>$null)
+    }
+    foreach ($substLine in $substLines) {
+        if ($substLine -match '^([A-Za-z]):\s*=>') {
+            $substDrive = $Matches[1] + ':\'
+            if ($path.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase)) {
+                return $true
+            }
+        }
+    }
+    return $false
+}
+
 if ($SelfTest) {
     if (-not (Test-PathOverlap 'C:\Work\staging' 'c:\work\staging\project')) {
         throw 'Case-insensitive child overlap was not detected.'
     }
     if (Test-PathOverlap 'C:\Work\staging' 'D:\Work\project') {
         throw 'Unrelated paths were reported as overlapping.'
+    }
+    $substFixture = @('Z: => C:\repo\godot')
+    if (-not (Test-SubstPath 'Z:\out' $substFixture)) {
+        throw 'SUBST drive path was not detected.'
+    }
+    if (Test-SubstPath 'C:\out' $substFixture) {
+        throw 'A regular path was misreported as SUBST.'
     }
     $junction = Join-Path $env:TEMP ('brucelee-path-overlap-junction-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Junction -Path $junction -Target $rootFull | Out-Null
@@ -84,16 +106,9 @@ if ((Test-ReparsePointInPath $BuildRoot) -or (Test-ReparsePointInPath $staging) 
         (Test-ReparsePointInPath $sourceProject) -or (Test-ReparsePointInPath $root)) {
     throw 'BuildRoot/staging/source paths must not traverse a junction or symlink.'
 }
-$substOutput = & cmd.exe /c subst 2>$null
-foreach ($substLine in @($substOutput)) {
-    if ($substLine -match '^([A-Za-z]):\\') {
-        $substDrive = $Matches[1] + ':\'
-        if ($buildRootFull.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase) -or
-                $sourceFull.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase) -or
-                $rootFull.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase)) {
-            throw 'BuildRoot/source paths must not use a SUBST virtual drive.'
-        }
-    }
+if ((Test-SubstPath $buildRootFull) -or (Test-SubstPath $sourceFull) -or
+        (Test-SubstPath $rootFull)) {
+    throw 'BuildRoot/source paths must not use a SUBST virtual drive.'
 }
 if (Test-Path $staging) { throw 'Generated staging directory already exists.' }
 New-Item -ItemType Directory -Force -Path $staging | Out-Null
