@@ -884,7 +884,7 @@
         "height": "low",
         "direction": "frontal",
         "source_action": "impacthardfrontlow",
-        "animation": "hard_frontlow",
+        "animation": "all_impct_hard_frnt_low",
         "animation_radius": 70.0,
         "entry_frame": 0,
         "exit_start_frame": 20,

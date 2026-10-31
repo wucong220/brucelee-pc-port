@@ -46,7 +46,6 @@ const CANDIDATE_CLIPS: Dictionary = {
     "stun_fall": "all_stunned_fall",
     "stun_hard": "all_impct_hard_frnt_high",
     "stun_brutal": "all_impct_spectacular_lft",
-    "hard_frontlow": "all_impct_hard_frnt_low",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -1005,7 +1004,7 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "height": "low",
             "direction": "frontal",
             "source_action": "impacthardfrontlow",
-            "animation": "hard_frontlow",
+            "animation": "all_impct_hard_frnt_low",
             "animation_radius": 70.0,
             "entry_frame": 0,
             "exit_start_frame": 20,
@@ -1822,7 +1821,7 @@ func _try_load_candidate_visual() -> void:
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
             "endattack1", "endattack2", "stun", "stun_fall",
-            "stun_hard", "stun_brutal", "hard_frontlow"]:
+            "stun_hard", "stun_brutal"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -3870,7 +3869,7 @@ func receive_hit(
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
     if (health <= 0.0 and not blocked
-            and _candidate_clip_paths.has("hard_frontlow")
+            and _candidate_clip_paths.has("all_impct_hard_frnt_low")
             and last_reaction_source_action in [
                 "impacthardfrontlow", "impacthardfrontmid"
             ]):
@@ -3880,7 +3879,7 @@ func receive_hit(
         state_time = 21.0 / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_source_action = "impacthardfrontlow"
-        last_reaction_animation = "hard_frontlow"
+        last_reaction_animation = "all_impct_hard_frnt_low"
         last_reaction_exit_frame = 21
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true

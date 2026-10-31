@@ -319,7 +319,7 @@ func _run() -> void:
         {"strength": "hard", "height": "low", "direction": "frontal"}, false
     )
     if (String(frontlow_reaction.get("source_action", "")) != "impacthardfrontlow"
-            or String(frontlow_reaction.get("animation", "")) != "hard_frontlow"
+            or String(frontlow_reaction.get("animation", "")) != "all_impct_hard_frnt_low"
             or int(frontlow_reaction.get("exit_start_frame", -1)) != 20
             or int(frontlow_reaction.get("animation_duration_frames", -1)) != 23):
         push_error("hard frontlow nonlethal reaction mismatch")
@@ -333,10 +333,10 @@ func _run() -> void:
         push_error("hard frontlow nonlethal did not enter hitstun")
         quit(1)
         return
-    var had_frontlow: bool = clips.has("hard_frontlow")
+    var had_frontlow: bool = clips.has("all_impct_hard_frnt_low")
     if not had_frontlow:
         # State transition is testable without the optional visual clip.
-        clips["hard_frontlow"] = "synthetic:all_impct_hard_frnt_low"
+        clips["all_impct_hard_frnt_low"] = "synthetic:all_impct_hard_frnt_low"
     for key: Dictionary in [
         {"height": "low", "source": "impacthardfrontlow"},
         {"height": "medium", "source": "impacthardfrontmid"},
@@ -357,7 +357,7 @@ func _run() -> void:
             return
         if (player.state != "stunimpact"
                 or player.last_reaction_source_action != "impacthardfrontlow"
-                or player.last_reaction_animation != "hard_frontlow"):
+                or player.last_reaction_animation != "all_impct_hard_frnt_low"):
             push_error("hard frontlow lethal path mismatch: " + String(key["source"]))
             quit(1)
             return
@@ -373,7 +373,7 @@ func _run() -> void:
             quit(1)
             return
     if not had_frontlow:
-        clips.erase("hard_frontlow")
+        clips.erase("all_impct_hard_frnt_low")
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
         "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko",
             "stun/stun2 brutal -> facedownko", "brutal block -> highblockbrutal",
