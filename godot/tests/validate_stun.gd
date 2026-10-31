@@ -129,6 +129,24 @@ func _run() -> void:
         push_error("low impactstun did not enter stun on frame 14: " + player.state)
         quit(1)
         return
+    # A lethal medium light hit must skip impactstun and still KO immediately.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 5.0
+    var medium_reaction: Dictionary = {
+        "source_action": "impactlightfrontmid",
+        "animation": "all_impct_light_frnt_mid",
+        "exit_start_frame": 14,
+        "animation_duration_frames": 16,
+        "linking_frame": 0,
+    }
+    if not player.receive_hit(5.0, false, 0.0, 1.0, medium_reaction):
+        push_error("medium lethal hit was rejected")
+        quit(1)
+        return
+    if player.state != "ko":
+        push_error("medium lethal hit did not enter generic ko: " + player.state)
+        quit(1)
+        return
     # Nonlethal and blocked hits must not enter the stun state.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0

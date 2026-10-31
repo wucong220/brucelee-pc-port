@@ -22,7 +22,7 @@
 - `parrylow` 作为 `parryhigh` 的低段 PC 扩展
 - `grab1miss/grab2miss → grab1/grab2`（`m02_grab_01` 从 Ken 骨架实验性重定向）
 - `endattack1/2` 作为 endmove/收招动作，零伤害
-- `impactstun → stun → stun2 → stunfall → faceupko` 候选状态（48 段候选，`all_stunned`）；`impactstun` 仅接受 high/low light reaction（medium 因缺少独立 impactstun 映射保持 fail-closed），播 14 帧后进入 stun；`stunfall` 结束走 `_begin_faceup_ko()`。
+- `impactstun → stun → stun2 → stunfall → faceupko` 候选状态（48 段候选，`all_stunned`）；`impactstun` 仅接受 high/low light reaction（medium 致命命中跳过 impactstun，走普通 KO），播 14 帧后进入 stun；`stunfall` 结束走 `_begin_faceup_ko()`。
 - `endattack1/2` 可从 prototype stun/stun2 进入
 - 三个 light frontal reaction 的 source depth → prototype forward push
 

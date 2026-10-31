@@ -3583,11 +3583,10 @@ func receive_hit(
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("stun")
-            and String(reaction.get("source_action", "")).begins_with("impactlight")):
+            and String(reaction.get("source_action", "")) in [
+                "impactlightfronthigh", "impactlightfrontlow"
+            ]):
         var stun_entry_source: String = String(reaction.get("source_action", ""))
-        if (stun_entry_source != "impactlightfronthigh"
-                and stun_entry_source != "impactlightfrontlow"):
-            return false
         # Source impactstun high/low links land at [14,17] before stun; this
         # prototype plays the matching impact reaction for 14 frames first.
         state = "impactstun"
