@@ -15,8 +15,8 @@ $dist = if ([string]::IsNullOrWhiteSpace($OutputDir)) {
 } else {
     $OutputDir
 }
-$project = Join-Path $BuildRoot 'godot'
-$buildDist = Join-Path $BuildRoot 'dist'
+$project = Join-Path $BuildRoot 'staging\godot'
+$buildDist = Join-Path $BuildRoot 'staging\dist'
 $targetName = 'DragonWarrior_PC_Prototype.exe'
 $delivered = Join-Path $dist $targetName
 $profile = if ($Debug) { '--export-debug' } else { '--export-release' }
@@ -25,10 +25,16 @@ Write-Host "Godot: $GodotExe"
 Write-Host "Source project: $sourceProject"
 Write-Host "Build project: $project"
 
-if (Test-Path $BuildRoot) { Remove-Item -LiteralPath $BuildRoot -Recurse -Force }
-New-Item -ItemType Directory -Force -Path $BuildRoot | Out-Null
-Copy-Item -LiteralPath $sourceProject -Destination $project -Recurse
+$buildRootFull = [System.IO.Path]::GetFullPath($BuildRoot)
+$sourceFull = [System.IO.Path]::GetFullPath($sourceProject)
+$rootFull = [System.IO.Path]::GetFullPath($root)
+if ($buildRootFull -eq $rootFull -or $buildRootFull -eq $sourceFull) {
+    throw 'BuildRoot must not be the repository or source project root.'
+}
+$staging = Join-Path $BuildRoot 'staging'
+if (Test-Path $staging) { Remove-Item -LiteralPath $staging -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $buildDist | Out-Null
+Copy-Item -LiteralPath $sourceProject -Destination $project -Recurse
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
 & $GodotExe --headless --path $project --editor --quit
@@ -37,20 +43,27 @@ if (-not $?) { throw 'Godot import/script validation failed.' }
 & $GodotExe --headless --path $project $profile 'Windows Desktop' (Join-Path $buildDist $targetName)
 if (-not $?) { throw 'Windows export failed. Install the matching Godot export templates and retry.' }
 
+$targetPath = Join-Path $buildDist $targetName
+$pckPath = Join-Path $buildDist 'DragonWarrior_PC_Prototype.pck'
 $exported = $null
 for ($attempt = 0; $attempt -lt 150 -and $null -eq $exported; $attempt++) {
-    $exported = Get-ChildItem -LiteralPath $buildDist -Filter '*.exe' -File -ErrorAction SilentlyContinue |
-        Select-Object -First 1
+    if (Test-Path -LiteralPath $targetPath) {
+        $exported = Get-Item -LiteralPath $targetPath -ErrorAction SilentlyContinue
+    }
     if ($null -eq $exported) { Start-Sleep -Milliseconds 200 }
 }
 if ($null -eq $exported) { throw 'Godot did not produce the expected EXE.' }
+$exportedPck = $null
+for ($attempt = 0; $attempt -lt 50 -and $null -eq $exportedPck; $attempt++) {
+    if (Test-Path -LiteralPath $pckPath) {
+        $exportedPck = Get-Item -LiteralPath $pckPath -ErrorAction SilentlyContinue
+    }
+    if ($null -eq $exportedPck) { Start-Sleep -Milliseconds 200 }
+}
+if ($null -eq $exportedPck) { throw 'Godot did not produce the expected PCK.' }
 
 Copy-Item -LiteralPath $exported.FullName -Destination $delivered -Force
-$exportedPck = Get-ChildItem -LiteralPath $buildDist -Filter '*.pck' -File -ErrorAction SilentlyContinue |
-    Select-Object -First 1
-if ($null -ne $exportedPck) {
-    Copy-Item -LiteralPath $exportedPck.FullName -Destination (Join-Path $dist 'DragonWarrior_PC_Prototype.pck') -Force
-}
+Copy-Item -LiteralPath $exportedPck.FullName -Destination (Join-Path $dist 'DragonWarrior_PC_Prototype.pck') -Force
 
 Write-Host "Built: $delivered"
 Write-Host 'Reminder: This is a combat prototype, not the complete original game.'
