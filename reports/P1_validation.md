@@ -40,6 +40,7 @@
   - `Godot_v4.7.2-stable_win64.exe --headless --path <smoke_root>/godot --export-pack "Windows Desktop" <dist>/DragonWarrior_PC_Prototype.pck`
   - 产物：532,748 字节，SHA-256 `c48237afe11b0895c36a5b5ffb9784825603634762e6ae6d37c8ec4e10e0f5cb`
   - 产物位于仓库外，不提交。
+  - PCK 启动自检：`Godot_v4.7.2-stable_win64.exe --headless --main-pack <dist>/DragonWarrior_PC_Prototype.pck --quit`，退出码 0；日志中的菜单背景缺失警告不阻断启动。
 
 ## 未冒充为已验证
 
