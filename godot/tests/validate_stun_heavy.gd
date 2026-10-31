@@ -196,6 +196,18 @@ func _run() -> void:
         push_error("brutal medium hit did not enter hitstun")
         quit(1)
         return
+    if (player.last_reaction_entry_frame != 6
+            or absf(player.state_time - 19.0 / PortFighter.SOURCE_FRAME_RATE) > 0.001):
+        push_error("brutal medium runtime did not start at frame 6 and end at 25")
+        quit(1)
+        return
+    if clips.has("all_sp_pnch_low_forset04"):
+        player._animate_candidate()
+        if absf(player._candidate_animation.current_animation_position
+                - 6.0 / PortFighter.SOURCE_FRAME_RATE) > 0.001:
+            push_error("brutal medium animation did not seek to frame 6")
+            quit(1)
+            return
     player.reset_fighter(Vector3.ZERO)
     player.state = "faceupidle"
     if not player.reaction_for_incoming(
