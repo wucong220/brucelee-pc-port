@@ -87,6 +87,11 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 原版要求 `oppposestun + grabdistance`；原型用“抓取后受控/硬直 + 距离”近似，
 不声称是完整眩晕状态。
 
+低段格挡反击（PC 扩展）：与 `parry_high` 共用同一套“按住防御 + 下+朝向 ×3”
+输入，但对手来招高度为 `low` 时触发 `parrylow`（动画 `m01_kick_low_02`，27 帧，
+无伤害，消耗 30 怒气）。原版 `brucelee.set` 没有指向 `parrylow` 的 link；这里按用户
+要求把它作为 `parryhigh` 的低段对应实现，属于 PC 原型扩展，不声称是原版可触发路径。
+
 抓取（原型两段式）：基础 `A` 后按 `左+A → A → A` 进入 `grab1_miss`，
 第 8–9 帧若对手在 0.62 世界单位内、站立且不格挡则链到 `grab1`；
 基础 `B` 后按 `左+B → C → C` 进入 `grab2_miss`，条件相同时链到 `grab2`。

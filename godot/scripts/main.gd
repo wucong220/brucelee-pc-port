@@ -477,8 +477,15 @@ func _update_parry_input() -> void:
             player.position.x - computer.position.x,
             player.position.z - computer.position.z).length()
         if distance <= computer.attack_reach_world(computer.attack_kind, player):
-            player.record_parry_press()
+            var parry_kind: String = ("parry_low"
+                    if _incoming_attack_is_low() else "parry_high")
+            player.record_parry_press(parry_kind)
     _parry_input_was_pressed = pressed
+
+
+func _incoming_attack_is_low() -> bool:
+    var details: Dictionary = computer.ATTACKS.get(computer.attack_kind, {})
+    return str(details.get("source_impact", {}).get("height", "")) == "low"
 
 
 func _physics_process(delta: float) -> void:

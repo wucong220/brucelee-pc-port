@@ -34,6 +34,7 @@ const CANDIDATE_CLIPS: Dictionary = {
     "special_punch_high_miss": "m01_sp_pnch_high_fail",
     "special_punch_high_hit": "m01_sp_pnch_high",
     "parry_high": "m01_parry_high",
+    "parry_low": "m01_kick_low_02",
     "parry_attack": "m01_pnch_high_03",
     "grab1": "m01_grab_01",
     "grab2": "m01_grab_02",
@@ -212,8 +213,9 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
 }
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
 const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
+const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
 const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
-const NON_CONTACT_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
+const NON_CONTACT_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true, "parry_low": true}
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.
@@ -482,6 +484,17 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "radius": 40.0,
         "body_part": "larm",
         "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "parry_low": {
+        "source_action": "parrylow",
+        "animation": "m01_kick_low_02",
+        "frame_count": 27,
+        "damage": 0.0,
+        "radius": 40.0,
+        "body_part": "larm",
+        "height": "low",
         "strength": "normal",
         "direction": "frontal",
     },
@@ -1607,7 +1620,7 @@ func _try_load_candidate_visual() -> void:
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
-            "parry_high", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
+            "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
             "endattack1", "endattack2"]:
         if not candidate_clips.has(action):
             continue
@@ -2477,7 +2490,7 @@ func record_standing_combo_press(
     return _try_begin_pending_standing_combo()
 
 
-func record_parry_press() -> bool:
+func record_parry_press(kind: String = "parry_high") -> bool:
     if state not in ["idle", "idle2"]:
         _parry_press_times.clear()
         return false
@@ -2487,17 +2500,20 @@ func record_parry_press() -> bool:
     if _parry_press_times.size() < 3:
         return false
     _parry_press_times.clear()
-    if rage < 33.0:
+    if not ATTACKS.has(kind):
         return false
-    rage -= 33.0
-    attack_kind = "parry_high"
+    var cost: float = float(PARRY_RAGE_COSTS.get(kind, 33.0))
+    if rage < cost:
+        return false
+    rage -= cost
+    attack_kind = kind
     attack_sequence += 1
     _attack_connected = false
     _attack_hit_landed = false
     _grab_connected = false
     _multi_impact_applied.clear()
     state = "startup"
-    state_time = float(ATTACKS["parry_high"]["startup"])
+    state_time = float(ATTACKS[kind]["startup"])
     _restart_candidate_action()
     return true
 
@@ -2716,7 +2732,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -3565,7 +3581,7 @@ func _animate_candidate() -> void:
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",
                 "special_punch_high_miss", "special_punch_high_hit",
-                "parry_high", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
+                "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
                 "endattack1", "endattack2"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]
