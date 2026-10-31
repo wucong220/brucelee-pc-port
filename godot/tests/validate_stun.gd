@@ -310,6 +310,20 @@ func _run() -> void:
             push_error("empty stunimpact reaction changed state from " + source_state)
             quit(1)
             return
+    # If the high impact clip is absent, impactstun must fall through to KO.
+    var saved_high_clip: String = String(clips["all_impct_light_frnt_high"])
+    clips.erase("all_impct_light_frnt_high")
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 5.0
+    if not player.receive_hit(5.0, false, 0.0, 1.0, reaction):
+        push_error("missing-high-clip fixture was rejected")
+        quit(1)
+        return
+    if player.state != "ko":
+        push_error("missing high clip did not fall through to ko: " + player.state)
+        quit(1)
+        return
+    clips["all_impct_light_frnt_high"] = saved_high_clip
     var defender: PortFighter = PortFighter.new()
     defender.configure("Stun endmove defender", false, Color.CYAN)
     defender.configure_attack_config(PortFighter.ATTACK_CONFIG_PATH)
