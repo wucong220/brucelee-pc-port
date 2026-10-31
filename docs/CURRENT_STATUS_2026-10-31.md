@@ -2,13 +2,13 @@
 
 - 工作树：`C:\Users\Lenovo\.codex\worktrees\prototype-menu\李小龙`
 - 分支：`codex/combat-next`
-- PR #96 的当前 HEAD：`92fcfb8`（文档提交）
+- PR #96 的当前 HEAD：`8efbebc`（文档提交）
 - 记录本文件时的代码基线：`bb7eea6`（PR #95 的 HEAD；远端 main 已包含 #93/#94/#95 合并，PR #95 merge commit 为 `36cd24a`）
 
 ## 测试口径
 
 - 本地工作树 `bb7eea6` + candidate48：13 个 Godot 套件 exit 0，Python 243 passed / 1 skipped（默认 TEMP）。
-- PR #96 的 GitHub Actions 实际结果：Python workflow SUCCESS，**247 total / 246 passed / 1 skipped**；GitHub Actions 未执行 Godot 测试。
+- PR #96 的 GitHub Actions 实际结果（在 92fcfb8 上执行，Run #318）：Python workflow SUCCESS，**247 total / 246 passed / 1 skipped**；GitHub Actions 未执行 Godot 测试。
 - 本地 Godot 套件：`validate_standing_combos`、`validate_directional_combos`、`validate_directional_input`、`validate_special_moves`、`validate_level2_moves`、`validate_special_kick_low`、`validate_special_punch_low`、`validate_special_punch_high`、`validate_parry`、`validate_grabs`、`validate_endattacks`、`validate_reaction_push`、`validate_stun`。
 - 执行方式：`Godot_v4.7.2-stable_win64.exe --headless --path godot --script res://tests/<suite>.gd -- <candidate.glb>`；`validate_reaction_push` 不需要候选参数。
 - stun/endmove 的 48 段候选：`D:\BruceLeeWork\bruce_candidate_48_hair.glb`，4,087,860 字节，SHA-256 `d59e91193bdc30af1b3240d78cb32bb1113a405f28557fa749ae68175cbe2b7b`。
