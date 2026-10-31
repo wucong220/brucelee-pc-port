@@ -49,7 +49,10 @@ func _run() -> void:
     if not _validate_blocked_grab_rejects_endattack(player, defender):
         quit(1)
         return
-    if not _validate_normal_hit_endmove(player, defender):
+    if not _validate_normal_hit_endmove(player, defender, "endattack1", "b", "a", 380):
+        quit(1)
+        return
+    if not _validate_normal_hit_endmove(player, defender, "endattack2", "a", "c", 240):
         quit(1)
         return
     print("ENDATTACK_VALIDATION=" + JSON.stringify({
@@ -203,7 +206,10 @@ func _validate_blocked_grab_rejects_endattack(player: PortFighter, defender: Por
     return true
 
 
-func _validate_normal_hit_endmove(player: PortFighter, defender: PortFighter) -> bool:
+func _validate_normal_hit_endmove(
+        player: PortFighter, defender: PortFighter,
+        target: String, first_key: String, repeat_key: String, steps: int
+) -> bool:
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player._time = 0.0
     player.rage = 70.0
@@ -216,27 +222,27 @@ func _validate_normal_hit_endmove(player: PortFighter, defender: PortFighter) ->
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if not bool(player.get("_attack_hit_landed")):
-        push_error("Normal base hit did not land before endmove")
+        push_error("Normal base hit did not land before " + target)
         return false
     if defender.state != "hitstun":
-        push_error("Endmove normal-hit test is not inside hitstun")
+        push_error(target + " normal-hit test is not inside hitstun")
         return false
     var health_before: float = defender.health
-    player.record_standing_combo_press("b", ["up", "in"])
-    player.record_standing_combo_press("a")
-    player.record_standing_combo_press("a")
-    if player.attack_kind != "endattack1":
+    player.record_standing_combo_press(first_key, ["up", "in"])
+    player.record_standing_combo_press(repeat_key)
+    player.record_standing_combo_press(repeat_key)
+    if player.attack_kind != target:
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
         if not player._try_begin_pending_standing_combo():
-            push_error("Normal-hit endmove did not start")
+            push_error("Normal-hit " + target + " did not start")
             return false
-    if player.attack_kind != "endattack1":
-        push_error("Expected endattack1 after normal hit, got " + player.attack_kind)
+    if player.attack_kind != target:
+        push_error("Expected " + target + " after normal hit, got " + player.attack_kind)
         return false
-    for _i: int in range(380):
+    for _i: int in range(steps):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if absf(defender.health - health_before) > 0.001:
-        push_error("Normal-hit endmove invented damage")
+        push_error("Normal-hit " + target + " invented damage")
         return false
     return true
 
