@@ -247,13 +247,13 @@ func _run() -> void:
             quit(1)
             return
     for case: Dictionary in [
-        {"height": "high", "direction": "fromleft",
+        {"height": "high", "direction": "fromleft", "exit": 15,
             "source": "impactlightlefthigh", "animation": "all_impct_light_lft_high"},
-        {"height": "high", "direction": "fromright",
+        {"height": "high", "direction": "fromright", "exit": 15,
             "source": "impactlightrighthigh", "animation": "all_impct_light_rht_high"},
-        {"height": "low", "direction": "fromleft",
+        {"height": "low", "direction": "fromleft", "exit": 15,
             "source": "impactlightleftlow", "animation": "all_impct_light_lft_low"},
-        {"height": "low", "direction": "fromright",
+        {"height": "low", "direction": "fromright", "exit": 13,
             "source": "impactlightrightlow", "animation": "all_impct_light_rht_low"},
     ]:
         player.reset_fighter(Vector3.ZERO)
@@ -264,7 +264,7 @@ func _run() -> void:
         }, false)
         if (String(reaction.get("source_action", "")) != String(case["source"])
                 or String(reaction.get("animation", "")) != String(case["animation"])
-                or int(reaction.get("exit_start_frame", -1)) != 13
+                or int(reaction.get("exit_start_frame", -1)) != int(case["exit"])
                 or int(reaction.get("animation_duration_frames", -1)) != 17):
             push_error("normal directional reaction mismatch: " + String(case["source"]))
             quit(1)
