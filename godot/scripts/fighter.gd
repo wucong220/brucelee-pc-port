@@ -44,6 +44,7 @@ const CANDIDATE_CLIPS: Dictionary = {
     "endattack2": "m01_end_attack_02",
     "stun": "all_stunned",
     "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -905,6 +906,7 @@ var _special_stepback_origin: bool = false
 var _multi_impact_applied: Array = []
 var _attack_hit_landed: bool = false
 var _grab_connected: bool = false
+var _stun_impact_next_state: String = "stunfall"
 var _parry_press_times: Array = []
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
@@ -1634,7 +1636,8 @@ func _try_load_candidate_visual() -> void:
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
-            "endattack1", "endattack2", "stun", "stun_fall"]:
+            "endattack1", "endattack2", "stun", "stun_fall",
+            "stun_hard"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2143,9 +2146,18 @@ func _advance_stun_state(delta: float) -> void:
 
 func _advance_stun_impact_state(delta: float) -> void:
     state_time -= delta
-    if state_time <= 0.000001:
+    if state_time > 0.000001:
+        return
+    if _stun_impact_next_state == "stunfall":
         state = "stunfall"
         state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
+    elif _stun_impact_next_state == "faceupko":
+        _begin_faceup_ko(0.0)
+    elif _stun_impact_next_state == "facedownko":
+        _begin_facedown_ko()
+    else:
+        state = _stun_impact_next_state
+        state_time = 0.0
 
 
 func _advance_return_state(delta: float) -> void:
@@ -3474,18 +3486,22 @@ func receive_hit(
         var stun_source: String = String(reaction.get("source_action", ""))
         var stun_animation: String
         var stun_exit_frame: int
-        match stun_source:
-            "impactlightfronthigh":
-                stun_animation = "all_impct_light_frnt_high"
-                stun_exit_frame = 13
-            "impactlightfrontlow":
-                stun_animation = "all_impct_light_frnt_low"
-                stun_exit_frame = 13
-            "impactlightfrontmid":
-                stun_animation = "all_impct_crotch"
-                stun_exit_frame = 30
-            _:
-                return false
+        var stun_next_state: String = "stunfall"
+        if stun_source == "impactlightfronthigh":
+            stun_animation = "all_impct_light_frnt_high"
+            stun_exit_frame = 13
+        elif stun_source == "impactlightfrontlow":
+            stun_animation = "all_impct_light_frnt_low"
+            stun_exit_frame = 13
+        elif stun_source == "impactlightfrontmid":
+            stun_animation = "all_impct_crotch"
+            stun_exit_frame = 30
+        elif stun_source.begins_with("impacthard"):
+            stun_animation = "stun_hard"
+            stun_exit_frame = 20
+            stun_next_state = "faceupko"
+        else:
+            return false
         if not _candidate_clip_paths.has(stun_animation):
             return false
         health = maxf(0.0, health - amount)
@@ -3497,6 +3513,7 @@ func receive_hit(
         last_reaction_animation = stun_animation
         last_reaction_exit_frame = stun_exit_frame
         last_reaction_clip_implemented = true
+        _stun_impact_next_state = stun_next_state
         return true
     if state in [
         "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",

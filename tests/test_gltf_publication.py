@@ -23,7 +23,7 @@ class TestGltfPublication(unittest.TestCase):
                     root / 'missing.mesh',
                     root / 'candidate.glb',
                     animation_sources=[
-                        root / f'animation-{index}.anm' for index in range(49)
+                        root / f'animation-{index}.anm' for index in range(51)
                     ],
                 )
             self.assertFalse((root / 'candidate.glb').exists())
@@ -36,7 +36,7 @@ class TestGltfPublication(unittest.TestCase):
                     root / 'missing.mesh',
                     root / 'candidate.glb',
                     animation_sources=[
-                        root / f'animation-{index}.anm' for index in range(48)
+                        root / f'animation-{index}.anm' for index in range(50)
                     ],
                 )
             except (GltfExportError, FileNotFoundError) as exc:
