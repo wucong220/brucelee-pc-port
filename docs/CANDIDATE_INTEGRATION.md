@@ -436,7 +436,8 @@ Android 物理键位；抓取类 `endattack*` 链接仍未接入。
 SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 加入 `m01_kck_front_step` 后，由原型怒气槽和 `背向+B → 朝向+C → 朝向+C`
 触发，伤害 12、半径 115。专用 `hard/high/frontal` 受击动画
-`all_impct_hard_frnt_high` 现在可被转换器解码（空近似层规则），但尚未接入受击反应表，故仍 fail-closed。
+`all_impct_hard_frnt_high` 已在 50 段候选中接入；加载该候选时普通 hard frontal
+反应和 stun hard-impact 特殊路径可按代码路径播放，缺 clip 时仍 fail-closed。
 完整证据见 `reports/special_moves_evidence.json`。
 
 普通攻击第 2 段使用 35 段带头候选：2,020,448 字节，SHA-256
@@ -455,6 +456,11 @@ stun 原型状态使用 48 段带头候选：4,087,860 字节，SHA-256
 新增 `all_stunned`；`stun`/`stun2` 播 `all_stunned`，`stunfall` 播候选已有的
 `all_stunned_fall`。该状态只在候选确实包含 stun clip 且正常强度命中导致
 healthzero 时进入，是来源 `impactstun` 链的原型近似，未声称完整复刻时序。
+hard stun-impact 使用 50 段带头候选：4,188,076 字节，SHA-256
+`cadd1b1b9bf53a4dbec45ac99f86a21db9686aeaf59569fe250ce0ff38b26605`，
+新增 `all_impct_hard_frnt_high` 和未接线的 `all_impct_spectacular_lft`；
+`stun`/`stun2` 受到未格挡 hard impact 时播放 `all_impct_hard_frnt_high` 20 帧后进入
+`faceupko`，缺该 clip 时该特殊路径 fail-closed。brutal 当前没有战斗来源，仍 fail-closed。
 抓取及 endmove 收招使用 47 段带头候选：4,039,952 字节，SHA-256
 `592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0`，
 包含 `m01_grab_01/02`、重定向的 `m02_grab_01`、`m01_end_attack_01/02`。

@@ -91,7 +91,8 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 眩晕原型（候选）：普通 high/low 攻击使对手 healthzero 时，先播放对应
 `all_impct_light_frnt_high/low` 的 14 帧 `impactstun`，再进入
 `stun → stun2 → stunfall → faceupko`；`stun`/`stun2` 期间可被 endmove 使用。
-`hard` stun-impact 另走 `all_impct_hard_frnt_high → faceupko`。
+`hard` 在 `stun/stun2` 且命中未格挡时才会走 `all_impct_hard_frnt_high → stunimpact → faceupko`；
+普通 hard frontal 命中不使用这条眩晕链。
 这些状态、帧数和 `oppposestun` 等时序仍是 prototype，不是原版逐帧还原。
 
 低段格挡反击（PC 扩展）：与 `parry_high` 共用同一套“按住防御 + 下+朝向 ×3”
