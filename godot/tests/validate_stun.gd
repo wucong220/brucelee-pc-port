@@ -220,6 +220,12 @@ func _run() -> void:
         quit(1)
         return
     player._animate_candidate()
+    var before_repeat_position: float = player._candidate_animation.current_animation_position
+    player._candidate_animation.advance(0.1)
+    if player._candidate_animation.current_animation_position <= before_repeat_position:
+        push_error("cross-direction setup animation did not advance")
+        quit(1)
+        return
     var right_lethal: Dictionary = player.reaction_for_incoming(
         {"strength": "normal", "height": "high", "direction": "fromright"}, false
     )
