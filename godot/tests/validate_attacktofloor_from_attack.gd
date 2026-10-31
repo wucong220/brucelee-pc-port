@@ -61,7 +61,11 @@ func _run() -> void:
         push_error("Could not start grab1 for cross-phase test")
         quit(1)
         return
-    player._advance_timed_states(46.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._advance_timed_states(121.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "active":
+        push_error("grab1 is not active at the first attacktofloor key: " + player.state)
+        quit(1)
+        return
     if not player._candobasicattack_window_contains_current_frame():
         push_error("grab1 is not inside its candobasicattacks window")
         quit(1)
@@ -71,6 +75,10 @@ func _run() -> void:
         quit(1)
         return
     player._advance_timed_states(2.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "recovery":
+        push_error("grab1 did not reach recovery at frame 123: " + player.state)
+        quit(1)
+        return
     if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.BUFFERED:
         push_error("grab1 second attacktofloor key was lost across phase")
         quit(1)
