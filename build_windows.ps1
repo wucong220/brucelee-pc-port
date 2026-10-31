@@ -81,8 +81,9 @@ if ((Test-PathOverlap $stagingFull $rootFull) -or
         (Test-PathOverlap $projectFull $sourceFull)) {
     throw 'BuildRoot/staging must not overlap the repository or source project.'
 }
-if ((Test-ReparsePointInPath $BuildRoot) -or (Test-ReparsePointInPath $staging)) {
-    throw 'BuildRoot/staging must not traverse a junction or symlink.'
+if ((Test-ReparsePointInPath $BuildRoot) -or (Test-ReparsePointInPath $staging) -or
+        (Test-ReparsePointInPath $sourceProject) -or (Test-ReparsePointInPath $root)) {
+    throw 'BuildRoot/staging/source paths must not traverse a junction or symlink.'
 }
 if (Test-Path $staging) { Remove-Item -LiteralPath $staging -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $buildDist | Out-Null
