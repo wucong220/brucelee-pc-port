@@ -2659,7 +2659,15 @@ func _try_begin_pending_standing_combo() -> bool:
         _clear_standing_combo_state()
         return false
     if not _candobasicattack_window_contains_current_frame():
-        return false
+        # endmove is a prototype extension: its source link is from_group
+        # candobasicattacks and requires oppposestun; allow the endmove input
+        # while the actual unblocked hitstun overlap exists, even if the base
+        # action's recorded combo window starts later.
+        if not (ENDATTACK_ATTACKS.has(_standing_combo_pending_attack)
+                and _attack_hit_landed
+                and opponent != null and is_instance_valid(opponent)
+                and opponent.state == "hitstun"):
+            return false
     var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
             _standing_combo_pending_attack, 0.0))
     if special_cost > 0.0 and rage < special_cost:
@@ -2691,7 +2699,7 @@ func _try_begin_pending_standing_combo() -> bool:
             return false
         if (opponent == null or not is_instance_valid(opponent)
                 or opponent.guard_held
-                or opponent.state not in ["hitstun", "idle", "idle2"]):
+                or opponent.state != "hitstun"):
             _clear_standing_combo_state()
             return false
         var end_distance: float = Vector2(
