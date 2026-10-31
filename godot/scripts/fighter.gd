@@ -2691,7 +2691,7 @@ func _try_begin_pending_standing_combo() -> bool:
             return false
         if (opponent == null or not is_instance_valid(opponent)
                 or opponent.guard_held
-                or opponent.state not in ["hitstun", "idle", "idle2"]):
+                or opponent.state != "hitstun"):
             _clear_standing_combo_state()
             return false
         var end_distance: float = Vector2(

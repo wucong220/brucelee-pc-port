@@ -212,7 +212,7 @@ func _validate_normal_hit_endmove(player: PortFighter, defender: PortFighter) ->
     player.opponent = defender
     if not player.request_attack("punch"):
         return false
-    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._advance_timed_states(25.0 / PortFighter.SOURCE_FRAME_RATE)
     if not bool(player.get("_attack_hit_landed")):
         push_error("Normal base hit did not land before endmove")
         return false
