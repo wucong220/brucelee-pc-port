@@ -728,6 +728,20 @@
         "return_action": "faceupidle",
         "return_implemented": true,
         "clip_implemented": false
+      },
+      {
+        "strength": "brutal",
+        "height": "medium",
+        "direction": "frontal",
+        "source_action": "impactbrutalmid",
+        "animation": "all_sp_pnch_low_forset04",
+        "animation_radius": 60.0,
+        "exit_start_frame": 25,
+        "animation_duration_frames": 28,
+        "linking_frame": 0,
+        "return_action": "facedownidle",
+        "return_implemented": false,
+        "clip_implemented": false
       }
     ],
     "block": [

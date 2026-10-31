@@ -849,6 +849,20 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "return_implemented": true,
             "clip_implemented": false,
         },
+        {
+            "strength": "brutal",
+            "height": "medium",
+            "direction": "frontal",
+            "source_action": "impactbrutalmid",
+            "animation": "all_sp_pnch_low_forset04",
+            "animation_radius": 60.0,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 28,
+            "linking_frame": 0,
+            "return_action": "facedownidle",
+            "return_implemented": false,
+            "clip_implemented": false,
+        },
     ],
     "block": [
         {
@@ -3431,9 +3445,6 @@ func attack_reach_world(kind: String, target: PortFighter = null) -> float:
 func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     if _is_brick_facedown_low_impact(impact, blocked):
         return BRICK_FACEDOWN_IMPACT_REACTION.duplicate(true)
-    var exact: Dictionary = _matching_exact_reaction(impact, blocked)
-    if not exact.is_empty():
-        return exact
     if (not blocked and String(impact.get("strength", "")) == "brutal"
             and state in ["stun", "stun2"]):
         # brucelee.set link 134: impactsfromstun + brutal -> stunbrutalimpact,
@@ -3445,6 +3456,9 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
             "animation_duration_frames": 45,
             "linking_frame": 0,
         }
+    var exact: Dictionary = _matching_exact_reaction(impact, blocked)
+    if not exact.is_empty():
+        return exact
     # Hard and brutal attacks have no light-height fallback when the exact link is absent.
     if String(impact.get("strength", "")) != "normal":
         return {}

@@ -1,0 +1,261 @@
+{
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "resource": "adreno_200/set/brucelee.set"
+  },
+  "action": {
+    "name": "impactbrutalmid",
+    "binary": {
+      "ordinal": 194,
+      "directory": "animation/",
+      "basename": "all_sp_pnch_low_forset04",
+      "extension": "anm"
+    },
+    "unique": [],
+    "groups": [
+      [
+        "receivedamage",
+        [
+          0,
+          28
+        ],
+        0
+      ]
+    ],
+    "categories": [],
+    "facing": [
+      1,
+      0
+    ],
+    "pose": "laying",
+    "radius": 60.0,
+    "rage": -20.0,
+    "disablecollision": "false",
+    "sounds": [
+      {
+        "file": {
+          "ordinal": 200,
+          "directory": "sounds/sfx/",
+          "basename": "punch_body_heavy_2",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.5,
+        "unique": "",
+        "is_voice": "false"
+      },
+      {
+        "file": {
+          "ordinal": 206,
+          "directory": "sounds/voices/brick_davies/heavy_pain/",
+          "basename": "hurt_heavy_male_ls_g_death02_brick_davies",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.8500000238418579,
+        "unique": "brickdavis",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 207,
+          "directory": "sounds/voices/bruce_lee/pain_heavy/",
+          "basename": "pain_loud_3",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.699999988079071,
+        "unique": "brucelee",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 208,
+          "directory": "sounds/voices/chief/pain_heavy/",
+          "basename": "hurt_heavy_male_ls_h_death03_the_cheif",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.8500000238418579,
+        "unique": "chief",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 209,
+          "directory": "sounds/voices/johnson/heavy_pain/",
+          "basename": "hurt_heavy_male_ls_d_painscream07_johnson",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.8500000238418579,
+        "unique": "johnson",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 210,
+          "directory": "sounds/voices/ken_goodall/heavy_pain/",
+          "basename": "hurt_heavy_male_ls_c_painscream02_ken",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.8500000238418579,
+        "unique": "kengodall",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 191,
+          "directory": "sounds/voices/lo_ming/heavy_pain/",
+          "basename": "hurt_light_male_ls_l_hurtgrunt07_lo_ming",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.8500000238418579,
+        "unique": "loming",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 192,
+          "directory": "sounds/voices/shen_lo/heavy_pain/",
+          "basename": "male_ls_j_painscream04_shen_lo",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.8500000238418579,
+        "unique": "shenlo",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 204,
+          "directory": "sounds/voices/sin_fu/heavy_pain/",
+          "basename": "male_ls_f_painscream01_sin_fu_a",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.8500000238418579,
+        "unique": "sinfu",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 223,
+          "directory": "sounds/voices/smallboy/pain_heavy/",
+          "basename": "hurt_hard_male_ls_b_death01_small_boy",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.8500000238418579,
+        "unique": "smallboy",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 224,
+          "directory": "sounds/voices/the_master/pain/",
+          "basename": "master_pain_hvy_6",
+          "extension": "wav"
+        },
+        "frame": 6,
+        "volume": 0.699999988079071,
+        "unique": "themaster",
+        "is_voice": "true"
+      },
+      {
+        "file": {
+          "ordinal": 3,
+          "directory": "sounds/sfx/",
+          "basename": "shoe_foot_l",
+          "extension": "wav"
+        },
+        "frame": 17,
+        "volume": 0.5,
+        "unique": "",
+        "is_voice": "false"
+      },
+      {
+        "file": {
+          "ordinal": 162,
+          "directory": "sounds/sfx/",
+          "basename": "fall_2_normal",
+          "extension": "wav"
+        },
+        "frame": 20,
+        "volume": 0.5,
+        "unique": "",
+        "is_voice": "false"
+      }
+    ],
+    "fx": []
+  },
+  "links": {
+    "237": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impactbrutalmid",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthbrutal",
+        "oppattackheightmed",
+        "oppattackdirfrontal"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 6,
+      "blending": 2
+    },
+    "337": {
+      "unique": [],
+      "from": "impactbrutalmid",
+      "to": "facedownidle",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [],
+      "time": [
+        25,
+        28
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 3
+    }
+  },
+  "animation": {
+    "resource": "adreno_200/animation/all_sp_pnch_low_forset04.anm",
+    "resource_sha256": "82cbde2c8eea15daac5c19afbc535113c976141234332395bcb7b19bc5c3bb6f",
+    "headers": {
+      "firstframe": 0,
+      "duration": 28,
+      "framerate": 30,
+      "version": 7,
+      "pose": 1
+    },
+    "data_offset": 601,
+    "payload_bytes": 9508
+  }
+}
