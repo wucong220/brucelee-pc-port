@@ -12,6 +12,7 @@
 - 本地 Godot 套件：`validate_standing_combos`、`validate_directional_combos`、`validate_directional_input`、`validate_special_moves`、`validate_level2_moves`、`validate_special_kick_low`、`validate_special_punch_low`、`validate_special_punch_high`、`validate_parry`、`validate_grabs`、`validate_endattacks`、`validate_reaction_push`、`validate_stun`。
 - 执行方式：`Godot_v4.7.2-stable_win64.exe --headless --path godot --script res://tests/<suite>.gd -- <candidate.glb>`；`validate_reaction_push` 不需要候选参数。
 - stun/endmove 的 48 段候选：`D:\BruceLeeWork\bruce_candidate_48_hair.glb`，4,087,860 字节，SHA-256 `d59e91193bdc30af1b3240d78cb32bb1113a405f28557fa749ae68175cbe2b7b`。
+- hard/brutal 的 50 段候选：`D:\BruceLeeWork\bruce_candidate_50_hair.glb`，4,188,076 字节，SHA-256 `cadd1b1b9bf53a4dbec45ac99f86a21db9686aeaf59569fe250ce0ff38b26605`。
 
 ## 已完成的招式/战斗项
 
@@ -32,7 +33,7 @@
 - 跨骨架 `m02_grab_01` 是实验性映射，不声称骨骼语义完全等价
 - reaction push 的轴向/符号与 `oppposestun` 精确时序仍是 prototype，非原版逐帧还原
 - `all_stunned` 的 55–61 帧精确转换窗口尚未恢复；当前按 61/61/79 帧推进
-- `stun` 现在接受 `impactsfromstun` 的 light/medium 候选反应（`all_impct_light_frnt_high/low`、`all_impct_crotch`），硬/brutal 因候选 clip 缺失仍 fail-closed。
+- `stun` 现在接受 `impactsfromstun` 的 light/medium/hard/brutal 候选反应（`all_impct_light_frnt_high/low`、`all_impct_crotch`、`all_impct_hard_frnt_high`、`all_impct_spectacular_lft`）；hard → `faceupko`，brutal → `facedownko`。
 - `ko` 是终止状态但没有对应候选动画映射；`validate_stun.gd` 验证的是进入 `ko` 状态，不是 `ko` 动画播放
 - `endattack1/2` 不只从 `stun/stun2` 进入；普通 `hitstun` 命中后也可进入，当前实现两者都允许
 
