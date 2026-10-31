@@ -43,7 +43,7 @@
 
 ## 未冒充为已验证
 
-- 未新增 Windows EXE 导出验收；已有历史 Windows EXE 自检结论仍按旧记录引用，本次未重新导出。
+- 未新增 Windows EXE 导出验收；已有历史 Windows EXE 自检结论仍按旧记录引用，本次未重新导出。当前实际阻塞是 Godot 4.7.2 导出模板缺失：`windows_debug_x86_64.exe` 和 `windows_release_x86_64.exe` 均不在当前模板路径中。
 - 在当前 C 盘 worktree 的默认位置直接运行 `smoke_test.gd` 时，`_path_guard_check()` 的 `.path-guard-fixture-*` 创建失败；因此上面的 smoke 通过结果只对应隔离 `smoke_root` 副本，不能宣称任意工作目录都通过。
 - 未实测真实手柄设备、长时间运行、真实关卡和原版逐帧对照。
 
