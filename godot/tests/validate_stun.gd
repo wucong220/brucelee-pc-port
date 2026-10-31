@@ -374,6 +374,29 @@ func _run() -> void:
         push_error("Stun2 opponent did not accept endattack1: " + player.attack_kind)
         quit(1)
         return
+    # A real low kick must enter impactstun with the low clip before stun.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 100.0
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.health = 5.0
+    player.opponent = defender
+    if not player.request_attack("kick"):
+        push_error("Low kick setup did not start")
+        quit(1)
+        return
+    for _i: int in range(10):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "impactstun":
+        push_error("Low kick did not enter impactstun: " + defender.state)
+        quit(1)
+        return
+    for _i: int in range(14):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "stun":
+        push_error("Low kick impactstun did not enter stun: " + defender.state)
+        quit(1)
+        return
     print("STUN_VALIDATION=" + JSON.stringify({
         "state_chain": ["stun", "stun2", "stunfall", "faceupko"],
         "animation": clips["stun"],
