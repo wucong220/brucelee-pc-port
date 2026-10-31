@@ -32,13 +32,17 @@
   - `py -3.12 -X utf8 -B -m unittest discover -s tests -p "test*.py" -q`
   - 结果：`243 passed / 1 skipped`
 - GitHub Actions（独立环境，Run #380，commit `f2090c9`）：Python workflow SUCCESS，247 tests / 246 passed / 1 skipped；该 workflow 没有执行 Godot 验证脚本。
+- `smoke_test.gd` 在隔离的 `smoke_root/godot` 副本 + 仓库外临时目录下实际通过：
+  - `EXIT=0`
+  - 输出 `PROTOTYPE_VALIDATION={"blocked_kick_target_health":99.4,"blockstun_frames":12,"kick_hitstun_frames":13,"ko_and_restart":true,"punch_hitstun_frames":14,"punch_target_health":95.0}`
+  - 隔离布局用于满足 path-guard 的 repository fixture 与 external temp 边界。
 
 ## 未冒充为已验证
 
 - 未新增 Windows EXE 导出验收；已有历史 Windows EXE 自检结论仍按旧记录引用，本次未重新导出。
-- `smoke_test.gd` 本轮未通过验证：`_path_guard_check()` 在 `DirAccess.make_dir_absolute(repository_fixture)` 处失败；源码使用带 token 的 `.path-guard-fixture-*` 目录（不是 `OS.get_temp_dir()` 本身）。当前只能确认该 repository fixture 创建失败，具体环境原因尚未确认，不能据此断言沙箱权限或其他机制。
+- 在当前 C 盘 worktree 的默认位置直接运行 `smoke_test.gd` 时，`_path_guard_check()` 的 `.path-guard-fixture-*` 创建失败；因此上面的 smoke 通过结果只对应隔离 `smoke_root` 副本，不能宣称任意工作目录都通过。
 - 未实测真实手柄设备、长时间运行、真实关卡和原版逐帧对照。
 
 ## 结论
 
-P1 的工程加载、所选 14 个核心战斗脚本和本地 Python 测试面当前保持可运行；完整发行级 Windows 构建、真实设备、全部 41 个 validate 脚本和 smoke 环境仍待独立执行，不能把本记录当作完整 P1 验收。
+P1 的工程加载、所选 14 个核心战斗脚本、隔离布局下的 smoke test 和本地 Python 测试面当前保持可运行；完整发行级 Windows 构建、真实设备、全部 41 个 validate 脚本和默认 worktree 的 smoke 环境仍待分别确认，不能把本记录当作完整 P1 验收。
