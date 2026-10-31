@@ -88,6 +88,11 @@ func _run() -> void:
         push_error("stun did not advance to stun2: " + player.state)
         quit(1)
         return
+    player._animate_candidate()
+    if player.candidate_animation_clip != String(clips["stun"]):
+        push_error("stun2 did not keep playing all_stunned")
+        quit(1)
+        return
     for _i: int in range(62):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stunfall":
