@@ -1,0 +1,222 @@
+{
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "resource": "adreno_200/set/brucelee.set"
+  },
+  "action": {
+    "name": "impacthardfrontlow",
+    "binary": {
+      "ordinal": 222,
+      "directory": "animation/",
+      "basename": "all_impct_hard_frnt_low",
+      "extension": "anm"
+    },
+    "unique": [],
+    "groups": [
+      [
+        "receivedamage",
+        [
+          0,
+          23
+        ],
+        0
+      ]
+    ],
+    "categories": [],
+    "facing": [
+      1,
+      0
+    ],
+    "pose": "laying",
+    "radius": 70.0,
+    "rage": -15.0,
+    "disablecollision": "false",
+    "sounds": [
+      {
+        "file": {
+          "ordinal": 50,
+          "directory": "sounds/sfx/",
+          "basename": "kick_body_light_2",
+          "extension": "wav"
+        },
+        "frame": 0,
+        "volume": 0.5,
+        "unique": "",
+        "is_voice": "false"
+      },
+      {
+        "file": {
+          "ordinal": 46,
+          "directory": "sounds/sfx/",
+          "basename": "fall_3_normal",
+          "extension": "wav"
+        },
+        "frame": 10,
+        "volume": 0.5,
+        "unique": "",
+        "is_voice": "false"
+      },
+      {
+        "file": {
+          "ordinal": 73,
+          "directory": "sounds/sfx/",
+          "basename": "fall_1_normal",
+          "extension": "wav"
+        },
+        "frame": 17,
+        "volume": 0.3499999940395355,
+        "unique": "",
+        "is_voice": "false"
+      }
+    ],
+    "fx": []
+  },
+  "links": {
+    "213": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impacthardfrontlow",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthhard",
+        "oppattackheightmed",
+        "healthzero"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "214": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impacthardfrontlow",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthhard",
+        "oppattackheightlow",
+        "healthzero"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "228": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impacthardfrontlow",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthhard",
+        "oppattackheightlow",
+        "oppattackdirfrontal"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "289": {
+      "unique": [],
+      "from": "impacthardfrontlow",
+      "to": "facedownko",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "healthzero"
+      ],
+      "time": [
+        21,
+        23
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "299": {
+      "unique": [],
+      "from": "impacthardfrontlow",
+      "to": "facedownidle",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [],
+      "time": [
+        20,
+        23
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 3
+    }
+  },
+  "animation": {
+    "resource": "adreno_200/animation/all_impct_hard_frnt_low.anm",
+    "sha256": "c38c0b8c3445ec9f4f237c9a882ed960ce6c7b0e333dbdd9e127742d33ff1647",
+    "headers": {
+      "firstframe": 0,
+      "duration": 23,
+      "framerate": 30,
+      "version": 7,
+      "pose": 1
+    },
+    "data_offset": 601,
+    "payload_bytes": 9072
+  }
+}

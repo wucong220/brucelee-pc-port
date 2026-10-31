@@ -312,13 +312,76 @@ func _run() -> void:
             push_error("hard directional hit did not enter hitstun: " + String(case["source"]))
             quit(1)
             return
+    # Source links 228/213/214: hard low/medium frontal hits use frontlow.
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 100.0
+    var frontlow_reaction: Dictionary = player.reaction_for_incoming(
+        {"strength": "hard", "height": "low", "direction": "frontal"}, false
+    )
+    if (String(frontlow_reaction.get("source_action", "")) != "impacthardfrontlow"
+            or String(frontlow_reaction.get("animation", "")) != "all_impct_hard_frnt_low"
+            or int(frontlow_reaction.get("exit_start_frame", -1)) != 20
+            or int(frontlow_reaction.get("animation_duration_frames", -1)) != 23):
+        push_error("hard frontlow nonlethal reaction mismatch")
+        quit(1)
+        return
+    if not player.receive_hit(5.0, false, 0.0, 1.0, frontlow_reaction):
+        push_error("hard frontlow nonlethal hit was rejected")
+        quit(1)
+        return
+    if player.state != "hitstun" or absf(player.health - 95.0) > 0.001:
+        push_error("hard frontlow nonlethal did not enter hitstun")
+        quit(1)
+        return
+    var had_frontlow: bool = clips.has("all_impct_hard_frnt_low")
+    if not had_frontlow:
+        # State transition is testable without the optional visual clip.
+        clips["all_impct_hard_frnt_low"] = "synthetic:all_impct_hard_frnt_low"
+    for key: Dictionary in [
+        {"height": "low", "source": "impacthardfrontlow"},
+        {"height": "medium", "source": "impacthardfrontmid"},
+    ]:
+        player.reset_fighter(Vector3.ZERO)
+        player.health = 5.0
+        var lethal_reaction: Dictionary = player.reaction_for_incoming({
+            "strength": "hard", "height": String(key["height"]),
+            "direction": "frontal",
+        }, false)
+        if String(lethal_reaction.get("source_action", "")) != String(key["source"]):
+            push_error("hard frontlow lethal dispatch mismatch: " + String(key["source"]))
+            quit(1)
+            return
+        if not player.receive_hit(5.0, false, 0.0, 1.0, lethal_reaction):
+            push_error("hard frontlow lethal hit was rejected: " + String(key["source"]))
+            quit(1)
+            return
+        if (player.state != "stunimpact"
+                or player.last_reaction_source_action != "impacthardfrontlow"
+                or player.last_reaction_animation != "all_impct_hard_frnt_low"):
+            push_error("hard frontlow lethal path mismatch: " + String(key["source"]))
+            quit(1)
+            return
+        for _i: int in range(20):
+            player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        if player.state != "stunimpact":
+            push_error("hard frontlow lethal ended before frame 21")
+            quit(1)
+            return
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        if player.state != "facedownko":
+            push_error("hard frontlow lethal did not enter facedownko")
+            quit(1)
+            return
+    if not had_frontlow:
+        clips.erase("all_impct_hard_frnt_low")
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
         "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko",
             "stun/stun2 brutal -> facedownko", "brutal block -> highblockbrutal",
             "brutal medium -> impactbrutalmid",
             "brutal high left/right -> impactbrutalleft/right",
             "normal directional light hits",
-            "hard directional left/above reactions"],
+            "hard directional left/above reactions",
+            "hard frontlow nonlethal/lethal reactions"],
         "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()

@@ -999,6 +999,21 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "return_implemented": false,
             "clip_implemented": false,
         },
+        {
+            "strength": "hard",
+            "height": "low",
+            "direction": "frontal",
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 70.0,
+            "entry_frame": 0,
+            "exit_start_frame": 20,
+            "animation_duration_frames": 23,
+            "linking_frame": 0,
+            "return_action": "facedownidle",
+            "return_implemented": false,
+            "clip_implemented": false,
+        },
     ],
     "block": [
         {
@@ -3601,6 +3616,7 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
                     "impactlightlefthigh", "impactlightrighthigh",
                     "impactlightleftlow", "impactlightrightlow",
                     "impacthardleftlow", "impacthardlefthigh", "impacthardabove",
+                    "impacthardfrontlow",
                 ] and not _medium_lethal_impactable()):
             return {}
         return exact
@@ -3852,6 +3868,23 @@ func receive_hit(
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
+    if (health <= 0.0 and not blocked
+            and _candidate_clip_paths.has("all_impct_hard_frnt_low")
+            and last_reaction_source_action in [
+                "impacthardfrontlow", "impacthardfrontmid"
+            ]):
+        # Source links 213/214/228: hard medium/low frontal lethal hits use
+        # impacthardfrontlow; link 289 then enters facedownko at [21,23].
+        state = "stunimpact"
+        state_time = 21.0 / SOURCE_FRAME_RATE
+        combo_hits = 0
+        last_reaction_source_action = "impacthardfrontlow"
+        last_reaction_animation = "all_impct_hard_frnt_low"
+        last_reaction_exit_frame = 21
+        last_reaction_entry_frame = 0
+        last_reaction_clip_implemented = true
+        _stun_impact_next_state = "facedownko"
+        return true
     var stun_entry_source: String = String(reaction.get("source_action", ""))
     var stun_entry_clip: String = (
         "all_impct_light_frnt_low"
