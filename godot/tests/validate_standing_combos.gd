@@ -286,6 +286,24 @@ func _validate_pending_replacement(
     if matched != "punch":
         push_error("Overlapping history selected %s instead of punch(88)" % matched)
         return false
+    # Independently completed sequences still replace the earlier pending entry.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    opponent.reset_fighter(Vector3(2.0, 1.20, 0.0))
+    player._time = 0.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the low punch for the replacement check")
+        return false
+    for _index: int in 3:
+        player.record_standing_combo_press("a")
+    if String(player.get("_standing_combo_pending_attack")) != "high_punch":
+        push_error("AAA did not queue highpunch1 for the replacement check")
+        return false
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("b")
+    if String(player.get("_standing_combo_pending_attack")) != "punch":
+        push_error("An independently completed sequence did not replace the pending entry")
+        return false
     return true
 
 
