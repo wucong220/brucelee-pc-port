@@ -42,6 +42,7 @@
 - brutal 普通高段左右命中链接 235/301 与 236/302 已接入 `impactbrutalleft`（[39,45]）和 `impactbrutalright`（[41,45]），两者回到 `facedownidle`；当前没有 brutal 攻击来源，使用合成命中测试覆盖。
 - 普通方向 light 反应链接 221/222/224/225 已接入 exact reactions `impactlightleftlow/rightlow/lefthigh/righthigh`（`all_impct_light_lft/rht_low/high`，[13,17] → `idle`），覆盖当前 `high_punch2/high_kick2/low_kick2` 的 fromleft 输入；合成候选50测试覆盖左右方向。
 - hard 方向反应链接 229/231/233 已接入 `impacthardleftlow`（[25,29] → faceupidle）、`impacthardlefthigh`（[26,29] → faceupidle）、`impacthardabove`（[17,17] → facedownidle）；当前 Bruce 攻击配置没有这些方向输入，使用候选50合成测试覆盖。
+- hard 正面低段链接 213/214/228 已接入 `impacthardfrontlow`（`all_impct_hard_frnt_low`）：非致命 [20,23] → facedownidle；healthzero 走 [21,23] → facedownko。CLIP 缺失时退回现有 KO 路径。
 - `faceupko` 是 KO 终点；`validate_stun.gd` 验证进入 `faceupko`，不是独立 `ko` 候选动画播放
 - `endattack1/2` 不只从 `stun/stun2` 进入；普通 `hitstun` 命中后也可进入，当前实现两者都允许
 

@@ -878,6 +878,21 @@
         "return_action": "facedownidle",
         "return_implemented": false,
         "clip_implemented": false
+      },
+      {
+        "strength": "hard",
+        "height": "low",
+        "direction": "frontal",
+        "source_action": "impacthardfrontlow",
+        "animation": "hard_frontlow",
+        "animation_radius": 70.0,
+        "entry_frame": 0,
+        "exit_start_frame": 20,
+        "animation_duration_frames": 23,
+        "linking_frame": 0,
+        "return_action": "facedownidle",
+        "return_implemented": false,
+        "clip_implemented": false
       }
     ],
     "block": [
