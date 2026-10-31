@@ -169,9 +169,57 @@ func _run() -> void:
         push_error("brutal block did not enter blockstun with chip damage")
         quit(1)
         return
+    # Source links 237/337: brutal medium frontal hit -> impactbrutalmid -> facedownidle.
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 100.0
+    var brutal_mid: Dictionary = player.reaction_for_incoming(
+        {"strength": "brutal", "height": "medium", "direction": "frontal"}, false
+    )
+    if (String(brutal_mid.get("source_action", "")) != "impactbrutalmid"
+            or String(brutal_mid.get("animation", "")) != "all_sp_pnch_low_forset04"
+            or int(brutal_mid.get("exit_start_frame", -1)) != 25
+            or int(brutal_mid.get("animation_duration_frames", -1)) != 28
+            or String(brutal_mid.get("return_action", "")) != "facedownidle"):
+        push_error("brutal medium hit did not select impactbrutalmid metadata")
+        quit(1)
+        return
+    if int(brutal_mid.get("entry_frame", -1)) != 6:
+        push_error("brutal medium hit lacks source entry_frame 6")
+        quit(1)
+        return
+    if not player.receive_hit(5.0, false, 0.0, 1.0, brutal_mid):
+        push_error("brutal medium hit was rejected")
+        quit(1)
+        return
+    if (player.state != "hitstun" or absf(player.health - 95.0) > 0.001
+            or player.last_reaction_source_action != "impactbrutalmid"):
+        push_error("brutal medium hit did not enter hitstun")
+        quit(1)
+        return
+    if (player.last_reaction_entry_frame != 6
+            or absf(player.state_time - 19.0 / PortFighter.SOURCE_FRAME_RATE) > 0.001):
+        push_error("brutal medium runtime did not start at frame 6 and end at 25")
+        quit(1)
+        return
+    if clips.has("all_sp_pnch_low_forset04"):
+        player._animate_candidate()
+        if absf(player._candidate_animation.current_animation_position
+                - 6.0 / PortFighter.SOURCE_FRAME_RATE) > 0.001:
+            push_error("brutal medium animation did not seek to frame 6")
+            quit(1)
+            return
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "faceupidle"
+    if not player.reaction_for_incoming(
+        {"strength": "brutal", "height": "medium", "direction": "frontal"}, false
+    ).is_empty():
+        push_error("non-impactable state accepted brutal medium reaction")
+        quit(1)
+        return
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
         "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko",
-            "stun/stun2 brutal -> facedownko", "brutal block -> highblockbrutal"],
+            "stun/stun2 brutal -> facedownko", "brutal block -> highblockbrutal",
+            "brutal medium -> impactbrutalmid"],
         "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()

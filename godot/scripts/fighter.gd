@@ -849,6 +849,21 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "return_implemented": true,
             "clip_implemented": false,
         },
+        {
+            "strength": "brutal",
+            "height": "medium",
+            "direction": "frontal",
+            "source_action": "impactbrutalmid",
+            "animation": "all_sp_pnch_low_forset04",
+            "animation_radius": 60.0,
+            "entry_frame": 6,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 28,
+            "linking_frame": 0,
+            "return_action": "facedownidle",
+            "return_implemented": false,
+            "clip_implemented": false,
+        },
     ],
     "block": [
         {
@@ -916,6 +931,7 @@ var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
 var last_reaction_animation: String = ""
 var last_reaction_exit_frame: int = -1
+var last_reaction_entry_frame: int = 0
 var last_reaction_clip_implemented: bool = false
 var facing: float = 1.0
 var combo_hits: int = 0
@@ -2074,6 +2090,7 @@ func _clear_reaction_tracking() -> void:
     last_reaction_source_action = ""
     last_reaction_animation = ""
     last_reaction_exit_frame = -1
+    last_reaction_entry_frame = 0
     last_reaction_clip_implemented = false
 
 
@@ -3431,9 +3448,6 @@ func attack_reach_world(kind: String, target: PortFighter = null) -> float:
 func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     if _is_brick_facedown_low_impact(impact, blocked):
         return BRICK_FACEDOWN_IMPACT_REACTION.duplicate(true)
-    var exact: Dictionary = _matching_exact_reaction(impact, blocked)
-    if not exact.is_empty():
-        return exact
     if (not blocked and String(impact.get("strength", "")) == "brutal"
             and state in ["stun", "stun2"]):
         # brucelee.set link 134: impactsfromstun + brutal -> stunbrutalimpact,
@@ -3445,6 +3459,12 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
             "animation_duration_frames": 45,
             "linking_frame": 0,
         }
+    var exact: Dictionary = _matching_exact_reaction(impact, blocked)
+    if not exact.is_empty():
+        if (String(exact.get("source_action", "")) == "impactbrutalmid"
+                and not _medium_lethal_impactable()):
+            return {}
+        return exact
     # Hard and brutal attacks have no light-height fallback when the exact link is absent.
     if String(impact.get("strength", "")) != "normal":
         return {}
@@ -3681,14 +3701,16 @@ func receive_hit(
         last_reaction_source_action = String(reaction["source_action"])
         last_reaction_animation = String(reaction["animation"])
         last_reaction_exit_frame = int(reaction["exit_start_frame"])
+        last_reaction_entry_frame = int(reaction.get("entry_frame", 0))
         var configured_clip: bool = reaction.get("clip_implemented", true) == true
         var prepared_clip: bool = _candidate_clip_paths.has(last_reaction_animation)
         last_reaction_clip_implemented = configured_clip or prepared_clip
-        state_time = float(last_reaction_exit_frame) / SOURCE_FRAME_RATE
+        state_time = float(maxi(last_reaction_exit_frame - last_reaction_entry_frame, 0)) / SOURCE_FRAME_RATE
     else:
         last_reaction_source_action = ""
         last_reaction_animation = ""
         last_reaction_exit_frame = -1
+        last_reaction_entry_frame = 0
         last_reaction_clip_implemented = false
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
     var stun_entry_source: String = String(reaction.get("source_action", ""))
@@ -3762,6 +3784,7 @@ func reset_fighter(start_position: Vector3) -> void:
     last_reaction_source_action = ""
     last_reaction_animation = ""
     last_reaction_exit_frame = -1
+    last_reaction_entry_frame = 0
     last_reaction_clip_implemented = false
     guard_held = false
     combo_hits = 0
@@ -3837,6 +3860,7 @@ func _animate_candidate() -> void:
             and last_reaction_clip_implemented
             and _candidate_clip_paths.has(last_reaction_animation)):
         requested = last_reaction_animation
+        start_frame = last_reaction_entry_frame
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "ko" and _candidate_clip_paths.has("ko"):

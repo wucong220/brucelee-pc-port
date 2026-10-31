@@ -255,6 +255,7 @@ class TestFightingConfig(unittest.TestCase):
             "impacthardrightlow",
             "impacthardrighthigh",
             "impacthardfronthigh",
+            "impactbrutalmid",
         ])
         self.assertEqual(exact["hit"][0]["exit_start_frame"], 27)
         self.assertEqual(exact["hit"][0]["animation_duration_frames"], 30)
@@ -274,6 +275,12 @@ class TestFightingConfig(unittest.TestCase):
         self.assertEqual(exact["hit"][2]["return_action"], "faceupidle")
         self.assertTrue(exact["hit"][2]["return_implemented"])
         self.assertFalse(exact["hit"][2]["clip_implemented"])
+        self.assertEqual(exact["hit"][4]["source_action"], "impactbrutalmid")
+        self.assertEqual(exact["hit"][4]["animation"], "all_sp_pnch_low_forset04")
+        self.assertEqual(exact["hit"][4]["entry_frame"], 6)
+        self.assertEqual(exact["hit"][4]["exit_start_frame"], 25)
+        self.assertEqual(exact["hit"][4]["animation_duration_frames"], 28)
+        self.assertEqual(exact["hit"][4]["return_action"], "facedownidle")
         self.assertEqual(exact["block"][0]["source_action"], "highblockhard")
         self.assertEqual(exact["block"][0]["exit_start_frame"], 11)
         self.assertEqual(exact["block"][0]["animation_duration_frames"], 14)
@@ -281,6 +288,10 @@ class TestFightingConfig(unittest.TestCase):
         self.assertEqual(exact["block"][0]["return_action"], "idle2")
         self.assertFalse(exact["block"][0]["return_implemented"])
         self.assertFalse(exact["block"][0]["clip_implemented"])
+        self.assertEqual(exact["block"][1]["source_action"], "highblockbrutal")
+        self.assertEqual(exact["block"][1]["animation"], "all_block_high_brutal")
+        self.assertEqual(exact["block"][1]["exit_start_frame"], 17)
+        self.assertEqual(exact["block"][1]["animation_duration_frames"], 20)
 
     def test_brick_mapping_is_limited_to_the_four_current_clips(self):
         path = CONFIG.with_name("fighting_set_m03_mapped_attacks.json")
