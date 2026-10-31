@@ -2840,7 +2840,9 @@ func _matching_standing_combo_attack() -> String:
                         best_attack = String(entry["attack"])
                         best_index = index
                     break
-    return best_attack
+        if not best_attack.is_empty():
+            return best_attack
+    return ""
 
 
 func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
