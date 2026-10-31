@@ -2141,6 +2141,13 @@ func _advance_stun_state(delta: float) -> void:
         combat_ko.emit(self)
 
 
+func _advance_stun_impact_state(delta: float) -> void:
+    state_time -= delta
+    if state_time <= 0.0:
+        state = "stunfall"
+        state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
+
+
 func _advance_return_state(delta: float) -> void:
     if state == "idle2":
         state_time += maxf(delta, 0.0)
@@ -2967,6 +2974,9 @@ func _advance_timed_states(delta: float) -> void:
     if state in ["stun", "stun2", "stunfall"]:
         _advance_stun_state(delta)
         return
+    if state == "stunimpact":
+        _advance_stun_impact_state(delta)
+        return
     if state in [
         "idle2", "facedownidle", "facedownko", "facedowngetup",
         "impactfacedown", "facedownattack", "impacttofloor", "faceupidle",
@@ -3460,9 +3470,31 @@ func receive_hit(
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
+    if state in ["stun", "stun2"] and not blocked:
+        var stun_source: String = String(reaction.get("source_action", ""))
+        var stun_animation: String = "all_impct_light_frnt_high"
+        var stun_exit_frame: int = 13
+        if stun_source.contains("low"):
+            stun_animation = "all_impct_light_frnt_low"
+            stun_exit_frame = 13
+        elif stun_source.contains("mid"):
+            stun_animation = "all_impct_crotch"
+            stun_exit_frame = 15
+        if not _candidate_clip_paths.has(stun_animation):
+            return false
+        health = maxf(0.0, health - amount)
+        state = "stunimpact"
+        state_time = float(stun_exit_frame) / SOURCE_FRAME_RATE
+        combo_hits = 0
+        last_reaction_group = "hit"
+        last_reaction_source_action = "stunimpact"
+        last_reaction_animation = stun_animation
+        last_reaction_exit_frame = stun_exit_frame
+        last_reaction_clip_implemented = true
+        return true
     if state in [
         "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
-        "impactfaceup", "faceupko", "stun", "stun2", "stunfall",
+        "impactfaceup", "faceupko", "stun", "stun2", "stunfall", "stunimpact",
     ]:
         return false
     var state_before: String = state
@@ -3650,7 +3682,7 @@ func _animate_candidate() -> void:
         requested = "stun"
     elif state == "stunfall" and _candidate_clip_paths.has("stun_fall"):
         requested = "stun_fall"
-    elif (state in ["hitstun", "blockstun"]
+    elif (state in ["hitstun", "blockstun", "stunimpact"]
             and last_reaction_clip_implemented
             and _candidate_clip_paths.has(last_reaction_animation)):
         requested = last_reaction_animation
