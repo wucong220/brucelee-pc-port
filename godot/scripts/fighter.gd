@@ -3881,6 +3881,10 @@ func receive_hit(
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true
         _stun_impact_next_state = "faceupko"
+        if _candidate_animation != null:
+            _candidate_animation.stop()
+        _candidate_action = ""
+        candidate_visual_blend_pending_seconds = 0.0
         return true
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("all_impct_hard_frnt_low")
@@ -3898,6 +3902,10 @@ func receive_hit(
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true
         _stun_impact_next_state = "facedownko"
+        if _candidate_animation != null:
+            _candidate_animation.stop()
+        _candidate_action = ""
+        candidate_visual_blend_pending_seconds = 0.0
         return true
     var stun_entry_source: String = String(reaction.get("source_action", ""))
     var stun_entry_clip: String = (

@@ -339,6 +339,32 @@ func _run() -> void:
         push_error("hard high frontal lethal did not enter faceupko")
         quit(1)
         return
+    # Repeated same high-frontal hit must restart the reaction animation.
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 10.0
+    var repeat_reaction: Dictionary = player.reaction_for_incoming(
+        {"strength": "hard", "height": "high", "direction": "frontal"}, false
+    )
+    if not player.receive_hit(2.0, false, 0.0, 1.0, repeat_reaction):
+        push_error("nonlethal hard high setup was rejected")
+        quit(1)
+        return
+    if clips.has("all_impct_hard_frnt_high"):
+        player._animate_candidate()
+    if not player.receive_hit(8.0, false, 0.0, 1.0, repeat_reaction):
+        push_error("repeated lethal hard high hit was rejected")
+        quit(1)
+        return
+    if player.state != "stunimpact" or player._candidate_action != "":
+        push_error("repeated lethal hard high did not reset the reaction action")
+        quit(1)
+        return
+    if clips.has("all_impct_hard_frnt_high"):
+        player._animate_candidate()
+        if absf(player._candidate_animation.current_animation_position) > 0.01:
+            push_error("repeated lethal hard high did not restart animation")
+            quit(1)
+            return
     # Source links 228/213/214: hard low/medium frontal hits use frontlow.
     player.reset_fighter(Vector3.ZERO)
     player.health = 100.0
