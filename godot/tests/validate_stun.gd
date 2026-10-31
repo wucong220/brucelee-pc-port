@@ -72,10 +72,16 @@ func _run() -> void:
         push_error("stunfall did not play all_stunned_fall")
         quit(1)
         return
-    for _i: int in range(80):
+    for _i: int in range(70):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "stunfall":
+        push_error("stunfall ended before its 71-79 source window: " + player.state)
+        quit(1)
+        return
+    for _i: int in range(9):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "faceupko":
-        push_error("stunfall did not finish in faceupko: " + player.state)
+        push_error("stunfall did not finish in faceupko by frame 79: " + player.state)
         quit(1)
         return
     # Nonlethal and blocked hits must not enter the stun state.

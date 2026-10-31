@@ -34,7 +34,7 @@
 - reaction push 的轴向/符号与 `oppposestun` 精确时序仍是 prototype，非原版逐帧还原
 - `all_stunned` 的 55–61 帧精确转换窗口尚未恢复；当前按 61/61/79 帧推进
 - `stun` 现在接受 `impactsfromstun` 的 light/medium/hard 候选反应（`all_impct_light_frnt_high/low`、`all_impct_crotch`、`all_impct_hard_frnt_high`）；hard → `faceupko`。当前攻击配置没有 brutal 来源，brutal 保持 fail-closed（候选50里保留的 `all_impct_spectacular_lft` 尚未接线）。
-- `ko` 是终止状态但没有对应候选动画映射；`validate_stun.gd` 验证的是进入 `ko` 状态，不是 `ko` 动画播放
+- `faceupko` 是 KO 终点；`validate_stun.gd` 验证进入 `faceupko`，不是独立 `ko` 候选动画播放
 - `endattack1/2` 不只从 `stun/stun2` 进入；普通 `hitstun` 命中后也可进入，当前实现两者都允许
 
 ## 下一个可验证项
