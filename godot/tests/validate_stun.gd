@@ -166,6 +166,47 @@ func _run() -> void:
             push_error("rejected stunimpact changed state for " + String(case["source"]))
             quit(1)
             return
+    # Medium impact must play the full 30-frame all_impct_crotch before stunfall.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.state = "stun"
+    player.state_time = 0.1
+    player.health = 0.0
+    if not player.receive_hit(1.0, false, 0.0, 1.0, {
+        "source_action": "impactlightfrontmid",
+        "animation": "all_impct_crotch",
+        "exit_start_frame": 15,
+        "animation_duration_frames": 30,
+        "linking_frame": 0,
+    }):
+        push_error("medium stunimpact fixture rejected")
+        quit(1)
+        return
+    for _i: int in range(29):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "stunimpact":
+        push_error("medium stunimpact ended before 30 frames")
+        quit(1)
+        return
+    player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "stunfall":
+        push_error("medium stunimpact did not end in stunfall: " + player.state)
+        quit(1)
+        return
+    # Empty reaction source must fail closed from both stun and stun2.
+    for source_state: String in ["stun", "stun2"]:
+        player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+        player.state = source_state
+        player.state_time = 0.1
+        player.health = 0.0
+        if player.receive_hit(1.0, false, 0.0, 1.0, {}):
+            push_error("empty stunimpact reaction was accepted from " + source_state)
+            quit(1)
+            return
+        if player.state != source_state:
+            push_error("empty stunimpact reaction changed state from " + source_state)
+            quit(1)
+            return
     var defender: PortFighter = PortFighter.new()
     defender.configure("Stun endmove defender", false, Color.CYAN)
     defender.configure_attack_config(PortFighter.ATTACK_CONFIG_PATH)
