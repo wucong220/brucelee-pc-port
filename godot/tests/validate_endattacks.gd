@@ -58,7 +58,7 @@ func _run() -> void:
     print("ENDATTACK_VALIDATION=" + JSON.stringify({
         "endattack1": "m01_end_attack_01",
         "endattack2": "m01_end_attack_02",
-        "source_indexes": {"endattack1": 34, "endattack2": 35},
+        "source_record_indexes": {"endattack1": 34, "endattack2": 35},
         "source_damage": 0.0,
         "candidate_bytes": 4039952,
         "candidate_sha256": "592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0",
