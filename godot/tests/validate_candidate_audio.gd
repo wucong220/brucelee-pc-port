@@ -6,6 +6,24 @@ const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 func _initialize() -> void:
     call_deferred("_run")
 
+
+func _check_event(
+        scene: Node, player: PortFighter, opponent: PortFighter,
+        action: String, blocked: bool, expected: String,
+        streams: Dictionary, combat_audio: Node
+) -> bool:
+    var before: int = combat_audio.get_child_count()
+    scene._on_hit(player, opponent, action, 5.0, blocked)
+    await process_frame
+    if combat_audio.get_child_count() != before + 1:
+        push_error("Expected exactly one new audio player for " + action)
+        return false
+    var audio: AudioStreamPlayer = combat_audio.get_child(before) as AudioStreamPlayer
+    if audio == null or not audio.playing or audio.stream != streams[expected]:
+        push_error("Audio mapping mismatch for " + action + " -> " + expected)
+        return false
+    return true
+
 func _run() -> void:
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if args.size() != 1:
@@ -48,13 +66,46 @@ func _run() -> void:
         quit(1)
         return
     scene.set("_candidate_audio", streams)
-    scene._on_hit(player, opponent, "punch", 5.0, false)
-    await process_frame
-    scene._on_hit(player, opponent, "kick", 5.0, true)
-    await process_frame
+    if not await _check_event(scene, player, opponent, "punch", false, "punch", streams, combat_audio):
+        quit(1)
+        return
+    if not await _check_event(scene, player, opponent, "kick", false, "kick", streams, combat_audio):
+        quit(1)
+        return
+    if not await _check_event(scene, player, opponent, "high_punch", false, "punch", streams, combat_audio):
+        quit(1)
+        return
+    if not await _check_event(scene, player, opponent, "high_kick", false, "kick", streams, combat_audio):
+        quit(1)
+        return
+    if not await _check_event(scene, player, opponent, "low_kick3", false, "kick", streams, combat_audio):
+        quit(1)
+        return
+    if not await _check_event(scene, player, opponent, "special_punch_low_hit", false, "punch", streams, combat_audio):
+        quit(1)
+        return
+    if not await _check_event(scene, player, opponent, "special_kick_high", false, "kick", streams, combat_audio):
+        quit(1)
+        return
+    for entry: Array in [
+        ["high_punch2", "punch"], ["high_punch3", "punch"],
+        ["low_punch2", "punch"], ["low_punch3", "punch"],
+        ["special_punch_high_hit", "punch"], ["parry_attack", "punch"],
+        ["high_kick2", "kick"], ["high_kick3", "kick"],
+        ["low_kick2", "kick"], ["special_kick_low_hit", "kick"],
+    ]:
+        if not await _check_event(
+                scene, player, opponent, String(entry[0]), false,
+                String(entry[1]), streams, combat_audio
+        ):
+            quit(1)
+            return
+    if not await _check_event(scene, player, opponent, "punch", true, "block", streams, combat_audio):
+        quit(1)
+        return
     scene._on_hit(player, opponent, "attacktofloor", 5.0, false)
     await process_frame
-    if combat_audio.get_child_count() != 2:
+    if combat_audio.get_child_count() != 18:
         push_error("Unsupported attack action should not reuse a candidate sound")
         quit(1)
         return
