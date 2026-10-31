@@ -365,6 +365,32 @@ func _run() -> void:
         push_error("Stun endmove did not play the endattack1 candidate clip")
         quit(1)
         return
+    # endattack2 must also be reachable from stun.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 100.0
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.health = 5.0
+    player.opponent = defender
+    if not player.request_attack("high_punch"):
+        push_error("Stun endattack2 setup did not start")
+        quit(1)
+        return
+    for _i: int in range(6):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    for _i: int in range(14):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "stun":
+        push_error("Stun endattack2 setup did not stun defender: " + defender.state)
+        quit(1)
+        return
+    player.record_standing_combo_press("a", ["up", "in"])
+    player.record_standing_combo_press("c")
+    player.record_standing_combo_press("c")
+    if player.attack_kind != "endattack2":
+        push_error("Stun opponent did not accept endattack2: " + player.attack_kind)
+        quit(1)
+        return
     # The same endmove gate must work while the opponent is in stun2.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
