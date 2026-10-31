@@ -16,8 +16,9 @@ $dist = if ([string]::IsNullOrWhiteSpace($OutputDir)) {
 } else {
     $OutputDir
 }
-$project = Join-Path $BuildRoot 'staging\godot'
-$buildDist = Join-Path $BuildRoot 'staging\dist'
+$staging = Join-Path $BuildRoot ('brucelee-build-' + [guid]::NewGuid().ToString('N'))
+$project = Join-Path $staging 'godot'
+$buildDist = Join-Path $staging 'dist'
 $targetName = 'DragonWarrior_PC_Prototype.exe'
 $delivered = Join-Path $dist $targetName
 $profile = if ($Debug) { '--export-debug' } else { '--export-release' }
@@ -29,7 +30,6 @@ Write-Host "Build project: $project"
 $buildRootFull = [System.IO.Path]::GetFullPath($BuildRoot)
 $sourceFull = [System.IO.Path]::GetFullPath($sourceProject)
 $rootFull = [System.IO.Path]::GetFullPath($root)
-$staging = Join-Path $BuildRoot 'staging'
 $stagingFull = [System.IO.Path]::GetFullPath($staging)
 $projectFull = [System.IO.Path]::GetFullPath($project)
 function Test-PathOverlap([string]$left, [string]$right) {
@@ -85,7 +85,8 @@ if ((Test-ReparsePointInPath $BuildRoot) -or (Test-ReparsePointInPath $staging) 
         (Test-ReparsePointInPath $sourceProject) -or (Test-ReparsePointInPath $root)) {
     throw 'BuildRoot/staging/source paths must not traverse a junction or symlink.'
 }
-if (Test-Path $staging) { Remove-Item -LiteralPath $staging -Recurse -Force }
+if (Test-Path $staging) { throw 'Generated staging directory already exists.' }
+New-Item -ItemType Directory -Force -Path $staging | Out-Null
 New-Item -ItemType Directory -Force -Path $buildDist | Out-Null
 Copy-Item -LiteralPath $sourceProject -Destination $project -Recurse
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
@@ -99,7 +100,7 @@ if (-not $?) { throw 'Windows export failed. Install the matching Godot export t
 $targetPath = Join-Path $buildDist $targetName
 $pckPath = Join-Path $buildDist 'DragonWarrior_PC_Prototype.pck'
 $exported = $null
-for ($attempt = 0; $attempt -lt 150 -and $null -eq $exported; $attempt++) {
+for ($attempt = 0; $attempt -lt 600 -and $null -eq $exported; $attempt++) {
     if (Test-Path -LiteralPath $targetPath) {
         $exported = Get-Item -LiteralPath $targetPath -ErrorAction SilentlyContinue
     }
@@ -107,7 +108,7 @@ for ($attempt = 0; $attempt -lt 150 -and $null -eq $exported; $attempt++) {
 }
 if ($null -eq $exported) { throw 'Godot did not produce the expected EXE.' }
 $exportedPck = $null
-for ($attempt = 0; $attempt -lt 50 -and $null -eq $exportedPck; $attempt++) {
+for ($attempt = 0; $attempt -lt 300 -and $null -eq $exportedPck; $attempt++) {
     if (Test-Path -LiteralPath $pckPath) {
         $exportedPck = Get-Item -LiteralPath $pckPath -ErrorAction SilentlyContinue
     }
