@@ -894,6 +894,66 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "return_implemented": false,
             "clip_implemented": false,
         },
+        {
+            "strength": "normal",
+            "height": "high",
+            "direction": "fromleft",
+            "source_action": "impactlightlefthigh",
+            "animation": "all_impct_light_lft_high",
+            "animation_radius": 40.0,
+            "entry_frame": 0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        {
+            "strength": "normal",
+            "height": "high",
+            "direction": "fromright",
+            "source_action": "impactlightrighthigh",
+            "animation": "all_impct_light_rht_high",
+            "animation_radius": 40.0,
+            "entry_frame": 0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        {
+            "strength": "normal",
+            "height": "low",
+            "direction": "fromleft",
+            "source_action": "impactlightleftlow",
+            "animation": "all_impct_light_lft_low",
+            "animation_radius": 40.0,
+            "entry_frame": 0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        {
+            "strength": "normal",
+            "height": "low",
+            "direction": "fromright",
+            "source_action": "impactlightrightlow",
+            "animation": "all_impct_light_rht_low",
+            "animation_radius": 40.0,
+            "entry_frame": 0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
     ],
     "block": [
         {
@@ -3492,7 +3552,9 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
         if (String(exact.get("source_action", "")) in [
-                    "impactbrutalmid", "impactbrutalleft", "impactbrutalright"
+                    "impactbrutalmid", "impactbrutalleft", "impactbrutalright",
+                    "impactlightlefthigh", "impactlightrighthigh",
+                    "impactlightleftlow", "impactlightrightlow",
                 ] and not _medium_lethal_impactable()):
             return {}
         return exact

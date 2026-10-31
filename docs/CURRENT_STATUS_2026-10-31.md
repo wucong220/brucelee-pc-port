@@ -40,6 +40,7 @@
 - brutal 格挡链接 96/346 已接入 `highblockbrutal`（`all_block_high_brutal`，来源窗口 [17,20] → `idle2`）；当前没有 brutal 攻击来源，使用候选50的合成格挡测试覆盖。
 - brutal 普通中段命中链接 237/337 已接入 exact reaction `impactbrutalmid`（`all_sp_pnch_low_forset04`，窗口 [25,28] → `facedownidle`，ANM duration 28）；当前没有 brutal 攻击来源，使用合成命中测试覆盖。
 - brutal 普通高段左右命中链接 235/301 与 236/302 已接入 `impactbrutalleft`（[39,45]）和 `impactbrutalright`（[41,45]），两者回到 `facedownidle`；当前没有 brutal 攻击来源，使用合成命中测试覆盖。
+- 普通方向 light 反应链接 221/222/224/225 已接入 exact reactions `impactlightleftlow/rightlow/lefthigh/righthigh`（`all_impct_light_lft/rht_low/high`，[13,17] → `idle`），覆盖当前 `high_punch2/high_kick2/low_kick2` 的 fromleft 输入；合成候选50测试覆盖左右方向。
 - `faceupko` 是 KO 终点；`validate_stun.gd` 验证进入 `faceupko`，不是独立 `ko` 候选动画播放
 - `endattack1/2` 不只从 `stun/stun2` 进入；普通 `hitstun` 命中后也可进入，当前实现两者都允许
 

@@ -1,0 +1,775 @@
+{
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "resource": "adreno_200/set/brucelee.set"
+  },
+  "actions": {
+    "impactlightlefthigh": {
+      "action": {
+        "name": "impactlightlefthigh",
+        "binary": {
+          "ordinal": 230,
+          "directory": "animation/",
+          "basename": "all_impct_light_lft_high",
+          "extension": "anm"
+        },
+        "unique": [],
+        "groups": [
+          [
+            "receivedamage",
+            [
+              0,
+              17
+            ],
+            0
+          ],
+          [
+            "impactable",
+            [
+              0,
+              17
+            ],
+            0
+          ],
+          [
+            "canblock",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "candocounter",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "candobasicattacks",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "canmove",
+            [
+              13,
+              17
+            ],
+            0
+          ]
+        ],
+        "categories": [],
+        "facing": [
+          0,
+          17
+        ],
+        "pose": "stand",
+        "radius": 40.0,
+        "rage": -5.0,
+        "disablecollision": "false",
+        "sounds": [
+          {
+            "file": {
+              "ordinal": 134,
+              "directory": "sounds/sfx/",
+              "basename": "kick_head_light_2",
+              "extension": "wav"
+            },
+            "frame": 0,
+            "volume": 0.699999988079071,
+            "unique": "",
+            "is_voice": "false"
+          },
+          {
+            "file": {
+              "ordinal": 156,
+              "directory": "sounds/voices/brick_davies/light_pain/",
+              "basename": "hurt__light_male_ls_g_hurtgrunt02_brick_davies",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "brickdavis",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 157,
+              "directory": "sounds/voices/bruce_lee/pain_light/",
+              "basename": "pain_light_1_bl",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "brucelee",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 55,
+              "directory": "sounds/voices/chief/pain_light/",
+              "basename": "hurt_light_male_ls_h_hurtgrunt05_the_cheif",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "chief",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 56,
+              "directory": "sounds/voices/johnson/light_pain/",
+              "basename": "hurt_light_male_ls_d_hurtpunch02_johnson",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "johnson",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 158,
+              "directory": "sounds/voices/ken_goodall/light_pain/",
+              "basename": "hurt_light_male_ls_c_hurtgrunt04_ken",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "kengodall",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 70,
+              "directory": "sounds/voices/lo_ming/light_pain/",
+              "basename": "hurt_light_male_ls_l_hurtgrunt08_lo_ming",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "loming",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 106,
+              "directory": "sounds/voices/shen_lo/light_pain/",
+              "basename": "male_ls_j_hurtgrunt04_shen_lo",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "shenlo",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 159,
+              "directory": "sounds/voices/sin_fu/light_pain/",
+              "basename": "hurt_light_male_ls_f_sin_fu",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "sinfu",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 71,
+              "directory": "sounds/voices/smallboy/pain_light/",
+              "basename": "hurt_light_male_ls_b_hurtgrunt06_small_boy",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "smallboy",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 160,
+              "directory": "sounds/voices/the_master/pain/",
+              "basename": "master_pain_lt_2",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.699999988079071,
+            "unique": "themaster",
+            "is_voice": "true"
+          }
+        ],
+        "fx": []
+      },
+      "animation": {
+        "resource": "adreno_200/animation/all_impct_light_lft_high.anm",
+        "sha256": "ad7b331bd539db806d9793713fd6b581c11b4404a9fe1d9800621b7b672207e7",
+        "headers": {
+          "firstframe": 0,
+          "duration": 17,
+          "framerate": 30,
+          "version": 7,
+          "pose": 1
+        }
+      }
+    },
+    "impactlightrighthigh": {
+      "action": {
+        "name": "impactlightrighthigh",
+        "binary": {
+          "ordinal": 229,
+          "directory": "animation/",
+          "basename": "all_impct_light_rht_high",
+          "extension": "anm"
+        },
+        "unique": [],
+        "groups": [
+          [
+            "receivedamage",
+            [
+              0,
+              17
+            ],
+            0
+          ],
+          [
+            "impactable",
+            [
+              0,
+              17
+            ],
+            0
+          ],
+          [
+            "canblock",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "candocounter",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "candobasicattacks",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "canmove",
+            [
+              13,
+              17
+            ],
+            0
+          ]
+        ],
+        "categories": [],
+        "facing": [
+          0,
+          17
+        ],
+        "pose": "stand",
+        "radius": 40.0,
+        "rage": -5.0,
+        "disablecollision": "false",
+        "sounds": [
+          {
+            "file": {
+              "ordinal": 48,
+              "directory": "sounds/sfx/",
+              "basename": "kick_head_light_1",
+              "extension": "wav"
+            },
+            "frame": 0,
+            "volume": 0.699999988079071,
+            "unique": "",
+            "is_voice": "false"
+          },
+          {
+            "file": {
+              "ordinal": 156,
+              "directory": "sounds/voices/brick_davies/light_pain/",
+              "basename": "hurt__light_male_ls_g_hurtgrunt02_brick_davies",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "brickdavis",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 157,
+              "directory": "sounds/voices/bruce_lee/pain_light/",
+              "basename": "pain_light_1_bl",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "brucelee",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 55,
+              "directory": "sounds/voices/chief/pain_light/",
+              "basename": "hurt_light_male_ls_h_hurtgrunt05_the_cheif",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "chief",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 56,
+              "directory": "sounds/voices/johnson/light_pain/",
+              "basename": "hurt_light_male_ls_d_hurtpunch02_johnson",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "johnson",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 158,
+              "directory": "sounds/voices/ken_goodall/light_pain/",
+              "basename": "hurt_light_male_ls_c_hurtgrunt04_ken",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "kengodall",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 70,
+              "directory": "sounds/voices/lo_ming/light_pain/",
+              "basename": "hurt_light_male_ls_l_hurtgrunt08_lo_ming",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "loming",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 106,
+              "directory": "sounds/voices/shen_lo/light_pain/",
+              "basename": "male_ls_j_hurtgrunt04_shen_lo",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "shenlo",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 159,
+              "directory": "sounds/voices/sin_fu/light_pain/",
+              "basename": "hurt_light_male_ls_f_sin_fu",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "sinfu",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 71,
+              "directory": "sounds/voices/smallboy/pain_light/",
+              "basename": "hurt_light_male_ls_b_hurtgrunt06_small_boy",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.8500000238418579,
+            "unique": "smallboy",
+            "is_voice": "true"
+          },
+          {
+            "file": {
+              "ordinal": 160,
+              "directory": "sounds/voices/the_master/pain/",
+              "basename": "master_pain_lt_2",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.699999988079071,
+            "unique": "themaster",
+            "is_voice": "true"
+          }
+        ],
+        "fx": []
+      },
+      "animation": {
+        "resource": "adreno_200/animation/all_impct_light_rht_high.anm",
+        "sha256": "94f23fcbfaba6f727d47ea6774941eba9d3f3f5d25c41fae003e7f5bf6a5ce26",
+        "headers": {
+          "firstframe": 0,
+          "duration": 17,
+          "framerate": 30,
+          "version": 7,
+          "pose": 1
+        }
+      }
+    },
+    "impactlightleftlow": {
+      "action": {
+        "name": "impactlightleftlow",
+        "binary": {
+          "ordinal": 232,
+          "directory": "animation/",
+          "basename": "all_impct_light_lft_low",
+          "extension": "anm"
+        },
+        "unique": [],
+        "groups": [
+          [
+            "receivedamage",
+            [
+              0,
+              17
+            ],
+            0
+          ],
+          [
+            "impactable",
+            [
+              0,
+              17
+            ],
+            0
+          ],
+          [
+            "canblock",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "candocounter",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "candobasicattacks",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "canmove",
+            [
+              13,
+              17
+            ],
+            0
+          ]
+        ],
+        "categories": [],
+        "facing": [
+          0,
+          17
+        ],
+        "pose": "stand",
+        "radius": 40.0,
+        "rage": -5.0,
+        "disablecollision": "false",
+        "sounds": [
+          {
+            "file": {
+              "ordinal": 135,
+              "directory": "sounds/sfx/",
+              "basename": "punch_body_light_1",
+              "extension": "wav"
+            },
+            "frame": 1,
+            "volume": 0.5,
+            "unique": "",
+            "is_voice": "false"
+          },
+          {
+            "file": {
+              "ordinal": 2,
+              "directory": "sounds/sfx/",
+              "basename": "shoe_foot_short_b",
+              "extension": "wav"
+            },
+            "frame": 9,
+            "volume": 0.5,
+            "unique": "",
+            "is_voice": "false"
+          }
+        ],
+        "fx": []
+      },
+      "animation": {
+        "resource": "adreno_200/animation/all_impct_light_lft_low.anm",
+        "sha256": "6dd109d6d32bbaf4e7f7185a64502fc40156ff887eb2d0d4a2b3fc507166bb1e",
+        "headers": {
+          "firstframe": 0,
+          "duration": 17,
+          "framerate": 30,
+          "version": 7,
+          "pose": 1
+        }
+      }
+    },
+    "impactlightrightlow": {
+      "action": {
+        "name": "impactlightrightlow",
+        "binary": {
+          "ordinal": 231,
+          "directory": "animation/",
+          "basename": "all_impct_light_rht_low",
+          "extension": "anm"
+        },
+        "unique": [],
+        "groups": [
+          [
+            "receivedamage",
+            [
+              0,
+              17
+            ],
+            0
+          ],
+          [
+            "impactable",
+            [
+              0,
+              17
+            ],
+            0
+          ],
+          [
+            "canblock",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "candocounter",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "candobasicattacks",
+            [
+              13,
+              17
+            ],
+            0
+          ],
+          [
+            "canmove",
+            [
+              13,
+              17
+            ],
+            0
+          ]
+        ],
+        "categories": [],
+        "facing": [
+          0,
+          17
+        ],
+        "pose": "stand",
+        "radius": 40.0,
+        "rage": -5.0,
+        "disablecollision": "false",
+        "sounds": [
+          {
+            "file": {
+              "ordinal": 52,
+              "directory": "sounds/sfx/",
+              "basename": "punch_body_light_2",
+              "extension": "wav"
+            },
+            "frame": 0,
+            "volume": 0.5,
+            "unique": "",
+            "is_voice": "false"
+          },
+          {
+            "file": {
+              "ordinal": 5,
+              "directory": "sounds/sfx/",
+              "basename": "shoe_foot_r",
+              "extension": "wav"
+            },
+            "frame": 9,
+            "volume": 0.5,
+            "unique": "",
+            "is_voice": "false"
+          }
+        ],
+        "fx": []
+      },
+      "animation": {
+        "resource": "adreno_200/animation/all_impct_light_rht_low.anm",
+        "sha256": "ed6a9dbd22911da2ce04921e74c837a3f53d870e952191ba3b509f9722ac854c",
+        "headers": {
+          "firstframe": 0,
+          "duration": 17,
+          "framerate": 30,
+          "version": 7,
+          "pose": 1
+        }
+      }
+    }
+  },
+  "links": {
+    "221": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impactlightleftlow",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthnormal",
+        "oppattackheightlow",
+        "oppattackdirfromleft"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "222": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impactlightrightlow",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthnormal",
+        "oppattackheightlow",
+        "oppattackdirfromright"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "224": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impactlightlefthigh",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthnormal",
+        "oppattackheighthigh",
+        "oppattackdirfromleft"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    },
+    "225": {
+      "unique": [],
+      "from_group": "impactable",
+      "to": "impactlightrighthigh",
+      "keysequence": [
+        [],
+        [],
+        []
+      ],
+      "keystatus": [
+        [],
+        [],
+        []
+      ],
+      "conditions": [
+        "impact",
+        "oppattackstrengthnormal",
+        "oppattackheighthigh",
+        "oppattackdirfromright"
+      ],
+      "time": [
+        0,
+        0
+      ],
+      "linking_frame": 0,
+      "entry_frame": 0,
+      "blending": 2
+    }
+  }
+}
