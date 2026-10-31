@@ -87,9 +87,25 @@ func _run() -> void:
     if not await _check_event(scene, player, opponent, "special_kick_high", false, "kick", streams, combat_audio):
         quit(1)
         return
+    for entry: Array in [
+        ["high_punch2", "punch"], ["high_punch3", "punch"],
+        ["low_punch2", "punch"], ["low_punch3", "punch"],
+        ["special_punch_high_hit", "punch"], ["parry_attack", "punch"],
+        ["high_kick2", "kick"], ["high_kick3", "kick"],
+        ["low_kick2", "kick"], ["special_kick_low_hit", "kick"],
+    ]:
+        if not await _check_event(
+                scene, player, opponent, String(entry[0]), false,
+                String(entry[1]), streams, combat_audio
+        ):
+            quit(1)
+            return
+    if not await _check_event(scene, player, opponent, "punch", true, "block", streams, combat_audio):
+        quit(1)
+        return
     scene._on_hit(player, opponent, "attacktofloor", 5.0, false)
     await process_frame
-    if combat_audio.get_child_count() != 7:
+    if combat_audio.get_child_count() != 18:
         push_error("Unsupported attack action should not reuse a candidate sound")
         quit(1)
         return
