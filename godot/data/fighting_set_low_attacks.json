@@ -833,6 +833,51 @@
         "return_action": "idle",
         "return_implemented": true,
         "clip_implemented": false
+      },
+      {
+        "strength": "hard",
+        "height": "low",
+        "direction": "fromleft",
+        "source_action": "impacthardleftlow",
+        "animation": "all_impct_hard_lft_low",
+        "animation_radius": 80.0,
+        "entry_frame": 0,
+        "exit_start_frame": 25,
+        "animation_duration_frames": 29,
+        "linking_frame": 0,
+        "return_action": "faceupidle",
+        "return_implemented": false,
+        "clip_implemented": false
+      },
+      {
+        "strength": "hard",
+        "height": "high",
+        "direction": "fromleft",
+        "source_action": "impacthardlefthigh",
+        "animation": "all_impct_hard_lft_high",
+        "animation_radius": 80.0,
+        "entry_frame": 0,
+        "exit_start_frame": 26,
+        "animation_duration_frames": 29,
+        "linking_frame": 0,
+        "return_action": "faceupidle",
+        "return_implemented": false,
+        "clip_implemented": false
+      },
+      {
+        "strength": "hard",
+        "height": "high",
+        "direction": "fromabove",
+        "source_action": "impacthardabove",
+        "animation": "all_impct_hard_above",
+        "animation_radius": 70.0,
+        "entry_frame": 0,
+        "exit_start_frame": 17,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+        "return_action": "facedownidle",
+        "return_implemented": false,
+        "clip_implemented": false
       }
     ],
     "block": [
