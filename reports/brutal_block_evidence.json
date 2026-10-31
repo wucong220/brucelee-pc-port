@@ -94,5 +94,18 @@
       "blending": 3,
       "input_reset": "true"
     }
+  },
+  "animation": {
+    "resource": "adreno_200/animation/all_block_high_brutal.anm",
+    "resource_sha256": "874c4e1574bcf8f2bb9361b35a83fce7fe70a7acb920d0f82a52522bf0b967f5",
+    "headers": {
+      "firstframe": 0,
+      "duration": 20,
+      "framerate": 30,
+      "version": 7,
+      "pose": 1
+    },
+    "data_offset": 601,
+    "payload_bytes": 8156
   }
 }
