@@ -42,9 +42,10 @@
   - 产物位于仓库外，不提交。
   - PCK 启动自检：`Godot_v4.7.2-stable_win64.exe --headless --main-pack <dist>/DragonWarrior_PC_Prototype.pck --quit`，退出码 0；日志中的菜单背景缺失警告不阻断启动。
 - 候选音频映射回归：使用仓库外音频根运行 `validate_candidate_audio.gd`，输出 `CANDIDATE_AUDIO_VALIDATION=passed`，退出码 0；仓库内音频根会被 path guard 拒绝。
-- Windows EXE 导出（隔离 `smoke_root/godot`，Godot 4.7.2 导出模板已安装到 APPDATA）：
-  - 产物：`dist/DragonWarrior_PC_Prototype.exe`，109,127,680 字节，SHA-256 `4a9eaded8955ef789ab02651ed9d2dde80328fbb342bd2a6db4db33e86305668`
+- Windows EXE 导出（`build_windows.ps1 -BuildRoot <可写目录> -OutputDir <dist>`，Godot 4.7.2 导出模板已安装到 APPDATA）：
+  - 产物：`dist/DragonWarrior_PC_Prototype.exe`，109,268,480 字节，SHA-256 `10dd53c2a28599ad57165237451118f8af19bada271c430aa8caa6ca77b7ae5e`
   - 同时生成 `DragonWarrior_PC_Prototype.pck`，533,804 字节
+  - 脚本在 C 盘 worktree 下通过“复制到可写构建根再导出”完成，不再依赖手工复制；构建根和模板归档不提交。
   - 启动自检：`DragonWarrior_PC_Prototype.exe --headless --quit`，退出码 0；日志仅有未布置的候选音频/HUD/菜单背景资源缺失错误，不是启动失败
   - EXE 内置确定性自检（使用 `BRUCELEE_EXPORT_SELF_TEST=1`、candidate47、Brick candidate7 和对应 texture roots）：退出码 0，输出 `EXPORT_SELF_TEST={"candidate_textures_loaded":true,"candidate_visual_height":1.8,"candidate_world_height":1.55666851997375,"candidate_world_min_y":-0.00497347116470337,"internal_path_rejected":true,"opponent_candidate_loaded":true,"opponent_idle_clip":"m03_idle_01","opponent_texture_reason":"","opponent_textures_loaded":true,"punch_hitstun_frames":14,"punch_target_health":95.0,"reaction_clip":"all_impct_light_frnt_mid"}`
   - 将 `candidate-sfx-20261030`、`local-assets`、`p5-menu-assets-20261030`、player/brick textures 布置到 `LOCALAPPDATA\BruceLee-PC-Port` 后，`DragonWarrior_PC_Prototype.exe --headless --quit` 退出码 0 且不再出现这些外部资源缺失警告；确定性自检同样退出码 0。布置资源是该 EXE 运行所需的本地外部资源，不进入仓库。
