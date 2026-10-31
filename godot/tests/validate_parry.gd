@@ -30,7 +30,7 @@ func _run() -> void:
         quit(1)
         return
     var clips: Dictionary = player.get("_candidate_clip_paths")
-    for required: String in ["parry_high", "parry_attack"]:
+    for required: String in ["parry_high", "parry_low", "parry_attack"]:
         if not clips.has(required):
             push_error("Candidate is missing " + required)
             quit(1)
@@ -55,6 +55,9 @@ func _run() -> void:
         quit(1)
         return
     if not _validate_release_wiring(scene, player):
+        quit(1)
+        return
+    if not _validate_parry_low(scene, player, computer):
         quit(1)
         return
     print("PARRY_VALIDATION=" + JSON.stringify({
@@ -213,5 +216,48 @@ func _validate_release_wiring(scene: Node, player: PortFighter) -> bool:
     var history: Array = player.get("_parry_press_times")
     if not history.is_empty():
         push_error("Releasing guard through the real input path did not clear history")
+        return false
+    return true
+
+
+func _validate_parry_low(scene: Node, player: PortFighter, computer: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    player.rage = 40.0
+    player.guard_held = true
+    player.facing = 1.0
+    computer.reset_fighter(Vector3(-1.7, 1.20, 0.0))
+    computer.attack_kind = "kick"
+    computer.state = "startup"
+    for _i: int in range(3):
+        Input.action_press("prototype_move_down")
+        Input.action_press("prototype_move_right")
+        scene._update_parry_input()
+        Input.action_release("prototype_move_down")
+        Input.action_release("prototype_move_right")
+        scene._update_parry_input()
+        player._time += 0.1
+    if player.attack_kind != "parry_low":
+        push_error("Low incoming attack did not select parry_low: kind=" + player.attack_kind + " low=" + str(scene._incoming_attack_is_low()) + " reach=" + str(computer.attack_reach_world(computer.attack_kind, player)) + " dist=" + str(Vector2(player.position.x - computer.position.x, player.position.z - computer.position.z).length()) + " state=" + player.state + " cstate=" + computer.state)
+        return false
+    if absf(player.rage - 10.0) > 0.001:
+        push_error("parry_low did not cost 30 rage: " + str(player.rage))
+        return false
+    if player.current_source_animation() != "m01_kick_low_02":
+        push_error("parry_low animation was " + player.current_source_animation())
+        return false
+    player._animate_candidate()
+    var clips: Dictionary = player.get("_candidate_clip_paths")
+    if player.candidate_animation_clip != String(clips.get("parry_low", "")):
+        push_error("parry_low did not play its candidate clip")
+        return false
+    var health_before: float = computer.health
+    for _i: int in range(30):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.attack_kind == "parry_attack":
+        push_error("parry_low incorrectly chained to parry_attack")
+        return false
+    if absf(computer.health - health_before) > 0.001:
+        push_error("parry_low invented damage")
         return false
     return true

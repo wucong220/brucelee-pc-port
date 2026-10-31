@@ -37,6 +37,7 @@ class TestFightingConfig(unittest.TestCase):
                 "all_impct_hard_frnt_high": 80.0,
                 "m01_sp_pnch_high": 25.0,
                 "m01_parry_high": 40.0,
+                "m01_kick_low_02": 50.0,
                 "m01_grab_01": 40.0,
                 "m01_grab_02": 25.0,
                 "m02_grab_01": 25.0,
@@ -110,7 +111,7 @@ class TestFightingConfig(unittest.TestCase):
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
-            "parry_high", "parry_attack", "grab1", "grab2",
+            "parry_high", "parry_low", "parry_attack", "grab1", "grab2",
             "grab1_miss", "grab2_miss",
             "endattack1", "endattack2",
         })

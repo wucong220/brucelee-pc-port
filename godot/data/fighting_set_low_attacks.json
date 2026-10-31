@@ -652,6 +652,23 @@
         "strength": "normal",
         "direction": "frontal"
       }
+    },
+    "parry_low": {
+      "source_action": "parrylow",
+      "animation": "m01_kick_low_02",
+      "animation_frame_count": 27,
+      "startup_frames": 17,
+      "active_frames": 1,
+      "recovery_frames": 9,
+      "damage": 0.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 40.0,
+        "body_part": "larm",
+        "height": "low",
+        "strength": "normal",
+        "direction": "frontal"
+      }
     }
   },
   "exact_reactions": {

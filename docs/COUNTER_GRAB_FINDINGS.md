@@ -40,6 +40,6 @@
 
 ## 结论/约束
 
-1. 反击：没有现成 GDScript，只能按 `IsInCounterTime` / `candocounter` 语义实现；不得把 `computer.state in startup/active` 说成原版等价。
+1. 反击：没有现成 GDScript，只能按 `IsInCounterTime` / `candocounter` 语义实现；不得把 `computer.state in startup/active` 说成原版等价。按用户指定，额外实现 `parry_low` 作为 `parry_high` 的低段对应（`low` 高度选择、27 帧、30 怒气、零伤害），明确标注为 PC 原型扩展。
 2. 抓取：命中动画可用，miss 动画属于 Ken 骨架；若没有正确的 Bruce miss 动画，只能做“命中直接抓取、距离不足 fail-closed”的候选实现，并在文档注明。
 3. 终结技 `endattack1/2` 仍缺 `oppposestun` 对应状态。
