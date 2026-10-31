@@ -856,6 +856,7 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "source_action": "impactbrutalmid",
             "animation": "all_sp_pnch_low_forset04",
             "animation_radius": 60.0,
+            "entry_frame": 6,
             "exit_start_frame": 25,
             "animation_duration_frames": 28,
             "linking_frame": 0,
@@ -3458,6 +3459,9 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
         }
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
+        if (String(exact.get("source_action", "")) == "impactbrutalmid"
+                and not _medium_lethal_impactable()):
+            return {}
         return exact
     # Hard and brutal attacks have no light-height fallback when the exact link is absent.
     if String(impact.get("strength", "")) != "normal":

@@ -183,6 +183,10 @@ func _run() -> void:
         push_error("brutal medium hit did not select impactbrutalmid metadata")
         quit(1)
         return
+    if int(brutal_mid.get("entry_frame", -1)) != 6:
+        push_error("brutal medium hit lacks source entry_frame 6")
+        quit(1)
+        return
     if not player.receive_hit(5.0, false, 0.0, 1.0, brutal_mid):
         push_error("brutal medium hit was rejected")
         quit(1)
@@ -190,6 +194,14 @@ func _run() -> void:
     if (player.state != "hitstun" or absf(player.health - 95.0) > 0.001
             or player.last_reaction_source_action != "impactbrutalmid"):
         push_error("brutal medium hit did not enter hitstun")
+        quit(1)
+        return
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "faceupidle"
+    if not player.reaction_for_incoming(
+        {"strength": "brutal", "height": "medium", "direction": "frontal"}, false
+    ).is_empty():
+        push_error("non-impactable state accepted brutal medium reaction")
         quit(1)
         return
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
