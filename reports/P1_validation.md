@@ -36,6 +36,10 @@
   - `EXIT=0`
   - 输出 `PROTOTYPE_VALIDATION={"blocked_kick_target_health":99.4,"blockstun_frames":12,"kick_hitstun_frames":13,"ko_and_restart":true,"punch_hitstun_frames":14,"punch_target_health":95.0}`
   - 隔离布局用于满足 path-guard 的 repository fixture 与 external temp 边界。
+- PCK 打包在隔离 `smoke_root/godot` 中实际成功：
+  - `Godot_v4.7.2-stable_win64.exe --headless --path <smoke_root>/godot --export-pack "Windows Desktop" <dist>/DragonWarrior_PC_Prototype.pck`
+  - 产物：532,748 字节，SHA-256 `c48237afe11b0895c36a5b5ffb9784825603634762e6ae6d37c8ec4e10e0f5cb`
+  - 产物位于仓库外，不提交。
 
 ## 未冒充为已验证
 
