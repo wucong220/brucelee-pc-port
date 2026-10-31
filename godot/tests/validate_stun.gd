@@ -132,6 +132,12 @@ func _run() -> void:
         push_error("Stun opponent did not accept endattack1: " + player.attack_kind)
         quit(1)
         return
+    player._animate_candidate()
+    var player_clips: Dictionary = player.get("_candidate_clip_paths")
+    if player.candidate_animation_clip != String(player_clips.get("endattack1", "")):
+        push_error("Stun endmove did not play the endattack1 candidate clip")
+        quit(1)
+        return
     print("STUN_VALIDATION=" + JSON.stringify({
         "state_chain": ["stun", "stun2", "stunfall", "ko"],
         "animation": clips["stun"],
