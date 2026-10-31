@@ -1,5 +1,5 @@
 extends SceneTree
-## Validate hard/brutal stun-impact reactions on the 50-clip candidate.
+## Validate the hard stun-impact reaction on the 50-clip candidate.
 
 func _initialize() -> void:
     call_deferred("_run")
@@ -34,6 +34,15 @@ func _run() -> void:
             quit(1)
             return
     var ko_seen: Array = [false]
+    var dispatched: Dictionary = player.reaction_for_incoming(
+        {"strength": "hard", "height": "high", "direction": "frontal"}, false
+    )
+    if (dispatched.is_empty()
+            or String(dispatched.get("source_action", "")) != "impacthardfronthigh"
+            or String(dispatched.get("animation", "")) != "all_impct_hard_frnt_high"):
+        push_error("reaction_for_incoming did not dispatch the hard frontal reaction")
+        quit(1)
+        return
     player.combat_ko.connect(func(_fighter: PortFighter) -> void: ko_seen[0] = true)
     var cases: Array[Dictionary] = [
         {
