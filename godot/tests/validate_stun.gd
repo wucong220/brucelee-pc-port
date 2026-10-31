@@ -410,8 +410,12 @@ func _run() -> void:
         push_error("Stun2 endmove setup did not stun defender: " + defender.state)
         quit(1)
         return
-    defender.state = "stun2"
-    defender.state_time = 0.1
+    for _i: int in range(61):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "stun2":
+        push_error("Endmove stun2 setup did not reach stun2: " + defender.state)
+        quit(1)
+        return
     player.record_standing_combo_press("b", ["up", "in"])
     player.record_standing_combo_press("a")
     player.record_standing_combo_press("a")
@@ -438,8 +442,12 @@ func _run() -> void:
         push_error("Stun2 endattack2 setup did not stun defender: " + defender.state)
         quit(1)
         return
-    defender.state = "stun2"
-    defender.state_time = 0.1
+    for _i: int in range(61):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "stun2":
+        push_error("Endmove stun2 setup did not reach stun2: " + defender.state)
+        quit(1)
+        return
     player.record_standing_combo_press("a", ["up", "in"])
     player.record_standing_combo_press("c")
     player.record_standing_combo_press("c")
