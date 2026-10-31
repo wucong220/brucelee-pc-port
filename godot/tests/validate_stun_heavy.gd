@@ -33,6 +33,8 @@ func _run() -> void:
             push_error("Candidate is missing " + required)
             quit(1)
             return
+    var ko_seen: Array = [false]
+    player.combat_ko.connect(func(_fighter: PortFighter) -> void: ko_seen[0] = true)
     var cases: Array[Dictionary] = [
         {
             "source": "impacthardfronthigh",
@@ -77,6 +79,11 @@ func _run() -> void:
             )
             quit(1)
             return
+        if not bool(ko_seen[0]):
+            push_error("stun impact did not emit combat_ko for " + String(case["source"]))
+            quit(1)
+            return
+        ko_seen[0] = false
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
         "cases": ["impacthard -> faceupko", "impactbrutal -> facedownko"],
         "scope": "prototype stun-impact transitions; source timing approximate",

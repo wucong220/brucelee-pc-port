@@ -2147,7 +2147,16 @@ func _advance_stun_state(delta: float) -> void:
 
 func _advance_stun_impact_state(delta: float) -> void:
     state_time -= delta
-    if state_time <= 0.000001:
+    if state_time > 0.000001:
+        return
+    if _stun_impact_next_state == "stunfall":
+        state = "stunfall"
+        state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
+    elif _stun_impact_next_state == "faceupko":
+        _begin_faceup_ko(0.0)
+    elif _stun_impact_next_state == "facedownko":
+        _begin_facedown_ko()
+    else:
         state = _stun_impact_next_state
         state_time = 0.0
 
