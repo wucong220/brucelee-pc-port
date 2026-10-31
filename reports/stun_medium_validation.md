@@ -4,7 +4,7 @@
 
 `data.zpak` SHA-256 `364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c`；`adreno_200/set/brucelee.set` SHA-256 `860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c`，PAKD offset 21016054，resource ID `f3d1549105ba342bc17b86a33b3834a0`。通过 `tools/kdf_fighting_set.read_archive_resource` 与 `tools/kdf_combat_reactions._parse_set` 只读解析。
 
-直接链接：125 轻高眩晕受击→stunfall [13,17]；129 轻低→stunfall [13,16]；131 中→stunfall [15,20]；210 impactable+normal+medium+healthzero→impactstunlow；211 normal+low→impactstunlow；288 impactstunlow→stun [14,17]；284 stun→stun2 [55,61]；285 stun2→stunfall [55,61]；286 stunfall→faceupko [71,79]。组入口 126/130 normal、128 hard、132 medium、134 brutal 条件可能重叠；normal/medium 与 hard/medium 的选择是 PC 候选，不证明原版优先级；当前配置没有 brutal 来源。stunimpact 属于 impactsfromstun，但当前候选拒绝再次受击，原版重入未验证。
+直接链接：125 轻高眩晕受击→stunfall [13,17]；129 轻低→stunfall [13,16]；131 中→stunfall [15,20]；210 impactable+normal+medium+healthzero→impactstunlow；211 normal+low→impactstunlow；288 impactstunlow→stun [14,17]；284 stun→stun2 [55,61]；285 stun2→stunfall [55,61]；286 stunfall→faceupko [71,79]；134 impactsfromstun+brutal→stunbrutalimpact；133 stunbrutalimpact→facedownko [40,45]。组入口 126/130 normal、128 hard、132 medium、134 brutal 条件可能重叠；normal/medium 与 hard/medium 的选择是 PC 候选，不证明原版优先级；当前配置没有 brutal 来源。stunimpact 属于 impactsfromstun，但当前候选拒绝再次受击，原版重入未验证。
 
 ## impactable 来源动作及窗口
 
@@ -17,7 +17,7 @@
 Godot 4.7.2 stable headless，APPDATA/TEMP 使用本地 godot-userdata：
 
 - `--path godot --script res://tests/validate_stun.gd -- D:/BruceLeeWork/bruce_candidate_48_hair.glb`：退出 0；输出 `STUN_VALIDATION={"animation":"all_stunned","scope":"prototype stun path for healthzero normal hits; source impactstun timing is not fully recovered","state_chain":["stun","stun2","stunfall","faceupko"]}`；日志含系统根证书存储读取错误，脚本结果成功。
-- `validate_stun_heavy.gd -- D:/BruceLeeWork/bruce_candidate_50_hair.glb`：退出 0；`STUN_HEAVY_VALIDATION` 输出两例 hard→faceupko。
+- `validate_stun_heavy.gd -- D:/BruceLeeWork/bruce_candidate_50_hair.glb`：退出 0；`STUN_HEAVY_VALIDATION` 输出 hard→faceupko 与 brutal→facedownko 三例。
 - `validate_ground_pose.gd -- .../bruce_candidate_23.glb .../brick_candidate_7.glb`：退出 0。
 - `validate_faceup_impact.gd -- .../bruce_candidate_23.glb .../brick_candidate_7.glb`：退出 0。
 

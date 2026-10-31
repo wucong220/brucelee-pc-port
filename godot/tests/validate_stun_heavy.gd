@@ -111,8 +111,44 @@ func _run() -> void:
         push_error("hard/medium did not select the candidate hard reaction")
         quit(1)
         return
+    # Source links 134/133: brutal stun hit -> stunbrutalimpact -> facedownko.
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "stun"
+    var brutal_reaction: Dictionary = player.reaction_for_incoming(
+        {"strength": "brutal", "height": "medium", "direction": "frontal"}, false
+    )
+    if (String(brutal_reaction.get("source_action", "")) != "stunbrutalimpact"
+            or String(brutal_reaction.get("animation", "")) != "stun_brutal"):
+        push_error("brutal stun reaction did not select stunbrutalimpact")
+        quit(1)
+        return
+    for origin: String in ["stun", "stun2"]:
+        player.reset_fighter(Vector3.ZERO)
+        player.state = origin
+        player.health = 10.0
+        if not player.receive_hit(2.0, false, 0.0, 1.0, brutal_reaction):
+            push_error("brutal stun hit was rejected from " + origin)
+            quit(1)
+            return
+        if (player.state != "stunimpact" or player.health != 8.0
+                or player.last_reaction_animation != "stun_brutal"):
+            push_error("brutal stun hit mismatch from " + origin)
+            quit(1)
+            return
+        for _i: int in range(39):
+            player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        if player.state != "stunimpact":
+            push_error("brutal stunimpact ended before frame 40 from " + origin)
+            quit(1)
+            return
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        if player.state != "facedownko":
+            push_error("brutal stunimpact did not enter facedownko from " + origin)
+            quit(1)
+            return
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
-        "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko"],
+        "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko",
+            "stun/stun2 brutal -> facedownko"],
         "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()
