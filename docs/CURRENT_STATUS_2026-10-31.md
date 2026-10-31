@@ -2,7 +2,7 @@
 
 - 工作树：`C:\Users\Lenovo\.codex\worktrees\prototype-menu\李小龙`
 - 分支：`codex/combat-next`
-- PR #96 的当前 HEAD：`aef0de1`
+- PR #96 的当前 HEAD：见 PR 页面（本文件不静态记录会变化的提交号）
 - 记录本文件时的代码基线：`bb7eea6`（PR #95 的 HEAD；远端 main 已包含 #93/#94/#95 合并，PR #95 merge commit 为 `36cd24a`）
 
 ## 测试口径
