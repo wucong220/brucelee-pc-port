@@ -61,7 +61,7 @@ function Test-SubstPath([string]$path, [string[]]$substLines = $null) {
         $substLines = @(& cmd.exe /c subst 2>$null)
     }
     foreach ($substLine in $substLines) {
-        if ($substLine -match '^([A-Za-z]):\s*=>') {
+        if ($substLine -match '^([A-Za-z]):\\:\s*=>') {
             $substDrive = $Matches[1] + ':\'
             if ($path.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase)) {
                 return $true
@@ -78,7 +78,7 @@ if ($SelfTest) {
     if (Test-PathOverlap 'C:\Work\staging' 'D:\Work\project') {
         throw 'Unrelated paths were reported as overlapping.'
     }
-    $substFixture = @('Z: => C:\repo\godot')
+    $substFixture = @('Z:\: => C:\repo\godot')
     if (-not (Test-SubstPath 'Z:\out' $substFixture)) {
         throw 'SUBST drive path was not detected.'
     }
