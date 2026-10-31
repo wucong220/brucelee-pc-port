@@ -28,10 +28,20 @@ Write-Host "Build project: $project"
 $buildRootFull = [System.IO.Path]::GetFullPath($BuildRoot)
 $sourceFull = [System.IO.Path]::GetFullPath($sourceProject)
 $rootFull = [System.IO.Path]::GetFullPath($root)
-if ($buildRootFull -eq $rootFull -or $buildRootFull -eq $sourceFull) {
-    throw 'BuildRoot must not be the repository or source project root.'
-}
 $staging = Join-Path $BuildRoot 'staging'
+$stagingFull = [System.IO.Path]::GetFullPath($staging)
+$projectFull = [System.IO.Path]::GetFullPath($project)
+function Test-PathOverlap([string]$left, [string]$right) {
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+    return $left -eq $right -or
+        $left.StartsWith($right + $separator) -or
+        $right.StartsWith($left + $separator)
+}
+if ((Test-PathOverlap $stagingFull $rootFull) -or
+        (Test-PathOverlap $stagingFull $sourceFull) -or
+        (Test-PathOverlap $projectFull $sourceFull)) {
+    throw 'BuildRoot/staging must not overlap the repository or source project.'
+}
 if (Test-Path $staging) { Remove-Item -LiteralPath $staging -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $buildDist | Out-Null
 Copy-Item -LiteralPath $sourceProject -Destination $project -Recurse
