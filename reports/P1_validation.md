@@ -36,7 +36,7 @@
 ## 未冒充为已验证
 
 - 未新增 Windows EXE 导出验收；已有历史 Windows EXE 自检结论仍按旧记录引用，本次未重新导出。
-- `smoke_test.gd` 本轮未通过验证；其 `_path_guard_check()` 会创建带 token 的临时目录并调用 `DirAccess.make_dir_absolute(temp_root)`，但具体失败阶段/错误尚未确认。不能据此断言失败原因是沙箱权限或某个 `OS.get_temp_dir()` 调用。
+- `smoke_test.gd` 本轮未通过验证：`_path_guard_check()` 在 `DirAccess.make_dir_absolute(repository_fixture)` 处失败；源码使用带 token 的 `.path-guard-fixture-*` 目录（不是 `OS.get_temp_dir()` 本身）。当前只能确认该 repository fixture 创建失败，具体环境原因尚未确认，不能据此断言沙箱权限或其他机制。
 - 未实测真实手柄设备、长时间运行、真实关卡和原版逐帧对照。
 
 ## 结论
