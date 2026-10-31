@@ -216,10 +216,41 @@ func _run() -> void:
         push_error("non-impactable state accepted brutal medium reaction")
         quit(1)
         return
+    for case: Dictionary in [
+        {"height": "high", "direction": "fromleft",
+            "source": "impactbrutalleft", "animation": "all_impct_spectacular_lft",
+            "exit": 39, "duration": 45},
+        {"height": "high", "direction": "fromright",
+            "source": "impactbrutalright", "animation": "all_impct_spectacular_rht",
+            "exit": 41, "duration": 45},
+    ]:
+        player.reset_fighter(Vector3.ZERO)
+        player.health = 100.0
+        var reaction: Dictionary = player.reaction_for_incoming({
+            "strength": "brutal", "height": String(case["height"]),
+            "direction": String(case["direction"]),
+        }, false)
+        if (String(reaction.get("source_action", "")) != String(case["source"])
+                or String(reaction.get("animation", "")) != String(case["animation"])
+                or int(reaction.get("exit_start_frame", -1)) != int(case["exit"])
+                or int(reaction.get("animation_duration_frames", -1)) != int(case["duration"])):
+            push_error("brutal high reaction metadata mismatch: " + String(case["source"]))
+            quit(1)
+            return
+        if not player.receive_hit(5.0, false, 0.0, 1.0, reaction):
+            push_error("brutal high hit was rejected: " + String(case["source"]))
+            quit(1)
+            return
+        if (player.state != "hitstun" or absf(player.health - 95.0) > 0.001
+                or player.last_reaction_source_action != String(case["source"])):
+            push_error("brutal high hit did not enter hitstun: " + String(case["source"]))
+            quit(1)
+            return
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
         "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko",
             "stun/stun2 brutal -> facedownko", "brutal block -> highblockbrutal",
-            "brutal medium -> impactbrutalmid"],
+            "brutal medium -> impactbrutalmid",
+            "brutal high left/right -> impactbrutalleft/right"],
         "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()
