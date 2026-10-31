@@ -88,8 +88,10 @@ $substOutput = & cmd.exe /c subst 2>$null
 foreach ($substLine in @($substOutput)) {
     if ($substLine -match '^([A-Za-z]):\\') {
         $substDrive = $Matches[1] + ':\'
-        if ($buildRootFull.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase)) {
-            throw 'BuildRoot must not use a SUBST virtual drive.'
+        if ($buildRootFull.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase) -or
+                $sourceFull.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase) -or
+                $rootFull.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw 'BuildRoot/source paths must not use a SUBST virtual drive.'
         }
     }
 }
