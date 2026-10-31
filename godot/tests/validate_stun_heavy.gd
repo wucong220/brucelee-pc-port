@@ -144,9 +144,28 @@ func _run() -> void:
             push_error("brutal stunimpact did not enter facedownko from " + origin)
             quit(1)
             return
+    # Source links 96/346: brutal block -> highblockbrutal -> idle2 [17,20].
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 10.0
+    var brutal_block: Dictionary = player.reaction_for_incoming(
+        {"strength": "brutal", "height": "medium", "direction": "frontal"}, true
+    )
+    if (String(brutal_block.get("source_action", "")) != "highblockbrutal"
+            or String(brutal_block.get("animation", "")) != "all_block_high_brutal"):
+        push_error("brutal block did not select highblockbrutal")
+        quit(1)
+        return
+    if not player.receive_hit(2.0, true, 0.0, 1.0, brutal_block):
+        push_error("brutal block was rejected")
+        quit(1)
+        return
+    if player.state != "blockstun" or absf(player.health - 9.76) > 0.001:
+        push_error("brutal block did not enter blockstun with chip damage")
+        quit(1)
+        return
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
         "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko",
-            "stun/stun2 brutal -> facedownko"],
+            "stun/stun2 brutal -> facedownko", "brutal block -> highblockbrutal"],
         "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()

@@ -865,6 +865,20 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
             "return_implemented": false,
             "clip_implemented": false,
         },
+        {
+            "strength": "brutal",
+            "height": "",
+            "direction": "",
+            "source_action": "highblockbrutal",
+            "animation": "all_block_high_brutal",
+            "animation_radius": 25.0,
+            "exit_start_frame": 17,
+            "animation_duration_frames": 20,
+            "linking_frame": 0,
+            "return_action": "idle2",
+            "return_implemented": false,
+            "clip_implemented": false,
+        },
     ],
 }
 var ATTACKS: Dictionary = {}
