@@ -42,10 +42,15 @@
   - 产物位于仓库外，不提交。
   - PCK 启动自检：`Godot_v4.7.2-stable_win64.exe --headless --main-pack <dist>/DragonWarrior_PC_Prototype.pck --quit`，退出码 0；日志中的菜单背景缺失警告不阻断启动。
 - 候选音频映射回归：使用仓库外音频根运行 `validate_candidate_audio.gd`，输出 `CANDIDATE_AUDIO_VALIDATION=passed`，退出码 0；仓库内音频根会被 path guard 拒绝。
+- Windows EXE 导出（隔离 `smoke_root/godot`，Godot 4.7.2 导出模板已安装到 APPDATA）：
+  - 产物：`dist/DragonWarrior_PC_Prototype.exe`，109,127,680 字节，SHA-256 `4a9eade8955ef789ab02651ed9d2dde80328fbb342bd2a6db4db33e86305668`
+  - 同时生成 `DragonWarrior_PC_Prototype.pck`，533,804 字节
+  - 启动自检：`DragonWarrior_PC_Prototype.exe --headless --quit`，退出码 0；日志仅有未布置的候选音频/HUD/菜单背景资源缺失错误，不是启动失败
 
 ## 未冒充为已验证
 
-- 未新增 Windows EXE 导出验收；已有历史 Windows EXE 自检结论仍按旧记录引用，本次未重新导出。当前实际阻塞是 Godot 4.7.2 导出模板缺失：`windows_debug_x86_64.exe` 和 `windows_release_x86_64.exe` 均不在当前模板路径中。
+- 历史 Windows EXE 自检结论仍按旧记录引用；本次新增的是隔离副本导出结果。
+- 本次已补齐 Godot 4.7.2 导出模板并完成隔离副本 EXE 导出；EXE 启动日志中的候选音频/HUD/菜单背景错误仅表示这些外部资源未布置到运行目录，未冒充为完整游戏资产验收。
 - 在当前 C 盘 worktree 的默认位置直接运行 `smoke_test.gd` 时，`_path_guard_check()` 的 `.path-guard-fixture-*` 创建失败；因此上面的 smoke 通过结果只对应隔离 `smoke_root` 副本，不能宣称任意工作目录都通过。
 - 未实测真实手柄设备、长时间运行、真实关卡和原版逐帧对照。
 
