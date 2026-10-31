@@ -188,9 +188,8 @@ func _run() -> void:
         quit(1)
         return
     player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
-    player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stunfall":
-        push_error("medium stunimpact did not end in stunfall: " + player.state)
+        push_error("medium stunimpact did not end in stunfall on frame 30: " + player.state)
         quit(1)
         return
     # Empty reaction source must fail closed from both stun and stun2.
