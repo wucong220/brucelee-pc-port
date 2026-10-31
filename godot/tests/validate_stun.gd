@@ -449,6 +449,11 @@ func _run() -> void:
         push_error("High punch real chain did not reach faceupko: " + defender.state)
         quit(1)
         return
+    defender._animate_candidate()
+    if defender.candidate_animation_clip != String(clips["all_idle_face_up"]):
+        push_error("faceupko did not play all_idle_face_up")
+        quit(1)
+        return
     print("STUN_VALIDATION=" + JSON.stringify({
         "state_chain": ["stun", "stun2", "stunfall", "faceupko"],
         "animation": clips["stun"],
