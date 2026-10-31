@@ -3472,14 +3472,20 @@ func receive_hit(
     # their own evidence-backed transitions.
     if state in ["stun", "stun2"] and not blocked:
         var stun_source: String = String(reaction.get("source_action", ""))
-        var stun_animation: String = "all_impct_light_frnt_high"
-        var stun_exit_frame: int = 13
-        if stun_source.contains("low"):
-            stun_animation = "all_impct_light_frnt_low"
-            stun_exit_frame = 13
-        elif stun_source.contains("mid"):
-            stun_animation = "all_impct_crotch"
-            stun_exit_frame = 15
+        var stun_animation: String
+        var stun_exit_frame: int
+        match stun_source:
+            "impactlightfronthigh":
+                stun_animation = "all_impct_light_frnt_high"
+                stun_exit_frame = 13
+            "impactlightfrontlow":
+                stun_animation = "all_impct_light_frnt_low"
+                stun_exit_frame = 13
+            "impactlightfrontmid":
+                stun_animation = "all_impct_crotch"
+                stun_exit_frame = 30
+            _:
+                return false
         if not _candidate_clip_paths.has(stun_animation):
             return false
         health = maxf(0.0, health - amount)
