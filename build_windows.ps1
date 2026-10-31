@@ -63,8 +63,7 @@ if ($SelfTest) {
     if (Test-PathOverlap 'C:\Work\staging' 'D:\Work\project') {
         throw 'Unrelated paths were reported as overlapping.'
     }
-    $junction = Join-Path $env:TEMP 'brucelee-path-overlap-junction'
-    if (Test-Path $junction) { cmd.exe /c rmdir /q "$junction" | Out-Null }
+    $junction = Join-Path $env:TEMP ('brucelee-path-overlap-junction-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Junction -Path $junction -Target $rootFull | Out-Null
     try {
         if (-not (Test-ReparsePointInPath $junction)) {
@@ -84,6 +83,15 @@ if ((Test-PathOverlap $stagingFull $rootFull) -or
 if ((Test-ReparsePointInPath $BuildRoot) -or (Test-ReparsePointInPath $staging) -or
         (Test-ReparsePointInPath $sourceProject) -or (Test-ReparsePointInPath $root)) {
     throw 'BuildRoot/staging/source paths must not traverse a junction or symlink.'
+}
+$substOutput = & cmd.exe /c subst 2>$null
+foreach ($substLine in @($substOutput)) {
+    if ($substLine -match '^([A-Za-z]):\\') {
+        $substDrive = $Matches[1] + ':\'
+        if ($buildRootFull.StartsWith($substDrive, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw 'BuildRoot must not use a SUBST virtual drive.'
+        }
+    }
 }
 if (Test-Path $staging) { throw 'Generated staging directory already exists.' }
 New-Item -ItemType Directory -Force -Path $staging | Out-Null
