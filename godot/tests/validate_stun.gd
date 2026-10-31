@@ -431,6 +431,24 @@ func _run() -> void:
         push_error("High punch impactstun did not enter stun: " + defender.state)
         quit(1)
         return
+    for _i: int in range(61):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "stun2":
+        push_error("High punch real chain did not reach stun2: " + defender.state)
+        quit(1)
+        return
+    for _i: int in range(61):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "stunfall":
+        push_error("High punch real chain did not reach stunfall: " + defender.state)
+        quit(1)
+        return
+    for _i: int in range(79):
+        defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if defender.state != "faceupko":
+        push_error("High punch real chain did not reach faceupko: " + defender.state)
+        quit(1)
+        return
     print("STUN_VALIDATION=" + JSON.stringify({
         "state_chain": ["stun", "stun2", "stunfall", "faceupko"],
         "animation": clips["stun"],
