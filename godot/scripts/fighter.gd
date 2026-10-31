@@ -45,7 +45,6 @@ const CANDIDATE_CLIPS: Dictionary = {
     "stun": "all_stunned",
     "stun_fall": "all_stunned_fall",
     "stun_hard": "all_impct_hard_frnt_high",
-    "stun_brutal": "all_impct_spectacular_lft",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -1638,7 +1637,7 @@ func _try_load_candidate_visual() -> void:
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
             "endattack1", "endattack2", "stun", "stun_fall",
-            "stun_hard", "stun_brutal"]:
+            "stun_hard"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -3501,10 +3500,6 @@ func receive_hit(
             stun_animation = "stun_hard"
             stun_exit_frame = 20
             stun_next_state = "faceupko"
-        elif stun_source.begins_with("impactbrutal"):
-            stun_animation = "stun_brutal"
-            stun_exit_frame = 40
-            stun_next_state = "facedownko"
         else:
             return false
         if not _candidate_clip_paths.has(stun_animation):

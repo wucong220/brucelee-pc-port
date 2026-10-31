@@ -28,7 +28,7 @@ func _run() -> void:
         quit(1)
         return
     var clips: Dictionary = player.get("_candidate_clip_paths")
-    for required: String in ["stun_hard", "stun_brutal"]:
+    for required: String in ["stun_hard"]:
         if not clips.has(required):
             push_error("Candidate is missing " + required)
             quit(1)
@@ -41,12 +41,6 @@ func _run() -> void:
             "key": "stun_hard",
             "frames": 20,
             "next": "faceupko",
-        },
-        {
-            "source": "impactbrutalfronthigh",
-            "key": "stun_brutal",
-            "frames": 40,
-            "next": "facedownko",
         },
     ]
     for case: Dictionary in cases:
@@ -85,8 +79,8 @@ func _run() -> void:
             return
         ko_seen[0] = false
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
-        "cases": ["impacthard -> faceupko", "impactbrutal -> facedownko"],
-        "scope": "prototype stun-impact transitions; source timing approximate",
+        "cases": ["impacthard -> faceupko"],
+        "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()
     await process_frame
