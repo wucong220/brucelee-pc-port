@@ -24,6 +24,26 @@ def binding():
                           'offset': 28, 'track': 'bonerot', 'target': 'rotation'}]}
 
 
+def object_skeletons():
+    source = {'sha256': 'source', 'nodes': [
+        {'nodeid': 0, 'parentid': -2, 'name': 'root', 'type': 'root'},
+        {'nodeid': 1, 'parentid': 0, 'name': 'skeleton', 'type': 'bone'},
+        {'nodeid': 2, 'parentid': 1, 'name': 'bl_x_body', 'type': 'object',
+         'object_scale_index': 5},
+    ]}
+    target = {'sha256': 'target', 'nodes': [
+        {'nodeid': 0, 'parentid': -2, 'name': 'root', 'type': 'root'},
+        {'nodeid': 1, 'parentid': 0, 'name': 'skeleton', 'type': 'bone'},
+        {'nodeid': 3, 'parentid': 1, 'name': 'bl_y_body', 'type': 'object',
+         'object_scale_index': 7},
+    ]}
+    binding = {'animation_sha256': 'animation', 'skeleton_sha256': 'source',
+               'bindings': [{'nodeid': 2, 'node_name': 'bl_x_body',
+                             'node_type': 'object', 'index_field': 'object_scale_index',
+                             'offset': 5, 'track': 'scales', 'target': 'scale'}]}
+    return source, target, binding
+
+
 class AuditRetargetTests(unittest.TestCase):
     def setUp(self):
         self.source = skeleton(2, 28, 'source')
@@ -84,6 +104,18 @@ class AuditRetargetTests(unittest.TestCase):
                 source['nodes'][1]['parentid'] = 2
             with self.subTest(mutation=mutation), self.assertRaises(KdfError):
                 audit(binding(), source, target)
+
+    def test_maps_unique_object_role_and_rejects_ambiguous_role(self):
+        source, target, bound = object_skeletons()
+        result = audit(bound, source, target, allow_object_track_mismatch=True)
+        self.assertEqual(result['mappings'][0]['target_offset'], 7)
+        duplicate = deepcopy(target['nodes'][-1])
+        duplicate['nodeid'] = 4
+        duplicate['name'] = 'bl_z_body'
+        target['nodes'].append(duplicate)
+        with self.assertRaises(KdfError):
+            audit(bound, source, target, allow_object_track_mismatch=True)
+
 
 
 if __name__ == '__main__':

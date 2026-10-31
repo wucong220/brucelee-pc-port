@@ -37,6 +37,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "parry_attack": "m01_pnch_high_03",
     "grab1": "m01_grab_01",
     "grab2": "m01_grab_02",
+    "grab1_miss": "m02_grab_01",
+    "grab2_miss": "m02_grab_01",
     "endattack1": "m01_end_attack_01",
     "endattack2": "m01_end_attack_02",
 }
@@ -186,12 +188,16 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "special_punch_high_miss": 66.0,
     "grab1": 66.0,
     "grab2": 66.0,
+    "grab1_miss": 66.0,
+    "grab2_miss": 66.0,
 }
 const SPECIAL_CHAIN_MISSES: Dictionary = {
     "special_kick_low_miss": "special_kick_low_hit",
     "special_punch_low_miss": "special_punch_low_hit",
     "special_punch_high_miss": "special_punch_high_hit",
     "parry_high": "parry_attack",
+    "grab1_miss": "grab1",
+    "grab2_miss": "grab2",
 }
 const SPECIAL_REQUIRES_STEPBACK: Dictionary = {
     "special_kick_high": true,
@@ -201,6 +207,8 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
     "special_kick_low_miss": [14, 16],
     "special_punch_low_miss": [8, 9],
     "special_punch_high_miss": [6, 7],
+    "grab1_miss": [8, 9],
+    "grab2_miss": [8, 9],
 }
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
 const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
@@ -230,8 +238,8 @@ const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
     {"steps": [["left", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_low_miss", "from_attack": "punch"},
     {"steps": [["down", "a"], ["out", "a"], ["out", "a"]], "attack": "special_punch_low_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
     {"steps": [["up", "a"], ["up", "a"], ["up", "a"]], "attack": "special_punch_high_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
-    {"steps": [["left", "a"], ["a"], ["a"]], "attack": "grab1", "from_attack": "punch"},
-    {"steps": [["left", "b"], ["c"], ["c"]], "attack": "grab2", "from_attack": "kick"},
+    {"steps": [["left", "a"], ["a"], ["a"]], "attack": "grab1_miss", "from_attack": "punch"},
+    {"steps": [["left", "b"], ["c"], ["c"]], "attack": "grab2_miss", "from_attack": "kick"},
     {"steps": [["up", "in", "b"], ["a"], ["a"]], "attack": "endattack1", "from_attack_in": ["grab1", "grab2"]},
     {"steps": [["up", "in", "a"], ["c"], ["c"]], "attack": "endattack2", "from_attack_in": ["grab1", "grab2"]},
 ]
@@ -530,6 +538,28 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "body_part": "rleg",
         "height": "high",
         "strength": "hard",
+        "direction": "frontal",
+    },
+    "grab1_miss": {
+        "source_action": "grab1miss",
+        "animation": "m02_grab_01",
+        "frame_count": 47,
+        "damage": 0.0,
+        "radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal",
+    },
+    "grab2_miss": {
+        "source_action": "grab2miss",
+        "animation": "m02_grab_01",
+        "frame_count": 47,
+        "damage": 0.0,
+        "radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
         "direction": "frontal",
     },
 }
@@ -1577,7 +1607,7 @@ func _try_load_candidate_visual() -> void:
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
-            "parry_high", "parry_attack", "grab1", "grab2",
+            "parry_high", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
             "endattack1", "endattack2"]:
         if not candidate_clips.has(action):
             continue
@@ -2686,7 +2716,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_attack", "grab1", "grab2", "endattack1", "endattack2":
+        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -3535,7 +3565,7 @@ func _animate_candidate() -> void:
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",
                 "special_punch_high_miss", "special_punch_high_hit",
-                "parry_high", "parry_attack", "grab1", "grab2",
+                "parry_high", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
                 "endattack1", "endattack2"]:
             requested = attack_kind
     elif (state in ["hitstun", "blockstun"]

@@ -26,12 +26,13 @@ def retarget_candidate(binding: dict, source: dict, target: dict, *,
             or target.get('sha256') != expected_target_sha256
             or binding.get('skeleton_reference', {}).get('reference') != expected_reference):
         raise KdfError('candidate source identity or target identity does not match')
-    result = audit(binding, source, target)
+    result = audit(binding, source, target, allow_object_track_mismatch=True)
     mapped = []
     for original, identity in zip(binding['bindings'], result['mappings'], strict=True):
         item = deepcopy(original)
         item['nodeid'] = identity['target_nodeid']
         item['offset'] = identity['target_offset']
+        item['node_name'] = identity.get('target_node_name', original['node_name'])
         mapped.append(item)
     return {
         'status': 'experimental-cross-skeleton-candidate',

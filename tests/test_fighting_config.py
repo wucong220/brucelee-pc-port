@@ -39,6 +39,7 @@ class TestFightingConfig(unittest.TestCase):
                 "m01_parry_high": 40.0,
                 "m01_grab_01": 40.0,
                 "m01_grab_02": 25.0,
+                "m02_grab_01": 25.0,
                 "m01_end_attack_01": 45.0,
                 "m01_end_attack_02": 45.0,
                 "m01_sp_pnch_high_fail": 40.0,
@@ -110,6 +111,7 @@ class TestFightingConfig(unittest.TestCase):
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_attack", "grab1", "grab2",
+            "grab1_miss", "grab2_miss",
             "endattack1", "endattack2",
         })
         self.assertEqual(attacks["punch"]["source_action"], "lowpunch1")

@@ -31,9 +31,11 @@
 ## 抓取动画的核对结果
 
 - `grab1miss` / `grab2miss` 都使用 `m02_grab_01`，其动画头部引用是
-  `skeletons/bl_ken_goodall_01_high.skl`，不是 Bruce 骨架，因此不能直接打进 Bruce 候选。
-- `grab1` 使用 `m01_grab_01`、`grab2` 使用 `m01_grab_02`，这两个动画引用
-  `skeletons/bl_brucelee_01_high.skl`，可以使用。
+  `skeletons/bl_ken_goodall_01_high.skl`。60 个骨骼路径与 Bruce 完全同名，
+  仅 body/hair 两个对象节点不同；`retarget_animation_binding.py` 已做实验性
+  跨骨架映射（对象按 hair/body 角色对应），因此现在可作为候选打包。
+- `grab1` 使用 `m01_grab_01`、`grab2` 使用 `m01_grab_02`，引用
+  `skeletons/bl_brucelee_01_high.skl`，可直接使用。
 - 现有 `multi_impacts` 已能承载 `grab1` 的三段（6/5/9）和 `grab2` 的两段（5/15）。
 
 ## 结论/约束

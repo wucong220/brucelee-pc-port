@@ -450,10 +450,11 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 格挡反击使用 42 段带头候选：2,727,612 字节，SHA-256
 `7771893136ca4cba7a25284ccd1c0cb95f982b1344ab5ef870574760dadc43cf`，
 新增 `m01_parry_high`；`parry_attack` 复用已有的 `m01_pnch_high_03`。
-抓取使用 44 段带头候选：3,164,064 字节，SHA-256
-`e155bec24771ea60724b09fbfee1620bd887d7226a2730aba5a6578e892c6d73`，
-新增 `m01_grab_01`、`m01_grab_02`。`grab1miss/grab2miss` 的 `m02_grab_01`
-属于 Ken 骨架，未打包。
+抓取及终结使用 47 段带头候选：4,039,952 字节，SHA-256
+`592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0`，
+包含 `m01_grab_01/02`、重定向的 `m02_grab_01`、`m01_end_attack_01/02`。
+`m02_grab_01` 原属于 `bl_ken_goodall_01_high.skl`，通过实验性跨骨架映射
+（60 个骨骼轨道 + body/hair 对象轨道）重定向到 Bruce；这是候选，不等价于原版骨骼语义。
 抓取终结使用 46 段带头候选：3,964,068 字节，SHA-256
 `de6819927bf7cb642e2f95e802b283c5ec06a181c37f54f5321c8468802310dd`，
 新增 `m01_end_attack_01`、`m01_end_attack_02`；原版 impact 伤害为 0，仅作动画候选。

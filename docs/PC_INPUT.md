@@ -87,6 +87,21 @@ impact 使用已恢复的 `impacthardrighthigh -> all_impct_hard_rht_high`，
 原版要求 `oppposestun + grabdistance`；原型用“抓取后受控/硬直 + 距离”近似，
 不声称是完整眩晕状态。
 
+抓取（原型两段式）：基础 `A` 后按 `左+A → A → A` 进入 `grab1_miss`，
+第 8–9 帧若对手在 0.62 世界单位内、站立且不格挡则链到 `grab1`；
+基础 `B` 后按 `左+B → C → C` 进入 `grab2_miss`，条件相同时链到 `grab2`。
+两段都消耗 66 怒气。`grab1miss/grab2miss` 的 `m02_grab_01` 属于 Ken 骨架，
+已用 `retarget_animation_binding.py` 把 60 个骨骼轨道和 body/hair 对象轨道
+重定向到 Bruce 骨架，作为实验性跨骨架候选打包；不能声称与原版骨骼语义等价。
+`grab1` 分三段 6/5/9（共 20），`grab2` 分两段 5/15（共 20）。
+
+抓取终结（候选）：抓取进行中、对手处于受控/硬直且在 0.62 距离内时，
+`上+朝向+B → A → A` 触发 `endattack1`（`m01_end_attack_01`，377 帧），
+`上+朝向+A → C → C` 触发 `endattack2`（`m01_end_attack_02`，235 帧）。
+这两招在 `brucelee.set` 里的 impact 伤害为 **0**，因此只播放终结动画，不添加伤害。
+原版要求 `oppposestun + grabdistance`；原型用“抓取后受控/硬直 + 距离”近似，
+不声称是完整眩晕状态。
+
 抓取（原型直抓）：基础 `A` 命中后按 `左+A → A → A` 触发 `grab1`；
 基础 `B` 命中后按 `左+B → C → C` 触发 `grab2`。两者要求 `rage2thirds`（≥66）、
 对手在 0.62 世界单位的原型抓取距离内、站立且不格挡；距离不足则 fail-closed。

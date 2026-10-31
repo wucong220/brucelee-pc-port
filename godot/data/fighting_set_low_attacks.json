@@ -39,7 +39,8 @@
       "m01_grab_01": 40.0,
       "m01_grab_02": 25.0,
       "m01_end_attack_01": 45.0,
-      "m01_end_attack_02": 45.0
+      "m01_end_attack_02": 45.0,
+      "m02_grab_01": 25.0
     }
   },
   "reaction_profiles": {
@@ -615,6 +616,40 @@
         "body_part": "rleg",
         "height": "high",
         "strength": "hard",
+        "direction": "frontal"
+      }
+    },
+    "grab1_miss": {
+      "source_action": "grab1miss",
+      "animation": "m02_grab_01",
+      "animation_frame_count": 47,
+      "startup_frames": 5,
+      "active_frames": 2,
+      "recovery_frames": 40,
+      "damage": 0.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "grab2_miss": {
+      "source_action": "grab2miss",
+      "animation": "m02_grab_01",
+      "animation_frame_count": 47,
+      "startup_frames": 4,
+      "active_frames": 3,
+      "recovery_frames": 40,
+      "damage": 0.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
         "direction": "frontal"
       }
     }
