@@ -155,30 +155,92 @@ func _run() -> void:
         push_error("low impactstun did not enter stun on frame 14: " + player.state)
         quit(1)
         return
-    # A lethal medium light hit must skip impactstun and still KO immediately.
+    # Source link 210 routes lethal normal medium hits through impactstunlow.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 5.0
-    var medium_reaction: Dictionary = {
-        "source_action": "impactlightfrontmid",
-        "animation": "all_impct_light_frnt_mid",
-        "exit_start_frame": 14,
-        "animation_duration_frames": 16,
-        "linking_frame": 0,
-    }
+    var medium_reaction: Dictionary = player.reaction_for_incoming(
+        {"strength": "normal", "height": "medium", "direction": "frontal"}, false
+    )
     if not player.receive_hit(5.0, false, 0.0, 1.0, medium_reaction):
         push_error("medium lethal hit was rejected")
         quit(1)
         return
+    if player.state != "impactstun" or player.last_reaction_animation != "all_impct_light_frnt_low":
+        push_error("medium lethal hit did not enter low impactstun: " + player.state)
+        quit(1)
+        return
+    if absf(player.health) > 0.001 or bool(ko_seen[0]):
+        push_error("medium lethal entry has incorrect health or premature KO")
+        quit(1)
+        return
+    player._advance_timed_states(13.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "impactstun":
+        push_error("medium impactstun ended before frame 14")
+        quit(1)
+        return
+    player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "stun":
+        push_error("medium impactstun did not enter stun on frame 14")
+        quit(1)
+        return
+    ko_seen[0] = false
+    # The source facedowngetup impactable group starts at frame 12.
+    for frame: int in [11, 12]:
+        player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+        player.state = "facedowngetup"
+        player.state_time = float(frame) / PortFighter.SOURCE_FRAME_RATE
+        player.health = 5.0
+        if not player.receive_hit(5.0, false, 0.0, 1.0, medium_reaction):
+            push_error("facedowngetup medium hit rejected at frame %d" % frame)
+            quit(1)
+            return
+        var expected_state: String = "impactstun" if frame == 12 else "ko"
+        if player.state != expected_state:
+            push_error("facedowngetup frame %d selected %s instead of %s" % [frame, player.state, expected_state])
+            quit(1)
+            return
+    # highkick3 joins impactable at frame 17; the previous frame is excluded.
+    for frame: int in [16, 17]:
+        player.reset_fighter(Vector3.ZERO)
+        player.state = "active"
+        player.attack_kind = "high_kick3"
+        var details: Dictionary = player.ATTACKS["high_kick3"]
+        player.state_time = (float(details["animation_frame_count"]) - float(frame)) / PortFighter.SOURCE_FRAME_RATE - float(details["recovery"])
+        if player._medium_lethal_impactable() != (frame == 17):
+            push_error("highkick3 impactable window mismatch at frame %d" % frame)
+            quit(1)
+            return
+    # Source facedownattack is impactable at [29,35]; candidate exits at 32.
+    for frame: int in [28, 29]:
+        player.reset_fighter(Vector3.ZERO)
+        player.state = "facedownattack"
+        player.state_time = float(frame) / PortFighter.SOURCE_FRAME_RATE
+        player.health = 5.0
+        player.receive_hit(5.0, false, 0.0, 1.0, medium_reaction)
+        if player.state != ("impactstun" if frame == 29 else "ko"):
+            push_error("facedownattack medium entry mismatch at frame %d" % frame)
+            quit(1)
+            return
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "hitstun"
+    player.last_reaction_source_action = "impactlightfrontmid"
+    player.last_reaction_exit_frame = 14
+    player.state_time = 5.0 / PortFighter.SOURCE_FRAME_RATE
+    player.health = 5.0
+    player.receive_hit(5.0, false, 0.0, 1.0, medium_reaction)
+    if player.state != "impactstun":
+        push_error("impactable light reaction did not accept medium lethal hit")
+        quit(1)
+        return
+    # Missing low impact clip must fall back rather than enter a blank state.
+    var saved_low_clip: String = String(clips["all_impct_light_frnt_low"])
+    clips.erase("all_impct_light_frnt_low")
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.health = 5.0
+    player.receive_hit(5.0, false, 0.0, 1.0, medium_reaction)
+    clips["all_impct_light_frnt_low"] = saved_low_clip
     if player.state != "ko":
-        push_error("medium lethal hit did not enter generic ko: " + player.state)
-        quit(1)
-        return
-    if absf(player.health) > 0.001:
-        push_error("medium lethal hit did not reach zero health")
-        quit(1)
-        return
-    if not bool(ko_seen[0]):
-        push_error("medium lethal hit did not emit combat_ko")
+        push_error("Missing low clip did not fall back to KO")
         quit(1)
         return
     ko_seen[0] = false
@@ -270,30 +332,96 @@ func _run() -> void:
             push_error("rejected stunimpact changed state for " + String(case["source"]))
             quit(1)
             return
-    # Medium impact must play the full 30-frame all_impct_crotch before stunfall.
+    # Source link 131 offers [15,20]; the PC candidate selects frame 15.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.state = "stun"
     player.state_time = 0.1
     player.health = 0.0
-    if not player.receive_hit(1.0, false, 0.0, 1.0, {
-        "source_action": "impactlightfrontmid",
-        "animation": "all_impct_crotch",
-        "exit_start_frame": 15,
-        "animation_duration_frames": 30,
-        "linking_frame": 0,
-    }):
+    if not player.receive_hit(1.0, false, 0.0, 1.0, player.reaction_for_incoming(
+        {"strength": "normal", "height": "medium", "direction": "frontal"}, false
+    )):
         push_error("medium stunimpact fixture rejected")
         quit(1)
         return
-    for _i: int in range(29):
+    for _i: int in range(14):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stunimpact":
-        push_error("medium stunimpact ended before 30 frames")
+        push_error("medium stunimpact ended before 15 frames")
+        quit(1)
+        return
+    # Repeated impact remains fail-closed in the current prototype.
+    var timer_before_repeat: float = player.state_time
+    var health_before_repeat: float = player.health
+    if player.receive_hit(3.0, false, 0.0, 1.0, medium_reaction):
+        push_error("Repeated stunimpact unexpectedly accepted")
+        quit(1)
+        return
+    if (player.state != "stunimpact" or player.state_time != timer_before_repeat
+            or player.health != health_before_repeat):
+        push_error("Rejected repeated impact changed the state")
         quit(1)
         return
     player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stunfall":
-        push_error("medium stunimpact did not end in stunfall on frame 30: " + player.state)
+        push_error("medium stunimpact did not end in stunfall on frame 15: " + player.state)
+        quit(1)
+        return
+    # Both stun states use real normal/medium dispatch and the 15-frame exit.
+    for origin: String in ["stun", "stun2"]:
+        player.reset_fighter(Vector3.ZERO)
+        player.state = origin
+        player.health = 10.0
+        if not player.receive_hit(2.0, false, 0.0, 1.0, medium_reaction):
+            push_error("Normal medium was rejected from " + origin)
+            quit(1)
+            return
+        if (player.state != "stunimpact" or player.health != 8.0
+                or player.last_reaction_animation != "all_impct_crotch"):
+            push_error("Normal medium dispatch mismatch from " + origin)
+            quit(1)
+            return
+        player._advance_timed_states(14.0 / PortFighter.SOURCE_FRAME_RATE)
+        if player.state != "stunimpact":
+            push_error("Medium stunimpact exited early from " + origin)
+            quit(1)
+            return
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        if player.state != "stunfall":
+            push_error("Medium stunimpact missed frame-15 exit from " + origin)
+            quit(1)
+            return
+    # Nonlethal normal medium must stay hitstun and preserve health.
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 100.0
+    if not player.receive_hit(2.0, false, 0.0, 1.0, medium_reaction):
+        push_error("Nonlethal medium was rejected")
+        quit(1)
+        return
+    if player.state != "hitstun" or player.health != 98.0:
+        push_error("Nonlethal medium did not stay in hitstun")
+        quit(1)
+        return
+    # Blocked lethal medium must enter blockstun without the impactstun chain.
+    player.reset_fighter(Vector3.ZERO)
+    player.health = 5.0
+    if not player.receive_hit(5.0, true, 0.0, 1.0, medium_reaction):
+        push_error("Blocked medium was rejected")
+        quit(1)
+        return
+    if player.state != "blockstun" or player.health <= 0.0:
+        push_error("Blocked medium entered an invalid state")
+        quit(1)
+        return
+    # Missing medium reaction clip must reject the hit without state or health changes.
+    var saved_crotch_clip: String = String(clips["all_impct_crotch"])
+    clips.erase("all_impct_crotch")
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "stun"
+    player.health = 10.0
+    var accepted_without_crotch: bool = player.receive_hit(2.0, false, 0.0, 1.0, medium_reaction)
+    clips["all_impct_crotch"] = saved_crotch_clip
+    if accepted_without_crotch or player.state != "stun" or player.health != 10.0:
+        push_error("Missing medium reaction clip changed stun state or health")
         quit(1)
         return
     # Empty reaction source must fail closed from both stun and stun2.
@@ -453,6 +581,21 @@ func _run() -> void:
     player.record_standing_combo_press("c")
     if player.attack_kind != "endattack2":
         push_error("Stun2 opponent did not accept endattack2: " + player.attack_kind)
+        quit(1)
+        return
+    # A real normal/medium punch uses the source impactstunlow link.
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.health = 5.0
+    player.opponent = defender
+    if not player.request_attack("punch"):
+        push_error("Medium punch setup did not start")
+        quit(1)
+        return
+    player._advance_timed_states(6.0 / PortFighter.SOURCE_FRAME_RATE)
+    if (defender.state != "impactstun" or defender.health != 0.0
+            or defender.last_reaction_animation != "all_impct_light_frnt_low"):
+        push_error("Medium punch did not enter low impactstun: " + defender.state)
         quit(1)
         return
     # A real low kick must enter impactstun with the low clip before stun.

@@ -95,6 +95,22 @@ func _run() -> void:
             quit(1)
             return
         ko_seen[0] = false
+    # hard/medium satisfies overlapping source links; hard-first is a PC choice.
+    var hard_medium: Dictionary = player.reaction_for_incoming(
+        {"strength": "hard", "height": "medium", "direction": "frontal"}, false
+    )
+    player.reset_fighter(Vector3.ZERO)
+    player.state = "stun"
+    player.health = 10.0
+    if not player.receive_hit(2.0, false, 0.0, 1.0, hard_medium):
+        push_error("hard/medium dispatch was rejected")
+        quit(1)
+        return
+    if (player.state != "stunimpact" or player.health != 8.0
+            or player.last_reaction_animation != "stun_hard"):
+        push_error("hard/medium did not select the candidate hard reaction")
+        quit(1)
+        return
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
         "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko"],
         "scope": "prototype hard stun-impact transition; source timing approximate",

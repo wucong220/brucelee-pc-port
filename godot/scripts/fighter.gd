@@ -3505,6 +3505,58 @@ func _reaction_profile_for_impact(
     return profiles[height]
 
 
+# Verified subset of brucelee.set impactable membership for the medium-lethal
+# candidate. Unknown actions remain on their existing KO path.
+func _medium_lethal_impactable() -> bool:
+    if attack_config_path != ATTACK_CONFIG_PATH:
+        return false
+    if state == "idle":
+        # PC idle uses Default.set's m01_idle_01 as a standing approximation;
+        # brucelee.set's idle is impactable for [0,140].
+        return true
+    if state == "idle2":
+        return state_time * SOURCE_FRAME_RATE <= 43.0001
+    if state == "facedowngetup":
+        var frame: float = state_time * SOURCE_FRAME_RATE
+        return frame + 0.0001 >= 12.0 and frame <= 19.0001
+    if state == "facedownattack":
+        var frame: float = state_time * SOURCE_FRAME_RATE
+        return frame + 0.0001 >= 29.0 and frame <= 35.0001
+    if state == "hitstun":
+        var hit_windows: Dictionary = {
+            "impactlightfronthigh": 17, "impactlightfrontlow": 17,
+            "impactlightfrontmid": 16, "impacthardfrontmid": 30,
+            "impactlightrighthigh": 17, "impactlightlefthigh": 17,
+            "impactlightrightlow": 17, "impactlightleftlow": 17,
+        }
+        if hit_windows.has(last_reaction_source_action) and last_reaction_exit_frame >= 0:
+            var frame: float = float(last_reaction_exit_frame) - state_time * SOURCE_FRAME_RATE
+            return frame >= -0.0001 and frame <= float(hit_windows[last_reaction_source_action]) + 0.0001
+        return false
+    if state == "attacktofloor":
+        return state_time * SOURCE_FRAME_RATE <= 90.0001
+    if state in ["startup", "active", "recovery"]:
+        var windows: Dictionary = {
+            "punch": [0, 69], "kick": [0, 86],
+            "high_punch": [0, 101], "high_punch2": [0, 81],
+            "high_punch3": [0, 85], "low_punch2": [0, 65],
+            "low_punch3": [0, 81], "high_kick": [0, 73],
+            "high_kick2": [0, 95], "high_kick3": [17, 51],
+            "low_kick2": [0, 27], "low_kick3": [0, 56],
+            "parry_high": [30, 62], "parry_low": [17, 27],
+            "parry_attack": [15, 85], "grab1_miss": [0, 47],
+            "grab2_miss": [0, 14], "special_kick_high": [17, 57],
+            "special_kick_low_miss": [24, 50],
+            "special_punch_low_miss": [16, 33],
+            "special_punch_high_miss": [0, 122], "endattack2": [0, 235],
+        }
+        if windows.has(attack_kind):
+            var bounds: Array = windows[attack_kind]
+            var frame: float = _current_attack_source_frame()
+            return frame + 0.0001 >= float(bounds[0]) and frame <= float(bounds[1]) + 0.0001
+    return false
+
+
 func receive_hit(
         amount: float,
         blocked: bool,
@@ -3529,7 +3581,8 @@ func receive_hit(
             stun_exit_frame = 13
         elif stun_source == "impactlightfrontmid":
             stun_animation = "all_impct_crotch"
-            stun_exit_frame = 30
+            # Source link 131 allows [15,20]; choose 15 for this PC candidate.
+            stun_exit_frame = 15
         elif stun_source.begins_with("impacthard"):
             stun_animation = "stun_hard"
             stun_exit_frame = 20
@@ -3555,6 +3608,7 @@ func receive_hit(
     ]:
         return false
     var state_before: String = state
+    var medium_lethal_eligible: bool = _medium_lethal_impactable()
     var reaction_root_source: float = float(
         REACTION_ROOT_PUSH_SOURCE.get(String(reaction.get("source_action", "")), -1.0)
     )
@@ -3608,15 +3662,14 @@ func receive_hit(
     var stun_entry_source: String = String(reaction.get("source_action", ""))
     var stun_entry_clip: String = (
         "all_impct_light_frnt_low"
-        if stun_entry_source == "impactlightfrontlow"
+        if stun_entry_source in ["impactlightfrontlow", "impactlightfrontmid"]
         else "all_impct_light_frnt_high"
     )
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("stun")
             and _candidate_clip_paths.has(stun_entry_clip)
-            and stun_entry_source in [
-                "impactlightfronthigh", "impactlightfrontlow"
-            ]):
+            and (stun_entry_source in ["impactlightfronthigh", "impactlightfrontlow"]
+                or (stun_entry_source == "impactlightfrontmid" and medium_lethal_eligible))):
         # Source impactstun high/low links land at [14,17] before stun; this
         # prototype plays the matching impact reaction for 14 frames first.
         state = "impactstun"
