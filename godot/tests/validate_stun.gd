@@ -99,6 +99,73 @@ func _run() -> void:
         push_error("blocked lethal hit entered stun")
         quit(1)
         return
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player.state = "stun"
+    player.state_time = 0.1
+    player.health = 0.0
+    var stun_reaction: Dictionary = {
+        "source_action": "impactlightfronthigh",
+        "animation": "all_impct_light_frnt_high",
+        "exit_start_frame": 13,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+    }
+    if not player.receive_hit(1.0, false, 0.0, 1.0, stun_reaction):
+        push_error("stun impact fixture rejected")
+        quit(1)
+        return
+    if player.state != "stunimpact":
+        push_error("stun hit did not enter stunimpact: " + player.state)
+        quit(1)
+        return
+    player._animate_candidate()
+    if player.candidate_animation_clip != String(clips["all_impct_light_frnt_high"]):
+        push_error("stunimpact did not play all_impct_light_frnt_high")
+        quit(1)
+        return
+    for _i: int in range(14):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "stunfall":
+        push_error("stunimpact did not return to stunfall: " + player.state)
+        quit(1)
+        return
+    var stun_cases: Array[Dictionary] = [
+        {"source": "impactlightfrontlow", "animation": "all_impct_light_frnt_low", "accepted": true},
+        {"source": "impactlightfrontmid", "animation": "all_impct_crotch", "accepted": true},
+        {"source": "impacthardfrontlow", "animation": "", "accepted": false},
+        {"source": "impactbrutallow", "animation": "", "accepted": false},
+    ]
+    for case: Dictionary in stun_cases:
+        player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+        player.state = "stun"
+        player.state_time = 0.1
+        player.health = 0.0
+        var case_reaction: Dictionary = {
+            "source_action": String(case["source"]),
+            "animation": String(case["animation"]),
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+        }
+        var accepted: bool = player.receive_hit(1.0, false, 0.0, 1.0, case_reaction)
+        if accepted != bool(case["accepted"]):
+            push_error("stunimpact acceptance mismatch for " + String(case["source"]))
+            quit(1)
+            return
+        if accepted:
+            if player.state != "stunimpact":
+                push_error("accepted stunimpact did not enter stunimpact")
+                quit(1)
+                return
+            player._animate_candidate()
+            if player.candidate_animation_clip != String(clips[String(case["animation"])]):
+                push_error("stunimpact clip mismatch for " + String(case["source"]))
+                quit(1)
+                return
+        elif player.state != "stun":
+            push_error("rejected stunimpact changed state for " + String(case["source"]))
+            quit(1)
+            return
     var defender: PortFighter = PortFighter.new()
     defender.configure("Stun endmove defender", false, Color.CYAN)
     defender.configure_attack_config(PortFighter.ATTACK_CONFIG_PATH)
