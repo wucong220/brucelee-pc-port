@@ -112,20 +112,18 @@ func _run() -> void:
         quit(1)
         return
     # Source links 134/133: brutal stun hit -> stunbrutalimpact -> facedownko.
-    player.reset_fighter(Vector3.ZERO)
-    player.state = "stun"
-    var brutal_reaction: Dictionary = player.reaction_for_incoming(
-        {"strength": "brutal", "height": "medium", "direction": "frontal"}, false
-    )
-    if (String(brutal_reaction.get("source_action", "")) != "stunbrutalimpact"
-            or String(brutal_reaction.get("animation", "")) != "stun_brutal"):
-        push_error("brutal stun reaction did not select stunbrutalimpact")
-        quit(1)
-        return
     for origin: String in ["stun", "stun2"]:
         player.reset_fighter(Vector3.ZERO)
         player.state = origin
         player.health = 10.0
+        var brutal_reaction: Dictionary = player.reaction_for_incoming(
+            {"strength": "brutal", "height": "medium", "direction": "frontal"}, false
+        )
+        if (String(brutal_reaction.get("source_action", "")) != "stunbrutalimpact"
+                or String(brutal_reaction.get("animation", "")) != "stun_brutal"):
+            push_error("brutal stun reaction did not select stunbrutalimpact from " + origin)
+            quit(1)
+            return
         if not player.receive_hit(2.0, false, 0.0, 1.0, brutal_reaction):
             push_error("brutal stun hit was rejected from " + origin)
             quit(1)
