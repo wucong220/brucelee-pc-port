@@ -23,6 +23,8 @@ func _run() -> void:
     scene.set_physics_process(false)
     var player: PortFighter = scene.get("player")
     player.set_physics_process(false)
+    var ko_seen: Array = [false]
+    player.combat_ko.connect(func(_fighter: PortFighter) -> void: ko_seen[0] = true)
     if not player.candidate_loaded:
         push_error("Stun candidate failed: " + player.candidate_load_error)
         quit(1)
@@ -95,6 +97,11 @@ func _run() -> void:
         push_error("stunfall did not finish in faceupko by frame 79: " + player.state)
         quit(1)
         return
+    if not bool(ko_seen[0]):
+        push_error("stunfall -> faceupko did not emit combat_ko")
+        quit(1)
+        return
+    ko_seen[0] = false
     # Lethal low hit must use the low impactstun entry, not the high clip.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 5.0
@@ -147,6 +154,15 @@ func _run() -> void:
         push_error("medium lethal hit did not enter generic ko: " + player.state)
         quit(1)
         return
+    if absf(player.health) > 0.001:
+        push_error("medium lethal hit did not reach zero health")
+        quit(1)
+        return
+    if not bool(ko_seen[0]):
+        push_error("medium lethal hit did not emit combat_ko")
+        quit(1)
+        return
+    ko_seen[0] = false
     # Nonlethal and blocked hits must not enter the stun state.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
