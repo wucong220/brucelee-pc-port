@@ -82,7 +82,7 @@ func _run() -> void:
         push_error("stun did not play all_stunned")
         quit(1)
         return
-    for _i: int in range(62):
+    for _i: int in range(PortFighter.STUN_DURATION_FRAMES):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stun2":
         push_error("stun did not advance to stun2: " + player.state)
@@ -93,7 +93,7 @@ func _run() -> void:
         push_error("stun2 did not keep playing all_stunned")
         quit(1)
         return
-    for _i: int in range(62):
+    for _i: int in range(PortFighter.STUN_DURATION_FRAMES):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stunfall":
         push_error("stun2 did not advance to stunfall: " + player.state)
@@ -104,16 +104,15 @@ func _run() -> void:
         push_error("stunfall did not play all_stunned_fall")
         quit(1)
         return
-    for _i: int in range(70):
+    for _i: int in range(PortFighter.STUN_FALL_DURATION_FRAMES - 1):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stunfall":
         push_error("stunfall ended before its 71-79 source window: " + player.state)
         quit(1)
         return
-    for _i: int in range(9):
-        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "faceupko":
-        push_error("stunfall did not finish in faceupko by frame 79: " + player.state)
+        push_error("stunfall did not finish in faceupko at the source window start: " + player.state)
         quit(1)
         return
     if not bool(ko_seen[0]):
@@ -538,7 +537,7 @@ func _run() -> void:
         push_error("Stun2 endmove setup did not stun defender: " + defender.state)
         quit(1)
         return
-    for _i: int in range(61):
+    for _i: int in range(PortFighter.STUN_DURATION_FRAMES):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stun2":
         push_error("Endmove stun2 setup did not reach stun2: " + defender.state)
@@ -570,7 +569,7 @@ func _run() -> void:
         push_error("Stun2 endattack2 setup did not stun defender: " + defender.state)
         quit(1)
         return
-    for _i: int in range(61):
+    for _i: int in range(PortFighter.STUN_DURATION_FRAMES):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stun2":
         push_error("Endmove stun2 setup did not reach stun2: " + defender.state)
@@ -655,19 +654,19 @@ func _run() -> void:
         push_error("High punch impactstun did not enter stun: " + defender.state)
         quit(1)
         return
-    for _i: int in range(61):
+    for _i: int in range(PortFighter.STUN_DURATION_FRAMES):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stun2":
         push_error("High punch real chain did not reach stun2: " + defender.state)
         quit(1)
         return
-    for _i: int in range(61):
+    for _i: int in range(PortFighter.STUN_DURATION_FRAMES):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "stunfall":
         push_error("High punch real chain did not reach stunfall: " + defender.state)
         quit(1)
         return
-    for _i: int in range(79):
+    for _i: int in range(PortFighter.STUN_FALL_DURATION_FRAMES + 1):
         defender._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if defender.state != "faceupko":
         push_error("High punch real chain did not reach faceupko: " + defender.state)

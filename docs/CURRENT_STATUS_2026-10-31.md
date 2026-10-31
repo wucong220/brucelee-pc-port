@@ -35,7 +35,7 @@
 - `endattack1/2` 原始 impact 伤害为 0，只播 endmove 动画
 - 跨骨架 `m02_grab_01` 是实验性映射，不声称骨骼语义完全等价
 - reaction push 的轴向/符号与 `oppposestun` 精确时序仍是 prototype，非原版逐帧还原
-- `all_stunned` 的 55–61 帧精确转换窗口尚未恢复；当前按 61/61/79 帧推进
+- `all_stunned` 的 `stun→stun2`、`stun2→stunfall` 来源窗口为 [55,61]，`stunfall→faceupko` 为 [71,79]；候选选择窗口起点 55/55/71，精确原版调度仍未验证
 - `stun` 现在接受 `impactsfromstun` 的 light/medium/hard 候选反应（`all_impct_light_frnt_high/low`、`all_impct_crotch`、`all_impct_hard_frnt_high`）；hard → `faceupko`。当前攻击配置没有 brutal 来源，brutal 保持 fail-closed（候选50里保留的 `all_impct_spectacular_lft` 尚未接线）。
 - `faceupko` 是 KO 终点；`validate_stun.gd` 验证进入 `faceupko`，不是独立 `ko` 候选动画播放
 - `endattack1/2` 不只从 `stun/stun2` 进入；普通 `hitstun` 命中后也可进入，当前实现两者都允许
