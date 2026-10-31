@@ -2829,10 +2829,19 @@ func try_attack_to_floor_press(
 ) -> AttackToFloorInputResult:
     # Prototype-only mapping for recovered b/c/d sequences. Native key status,
     # source-frame clocks, link order and deferred third-value timing remain unverified.
-    if (state not in ["idle", "idle2"] or attack_config_path == BRICK_ATTACK_CONFIG_PATH
+    if (state not in ["idle", "idle2", "startup", "active", "recovery"]
+            or attack_config_path == BRICK_ATTACK_CONFIG_PATH
             or virtual_key not in ["b", "c", "d"]):
         _clear_ground_attack_input_history()
         return AttackToFloorInputResult.IGNORED
+    if state in ["startup", "active", "recovery"]:
+        # candobasicattacks links can select attacktofloor from a current
+        # group member window; Heavy has no recovered window and stays closed.
+        if (attack_kind == "heavy"
+                or not CANDOBASICATTACK_WINDOWS.has(attack_kind)
+                or not _candobasicattack_window_contains_current_frame()):
+            _clear_ground_attack_input_history()
+            return AttackToFloorInputResult.IGNORED
     if (not _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP)
             or not _candidate_clip_paths.has(IDLE2_CLIP)):
         _clear_ground_attack_input_history()
@@ -2841,7 +2850,11 @@ func try_attack_to_floor_press(
         _clear_ground_attack_input_history()
         return AttackToFloorInputResult.IGNORED
     _prune_ground_attack_input_history()
-    var input_owner: String = "attacktofloor:" + state
+    var input_owner: String = (
+        "attacktofloor:attack:" + attack_kind + ":" + str(attack_sequence)
+        if state in ["startup", "active", "recovery"]
+        else "attacktofloor:" + state
+    )
     if _ground_attack_input_owner != input_owner:
         _clear_ground_attack_input_history()
         _ground_attack_input_owner = input_owner
