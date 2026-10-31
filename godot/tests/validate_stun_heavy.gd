@@ -278,12 +278,47 @@ func _run() -> void:
             push_error("normal directional hit did not enter hitstun: " + String(case["source"]))
             quit(1)
             return
+    for case: Dictionary in [
+        {"height": "low", "direction": "fromleft", "exit": 25, "duration": 29,
+            "source": "impacthardleftlow", "animation": "all_impct_hard_lft_low",
+            "return": "faceupidle"},
+        {"height": "high", "direction": "fromleft", "exit": 26, "duration": 29,
+            "source": "impacthardlefthigh", "animation": "all_impct_hard_lft_high",
+            "return": "faceupidle"},
+        {"height": "high", "direction": "fromabove", "exit": 17, "duration": 17,
+            "source": "impacthardabove", "animation": "all_impct_hard_above",
+            "return": "facedownidle"},
+    ]:
+        player.reset_fighter(Vector3.ZERO)
+        player.health = 100.0
+        var reaction: Dictionary = player.reaction_for_incoming({
+            "strength": "hard", "height": String(case["height"]),
+            "direction": String(case["direction"]),
+        }, false)
+        if (String(reaction.get("source_action", "")) != String(case["source"])
+                or String(reaction.get("animation", "")) != String(case["animation"])
+                or int(reaction.get("exit_start_frame", -1)) != int(case["exit"])
+                or int(reaction.get("animation_duration_frames", -1)) != int(case["duration"])
+                or String(reaction.get("return_action", "")) != String(case["return"])):
+            push_error("hard directional reaction mismatch: " + String(case["source"]))
+            quit(1)
+            return
+        if not player.receive_hit(5.0, false, 0.0, 1.0, reaction):
+            push_error("hard directional hit was rejected: " + String(case["source"]))
+            quit(1)
+            return
+        if (player.state != "hitstun" or absf(player.health - 95.0) > 0.001
+                or player.last_reaction_source_action != String(case["source"])):
+            push_error("hard directional hit did not enter hitstun: " + String(case["source"]))
+            quit(1)
+            return
     print("STUN_HEAVY_VALIDATION=" + JSON.stringify({
         "cases": ["stun hard -> faceupko", "stun2 hard -> faceupko",
             "stun/stun2 brutal -> facedownko", "brutal block -> highblockbrutal",
             "brutal medium -> impactbrutalmid",
             "brutal high left/right -> impactbrutalleft/right",
-            "normal directional light hits"],
+            "normal directional light hits",
+            "hard directional left/above reactions"],
         "scope": "prototype hard stun-impact transition; source timing approximate",
     }))
     scene.queue_free()
