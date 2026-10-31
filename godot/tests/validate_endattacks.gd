@@ -8,7 +8,7 @@ func _initialize() -> void:
 func _run() -> void:
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if args.size() != 1:
-        push_error("Expected the 46-clip Bruce candidate GLB")
+        push_error("Expected the 47-clip Bruce candidate GLB")
         quit(1)
         return
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
@@ -25,6 +25,9 @@ func _run() -> void:
     player.set_physics_process(false)
     if not player.candidate_loaded:
         push_error("Endattack candidate failed: " + player.candidate_load_error)
+        quit(1)
+        return
+    if not _validate_candidate_identity(args[0]):
         quit(1)
         return
     var clips: Dictionary = player.get("_candidate_clip_paths")
@@ -44,6 +47,9 @@ func _run() -> void:
         quit(1)
         return
     if not _validate_blocked_grab_rejects_endattack(player, defender):
+        quit(1)
+        return
+    if not _validate_normal_hit_endmove(player, defender):
         quit(1)
         return
     print("ENDATTACK_VALIDATION=" + JSON.stringify({
@@ -193,5 +199,62 @@ func _validate_blocked_grab_rejects_endattack(player: PortFighter, defender: Por
         return false
     if player.attack_kind in ["endattack1", "endattack2"]:
         push_error("Blocked grab changed into an endattack")
+        return false
+    return true
+
+
+func _validate_normal_hit_endmove(player: PortFighter, defender: PortFighter) -> bool:
+    player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
+    player._time = 0.0
+    player.rage = 70.0
+    player.facing = 1.0
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    player.opponent = defender
+    if not player.request_attack("punch"):
+        return false
+    player._advance_timed_states(40.0 / PortFighter.SOURCE_FRAME_RATE)
+    if not bool(player.get("_attack_hit_landed")):
+        push_error("Normal base hit did not land before endmove")
+        return false
+    var health_before: float = defender.health
+    player.record_standing_combo_press("b", ["up", "in"])
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    if player.attack_kind != "endattack1":
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        if not player._try_begin_pending_standing_combo():
+            push_error("Normal-hit endmove did not start")
+            return false
+    if player.attack_kind != "endattack1":
+        push_error("Expected endattack1 after normal hit, got " + player.attack_kind)
+        return false
+    for _i: int in range(380):
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if absf(defender.health - health_before) > 0.001:
+        push_error("Normal-hit endmove invented damage")
+        return false
+    return true
+
+
+func _validate_candidate_identity(path: String) -> bool:
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        push_error("Could not open endattack candidate GLB")
+        return false
+    var bytes: PackedByteArray = file.get_buffer(file.get_length())
+    file.close()
+    if bytes.size() != 4039952:
+        push_error("Endattack candidate size mismatch: " + str(bytes.size()))
+        return false
+    var hash: HashingContext = HashingContext.new()
+    hash.start(HashingContext.HASH_SHA256)
+    hash.update(bytes)
+    if hash.finish().hex_encode().to_lower() != "592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0":
+        push_error("Endattack candidate SHA-256 mismatch")
+        return false
+    var json_length: int = bytes.decode_u32(12)
+    var document: Variant = JSON.parse_string(bytes.slice(20, 20 + json_length).get_string_from_utf8())
+    if not document is Dictionary or not document.has("animations") or document["animations"].size() != 47:
+        push_error("Endattack candidate animation count mismatch")
         return false
     return true

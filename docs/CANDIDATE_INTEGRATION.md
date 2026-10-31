@@ -450,14 +450,11 @@ SHA-256 `e09f944dad97598163751d64f083fc982d960ab2a82ab72ca7c776eda27a7a64`）
 格挡反击使用 42 段带头候选：2,727,612 字节，SHA-256
 `7771893136ca4cba7a25284ccd1c0cb95f982b1344ab5ef870574760dadc43cf`，
 新增 `m01_parry_high`；`parry_attack` 复用已有的 `m01_pnch_high_03`。
-抓取及终结使用 47 段带头候选：4,039,952 字节，SHA-256
+抓取及 endmove 收招使用 47 段带头候选：4,039,952 字节，SHA-256
 `592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0`，
 包含 `m01_grab_01/02`、重定向的 `m02_grab_01`、`m01_end_attack_01/02`。
 `m02_grab_01` 原属于 `bl_ken_goodall_01_high.skl`，通过实验性跨骨架映射
 （60 个骨骼轨道 + body/hair 对象轨道）重定向到 Bruce；这是候选，不等价于原版骨骼语义。
-抓取终结使用 46 段带头候选：3,964,068 字节，SHA-256
-`de6819927bf7cb642e2f95e802b283c5ec06a181c37f54f5321c8468802310dd`，
-新增 `m01_end_attack_01`、`m01_end_attack_02`；原版 impact 伤害为 0，仅作动画候选。
 下段拳必杀与 hard/high/frontal 反应使用 40 段带头候选：2,453,728 字节，SHA-256
 `77ead1783187b738554a99655cb42cd9f27ca32e47782553dc6e31356c6d58ca`，
 新增 `m01_sp_pnch_low_fail`、`m01_sp_pnch_low`、`all_impct_hard_frnt_high`。
