@@ -87,4 +87,35 @@ func _run() -> void:
         push_error("grab1 attacktofloor did not start after phase change")
         quit(1)
         return
+    # grab2 is a second recovered candobasicattacks window and must behave alike.
+    player.reset_fighter(Vector3(-2.0, 1.2, 0.0))
+    defender.reset_fighter(Vector3(2.0, 1.2, 0.0))
+    defender._enter_locomotion_state("facedownidle")
+    player.opponent = defender
+    if not player.request_attack("grab2"):
+        push_error("Could not start grab2 for cross-phase test")
+        quit(1)
+        return
+    player._advance_timed_states(45.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "active":
+        push_error("grab2 is not active at the first attacktofloor key: " + player.state)
+        quit(1)
+        return
+    if player.try_attack_to_floor_press("b") != PortFighter.AttackToFloorInputResult.BUFFERED:
+        push_error("grab2 first attacktofloor key was not buffered")
+        quit(1)
+        return
+    player._advance_timed_states(35.0 / PortFighter.SOURCE_FRAME_RATE)
+    if player.state != "recovery":
+        push_error("grab2 did not reach recovery at frame 123: " + player.state)
+        quit(1)
+        return
+    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.BUFFERED:
+        push_error("grab2 second attacktofloor key was lost across phase")
+        quit(1)
+        return
+    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.STARTED:
+        push_error("grab2 attacktofloor did not start after phase change")
+        quit(1)
+        return
     quit(0)
