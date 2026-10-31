@@ -246,6 +246,11 @@ func _validate_parry_low(scene: Node, player: PortFighter, computer: PortFighter
     if player.current_source_animation() != "m01_kick_low_02":
         push_error("parry_low animation was " + player.current_source_animation())
         return false
+    player._animate_candidate()
+    var clips: Dictionary = player.get("_candidate_clip_paths")
+    if player.candidate_animation_clip != String(clips.get("parry_low", "")):
+        push_error("parry_low did not play its candidate clip")
+        return false
     var health_before: float = computer.health
     for _i: int in range(30):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
