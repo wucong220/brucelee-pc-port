@@ -10,7 +10,7 @@
 - 本地工作树 `cf59ccf` + candidate48：核心 Godot 套件 exit 0，Python 243 passed / 1 skipped（默认 TEMP）。
 - PR #96 的 GitHub Actions 实际结果（在 92fcfb8 上执行，Run #318）：Python workflow SUCCESS，**247 total / 246 passed / 1 skipped**；GitHub Actions 未执行 Godot 测试。
 - 本地 Godot 套件：`validate_standing_combos`、`validate_directional_combos`、`validate_directional_input`、`validate_special_moves`、`validate_level2_moves`、`validate_special_kick_low`、`validate_special_punch_low`、`validate_special_punch_high`、`validate_parry`、`validate_grabs`、`validate_endattacks`、`validate_reaction_push`、`validate_stun`、`validate_stun_heavy`、`validate_attacktofloor_from_attack`、`validate_ground_pose`、`validate_faceup_impact`、`validate_brick_facedown_impact`、`validate_candidate_audio`。
-- 执行方式：`Godot_v4.7.2-stable_win64.exe --headless --path godot --script res://tests/<suite>.gd -- <candidate.glb>`；`validate_reaction_push` 不需要候选参数。
+- 执行方式：`Godot_v4.7.2-stable_win64.exe --headless --path godot --script res://tests/<suite>.gd -- <candidate.glb>`；例外：`validate_reaction_push` 不需要参数；`validate_ground_pose`、`validate_faceup_impact`、`validate_brick_facedown_impact` 需要 Bruce GLB + Brick GLB；`validate_candidate_audio` 需要解压后的 `adreno_200/sounds/sfx` 目录。
 - stun/endmove 的 48 段候选：`D:\BruceLeeWork\bruce_candidate_48_hair.glb`，4,087,860 字节，SHA-256 `d59e91193bdc30af1b3240d78cb32bb1113a405f28557fa749ae68175cbe2b7b`。
 - hard stun impact 的 50 段候选：`D:\BruceLeeWork\bruce_candidate_50_hair.glb`，4,188,076 字节，SHA-256 `cadd1b1b9bf53a4dbec45ac99f86a21db9686aeaf59569fe250ce0ff38b26605`（含未接线的 `all_impct_spectacular_lft`）。
 
