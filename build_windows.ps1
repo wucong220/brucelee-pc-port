@@ -10,7 +10,23 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sourceProject = Join-Path $root 'godot'
 if ([string]::IsNullOrWhiteSpace($BuildRoot)) {
-    $BuildRoot = Join-Path $env:TEMP 'brucelee-godot-build'
+    $defaultBuildBase = ''
+    if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+        $defaultBuildBase = Join-Path $env:LOCALAPPDATA 'BruceLee-PC-Port'
+        if (Test-Path -LiteralPath $defaultBuildBase) {
+            $item = Get-Item -LiteralPath $defaultBuildBase -Force
+            if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                $target = @($item.Target)[0]
+                if (-not [string]::IsNullOrWhiteSpace($target)) {
+                    $defaultBuildBase = [System.IO.Path]::GetFullPath($target)
+                }
+            }
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($defaultBuildBase)) {
+        $defaultBuildBase = $env:TEMP
+    }
+    $BuildRoot = Join-Path $defaultBuildBase 'godot-build'
 }
 $dist = if ([string]::IsNullOrWhiteSpace($OutputDir)) {
     Join-Path $root 'dist'
