@@ -45,6 +45,7 @@ func _run_check() -> void:
             player._animate_candidate()
             animation.seek(0.0, true)
             var idle_skeleton_position: Vector3 = skeleton_parent.global_position
+            var idle_skeleton_local_position: Vector3 = skeleton_parent.position
             var profile: Dictionary = player.REACTION_PROFILES[group][height]
             player.receive_hit(5.0, group == "block", 0.0, 1.0, profile)
             player._animate_candidate()
@@ -105,8 +106,17 @@ func _run_check() -> void:
                 quit(1)
                 return
             animation.seek(0.0, true)
-            if skeleton_parent.global_position.distance_to(idle_skeleton_position) > 0.001:
-                push_error("Idle did not restore skeleton position after reaction: " + expected)
+            if skeleton_parent.position.distance_to(idle_skeleton_local_position) > 0.001:
+                push_error("Idle did not restore skeleton local position after reaction: "
+                        + expected)
+                quit(1)
+                return
+            var expected_global_shift: float = Vector2(
+                player.position.x + 0.25, player.position.z
+            ).length()
+            if absf(skeleton_parent.global_position.distance_to(
+                    idle_skeleton_position) - expected_global_shift) > 0.001:
+                push_error("Idle did not follow the pushed fighter position: " + expected)
                 quit(1)
                 return
     player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
@@ -128,8 +138,18 @@ func _run_check() -> void:
         return
     player.receive_hit(1000.0, false, 0.0, 1.0, player.REACTION_PROFILES["hit"]["low"])
     player._animate_candidate()
-    if player.state != "ko" or player.candidate_animation_clip != "m01_idle_01":
-        push_error("KO retained a reaction animation")
+    var lethal_stun_path: bool = (
+        player._candidate_clip_paths.has("stun")
+        and player._candidate_clip_paths.has("all_impct_light_frnt_low")
+    )
+    var expected_lethal_state: String = "impactstun" if lethal_stun_path else "ko"
+    var expected_lethal_clip: String = (
+        "all_impct_light_frnt_low" if lethal_stun_path else "m01_idle_01"
+    )
+    if (player.state != expected_lethal_state
+            or player.candidate_animation_clip != expected_lethal_clip):
+        push_error("Lethal reaction used the wrong KO path: state="
+                + player.state + " clip=" + player.candidate_animation_clip)
         quit(1)
         return
     player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
