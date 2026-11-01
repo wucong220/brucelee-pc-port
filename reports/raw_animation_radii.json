@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "source_set": "adreno_200/set/brucelee.set",
+  "method": "read-only kdf_fighting_set.inspect_archive action.animation_radius; no original bytes",
+  "actions": {
+    "endattack1": {
+      "animation": "m01_end_attack_01",
+      "animation_radius": 45.0
+    },
+    "endattack2": {
+      "animation": "m01_end_attack_02",
+      "animation_radius": 45.0
+    },
+    "grab1": {
+      "animation": "m01_grab_01",
+      "animation_radius": 40.0
+    },
+    "grab1miss": {
+      "animation": "m02_grab_01",
+      "animation_radius": 25.0
+    },
+    "grab2": {
+      "animation": "m01_grab_02",
+      "animation_radius": 25.0
+    },
+    "grab2miss": {
+      "animation": "m02_grab_01",
+      "animation_radius": 25.0
+    },
+    "highkick1": {
+      "animation": "m01_kick_high_01",
+      "animation_radius": 60.0
+    },
+    "highkick2": {
+      "animation": "m01_kick_high_02",
+      "animation_radius": 60.0
+    },
+    "highkick3": {
+      "animation": "m01_sp_kick_jump_01",
+      "animation_radius": 60.0
+    },
+    "highpunch1": {
+      "animation": "m01_pnch_high_01",
+      "animation_radius": 45.0
+    },
+    "highpunch2": {
+      "animation": "m01_pnch_high_02",
+      "animation_radius": 45.0
+    },
+    "highpunch3": {
+      "animation": "m01_pnch_high_03",
+      "animation_radius": 60.0
+    },
+    "lowkick1": {
+      "animation": "m01_kick_low_01",
+      "animation_radius": 50.0
+    },
+    "lowkick2": {
+      "animation": "m01_kick_low_02",
+      "animation_radius": 50.0
+    },
+    "lowkick3": {
+      "animation": "m01_kick_low_03",
+      "animation_radius": 50.0
+    },
+    "lowpunch1": {
+      "animation": "m01_pnch_low_01",
+      "animation_radius": 40.0
+    },
+    "lowpunch2": {
+      "animation": "m01_pnch_low_02",
+      "animation_radius": 40.0
+    },
+    "lowpunch3": {
+      "animation": "m01_pnch_low_03",
+      "animation_radius": 40.0
+    },
+    "parryattack": {
+      "animation": "m01_pnch_high_03",
+      "animation_radius": 25.0
+    },
+    "parryhigh": {
+      "animation": "m01_parry_high",
+      "animation_radius": 40.0
+    },
+    "parrylow": {
+      "animation": "m01_kick_low_02",
+      "animation_radius": 40.0
+    },
+    "specialkickhigh": {
+      "animation": "m01_kck_front_step",
+      "animation_radius": 65.0
+    },
+    "specialkicklowhit": {
+      "animation": "m01_sp_kick_low",
+      "animation_radius": 25.0
+    },
+    "specialkicklowmiss": {
+      "animation": "m01_sp_kick_low_fail",
+      "animation_radius": 25.0
+    },
+    "specialpunchhighhit": {
+      "animation": "m01_sp_pnch_high",
+      "animation_radius": 25.0
+    },
+    "specialpunchhighmiss": {
+      "animation": "m01_sp_pnch_high_fail",
+      "animation_radius": 40.0
+    },
+    "specialpunchlowhit": {
+      "animation": "m01_sp_pnch_low",
+      "animation_radius": 25.0
+    },
+    "specialpunchlowmiss": {
+      "animation": "m01_sp_pnch_low_fail",
+      "animation_radius": 45.0
+    }
+  }
+}
