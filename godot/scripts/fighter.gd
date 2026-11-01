@@ -46,6 +46,13 @@ const CANDIDATE_CLIPS: Dictionary = {
     "stun_fall": "all_stunned_fall",
     "stun_hard": "all_impct_hard_frnt_high",
     "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m01_movelft",
+    "moveleft": "m01_moverht",
+    "moveright": "m01_movelft",
+    "stepfwd": "m01_stepfwd",
+    "stepback": "m01_stepbck",
+    "stepleft": "m01_steplft",
+    "stepright": "m01_steprht",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -653,6 +660,13 @@ const FACEUP_ATTACK_IMPACT: Dictionary = {
 const RETURN_ANIMATION_RADII: Dictionary = {
     "m01_idle_02": 40.0,
     "m01_idle_03": 40.0,
+    "m01_movebck": 40.0,
+    "m01_moverht": 25.0,
+    "m01_movelft": 35.0,
+    "m01_stepfwd": 40.0,
+    "m01_stepbck": 40.0,
+    "m01_steplft": 40.0,
+    "m01_steprht": 40.0,
     "all_idle_face_down": 75.0,
     "all_idle_face_down_forbigguy": 75.0,
     "all_getup_facedwn": 25.0,
@@ -1952,7 +1966,9 @@ func _try_load_candidate_visual() -> void:
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
             "endattack1", "endattack2", "stun", "stun_fall",
-            "stun_hard", "stun_brutal"]:
+            "stun_hard", "stun_brutal",
+            "move", "moveleft", "moveright", "stepfwd", "stepback",
+            "stepleft", "stepright"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2022,6 +2038,8 @@ func _try_load_candidate_visual() -> void:
         move.loop_mode = Animation.LOOP_LINEAR
     for looping_return: String in [
         IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
+        "move", "moveleft", "moveright", "stepfwd", "stepback",
+        "stepleft", "stepright",
     ]:
         if not _candidate_clip_paths.has(looping_return):
             continue
@@ -3640,6 +3658,10 @@ func current_source_animation() -> String:
         return STUN_FALL_CLIP
     if state in ["stunimpact", "impactstun"] and not last_reaction_animation.is_empty():
         return last_reaction_animation
+    if state in ["idle", "idle2", "idle3"]:
+        var movement_action: String = _movement_action()
+        if not movement_action.is_empty():
+            return String(candidate_clips.get(movement_action, candidate_clips["idle"]))
     if state == "idle2":
         return IDLE2_CLIP
     if state == "idle3":
@@ -3683,6 +3705,23 @@ func current_source_pose() -> String:
     if not _candidate_clip_paths.has(clip_key):
         return ""
     return String(SOURCE_ACTION_POSES[state])
+
+
+func _movement_action() -> String:
+    var x: float = move_axis.x
+    var y: float = move_axis.y
+    if absf(x) <= 0.001 and absf(y) <= 0.001:
+        return ""
+    var action: String
+    if absf(x) >= absf(y):
+        action = "moveleft" if x < 0.0 else "moveright"
+    else:
+        action = "stepleft" if y < 0.0 else "stepright"
+    if _candidate_clip_paths.has(action):
+        return action
+    if _candidate_clip_paths.has("move"):
+        return "move"
+    return ""
 
 
 func _owner_idle_animation() -> String:
@@ -4289,6 +4328,8 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "ko" and _candidate_clip_paths.has("ko"):
         requested = "ko"
+    elif state in ["idle", "idle2", "idle3"] and not _movement_action().is_empty():
+        requested = _movement_action()
     elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
         requested = IDLE2_CLIP
     elif state == "idle3" and _candidate_clip_paths.has(IDLE3_CLIP):
@@ -4328,10 +4369,6 @@ func _animate_candidate() -> void:
         start_frame = ATTACK_TO_FLOOR_ENTRY_FRAME
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
-    elif state == "idle" and _candidate_clip_paths.has("move") and (
-            absf(move_axis.x) > 0.001 or absf(move_axis.y) > 0.001
-    ):
-        requested = "move"
     if requested == FACEUP_IMPACT_TO_FLOOR_CLIP:
         start_frame = int(state_time * SOURCE_FRAME_RATE + 0.0001)
     _play_candidate_action(requested, start_frame)

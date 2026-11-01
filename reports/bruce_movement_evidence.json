@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "source_set": "adreno_200/set/brucelee.set",
+  "method": "read-only kdf_fighting_set/kdf_animation; action.animation and ANM headers",
+  "actions": {
+    "moveback": {"animation": "m01_movebck", "duration": 17, "radius": 40.0},
+    "moveleft": {"animation": "m01_moverht", "duration": 50, "radius": 25.0},
+    "moveright": {"animation": "m01_movelft", "duration": 50, "radius": 35.0},
+    "stepfwd": {"animation": "m01_stepfwd", "duration": 20, "radius": 40.0},
+    "stepback": {"animation": "m01_stepbck", "duration": 19, "radius": 40.0},
+    "stepleft": {"animation": "m01_steplft", "duration": 76, "radius": 40.0},
+    "stepright": {"animation": "m01_steprht", "duration": 124, "radius": 40.0}
+  }
+}
