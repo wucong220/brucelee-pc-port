@@ -387,7 +387,7 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
         "frame_count": 81,
         "damage": 5.0,
         "radius": 75.0,
-        "body_part": "larm",
+        "body_part": "rarm",
         "height": "high",
         "strength": "normal",
         "direction": "fromleft",
@@ -3738,6 +3738,15 @@ func source_radius_for_current_animation() -> float:
         # The recovered parryattack action uses radius 25 although its ANM is
         # shared with m01_pnch_high_03 (60 in the generic animation table).
         return 25.0 * radius_scale
+    if state in ["startup", "active", "recovery"] and attack_kind == "parry_low":
+        # The recovered parrylow action uses 40 although m01_kick_low_02's
+        # generic table entry is 50.
+        return 40.0 * radius_scale
+    if (state in ["startup", "active", "recovery"]
+            and attack_kind == "special_punch_low_miss"):
+        # The recovered specialpunchlowmiss action uses 45 although the shared
+        # m01_sp_pnch_low_fail table entry is 25.
+        return 45.0 * radius_scale
     var animation: String = current_source_animation()
     var radius: float = _stored_animation_radius(animation)
     if radius < 0.0:

@@ -49,6 +49,16 @@
         }
       ]
     },
+    "parrylow": {
+      "animation": "m01_kick_low_02",
+      "animation_radius": 40.0,
+      "impacts": []
+    },
+    "specialpunchlowmiss": {
+      "animation": "m01_sp_pnch_low_fail",
+      "animation_radius": 45.0,
+      "impacts": []
+    },
     "specialkicklowhit": {
       "animation": "m01_sp_kick_low",
       "animation_radius": 25.0,

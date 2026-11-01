@@ -79,7 +79,13 @@ class RawAttackFieldsTest(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn('attack_kind == "parry_attack"', fighter_source)
+        self.assertIn('attack_kind == "parry_low"', fighter_source)
+        self.assertIn('attack_kind == "special_punch_low_miss"', fighter_source)
+        self.assertEqual(raw["parrylow"]["animation_radius"], 40.0)
+        self.assertEqual(raw["specialpunchlowmiss"]["animation_radius"], 45.0)
         self.assertIn("return 25.0 * radius_scale", fighter_source)
+        self.assertIn("return 40.0 * radius_scale", fighter_source)
+        self.assertIn("return 45.0 * radius_scale", fighter_source)
 
 
 if __name__ == "__main__":
