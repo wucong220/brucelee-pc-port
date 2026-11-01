@@ -2658,8 +2658,8 @@ func _accepts_impact_to_floor(
             and source_frame <= 11.0001)
         or
         (state == "facedownattack"
-            and source_frame + 0.0001 >= 24.0
-            and source_frame <= 31.0001)
+            and source_frame + 0.0001 >= 22.0
+            and source_frame <= 28.0001)
         or
         (state == "faceupattack"
             and source_frame + 0.0001 >= 24.0
@@ -3946,6 +3946,11 @@ func receive_hit(
         "ko", "facedownko", "faceupidle", "faceupgetup", "faceupattack",
         "impactfaceup", "faceupko", "stun", "stun2", "stunfall", "stunimpact", "impactstun",
     ]:
+        return false
+    # Outside their verified impactable windows, nonlethal hits must not fall
+    # through to standing hitstun. Lethal hits still reach the healthzero path.
+    if (state in ["facedowngetup", "facedownattack", "impacttofloor"]
+            and health - amount > 0.0):
         return false
     var state_before: String = state
     var medium_lethal_eligible: bool = _medium_lethal_impactable()

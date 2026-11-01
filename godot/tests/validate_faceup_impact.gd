@@ -69,7 +69,7 @@ func _run() -> void:
         "idle_duration_frames": PortFighter.FACEUP_IDLE_DURATION_FRAMES,
         "source_windows": {
             "facedowngetup": [5, 11],
-            "facedownattack": [24, 31],
+            "facedownattack": [22, 28],
             "faceupidle": [0, 45],
         },
         "candidate_scope": (
@@ -244,10 +244,10 @@ func _check_windows(player: PortFighter) -> bool:
         ["facedowngetup", 11.0, "low", false, 6.0, true],
         ["facedowngetup", 4.999, "low", false, 6.0, false],
         ["facedowngetup", 11.001, "low", false, 6.0, false],
-        ["facedownattack", 24.0, "low", false, 6.0, true],
-        ["facedownattack", 31.0, "low", false, 6.0, true],
-        ["facedownattack", 23.999, "low", false, 6.0, false],
-        ["facedownattack", 31.001, "low", false, 6.0, false],
+        ["facedownattack", 22.0, "low", false, 6.0, true],
+        ["facedownattack", 28.0, "low", false, 6.0, true],
+        ["facedownattack", 21.999, "low", false, 6.0, false],
+        ["facedownattack", 28.001, "low", false, 6.0, false],
         ["facedownattack", 24.0, "medium", false, 6.0, false],
         ["facedownattack", 24.0, "low", true, 6.0, false],
         ["facedownattack", 24.0, "low", false, 100.0, false],
@@ -362,6 +362,15 @@ func _check_hit_routing(player: PortFighter, opponent: PortFighter) -> bool:
         "low", false, _attacker_damage(opponent)
     ):
         push_error("facedownattack frame 24 did not accept the low impact")
+        return false
+    if not _prepare_ground_hit(player, opponent, "facedownattack", 29.0):
+        return false
+    var outside_window_state: String = player.state
+    if player.receive_hit(6.0, false, 0.0, 1.0):
+        push_error("facedownattack frame 29 accepted a nonlethal hit")
+        return false
+    if player.state != outside_window_state:
+        push_error("facedownattack frame 29 changed state outside its window")
         return false
     if not _prepare_ground_hit(player, opponent, "facedownattack", 24.0):
         return false

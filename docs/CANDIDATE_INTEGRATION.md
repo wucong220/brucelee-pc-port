@@ -242,7 +242,7 @@ character 节点的平移、旋转和缩放轨道在运行时关闭，骨骼轨�
 原始 ANM 和 GLB 都留在仓库外，不进入 Git。
 
 候选运行时只在 `facedowngetup` 源动画第 5 到 11 帧或
-`facedownattack` 第 24 到 31 帧、受到 `impact`、`oppattackheightlow`、
+`facedownattack` 第 22 到 28 帧、受到 `impact`、`oppattackheightlow`、
 非格挡且伤害后血量大于 0 时进入 `impacttofloor`。`all_stunned_fall`
 从源动画第 21 帧起播，播放到第 48 帧后进入循环的
 `all_idle_face_up`。致命命中保持现有 `ko` 优先级；缺少任一所需 clip
