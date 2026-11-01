@@ -260,8 +260,11 @@ func _config_negative_check(player: PortFighter) -> bool:
 func _path_guard_check() -> bool:
     var repository_root: String = CandidatePathGuard.repository_root()
     var token: String = str(Time.get_ticks_usec())
-    var temp_root: String = OS.get_temp_dir().path_join(
-        "brucelee-path-guard-" + token
+    var test_root: String = OS.get_environment("LOCALAPPDATA")
+    if test_root.is_empty():
+        test_root = OS.get_temp_dir()
+    var temp_root: String = test_root.path_join(
+        "BruceLee-PC-Port/smoke-path-guard-" + token
     )
     var external_file: String = temp_root.path_join("candidate-outside-fixture.glb")
     var repository_fixture: String = repository_root.path_join(
@@ -271,16 +274,18 @@ func _path_guard_check() -> bool:
     var junction_path: String = temp_root.path_join("repository-junction")
     var passed: bool = true
 
-    if DirAccess.make_dir_absolute(temp_root) != OK:
+    if DirAccess.make_dir_recursive_absolute(temp_root) != OK:
         push_error("Could not create candidate path guard temp directory")
         return false
-    if DirAccess.make_dir_absolute(repository_fixture) != OK:
-        push_error("Could not create candidate path guard repository fixture")
-        DirAccess.remove_absolute(temp_root)
-        return false
+    var repository_fixture_ready: bool = (
+        DirAccess.make_dir_absolute(repository_fixture) == OK
+    )
     var external_handle: FileAccess = FileAccess.open(external_file, FileAccess.WRITE)
-    var repository_handle: FileAccess = FileAccess.open(repository_file, FileAccess.WRITE)
-    if external_handle == null or repository_handle == null:
+    var repository_handle: FileAccess = (
+        FileAccess.open(repository_file, FileAccess.WRITE)
+        if repository_fixture_ready else null
+    )
+    if external_handle == null or (repository_fixture_ready and repository_handle == null):
         push_error("Could not create candidate path guard fixture files")
         if external_handle != null:
             external_handle.close()
@@ -290,8 +295,9 @@ func _path_guard_check() -> bool:
     else:
         external_handle.store_string("external fixture")
         external_handle.close()
-        repository_handle.store_string("repository fixture")
-        repository_handle.close()
+        if repository_handle != null:
+            repository_handle.store_string("repository fixture")
+            repository_handle.close()
 
     var external_error: String = CandidatePathGuard.external_path_error(
         external_file, "candidate path"
@@ -310,26 +316,28 @@ func _path_guard_check() -> bool:
             push_error("Candidate path guard accepted a repository path")
             passed = false
 
-    var junction_output: Array = []
-    var junction_command: String = "mklink /J \"%s\" \"%s\"" % [
-        junction_path.replace("/", "\\"),
-        repository_fixture.replace("/", "\\"),
-    ]
-    var junction_exit: int = OS.execute(
-        "cmd.exe",
-        PackedStringArray(["/d", "/s", "/c", junction_command]),
-        junction_output,
-        true,
-        false,
-    )
-    if junction_exit != 0:
-        push_error("Could not create candidate path guard junction: "
-                + "\n".join(PackedStringArray(junction_output)))
-        passed = false
-    elif CandidatePathGuard.external_path_error(
-            junction_path.path_join("candidate.glb"), "candidate path").is_empty():
-        push_error("Candidate path guard accepted an external junction into the repository")
-        passed = false
+    var junction_exit: int = -1
+    if repository_fixture_ready:
+        var junction_output: Array = []
+        var junction_command: String = "mklink /J \"%s\" \"%s\"" % [
+            junction_path.replace("/", "\\"),
+            repository_fixture.replace("/", "\\"),
+        ]
+        junction_exit = OS.execute(
+            "cmd.exe",
+            PackedStringArray(["/d", "/s", "/c", junction_command]),
+            junction_output,
+            true,
+            false,
+        )
+        if junction_exit != 0:
+            push_error("Could not create candidate path guard junction: "
+                    + "\n".join(PackedStringArray(junction_output)))
+            passed = false
+        elif CandidatePathGuard.external_path_error(
+                junction_path.path_join("candidate.glb"), "candidate path").is_empty():
+            push_error("Candidate path guard accepted an external junction into the repository")
+            passed = false
 
     if junction_exit == 0:
         var remove_output: Array = []
@@ -565,9 +573,11 @@ func _run_check() -> void:
         push_error("Brick idle reach drifted from attack radius 70 plus idle radius 43")
         quit(1)
         return
-    opponent.global_position = player.global_position + Vector3(source_reach + 0.02, 0.0, 0.0)
+    opponent.global_position = player.global_position + Vector3(10.0, 0.0, 10.0)
     player.request_attack("punch")
     player._advance_timed_states(punch_startup + 0.001)
+    source_reach = player.attack_reach_world("punch", opponent)
+    opponent.global_position = player.global_position + Vector3(source_reach + 0.02, 0.0, 0.0)
     player._try_attack_contact()
     if opponent.health != PortFighter.MAX_HEALTH:
         push_error("Target outside the recovered source radius was hit")
@@ -581,33 +591,39 @@ func _run_check() -> void:
         quit(1)
         return
     player.reset_fighter(Vector3(0.0, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.9, 1.2, 0.9))
+    opponent.reset_fighter(Vector3(10.0, 1.2, 10.0))
     player.request_attack("punch")
     player._advance_timed_states(punch_startup + 0.001)
+    source_reach = player.attack_reach_world("punch", opponent)
+    var diagonal: float = (source_reach + 0.02) / sqrt(2.0)
+    opponent.global_position = player.global_position + Vector3(diagonal, 0.0, diagonal)
     player._try_attack_contact()
     if opponent.health < PortFighter.MAX_HEALTH:
         push_error("Target outside the recovered Euclidean source radius was hit")
         quit(1)
         return
-    opponent.position = Vector3(0.75, 1.2, 0.75)
+    diagonal = (source_reach - 0.00001) / sqrt(2.0)
+    opponent.global_position = player.global_position + Vector3(diagonal, 0.0, diagonal)
     player._try_attack_contact()
     if absf(opponent.health - 95.0) > 0.001:
         push_error("Target inside the recovered Euclidean source radius was not hit")
         quit(1)
         return
     player.reset_fighter(Vector3(0.0, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(1.2, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(10.0, 1.2, 10.0))
     opponent.state = "startup"
     opponent.attack_kind = "punch"
     opponent.state_time = punch_startup
     player.request_attack("punch")
     player._advance_timed_states(punch_startup + 0.001)
+    source_reach = player.attack_reach_world("punch", opponent)
+    opponent.global_position = player.global_position + Vector3(source_reach + 0.02, 0.0, 0.0)
     player._try_attack_contact()
     if opponent.health != PortFighter.MAX_HEALTH:
         push_error("Target radius did not change with the defender's source animation")
         quit(1)
         return
-    opponent.position.x = 1.10
+    opponent.global_position = player.global_position + Vector3(source_reach - 0.00001, 0.0, 0.0)
     player._try_attack_contact()
     if absf(opponent.health - 95.0) > 0.001:
         push_error("Target inside the defender punch radius was not hit")
