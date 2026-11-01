@@ -42,6 +42,11 @@ func _run() -> void:
         push_error("menu navigation sfx did not trigger")
         quit(1)
         return
+    if (menu.background_practice_texture == null
+            or menu.background.texture != menu.background_practice_texture):
+        push_error("training selection did not preview practice background")
+        quit(1)
+        return
     _press(menu, KEY_ENTER)
     if menu.last_sfx_played != "accept":
         push_error("menu accept sfx did not trigger")
