@@ -33,6 +33,9 @@ Write-Host "Build project: $project"
 
 function Get-ComparisonPath([string]$path) {
     $value = [System.IO.Path]::GetFullPath($path)
+    if ($value.StartsWith('\\.\', [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Unsupported device path.'
+    }
     if ($value.StartsWith('\\?\UNC\', [System.StringComparison]::OrdinalIgnoreCase)) {
         $value = '\\' + $value.Substring(8)
     } elseif ($value.StartsWith('\\?\', [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -119,6 +122,15 @@ if ($SelfTest) {
     }
     if (-not $volumePathRejected) {
         throw 'Volume GUID path was not rejected.'
+    }
+    $devicePathRejected = $false
+    try {
+        Test-PathOverlap '\\.\C:\repo' 'C:\repo' | Out-Null
+    } catch {
+        $devicePathRejected = $true
+    }
+    if (-not $devicePathRejected) {
+        throw 'Device namespace path was not rejected.'
     }
     $substFixture = @('Z:\: => C:\repo\godot')
     if (-not (Test-SubstPath 'Z:\out' $substFixture)) {
