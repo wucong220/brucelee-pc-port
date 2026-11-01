@@ -2460,7 +2460,13 @@ func _verified_post_hit_return_state() -> String:
             and return_action == "idle2"
             and _candidate_clip_paths.has(IDLE2_CLIP)):
         return "idle2"
-    if (reaction_clip_ready and return_link_implemented
+    var hard_frontlow_facedown_link: bool = (
+        last_reaction_source_action == "impacthardfrontlow"
+        and return_action == "facedownidle"
+        and _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP)
+    )
+    if (reaction_clip_ready
+            and (return_link_implemented or hard_frontlow_facedown_link)
             and return_action == "facedownidle"
             and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)
             and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP)):
