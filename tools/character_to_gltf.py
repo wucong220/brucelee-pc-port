@@ -27,14 +27,9 @@ _FLOAT = 5126
 _UNSIGNED_BYTE = 5121
 _UNSIGNED_SHORT = 5123
 _MAX_ANIMATION_BYTES = 16 * 1024 * 1024
-# This slice adds the recovered highpunch1/highkick1 clips to the 23-clip
-# Bruce candidate used by the ground-reaction prototype, plus headroom for the
-# four *_03 / m01_sp_* attacks that the group inventory lists. The cap stays
-# explicit so an accidental unbounded import is rejected.
-_MAX_ANIMATION_FILES = 50
-# Raising the per-file count must not leave the total input unbounded. 32 files
-# at the 16 MiB per-file cap would otherwise allow about 512 MiB of animation
-# input, so the sum of the declared ANM sizes is capped separately.
+# Allow the 51-clip candidate while keeping animation imports bounded.
+_MAX_ANIMATION_FILES = 64
+# Cap the sum of declared ANM sizes separately from the per-file limit.
 _MAX_TOTAL_ANIMATION_BYTES = 64 * 1024 * 1024
 _MAX_RIGID_ATTACHMENTS = 16
 
