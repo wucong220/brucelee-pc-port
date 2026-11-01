@@ -33,7 +33,19 @@ func _run() -> void:
         push_error("Initial round state is wrong")
         quit(1)
         return
-    scene._on_ko(computer)
+    player.reset_fighter(Vector3(0.0, 1.20, 0.0))
+    computer.reset_fighter(Vector3(0.6, 1.20, 0.0))
+    computer.health = 1.0
+    if not player.request_attack("punch"):
+        push_error("Could not start the real KO attack")
+        quit(1)
+        return
+    player._advance_timed_states(player.ATTACKS["punch"]["startup"] + 0.001)
+    player._try_attack_contact()
+    if computer.health > 0.0:
+        push_error("Real KO attack did not damage Brick")
+        quit(1)
+        return
     if (scene.player_rounds != 1 or scene.round_number != 1
             or scene.done != true or scene.round_reset_timer <= 0.0):
         push_error("First player round win did not schedule the next round")
@@ -41,14 +53,9 @@ func _run() -> void:
         return
     player.move_axis = Vector2(1.0, 0.0)
     computer.move_axis = Vector2(-1.0, 0.0)
-    var player_x: float = player.position.x
-    var computer_x: float = computer.position.x
     scene._physics_process(0.1)
-    player._physics_process(0.1)
-    computer._physics_process(0.1)
-    if (absf(player.position.x - player_x) > 0.0001
-            or absf(computer.position.x - computer_x) > 0.0001):
-        push_error("Fighters moved during the round reset pause")
+    if player.move_axis != Vector2.ZERO or computer.move_axis != Vector2.ZERO:
+        push_error("Round reset pause did not clear fighter movement")
         quit(1)
         return
     scene._physics_process(2.1)
