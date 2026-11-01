@@ -617,6 +617,17 @@ func _run_check() -> void:
     player.request_attack("punch")
     player._advance_timed_states(punch_startup + 0.001)
     source_reach = player.attack_reach_world("punch", opponent)
+    var expected_startup_reach: float = (
+        (70.0 + 40.0) * PortFighter.CANDIDATE_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
+    )
+    if absf(source_reach - expected_startup_reach) > 0.0001:
+        push_error("Defender punch-startup radius did not use source animation radius 40")
+        quit(1)
+        return
+    if source_reach >= expected_idle_reach:
+        push_error("Defender startup radius did not differ from idle radius")
+        quit(1)
+        return
     opponent.global_position = player.global_position + Vector3(source_reach + 0.02, 0.0, 0.0)
     player._try_attack_contact()
     if opponent.health != PortFighter.MAX_HEALTH:
