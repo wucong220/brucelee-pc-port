@@ -29,6 +29,18 @@ func _run() -> void:
             "exit_frame": 13,
             "duration": 17,
         },
+        {
+            "source_action": "impactlightleftlow",
+            "depth": 7.284912109375,
+            "exit_frame": 15,
+            "duration": 17,
+        },
+        {
+            "source_action": "impactlightrightlow",
+            "depth": 21.27294921875,
+            "exit_frame": 13,
+            "duration": 17,
+        },
     ]
     var results: Array = []
     for case: Dictionary in cases:
@@ -58,7 +70,7 @@ func _run() -> void:
         })
     print("REACTION_PUSH_VALIDATION=" + JSON.stringify({
         "cases": results,
-        "scope": "source positions depth mapped to prototype forward push; axis/sign native mapping unverified",
+        "scope": "source reaction horizontal positions mapped to prototype forward push; axis/sign native mapping unverified",
     }))
     fighter.queue_free()
     await process_frame

@@ -661,6 +661,11 @@ const REACTION_ROOT_PUSH_SOURCE: Dictionary = {
     "impactlightfronthigh": 36.86962890625,
     "impactlightfrontlow": 18.252197265625,
     "impactlightfrontmid": 22.845458984375,
+    # Lateral light reactions: peak absolute X from the decoded source
+    # positions. Frontal entries use peak Y (depth); exact native axis/sign
+    # mapping remains unverified.
+    "impactlightleftlow": 7.284912109375,
+    "impactlightrightlow": 21.27294921875,
 }
 
 
