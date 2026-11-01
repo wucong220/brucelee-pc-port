@@ -105,6 +105,7 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "all_block_high": 40.0,
 }
 const IDLE2_CLIP: String = "m01_idle_02"
+const IDLE3_CLIP: String = "m01_idle_03"
 const FACEDOWN_IDLE_CLIP: String = "all_idle_face_down"
 const BRICK_FACEDOWN_IDLE_CLIP: String = "all_idle_face_down_forbigguy"
 const BRICK_FRONT_LOW_CLIP: String = "all_impct_hard_frnt_low"
@@ -120,6 +121,7 @@ const BRICK_FRONT_LOW_REACTION: Dictionary = {
 }
 const FACEDOWN_GETUP_CLIP: String = "all_getup_facedwn"
 const IDLE2_DURATION_FRAMES: int = 43
+const IDLE3_DURATION_FRAMES: int = 143
 const FACEDOWN_IDLE_DURATION_FRAMES: int = 45
 const FACEDOWN_GETUP_WINDOW_START: int = 10
 const FACEDOWN_GETUP_WINDOW_END: int = 45
@@ -610,6 +612,7 @@ enum AttackToFloorSequenceMatch {
 const SOURCE_ACTION_POSES: Dictionary = {
     "idle": "stand",
     "idle2": "stand",
+    "idle3": "stand",
     "facedownidle": "laying",
     "facedownko": "laying",
     "facedowngetup": "stand",
@@ -649,6 +652,7 @@ const FACEUP_ATTACK_IMPACT: Dictionary = {
 }
 const RETURN_ANIMATION_RADII: Dictionary = {
     "m01_idle_02": 40.0,
+    "m01_idle_03": 40.0,
     "all_idle_face_down": 75.0,
     "all_idle_face_down_forbigguy": 75.0,
     "all_getup_facedwn": 25.0,
@@ -1988,7 +1992,7 @@ func _try_load_candidate_visual() -> void:
     # enter one only after the same candidate track check used above.
     if _candidate_skeleton != null:
         for return_clip_name: String in [
-            IDLE2_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
+            IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
             FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
             FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP,
             FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP,
@@ -2017,7 +2021,7 @@ func _try_load_candidate_visual() -> void:
         )
         move.loop_mode = Animation.LOOP_LINEAR
     for looping_return: String in [
-        IDLE2_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
+        IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
     ]:
         if not _candidate_clip_paths.has(looping_return):
             continue
@@ -2350,7 +2354,7 @@ func supports_attack(kind: String) -> bool:
 
 
 func _uses_standing_idle_rules() -> bool:
-    return state == "idle" or state == "idle2"
+    return state in ["idle", "idle2", "idle3"]
 
 
 func _can_block_current_hit() -> bool:
@@ -2482,6 +2486,10 @@ func _advance_return_state(delta: float) -> void:
     if state == "idle2":
         state_time += maxf(delta, 0.0)
         _wrap_return_loop(IDLE2_DURATION_FRAMES)
+        return
+    if state == "idle3":
+        state_time += maxf(delta, 0.0)
+        _wrap_return_loop(IDLE3_DURATION_FRAMES)
         return
     if state == "facedownidle":
         var before: float = state_time
@@ -2857,7 +2865,7 @@ func record_standing_combo_press(
 
 
 func record_parry_press(kind: String = "parry_high") -> bool:
-    if state not in ["idle", "idle2"]:
+    if state not in ["idle", "idle2", "idle3"]:
         _parry_press_times.clear()
         return false
     _parry_press_times = _parry_press_times.filter(
@@ -2903,7 +2911,7 @@ func _accepts_standing_combo_input(virtual_key: String) -> bool:
     if (guard_held
             or attack_config_path == BRICK_ATTACK_CONFIG_PATH
             or virtual_key not in ["a", "b", "c", "d"]
-            or state not in ["idle", "idle2", "startup", "active", "recovery"]):
+            or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]):
         return false
     if state in ["startup", "active", "recovery"]:
         if attack_kind == "heavy" or not CANDOBASICATTACK_WINDOWS.has(attack_kind):
@@ -3061,7 +3069,7 @@ func _try_begin_pending_standing_combo() -> bool:
             return false
         if (opponent == null or not is_instance_valid(opponent)
                 or opponent.guard_held
-                or opponent.state not in ["idle", "idle2", "hitstun"]):
+                or opponent.state not in ["idle", "idle2", "idle3", "hitstun"]):
             _clear_standing_combo_state()
             return false
         var grab_distance: float = Vector2(
@@ -3140,7 +3148,7 @@ func try_attack_to_floor_press(
 ) -> AttackToFloorInputResult:
     # Prototype-only mapping for recovered b/c/d sequences. Native key status,
     # source-frame clocks, link order and deferred third-value timing remain unverified.
-    if (state not in ["idle", "idle2", "startup", "active", "recovery"]
+    if (state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]
             or attack_config_path == BRICK_ATTACK_CONFIG_PATH
             or virtual_key not in ["b", "c", "d"]):
         _clear_ground_attack_input_history()
@@ -3230,7 +3238,7 @@ func _begin_attack_to_floor() -> void:
     _attack_connected = false
     _clear_ground_attack_input_history()
     if (candidate_visual_blending_enabled
-            and previous_state in ["idle", "idle2"]
+            and previous_state in ["idle", "idle2", "idle3"]
             and _candidate_animation != null
             and _candidate_animation.is_playing()):
         _queue_candidate_visual_blend(
@@ -3337,7 +3345,7 @@ func _advance_timed_states(delta: float) -> void:
         _advance_stun_impact_state(delta)
         return
     if state in [
-        "idle2", "facedownidle", "facedownko", "facedowngetup",
+        "idle2", "idle3", "facedownidle", "facedownko", "facedowngetup",
         "impactfacedown", "facedownattack", "impacttofloor", "faceupidle",
         "faceupgetup", "faceupattack", "impactfaceup", "faceupko",
         "attacktofloor",
@@ -3443,7 +3451,7 @@ func _try_special_chain() -> void:
         return
     if (opponent == null or not is_instance_valid(opponent)
             or opponent.guard_held
-            or opponent.state not in ["idle", "idle2"]):
+            or opponent.state not in ["idle", "idle2", "idle3"]):
         return
     var distance: float = Vector2(
         opponent.global_position.x - global_position.x,
@@ -3480,6 +3488,11 @@ func _advance_state() -> void:
                 # as the fallback when the candidate lacks that clip.
                 if _candidate_clip_paths.has(IDLE2_CLIP):
                     next_state = "idle2"
+            elif state == "recovery" and attack_kind == "special_kick_high":
+                # Recovered return targets idle3 [53,57]; keep idle as the
+                # fallback until a candidate supplies m01_idle_03.
+                if _candidate_clip_paths.has(IDLE3_CLIP):
+                    next_state = "idle3"
             elif state != "recovery":
                 next_state = _verified_post_hit_return_state()
             _enter_locomotion_state(next_state)
@@ -3629,6 +3642,8 @@ func current_source_animation() -> String:
         return last_reaction_animation
     if state == "idle2":
         return IDLE2_CLIP
+    if state == "idle3":
+        return IDLE3_CLIP
     if state == "facedownidle" or state == "facedownko":
         return _facedown_idle_clip()
     if state == "facedowngetup":
@@ -3908,6 +3923,8 @@ func _medium_lethal_impactable() -> bool:
         return true
     if state == "idle2":
         return state_time * SOURCE_FRAME_RATE <= 43.0001
+    if state == "idle3":
+        return state_time * SOURCE_FRAME_RATE <= 143.0001
     if state == "facedowngetup":
         var frame: float = state_time * SOURCE_FRAME_RATE
         return frame + 0.0001 >= 12.0 and frame <= 19.0001
@@ -4274,6 +4291,8 @@ func _animate_candidate() -> void:
         requested = "ko"
     elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
         requested = IDLE2_CLIP
+    elif state == "idle3" and _candidate_clip_paths.has(IDLE3_CLIP):
+        requested = IDLE3_CLIP
     elif state in ["facedownidle", "facedownko"] and _candidate_clip_paths.has(_facedown_idle_clip()):
         requested = _facedown_idle_clip()
     elif state == "facedowngetup" and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP):

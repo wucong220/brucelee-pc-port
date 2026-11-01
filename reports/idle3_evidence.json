@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "source_set": "adreno_200/set/brucelee.set",
+  "method": "read-only kdf_fighting_set/kdf_animation metadata; no original bytes",
+  "action": "idle3",
+  "animation": "m01_idle_03",
+  "animation_sha256": "62ab87aaa9ba20e7b7b8299c8a56c4505cf0d4300b388ab7a0d2efbea6bb1d9a",
+  "duration_frames": 143,
+  "framerate": 30,
+  "animation_radius": 40.0,
+  "return_link": {
+    "from": "specialkickhigh",
+    "time": [53, 57]
+  }
+}
