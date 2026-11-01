@@ -56,7 +56,42 @@ class TestReactionRootMotion(unittest.TestCase):
             "lowblock",
             "midblock",
             "highblock",
+            "impactlightlefthigh", "impactlightrighthigh",
+            "impactlightleftlow", "impactlightrightlow",
+            "impacthardleftlow", "impacthardlefthigh", "impacthardabove",
+            "impacthardfrontlow", "impacthardfrontmid", "impacthardrighthigh",
+            "impacthardfronthigh", "impactbrutalmid", "impactbrutalleft",
+            "impactbrutalright",
         })
+        expected_last = {
+            "impactlightleftlow": [7.284912109375, 1.511962890625, 0.0],
+            "impactlightrightlow": [12.990478515625, 0.0, 0.0],
+            "impacthardleftlow": [-37.579345703125, -6.0205078125, 0.0],
+            "impacthardlefthigh": [-199.57080078125, 51.24755859375, 0.0],
+            "impacthardabove": [0.0, -35.1337890625, 0.0],
+            "impacthardfrontlow": [-2.05224609375, -3.348388671875, 0.0],
+            "impacthardfrontmid": [0.0009765625, 69.15380859375, 0.0],
+            "impacthardrighthigh": [194.52294921875, 31.501220703125, 0.0],
+            "impacthardfronthigh": [-0.761962890625, 200.7998046875, 0.0],
+            "impactbrutalmid": [12.145263671875, 181.56494140625, 0.0],
+            "impactbrutalleft": [-187.198974609375, 19.37939453125, -0.136962890625],
+            "impactbrutalright": [187.095458984375, 43.887451171875, 0.0],
+        }
+        for name, last in expected_last.items():
+            with self.subTest(action=name):
+                self.assertTrue(actions[name]["positions_track_present"])
+                self.assertTrue(actions[name]["track_presence"]["positions"])
+                self.assertEqual(actions[name]["positions"][-1], last)
+                self.assertEqual(actions[name]["positions_summary"]["last"], last)
+        for name in ("impactlightlefthigh", "impactlightrighthigh"):
+            with self.subTest(action=name):
+                self.assertFalse(actions[name]["positions_track_present"])
+                self.assertFalse(actions[name]["track_presence"]["positions"])
+                self.assertNotIn("positions", actions[name])
+                self.assertTrue(actions[name]["track_presence"]["bonepos"])
+        self.assertEqual(actions["impacthardfrontmid"]["animation"],
+                         "adreno_200/animation/all_impct_crotch.anm")
+        self.assertEqual(report["evidence"]["positions_axis_semantics"], "UNVERIFIED")
         self.assertEqual(
             actions["impactlightfrontlow"]["positions_summary"]["maximum_absolute"],
             [0.0, 18.252197265625, 0.0],
