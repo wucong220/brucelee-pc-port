@@ -193,7 +193,7 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
     "body_part": "lleg", "attack_radius": ATTACK_TO_FLOOR_RADIUS,
 }
 const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
-const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.5
+const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.8
 const RAGE_MAX: float = 100.0
 const RAGE_GAIN_PER_HIT: float = 10.0
 # Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
@@ -2935,9 +2935,8 @@ func _accepts_standing_combo_input(virtual_key: String) -> bool:
             or virtual_key not in ["a", "b", "c", "d"]
             or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]):
         return false
-    if state in ["startup", "active", "recovery"]:
-        if attack_kind == "heavy" or not CANDOBASICATTACK_WINDOWS.has(attack_kind):
-            return false
+    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
+        return false
     return true
 
 
