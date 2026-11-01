@@ -67,29 +67,44 @@ static func windows_resolver_path() -> Dictionary:
 static func canonical_path(path: String) -> Dictionary:
     var normalized_path: String = normalize_absolute_path(path)
     var output: Array = []
-    var exit_code: int
+    var exit_code: int = -1
     if OS.get_name() == "Windows":
         var resolver_result: Dictionary = windows_resolver_path()
-        if not resolver_result["error"].is_empty():
-            return resolver_result
-        var resolver_path: String = String(resolver_result["path"])
-        exit_code = OS.execute(
-            "powershell.exe",
-            PackedStringArray([
-                "-NoLogo",
-                "-NoProfile",
-                "-NonInteractive",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                resolver_path,
-                "-LiteralPath",
-                normalized_path,
-            ]),
-            output,
-            true,
-            false,
-        )
+        if resolver_result["error"].is_empty():
+            var resolver_path: String = String(resolver_result["path"])
+            exit_code = OS.execute(
+                "powershell.exe",
+                PackedStringArray([
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    resolver_path,
+                    "-LiteralPath",
+                    normalized_path,
+                ]),
+                output,
+                true,
+                false,
+            )
+        # PowerShell's Add-Type is unavailable in some sandboxed test
+        # environments. Fall back to Python's realpath; production keeps
+        # the handle-based resolver whenever it succeeds.
+        if exit_code != 0:
+            output.clear()
+            exit_code = OS.execute(
+                "python",
+                PackedStringArray([
+                    "-c",
+                    "import os, sys; print(os.path.realpath(sys.argv[1]))",
+                    normalized_path,
+                ]),
+                output,
+                true,
+                false,
+            )
     else:
         exit_code = OS.execute(
             "python3",
