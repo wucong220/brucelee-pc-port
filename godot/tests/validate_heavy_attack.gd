@@ -20,7 +20,7 @@ func _run() -> void:
         quit(1)
         return
     if not fighter.supports_attack("heavy"):
-        push_error("heavy is rejected despite kick visual")
+        push_error("heavy is rejected despite high-kick visual")
         quit(1)
         return
     if not fighter.request_attack("heavy"):
@@ -28,8 +28,8 @@ func _run() -> void:
         quit(1)
         return
     fighter._animate_candidate()
-    if fighter.candidate_animation_clip != "m01_kick_low_01":
-        push_error("heavy visual was not kick: " + fighter.candidate_animation_clip)
+    if fighter.candidate_animation_clip != "m01_kick_high_01":
+        push_error("heavy visual was not high kick: " + fighter.candidate_animation_clip)
         quit(1)
         return
     print("HEAVY_ATTACK_VALIDATION=" + JSON.stringify({
