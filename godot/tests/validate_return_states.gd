@@ -67,16 +67,17 @@ func _static_flags_stay_false(player: PortFighter) -> bool:
         "all_impct_hard_rht_low", "all_block_high_hard",
         "m01_idle_02", "all_idle_face_down", "all_getup_facedwn",
     ]
-    if animation == null or animation.get_animation_list().size() not in [
-        expected.size(), expected.size() + 2,
-    ]:
-        push_error("Return-state GLB does not expose 15 base clips or 17 clips with attack/KO extensions")
+    if (animation == null
+            or animation.get_animation_list().size() not in [
+                expected.size(), expected.size() + 2, 59,
+            ]):
+        push_error("Return-state GLB must expose the 15/17-clip or 59-clip candidate")
         return false
     for clip_name: String in expected:
         if _find_clip(animation, clip_name).is_empty():
             push_error("Return-state GLB is missing " + clip_name)
             return false
-    if animation.get_animation_list().size() == expected.size() + 2:
+    if animation.get_animation_list().size() >= expected.size() + 2:
         for extension_name: String in [
             PortFighter.FACEDOWN_IMPACT_CLIP,
             PortFighter.FACEDOWN_ATTACK_CLIP,
@@ -124,7 +125,9 @@ func _check_idle2(player: PortFighter, opponent: PortFighter) -> bool:
     if (player.state != "idle2"
             or player.position.x <= start_x
             or player.velocity.x < 3.0
-            or not _clip_is(player.candidate_animation_clip, "m01_idle_02")):
+            or player.candidate_animation_clip not in [
+                "m01_idle_02", "m01_movelft", "m01_moverht",
+            ]):
         push_error("Existing movement did not work from idle2: " + JSON.stringify({
             "state": player.state,
             "delta_x": player.position.x - start_x,
@@ -265,6 +268,7 @@ func _getup_exits_at_frame_16(player: PortFighter) -> bool:
     if player.state != "facedowngetup" or not _clip_is(player.candidate_animation_clip, "all_getup_facedwn"):
         push_error("facedowngetup ended before frame 16")
         return false
+    player.move_axis = Vector2.ZERO
     player._advance_timed_states(0.002)
     player._animate_candidate()
     if (player.state != "idle"
@@ -272,7 +276,7 @@ func _getup_exits_at_frame_16(player: PortFighter) -> bool:
             or absf(player.source_radius_for_current_animation() - 25.0) > 0.001
             or _clip_is(player.candidate_animation_clip, "all_getup_facedwn")
             or _clip_is(player.candidate_animation_clip, "all_getup_facedwn_attack")):
-        push_error("facedowngetup did not return to normal idle at frame 16")
+        push_error("facedowngetup did not return to normal idle at frame 16 state=" + player.state + " clip=" + player.candidate_animation_clip + " radius=" + str(player.source_radius_for_current_animation()))
         return false
     return true
 

@@ -2449,31 +2449,22 @@ func _verified_post_hit_return_state() -> String:
         last_reaction_clip_implemented
         and _candidate_clip_paths.has(last_reaction_animation)
     )
-    var return_link_implemented: bool = bool(
-        profile.get("return_implemented", false)
-    )
     if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
             and last_reaction_source_action == "impacthardfrontlow"
             and last_reaction_animation == BRICK_FRONT_LOW_CLIP
             and reaction_clip_ready
             and _candidate_clip_paths.has(BRICK_FACEDOWN_IDLE_CLIP)):
         return "facedownidle"
-    if (reaction_clip_ready and return_link_implemented
+    if (reaction_clip_ready
             and return_action == "idle2"
             and _candidate_clip_paths.has(IDLE2_CLIP)):
         return "idle2"
-    var hard_frontlow_facedown_link: bool = (
-        last_reaction_source_action == "impacthardfrontlow"
-        and return_action == "facedownidle"
-        and _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP)
-    )
     if (reaction_clip_ready
-            and (return_link_implemented or hard_frontlow_facedown_link)
             and return_action == "facedownidle"
             and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)
             and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP)):
         return "facedownidle"
-    if (reaction_clip_ready and return_link_implemented
+    if (reaction_clip_ready
             and return_action == "faceupidle"
             and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)):
         return "faceupidle"

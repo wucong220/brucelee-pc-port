@@ -126,12 +126,17 @@ func _check_case(player: PortFighter, opponent: PortFighter, spec: Dictionary) -
         return false
     player._advance_timed_states(player.state_time + 0.001)
     player._animate_candidate()
-    if (player.state != "idle"
-            or not _clip_is(player.candidate_animation_clip, "m01_idle_01")
-            or _clip_is(player.candidate_animation_clip, "facedownidle")
-            or _clip_is(player.candidate_animation_clip, "idle2")
-            or _clip_is(player.candidate_animation_clip, "all_idle_face_down_forbigguy")):
-        push_error("Hard reaction did not return explicitly to idle: " + expected_animation)
+    var expected_return_state: String = String(spec["return_action"])
+    var expected_return_clip: String = (
+        "m01_idle_01" if expected_return_state == "idle"
+        else ("m01_idle_02" if expected_return_state == "idle2"
+        else "all_idle_face_down")
+    )
+    if (player.state != expected_return_state
+            or not _clip_is(player.candidate_animation_clip, expected_return_clip)):
+        push_error("Hard reaction used the wrong return state: "
+                + expected_animation + " state=" + player.state
+                + " clip=" + player.candidate_animation_clip)
         return false
     return true
 
