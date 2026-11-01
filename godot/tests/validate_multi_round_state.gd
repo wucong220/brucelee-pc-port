@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 
 func _initialize() -> void:
     call_deferred("_run")
@@ -66,8 +66,22 @@ func _run() -> void:
     if (player.state != "idle" or computer.state != "idle"
             or player.health != PortFighter.MAX_HEALTH
             or computer.health != PortFighter.MAX_HEALTH
-            or not scene.round_number == 1 or scene.player_rounds != 0):
-        push_error("Match reset retained combat state")
+            or scene.round_number != 1 or scene.player_rounds != 0
+            or scene.computer_rounds != 0 or scene.match_over or scene.done):
+        push_error("Match reset retained combat or score state")
+        quit(1)
+        return
+    scene._on_ko(player)
+    scene._physics_process(2.1)
+    scene._on_ko(player)
+    if scene.computer_rounds != 2 or not scene.match_over:
+        push_error("Computer did not close a two-round match")
+        quit(1)
+        return
+    scene._reset_match()
+    if (scene.player_rounds != 0 or scene.computer_rounds != 0
+            or scene.match_over or scene.round_number != 1 or scene.done):
+        push_error("Match reset after a computer win retained score state")
         quit(1)
         return
     print("MULTI_ROUND_VALIDATION=" + JSON.stringify({
