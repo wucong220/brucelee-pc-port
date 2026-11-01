@@ -3734,6 +3734,10 @@ func source_radius_for_current_animation() -> float:
         # all_stunned_fall is shared with stunfall; the recovered impact action
         # uses radius 75 while stunfall uses 70.
         return 75.0 * radius_scale
+    if state in ["startup", "active", "recovery"] and attack_kind == "parry_attack":
+        # The recovered parryattack action uses radius 25 although its ANM is
+        # shared with m01_pnch_high_03 (60 in the generic animation table).
+        return 25.0 * radius_scale
     var animation: String = current_source_animation()
     var radius: float = _stored_animation_radius(animation)
     if radius < 0.0:

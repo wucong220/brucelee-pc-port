@@ -65,7 +65,7 @@ class RawAttackFieldsTest(unittest.TestCase):
                 },
                 config_name,
             )
-            if expected["damage_amount"] > 0:
+            if expected["damage_amount"] > 0 or config_name.startswith("grab"):
                 self.assertEqual(
                     [
                         action["startup_frames"],
@@ -74,6 +74,11 @@ class RawAttackFieldsTest(unittest.TestCase):
                     expected["damage_time"],
                     config_name,
                 )
+        fighter_source = (ROOT / "godot" / "scripts" / "fighter.gd").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('attack_kind == "parry_attack"', fighter_source)
+        self.assertIn("return 25.0 * radius_scale", fighter_source)
 
 
 if __name__ == "__main__":
