@@ -289,8 +289,11 @@ func _build_fighters() -> void:
     computer.combat_hit.connect(_on_hit)
 
 func _reset_match() -> void:
-    player.reset_fighter(Vector3(-0.25 if training_mode else -2.0, 1.20, 0.0))
-    computer.reset_fighter(Vector3(0.25 if training_mode else 2.0, 1.20, 0.0))
+    var demo_close: bool = OS.get_environment("BRUCELEE_DEMO_CLOSE") == "1"
+    var player_x: float = -0.25 if training_mode else (-0.75 if demo_close else -2.0)
+    var computer_x: float = 0.25 if training_mode else (0.75 if demo_close else 2.0)
+    player.reset_fighter(Vector3(player_x, 1.20, 0.0))
+    computer.reset_fighter(Vector3(computer_x, 1.20, 0.0))
     var demo_rage: String = OS.get_environment("BRUCELEE_DEMO_RAGE")
     if not demo_rage.is_empty() and demo_rage.is_valid_float():
         player.rage = clampf(demo_rage.to_float(), 0.0, PortFighter.RAGE_MAX)
