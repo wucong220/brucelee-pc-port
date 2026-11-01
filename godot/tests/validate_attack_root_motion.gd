@@ -57,6 +57,10 @@ func _run() -> void:
     brick.configure_attack_config(PortFighter.BRICK_ATTACK_CONFIG_PATH)
     root.add_child(brick)
     await process_frame
+    if not brick._attack_root_tracks.has("m03_pnch_low_01"):
+        push_error("Brick attack root data missing m03_pnch_low_01")
+        quit(1)
+        return
     brick.facing = 1.0
     brick.attack_kind = "punch"
     brick.attack_sequence = 1
@@ -66,8 +70,8 @@ func _run() -> void:
     brick._apply_attack_root_motion()
     brick.state_time -= 1.0 / PortFighter.SOURCE_FRAME_RATE
     brick._apply_attack_root_motion()
-    if not is_equal_approx(brick.position.x, brick_before):
-        push_error("Brick punch incorrectly reused Bruce root data")
+    if brick.position.x <= brick_before:
+        push_error("Brick punch did not use its m03 root data")
         quit(1)
         return
     print("ATTACK_ROOT_MOTION_VALIDATION=" + JSON.stringify({

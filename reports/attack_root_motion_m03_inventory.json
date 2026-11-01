@@ -1,0 +1,624 @@
+{
+  "actions": [
+    {
+      "animation": "adreno_200/animation/m03_kck_low_01.anm",
+      "headers": {
+        "duration": 41,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 78625088,
+      "positions": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0498046875,
+          -1.960205078125,
+          0.0
+        ],
+        [
+          2.099609375,
+          -3.92041015625,
+          0.0
+        ],
+        [
+          3.1494140625,
+          -5.880859375,
+          0.0
+        ],
+        [
+          4.19921875,
+          -7.841064453125,
+          0.0
+        ],
+        [
+          5.2490234375,
+          -9.801513671875,
+          0.0
+        ],
+        [
+          6.298828125,
+          -11.76171875,
+          0.0
+        ],
+        [
+          7.3486328125,
+          -13.72216796875,
+          0.0
+        ],
+        [
+          8.3984375,
+          -15.682373046875,
+          0.0
+        ],
+        [
+          9.4482421875,
+          -17.642822265625,
+          0.0
+        ],
+        [
+          9.143310546875,
+          -17.417236328125,
+          0.0
+        ],
+        [
+          8.838623046875,
+          -17.191650390625,
+          0.0
+        ],
+        [
+          8.53369140625,
+          -16.96630859375,
+          0.0
+        ],
+        [
+          8.22900390625,
+          -16.74072265625,
+          0.0
+        ],
+        [
+          7.92431640625,
+          -16.51513671875,
+          0.0
+        ],
+        [
+          7.619384765625,
+          -16.289794921875,
+          0.0
+        ],
+        [
+          7.314697265625,
+          -16.064208984375,
+          0.0
+        ],
+        [
+          7.009765625,
+          -15.838623046875,
+          0.0
+        ],
+        [
+          6.705078125,
+          -15.61328125,
+          0.0
+        ],
+        [
+          6.400390625,
+          -15.3876953125,
+          0.0
+        ],
+        [
+          6.095458984375,
+          -15.162109375,
+          0.0
+        ],
+        [
+          5.790771484375,
+          -14.9365234375,
+          0.0
+        ],
+        [
+          5.486083984375,
+          -14.711181640625,
+          0.0
+        ],
+        [
+          5.18115234375,
+          -14.485595703125,
+          0.0
+        ],
+        [
+          4.87646484375,
+          -14.260009765625,
+          0.0
+        ],
+        [
+          4.571533203125,
+          -14.03466796875,
+          0.0
+        ],
+        [
+          4.266845703125,
+          -13.80908203125,
+          0.0
+        ],
+        [
+          3.962158203125,
+          -13.58349609375,
+          0.0
+        ],
+        [
+          3.6572265625,
+          -13.358154296875,
+          0.0
+        ],
+        [
+          3.3525390625,
+          -13.132568359375,
+          0.0
+        ],
+        [
+          3.047607421875,
+          -12.906982421875,
+          0.0
+        ],
+        [
+          2.742919921875,
+          -12.681396484375,
+          0.0
+        ],
+        [
+          2.438232421875,
+          -12.4560546875,
+          0.0
+        ],
+        [
+          2.13330078125,
+          -12.23046875,
+          0.0
+        ],
+        [
+          1.82861328125,
+          -12.0048828125,
+          0.0
+        ],
+        [
+          1.523681640625,
+          -11.779541015625,
+          0.0
+        ],
+        [
+          1.218994140625,
+          -11.553955078125,
+          0.0
+        ],
+        [
+          0.914306640625,
+          -11.328369140625,
+          0.0
+        ],
+        [
+          0.609375,
+          -11.102783203125,
+          0.0
+        ],
+        [
+          0.3046875,
+          -10.87744140625,
+          0.0
+        ],
+        [
+          0.0,
+          -10.65185546875,
+          0.0
+        ]
+      ],
+      "positions_summary": {
+        "first": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_count": 41,
+        "last": [
+          0.0,
+          -10.65185546875,
+          0.0
+        ],
+        "maximum": [
+          9.4482421875,
+          0.0,
+          0.0
+        ],
+        "maximum_absolute": [
+          9.4482421875,
+          17.642822265625,
+          0.0
+        ],
+        "minimum": [
+          0.0,
+          -17.642822265625,
+          0.0
+        ],
+        "range": [
+          9.4482421875,
+          17.642822265625,
+          0.0
+        ]
+      },
+      "positions_track_present": true,
+      "resource_id": "b3451ca524a81b1afc5e21b9fe74d456",
+      "sha256": "e769523bbdebc205749268836abd610bb758319ef64997b50342798b0633f7ce",
+      "source_action": "lowkick3",
+      "track_presence": {
+        "bonepos": true,
+        "bonerot": true,
+        "positions": true,
+        "scales": true
+      },
+      "tracks": [
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 248,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 41,
+          "element_stride": 12,
+          "group": 0,
+          "name": "positions"
+        },
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 1158,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 6,
+          "element_stride": 12,
+          "group": 1,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 28,
+          "element_stride": 8,
+          "group": 1,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "scales"
+        }
+      ]
+    },
+    {
+      "animation": "adreno_200/animation/m03_pnch_low_01.anm",
+      "headers": {
+        "duration": 38,
+        "firstframe": 0,
+        "framerate": 30,
+        "pose": 1,
+        "version": 7
+      },
+      "pakd_offset": 87011417,
+      "positions": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          -0.504150390625,
+          0.0
+        ],
+        [
+          0.0,
+          -1.008544921875,
+          0.0
+        ],
+        [
+          0.0,
+          -1.5126953125,
+          0.0
+        ],
+        [
+          0.0,
+          -2.01708984375,
+          0.0
+        ],
+        [
+          0.0,
+          -2.521484375,
+          0.0
+        ],
+        [
+          0.0,
+          -3.025634765625,
+          0.0
+        ],
+        [
+          0.0,
+          -3.530029296875,
+          0.0
+        ],
+        [
+          0.0,
+          -4.0341796875,
+          0.0
+        ],
+        [
+          0.0,
+          -4.53857421875,
+          0.0
+        ],
+        [
+          0.0,
+          -5.04296875,
+          0.0
+        ],
+        [
+          0.0,
+          -5.547119140625,
+          0.0
+        ],
+        [
+          0.0,
+          -6.051513671875,
+          0.0
+        ],
+        [
+          0.0,
+          -6.555908203125,
+          0.0
+        ],
+        [
+          0.0,
+          -7.06005859375,
+          0.0
+        ],
+        [
+          0.0,
+          -7.564453125,
+          0.0
+        ],
+        [
+          0.0,
+          -8.068603515625,
+          0.0
+        ],
+        [
+          0.0,
+          -8.572998046875,
+          0.0
+        ],
+        [
+          0.0,
+          -9.077392578125,
+          0.0
+        ],
+        [
+          0.0,
+          -9.58154296875,
+          0.0
+        ],
+        [
+          0.0,
+          -10.0859375,
+          0.0
+        ],
+        [
+          0.0,
+          -10.59033203125,
+          0.0
+        ],
+        [
+          0.0,
+          -11.094482421875,
+          0.0
+        ],
+        [
+          0.0,
+          -11.598876953125,
+          0.0
+        ],
+        [
+          0.0,
+          -12.10302734375,
+          0.0
+        ],
+        [
+          0.0,
+          -12.607421875,
+          0.0
+        ],
+        [
+          0.0,
+          -13.11181640625,
+          0.0
+        ],
+        [
+          0.0,
+          -13.615966796875,
+          0.0
+        ],
+        [
+          0.0,
+          -14.120361328125,
+          0.0
+        ],
+        [
+          0.0,
+          -14.624755859375,
+          0.0
+        ],
+        [
+          0.0,
+          -15.12890625,
+          0.0
+        ],
+        [
+          0.0,
+          -15.63330078125,
+          0.0
+        ],
+        [
+          0.0,
+          -16.137451171875,
+          0.0
+        ],
+        [
+          0.0,
+          -16.641845703125,
+          0.0
+        ],
+        [
+          0.0,
+          -17.146240234375,
+          0.0
+        ],
+        [
+          0.0,
+          -17.650390625,
+          0.0
+        ],
+        [
+          0.0,
+          -18.15478515625,
+          0.0
+        ],
+        [
+          0.0,
+          -18.6591796875,
+          0.0
+        ]
+      ],
+      "positions_summary": {
+        "first": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_count": 38,
+        "last": [
+          0.0,
+          -18.6591796875,
+          0.0
+        ],
+        "maximum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "maximum_absolute": [
+          0.0,
+          18.6591796875,
+          0.0
+        ],
+        "minimum": [
+          0.0,
+          -18.6591796875,
+          0.0
+        ],
+        "range": [
+          0.0,
+          18.6591796875,
+          0.0
+        ]
+      },
+      "positions_track_present": true,
+      "resource_id": "cb146cbf3a19bd3bd5e5503296cc5f38",
+      "sha256": "0b40c03c1b6e127f70c5597f0b4b292077a41bede5377bf6d64a4b7792a1ca8e",
+      "source_action": "lowpunch3",
+      "track_presence": {
+        "bonepos": true,
+        "bonerot": true,
+        "positions": true,
+        "scales": true
+      },
+      "tracks": [
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 242,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 38,
+          "element_stride": 12,
+          "group": 0,
+          "name": "positions"
+        },
+        {
+          "codec": "waveletsample",
+          "decode_status": "unresolved-wavelet",
+          "element_count": 1035,
+          "element_stride": 4,
+          "group": 0,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 6,
+          "element_stride": 12,
+          "group": 1,
+          "name": "bonepos"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 28,
+          "element_stride": 8,
+          "group": 1,
+          "name": "bonerot"
+        },
+        {
+          "codec": "rawfixedsample",
+          "decode_status": "decoded-fixed-point",
+          "element_count": 2,
+          "element_stride": 12,
+          "group": 1,
+          "name": "scales"
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "native_instruction_chain": "STATIC_VERIFIED",
+    "note": "The report exports positions tracks and frame values only. It does not classify an axis as horizontal push or replace the Godot prototype push.",
+    "positions_axis_semantics": "UNVERIFIED",
+    "positions_track_consumed_by_root_transform": "STATIC_SUPPORTED",
+    "positions_track_values": "STATIC_VERIFIED",
+    "push_or_knockback_mapping": "HYPOTHESIS"
+  },
+  "schema_version": 1,
+  "source_archive": {
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c"
+  }
+}
