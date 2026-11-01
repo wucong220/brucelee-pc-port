@@ -1211,8 +1211,8 @@ func _sample_attack_root(track: Array, frame: float) -> Vector3:
 func _apply_attack_root_motion() -> void:
     if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
         return
-    var source_action: String = String(ATTACKS[attack_kind].get("source_action", ""))
-    var track: Variant = _attack_root_tracks.get(source_action)
+    var animation_name: String = String(ATTACKS[attack_kind].get("animation", ""))
+    var track: Variant = _attack_root_tracks.get(animation_name)
     if not track is Array or track.size() < 2:
         return
     var frame: float = _current_attack_source_frame()
@@ -3258,8 +3258,8 @@ func _physics_process(delta: float) -> void:
         # Raising guard between two presses must not keep a partial sequence or
         # a matched-but-unexecuted combo alive.
         _clear_standing_combo_state()
-    _advance_timed_states(delta)
     _apply_attack_root_motion()
+    _advance_timed_states(delta)
     _try_begin_pending_standing_combo()
     if (state == "active" and ATTACKS.has(attack_kind)
             and not NON_CONTACT_ATTACKS.has(attack_kind)
