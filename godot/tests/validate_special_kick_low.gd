@@ -105,6 +105,7 @@ func _validate_hit_branch(player: PortFighter, defender: PortFighter) -> bool:
     if absf(player.rage - 4.0) > 0.001:
         push_error("The special did not consume 66 rage: " + str(player.rage))
         return false
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
     defender.reset_fighter(Vector3(-1.7, 1.20, 0.0))
     player.facing = 1.0
     player.opponent = defender
