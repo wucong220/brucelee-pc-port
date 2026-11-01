@@ -138,9 +138,11 @@ Godot 临时目录：
 .\build_windows.ps1 `
   -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64.exe' `
   -BuildRoot 'D:\Build\BruceLee' `
-  -GodotTempRoot 'D:\Build\BruceLeeTemp' `
-  -OutputDir 'D:\Build\BruceLeeDist'
+  -GodotTempRoot 'D:\Build\BruceLeeTemp'
 ```
+
+默认输出到仓库 `dist`。若使用 `-OutputDir` 指定别处，验证脚本前需把
+EXE/PCK 复制回仓库 `dist`。
 
 预期输出 `dist/DragonWarrior_PC_Prototype.exe` 和同目录 `.pck` 文件（除非改用 embed_pck）。Windows EXE 必须与生成的 `.pck` 一起分发；只有独立 EXE 时可能无法运行。**此 EXE 是占位对战原型，不是原版游戏。**
 
