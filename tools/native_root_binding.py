@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Check static ARM root binding evidence in the recorded local ELF; never execute it."""
+"""Check static ARM root binding evidence in the recorded local ELF; never execute it.
+
+FindChunk is identified at the PLT call site only; its return ABI and callee
+implementation are not established by this check. GetOutput's r0 is its object,
+while the separately verified SetToTime call uses a distinct return buffer.
+"""
 import argparse
 import hashlib
 import struct
@@ -12,7 +17,14 @@ from native_root_motion import _plt_target
 SHA256 = '1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70'
 # Exact instruction words preserve register flow and conditional branches.
 WORDS = {
- 0x407578:0xe92d45f0, 0x407588:0xe2806074, 0x407590:0xe1a05000,
+ 0x407578:0xe92d45f0, 0x407584:0xe2818030, 0x407588:0xe2806074,
+ 0x40758c:0xe1a01008, 0x407590:0xe1a05000,
+ # GetOutput r0 is its object; SetToTime r0 is its separate return buffer.
+ 0x407a20:0xe1a05001, 0x407a24:0xe1a04000,
+ 0x40687c:0xe1a05001, 0x406884:0xe1a04000, 0x4068c4:0xe5953000,
+ 0x4068d0:0xe283108c, 0x4068d4:0xe1a00003, 0x4068e8:0xebf479c0,
+ 0x4068ec:0xe3a02028, 0x4068f0:0xe1a01000, 0x4068f4:0xe1a00004,
+ 0x4068f8:0xebf476b3,
  0x4075a4:0xe59f4138, 0x4075ac:0xe08f4004,
  0x407610:0xe59f30d0, 0x407614:0xe1a00007, 0x407618:0xe1a01006,
  0x40761c:0xe7942003, 0x407620:0xebf48080,

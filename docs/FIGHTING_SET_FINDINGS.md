@@ -732,14 +732,23 @@ py -3.12 -X utf8 -B tools\native_root_output.py `
 ```
 
 后续静态追踪找到了之前固定偏移扫描遗漏的间接引用。在
-`CRootPlayerBase::UpdateBinding` 中，`0x407620` 调用 `FindChunk(Character)`；
-成功路径上 `0x40764c` 调用 `FindOffset(Positions, r5+0x80)`，其中
-`Positions` 来自 GOT 槽 `0x604d50` 的 `R_ARM_GLOB_DAT` 重定位。后续
-`GetOutput` 在 `0x407b0c` 读取同一成员偏移 `+0x80`，用于计算三字样本
-地址；浮点比较不相等时先走 `0x407d84` 的 `BuildFrame` 分支。这个静态
-数据流支持 `Positions` 绑定索引用于根输出采样，但仍未证明原始 ANM 轨道
-逐值等于最终输出，也未验证插值、坐标轴或击退。此前“找不到 `Positions`
-实际代码引用”的判断不正确，原因是访问经过 PC 字面量和寄存器间接寻址。
+`CRootPlayerBase::UpdateBinding` 中，`0x407590` 将入口 `r0` 保存到 `r5`；
+`0x407620` 调用经 PLT 重定位识别的 `FindChunk`，调用点的 `r2` 来自
+`gid_Character` GOT 槽。这里未核实被调函数入口及其返回 ABI，不能仅凭调用点
+断言隐藏返回参数或返回对象的语义。其后的条件路径上，`0x40764c` 调用
+`FindOffset`，`r1` 来自 `gid_Positions` 的 GOT 槽 `0x604d50`
+（`R_ARM_GLOB_DAT`），`r2 = r5+0x80`。
+
+`GetOutput` 入口 `0x407a24` 将入口 `r0` 保存到 `r4`，`0x407b0c`
+读取 `[r4+0x80]` 并参与三字样本地址计算；浮点比较不相等的分支经
+`0x407d84` 调用 `BuildFrame` 后回到该计算。`SetToTime` 调用点将其
+入口 `r1` 指向对象的首字作为 `GetOutput` 的 `r0`；`SetToTime` 自身
+入口 `r0` 则保存为后续复制的目标，不能将这两个指针混同。当前没有验证
+`UpdateBinding` 的入口对象与该 `GetOutput` 入口对象在实际调用中为同一
+实例，因此相同 `+0x80` 偏移及上述两条局部路径尚不能闭合跨调用对象的数据流。
+同样，原始 ANM 轨道与最终输出的逐值关系、插值、坐标轴和击退仍未验证。
+此前“找不到 `Positions` 实际代码引用”的判断不正确，原因是访问经过
+PC 字面量和寄存器间接寻址。
 
 ```powershell
 py -3.12 -X utf8 -B tools/native_root_binding.py `
