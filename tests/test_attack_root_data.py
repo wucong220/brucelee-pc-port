@@ -39,6 +39,7 @@ class AttackRootDataTests(unittest.TestCase):
             self.assertEqual(len(actual[key]), len(positions), key)
             for left, right in zip(actual[key], positions):
                 self.assertEqual(len(left), 3, key)
+                self.assertEqual(len(right), 3, key)
                 for a, b in zip(left, right):
                     self.assertTrue(math.isclose(a, b, rel_tol=0.0, abs_tol=1e-9), key)
 
