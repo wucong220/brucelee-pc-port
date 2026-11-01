@@ -50,6 +50,16 @@ func _run() -> void:
         push_error("High KO clip was not applied: " + brick.candidate_animation_clip)
         quit(1)
         return
+    brick._advance_stun_impact_state(1.0)
+    if brick.state != "faceupko":
+        push_error("High KO did not transition to faceupko: " + brick.state)
+        quit(1)
+        return
+    brick._animate_candidate()
+    if brick.candidate_animation_clip != "all_idle_face_up":
+        push_error("Faceup KO clip was not applied: " + brick.candidate_animation_clip)
+        quit(1)
+        return
     print("BRICK_HIGH_KO_VALIDATION=" + JSON.stringify({
         "state": brick.state,
         "clip": brick.candidate_animation_clip,
