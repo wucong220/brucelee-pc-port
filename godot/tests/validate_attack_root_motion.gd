@@ -41,6 +41,18 @@ func _run() -> void:
         push_error("grab2 without positions should not move")
         quit(1)
         return
+    fighter.attack_kind = "special_kick_low_miss"
+    fighter.attack_sequence = 10
+    fighter.state = "startup"
+    fighter.state_time = float(fighter.ATTACKS["special_kick_low_miss"]["startup"])
+    fighter._begin_chained_attack("special_kick_low_hit")
+    var chain_before: float = fighter.position.x
+    fighter.state_time -= 1.0 / PortFighter.SOURCE_FRAME_RATE
+    fighter._apply_attack_root_motion()
+    if fighter.position.x <= chain_before:
+        push_error("chained attack lost its first root-motion frame")
+        quit(1)
+        return
     var brick: PortFighter = load("res://scripts/fighter.gd").new()
     brick.configure_attack_config(PortFighter.BRICK_ATTACK_CONFIG_PATH)
     root.add_child(brick)
@@ -51,6 +63,8 @@ func _run() -> void:
     brick.state = "startup"
     brick.state_time = float(brick.ATTACKS["punch"]["startup"])
     var brick_before: float = brick.position.x
+    brick._apply_attack_root_motion()
+    brick.state_time -= 1.0 / PortFighter.SOURCE_FRAME_RATE
     brick._apply_attack_root_motion()
     if not is_equal_approx(brick.position.x, brick_before):
         push_error("Brick punch incorrectly reused Bruce root data")

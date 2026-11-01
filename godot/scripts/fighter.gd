@@ -1208,6 +1208,21 @@ func _sample_attack_root(track: Array, frame: float) -> Vector3:
     return track[left].lerp(track[right], weight)
 
 
+func _seed_attack_root_motion() -> void:
+    _attack_root_sequence = attack_sequence
+    if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
+        return
+    var animation_name: String = String(ATTACKS[attack_kind].get("animation", ""))
+    var track: Variant = _attack_root_tracks.get(animation_name)
+    if not track is Array or track.size() < 2:
+        return
+    var frame: float = _current_attack_source_frame()
+    if frame < 0.0:
+        return
+    _attack_root_previous_frame = frame
+    _attack_root_previous_value = _sample_attack_root(track, frame)
+
+
 func _apply_attack_root_motion() -> void:
     if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
         return
@@ -1219,9 +1234,7 @@ func _apply_attack_root_motion() -> void:
     if frame < 0.0:
         return
     if attack_sequence != _attack_root_sequence:
-        _attack_root_sequence = attack_sequence
-        _attack_root_previous_frame = frame
-        _attack_root_previous_value = _sample_attack_root(track, frame)
+        _seed_attack_root_motion()
         return
     if frame + 0.0001 < _attack_root_previous_frame:
         _attack_root_previous_frame = frame
@@ -3392,6 +3405,7 @@ func _begin_chained_attack(kind: String) -> void:
     _grab_connected = false
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
+    _seed_attack_root_motion()
     _restart_candidate_action()
 
 
