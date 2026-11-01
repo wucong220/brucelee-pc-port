@@ -1,4 +1,5 @@
 import struct
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -39,6 +40,27 @@ class GotReferences(unittest.TestCase):
         literals = {0x1020: 0xff4, 0x1024: 0x1000}
         self.assertEqual(self.scan(code, literals, target=0x3004), [])
         self.assertEqual(self.scan(code, literals, window=8), [])
+
+    def test_oldest_source_in_second_add_operand_at_window_boundary(self):
+        # r1's earlier literal is the second ADD operand; LDR at +16.
+        code = words(0xe59f1018, 0xe59f0018, 0xe0802001,
+                     0xe59f3014, 0xe7924003)
+        literals = {0x1020: 0x1000, 0x1024: 0x1000, 0x1028: 0x1000}
+        self.assertEqual([h['ldr'] for h in self.scan(code, literals, window=16)], [0x1010])
+        self.assertEqual(self.scan(code, literals, window=15), [])
+
+    def test_missing_capstone_import_and_cli(self):
+        tools = str(Path(__file__).resolve().parents[1] / 'tools')
+        script = str(Path(tools) / 'native_arm_got_refs.py')
+        probe = "import sys; sys.path.insert(0, sys.argv[1]); import native_arm_got_refs"
+        imported = subprocess.run([sys.executable, '-S', '-c', probe, tools], capture_output=True, text=True, errors='replace')
+        self.assertNotEqual(imported.returncode, 0)
+        self.assertIn('ModuleNotFoundError', imported.stderr)
+        self.assertNotIn('SystemExit', imported.stderr)
+        cli = subprocess.run([sys.executable, '-S', script, '--help'], capture_output=True, text=True, errors='replace')
+        self.assertEqual(cli.returncode, 1)
+        self.assertIn('Python capstone is required', cli.stderr)
+        self.assertNotIn('Traceback', cli.stderr)
 
     def test_callee_saved_and_forward_branch(self):
         # r4 carries PIC base across BL and a conditional branch over a return.

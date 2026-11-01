@@ -13,8 +13,11 @@ try:
     from capstone.arm import (ARM_CC_AL, ARM_CC_INVALID, ARM_OP_IMM, ARM_OP_MEM,
                               ARM_OP_REG, ARM_REG_PC, ARM_SFT_INVALID,
                               ARM_REG_R0, ARM_REG_R1, ARM_REG_R2, ARM_REG_R3, ARM_REG_R12, ARM_REG_LR)
-except ImportError as exc:
-    raise SystemExit('error: Python capstone is required (tested with capstone 5.0.7)') from exc
+except ImportError:
+    if __name__ == '__main__':
+        print('error: Python capstone is required (tested with capstone 5.0.7)', file=sys.stderr)
+        raise SystemExit(1)
+    raise
 from native_hierarchy_links import HierarchyLinkError, file_offset
 
 MASK = 0xffffffff
@@ -42,7 +45,7 @@ def scan(code: bytes, start: int, read_word, target: int, window: int = 512):
         if addr in pending:
             for incoming in pending.pop(addr):
                 regs = {**incoming, **regs}
-        regs = {r: v for r, v in regs.items() if addr - v[2][0][0] <= window}
+        regs = {r: v for r, v in regs.items() if addr - min(item[0] for item in v[2]) <= window}
         ops = ins.operands
         unconditional = ins.cc in (ARM_CC_AL, ARM_CC_INVALID)
         mnemonic = ins.mnemonic
