@@ -743,15 +743,20 @@ py -3.12 -X utf8 -B tools\native_root_output.py `
 读取 `[r4+0x80]` 并参与三字样本地址计算；浮点比较不相等的分支经
 `0x407d84` 调用 `BuildFrame` 后回到该计算。`SetToTime` 调用点将其
 入口 `r1` 指向对象的首字作为 `GetOutput` 的 `r0`；`SetToTime` 自身
-入口 `r0` 则保存为后续复制的目标，不能将这两个指针混同。当前没有验证
-`UpdateBinding` 的入口对象与该 `GetOutput` 入口对象在实际调用中为同一
-实例，因此相同 `+0x80` 偏移及上述两条局部路径尚不能闭合跨调用对象的数据流。
-同样，原始 ANM 轨道与最终输出的逐值关系、插值、坐标轴和击退仍未验证。
+入口 `r0` 则保存为后续复制的目标，不能将这两个指针混同。
+进一步静态核查显示，`GetOutput` 在 `0x407aa4` 将保存的入口 `r0`
+传回 `r0`，`0x407aac` 经 PLT 调用的重定位符号为 `UpdateBinding`；
+本地动态符号定义位于 `0x407578`。如果运行时 PLT 解析到该本地定义，
+这一次调用将传入与 `GetOutput` 入口相同的对象指针；动态符号可能被其他
+定义抢占，实际运行时绑定尚未测量。原始 ANM 轨道与最终输出的逐值关系、
+插值、坐标轴和击退仍未验证。
 此前“找不到 `Positions` 实际代码引用”的判断不正确，原因是访问经过
 PC 字面量和寄存器间接寻址。
 
 ```powershell
 py -3.12 -X utf8 -B tools/native_root_binding.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+py -3.12 -X utf8 -B tools/native_root_same_instance.py `
   'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
 ```
 
