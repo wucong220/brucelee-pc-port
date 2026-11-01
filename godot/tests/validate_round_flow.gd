@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 
 func _initialize() -> void:
     call_deferred("_run")
@@ -37,6 +37,18 @@ func _run() -> void:
     if (scene.player_rounds != 1 or scene.round_number != 1
             or scene.done != true or scene.round_reset_timer <= 0.0):
         push_error("First player round win did not schedule the next round")
+        quit(1)
+        return
+    player.move_axis = Vector2(1.0, 0.0)
+    computer.move_axis = Vector2(-1.0, 0.0)
+    var player_x: float = player.position.x
+    var computer_x: float = computer.position.x
+    scene._physics_process(0.1)
+    player._physics_process(0.1)
+    computer._physics_process(0.1)
+    if (absf(player.position.x - player_x) > 0.0001
+            or absf(computer.position.x - computer_x) > 0.0001):
+        push_error("Fighters moved during the round reset pause")
         quit(1)
         return
     scene._physics_process(2.1)

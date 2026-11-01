@@ -548,6 +548,8 @@ func _physics_process(delta: float) -> void:
         return
     hud.set_context_hint(_contextual_controls())
     if round_reset_timer > 0.0:
+        player.move_axis = Vector2.ZERO
+        computer.move_axis = Vector2.ZERO
         round_reset_timer -= delta
         if round_reset_timer <= 0.0 and not match_over:
             _start_next_round()
