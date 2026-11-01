@@ -639,7 +639,7 @@ py -3.12 tools\native_reaction_links.py `
 通过 `gfxScnFrame::SetRot`、`gfxScnFrame::SetPos` 写回。该链条支持“当前动画
 时间参与场景位置更新”，但不证明具体坐标轴或最终击退效果。
 
-安全导出覆盖六个 normal 受击/格挡 ANM：
+最初的安全导出覆盖六个 normal 受击/格挡 ANM（当前报告已扩展到 20 个动作）：
 
 | 动作 | `positions` 轨道 | 帧数/关键值 |
 |---|---:|---|
@@ -658,17 +658,17 @@ py -3.12 tools\native_reaction_links.py `
 复核命令：
 
 ```powershell
-py -3.12 tools\kdf_reaction_root_motion.py `
-  --archive 'D:\private\Bruce Lee Dragon Warrior v1.15.26.zip' `
-  --report 'reports\reaction_root_motion_inventory.new.json'
+py -3.12 -X utf8 -B tools\kdf_reaction_root_motion.py `
+  'D:\private\data.zpak' `
+  --report 'D:\private\reaction_root_motion_inventory.new.json'
 py -3.12 tools\native_root_motion.py `
   'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
 ```
 
-报告为
+当前报告为
 [`reports/reaction_root_motion_inventory.json`](../reports/reaction_root_motion_inventory.json)，
-SHA-256 为
-`930708b35c2d925256b46fbaba11f63ec4b050dc9b0ebce68342872607b17d21`。
+包含 20 个动作，SHA-256 为
+`4466995687f73bcdf15f1eb267efcfedc6683088b599a2eef764b4d5f40d14b1`。其中新增的 14 个动作有 12 个解析出 `positions`；其余两个未解析出独立的 `positions` 轨道，这不证明没有根位移。
 原始 SO 校验结果为 `verified 16 native root-motion instructions`，退出码 0；
 该校验器后续扩展的结果见下文。
 证据等级：原始 `positions` 数值为 `STATIC_VERIFIED`，动画时间到场景变换的
