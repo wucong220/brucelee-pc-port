@@ -89,8 +89,35 @@ class TestReactionRootMotion(unittest.TestCase):
                 self.assertFalse(actions[name]["track_presence"]["positions"])
                 self.assertNotIn("positions", actions[name])
                 self.assertTrue(actions[name]["track_presence"]["bonepos"])
-        self.assertEqual(actions["impacthardfrontmid"]["animation"],
-                         "adreno_200/animation/all_impct_crotch.anm")
+        expected_animations = {
+            "impactlightlefthigh": "all_impct_light_lft_high.anm",
+            "impactlightrighthigh": "all_impct_light_rht_high.anm",
+            "impactlightleftlow": "all_impct_light_lft_low.anm",
+            "impactlightrightlow": "all_impct_light_rht_low.anm",
+            "impacthardleftlow": "all_impct_hard_lft_low.anm",
+            "impacthardlefthigh": "all_impct_hard_lft_high.anm",
+            "impacthardabove": "all_impct_hard_above.anm",
+            "impacthardfrontlow": "all_impct_hard_frnt_low.anm",
+            "impacthardfrontmid": "all_impct_crotch.anm",
+            "impacthardrighthigh": "all_impct_hard_rht_high.anm",
+            "impacthardfronthigh": "all_impct_hard_frnt_high.anm",
+            "impactbrutalmid": "all_sp_pnch_low_forset04.anm",
+            "impactbrutalleft": "all_impct_spectacular_lft.anm",
+            "impactbrutalright": "all_impct_spectacular_rht.anm",
+        }
+        for name, filename in expected_animations.items():
+            with self.subTest(action=name):
+                self.assertEqual(actions[name]["animation"],
+                                 f"adreno_200/animation/{filename}")
+        for name, action in actions.items():
+            with self.subTest(action=name):
+                if action["positions_track_present"]:
+                    self.assertEqual(len(action["positions"]), action["headers"]["duration"])
+                    self.assertEqual(action["positions_summary"],
+                                     summarize_vectors(action["positions"]))
+                else:
+                    self.assertNotIn("positions", action)
+                    self.assertNotIn("positions_summary", action)
         self.assertEqual(report["evidence"]["positions_axis_semantics"], "UNVERIFIED")
         self.assertEqual(
             actions["impactlightfrontlow"]["positions_summary"]["maximum_absolute"],
