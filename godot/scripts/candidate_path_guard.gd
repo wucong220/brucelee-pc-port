@@ -148,6 +148,8 @@ static func external_path_error(path: String, label: String) -> String:
     if (lexical_path == lexical_root
             or lexical_path.begins_with(lexical_root + "/")):
         return label + " must remain outside the repository"
+    if not FileAccess.file_exists(normalized_path):
+        return label + " does not exist: " + normalized_path
     var root_result: Dictionary = canonical_path(repository_root())
     if not root_result["error"].is_empty():
         return label + " repository root could not be resolved: " + root_result["error"]
