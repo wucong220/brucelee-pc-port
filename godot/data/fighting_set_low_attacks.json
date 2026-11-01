@@ -256,7 +256,7 @@
       "prototype_push": 0.3,
       "source_impact": {
         "attack_radius": 75.0,
-        "body_part": "larm",
+        "body_part": "rarm",
         "height": "high",
         "strength": "normal",
         "direction": "fromleft"

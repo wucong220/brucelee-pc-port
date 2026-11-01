@@ -34,6 +34,21 @@
         }
       ]
     },
+    "highpunch2": {
+      "animation": "m01_pnch_high_02",
+      "animation_radius": 45.0,
+      "impacts": [
+        {
+          "damage_time": [6, 8],
+          "damage_amount": 5,
+          "attack_radius": 75.0,
+          "body_part": "rarm",
+          "height": "high",
+          "strength": "normal",
+          "direction": "fromleft"
+        }
+      ]
+    },
     "specialkicklowhit": {
       "animation": "m01_sp_kick_low",
       "animation_radius": 25.0,
