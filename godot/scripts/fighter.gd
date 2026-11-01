@@ -3434,7 +3434,13 @@ func _try_multi_impact_contacts() -> void:
         var distance: float = Vector2(dx, dz).length()
         var reach: float = (float(impact["attack_radius"]) * radius_scale
                 + opponent.source_radius_for_current_animation()) * source_units_to_world
-        if distance > reach or dx * facing < -0.1:
+        if distance > reach:
+            continue
+        # Once the first impact lands, a short block push may put the target
+        # slightly behind the facing line; later impacts still belong to the
+        # same connected sequence and must not be discarded by the direction
+        # guard. Keep that guard for the opening impact only.
+        if _multi_impact_applied.is_empty() and dx * facing < -0.1:
             continue
         var blocked: bool = opponent.guard_held and (
             opponent._can_block_current_hit() or opponent.state == "blockstun")
