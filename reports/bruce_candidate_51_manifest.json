@@ -1,0 +1,213 @@
+{
+  "candidate": "D:\\BruceLeeWork\\frontlow-20261101\\bruce_candidate_51_frontlow.glb",
+  "bytes": 4222908,
+  "sha256": "c9e40355bd61a9e897c3e81342b10e2c9b68cf45c0d5f77d861f96817e70d73c",
+  "animation_count": 51,
+  "skeleton_sha256": "4a6d4532b42d6cbee3016b849befc2dc98c089e72fa4cfe291d9550f059412e3",
+  "animations": [
+    {
+      "name": "all_block_high",
+      "source_animation_sha256": "0f28bb430632807073b2f47960286125bc7408080af4d306beeba2a20987434e"
+    },
+    {
+      "name": "all_block_high_hard",
+      "source_animation_sha256": "d41abaf32bf6aadcf9c5897d123c618eb1d34b728c96756bcfc9c370122b11a0"
+    },
+    {
+      "name": "all_block_low",
+      "source_animation_sha256": "9c9c1970fdc2ff8a064d5cb8d2b8bf8dcb8a0551e2177551096fc4e18169f61b"
+    },
+    {
+      "name": "all_block_mid",
+      "source_animation_sha256": "2a68724ef317d89c74ffc5fae3e19bd5204dc37f05a0817ba313aece16d3a0a9"
+    },
+    {
+      "name": "all_getup_facedwn",
+      "source_animation_sha256": "632e3d786edb9fac44b1ebf2515d043c53f42cb1197f776a706c8743d94cd676"
+    },
+    {
+      "name": "all_getup_facedwn_attack",
+      "source_animation_sha256": "193891b7d864183c3e5873bb6503a4384af88ff66f0af4b3ff48e4a9a07c7630"
+    },
+    {
+      "name": "all_getup_faceup",
+      "source_animation_sha256": "c78188260acaad0ecb2af9209d250e4901fa66aba49211a85ad46a98b89c9a48"
+    },
+    {
+      "name": "all_getup_faceup_attack",
+      "source_animation_sha256": "c3da3339b7ee5cadfae8a0d0a0723241f104fa1c4189a60c3001b783b1ec0982"
+    },
+    {
+      "name": "all_idle_face_down",
+      "source_animation_sha256": "ed5f0ef99967f2536e6472a9afc85e98b88d373287adbc6aec2ef64afdea333f"
+    },
+    {
+      "name": "all_idle_face_up",
+      "source_animation_sha256": "f6c80e28565acdc26d91ac1c722f934cf3a79cb020879da4bec5225eb4c790d8"
+    },
+    {
+      "name": "all_impct_crotch",
+      "source_animation_sha256": "9111b1e02209f39cae9ad4d1e95c9c19c965847357f14c60d19a74cc781f1612"
+    },
+    {
+      "name": "all_impct_facedwn",
+      "source_animation_sha256": "2b13ac06d8bbbf11ac1cdc72868a21f757fca06dfe1e284380aecb0f1a756d1c"
+    },
+    {
+      "name": "all_impct_faceup",
+      "source_animation_sha256": "d855f25bbe8f743d108062505d952959c47b96a76bdbcc986deee8e338472723"
+    },
+    {
+      "name": "all_impct_hard_rht_high",
+      "source_animation_sha256": "f265d026d435348586dede7c750422f6281a5356a73e000b8c061921aecd73fd"
+    },
+    {
+      "name": "all_impct_hard_rht_low",
+      "source_animation_sha256": "33f35872cab1d83976914d8a8b528a7b53496799008781b1bd4e2ea4ae0c3b99"
+    },
+    {
+      "name": "all_impct_light_frnt_high",
+      "source_animation_sha256": "12c0eb7277771f07f6a968eaa7a645ab83dfab5f57d8ea1f14d96760bb075d6d"
+    },
+    {
+      "name": "all_impct_light_frnt_low",
+      "source_animation_sha256": "a8ff4c5dc66580414be2b4fb1a96ab6aad841e7fef5696e53708b3199b11f6de"
+    },
+    {
+      "name": "all_impct_light_frnt_mid",
+      "source_animation_sha256": "5d351a6cbc9aeb67973b2b60b49ac6729153ec568e6d7556a010d8ee86d3b3aa"
+    },
+    {
+      "name": "all_stunned_fall",
+      "source_animation_sha256": "96c678d526442c1238a342b07b043ad532ad570ab44187d9b13359c36e901954"
+    },
+    {
+      "name": "m01_attack_to_floor",
+      "source_animation_sha256": "43aa3e5fa464b6227295a05b96ee34eca219c4ffb954c05412777fdc02acd0fa"
+    },
+    {
+      "name": "m01_idle_01",
+      "source_animation_sha256": "adbfa5a598995b0424fb829a95d22d55407aec3fa31d67854d9c6bf6846cfa52"
+    },
+    {
+      "name": "m01_idle_02",
+      "source_animation_sha256": "4ec45535b388da4951159691e0cd46b66eacecd214c15df3819b6e557453b8c0"
+    },
+    {
+      "name": "m01_kick_high_01",
+      "source_animation_sha256": "116bb542d8c9c2a6ec50ed8131e40d21118b41d2a355123a6c48fb51c0d84f4e"
+    },
+    {
+      "name": "m01_kick_low_01",
+      "source_animation_sha256": "fe202a35ce7c7c149a7dafe42496f06dc4b95b63c8fceacdff4d6d2ec98b2f03"
+    },
+    {
+      "name": "m01_kick_low_03",
+      "source_animation_sha256": "b8a915054101c4bf85aef3821517cd9f2820a0cbb8811ff53daab96a5f63a6a5"
+    },
+    {
+      "name": "m01_pnch_high_01",
+      "source_animation_sha256": "cd14253de0476aeff5e4132ad216177f444b55ed926692bd748bcad6aeac2f73"
+    },
+    {
+      "name": "m01_pnch_high_03",
+      "source_animation_sha256": "cb41bed04d724dc8c76515c0e710ded9efacc0dbebeab391596e45e94ed15a65"
+    },
+    {
+      "name": "m01_pnch_low_01",
+      "source_animation_sha256": "47a40807899674244285eae06de8341660e36b6a987e88e50705edde015bb439"
+    },
+    {
+      "name": "m01_pnch_low_03",
+      "source_animation_sha256": "de65c019439b50f383fd9b5841473f48ea354a32f740a180e344358b28b85184"
+    },
+    {
+      "name": "m01_sp_kick_jump_01",
+      "source_animation_sha256": "e47aa8ed0bca8121479675cc531418186d548484c009529041319f3112fda80f"
+    },
+    {
+      "name": "m01_kck_front_step",
+      "source_animation_sha256": "604efe53b69d5646128783c3f2be9d07e9ff4c4cbfde86a270c5db730fd33288"
+    },
+    {
+      "name": "m01_kick_high_02",
+      "source_animation_sha256": "90d8f10dcb3491a8f774195e7c769f385b69be2fc84a59af4730e1715253390a"
+    },
+    {
+      "name": "m01_kick_low_02",
+      "source_animation_sha256": "af75fa0367be96438b0f166a0fbd78a958b7f136e3b349fe4eb6c0dcd0e05a12"
+    },
+    {
+      "name": "m01_pnch_high_02",
+      "source_animation_sha256": "f971e10c8aa0c3bd9eeb70f77485a54c48772a1a9896cac7b58e93681ca55b9b"
+    },
+    {
+      "name": "m01_pnch_low_02",
+      "source_animation_sha256": "a2fe719073c0129ea9ec5eb41687e9f95c906b7ebff188987c4ab6bb7a87d018"
+    },
+    {
+      "name": "m01_sp_kick_low_fail",
+      "source_animation_sha256": "2a47256b0e65fce4ef141c812c515f7572781b8d73044b8962c632ac438fc9ee"
+    },
+    {
+      "name": "m01_sp_kick_low",
+      "source_animation_sha256": "16c53309261af3c8924d9daea0cd50fe8da67a38cdda83455cdc012986cab550"
+    },
+    {
+      "name": "m01_sp_pnch_low_fail",
+      "source_animation_sha256": "d35bbf532230fd27a05e1b078414085e1aff0df0d1ac300a8ef6b59e291e6d92"
+    },
+    {
+      "name": "m01_sp_pnch_low",
+      "source_animation_sha256": "a9934b04adb26f73b767a2cf926b8b3b40ff0945f7a34534ad7c34d5f050c96a"
+    },
+    {
+      "name": "m01_sp_pnch_high_fail",
+      "source_animation_sha256": "f4a03d1ef145d39a6478b4b57620161acacb0f168d18cfb22e95188fd3df8d47"
+    },
+    {
+      "name": "m01_sp_pnch_high",
+      "source_animation_sha256": "56b695e39856c31cfbb5e8d147012833aaa8402887b431344d08a46a5594e114"
+    },
+    {
+      "name": "m01_parry_high",
+      "source_animation_sha256": "0142e4d4c85cfd0907c1c61de7243417282aec603f80474770f63b2b4df88844"
+    },
+    {
+      "name": "m01_grab_01",
+      "source_animation_sha256": "139e99896e193fd9ccbfdfb4cb08b387fac047436083660cb097135d02fc7e37"
+    },
+    {
+      "name": "m01_grab_02",
+      "source_animation_sha256": "adc7d12c0d579ef4ea9577922cd0c29ce66206ce78bff60b2a41afb6ae21bf8f"
+    },
+    {
+      "name": "m01_end_attack_01",
+      "source_animation_sha256": "84d51c89f017d6d50150ed83e62c29666f1235340f2dac6b1b7ff7f92bf8d1a1"
+    },
+    {
+      "name": "m01_end_attack_02",
+      "source_animation_sha256": "7c947960a7e6396a4c811962cda2e9ea3a2921bccf9cd67d5a79aebf9ca7ed39"
+    },
+    {
+      "name": "all_stunned",
+      "source_animation_sha256": "7dc5ee4f7593a61e8f46e33761fd0365205a4641b94c3426d200b4cf85605538"
+    },
+    {
+      "name": "all_impct_hard_frnt_high",
+      "source_animation_sha256": "01941c60a9840ff9824933008e4f40bb6998b6f5b293a3f9682e6b85e9880232"
+    },
+    {
+      "name": "all_impct_spectacular_lft",
+      "source_animation_sha256": "00b749b6b91cd3d40d3f6fe62c16d44247add55f5742d29c14bc275bc92abafa"
+    },
+    {
+      "name": "all_impct_hard_frnt_low",
+      "source_animation_sha256": "c38c0b8c3445ec9f4f237c9a882ed960ce6c7b0e333dbdd9e127742d33ff1647"
+    },
+    {
+      "name": "m02_grab_01",
+      "source_animation_sha256": "8d155a8b54cca09c3716a3398fae573675efddd7facaaee064d4222c8c431869"
+    }
+  ]
+}
