@@ -31,16 +31,26 @@ Write-Host "Godot: $GodotExe"
 Write-Host "Source project: $sourceProject"
 Write-Host "Build project: $project"
 
+function Get-ComparisonPath([string]$path) {
+    $value = [System.IO.Path]::GetFullPath($path)
+    if ($value.StartsWith('\\?\UNC\', [System.StringComparison]::OrdinalIgnoreCase)) {
+        $value = '\\' + $value.Substring(8)
+    } elseif ($value.StartsWith('\\?\', [System.StringComparison]::OrdinalIgnoreCase)) {
+        $value = $value.Substring(4)
+    }
+    return $value.TrimEnd([char[]]@('\', '/'))
+}
+
 $buildRootFull = [System.IO.Path]::GetFullPath($BuildRoot)
 $sourceFull = [System.IO.Path]::GetFullPath($sourceProject)
 $rootFull = [System.IO.Path]::GetFullPath($root)
 $stagingFull = [System.IO.Path]::GetFullPath($staging)
 $projectFull = [System.IO.Path]::GetFullPath($project)
-$godotTempFull = [System.IO.Path]::GetFullPath($GodotTempRoot)
+$godotTempFull = Get-ComparisonPath($GodotTempRoot)
 function Test-PathOverlap([string]$left, [string]$right) {
     $separator = [System.IO.Path]::DirectorySeparatorChar
-    $left = $left.TrimEnd([char[]]@('\', '/'))
-    $right = $right.TrimEnd([char[]]@('\', '/'))
+    $left = Get-ComparisonPath($left)
+    $right = Get-ComparisonPath($right)
     return [string]::Equals($left, $right, [System.StringComparison]::OrdinalIgnoreCase) -or
         $left.StartsWith($right + $separator, [System.StringComparison]::OrdinalIgnoreCase) -or
         $right.StartsWith($left + $separator, [System.StringComparison]::OrdinalIgnoreCase)
@@ -90,6 +100,12 @@ if ($SelfTest) {
     }
     if (Test-PathOverlap 'D:\' 'C:\staging') {
         throw 'Drive-root overlap crossed unrelated drives.'
+    }
+    if (-not (Test-PathOverlap '\\?\D:\staging' 'D:\staging\project')) {
+        throw 'Extended-length drive overlap was not detected.'
+    }
+    if (-not (Test-PathOverlap '\\?\UNC\server\share' '\\server\share\project')) {
+        throw 'Extended-length UNC overlap was not detected.'
     }
     $substFixture = @('Z:\: => C:\repo\godot')
     if (-not (Test-SubstPath 'Z:\out' $substFixture)) {
