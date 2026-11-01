@@ -74,13 +74,51 @@ func _run() -> void:
         push_error("Brick punch did not use its m03 root data")
         quit(1)
         return
+    brick.reset_fighter(Vector3.ZERO)
+    brick.attack_kind = "kick"
+    brick.attack_sequence = 2
+    var kick_track: Array = brick._attack_root_tracks["m03_kck_low_01"]
+    var max_x: float = 0.0
+    var final_x: float = 0.0
+    for frame_index: int in range(kick_track.size()):
+        _set_attack_frame(brick, frame_index)
+        brick._apply_attack_root_motion()
+        max_x = maxf(max_x, brick.position.x)
+        final_x = brick.position.x
+    if final_x >= max_x - 0.001:
+        push_error("Brick kick return stroke did not move back")
+        quit(1)
+        return
+    var lateral_z: Array[float] = []
+    for direction: float in [1.0, -1.0]:
+        fighter.reset_fighter(Vector3.ZERO)
+        fighter.facing = direction
+        fighter.attack_kind = "punch"
+        fighter.attack_sequence = 3
+        _set_attack_frame(fighter, 0)
+        fighter._apply_attack_root_motion()
+        _set_attack_frame(fighter, 1)
+        fighter._apply_attack_root_motion()
+        lateral_z.append(fighter.position.z)
+    if absf(lateral_z[0]) < 0.000001 or not (lateral_z[0] * lateral_z[1] < 0.0):
+        push_error("lateral attack root motion did not follow facing")
+        quit(1)
+        return
     print("ATTACK_ROOT_MOTION_VALIDATION=" + JSON.stringify({
         "source_action": "lowpunch1",
         "frame_delta": 1.0 / PortFighter.SOURCE_FRAME_RATE,
         "world_delta": moved,
-        "scope": "raw source component magnitude mapped to prototype forward displacement; native axis/sign unverified",
+        "scope": "signed raw source components mapped to prototype forward/lateral displacement; native axis/sign unverified",
     }))
     brick.queue_free()
     fighter.queue_free()
     await process_frame
     quit(0)
+
+
+func _set_attack_frame(fighter: PortFighter, frame_index: int) -> void:
+    var details: Dictionary = fighter.ATTACKS[fighter.attack_kind]
+    fighter.state = "recovery"
+    fighter.state_time = (
+        float(details["animation_frame_count"]) - float(frame_index)
+    ) / PortFighter.SOURCE_FRAME_RATE
