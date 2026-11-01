@@ -655,7 +655,8 @@ const RETURN_ANIMATION_RADII: Dictionary = {
     "all_impct_facedwn": 80.0,
     "all_impct_hard_rht_high": 80.0,
     "all_getup_facedwn_attack": 45.0,
-    "all_stunned_fall": 75.0,
+    "all_stunned": 40.0,
+    "all_stunned_fall": 70.0,
     "all_idle_face_up": 75.0,
     "all_getup_faceup": 40.0,
     "all_getup_faceup_attack": 45.0,
@@ -3600,6 +3601,12 @@ func current_source_animation() -> String:
         return String(ATTACKS[attack_kind]["animation"])
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return CANDIDATE_CLIPS["kick"]
+    if state in ["stun", "stun2"]:
+        return STUN_CLIP
+    if state == "stunfall":
+        return STUN_FALL_CLIP
+    if state in ["stunimpact", "impactstun"] and not last_reaction_animation.is_empty():
+        return last_reaction_animation
     if state == "idle2":
         return IDLE2_CLIP
     if state == "facedownidle" or state == "facedownko":
