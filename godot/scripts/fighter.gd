@@ -2068,6 +2068,7 @@ func _try_load_candidate_visual() -> void:
             FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP,
             ATTACK_TO_FLOOR_CLIP, BRICK_FRONT_LOW_CLIP,
             "m03_blck_high", "all_block_low", "all_block_mid",
+            "all_impct_hard_frnt_high",
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
@@ -3919,6 +3920,19 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
             "exit_start_frame": 40,
             "animation_duration_frames": 45,
             "linking_frame": 0,
+        }
+    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH and not blocked
+            and String(impact.get("strength", "")) == "hard"
+            and String(impact.get("height", "")) == "high"
+            and String(impact.get("direction", "")) == "frontal"
+            and _candidate_clip_paths.has("all_impct_hard_frnt_high")):
+        return {
+            "source_action": "impacthardfronthigh",
+            "animation": "all_impct_hard_frnt_high",
+            "exit_start_frame": 23,
+            "animation_duration_frames": 35,
+            "linking_frame": 0,
+            "return_action": "faceupidle",
         }
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
