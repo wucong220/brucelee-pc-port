@@ -7,6 +7,8 @@ const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
+const ROUNDS_TO_WIN: int = 2
+const ROUND_RESET_DELAY: float = 2.0
 
 var player: PortFighter
 var computer: PortFighter
@@ -28,6 +30,11 @@ var menu_paused: bool = false
 var elapsed: float = 0.0
 var notice_timer: float = 0.0
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var round_number: int = 1
+var player_rounds: int = 0
+var computer_rounds: int = 0
+var match_over: bool = false
+var round_reset_timer: float = -1.0
 
 func _ready() -> void:
     PrototypeControls.ensure_default_actions()
@@ -294,6 +301,15 @@ func _build_fighters() -> void:
     computer.combat_hit.connect(_on_hit)
 
 func _reset_match() -> void:
+    round_number = 1
+    player_rounds = 0
+    computer_rounds = 0
+    match_over = false
+    round_reset_timer = -1.0
+    _reset_round()
+
+
+func _reset_round() -> void:
     var demo_close: bool = OS.get_environment("BRUCELEE_DEMO_CLOSE") == "1"
     var player_x: float = -0.25 if training_mode else (-0.75 if demo_close else -2.0)
     var computer_x: float = 0.25 if training_mode else (0.75 if demo_close else 2.0)
@@ -312,8 +328,18 @@ func _reset_match() -> void:
     ai_guard_sequence = -1
     ai_guard_decision = false
     notice_timer = 1.2
-    hud.show_message("TRAINING · K L L / K U U" if training_mode else "ROUND 1 · FIGHT")
+    round_reset_timer = -1.0
+    hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
+    hud.show_message(
+        "TRAINING · K L L / K U U" if training_mode
+        else "ROUND %d · FIGHT" % round_number
+    )
     _update_fight_camera()
+
+
+func _start_next_round() -> void:
+    round_number += 1
+    _reset_round()
 
 func _should_show_main_menu() -> bool:
     var setting: String = OS.get_environment("BRUCELEE_MAIN_MENU")
@@ -521,6 +547,11 @@ func _physics_process(delta: float) -> void:
         computer.move_axis = Vector2.ZERO
         return
     hud.set_context_hint(_contextual_controls())
+    if round_reset_timer > 0.0:
+        round_reset_timer -= delta
+        if round_reset_timer <= 0.0 and not match_over:
+            _start_next_round()
+        return
     if notice_timer > 0.0:
         notice_timer -= delta
         if notice_timer <= 0.0 and not done:
@@ -796,7 +827,24 @@ func _on_ko(fighter: PortFighter) -> void:
     if training_completed:
         return
     done = true
+    if training_mode:
+        hud.show_message("TRAINING KO  ·  R TO RESET")
+        return
     if fighter == computer:
-        hud.show_message("YOU WIN!  ·  R TO RESTART")
+        player_rounds += 1
     else:
-        hud.show_message("YOU LOSE  ·  R TO RESTART")
+        computer_rounds += 1
+    hud.set_round(round_number, player_rounds, computer_rounds)
+    if player_rounds >= ROUNDS_TO_WIN or computer_rounds >= ROUNDS_TO_WIN:
+        match_over = true
+        round_reset_timer = -1.0
+        hud.show_message(
+            "YOU WIN THE MATCH  ·  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
+            else "YOU LOSE THE MATCH  ·  R TO RESTART"
+        )
+        return
+    round_reset_timer = ROUND_RESET_DELAY
+    hud.show_message(
+        "YOU WIN · ROUND %d" % round_number if fighter == computer
+        else "YOU LOSE · ROUND %d" % round_number
+    )

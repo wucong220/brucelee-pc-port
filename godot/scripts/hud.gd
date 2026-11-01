@@ -8,6 +8,7 @@ var hint: Label
 var center_message: Label
 var footer: Label
 var context_hint: Label
+var round_label: Label
 
 func _ready() -> void:
     var screen: Control = Control.new()
@@ -33,6 +34,17 @@ func _ready() -> void:
     top.add_child(o)
     _add_label(o, "OPPONENT | CPU", 20)
     opponent_bar = _make_bar(o)
+    round_label = Label.new()
+    round_label.anchor_left = 0.5
+    round_label.anchor_right = 0.5
+    round_label.offset_left = -180
+    round_label.offset_right = 180
+    round_label.offset_top = 8
+    round_label.offset_bottom = 34
+    round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    round_label.add_theme_font_size_override("font_size", 18)
+    round_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.36))
+    screen.add_child(round_label)
     hint = Label.new()
     hint.anchor_left = 0.5
     hint.anchor_right = 0.5
@@ -135,6 +147,13 @@ func _try_load_hud_icon() -> ImageTexture:
 func set_health(player_health: float, enemy_health: float) -> void:
     player_bar.value = player_health
     opponent_bar.value = enemy_health
+
+func set_round(round_number: int, player_wins: int, computer_wins: int, training: bool = false) -> void:
+    round_label.text = (
+        "TRAINING" if training
+        else "ROUND %d  ·  %d — %d" % [round_number, player_wins, computer_wins]
+    )
+
 
 func set_rage(value: float) -> void:
     if rage_bar != null:
