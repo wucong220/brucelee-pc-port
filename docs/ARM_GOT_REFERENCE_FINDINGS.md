@@ -20,7 +20,7 @@ py -3.12 -B tools\native_arm_got_refs.py "$env:LOCALAPPDATA\BruceLee-PC-Port\bin
 py -3.12 -B tools\native_arm_got_refs.py "$env:LOCALAPPDATA\BruceLee-PC-Port\binaries\libdefault.so" --window 64
 ```
 
-上述命令本机退出码均为 0；5 项合成测试通过，覆盖 literal/add/index、调用保存寄存器、前向条件分支、覆盖、错误槽、窗口过期、未映射 literal 和移位索引排除。动态重定位使用现有 `_section` helper 读取 `.rel.dyn`、`.dynsym` 与 `.dynstr` 得出；原始库未写入或复制到仓库。
+上述命令本机退出码均为 0；7 项测试通过，覆盖 literal/add/index、调用保存寄存器、前向条件分支、覆盖、错误槽、窗口过期、未映射 literal、移位索引排除、最早来源窗口边界与缺少 Capstone 的导入/命令行行为。动态重定位使用现有 `_section` helper 读取 `.rel.dyn`、`.dynsym` 与 `.dynstr` 得出；原始库未写入或复制到仓库。
 
 ## 局限
 
