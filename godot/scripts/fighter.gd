@@ -1771,8 +1771,9 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
         "high_kick", "high_kick2", "high_kick3",
         "low_kick", "low_kick2", "low_kick3",
     ]
-    if attacks.size() < 2:
-        return _reject_attack_config("thai mapping lacks the verified base attacks")
+    for required_action: String in THAI_ATTACK_DATA:
+        if not attacks.has(required_action):
+            return _reject_attack_config("thai mapping lacks " + required_action)
     var result: Dictionary = {}
     for action: String in attacks.keys():
         if action not in allowed_actions:
