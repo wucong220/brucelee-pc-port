@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "source_set": "adreno_200/set/brucelee.set",
+  "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+  "method": "Read-only kdf_fighting_set.inspect_archive; stores decoded fields only, no original bytes.",
+  "actions": {
+    "endattack1": {
+      "animation": "m01_end_attack_01",
+      "animation_radius": 45.0,
+      "impacts": [
+        {
+          "damage_time": [0, 0],
+          "damage_amount": 0,
+          "attack_radius": 65.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "normal",
+          "direction": "frontal"
+        }
+      ]
+    },
+    "endattack2": {
+      "animation": "m01_end_attack_02",
+      "animation_radius": 45.0,
+      "impacts": [
+        {
+          "damage_time": [20, 23],
+          "damage_amount": 0,
+          "attack_radius": 75.0,
+          "body_part": "rleg",
+          "height": "high",
+          "strength": "hard",
+          "direction": "frontal"
+        }
+      ]
+    },
+    "specialkicklowhit": {
+      "animation": "m01_sp_kick_low",
+      "animation_radius": 25.0,
+      "impacts": [
+        {
+          "damage_time": [13, 20],
+          "damage_amount": 15,
+          "attack_radius": 45.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "hard",
+          "direction": "frontal"
+        }
+      ]
+    },
+    "parryattack": {
+      "animation": "m01_pnch_high_03",
+      "animation_radius": 25.0,
+      "impacts": [
+        {
+          "damage_time": [4, 8],
+          "damage_amount": 10,
+          "attack_radius": 75.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "hard",
+          "direction": "frontal"
+        }
+      ]
+    },
+    "grab1": {
+      "animation": "m01_grab_01",
+      "animation_radius": 40.0,
+      "impacts": [
+        {"damage_time": [45, 46], "damage_amount": 6, "attack_radius": 45.0, "body_part": "larm", "height": "high", "strength": "normal", "direction": "frontal"},
+        {"damage_time": [71, 73], "damage_amount": 5, "attack_radius": 45.0, "body_part": "larm", "height": "high", "strength": "hard", "direction": "frontal"},
+        {"damage_time": [121, 122], "damage_amount": 9, "attack_radius": 45.0, "body_part": "larm", "height": "high", "strength": "hard", "direction": "frontal"}
+      ]
+    },
+    "grab2": {
+      "animation": "m01_grab_02",
+      "animation_radius": 25.0,
+      "impacts": [
+        {"damage_time": [4, 5], "damage_amount": 5, "attack_radius": 45.0, "body_part": "larm", "height": "high", "strength": "normal", "direction": "frontal"},
+        {"damage_time": [75, 76], "damage_amount": 15, "attack_radius": 45.0, "body_part": "larm", "height": "high", "strength": "hard", "direction": "frontal"}
+      ]
+    },
+    "grab1miss": {
+      "animation": "m02_grab_01",
+      "animation_radius": 25.0,
+      "impacts": [
+        {"damage_time": [5, 7], "damage_amount": 0, "attack_radius": 45.0, "body_part": "larm", "height": "high", "strength": "normal", "direction": "frontal"}
+      ]
+    },
+    "grab2miss": {
+      "animation": "m02_grab_01",
+      "animation_radius": 25.0,
+      "impacts": [
+        {"damage_time": [4, 7], "damage_amount": 0, "attack_radius": 45.0, "body_part": "larm", "height": "high", "strength": "normal", "direction": "frontal"}
+      ]
+    }
+  }
+}

@@ -624,8 +624,8 @@
       "animation": "m02_grab_01",
       "animation_frame_count": 47,
       "startup_frames": 5,
-      "active_frames": 2,
-      "recovery_frames": 40,
+      "active_frames": 3,
+      "recovery_frames": 39,
       "damage": 0.0,
       "prototype_push": 0.0,
       "source_impact": {
@@ -641,8 +641,8 @@
       "animation": "m02_grab_01",
       "animation_frame_count": 47,
       "startup_frames": 4,
-      "active_frames": 3,
-      "recovery_frames": 40,
+      "active_frames": 4,
+      "recovery_frames": 39,
       "damage": 0.0,
       "prototype_push": 0.0,
       "source_impact": {
