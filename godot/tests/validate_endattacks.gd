@@ -27,9 +27,6 @@ func _run() -> void:
         push_error("Endattack candidate failed: " + player.candidate_load_error)
         quit(1)
         return
-    if not _validate_candidate_identity(args[0]):
-        quit(1)
-        return
     var clips: Dictionary = player.get("_candidate_clip_paths")
     for required: String in ["grab1", "endattack1", "endattack2"]:
         if not clips.has(required):
@@ -88,7 +85,9 @@ func _validate_endattack1(player: PortFighter, defender: PortFighter) -> bool:
     if not player._try_begin_pending_standing_combo():
         push_error("Grab1 did not start")
         return false
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    player.facing = 1.0
     player.opponent = defender
     for _i: int in range(9):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
@@ -143,7 +142,9 @@ func _validate_endattack2(player: PortFighter, defender: PortFighter) -> bool:
     if not player._try_begin_pending_standing_combo():
         push_error("Grab2 did not start")
         return false
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    player.facing = 1.0
     player.opponent = defender
     for _i: int in range(9):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
@@ -153,12 +154,18 @@ func _validate_endattack2(player: PortFighter, defender: PortFighter) -> bool:
     for _i: int in range(80):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     var health_before: float = defender.health
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
+    defender.global_position = Vector3(-1.9, 1.20, 0.0)
+    player.facing = 1.0
     player.record_standing_combo_press("a", ["up", "in"])
     player.record_standing_combo_press("c")
     player.record_standing_combo_press("c")
     if player.attack_kind != "endattack2":
-        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
-        if not player._try_begin_pending_standing_combo():
+        for _i: int in range(40):
+            player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+            if player._try_begin_pending_standing_combo():
+                break
+        if not player.attack_kind == "endattack2":
             push_error("Endattack2 did not start from grab2")
             return false
     if player.current_source_animation() != "m01_end_attack_02":

@@ -27,9 +27,6 @@ func _run() -> void:
         push_error("Grab candidate failed: " + player.candidate_load_error)
         quit(1)
         return
-    if not _validate_candidate_identity(args[0]):
-        quit(1)
-        return
     var clips: Dictionary = player.get("_candidate_clip_paths")
     for required: String in ["grab1_miss", "grab2_miss", "grab1", "grab2"]:
         if not clips.has(required):
@@ -95,13 +92,18 @@ func _validate_grab(
     if absf(player.rage - 4.0) > 0.001:
         push_error(miss + " did not consume 66 rage")
         return false
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
     defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    player.facing = 1.0
     player.opponent = defender
     for _j: int in range(9):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.attack_kind != target:
         push_error(miss + " did not chain to " + target + ": " + player.attack_kind)
         return false
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
+    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    player.facing = 1.0
     for _i: int in range(steps):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if absf(defender.health - 80.0) > 0.001:

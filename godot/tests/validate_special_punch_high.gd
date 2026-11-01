@@ -108,6 +108,7 @@ func _validate_multi_hit(player: PortFighter, defender: PortFighter) -> bool:
     if absf(player.rage - 4.0) > 0.001:
         push_error("The special did not consume 66 rage: " + str(player.rage))
         return false
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
     defender.reset_fighter(Vector3(-1.7, 1.20, 0.0))
     player.facing = 1.0
     player.opponent = defender
@@ -160,6 +161,7 @@ func _validate_input_mapping(scene: Node, player: PortFighter) -> bool:
 func _validate_all_blocked(player: PortFighter, defender: PortFighter) -> bool:
     if not _start_sequence(player, 70.0):
         return false
+    player.global_position = Vector3(-2.0, 1.20, 0.0)
     defender.reset_fighter(Vector3(-1.7, 1.20, 0.0))
     player.facing = 1.0
     player.opponent = defender

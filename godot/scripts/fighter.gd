@@ -193,7 +193,7 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
     "body_part": "lleg", "attack_radius": ATTACK_TO_FLOOR_RADIUS,
 }
 const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
-const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.5
+const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.8
 const RAGE_MAX: float = 100.0
 const RAGE_GAIN_PER_HIT: float = 10.0
 # Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
@@ -229,7 +229,7 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
 # Recovered miss_return is [22,25]; choose its first frame as the PC
 # candidate exit while retaining the 33-frame source animation metadata.
 const SPECIAL_PUNCH_LOW_MISS_RETURN_FRAME: float = 22.0
-const PROTOTYPE_GRAB_DISTANCE: float = 0.62
+const PROTOTYPE_GRAB_DISTANCE: float = 0.7
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
 # Source windows: stun->stun2 and stun2->stunfall [55,61]; stunfall->faceupko [71,79].
@@ -2935,9 +2935,8 @@ func _accepts_standing_combo_input(virtual_key: String) -> bool:
             or virtual_key not in ["a", "b", "c", "d"]
             or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]):
         return false
-    if state in ["startup", "active", "recovery"]:
-        if attack_kind == "heavy" or not CANDOBASICATTACK_WINDOWS.has(attack_kind):
-            return false
+    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
+        return false
     return true
 
 
@@ -3435,7 +3434,14 @@ func _try_multi_impact_contacts() -> void:
         var distance: float = Vector2(dx, dz).length()
         var reach: float = (float(impact["attack_radius"]) * radius_scale
                 + opponent.source_radius_for_current_animation()) * source_units_to_world
-        if distance > reach or dx * facing < -0.1:
+        if _multi_impact_applied.is_empty() and distance > reach:
+            continue
+        # Once the first impact lands, later impacts still belong to the same
+        # connected sequence. Block push or grab hold motion can move the
+        # target slightly outside the opening reach or behind the facing line;
+        # do not discard the remaining connected hits.
+        if (_multi_impact_applied.is_empty() and dx * facing < -0.1
+                and not GRAB_ATTACKS.has(attack_kind)):
             continue
         var blocked: bool = opponent.guard_held and (
             opponent._can_block_current_hit() or opponent.state == "blockstun")

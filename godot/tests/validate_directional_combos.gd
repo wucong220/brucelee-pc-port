@@ -222,8 +222,8 @@ func _validate_subsequence_order(player: PortFighter) -> bool:
     player.record_standing_combo_press("a")
     player.record_standing_combo_press("b")
     player.record_standing_combo_press("b")
-    if String(player.get("_standing_combo_pending_attack")) != "punch":
-        push_error("a,a,b,b did not select lowpunch1")
+    if String(player.get("_standing_combo_pending_attack")) != "low_punch2":
+        push_error("a,a,b,b did not select lowpunch2")
         return false
     return true
 

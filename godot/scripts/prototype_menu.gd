@@ -27,40 +27,55 @@ var background: TextureRect
 var mode_label: Label
 var status_label: Label
 var controls_label: Label
+var nav_sfx: AudioStreamPlayer
 var accept_sfx: AudioStreamPlayer
+var back_sfx: AudioStreamPlayer
 var accept_sfx_error: String = ""
+var menu_sfx_errors: Dictionary = {}
+var last_sfx_played: String = ""
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     layer = 30
     _build_ui()
     _load_background()
-    _load_accept_sfx()
+    _load_menu_sfx()
     hide_menu()
 
-func _load_accept_sfx() -> void:
+func _load_menu_sfx() -> void:
+    nav_sfx = _load_sfx("Menu_Punch_2.wav", "nav")
+    accept_sfx = _load_sfx("Select_Play_Bl_Shout.wav", "accept")
+    back_sfx = _load_sfx("Back_BL_Shout_Short.wav", "back")
+    accept_sfx_error = String(menu_sfx_errors.get("accept", ""))
+
+func _load_sfx(filename: String, label: String) -> AudioStreamPlayer:
     var sfx_path: String = OS.get_environment("BRUCELEE_MENU_SFX_PATH")
-    if sfx_path.is_empty():
-        var local_app_data: String = OS.get_environment("LOCALAPPDATA")
-        if local_app_data.is_empty():
-            accept_sfx_error = "LOCALAPPDATA is unavailable"
-            return
-        sfx_path = local_app_data.path_join(
-            "BruceLee-PC-Port/p5-menu-assets-20261030/"
-            + "adreno_200/sounds/menu_sfx/Menu_Punch_2.wav"
-        )
-    accept_sfx_error = CandidatePathGuard.external_path_error(
+    if label != "accept" or sfx_path.is_empty():
+        var root: String = OS.get_environment("BRUCELEE_MENU_SFX_ROOT")
+        if root.is_empty():
+            var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+            if local_app_data.is_empty():
+                menu_sfx_errors[label] = "LOCALAPPDATA is unavailable"
+                return null
+            root = local_app_data.path_join(
+                "BruceLee-PC-Port/p5-menu-assets-20261030/"
+                + "adreno_200/sounds/menu_sfx"
+            )
+        sfx_path = root.path_join(filename)
+    var error: String = CandidatePathGuard.external_path_error(
         sfx_path, "prototype menu sfx"
     )
-    if not accept_sfx_error.is_empty():
-        return
+    if not error.is_empty():
+        menu_sfx_errors[label] = error
+        return null
     var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(sfx_path)
     if stream == null:
-        accept_sfx_error = "prototype menu sfx failed to load: " + sfx_path
-        return
-    accept_sfx = AudioStreamPlayer.new()
-    accept_sfx.stream = stream
-    add_child(accept_sfx)
+        menu_sfx_errors[label] = "prototype menu sfx failed to load: " + sfx_path
+        return null
+    var player: AudioStreamPlayer = AudioStreamPlayer.new()
+    player.stream = stream
+    add_child(player)
+    return player
 
 func _build_ui() -> void:
     var screen: Control = Control.new()
@@ -211,17 +226,27 @@ func handle_input_event(event: InputEvent) -> bool:
     if event.is_action_pressed(PrototypeControls.MENU_UP):
         selected_index = wrapi(selected_index - 1, 0, commands.size())
         _refresh_selection()
+        if nav_sfx != null:
+            last_sfx_played = "nav"
+            nav_sfx.play()
     elif event.is_action_pressed(PrototypeControls.MENU_DOWN):
         selected_index = wrapi(selected_index + 1, 0, commands.size())
         _refresh_selection()
+        if nav_sfx != null:
+            last_sfx_played = "nav"
+            nav_sfx.play()
     elif event.is_action_pressed(PrototypeControls.MENU_ACCEPT):
         var command: String = selected_command()
         if not command.is_empty():
             if accept_sfx != null:
+                last_sfx_played = "accept"
                 accept_sfx.play()
             command_requested.emit(command)
     elif event.is_action_pressed(PrototypeControls.MENU_CANCEL):
         if menu_state == "pause":
+            if back_sfx != null:
+                last_sfx_played = "back"
+                back_sfx.play()
             command_requested.emit("resume")
     else:
         return false
