@@ -59,6 +59,18 @@ const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
     "punch": "m03_pnch_low_01",
     "kick": "m03_kck_low_01",
+    "high_punch": "m03_pnch_high_01",
+    "high_punch2": "m03_pnch_high_02",
+    "high_punch3": "m03_pnch_high_03",
+    "low_punch": "m03_pnch_low_03",
+    "low_punch2": "m03_pnch_low_02",
+    "low_punch3": "m03_pnch_low_01",
+    "high_kick": "m03_kck_high_01",
+    "high_kick2": "m03_kck_high_02",
+    "high_kick3": "m03_kck_high_03",
+    "low_kick": "m03_kck_low_02",
+    "low_kick2": "m03_kck_low_03",
+    "low_kick3": "m03_kck_low_01",
     "move": "m03_movefwd",
     "moveleft": "m03_movelft",
     "moveright": "m03_moverht",
@@ -774,6 +786,32 @@ const THAI_ANIMATION_RADII_DATA: Dictionary = {
     "m03_pnch_low_01": 40.0,
     "m03_kck_low_01": 50.0,
     "m03_movefwd": 50.0,
+    "m03_pnch_high_01": 43.0,
+    "m03_pnch_high_02": 43.0,
+    "m03_pnch_high_03": 50.0,
+    "m03_pnch_low_03": 40.0,
+    "m03_pnch_low_02": 40.0,
+    "m03_kck_high_01": 30.0,
+    "m03_kck_high_02": 30.0,
+    "m03_kck_high_03": 45.0,
+    "m03_kck_low_02": 50.0,
+    "m03_kck_low_03": 50.0,
+}
+const THAI_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m03_pnch_low_01", 38, 8, 4, 26, 7.0, 80.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m03_kck_low_01", 41, 9, 3, 29, 7.0, 70.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m03_pnch_high_01", 19, 6, 3, 10, 5.0, 72.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m03_pnch_high_02", 31, 8, 4, 19, 7.0, 65.0, "rarm", "high", "normal", "fromleft"],
+    "high_punch3": ["highpunch3", "m03_pnch_high_03", 35, 11, 4, 20, 8.0, 70.0, "larm", "high", "hard", "fromleft"],
+    "low_punch": ["lowpunch1", "m03_pnch_low_03", 27, 9, 4, 14, 6.0, 62.0, "rarm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m03_pnch_low_02", 35, 9, 4, 22, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m03_pnch_low_01", 38, 8, 4, 26, 7.0, 80.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m03_kck_high_01", 44, 12, 4, 28, 6.0, 65.0, "lleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m03_kck_high_02", 49, 9, 5, 35, 7.0, 65.0, "lleg", "high", "normal", "frontal"],
+    "high_kick3": ["highkick3", "m03_kck_high_03", 47, 12, 4, 31, 8.0, 70.0, "lleg", "high", "hard", "fromright"],
+    "low_kick": ["lowkick1", "m03_kck_low_02", 46, 6, 5, 35, 5.0, 65.0, "lleg", "medium", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m03_kck_low_03", 37, 8, 4, 25, 6.0, 65.0, "rleg", "medium", "normal", "frontal"],
+    "low_kick3": ["lowkick3", "m03_kck_low_01", 41, 9, 3, 29, 7.0, 70.0, "lleg", "low", "hard", "fromright"],
 }
 const THAI_REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -1702,8 +1740,8 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
     if not radii_value is Dictionary:
         return _reject_attack_config("animation_radii is not an object")
     var radii: Dictionary = radii_value
-    if radii.size() != THAI_ANIMATION_RADII_DATA.size():
-        return _reject_attack_config("animation_radii does not contain only the four current clips")
+    if radii.size() < THAI_ANIMATION_RADII_DATA.size():
+        return _reject_attack_config("animation_radii lacks the four verified base clips")
     var loaded_radii: Dictionary = {}
     for animation: String in THAI_ANIMATION_RADII_DATA:
         if not radii.has(animation) or not _is_number(radii[animation]):
@@ -1712,6 +1750,10 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
         if absf(radius - float(THAI_ANIMATION_RADII_DATA[animation])) > 0.001 or radius <= 0.0:
             return _reject_attack_config("animation_radii." + animation + " does not match thai.set")
         loaded_radii[animation] = radius
+    for animation: String in radii:
+        if not _is_number(radii[animation]) or float(radii[animation]) <= 0.0:
+            return _reject_attack_config("animation_radii." + animation + " is invalid")
+        loaded_radii[animation] = float(radii[animation])
     var loaded_reactions: Dictionary = _parse_reaction_profiles(
         config.get("reaction_profiles"),
         THAI_REACTION_PROFILE_DATA
@@ -1722,10 +1764,19 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
     if not configured_attacks is Dictionary:
         return _reject_attack_config("attacks is not an object")
     var attacks: Dictionary = configured_attacks
-    if attacks.size() != 2:
-        return _reject_attack_config("thai mapping contains more than the verified attacks")
+    var allowed_actions: Array[String] = [
+        "punch", "kick",
+        "high_punch", "high_punch2", "high_punch3",
+        "low_punch", "low_punch2", "low_punch3",
+        "high_kick", "high_kick2", "high_kick3",
+        "low_kick", "low_kick2", "low_kick3",
+    ]
+    if attacks.size() < 2:
+        return _reject_attack_config("thai mapping lacks the verified base attacks")
     var result: Dictionary = {}
-    for action: String in ["punch", "kick"]:
+    for action: String in attacks.keys():
+        if action not in allowed_actions:
+            return _reject_attack_config("thai mapping contains an unknown action: " + action)
         var entry_value: Variant = attacks.get(action)
         if not entry_value is Dictionary:
             return _reject_attack_config(action + " is not an object")
@@ -1752,44 +1803,32 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
                 or float(entry["animation_frame_count"]) != float(frame_count)
                 or startup_frames + active_frames + recovery_frames != frame_count):
             return _reject_attack_config(action + " phase frames do not match the clip")
-        var expected_source: String = "lowpunch3" if action == "punch" else "lowkick3"
-        var expected_animation: String = "m03_pnch_low_01" if action == "punch" else "m03_kck_low_01"
-        var expected_frames: Array = [8, 4, 26, 38] if action == "punch" else [9, 3, 29, 41]
-        if (String(entry["source_action"]) != expected_source
-                or String(entry["animation"]) != expected_animation
-                or startup_frames != int(expected_frames[0])
-                or active_frames != int(expected_frames[1])
-                or recovery_frames != int(expected_frames[2])
-                or frame_count != int(expected_frames[3])
-                or absf(float(entry["damage"]) - 7.0) > 0.001
+        var expected: Array = THAI_ATTACK_DATA.get(action, [])
+        if expected.is_empty():
+            return _reject_attack_config(action + " lacks recovered thai.set evidence")
+        if (String(entry["source_action"]) != String(expected[0])
+                or String(entry["animation"]) != String(expected[1])
+                or frame_count != int(expected[2])
+                or startup_frames != int(expected[3])
+                or active_frames != int(expected[4])
+                or recovery_frames != int(expected[5])
+                or absf(float(entry["damage"]) - float(expected[6])) > 0.001
                 or absf(float(entry["prototype_push"])) > 0.001):
-            return _reject_attack_config(action + " does not match the verified thai.set attack")
+            return _reject_attack_config(action + " does not match recovered thai.set frames")
         var impact_value: Variant = entry["source_impact"]
         if not impact_value is Dictionary:
             return _reject_attack_config(action + " source_impact is not an object")
         var impact: Dictionary = impact_value
-        var expected_impact: Dictionary = {
-            "attack_radius": 80.0,
-            "body_part": "larm",
-            "height": "medium",
-            "strength": "hard",
-            "direction": "frontal",
-        } if action == "punch" else {
-            "attack_radius": 70.0,
-            "body_part": "lleg",
-            "height": "low",
-            "strength": "hard",
-            "direction": "fromright",
-        }
-        for key: String in expected_impact.keys():
+        for key: String in ["attack_radius", "body_part", "height", "strength", "direction"]:
             if not impact.has(key):
                 return _reject_attack_config(action + " impact lacks " + key)
-            if _is_number(expected_impact[key]):
-                if (not _is_number(impact[key])
-                        or absf(float(impact[key]) - float(expected_impact[key])) > 0.001):
-                    return _reject_attack_config(action + " impact does not match thai.set")
-            elif String(impact[key]) != String(expected_impact[key]):
-                return _reject_attack_config(action + " impact does not match thai.set")
+        if (not _is_number(impact["attack_radius"])
+                or absf(float(impact["attack_radius"]) - float(expected[7])) > 0.001
+                or String(impact["body_part"]) != String(expected[8])
+                or String(impact["height"]) != String(expected[9])
+                or String(impact["strength"]) != String(expected[10])
+                or String(impact["direction"]) != String(expected[11])):
+            return _reject_attack_config(action + " impact does not match recovered thai.set data")
         result[action] = {
             "startup": float(startup_frames) / SOURCE_FRAME_RATE,
             "active": float(active_frames) / SOURCE_FRAME_RATE,
@@ -1968,6 +2007,7 @@ func _try_load_candidate_visual() -> void:
             _candidate_skeleton_parent = _candidate_skeleton.get_parent()
     for action: String in [
             "move", "ko", "high_punch", "high_kick",
+            "low_punch", "low_kick",
             "high_punch3", "low_punch3", "low_kick3", "high_kick3",
             "special_kick_high",
             "high_punch2", "low_punch2", "high_kick2", "low_kick2",
@@ -3157,7 +3197,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
+        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -4340,8 +4380,8 @@ func _animate_candidate() -> void:
             requested = "heavy" if _candidate_clip_paths.has("heavy") else "kick"
         elif attack_kind == "kick":
             requested = "kick"
-        elif attack_kind in ["high_punch", "high_kick", "high_punch3", "low_punch3",
-                "low_kick3", "high_kick3", "special_kick_high",
+        elif attack_kind in ["high_punch", "high_kick", "low_punch", "low_kick",
+                "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high",
                 "high_punch2", "low_punch2", "high_kick2", "low_kick2",
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",

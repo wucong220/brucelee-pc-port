@@ -324,7 +324,7 @@ class TestFightingConfig(unittest.TestCase):
         self.assertEqual(exact["block"][1]["exit_start_frame"], 17)
         self.assertEqual(exact["block"][1]["animation_duration_frames"], 20)
 
-    def test_brick_mapping_is_limited_to_the_four_current_clips(self):
+    def test_brick_mapping_covers_recovered_base_attacks(self):
         path = CONFIG.with_name("fighting_set_m03_mapped_attacks.json")
         data = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(data["schema_version"], 4)
@@ -336,7 +336,30 @@ class TestFightingConfig(unittest.TestCase):
             "m03_pnch_low_01": 40.0,
             "m03_kck_low_01": 50.0,
             "m03_movefwd": 50.0,
+            "m03_pnch_high_01": 43.0,
+            "m03_pnch_high_02": 43.0,
+            "m03_pnch_high_03": 50.0,
+            "m03_pnch_low_03": 40.0,
+            "m03_pnch_low_02": 40.0,
+            "m03_kck_high_01": 30.0,
+            "m03_kck_high_02": 30.0,
+            "m03_kck_high_03": 45.0,
+            "m03_kck_low_02": 50.0,
+            "m03_kck_low_03": 50.0,
         })
+        self.assertEqual(len(data["attacks"]), 14)
+        high_punch = data["attacks"]["high_punch"]
+        self.assertEqual(high_punch["source_action"], "highpunch1")
+        self.assertEqual(high_punch["animation"], "m03_pnch_high_01")
+        self.assertEqual(
+            [high_punch[key] for key in (
+                "animation_frame_count", "startup_frames", "active_frames", "recovery_frames"
+            )],
+            [19, 6, 3, 10],
+        )
+        self.assertEqual(high_punch["damage"], 5.0)
+        self.assertEqual(high_punch["source_impact"]["attack_radius"], 72.0)
+        self.assertEqual(high_punch["source_impact"]["strength"], "normal")
         punch = data["attacks"]["punch"]
         kick = data["attacks"]["kick"]
         self.assertEqual(punch["source_action"], "lowpunch3")
