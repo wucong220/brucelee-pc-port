@@ -39,6 +39,8 @@ $projectFull = [System.IO.Path]::GetFullPath($project)
 $godotTempFull = [System.IO.Path]::GetFullPath($GodotTempRoot)
 function Test-PathOverlap([string]$left, [string]$right) {
     $separator = [System.IO.Path]::DirectorySeparatorChar
+    $left = $left.TrimEnd([char[]]@('\', '/'))
+    $right = $right.TrimEnd([char[]]@('\', '/'))
     return [string]::Equals($left, $right, [System.StringComparison]::OrdinalIgnoreCase) -or
         $left.StartsWith($right + $separator, [System.StringComparison]::OrdinalIgnoreCase) -or
         $right.StartsWith($left + $separator, [System.StringComparison]::OrdinalIgnoreCase)
@@ -83,6 +85,12 @@ if ($SelfTest) {
     if (Test-PathOverlap 'C:\Work\staging' 'D:\Work\project') {
         throw 'Unrelated paths were reported as overlapping.'
     }
+    if (-not (Test-PathOverlap 'D:\' 'D:\staging')) {
+        throw 'Drive-root overlap was not detected.'
+    }
+    if (Test-PathOverlap 'D:\' 'C:\staging') {
+        throw 'Drive-root overlap crossed unrelated drives.'
+    }
     $substFixture = @('Z:\: => C:\repo\godot')
     if (-not (Test-SubstPath 'Z:\out' $substFixture)) {
         throw 'SUBST drive path was not detected.'
@@ -106,6 +114,10 @@ if ((Test-PathOverlap $stagingFull $rootFull) -or
         (Test-PathOverlap $stagingFull $sourceFull) -or
         (Test-PathOverlap $projectFull $sourceFull)) {
     throw 'BuildRoot/staging must not overlap the repository or source project.'
+}
+if (($godotTempFull -match '^[A-Za-z]:[\\/]?$') -or
+        ($godotTempFull -match '^\\\\[^\\]+\\[^\\]+[\\/]?$')) {
+    throw 'GodotTempRoot must not be a drive or UNC share root.'
 }
 if ((Test-PathOverlap $godotTempFull $rootFull) -or
         (Test-PathOverlap $godotTempFull $sourceFull) -or
