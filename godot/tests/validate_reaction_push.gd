@@ -1,5 +1,5 @@
 extends SceneTree
-## Validate that the exported reaction root-motion depth values drive push.
+## Validate that the configured source position component drives prototype push.
 
 func _initialize() -> void:
     call_deferred("_run")
@@ -13,31 +13,31 @@ func _run() -> void:
     var cases: Array[Dictionary] = [
         {
             "source_action": "impactlightfrontlow",
-            "depth": 18.252197265625,
+            "source_component": 18.252197265625,
             "exit_frame": 13,
             "duration": 17,
         },
         {
             "source_action": "impactlightfrontmid",
-            "depth": 22.845458984375,
+            "source_component": 22.845458984375,
             "exit_frame": 14,
             "duration": 16,
         },
         {
             "source_action": "impactlightfronthigh",
-            "depth": 36.86962890625,
+            "source_component": 36.86962890625,
             "exit_frame": 13,
             "duration": 17,
         },
         {
             "source_action": "impactlightleftlow",
-            "depth": 7.284912109375,
+            "source_component": 7.284912109375,
             "exit_frame": 15,
             "duration": 17,
         },
         {
             "source_action": "impactlightrightlow",
-            "depth": 21.27294921875,
+            "source_component": 21.27294921875,
             "exit_frame": 13,
             "duration": 17,
         },
@@ -45,7 +45,7 @@ func _run() -> void:
     var results: Array = []
     for case: Dictionary in cases:
         fighter.reset_fighter(Vector3.ZERO)
-        var expected: float = float(case["depth"]) * fighter.source_units_to_world
+        var expected: float = float(case["source_component"]) * fighter.source_units_to_world
         var reaction: Dictionary = {
             "source_action": String(case["source_action"]),
             "exit_start_frame": int(case["exit_frame"]),
@@ -65,12 +65,12 @@ func _run() -> void:
             return
         results.append({
             "source_action": case["source_action"],
-            "source_depth": case["depth"],
+            "source_component": case["source_component"],
             "world_push": expected,
         })
     print("REACTION_PUSH_VALIDATION=" + JSON.stringify({
         "cases": results,
-        "scope": "source reaction horizontal positions mapped to prototype forward push; axis/sign native mapping unverified",
+        "scope": "raw source position components mapped to prototype forward push; axis/sign native mapping unverified",
     }))
     fighter.queue_free()
     await process_frame

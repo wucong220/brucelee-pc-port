@@ -661,9 +661,9 @@ const REACTION_ROOT_PUSH_SOURCE: Dictionary = {
     "impactlightfronthigh": 36.86962890625,
     "impactlightfrontlow": 18.252197265625,
     "impactlightfrontmid": 22.845458984375,
-    # Lateral light reactions: peak absolute X from the decoded source
-    # positions. Frontal entries use peak Y (depth); exact native axis/sign
-    # mapping remains unverified.
+    # Prototype input: lateral light reactions use peak absolute X from the
+    # decoded source positions; frontal entries use peak Y. These are raw
+    # position components, not proven native horizontal/depth axes.
     "impactlightleftlow": 7.284912109375,
     "impactlightrightlow": 21.27294921875,
 }
@@ -3825,9 +3825,9 @@ func receive_hit(
         REACTION_ROOT_PUSH_SOURCE.get(String(reaction.get("source_action", "")), -1.0)
     )
     if reaction_root_source >= 0.0:
-        # Source reaction positions are (X horizontal, Y depth, Z up). Their
-        # depth component is the current best evidence for forward displacement;
-        # the exact native push mapping remains unverified.
+        # Different reactions use a matching raw position component as the
+        # prototype push input. Native axis/sign semantics and the final
+        # knockback mapping remain unverified.
         push = reaction_root_source * source_units_to_world
     var brick_facedown_impact: bool = (
         state_before == "facedownidle"
