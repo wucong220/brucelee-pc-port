@@ -290,6 +290,9 @@ const CANDOBASICATTACK_WINDOWS: Dictionary = {
     "low_punch2": [20, 65],
     "high_kick2": [28, 95],
     "low_kick2": [17, 27],
+    "parry_high": [10, 62],
+    "parry_low": [10, 27],
+    "parry_attack": [15, 85],
 }
 const BRUCE_ATTACK_METADATA: Dictionary = {
     "punch": {
