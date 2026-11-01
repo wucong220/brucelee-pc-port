@@ -75,11 +75,21 @@ func _run() -> void:
             quit(1)
             return
     var full_candidate: bool = actual_names.size() in [53, 55]
+    var combat_candidate: bool = actual_names.size() == 26
+    var combat_extras: Array[String] = [
+        "all_idle_face_down_forbigguy", "all_block_low", "all_block_mid",
+        "all_impct_hard_frnt_low", "all_impct_facedwn",
+    ]
     for actual_name: String in actual_names:
         if full_candidate:
             if (not actual_name.begins_with("m03_")
                     and actual_name not in ["all_block_low", "all_block_mid"]):
                 push_error("Full opponent candidate has an unexpected clip: " + actual_name)
+                quit(1)
+                return
+        elif combat_candidate:
+            if not actual_name.begins_with("m03_") and actual_name not in combat_extras:
+                push_error("Combat opponent candidate has an unexpected clip: " + actual_name)
                 quit(1)
                 return
         elif actual_name not in allowed_names:
