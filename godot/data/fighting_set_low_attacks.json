@@ -369,8 +369,8 @@
       "animation": "m01_sp_pnch_low",
       "animation_frame_count": 178,
       "startup_frames": 5,
-      "active_frames": 10,
-      "recovery_frames": 163,
+      "active_frames": 11,
+      "recovery_frames": 162,
       "damage": 15.0,
       "prototype_push": 0.35,
       "source_impact": {
