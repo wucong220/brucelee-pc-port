@@ -3275,6 +3275,7 @@ func request_attack(kind: String) -> bool:
     _multi_impact_applied.clear()
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
+    _seed_attack_root_motion()
     return true
 
 func _physics_process(delta: float) -> void:
@@ -3343,8 +3344,11 @@ func _advance_timed_states(delta: float) -> void:
         _try_special_chain()
         if remaining < state_time:
             state_time -= remaining
+            _apply_attack_root_motion()
             return
         remaining -= maxf(state_time, 0.0)
+        state_time = 0.0
+        _apply_attack_root_motion()
         _advance_state()
 
 func _try_multi_impact_contacts() -> void:
