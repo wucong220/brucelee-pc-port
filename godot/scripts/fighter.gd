@@ -71,6 +71,7 @@ const BRICK_CLIPS: Dictionary = {
     "low_kick": "m03_kck_low_02",
     "low_kick2": "m03_kck_low_03",
     "low_kick3": "m03_kck_low_01",
+    "m03_blck_high": "m03_blck_high",
     "move": "m03_movefwd",
     "moveleft": "m03_movelft",
     "moveright": "m03_moverht",
@@ -2019,7 +2020,7 @@ func _try_load_candidate_visual() -> void:
             "endattack1", "endattack2", "stun", "stun_fall",
             "stun_hard", "stun_brutal", "heavy",
             "move", "moveleft", "moveright", "stepfwd", "stepback",
-            "stepleft", "stepright"]:
+            "stepleft", "stepright", "m03_blck_high"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -3927,8 +3928,9 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
                 ] and not _medium_lethal_impactable()):
             return {}
         return exact
-    # Hard and brutal attacks have no light-height fallback when the exact link is absent.
-    if String(impact.get("strength", "")) != "normal":
+    # Hard and brutal attacks have no light-height fallback for hits when the
+    # exact link is absent, but blocking still uses the block profile.
+    if not blocked and String(impact.get("strength", "")) != "normal":
         return {}
     return _reaction_profile_for_impact(impact, blocked)
 
