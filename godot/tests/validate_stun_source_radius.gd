@@ -39,7 +39,11 @@ func _run() -> void:
             + str(fighter.source_radius_for_current_animation()))
         quit(1)
         return
-    for case: Array in [["stun_hard", 85.0], ["stun_brutal", 25.0]]:
+    for case: Array in [
+        ["stun_hard", 85.0],
+        ["stun_brutal", 25.0],
+        ["all_impct_light_frnt_low", 25.0],
+    ]:
         fighter.state = "stunimpact"
         fighter.last_reaction_animation = String(case[0])
         if absf(fighter.source_radius_for_current_animation() - float(case[1])) > 0.001:
