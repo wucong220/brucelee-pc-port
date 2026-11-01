@@ -32,6 +32,7 @@ var accept_sfx: AudioStreamPlayer
 var back_sfx: AudioStreamPlayer
 var accept_sfx_error: String = ""
 var menu_sfx_errors: Dictionary = {}
+var last_sfx_played: String = ""
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -226,21 +227,25 @@ func handle_input_event(event: InputEvent) -> bool:
         selected_index = wrapi(selected_index - 1, 0, commands.size())
         _refresh_selection()
         if nav_sfx != null:
+            last_sfx_played = "nav"
             nav_sfx.play()
     elif event.is_action_pressed(PrototypeControls.MENU_DOWN):
         selected_index = wrapi(selected_index + 1, 0, commands.size())
         _refresh_selection()
         if nav_sfx != null:
+            last_sfx_played = "nav"
             nav_sfx.play()
     elif event.is_action_pressed(PrototypeControls.MENU_ACCEPT):
         var command: String = selected_command()
         if not command.is_empty():
             if accept_sfx != null:
+                last_sfx_played = "accept"
                 accept_sfx.play()
             command_requested.emit(command)
     elif event.is_action_pressed(PrototypeControls.MENU_CANCEL):
         if menu_state == "pause":
             if back_sfx != null:
+                last_sfx_played = "back"
                 back_sfx.play()
             command_requested.emit("resume")
     else:
