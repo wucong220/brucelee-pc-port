@@ -661,9 +661,19 @@ const REACTION_ROOT_PUSH_SOURCE: Dictionary = {
     "impactlightfronthigh": 36.86962890625,
     "impactlightfrontlow": 18.252197265625,
     "impactlightfrontmid": 22.845458984375,
-    # Prototype input: lateral light reactions use peak absolute X from the
-    # decoded source positions; frontal entries use peak Y. These are raw
-    # position components, not proven native horizontal/depth axes.
+    # Prototype input: the maximum absolute value among the first two raw
+    # position components of the decoded reaction clip. This is not a native
+    # axis/sign or final-knockback mapping claim.
+    "impactbrutalleft": 187.198974609375,
+    "impactbrutalmid": 181.56494140625,
+    "impactbrutalright": 187.095458984375,
+    "impacthardabove": 35.1337890625,
+    "impacthardfronthigh": 200.7998046875,
+    "impacthardfrontlow": 3.348388671875,
+    "impacthardfrontmid": 69.15380859375,
+    "impacthardlefthigh": 199.577880859375,
+    "impacthardleftlow": 37.691650390625,
+    "impacthardrighthigh": 194.52294921875,
     "impactlightleftlow": 7.284912109375,
     "impactlightrightlow": 21.27294921875,
 }

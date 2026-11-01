@@ -41,6 +41,66 @@ func _run() -> void:
             "exit_frame": 13,
             "duration": 17,
         },
+        {
+            "source_action": "impactbrutalleft",
+            "source_component": 187.198974609375,
+            "exit_frame": 39,
+            "duration": 45,
+        },
+        {
+            "source_action": "impactbrutalmid",
+            "source_component": 181.56494140625,
+            "exit_frame": 25,
+            "duration": 28,
+        },
+        {
+            "source_action": "impactbrutalright",
+            "source_component": 187.095458984375,
+            "exit_frame": 41,
+            "duration": 45,
+        },
+        {
+            "source_action": "impacthardabove",
+            "source_component": 35.1337890625,
+            "exit_frame": 17,
+            "duration": 17,
+        },
+        {
+            "source_action": "impacthardfronthigh",
+            "source_component": 200.7998046875,
+            "exit_frame": 23,
+            "duration": 35,
+        },
+        {
+            "source_action": "impacthardfrontlow",
+            "source_component": 3.348388671875,
+            "exit_frame": 20,
+            "duration": 23,
+        },
+        {
+            "source_action": "impacthardfrontmid",
+            "source_component": 69.15380859375,
+            "exit_frame": 27,
+            "duration": 30,
+        },
+        {
+            "source_action": "impacthardlefthigh",
+            "source_component": 199.577880859375,
+            "exit_frame": 26,
+            "duration": 29,
+        },
+        {
+            "source_action": "impacthardleftlow",
+            "source_component": 37.691650390625,
+            "exit_frame": 25,
+            "duration": 29,
+        },
+        {
+            "source_action": "impacthardrighthigh",
+            "source_component": 194.52294921875,
+            "exit_frame": 26,
+            "duration": 29,
+        },
     ]
     var results: Array = []
     for case: Dictionary in cases:
