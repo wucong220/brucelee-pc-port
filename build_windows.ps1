@@ -80,6 +80,17 @@ function Test-ReparsePointInPath([string]$path) {
     return $false
 }
 
+function Test-PckProjectSettings([string]$path) {
+    $bytes = [System.IO.File]::ReadAllBytes($path)
+    for ($index = 0; $index -le $bytes.Length - 4; $index++) {
+        if ($bytes[$index] -eq 0x45 -and $bytes[$index + 1] -eq 0x43 -and
+                $bytes[$index + 2] -eq 0x46 -and $bytes[$index + 3] -eq 0x47) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Test-SubstPath([string]$path, [string[]]$substLines = $null) {
     if ($null -eq $substLines) {
         $substLines = @(& cmd.exe /c subst 2>$null)
@@ -132,6 +143,16 @@ if ($SelfTest) {
     if (-not $devicePathRejected) {
         throw 'Device namespace path was not rejected.'
     }
+    $pckFixture = Join-Path $env:TEMP ('brucelee-pck-fixture-' + [guid]::NewGuid().ToString('N'))
+    [System.IO.File]::WriteAllBytes($pckFixture, [byte[]](1, 2, 3))
+    if (Test-PckProjectSettings $pckFixture) {
+        throw 'Empty PCK fixture was accepted.'
+    }
+    [System.IO.File]::WriteAllBytes($pckFixture, [byte[]](0x45, 0x43, 0x46, 0x47))
+    if (-not (Test-PckProjectSettings $pckFixture)) {
+        throw 'ECFG PCK fixture was rejected.'
+    }
+    Remove-Item -LiteralPath $pckFixture -Force -ErrorAction SilentlyContinue
     $substFixture = @('Z:\: => C:\repo\godot')
     if (-not (Test-SubstPath 'Z:\out' $substFixture)) {
         throw 'SUBST drive path was not detected.'
@@ -224,6 +245,9 @@ for ($attempt = 0; $attempt -lt 300 -and $null -eq $exportedPck; $attempt++) {
     if ($null -eq $exportedPck) { Start-Sleep -Milliseconds 200 }
 }
 if ($null -eq $exportedPck) { throw 'Godot did not produce the expected PCK.' }
+if (-not (Test-PckProjectSettings $exportedPck.FullName)) {
+    throw 'Exported PCK lacks binary project settings; check GodotTempRoot.'
+}
 
 Copy-Item -LiteralPath $exported.FullName -Destination $delivered -Force
 Copy-Item -LiteralPath $exportedPck.FullName -Destination (Join-Path $dist 'DragonWarrior_PC_Prototype.pck') -Force
