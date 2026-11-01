@@ -40,7 +40,7 @@ func _ready() -> void:
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
         hud.footer.text = (
             "J J J | J K K | K L L | K U U | "
-            + "A+K -> D+L -> D+L = special (rage 100)"
+            + "Back+K -> Toward+L -> Toward+L = special (rage 100)"
         )
     prototype_menu = PortPrototypeMenu.new()
     add_child(prototype_menu)
