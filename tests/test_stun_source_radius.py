@@ -34,6 +34,8 @@ class StunSourceRadiusTest(unittest.TestCase):
         )
         self.assertIn('if state in ["stun", "stun2"]', text)
         self.assertIn('if state == "stunfall"', text)
+        self.assertEqual(_radius_entry(text, "stun_hard"), 85.0)
+        self.assertEqual(_radius_entry(text, "stun_brutal"), 25.0)
 
 
 if __name__ == "__main__":

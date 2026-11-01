@@ -662,6 +662,14 @@ const RETURN_ANIMATION_RADII: Dictionary = {
     "all_getup_faceup_attack": 45.0,
     "all_impct_faceup": 80.0,
 }
+# stunimpact uses action-specific radii for the same source ANMs.
+const STUN_IMPACT_SOURCE_RADII: Dictionary = {
+    "stun_hard": 85.0,
+    "stun_brutal": 25.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 25.0,
+    "all_impct_crotch": 40.0,
+}
 const REACTION_ROOT_PUSH_SOURCE: Dictionary = {
     "impactlightfronthigh": 36.86962890625,
     "impactlightfrontlow": 18.252197265625,
@@ -3668,6 +3676,9 @@ func _stored_animation_radius(animation: String) -> float:
         # thai.set action 92 uses radius 85. The Bruce set uses 80 for the
         # same animation, so this value is character-config specific.
         return BRICK_FACEDOWN_IMPACT_RADIUS
+    if (STUN_IMPACT_SOURCE_RADII.has(animation)
+            and _is_number(STUN_IMPACT_SOURCE_RADII[animation])):
+        return float(STUN_IMPACT_SOURCE_RADII[animation])
     if source_animation_radii.has(animation) and _is_number(source_animation_radii[animation]):
         return float(source_animation_radii[animation])
     if RETURN_ANIMATION_RADII.has(animation) and _is_number(RETURN_ANIMATION_RADII[animation]):
