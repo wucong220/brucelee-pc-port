@@ -104,12 +104,29 @@ func _run() -> void:
         push_error("lateral attack root motion did not follow facing")
         quit(1)
         return
+    var runtime: PortFighter = load("res://scripts/fighter.gd").new()
+    runtime.configure_attack_config(PortFighter.ATTACK_CONFIG_PATH)
+    root.add_child(runtime)
+    await process_frame
+    runtime.reset_fighter(Vector3.ZERO)
+    if not runtime.request_attack("punch"):
+        push_error("real physics attack request was rejected")
+        quit(1)
+        return
+    var runtime_before: float = runtime.position.x
+    runtime._physics_process(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    runtime._physics_process(1.0 / PortFighter.SOURCE_FRAME_RATE)
+    if runtime.position.x <= runtime_before:
+        push_error("real physics loop did not apply attack root motion")
+        quit(1)
+        return
     print("ATTACK_ROOT_MOTION_VALIDATION=" + JSON.stringify({
         "source_action": "lowpunch1",
         "frame_delta": 1.0 / PortFighter.SOURCE_FRAME_RATE,
         "world_delta": moved,
         "scope": "signed raw source components mapped to prototype forward/lateral displacement; native axis/sign unverified",
     }))
+    runtime.queue_free()
     brick.queue_free()
     fighter.queue_free()
     await process_frame
