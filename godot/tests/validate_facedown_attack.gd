@@ -85,8 +85,9 @@ func _run() -> void:
 
 func _check_clip(player: PortFighter) -> bool:
     var animation: AnimationPlayer = player.get("_candidate_animation")
-    if animation == null or animation.get_animation_list().size() != 17:
-        push_error("Facedown-attack GLB does not expose exactly 17 clips")
+    if (animation == null
+            or animation.get_animation_list().size() not in [17, 59]):
+        push_error("Facedown-attack GLB must expose the 17- or 59-clip candidate")
         return false
     var clip_path: String = _find_clip(animation, PortFighter.FACEDOWN_ATTACK_CLIP)
     if clip_path.is_empty() or not player._candidate_clip_paths.has(

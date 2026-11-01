@@ -71,8 +71,9 @@ func _clips_are_present(player: PortFighter) -> bool:
         "m01_idle_02", "all_idle_face_down", "all_getup_facedwn",
         "all_impct_facedwn",
     ]
-    if animation == null or animation.get_animation_list().size() != expected.size():
-        push_error("Facedown-impact GLB does not expose exactly 16 clips")
+    if (animation == null
+            or animation.get_animation_list().size() not in [expected.size(), 59]):
+        push_error("Facedown-impact GLB must expose the legacy or 59-clip candidate")
         return false
     for clip_name: String in expected:
         if _find_clip(animation, clip_name).is_empty():

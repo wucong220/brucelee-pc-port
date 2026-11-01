@@ -83,8 +83,8 @@ func _run() -> void:
 func _check_clips(player: PortFighter) -> bool:
     var animation: AnimationPlayer = player.get("_candidate_animation")
     var clip_count: int = animation.get_animation_list().size() if animation != null else 0
-    if clip_count < 19 or clip_count > 29:
-        push_error("Face-up GLB must expose at least 19 candidate clips (through current 29-clip extension)")
+    if (clip_count < 19 or clip_count > 29) and clip_count != 59:
+        push_error("Face-up GLB must expose 19-29 or the 59-clip candidate")
         return false
     if clip_count >= 20 and not _has_clip(
         animation, PortFighter.FACEUP_GETUP_CLIP
