@@ -131,6 +131,17 @@ $env:BRUCELEE_CANDIDATE_VISUAL_BLENDING = "1"
 .\build_windows.ps1 -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64.exe'
 ```
 
+若默认 `TEMP` 或输出目录对 Godot 不可写，可显式指定可写的 staging 与
+Godot 临时目录：
+
+```powershell
+.\build_windows.ps1 `
+  -GodotExe 'C:\Tools\Godot_v4.7.2-stable_win64.exe' `
+  -BuildRoot 'D:\Build\BruceLee' `
+  -GodotTempRoot 'D:\Build\BruceLeeTemp' `
+  -OutputDir 'D:\Build\BruceLeeDist'
+```
+
 预期输出 `dist/DragonWarrior_PC_Prototype.exe` 和同目录 `.pck` 文件（除非改用 embed_pck）。Windows EXE 必须与生成的 `.pck` 一起分发；只有独立 EXE 时可能无法运行。**此 EXE 是占位对战原型，不是原版游戏。**
 
 也可以在 Godot 编辑器的 `Project → Export → Windows Desktop` 直接导出。
