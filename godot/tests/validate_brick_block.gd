@@ -22,30 +22,39 @@ func _run() -> void:
         push_error("Brick candidate failed: " + brick.candidate_load_error)
         quit(1)
         return
-    var reaction: Dictionary = brick.reaction_for_incoming({
-        "strength": "hard",
-        "height": "high",
-        "body_part": "larm",
-        "direction": "frontal",
-    }, true)
-    print("REACTION=" + JSON.stringify(reaction))
-    if String(reaction.get("animation", "")) != "m03_blck_high":
-        push_error("Brick high block did not select m03_blck_high")
-        quit(1)
-        return
-    brick.receive_hit(5.0, true, 0.0, 1.0, reaction)
-    if brick.state != "blockstun":
-        push_error("Brick high block did not enter blockstun")
-        quit(1)
-        return
-    brick._animate_candidate()
-    if brick.candidate_animation_clip != "m03_blck_high":
-        push_error("Brick high block clip was not applied: "
-                + brick.candidate_animation_clip)
-        quit(1)
-        return
+    var cases: Array[Array] = [
+        ["high", "larm", "m03_blck_high"],
+        ["low", "lleg", "all_block_low"],
+        ["medium", "larm", "all_block_mid"],
+    ]
+    for block_case: Array in cases:
+        brick.reset_fighter(Vector3(0.0, 1.20, 0.0))
+        var reaction: Dictionary = brick.reaction_for_incoming({
+            "strength": "hard",
+            "height": String(block_case[0]),
+            "body_part": String(block_case[1]),
+            "direction": "frontal",
+        }, true)
+        if String(reaction.get("animation", "")) != String(block_case[2]):
+            push_error("Brick %s block did not select %s"
+                    % [block_case[0], block_case[2]])
+            quit(1)
+            return
+        brick.receive_hit(5.0, true, 0.0, 1.0, reaction)
+        if brick.state != "blockstun":
+            push_error("Brick %s block did not enter blockstun" % block_case[0])
+            quit(1)
+            return
+        brick._animate_candidate()
+        if brick.candidate_animation_clip != String(block_case[2]):
+            push_error("Brick %s block clip was not applied: %s"
+                    % [block_case[0], brick.candidate_animation_clip])
+            quit(1)
+            return
     print("BRICK_BLOCK_VALIDATION=" + JSON.stringify({
-        "animation": brick.candidate_animation_clip,
+        "high": "m03_blck_high",
+        "low": "all_block_low",
+        "mid": "all_block_mid",
         "health": brick.health,
     }))
     brick.queue_free()

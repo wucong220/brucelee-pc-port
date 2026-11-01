@@ -72,6 +72,8 @@ const BRICK_CLIPS: Dictionary = {
     "low_kick2": "m03_kck_low_03",
     "low_kick3": "m03_kck_low_01",
     "m03_blck_high": "m03_blck_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
     "move": "m03_movefwd",
     "moveleft": "m03_movelft",
     "moveright": "m03_moverht",
@@ -2020,7 +2022,8 @@ func _try_load_candidate_visual() -> void:
             "endattack1", "endattack2", "stun", "stun_fall",
             "stun_hard", "stun_brutal", "heavy",
             "move", "moveleft", "moveright", "stepfwd", "stepback",
-            "stepleft", "stepright", "m03_blck_high"]:
+            "stepleft", "stepright", "m03_blck_high",
+            "all_block_low", "all_block_mid"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(

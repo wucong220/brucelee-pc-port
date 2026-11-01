@@ -74,11 +74,12 @@ func _run() -> void:
                     + JSON.stringify(actual_names))
             quit(1)
             return
-    var full_candidate: bool = actual_names.size() == 53
+    var full_candidate: bool = actual_names.size() in [53, 55]
     for actual_name: String in actual_names:
         if full_candidate:
-            if not actual_name.begins_with("m03_"):
-                push_error("Full opponent candidate has a non-m03 clip: " + actual_name)
+            if (not actual_name.begins_with("m03_")
+                    and actual_name not in ["all_block_low", "all_block_mid"]):
+                push_error("Full opponent candidate has an unexpected clip: " + actual_name)
                 quit(1)
                 return
         elif actual_name not in allowed_names:
