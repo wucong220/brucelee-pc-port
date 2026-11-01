@@ -36,6 +36,11 @@ func _run() -> void:
         push_error("source animation did not fall back: " + fighter.current_source_animation())
         quit(1)
         return
+    if absf(fighter.source_radius_for_current_animation() - 50.0) > 0.001:
+        push_error("heavy fallback radius was not 50: "
+            + str(fighter.source_radius_for_current_animation()))
+        quit(1)
+        return
     print("HEAVY_FALLBACK_VALIDATION=" + JSON.stringify({
         "clip": fighter.candidate_animation_clip,
         "source_animation": fighter.current_source_animation(),
