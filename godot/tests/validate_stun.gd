@@ -520,9 +520,12 @@ func _run() -> void:
         push_error("Stun endmove defender candidate failed")
         quit(1)
         return
+    # 0.1 separation lets the high-punch root pass the defender before
+    # contact; 0.5 keeps it in front over six frames and close enough for
+    # the prototype 0.62 endmove distance after contact.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(-1.5, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
     if not player.request_attack("high_punch"):
@@ -554,7 +557,7 @@ func _run() -> void:
     # endattack2 must also be reachable from stun.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(-1.5, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
     if not player.request_attack("high_punch"):
@@ -580,7 +583,7 @@ func _run() -> void:
     # The same endmove gate must work while the opponent is in stun2.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(-1.5, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
     if not player.request_attack("high_punch"):
@@ -612,7 +615,7 @@ func _run() -> void:
     # endattack2 must also be reachable from stun2.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(-1.5, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
     if not player.request_attack("high_punch"):
@@ -643,7 +646,7 @@ func _run() -> void:
         return
     # A real normal/medium punch uses the source impactstunlow link.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(-1.5, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
     if not player.request_attack("punch"):
@@ -659,7 +662,7 @@ func _run() -> void:
     # A real low kick must enter impactstun with the low clip before stun.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(-1.5, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
     if not player.request_attack("kick"):
@@ -685,7 +688,7 @@ func _run() -> void:
     # A real high punch must enter impactstun with the high clip.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.health = 100.0
-    defender.reset_fighter(Vector3(-1.9, 1.20, 0.0))
+    defender.reset_fighter(Vector3(-1.5, 1.20, 0.0))
     defender.health = 5.0
     player.opponent = defender
     if not player.request_attack("high_punch"):
