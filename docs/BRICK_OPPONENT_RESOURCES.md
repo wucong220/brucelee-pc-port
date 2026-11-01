@@ -76,7 +76,7 @@ OPPONENT_CANDIDATE_VALIDATION={"animations":[{"length":4.0,"name":"m03_idle_01",
 并确认每条动画在中点会改变骨架姿态。它不验证贴图最终像素、动画方向、原版
 动作选择、碰撞、命中、AI 或游戏内可见效果。
 
-## 战斗候选（26 段，本地）
+## 战斗候选（27 段，本地）
 
 完整 53 段基础候选与低/中格挡、受击反应合并会超过转换器通道上限
 （57/58 段均报 `animation channel count exceeds the export limit`）。因此另建
@@ -89,14 +89,15 @@ OPPONENT_CANDIDATE_VALIDATION={"animations":[{"length":4.0,"name":"m03_idle_01",
 - step：`m03_stepfwd`、`m03_stepbck`、`m03_steplft`、`m03_steprht`
 - 高格挡：`m03_blck_high`
 - `all_block_low`、`all_block_mid`（Bruce 骨架 retarget）
-- `all_impct_hard_frnt_low`、`all_impct_facedwn`（Bruce 骨架 retarget）
+- `all_impct_hard_frnt_low`、`all_impct_facedwn`、`all_impct_hard_frnt_high`
+  （Bruce 骨架 retarget）
 - `all_idle_face_down_forbigguy`（原生 Brick 骨架）
 
-本机文件：`D:\BruceLeeWork\brick_candidate_combat_20261102.glb`，
-1,094,108 字节，SHA-256 为
-`ccf759b6b1a9b04af81cb8c2aacb95c8079c2f9611a7a123a1c7edca729f4abf`。
-Godot 验证为 69 骨、3 个蒙皮面、26 条动画；战斗、移动、高/低/中格挡和
-趴地受击测试均通过。该候选仍在仓库外，不进入 Git。
+本机文件：`D:\BruceLeeWork\brick_candidate_combat_27_20261102.glb`，
+1,157,868 字节，SHA-256 为
+`169a498ac6b1daa4ab66b991164193c7b8177e97f615893450af0503f21d25fa`。
+Godot 验证为 69 骨、3 个蒙皮面、27 条动画；战斗、移动、高/低/中格挡、
+趴地受击和高 KO 分支均通过。该候选仍在仓库外，不进入 Git。
 
 ## 复现与检查
 

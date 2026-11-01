@@ -2068,6 +2068,7 @@ func _try_load_candidate_visual() -> void:
             FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP,
             ATTACK_TO_FLOOR_CLIP, BRICK_FRONT_LOW_CLIP,
             "m03_blck_high", "all_block_low", "all_block_mid",
+            "all_impct_hard_frnt_high",
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name
