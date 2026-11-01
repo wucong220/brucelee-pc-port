@@ -26,10 +26,16 @@ func _run() -> void:
         ])
         quit(1)
         return
+    var hud: PortHUD = scene.get("hud")
+    if hud == null or not hud.footer.text.contains("J J J"):
+        push_error("demo footer hint missing")
+        quit(1)
+        return
     print("DEMO_CLOSE_VALIDATION=" + JSON.stringify({
         "player_x": player.global_position.x,
         "computer_x": computer.global_position.x,
         "rage": player.rage,
+        "footer": hud.footer.text,
     }))
     scene.queue_free()
     await process_frame

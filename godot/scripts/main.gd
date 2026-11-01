@@ -37,6 +37,11 @@ func _ready() -> void:
     _build_combat_audio()
     hud = PortHUD.new()
     add_child(hud)
+    if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
+        hud.footer.text = (
+            "J J J | J K K | K L L | K U U | "
+            + "A+K -> D+L -> D+L = special (rage 100)"
+        )
     prototype_menu = PortPrototypeMenu.new()
     add_child(prototype_menu)
     prototype_menu.command_requested.connect(_on_menu_command)
