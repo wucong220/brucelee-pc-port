@@ -2371,7 +2371,9 @@ func supports_attack(kind: String) -> bool:
         return false
     if candidate_loaded and not _candidate_clip_paths.has(kind):
         # Heavy has no separate recovered animation; its visual path reuses kick.
-        if kind == "heavy" and _candidate_clip_paths.has("kick"):
+        if (kind == "heavy"
+                and attack_config_path != BRICK_ATTACK_CONFIG_PATH
+                and _candidate_clip_paths.has("kick")):
             return true
         return false
     return true
