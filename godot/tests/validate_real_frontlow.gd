@@ -38,6 +38,34 @@ func _run() -> void:
     if clip == null or clip.get_track_count() == 0:
         fail("registered clip has no tracks")
         return
+    if absf(clip.length - 23.0 / 30.0) > 0.035:
+        fail("unexpected frontlow duration: " + str(clip.length))
+        return
+    var skeleton: Skeleton3D = fighter.get("_candidate_skeleton")
+    if skeleton == null:
+        fail("candidate skeleton missing")
+        return
+    var valid_bone_track := false
+    for track in range(clip.get_track_count()):
+        var path: NodePath = clip.track_get_path(track)
+        if (clip.track_get_type(track) != Animation.TYPE_ROTATION_3D
+                or path.get_subname_count() != 1
+                or skeleton.find_bone(String(path.get_subname(0))) < 0
+                or not clip.track_is_enabled(track)
+                or clip.track_get_key_count(track) < 2):
+            continue
+        var first: Variant = clip.track_get_key_value(track, 0)
+        var last: Variant = clip.track_get_key_value(track, clip.track_get_key_count(track) - 1)
+        if (first is Quaternion and last is Quaternion
+                and first.is_finite() and last.is_finite()
+                and absf(first.length() - 1.0) < 0.01
+                and absf(last.length() - 1.0) < 0.01
+                and clip.track_get_key_time(track, clip.track_get_key_count(track) - 1) > 0.0):
+            valid_bone_track = true
+            break
+    if not valid_bone_track:
+        fail("no enabled skeleton rotation track with valid keyframes")
+        return
     anim.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
     var reaction: Dictionary = fighter.reaction_for_incoming(
         {"strength": "hard", "height": "low", "direction": "frontal"}, false)
@@ -63,9 +91,17 @@ func _run() -> void:
     if anim.current_animation_position > 0.001:
         fail("repeated nonlethal hit did not restart real clip; position=" + str(anim.current_animation_position))
         return
+    anim.advance(19.0 / 30.0)
     fighter._advance_timed_states(19.0 / 30.0)
+    if not anim.is_playing() or absf(anim.current_animation_position - 19.0 / 30.0) > 0.002:
+        fail("nonlethal clip ended early or is out of sync before frame 20")
+        return
     if fighter.state != "hitstun":
         fail("nonlethal transitioned before frame 20")
+        return
+    anim.advance(1.0 / 30.0)
+    if not anim.is_playing() or absf(anim.current_animation_position - 20.0 / 30.0) > 0.002:
+        fail("nonlethal clip ended early at frame 20")
         return
     fighter._advance_timed_states(1.0 / 30.0 + 0.00001)
     if fighter.state != "facedownidle":
@@ -94,9 +130,20 @@ func _run() -> void:
         if fighter.receive_hit(1.0, false, 0.0, 1.0, lethal):
             fail("stunimpact unexpectedly accepted repeated hit")
             return
-        fighter._advance_timed_states(20.0 / 30.0)
+        # 0.2 seconds were already advanced above; advance state by the same
+        # amount, then advance both clocks to frame 20.
+        fighter._advance_timed_states(0.2)
+        anim.advance(14.0 / 30.0)
+        fighter._advance_timed_states(14.0 / 30.0)
+        if not anim.is_playing() or absf(anim.current_animation_position - 20.0 / 30.0) > 0.002:
+            fail("lethal clip ended early or is out of sync before frame 21")
+            return
         if fighter.state != "stunimpact":
             fail("lethal transitioned before frame 21")
+            return
+        anim.advance(1.0 / 30.0)
+        if not anim.is_playing() or absf(anim.current_animation_position - 21.0 / 30.0) > 0.002:
+            fail("lethal clip ended early at frame 21")
             return
         fighter._advance_timed_states(1.0 / 30.0 + 0.00001)
         if fighter.state != "facedownko":
