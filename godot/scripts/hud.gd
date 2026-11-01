@@ -3,6 +3,7 @@ class_name PortHUD
 
 var player_bar: ProgressBar
 var opponent_bar: ProgressBar
+var rage_bar: ProgressBar
 var hint: Label
 var center_message: Label
 var footer: Label
@@ -18,7 +19,7 @@ func _ready() -> void:
     top.offset_left = 24.0
     top.offset_top = 18.0
     top.offset_right = -24.0
-    top.offset_bottom = 78.0
+    top.offset_bottom = 104.0
     top.add_theme_constant_override("separation", 40)
     screen.add_child(top)
     var p: VBoxContainer = VBoxContainer.new()
@@ -26,6 +27,7 @@ func _ready() -> void:
     top.add_child(p)
     _add_label(p, "BRUCE | PLAYER", 20)
     player_bar = _make_bar(p)
+    rage_bar = _make_rage_bar(p)
     var o: VBoxContainer = VBoxContainer.new()
     o.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     top.add_child(o)
@@ -98,6 +100,26 @@ func _make_bar(parent: Node) -> ProgressBar:
     row.add_child(bar)
     return bar
 
+func _make_rage_bar(parent: Node) -> ProgressBar:
+    var row: HBoxContainer = HBoxContainer.new()
+    row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_theme_constant_override("separation", 8)
+    parent.add_child(row)
+    var label: Label = Label.new()
+    label.text = "RAGE"
+    label.custom_minimum_size = Vector2(48.0, 14.0)
+    label.add_theme_font_size_override("font_size", 12)
+    label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.36))
+    row.add_child(label)
+    var bar: ProgressBar = ProgressBar.new()
+    bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    bar.custom_minimum_size = Vector2(0.0, 12.0)
+    bar.max_value = 100.0
+    bar.value = 0.0
+    bar.show_percentage = false
+    row.add_child(bar)
+    return bar
+
 func _try_load_hud_icon() -> ImageTexture:
     var local_app_data: String = OS.get_environment("LOCALAPPDATA")
     if local_app_data.is_empty():
@@ -113,6 +135,10 @@ func _try_load_hud_icon() -> ImageTexture:
 func set_health(player_health: float, enemy_health: float) -> void:
     player_bar.value = player_health
     opponent_bar.value = enemy_health
+
+func set_rage(value: float) -> void:
+    if rage_bar != null:
+        rage_bar.value = clampf(value, 0.0, 100.0)
 
 func show_message(value: String) -> void:
     center_message.text = value
