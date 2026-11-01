@@ -1263,7 +1263,7 @@ func _apply_attack_root_motion() -> void:
             -6.8, 6.8
         )
         position.z = clampf(
-            position.z + delta.x * source_units_to_world,
+            position.z + facing * delta.x * source_units_to_world,
             -3.0, 3.0
         )
     _attack_root_previous_frame = frame
