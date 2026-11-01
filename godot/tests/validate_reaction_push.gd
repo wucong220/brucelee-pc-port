@@ -155,6 +155,53 @@ func _run() -> void:
             "source_component": case["source_component"],
             "world_push": expected,
         })
+    var stun_cases: Array[Dictionary] = [
+        {
+            "state": "stun",
+            "impact": {"strength": "hard", "height": "high", "direction": "frontal"},
+            "clip": "stun_hard",
+            "source_component": 200.7998046875,
+        },
+        {
+            "state": "stun2",
+            "impact": {"strength": "hard", "height": "high", "direction": "frontal"},
+            "clip": "stun_hard",
+            "source_component": 200.7998046875,
+        },
+        {
+            "state": "stun",
+            "impact": {"strength": "brutal", "height": "high", "direction": "frontal"},
+            "clip": "stun_brutal",
+            "source_component": 187.198974609375,
+        },
+        {
+            "state": "stun2",
+            "impact": {"strength": "brutal", "height": "high", "direction": "frontal"},
+            "clip": "stun_brutal",
+            "source_component": 187.198974609375,
+        },
+    ]
+    for case: Dictionary in stun_cases:
+        fighter.reset_fighter(Vector3.ZERO)
+        fighter.state = String(case["state"])
+        fighter.state_time = 0.0
+        fighter._candidate_clip_paths[String(case["clip"])] = "synthetic"
+        var reaction: Dictionary = fighter.reaction_for_incoming(case["impact"], false)
+        var expected: float = float(case["source_component"]) * fighter.source_units_to_world
+        if not fighter.receive_hit(5.0, false, 0.0, 1.0, reaction):
+            push_error("stun receive_hit rejected " + String(case["state"]))
+            quit(1)
+            return
+        if absf(fighter.global_position.x - expected) > 0.001:
+            push_error("stun reaction push mismatch for " + String(case["state"]))
+            quit(1)
+            return
+        results.append({
+            "state": case["state"],
+            "source_action": reaction.get("source_action", ""),
+            "source_component": case["source_component"],
+            "world_push": expected,
+        })
     print("REACTION_PUSH_VALIDATION=" + JSON.stringify({
         "cases": results,
         "scope": "raw source position components mapped to prototype forward push; axis/sign native mapping unverified",

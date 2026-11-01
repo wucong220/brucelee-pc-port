@@ -3813,6 +3813,18 @@ func receive_hit(
             return false
         if not _candidate_clip_paths.has(stun_animation):
             return false
+        var stun_push_source: float = float(
+            REACTION_ROOT_PUSH_SOURCE.get(stun_source, -1.0)
+        )
+        if stun_source == "stunbrutalimpact":
+            # stun_brutal uses the spectacular-left source animation; use the
+            # corresponding decoded reaction positions as a prototype input.
+            stun_push_source = float(REACTION_ROOT_PUSH_SOURCE.get("impactbrutalleft", -1.0))
+        if stun_push_source >= 0.0:
+            position.x = clampf(
+                position.x + direction * stun_push_source * source_units_to_world,
+                -6.8, 6.8
+            )
         health = maxf(0.0, health - amount)
         state = "stunimpact"
         state_time = float(stun_exit_frame) / SOURCE_FRAME_RATE
