@@ -731,6 +731,21 @@ py -3.12 -X utf8 -B tools\native_root_output.py `
   'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
 ```
 
+后续静态追踪找到了之前固定偏移扫描遗漏的间接引用。在
+`CRootPlayerBase::UpdateBinding` 中，`0x407620` 调用 `FindChunk(Character)`；
+成功路径上 `0x40764c` 调用 `FindOffset(Positions, r5+0x80)`，其中
+`Positions` 来自 GOT 槽 `0x604d50` 的 `R_ARM_GLOB_DAT` 重定位。后续
+`GetOutput` 在 `0x407b0c` 读取同一成员偏移 `+0x80`，用于计算三字样本
+地址；浮点比较不相等时先走 `0x407d84` 的 `BuildFrame` 分支。这个静态
+数据流支持 `Positions` 绑定索引用于根输出采样，但仍未证明原始 ANM 轨道
+逐值等于最终输出，也未验证插值、坐标轴或击退。此前“找不到 `Positions`
+实际代码引用”的判断不正确，原因是访问经过 PC 字面量和寄存器间接寻址。
+
+```powershell
+py -3.12 -X utf8 -B tools/native_root_binding.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+```
+
 扩展后的只读校验命令：
 
 ```powershell
