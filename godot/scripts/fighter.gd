@@ -60,6 +60,12 @@ const BRICK_CLIPS: Dictionary = {
     "punch": "m03_pnch_low_01",
     "kick": "m03_kck_low_01",
     "move": "m03_movefwd",
+    "moveleft": "m03_movelft",
+    "moveright": "m03_moverht",
+    "stepfwd": "m03_stepfwd",
+    "stepback": "m03_stepbck",
+    "stepleft": "m03_steplft",
+    "stepright": "m03_steprht",
 }
 const SOURCE_FRAME_RATE: float = 30.0
 const SOURCE_CHARACTER_HEIGHT: float = CANDIDATE_SOURCE_HEIGHT
