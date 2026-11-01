@@ -21,6 +21,10 @@ func _run() -> void:
     var test_path: String = test_root.path_join(
         "BruceLee-PC-Port/brick-missing-action-%d.json" % Time.get_ticks_usec()
     )
+    if DirAccess.make_dir_recursive_absolute(test_path.get_base_dir()) != OK:
+        push_error("Could not create the missing-action config directory")
+        quit(1)
+        return
     var handle: FileAccess = FileAccess.open(test_path, FileAccess.WRITE)
     if handle == null:
         push_error("Could not write the missing-action config")
