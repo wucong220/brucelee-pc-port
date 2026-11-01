@@ -4114,6 +4114,15 @@ func receive_hit(
             and not _candidate_clip_paths.has(FACEDOWN_IMPACT_CLIP)):
         return false
     var position_before: float = position.x
+    if (not blocked and health - amount <= 0.0
+            and state_before == "facedownidle"
+            and _candidate_clip_paths.has(_facedown_idle_clip())):
+        # A lethal hit cannot promote an already-downed opponent into the
+        # standing impactstun/faceupko path. Prefer the source healthzero edge.
+        health = maxf(0.0, health - amount)
+        position.x = position_before
+        _begin_facedown_ko()
+        return true
     _attack_connected = false
     # Being hit cancels a sequence that matched during the interrupted attack.
     _clear_standing_combo_state()
