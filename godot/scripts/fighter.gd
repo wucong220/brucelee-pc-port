@@ -229,7 +229,7 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
 # Recovered miss_return is [22,25]; choose its first frame as the PC
 # candidate exit while retaining the 33-frame source animation metadata.
 const SPECIAL_PUNCH_LOW_MISS_RETURN_FRAME: float = 22.0
-const PROTOTYPE_GRAB_DISTANCE: float = 0.62
+const PROTOTYPE_GRAB_DISTANCE: float = 0.7
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
 # Source windows: stun->stun2 and stun2->stunfall [55,61]; stunfall->faceupko [71,79].
@@ -3440,7 +3440,8 @@ func _try_multi_impact_contacts() -> void:
         # connected sequence. Block push or grab hold motion can move the
         # target slightly outside the opening reach or behind the facing line;
         # do not discard the remaining connected hits.
-        if _multi_impact_applied.is_empty() and dx * facing < -0.1:
+        if (_multi_impact_applied.is_empty() and dx * facing < -0.1
+                and not GRAB_ATTACKS.has(attack_kind)):
             continue
         var blocked: bool = opponent.guard_held and (
             opponent._can_block_current_hit() or opponent.state == "blockstun")
