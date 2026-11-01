@@ -8,6 +8,7 @@ CONFIG = ROOT / "godot" / "data" / "fighting_set_low_attacks.json"
 RAW = ROOT / "reports" / "raw_attack_fields.json"
 
 KEYS = {
+    "highpunch2": "high_punch2",
     "endattack1": "endattack1",
     "endattack2": "endattack2",
     "specialkicklowhit": "special_kick_low_hit",
