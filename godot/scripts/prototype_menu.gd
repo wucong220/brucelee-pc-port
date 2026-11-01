@@ -24,6 +24,8 @@ var background_error: String = ""
 var background_path: String = ""
 var item_labels: Array[Label] = []
 var background: TextureRect
+var background_main_texture: Texture2D
+var background_practice_texture: Texture2D
 var mode_label: Label
 var status_label: Label
 var controls_label: Label
@@ -178,8 +180,29 @@ func _load_background() -> void:
     if image.load(background_path) != OK:
         background_error = "prototype menu background failed to load: " + background_path
         return
-    background.texture = ImageTexture.create_from_image(image)
+    background_main_texture = ImageTexture.create_from_image(image)
+    background.texture = background_main_texture
     background_loaded = true
+    var practice_path: String = background_path.get_base_dir().path_join(
+        "practice_default.png"
+    )
+    if FileAccess.file_exists(practice_path):
+        var practice_image: Image = Image.new()
+        if practice_image.load(practice_path) == OK:
+            background_practice_texture = ImageTexture.create_from_image(practice_image)
+    _refresh_background_preview()
+
+func _refresh_background_preview() -> void:
+    if not background_loaded or background == null:
+        return
+    var show_practice: bool = (
+        menu_state == "main"
+        and selected_command() == "training"
+        and background_practice_texture != null
+    )
+    background.texture = (
+        background_practice_texture if show_practice else background_main_texture
+    )
 
 func show_main_menu() -> void:
     menu_state = "main"
@@ -189,6 +212,7 @@ func show_main_menu() -> void:
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"
     _refresh_items(MAIN_LABELS)
+    _refresh_selection()
 
 func show_pause_menu() -> void:
     menu_state = "pause"
@@ -198,6 +222,7 @@ func show_pause_menu() -> void:
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm   ESC/B/START resume"
     _refresh_items(PAUSE_LABELS)
+    _refresh_selection()
 
 func hide_menu() -> void:
     menu_state = "hidden"
@@ -280,3 +305,4 @@ func _refresh_selection() -> void:
             "font_color",
             Color(1.0, 0.82, 0.36) if selected else Color(0.84, 0.86, 0.90)
         )
+    _refresh_background_preview()
