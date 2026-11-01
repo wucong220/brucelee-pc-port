@@ -84,8 +84,8 @@ func _run() -> void:
 func _check_clip(player: PortFighter) -> bool:
     var animation: AnimationPlayer = player.get("_candidate_animation")
     var clip_count: int = animation.get_animation_list().size() if animation != null else 0
-    if clip_count not in [21, 22, 23]:
-        push_error("Face-up attack GLB must expose 21, 22, or 23 clips")
+    if clip_count not in [21, 22, 23, 59]:
+        push_error("Face-up attack GLB must expose 21, 22, 23, or 59 clips")
         return false
     for required: String in [
         "all_stunned_fall",
@@ -102,8 +102,10 @@ func _check_clip(player: PortFighter) -> bool:
         push_error("22-clip candidate is missing "
             + PortFighter.FACEUP_IMPACT_CLIP)
         return false
-    if (clip_count == 23) != _has_clip(animation, PortFighter.ATTACK_TO_FLOOR_CLIP):
-        push_error("Only the 23-clip candidate must include m01_attack_to_floor")
+    if (clip_count >= 23) != _has_clip(
+            animation, PortFighter.ATTACK_TO_FLOOR_CLIP
+    ):
+        push_error("attacktofloor presence must match the 23-or-later candidate")
         return false
     if not player._candidate_clip_paths.has(PortFighter.FACEUP_ATTACK_CLIP):
         push_error("all_getup_faceup_attack did not pass candidate track validation")
