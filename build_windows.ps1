@@ -36,6 +36,7 @@ $sourceFull = [System.IO.Path]::GetFullPath($sourceProject)
 $rootFull = [System.IO.Path]::GetFullPath($root)
 $stagingFull = [System.IO.Path]::GetFullPath($staging)
 $projectFull = [System.IO.Path]::GetFullPath($project)
+$godotTempFull = [System.IO.Path]::GetFullPath($GodotTempRoot)
 function Test-PathOverlap([string]$left, [string]$right) {
     $separator = [System.IO.Path]::DirectorySeparatorChar
     return [string]::Equals($left, $right, [System.StringComparison]::OrdinalIgnoreCase) -or
@@ -106,13 +107,19 @@ if ((Test-PathOverlap $stagingFull $rootFull) -or
         (Test-PathOverlap $projectFull $sourceFull)) {
     throw 'BuildRoot/staging must not overlap the repository or source project.'
 }
+if ((Test-PathOverlap $godotTempFull $rootFull) -or
+        (Test-PathOverlap $godotTempFull $sourceFull) -or
+        (Test-PathOverlap $godotTempFull $stagingFull)) {
+    throw 'GodotTempRoot must not overlap the repository, source project, or staging.'
+}
 if ((Test-ReparsePointInPath $BuildRoot) -or (Test-ReparsePointInPath $staging) -or
-        (Test-ReparsePointInPath $sourceProject) -or (Test-ReparsePointInPath $root)) {
-    throw 'BuildRoot/staging/source paths must not traverse a junction or symlink.'
+        (Test-ReparsePointInPath $sourceProject) -or (Test-ReparsePointInPath $root) -or
+        (Test-ReparsePointInPath $GodotTempRoot)) {
+    throw 'BuildRoot/staging/source/temp paths must not traverse a junction or symlink.'
 }
 if ((Test-SubstPath $buildRootFull) -or (Test-SubstPath $sourceFull) -or
-        (Test-SubstPath $rootFull)) {
-    throw 'BuildRoot/source paths must not use a SUBST virtual drive.'
+        (Test-SubstPath $rootFull) -or (Test-SubstPath $godotTempFull)) {
+    throw 'BuildRoot/source/temp paths must not use a SUBST virtual drive.'
 }
 if (Test-Path $staging) { throw 'Generated staging directory already exists.' }
 New-Item -ItemType Directory -Force -Path $staging | Out-Null
