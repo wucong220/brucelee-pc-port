@@ -3730,6 +3730,10 @@ func source_radius_for_current_animation() -> float:
         return FACEDOWN_KO_RADIUS * radius_scale
     if state == "faceupko":
         return FACEUP_KO_RADIUS * radius_scale
+    if state == "impacttofloor":
+        # all_stunned_fall is shared with stunfall; the recovered impact action
+        # uses radius 75 while stunfall uses 70.
+        return 75.0 * radius_scale
     var animation: String = current_source_animation()
     var radius: float = _stored_animation_radius(animation)
     if radius < 0.0:
