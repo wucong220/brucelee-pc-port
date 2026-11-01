@@ -36,7 +36,11 @@ function Get-ComparisonPath([string]$path) {
     if ($value.StartsWith('\\?\UNC\', [System.StringComparison]::OrdinalIgnoreCase)) {
         $value = '\\' + $value.Substring(8)
     } elseif ($value.StartsWith('\\?\', [System.StringComparison]::OrdinalIgnoreCase)) {
-        $value = $value.Substring(4)
+        if ($value -match '^\\\\\?\\[A-Za-z]:') {
+            $value = $value.Substring(4)
+        } else {
+            throw 'Unsupported extended device path.'
+        }
     }
     return $value.TrimEnd([char[]]@('\', '/'))
 }
@@ -106,6 +110,15 @@ if ($SelfTest) {
     }
     if (-not (Test-PathOverlap '\\?\UNC\server\share' '\\server\share\project')) {
         throw 'Extended-length UNC overlap was not detected.'
+    }
+    $volumePathRejected = $false
+    try {
+        Test-PathOverlap '\\?\Volume{00000000-0000-0000-0000-000000000000}\repo' 'C:\repo' | Out-Null
+    } catch {
+        $volumePathRejected = $true
+    }
+    if (-not $volumePathRejected) {
+        throw 'Volume GUID path was not rejected.'
     }
     $substFixture = @('Z:\: => C:\repo\godot')
     if (-not (Test-SubstPath 'Z:\out' $substFixture)) {
