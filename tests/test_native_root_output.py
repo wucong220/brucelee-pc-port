@@ -63,6 +63,7 @@ class TestNativeRootOutput(unittest.TestCase):
                           hashlib.sha256(elf).hexdigest()):
             result = verify_bytes(elf)
         self.assertEqual(result["address"], 0x00407A04)
+        self.assertEqual(result["size"], 936)
         self.assertEqual(result["output_offsets"], [0xC, 0x10, 0x14])
 
     def test_wrong_instruction_is_rejected(self):
@@ -74,6 +75,13 @@ class TestNativeRootOutput(unittest.TestCase):
 
     def test_wrong_symbol_is_rejected(self):
         elf = _elf_fixture(symbol_address=0x00407A08)
+        with patch.object(native_root_output, "_SHA256",
+                          hashlib.sha256(elf).hexdigest()):
+            with self.assertRaisesRegex(HierarchyLinkError, "symbol"):
+                verify_bytes(elf)
+
+    def test_wrong_symbol_size_is_rejected(self):
+        elf = _elf_fixture(symbol_size=935)
         with patch.object(native_root_output, "_SHA256",
                           hashlib.sha256(elf).hexdigest()):
             with self.assertRaisesRegex(HierarchyLinkError, "symbol"):
