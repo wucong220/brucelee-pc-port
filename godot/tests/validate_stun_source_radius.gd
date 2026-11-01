@@ -32,6 +32,13 @@ func _run() -> void:
             + str(fighter.source_radius_for_current_animation()))
         quit(1)
         return
+    fighter.state = "hitstun"
+    fighter.last_reaction_animation = "all_impct_light_frnt_low"
+    if absf(fighter.source_radius_for_current_animation() - 40.0) > 0.001:
+        push_error("normal hitstun low radius was not 40: "
+            + str(fighter.source_radius_for_current_animation()))
+        quit(1)
+        return
     for case: Array in [["stun_hard", 85.0], ["stun_brutal", 25.0]]:
         fighter.state = "stunimpact"
         fighter.last_reaction_animation = String(case[0])

@@ -3676,7 +3676,8 @@ func _stored_animation_radius(animation: String) -> float:
         # thai.set action 92 uses radius 85. The Bruce set uses 80 for the
         # same animation, so this value is character-config specific.
         return BRICK_FACEDOWN_IMPACT_RADIUS
-    if (STUN_IMPACT_SOURCE_RADII.has(animation)
+    if (state in ["stunimpact", "impactstun"]
+            and STUN_IMPACT_SOURCE_RADII.has(animation)
             and _is_number(STUN_IMPACT_SOURCE_RADII[animation])):
         return float(STUN_IMPACT_SOURCE_RADII[animation])
     if source_animation_radii.has(animation) and _is_number(source_animation_radii[animation]):
