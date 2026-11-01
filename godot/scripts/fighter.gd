@@ -2022,8 +2022,7 @@ func _try_load_candidate_visual() -> void:
             "endattack1", "endattack2", "stun", "stun_fall",
             "stun_hard", "stun_brutal", "heavy",
             "move", "moveleft", "moveright", "stepfwd", "stepback",
-            "stepleft", "stepright", "m03_blck_high",
-            "all_block_low", "all_block_mid"]:
+            "stepleft", "stepright"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2068,6 +2067,7 @@ func _try_load_candidate_visual() -> void:
             FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP,
             FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP,
             ATTACK_TO_FLOOR_CLIP, BRICK_FRONT_LOW_CLIP,
+            "m03_blck_high", "all_block_low", "all_block_mid",
         ]:
             var matched_return: String = _find_animation_clip(
                 _candidate_animation, return_clip_name

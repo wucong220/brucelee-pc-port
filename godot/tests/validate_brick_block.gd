@@ -22,6 +22,14 @@ func _run() -> void:
         push_error("Brick candidate failed: " + brick.candidate_load_error)
         quit(1)
         return
+    var invalid_clip: Animation = Animation.new()
+    invalid_clip.length = 0.5
+    var invalid_track: int = invalid_clip.add_track(Animation.TYPE_VALUE)
+    invalid_clip.track_set_path(invalid_track, "bad_track")
+    if brick._prepare_candidate_reaction(invalid_clip):
+        push_error("Invalid reaction track was accepted")
+        quit(1)
+        return
     var cases: Array[Array] = [
         ["high", "larm", "m03_blck_high"],
         ["low", "lleg", "all_block_low"],
