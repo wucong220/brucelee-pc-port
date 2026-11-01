@@ -81,14 +81,69 @@ function Test-ReparsePointInPath([string]$path) {
 }
 
 function Test-PckProjectSettings([string]$path) {
+    if (-not (Test-Path -LiteralPath $path)) { return $false }
     $bytes = [System.IO.File]::ReadAllBytes($path)
-    for ($index = 0; $index -le $bytes.Length - 4; $index++) {
-        if ($bytes[$index] -eq 0x45 -and $bytes[$index + 1] -eq 0x43 -and
-                $bytes[$index + 2] -eq 0x46 -and $bytes[$index + 3] -eq 0x47) {
-            return $true
-        }
+    if ($bytes.Length -lt 64 -or
+            [System.Text.Encoding]::ASCII.GetString($bytes, 0, 4) -ne 'GDPC') {
+        return $false
+    }
+    $fileBase = [BitConverter]::ToUInt64($bytes, 24)
+    $directoryOffset = [BitConverter]::ToUInt64($bytes, 32)
+    if ($directoryOffset + 4 -gt $bytes.Length) { return $false }
+    $count = [BitConverter]::ToUInt32($bytes, [int]$directoryOffset)
+    $position = [int]$directoryOffset + 4
+    for ($entry = 0; $entry -lt $count; $entry++) {
+        if ($position + 4 -gt $bytes.Length) { return $false }
+        $pathLength = [BitConverter]::ToUInt32($bytes, $position)
+        $position += 4
+        if ($position + $pathLength + 36 -gt $bytes.Length) { return $false }
+        $entryPath = [System.Text.Encoding]::UTF8.GetString(
+            $bytes, $position, [int]$pathLength
+        ).TrimEnd([char[]]@([char]0))
+        $position += [int]$pathLength
+        $entryOffset = [BitConverter]::ToUInt64($bytes, $position)
+        $entrySize = [BitConverter]::ToUInt64($bytes, $position + 8)
+        $position += 36
+        if ($entryPath -ne 'project.binary') { continue }
+        $dataOffset = $fileBase + $entryOffset
+        if ($entrySize -lt 4 -or $dataOffset + 4 -gt $bytes.Length) { return $false }
+        $dataIndex = [int]$dataOffset
+        return (
+            $bytes[$dataIndex] -eq 0x45 -and $bytes[$dataIndex + 1] -eq 0x43 -and
+            $bytes[$dataIndex + 2] -eq 0x46 -and $bytes[$dataIndex + 3] -eq 0x47
+        )
     }
     return $false
+}
+
+function New-PckFixture([string]$path, [string]$entryPath, [byte[]]$data) {
+    $fileBase = 64
+    $directoryOffset = $fileBase + $data.Length
+    $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($entryPath + [char]0)
+    $entrySize = 4 + $pathBytes.Length + 8 + 8 + 16 + 4
+    $totalSize = $directoryOffset + 4 + $entrySize
+    $bytes = New-Object byte[] $totalSize
+    [System.Text.Encoding]::ASCII.GetBytes('GDPC').CopyTo($bytes, 0)
+    [BitConverter]::GetBytes([uint32]4).CopyTo($bytes, 4)
+    [BitConverter]::GetBytes([uint32]4).CopyTo($bytes, 8)
+    [BitConverter]::GetBytes([uint32]7).CopyTo($bytes, 12)
+    [BitConverter]::GetBytes([uint32]0).CopyTo($bytes, 16)
+    [BitConverter]::GetBytes([uint32]0).CopyTo($bytes, 20)
+    [BitConverter]::GetBytes([uint64]$fileBase).CopyTo($bytes, 24)
+    [BitConverter]::GetBytes([uint64]$directoryOffset).CopyTo($bytes, 32)
+    [BitConverter]::GetBytes([uint32]1).CopyTo($bytes, $directoryOffset)
+    $position = $directoryOffset + 4
+    [BitConverter]::GetBytes([uint32]$pathBytes.Length).CopyTo($bytes, $position)
+    $position += 4
+    [Array]::Copy($pathBytes, 0, $bytes, $position, $pathBytes.Length)
+    $position += $pathBytes.Length
+    [BitConverter]::GetBytes([uint64]0).CopyTo($bytes, $position)
+    [BitConverter]::GetBytes([uint64]$data.Length).CopyTo($bytes, $position + 8)
+    $position += 36
+    if ($data.Length -gt 0) {
+        [Array]::Copy($data, 0, $bytes, $fileBase, $data.Length)
+    }
+    [System.IO.File]::WriteAllBytes($path, $bytes)
 }
 
 function Test-SubstPath([string]$path, [string[]]$substLines = $null) {
@@ -144,13 +199,17 @@ if ($SelfTest) {
         throw 'Device namespace path was not rejected.'
     }
     $pckFixture = Join-Path $env:TEMP ('brucelee-pck-fixture-' + [guid]::NewGuid().ToString('N'))
-    [System.IO.File]::WriteAllBytes($pckFixture, [byte[]](1, 2, 3))
+    New-PckFixture $pckFixture 'other.bin' ([byte[]](0x45, 0x43, 0x46, 0x47))
     if (Test-PckProjectSettings $pckFixture) {
-        throw 'Empty PCK fixture was accepted.'
+        throw 'PCK without project.binary was accepted.'
     }
-    [System.IO.File]::WriteAllBytes($pckFixture, [byte[]](0x45, 0x43, 0x46, 0x47))
+    New-PckFixture $pckFixture 'project.binary' ([byte[]]@())
+    if (Test-PckProjectSettings $pckFixture) {
+        throw 'Empty project.binary fixture was accepted.'
+    }
+    New-PckFixture $pckFixture 'project.binary' ([byte[]](0x45, 0x43, 0x46, 0x47))
     if (-not (Test-PckProjectSettings $pckFixture)) {
-        throw 'ECFG PCK fixture was rejected.'
+        throw 'ECFG project.binary fixture was rejected.'
     }
     Remove-Item -LiteralPath $pckFixture -Force -ErrorAction SilentlyContinue
     $substFixture = @('Z:\: => C:\repo\godot')
