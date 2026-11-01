@@ -107,9 +107,9 @@ func _check_clips(player: PortFighter) -> bool:
     var has_attack_to_floor: bool = _has_clip(
         animation, PortFighter.ATTACK_TO_FLOOR_CLIP
     )
-    if clip_count >= 23 and not has_attack_to_floor:
+    if (clip_count >= 23) != has_attack_to_floor:
         push_error(
-            "23-or-later face-up extension is missing m01_attack_to_floor"
+            "m01_attack_to_floor must appear exactly on 23-or-later extensions"
         )
         return false
     if not _check_clip(
