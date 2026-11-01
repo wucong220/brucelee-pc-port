@@ -27,6 +27,9 @@ func _run() -> void:
         push_error("Grab candidate failed: " + player.candidate_load_error)
         quit(1)
         return
+    if not _validate_candidate_identity(args[0]):
+        quit(1)
+        return
     var clips: Dictionary = player.get("_candidate_clip_paths")
     for required: String in ["grab1_miss", "grab2_miss", "grab1", "grab2"]:
         if not clips.has(required):
@@ -146,22 +149,32 @@ func _validate_blocked_grab_rejects_chain(player: PortFighter, defender: PortFig
 func _validate_candidate_identity(path: String) -> bool:
     var file: FileAccess = FileAccess.open(path, FileAccess.READ)
     if file == null:
-        push_error("Could not open candidate GLB")
+        push_error("Candidate could not be opened")
         return false
     var bytes: PackedByteArray = file.get_buffer(file.get_length())
     file.close()
-    if bytes.size() != 4039952:
-        push_error("Candidate size mismatch: " + str(bytes.size()))
-        return false
+    var expected_hash: String
+    var expected_animations: int
+    match bytes.size():
+        4039952:
+            expected_hash = "592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0"
+            expected_animations = 47
+        4744428:
+            expected_hash = "58d100c31eb416d3c3948c51a78dc8b634426904e78ef754740baafe345f4d93"
+            expected_animations = 59
+        _:
+            push_error("Candidate size mismatch: " + str(bytes.size()))
+            return false
     var hash: HashingContext = HashingContext.new()
     hash.start(HashingContext.HASH_SHA256)
     hash.update(bytes)
-    if hash.finish().hex_encode().to_lower() != "592bfb185f2c587dde5a00b20ba92a8ae49b6211e957fb39f1a98c94da02afb0":
+    if hash.finish().hex_encode().to_lower() != expected_hash:
         push_error("Candidate SHA-256 mismatch")
         return false
     var json_length: int = bytes.decode_u32(12)
     var document: Variant = JSON.parse_string(bytes.slice(20, 20 + json_length).get_string_from_utf8())
-    if not document is Dictionary or not document.has("animations") or document["animations"].size() != 47:
+    if (not document is Dictionary or not document.has("animations")
+            or document["animations"].size() != expected_animations):
         push_error("Candidate animation count mismatch")
         return false
     return true
