@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source_set": "adreno_200/set/brucelee.set",
-  "method": "read-only kdf_fighting_set.inspect_archive; no original bytes",
+  "method": "read-only kdf_fighting_set.inspect_archive action.animation_radius; no original bytes",
   "actions": {
     "endattack1": {
       "animation": "m01_end_attack_01",
