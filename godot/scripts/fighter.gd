@@ -69,6 +69,7 @@ const HEAVY_ATTACK: Dictionary = {
 }
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
 const BRICK_ATTACK_CONFIG_PATH: String = "res://data/fighting_set_m03_mapped_attacks.json"
+const ATTACK_ROOT_MOTION_PATH: String = "res://data/attack_root_motion.json"
 const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_idle_01": 25.0,
     "m01_pnch_low_01": 40.0,
@@ -1081,6 +1082,10 @@ var state: String = "idle"
 var state_time: float = 0.0
 var attack_kind: String = ""
 var attack_sequence: int = 0
+var _attack_root_tracks: Dictionary = {}
+var _attack_root_sequence: int = -1
+var _attack_root_previous_frame: float = -1.0
+var _attack_root_previous_value: Vector3 = Vector3.ZERO
 var _attack_connected: bool = false
 var _ground_attack_input_history: Array[Dictionary] = []
 var _ground_attack_input_owner: String = ""
@@ -1171,11 +1176,77 @@ func configure_attack_config(path: String) -> void:
     attack_config_path = path
 
 
+func _load_attack_root_motion() -> void:
+    _attack_root_tracks.clear()
+    var file: FileAccess = FileAccess.open(ATTACK_ROOT_MOTION_PATH, FileAccess.READ)
+    if file == null:
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        push_warning("Attack root-motion data is not an object; disabled")
+        return
+    for source_action: Variant in parsed:
+        var track: Variant = parsed[source_action]
+        if not track is Array:
+            continue
+        var points: Array[Vector3] = []
+        for sample: Variant in track:
+            if not sample is Array or sample.size() < 2:
+                continue
+            points.append(Vector3(
+                float(sample[0]), float(sample[1]), float(sample[2])
+            ))
+        if points.size() >= 2:
+            _attack_root_tracks[String(source_action)] = points
+
+
+func _sample_attack_root(track: Array, frame: float) -> Vector3:
+    var bounded: float = clampf(frame, 0.0, float(track.size() - 1))
+    var left: int = int(floor(bounded))
+    var right: int = mini(left + 1, track.size() - 1)
+    var weight: float = bounded - float(left)
+    return track[left].lerp(track[right], weight)
+
+
+func _apply_attack_root_motion() -> void:
+    if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
+        return
+    var source_action: String = String(ATTACKS[attack_kind].get("source_action", ""))
+    var track: Variant = _attack_root_tracks.get(source_action)
+    if not track is Array or track.size() < 2:
+        return
+    var frame: float = _current_attack_source_frame()
+    if frame < 0.0:
+        return
+    if attack_sequence != _attack_root_sequence:
+        _attack_root_sequence = attack_sequence
+        _attack_root_previous_frame = frame
+        _attack_root_previous_value = _sample_attack_root(track, frame)
+        return
+    if frame + 0.0001 < _attack_root_previous_frame:
+        _attack_root_previous_frame = frame
+        _attack_root_previous_value = _sample_attack_root(track, frame)
+        return
+    var current: Vector3 = _sample_attack_root(track, frame)
+    var delta: Vector3 = current - _attack_root_previous_value
+    var forward_delta: float = Vector2(delta.x, delta.y).length()
+    if forward_delta > 0.0:
+        # Prototype: source raw components are projected to a forward scalar.
+        # Native axis/sign and final world mapping remain unverified.
+        position.x = clampf(
+            position.x + facing * forward_delta * source_units_to_world,
+            -6.8, 6.8
+        )
+    _attack_root_previous_frame = frame
+    _attack_root_previous_value = current
+
+
 func _ready() -> void:
     if OS.get_environment("BRUCELEE_CANDIDATE_VISUAL_BLENDING") == "1":
         candidate_visual_blending_enabled = true
     if not _load_attack_definitions():
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
+    _load_attack_root_motion()
     collision_layer = 2
     collision_mask = 1 | 2
     var capsule: CapsuleShape3D = CapsuleShape3D.new()
@@ -3188,6 +3259,7 @@ func _physics_process(delta: float) -> void:
         # a matched-but-unexecuted combo alive.
         _clear_standing_combo_state()
     _advance_timed_states(delta)
+    _apply_attack_root_motion()
     _try_begin_pending_standing_combo()
     if (state == "active" and ATTACKS.has(attack_kind)
             and not NON_CONTACT_ATTACKS.has(attack_kind)
