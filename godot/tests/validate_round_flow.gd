@@ -57,6 +57,11 @@ func _run() -> void:
         push_error("First player round win did not schedule the next round")
         quit(1)
         return
+    scene._on_ko(computer)
+    if scene.player_rounds != 1:
+        push_error("Duplicate KO signal scored the round twice")
+        quit(1)
+        return
     player.move_axis = Vector2(1.0, 0.0)
     computer.move_axis = Vector2(-1.0, 0.0)
     scene._physics_process(0.1)

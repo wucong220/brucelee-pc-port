@@ -826,7 +826,7 @@ func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damag
     notice_timer = 0.30
 
 func _on_ko(fighter: PortFighter) -> void:
-    if training_completed:
+    if training_completed or done:
         return
     done = true
     if training_mode:
