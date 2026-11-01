@@ -719,6 +719,18 @@ if fighter.current_frame <unsigned fighter.final_frame - 1:
 朝向矩阵约定、插值、blending、碰撞及其他位置写入仍待核对；不能直接把
 这段伪代码用于替换 Godot 的 `prototype_push`。
 
+新增的只读 `tools/native_root_output.py` 进一步固定了
+`CRootPlayerBase::GetOutput` 的样本路径：`0x407B44` 从 3 分量样本表
+`ldm r7, {r0, r1, r2}`，`0x407B50` 写回 `r5 = r4 + 0xc`，随后
+`0x407C94/0x407CB0/0x407CB4` 将变换结果写到输出的
+`+0x14/+0x10/+0xc`。这证明的是三浮点根部样本进入输出对象的指令路径，
+仍**不证明该样本来自 ANM 的 `positions` 属性**，也不证明坐标轴或世界位移。
+
+```powershell
+py -3.12 -X utf8 -B tools\native_root_output.py `
+  'C:\Users\Lenovo\AppData\Local\BruceLee-PC-Port\binaries\libdefault.so'
+```
+
 扩展后的只读校验命令：
 
 ```powershell
