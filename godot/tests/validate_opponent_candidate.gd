@@ -41,6 +41,39 @@ const COMBAT_ANIMATIONS: Array[String] = [
     "m03_steplft",
     "m03_steprht",
 ]
+const COMBAT_ANIMATIONS_31: Array[String] = [
+    "all_block_low",
+    "all_block_mid",
+    "all_idle_face_down_forbigguy",
+    "all_idle_face_up",
+    "all_impct_facedwn",
+    "all_impct_hard_frnt_high",
+    "all_impct_hard_frnt_low",
+    "all_impct_light_frnt_high",
+    "all_impct_light_frnt_low",
+    "all_impct_light_frnt_mid",
+    "m03_blck_high",
+    "m03_idle_01",
+    "m03_kck_high_01",
+    "m03_kck_high_02",
+    "m03_kck_high_03",
+    "m03_kck_low_01",
+    "m03_kck_low_02",
+    "m03_kck_low_03",
+    "m03_movefwd",
+    "m03_movelft",
+    "m03_moverht",
+    "m03_pnch_high_01",
+    "m03_pnch_high_02",
+    "m03_pnch_high_03",
+    "m03_pnch_low_01",
+    "m03_pnch_low_02",
+    "m03_pnch_low_03",
+    "m03_stepbck",
+    "m03_stepfwd",
+    "m03_steplft",
+    "m03_steprht",
+]
 const COMBAT_ANIMATIONS_28: Array[String] = [
     "all_block_low",
     "all_block_mid",
@@ -162,9 +195,11 @@ func _run() -> void:
             quit(1)
             return
     var full_candidate: bool = actual_names.size() in [53, 55]
-    var combat_candidate: bool = actual_names.size() in [26, 27, 28]
+    var combat_candidate: bool = actual_names.size() in [26, 27, 28, 31]
     var expected_combat: Array[String] = COMBAT_ANIMATIONS
-    if actual_names.size() == 28:
+    if actual_names.size() == 31:
+        expected_combat = COMBAT_ANIMATIONS_31
+    elif actual_names.size() == 28:
         expected_combat = COMBAT_ANIMATIONS_28
     elif actual_names.size() == 27:
         expected_combat = COMBAT_ANIMATIONS_27
