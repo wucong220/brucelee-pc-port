@@ -35,16 +35,14 @@ func _ready() -> void:
     _add_label(o, "OPPONENT | CPU", 20)
     opponent_bar = _make_bar(o)
     round_label = Label.new()
-    round_label.anchor_left = 0.5
-    round_label.anchor_right = 0.5
-    round_label.offset_left = -180
-    round_label.offset_right = 180
-    round_label.offset_top = 8
-    round_label.offset_bottom = 34
+    round_label.custom_minimum_size = Vector2(220.0, 0.0)
+    round_label.size_flags_vertical = Control.SIZE_FILL
     round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    round_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     round_label.add_theme_font_size_override("font_size", 18)
     round_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.36))
-    screen.add_child(round_label)
+    top.add_child(round_label)
+    top.move_child(round_label, 1)
     hint = Label.new()
     hint.anchor_left = 0.5
     hint.anchor_right = 0.5

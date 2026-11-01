@@ -28,6 +28,12 @@ func _run() -> void:
         quit(1)
         return
     scene._reset_match()
+    var hud: PortHUD = scene.get("hud")
+    if (hud.round_label.get_parent() is not HBoxContainer
+            or hud.round_label.text != "ROUND 1  ·  0 — 0"):
+        push_error("Round label is not embedded in the top HUD row")
+        quit(1)
+        return
     if (scene.round_number != 1 or scene.player_rounds != 0
             or scene.computer_rounds != 0 or scene.match_over):
         push_error("Initial round state is wrong")
