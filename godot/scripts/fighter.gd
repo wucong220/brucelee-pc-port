@@ -1083,6 +1083,7 @@ var state_time: float = 0.0
 var attack_kind: String = ""
 var attack_sequence: int = 0
 var _attack_root_tracks: Dictionary = {}
+var _attack_root_forward_signs: Dictionary = {}
 var _attack_root_sequence: int = -1
 var _attack_root_previous_frame: float = -1.0
 var _attack_root_previous_value: Vector3 = Vector3.ZERO
@@ -1178,6 +1179,7 @@ func configure_attack_config(path: String) -> void:
 
 func _load_attack_root_motion() -> void:
     _attack_root_tracks.clear()
+    _attack_root_forward_signs.clear()
     var file: FileAccess = FileAccess.open(ATTACK_ROOT_MOTION_PATH, FileAccess.READ)
     if file == null:
         return
@@ -1197,7 +1199,14 @@ func _load_attack_root_motion() -> void:
                 float(sample[0]), float(sample[1]), float(sample[2])
             ))
         if points.size() >= 2:
-            _attack_root_tracks[String(source_action)] = points
+            var key: String = String(source_action)
+            _attack_root_tracks[key] = points
+            var sign: float = 1.0
+            for point: Vector3 in points:
+                if absf(point.y) > 0.000001:
+                    sign = 1.0 if point.y > 0.0 else -1.0
+                    break
+            _attack_root_forward_signs[key] = sign
 
 
 func _sample_attack_root(track: Array, frame: float) -> Vector3:
@@ -1243,10 +1252,14 @@ func _apply_attack_root_motion() -> void:
     var current: Vector3 = _sample_attack_root(track, frame)
     var delta: Vector3 = current - _attack_root_previous_value
     if delta.length_squared() > 0.0:
-        # Prototype only: raw Y is mapped to forward and raw X to lateral.
-        # Native axis/sign and final world mapping remain unverified.
+        # Prototype only: per-clip first-Y sign maps signed raw Y to forward
+        # and raw X to lateral. Native axis/sign and final world mapping
+        # remain unverified.
+        var forward_sign: float = float(
+            _attack_root_forward_signs.get(animation_name, 1.0)
+        )
         position.x = clampf(
-            position.x + facing * absf(delta.y) * source_units_to_world,
+            position.x + facing * delta.y * forward_sign * source_units_to_world,
             -6.8, 6.8
         )
         position.z = clampf(
