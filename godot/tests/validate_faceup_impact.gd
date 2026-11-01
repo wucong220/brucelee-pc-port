@@ -83,8 +83,8 @@ func _run() -> void:
 func _check_clips(player: PortFighter) -> bool:
     var animation: AnimationPlayer = player.get("_candidate_animation")
     var clip_count: int = animation.get_animation_list().size() if animation != null else 0
-    if clip_count not in [19, 20, 21, 22, 23]:
-        push_error("Face-up GLB must expose 19 through 23 candidate clips")
+    if clip_count < 19 or clip_count > 29:
+        push_error("Face-up GLB must expose at least 19 candidate clips (through current 29-clip extension)")
         return false
     if clip_count >= 20 and not _has_clip(
         animation, PortFighter.FACEUP_GETUP_CLIP
@@ -107,9 +107,9 @@ func _check_clips(player: PortFighter) -> bool:
     var has_attack_to_floor: bool = _has_clip(
         animation, PortFighter.ATTACK_TO_FLOOR_CLIP
     )
-    if (clip_count == 23) != has_attack_to_floor:
+    if clip_count >= 23 and not has_attack_to_floor:
         push_error(
-            "m01_attack_to_floor must appear exactly on the 23-clip extension"
+            "23-or-later face-up extension is missing m01_attack_to_floor"
         )
         return false
     if not _check_clip(
@@ -133,7 +133,7 @@ func _check_clips(player: PortFighter) -> bool:
             Animation.LOOP_NONE,
     ):
         return false
-    if clip_count == 23:
+    if clip_count >= 23:
         return _check_clip(
             player,
             PortFighter.ATTACK_TO_FLOOR_CLIP,
