@@ -216,6 +216,9 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
     "grab1_miss": [8, 9],
     "grab2_miss": [8, 9],
 }
+# Recovered miss_return is [22,25]; choose its first frame as the PC
+# candidate exit while retaining the 33-frame source animation metadata.
+const SPECIAL_PUNCH_LOW_MISS_RETURN_FRAME: float = 22.0
 const PROTOTYPE_GRAB_DISTANCE: float = 0.62
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
@@ -3342,6 +3345,18 @@ func _advance_timed_states(delta: float) -> void:
                     and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
                 _try_attack_contact()
         _try_special_chain()
+        if state == "recovery" and attack_kind == "special_punch_low_miss":
+            var return_state_time: float = maxf(
+                (float(ATTACKS[attack_kind]["animation_frame_count"])
+                    - SPECIAL_PUNCH_LOW_MISS_RETURN_FRAME) / SOURCE_FRAME_RATE,
+                0.0
+            )
+            if state_time - remaining <= return_state_time + 0.000001:
+                remaining -= maxf(state_time - return_state_time, 0.0)
+                state_time = return_state_time
+                _apply_attack_root_motion()
+                _advance_state()
+                return
         if remaining < state_time:
             state_time -= remaining
             _apply_attack_root_motion()
