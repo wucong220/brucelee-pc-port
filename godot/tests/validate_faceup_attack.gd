@@ -102,10 +102,10 @@ func _check_clip(player: PortFighter) -> bool:
         push_error("22-clip candidate is missing "
             + PortFighter.FACEUP_IMPACT_CLIP)
         return false
-    if clip_count >= 23 and not _has_clip(
+    if (clip_count >= 23) != _has_clip(
             animation, PortFighter.ATTACK_TO_FLOOR_CLIP
     ):
-        push_error("23-or-later candidate must include m01_attack_to_floor")
+        push_error("attacktofloor presence must match the 23-or-later candidate")
         return false
     if not player._candidate_clip_paths.has(PortFighter.FACEUP_ATTACK_CLIP):
         push_error("all_getup_faceup_attack did not pass candidate track validation")
