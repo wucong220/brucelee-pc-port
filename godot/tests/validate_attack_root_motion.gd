@@ -108,7 +108,7 @@ func _run() -> void:
     runtime.configure_attack_config(PortFighter.ATTACK_CONFIG_PATH)
     root.add_child(runtime)
     await process_frame
-    runtime.reset_fighter(Vector3.ZERO)
+    runtime.reset_fighter(Vector3(-5.0, 0.0, 0.0))
     if not runtime.request_attack("punch"):
         push_error("real physics attack request was rejected")
         quit(1)
