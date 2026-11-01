@@ -374,8 +374,11 @@ func _check_candidate_fallback(
 
 
 func _check_body_only_textures(brick_path: String) -> String:
-    var texture_root: String = OS.get_temp_dir().path_join(
-        "brucelee-brick-body-textures-%d" % Time.get_ticks_usec()
+    var test_root: String = OS.get_environment("LOCALAPPDATA")
+    if test_root.is_empty():
+        test_root = OS.get_temp_dir()
+    var texture_root: String = test_root.path_join(
+        "BruceLee-PC-Port/test-brick-body-textures-%d" % Time.get_ticks_usec()
     )
     if DirAccess.make_dir_recursive_absolute(texture_root) != OK:
         return "Could not create synthetic Brick texture directory"
