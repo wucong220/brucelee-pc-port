@@ -116,12 +116,7 @@ func _run() -> void:
                 push_error("Full opponent candidate has an unexpected clip: " + actual_name)
                 quit(1)
                 return
-        elif combat_candidate:
-            if not actual_name.begins_with("m03_") and actual_name not in combat_extras:
-                push_error("Combat opponent candidate has an unexpected clip: " + actual_name)
-                quit(1)
-                return
-        elif actual_name not in allowed_names:
+        elif not combat_candidate and actual_name not in allowed_names:
             push_error("Opponent animation set has an unexpected clip: " + actual_name)
             quit(1)
             return
