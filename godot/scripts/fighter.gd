@@ -3655,7 +3655,9 @@ func current_source_animation() -> String:
             and attack_kind != "heavy" and ATTACKS.has(attack_kind)):
         return String(ATTACKS[attack_kind]["animation"])
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
-        return String(candidate_clips.get("heavy", CANDIDATE_CLIPS["kick"]))
+        if _candidate_clip_paths.has("heavy"):
+            return String(candidate_clips.get("heavy", CANDIDATE_CLIPS["kick"]))
+        return String(candidate_clips.get("kick", CANDIDATE_CLIPS["kick"]))
     if state in ["stun", "stun2"]:
         return STUN_CLIP
     if state == "stunfall":
