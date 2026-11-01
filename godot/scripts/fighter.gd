@@ -3354,6 +3354,18 @@ func _advance_timed_states(delta: float) -> void:
                     and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
                 _try_attack_contact()
         _try_special_chain()
+        if (state == "active"
+                and ATTACKS.has(attack_kind)
+                and not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty()
+                and remaining > (1.0 / SOURCE_FRAME_RATE) + 0.000001
+                and state_time > (1.0 / SOURCE_FRAME_RATE) + 0.000001):
+            # A large physics step must not skip later multi-impact windows:
+            # advance one source frame at a time while the active state lasts.
+            var multi_frame_step: float = 1.0 / SOURCE_FRAME_RATE
+            remaining -= multi_frame_step
+            state_time -= multi_frame_step
+            _apply_attack_root_motion()
+            continue
         if state == "recovery" and attack_kind == "special_punch_low_miss":
             var return_state_time: float = maxf(
                 (float(ATTACKS[attack_kind]["animation_frame_count"])
