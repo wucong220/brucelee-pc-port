@@ -353,10 +353,12 @@ func _run() -> void:
         push_error("stunimpact did not return to stunfall: " + player.state)
         quit(1)
         return
+    var stun_hard_available: bool = player._candidate_clip_paths.has("stun_hard")
     var stun_cases: Array[Dictionary] = [
         {"source": "impactlightfrontlow", "animation": "all_impct_light_frnt_low", "accepted": true},
         {"source": "impactlightfrontmid", "animation": "all_impct_crotch", "accepted": true},
-        {"source": "impacthardfrontlow", "animation": "", "accepted": false},
+        # stunhardimpact is the recovered stun-group animation for any hard hit.
+        {"source": "impacthardfrontlow", "animation": "stun_hard", "accepted": stun_hard_available},
         {"source": "impactbrutallow", "animation": "", "accepted": false},
     ]
     for case: Dictionary in stun_cases:
