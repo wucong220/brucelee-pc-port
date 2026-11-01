@@ -232,7 +232,9 @@ const STUN_IMPACT_ENTRY_FRAMES: int = 14
 const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
 const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
 const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
-const NON_CONTACT_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true, "parry_low": true}
+const NON_CONTACT_ATTACKS: Dictionary = {
+    "endattack1": true, "endattack2": true, "parry_high": true, "parry_low": true,
+}
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.

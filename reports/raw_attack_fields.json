@@ -49,6 +49,11 @@
         }
       ]
     },
+    "parryhigh": {
+      "animation": "m01_parry_high",
+      "animation_radius": 40.0,
+      "impacts": []
+    },
     "parrylow": {
       "animation": "m01_kick_low_02",
       "animation_radius": 40.0,
