@@ -119,6 +119,7 @@ PC 原型增加了“按住防御且对手正在攻击”的前置条件。
 必杀技上段拳（原型多点命中）：第 3 段攻击后，`上+A → 上+A → 上+A`
 （原版 `pressleft+pressright+A`，PC 用上+A×3 代表双手蓄力）在 `rage2thirds`
 时进入 `special_punch_high_miss`（`m01_sp_pnch_high_fail`，122 帧，无伤害）。
+未命中返回目标为 `idle2`，窗口 `[116,122]`；候选在第 122 帧退出，缺少 `m01_idle_02` 时回退到 `idle`。
 第 6–7 帧内对手在 0.62 世界单位、站立不格挡则切到 `special_punch_high_hit`
 （`m01_sp_pnch_high`，80 帧），三段伤害窗口 `[3,7]` 4、`[17,22]` 4、`[43,49]` 13，
 总计 21；最后一段 `hard/high/frontal` 精确反应为 `impacthardfronthigh`。

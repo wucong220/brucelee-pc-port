@@ -3454,7 +3454,12 @@ func _advance_state() -> void:
             state_time = float(ATTACKS[attack_kind]["recovery"])
         "recovery", "hitstun", "blockstun":
             var next_state: String = "idle"
-            if state != "recovery":
+            if state == "recovery" and attack_kind == "special_punch_high_miss":
+                # Recovered miss_return targets idle2 [116,122]; keep idle
+                # as the fallback when the candidate lacks that clip.
+                if _candidate_clip_paths.has(IDLE2_CLIP):
+                    next_state = "idle2"
+            elif state != "recovery":
                 next_state = _verified_post_hit_return_state()
             _enter_locomotion_state(next_state)
 
