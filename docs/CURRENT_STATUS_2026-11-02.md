@@ -24,9 +24,12 @@ PCK 的 `project.binary` 会变成 0 字节，release EXE 启动挂起。显式�
 ```powershell
 .\build_windows.ps1 `
   -BuildRoot 'D:\Build\BruceLee' `
-  -GodotTempRoot 'D:\Build\BruceLeeTemp' `
-  -OutputDir 'D:\Build\BruceLeeDist'
+  -GodotTempRoot 'D:\Build\BruceLeeTemp'
 ```
+
+默认输出到仓库 `dist`，`validate_windows_exe.ps1 -SkipBuild` 固定读取该目录。
+若使用 `-OutputDir` 输出到别处，验证前必须把生成的 EXE/PCK 复制到仓库
+`dist`。
 
 旧的 `CURRENT_STATUS_2026-10-31.md` 是历史快照，其中工作树 `prototype-menu`、
 PR #96 和 243/247 项测试计数均已过时；不要把它当作当前基线。
