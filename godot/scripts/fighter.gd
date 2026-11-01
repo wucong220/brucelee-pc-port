@@ -3716,7 +3716,7 @@ func _movement_action() -> String:
     if absf(x) >= absf(y):
         action = "moveleft" if x < 0.0 else "moveright"
     else:
-        action = "stepleft" if y < 0.0 else "stepright"
+        action = "stepfwd" if y < 0.0 else "stepback"
     if _candidate_clip_paths.has(action):
         return action
     if _candidate_clip_paths.has("move"):

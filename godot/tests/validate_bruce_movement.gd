@@ -22,8 +22,8 @@ func _run() -> void:
     var cases: Array[Dictionary] = [
         {"axis": Vector2(-1.0, 0.0), "action": "moveleft", "clip": "m01_moverht"},
         {"axis": Vector2(1.0, 0.0), "action": "moveright", "clip": "m01_movelft"},
-        {"axis": Vector2(0.0, -1.0), "action": "stepleft", "clip": "m01_steplft"},
-        {"axis": Vector2(0.0, 1.0), "action": "stepright", "clip": "m01_steprht"},
+        {"axis": Vector2(0.0, -1.0), "action": "stepfwd", "clip": "m01_stepfwd"},
+        {"axis": Vector2(0.0, 1.0), "action": "stepback", "clip": "m01_stepbck"},
     ]
     for case: Dictionary in cases:
         fighter.move_axis = case["axis"]
@@ -59,8 +59,8 @@ func _run() -> void:
         "candidate": args[0],
         "left": "m01_moverht",
         "right": "m01_movelft",
-        "side_left": "m01_steplft",
-        "side_right": "m01_steprht",
+        "forward": "m01_stepfwd",
+        "back": "m01_stepbck",
         "idle": "m01_idle_01",
     }))
     fighter.queue_free()

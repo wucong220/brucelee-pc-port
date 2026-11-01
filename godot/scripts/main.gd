@@ -291,6 +291,9 @@ func _build_fighters() -> void:
 func _reset_match() -> void:
     player.reset_fighter(Vector3(-0.25 if training_mode else -2.0, 1.20, 0.0))
     computer.reset_fighter(Vector3(0.25 if training_mode else 2.0, 1.20, 0.0))
+    var demo_rage: String = OS.get_environment("BRUCELEE_DEMO_RAGE")
+    if not demo_rage.is_empty() and demo_rage.is_valid_float():
+        player.rage = clampf(demo_rage.to_float(), 0.0, PortFighter.RAGE_MAX)
     if training_mode:
         computer._enter_locomotion_state("facedownidle")
         computer._animate_candidate()
