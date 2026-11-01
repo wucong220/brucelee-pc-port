@@ -1,12 +1,13 @@
 extends SceneTree
 
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
+const Menu = preload("res://scripts/prototype_menu.gd")
 
 func _initialize() -> void:
     call_deferred("_run")
 
 
-func _press(menu: PortPrototypeMenu, keycode: Key) -> void:
+func _press(menu, keycode: Key) -> void:
     var event: InputEventKey = InputEventKey.new()
     event.keycode = keycode
     event.physical_keycode = keycode
@@ -16,7 +17,7 @@ func _press(menu: PortPrototypeMenu, keycode: Key) -> void:
 
 func _run() -> void:
     PrototypeControls.ensure_default_actions()
-    var menu: PortPrototypeMenu = PortPrototypeMenu.new()
+    var menu = Menu.new()
     root.add_child(menu)
     await process_frame
     for entry: Array in [
