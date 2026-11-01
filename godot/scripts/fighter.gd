@@ -25,6 +25,7 @@ const CANDIDATE_CLIPS: Dictionary = {
     "special_kick_high": "m01_kck_front_step",
     "high_punch2": "m01_pnch_high_02",
     "low_punch2": "m01_pnch_low_02",
+    "heavy": "m01_kick_high_01",
     "high_kick2": "m01_kick_high_02",
     "low_kick2": "m01_kick_low_02",
     "special_kick_low_miss": "m01_sp_kick_low_fail",
@@ -1966,7 +1967,7 @@ func _try_load_candidate_visual() -> void:
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
             "endattack1", "endattack2", "stun", "stun_fall",
-            "stun_hard", "stun_brutal",
+            "stun_hard", "stun_brutal", "heavy",
             "move", "moveleft", "moveright", "stepfwd", "stepback",
             "stepleft", "stepright"]:
         if not candidate_clips.has(action):
@@ -3654,7 +3655,7 @@ func current_source_animation() -> String:
             and attack_kind != "heavy" and ATTACKS.has(attack_kind)):
         return String(ATTACKS[attack_kind]["animation"])
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
-        return CANDIDATE_CLIPS["kick"]
+        return String(candidate_clips.get("heavy", CANDIDATE_CLIPS["kick"]))
     if state in ["stun", "stun2"]:
         return STUN_CLIP
     if state == "stunfall":
@@ -4307,7 +4308,9 @@ func _animate_candidate() -> void:
     if state in ["startup", "active", "recovery"]:
         if attack_kind == "punch":
             requested = "punch"
-        elif attack_kind in ["kick", "heavy"]:
+        elif attack_kind == "heavy":
+            requested = "heavy" if _candidate_clip_paths.has("heavy") else "kick"
+        elif attack_kind == "kick":
             requested = "kick"
         elif attack_kind in ["high_punch", "high_kick", "high_punch3", "low_punch3",
                 "low_kick3", "high_kick3", "special_kick_high",
