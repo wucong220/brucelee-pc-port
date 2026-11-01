@@ -27,14 +27,18 @@ func _run() -> void:
         quit(1)
         return
     brick.health = 1.0
-    var reaction: Dictionary = {
-        "source_action": "impacthardfronthigh",
-        "animation": "all_impct_hard_frnt_high",
-        "exit_start_frame": 23,
-        "animation_duration_frames": 35,
-        "linking_frame": 0,
-        "return_action": "faceupko",
+    var impact: Dictionary = {
+        "strength": "hard",
+        "height": "high",
+        "body_part": "larm",
+        "direction": "frontal",
     }
+    var reaction: Dictionary = brick.reaction_for_incoming(impact, false)
+    if (String(reaction.get("source_action", "")) != "impacthardfronthigh"
+            or String(reaction.get("animation", "")) != "all_impct_hard_frnt_high"):
+        push_error("Hard frontal high hit did not dispatch the high KO reaction")
+        quit(1)
+        return
     brick.receive_hit(5.0, false, 0.0, 1.0, reaction)
     if brick.health > 0.0 or brick.state != "stunimpact":
         push_error("High lethal hit did not enter stunimpact: "

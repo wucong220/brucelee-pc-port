@@ -3921,6 +3921,19 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
             "animation_duration_frames": 45,
             "linking_frame": 0,
         }
+    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH and not blocked
+            and String(impact.get("strength", "")) == "hard"
+            and String(impact.get("height", "")) == "high"
+            and String(impact.get("direction", "")) == "frontal"
+            and _candidate_clip_paths.has("all_impct_hard_frnt_high")):
+        return {
+            "source_action": "impacthardfronthigh",
+            "animation": "all_impct_hard_frnt_high",
+            "exit_start_frame": 23,
+            "animation_duration_frames": 35,
+            "linking_frame": 0,
+            "return_action": "faceupidle",
+        }
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
         if (String(exact.get("source_action", "")) in [
