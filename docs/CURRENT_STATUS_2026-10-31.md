@@ -52,3 +52,11 @@
 1. `impactsfromstun` 的 light/medium 反应（已有候选 clip 的部分）
 2. 动作切换/取消窗口与 link 优先级
 3. reaction root-motion 其余可解码项和真实击退方向验证
+
+## 2026-11-01 更新
+
+- 主线基线：`f87ecfc`。PR #159（侧向 light 根推力）、PR #160（全部 15 个可解码 reaction + `stun/stun2` 分支）、PR #161（推力表与报告漂移防护测试）均已合并，ChatGPT 审查 PASS。
+- `REACTION_ROOT_PUSH_SOURCE` 覆盖报告中的 15 个有 `positions` 的反应；值是前两个原始位置分量的最大绝对值，不宣称原生水平/深度轴、符号或最终 knockback 映射。
+- `validate_reaction_push.gd` 本地 19 个案例通过（15 个普通 reaction + 4 个 `stun/stun2` hard/brutal）；`test_reaction_push_source.py` 2 项通过。
+- 本机 Godot 测试环境仍有阻塞：`validate_stun` / `validate_stun_heavy` 在候选加载前因 `user://logs` 写入失败和候选 path resolver 的 PowerShell `Add-Type` 临时文件权限失败而退出；不应把这算作游戏断言失败或 CI 通过。
+- 下一步：修复独立 Godot 测试用户的写入/路径解析环境，再继续动作切换、取消窗口与 link 优先级验证。
