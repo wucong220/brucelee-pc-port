@@ -142,6 +142,10 @@ func _run() -> void:
                 player.global_position.x - opponent.global_position.x,
                 player.global_position.z - opponent.global_position.z
             ).length()
+            minimum_distance = minf(minimum_distance, before_contact_distance)
+            observed_state = player.state
+            if before_contact_distance <= punch_reach:
+                entered_range = true
             if before_contact_distance > punch_reach:
                 # Simulate another movement source carrying the defender into
                 # range after this frame's contact check but before the next AI
@@ -149,6 +153,10 @@ func _run() -> void:
                 opponent.move_axis = Vector2(-1.0, 0.0)
             player._physics_process(dt)
             if player.combo_hits == 1:
+                # Contact itself proves the engine found both fighters in
+                # range, even when root motion carries the attacker in during
+                # this same update before the post-frame distance sample.
+                entered_range = true
                 guarded_contact = opponent.state == "blockstun"
                 break
             opponent._physics_process(dt)
