@@ -2038,8 +2038,8 @@ func _try_load_candidate_visual() -> void:
         move.loop_mode = Animation.LOOP_LINEAR
     for looping_return: String in [
         IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
-        "m01_movebck", "m01_moverht", "m01_movelft", "m01_stepfwd",
-        "m01_stepbck", "m01_steplft", "m01_steprht",
+        "move", "moveleft", "moveright", "stepfwd", "stepback",
+        "stepleft", "stepright",
     ]:
         if not _candidate_clip_paths.has(looping_return):
             continue
@@ -4328,6 +4328,8 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "ko" and _candidate_clip_paths.has("ko"):
         requested = "ko"
+    elif state in ["idle", "idle2", "idle3"] and not _movement_action().is_empty():
+        requested = _movement_action()
     elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
         requested = IDLE2_CLIP
     elif state == "idle3" and _candidate_clip_paths.has(IDLE3_CLIP):
@@ -4367,10 +4369,6 @@ func _animate_candidate() -> void:
         start_frame = ATTACK_TO_FLOOR_ENTRY_FRAME
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
-    elif state in ["idle", "idle2", "idle3"]:
-        var movement_action: String = _movement_action()
-        if not movement_action.is_empty():
-            requested = movement_action
     if requested == FACEUP_IMPACT_TO_FLOOR_CLIP:
         start_frame = int(state_time * SOURCE_FRAME_RATE + 0.0001)
     _play_candidate_action(requested, start_frame)

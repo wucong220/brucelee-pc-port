@@ -20,10 +20,10 @@ func _run() -> void:
         quit(1)
         return
     var cases: Array[Dictionary] = [
-        {"axis": Vector2(-1.0, 0.0), "clip": "m01_moverht"},
-        {"axis": Vector2(1.0, 0.0), "clip": "m01_movelft"},
-        {"axis": Vector2(0.0, -1.0), "clip": "m01_steplft"},
-        {"axis": Vector2(0.0, 1.0), "clip": "m01_steprht"},
+        {"axis": Vector2(-1.0, 0.0), "action": "moveleft", "clip": "m01_moverht"},
+        {"axis": Vector2(1.0, 0.0), "action": "moveright", "clip": "m01_movelft"},
+        {"axis": Vector2(0.0, -1.0), "action": "stepleft", "clip": "m01_steplft"},
+        {"axis": Vector2(0.0, 1.0), "action": "stepright", "clip": "m01_steprht"},
     ]
     for case: Dictionary in cases:
         fighter.move_axis = case["axis"]
@@ -34,6 +34,21 @@ func _run() -> void:
             ])
             quit(1)
             return
+        var clip: Animation = fighter._candidate_animation.get_animation(
+            fighter._candidate_clip_paths[String(case["action"])]
+        )
+        if clip == null or clip.loop_mode != Animation.LOOP_LINEAR:
+            push_error("movement clip is not LOOP_LINEAR: " + String(case["action"]))
+            quit(1)
+            return
+    fighter.state = "idle3"
+    fighter.move_axis = Vector2(-1.0, 0.0)
+    fighter._animate_candidate()
+    if fighter.candidate_animation_clip != "m01_moverht":
+        push_error("idle3 movement did not override idle3: " + fighter.candidate_animation_clip)
+        quit(1)
+        return
+    fighter.state = "idle"
     fighter.move_axis = Vector2.ZERO
     fighter._animate_candidate()
     if fighter.candidate_animation_clip != "m01_idle_01":
