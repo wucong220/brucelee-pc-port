@@ -209,11 +209,14 @@ func _validate_special_hit(player: PortFighter, opponent: PortFighter) -> bool:
     if absf(player.rage - 7.0) > 0.001:
         push_error("The special did not consume 33 rage: " + str(player.rage))
         return false
-    defender.global_position = Vector3(-1.75, 1.20, 0.0)
-    player.facing = 1.0
     player._advance_timed_states(
         float(player.ATTACKS["special_kick_high"]["startup"]) + 0.001
     )
+    # The special has forward root motion; place the target ahead of the
+    # resulting position and run the same contact path as gameplay.
+    defender.global_position = Vector3(player.global_position.x + 0.5, 1.20, 0.0)
+    player.facing = 1.0
+    player._try_attack_contact()
     if absf(defender.health - 88.0) > 0.001:
         push_error("The special damage was not 12: " + str(defender.health))
         return false
