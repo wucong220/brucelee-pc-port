@@ -3,7 +3,8 @@ param(
     [switch]$Debug,
     [switch]$SelfTest,
     [string]$BuildRoot = "",
-    [string]$OutputDir = ""
+    [string]$OutputDir = "",
+    [string]$GodotTempRoot = ""
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -19,6 +20,9 @@ $dist = if ([string]::IsNullOrWhiteSpace($OutputDir)) {
 $staging = Join-Path $BuildRoot ('brucelee-build-' + [guid]::NewGuid().ToString('N'))
 $project = Join-Path $staging 'godot'
 $buildDist = Join-Path $staging 'dist'
+if ([string]::IsNullOrWhiteSpace($GodotTempRoot)) {
+    $GodotTempRoot = Join-Path $BuildRoot 'godot-temp'
+}
 $targetName = 'DragonWarrior_PC_Prototype.exe'
 $delivered = Join-Path $dist $targetName
 $profile = if ($Debug) { '--export-debug' } else { '--export-release' }
@@ -113,14 +117,34 @@ if ((Test-SubstPath $buildRootFull) -or (Test-SubstPath $sourceFull) -or
 if (Test-Path $staging) { throw 'Generated staging directory already exists.' }
 New-Item -ItemType Directory -Force -Path $staging | Out-Null
 New-Item -ItemType Directory -Force -Path $buildDist | Out-Null
+New-Item -ItemType Directory -Force -Path $GodotTempRoot | Out-Null
 Copy-Item -LiteralPath $sourceProject -Destination $project -Recurse
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
-
-& $GodotExe --headless --path $project --editor --quit
-if (-not $?) { throw 'Godot import/script validation failed.' }
-
-& $GodotExe --headless --path $project $profile 'Windows Desktop' (Join-Path $buildDist $targetName)
-if (-not $?) { throw 'Windows export failed. Install the matching Godot export templates and retry.' }
+$oldTemp = $env:TEMP
+$oldTmp = $env:TMP
+$env:TEMP = $GodotTempRoot
+$env:TMP = $GodotTempRoot
+$importCode = 1
+$exportCode = 1
+try {
+    $importCommand = '"{0}" --headless --path "{1}" --editor --quit 2>nul' -f (
+        $GodotExe, $project
+    )
+    & cmd.exe /d /s /c $importCommand
+    $importCode = $LASTEXITCODE
+    if ($importCode -eq 0) {
+        $exportCommand = '"{0}" --headless --path "{1}" {2} "Windows Desktop" "{3}" 2>nul' -f (
+            $GodotExe, $project, $profile, (Join-Path $buildDist $targetName)
+        )
+        & cmd.exe /d /s /c $exportCommand
+        $exportCode = $LASTEXITCODE
+    }
+} finally {
+    $env:TEMP = $oldTemp
+    $env:TMP = $oldTmp
+}
+if ($importCode -ne 0) { throw 'Godot import/script validation failed.' }
+if ($exportCode -ne 0) { throw 'Windows export failed. Install the matching Godot export templates and retry.' }
 
 $targetPath = Join-Path $buildDist $targetName
 $pckPath = Join-Path $buildDist 'DragonWarrior_PC_Prototype.pck'
