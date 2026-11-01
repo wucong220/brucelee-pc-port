@@ -27,13 +27,40 @@ var background: TextureRect
 var mode_label: Label
 var status_label: Label
 var controls_label: Label
+var accept_sfx: AudioStreamPlayer
+var accept_sfx_error: String = ""
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     layer = 30
     _build_ui()
     _load_background()
+    _load_accept_sfx()
     hide_menu()
+
+func _load_accept_sfx() -> void:
+    var sfx_path: String = OS.get_environment("BRUCELEE_MENU_SFX_PATH")
+    if sfx_path.is_empty():
+        var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+        if local_app_data.is_empty():
+            accept_sfx_error = "LOCALAPPDATA is unavailable"
+            return
+        sfx_path = local_app_data.path_join(
+            "BruceLee-PC-Port/p5-menu-assets-20261030/"
+            + "adreno_200/sounds/menu_sfx/Menu_Punch_2.wav"
+        )
+    accept_sfx_error = CandidatePathGuard.external_path_error(
+        sfx_path, "prototype menu sfx"
+    )
+    if not accept_sfx_error.is_empty():
+        return
+    var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(sfx_path)
+    if stream == null:
+        accept_sfx_error = "prototype menu sfx failed to load: " + sfx_path
+        return
+    accept_sfx = AudioStreamPlayer.new()
+    accept_sfx.stream = stream
+    add_child(accept_sfx)
 
 func _build_ui() -> void:
     var screen: Control = Control.new()
@@ -190,6 +217,8 @@ func handle_input_event(event: InputEvent) -> bool:
     elif event.is_action_pressed(PrototypeControls.MENU_ACCEPT):
         var command: String = selected_command()
         if not command.is_empty():
+            if accept_sfx != null:
+                accept_sfx.play()
             command_requested.emit(command)
     elif event.is_action_pressed(PrototypeControls.MENU_CANCEL):
         if menu_state == "pause":
