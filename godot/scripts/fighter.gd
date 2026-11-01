@@ -1992,7 +1992,7 @@ func _try_load_candidate_visual() -> void:
     # enter one only after the same candidate track check used above.
     if _candidate_skeleton != null:
         for return_clip_name: String in [
-            IDLE2_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
+            IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEDOWN_GETUP_CLIP,
             FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
             FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP,
             FACEUP_GETUP_CLIP, FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP,
@@ -2021,7 +2021,7 @@ func _try_load_candidate_visual() -> void:
         )
         move.loop_mode = Animation.LOOP_LINEAR
     for looping_return: String in [
-        IDLE2_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
+        IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
     ]:
         if not _candidate_clip_paths.has(looping_return):
             continue

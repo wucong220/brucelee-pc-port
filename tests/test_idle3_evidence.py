@@ -22,6 +22,12 @@ class Idle3EvidenceTest(unittest.TestCase):
         self.assertEqual(report["animation_radius"], 40.0)
         self.assertIn('attack_kind == "special_kick_high"', text)
         self.assertIn('next_state = "idle3"', text)
+        self.assertIn("IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP", text)
+        self.assertIn(
+            "IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, "
+            "BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP",
+            text,
+        )
 
 
 if __name__ == "__main__":
