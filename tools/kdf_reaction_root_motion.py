@@ -111,10 +111,11 @@ def _inspect_tracks(inspection: dict) -> tuple[list[dict], list[dict] | None]:
     return tracks, positions_values
 
 
-def inspect_archive(path: Path) -> dict:
+def inspect_archive(path: Path, action_paths: dict[str, str] | None = None) -> dict:
+    action_map = _ACTIONS if action_paths is None else action_paths
     actions = []
     source_hashes = None
-    for action, animation_path in sorted(_ACTIONS.items()):
+    for action, animation_path in sorted(action_map.items()):
         raw, archive = read_archive_resource(path, animation_path)
         if source_hashes is None:
             source_hashes = {
