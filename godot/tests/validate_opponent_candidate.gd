@@ -13,6 +13,34 @@ const OPTIONAL_REACTION_ANIMATIONS: Array[String] = [
     "all_impct_facedwn",
     "all_impct_hard_frnt_low",
 ]
+const COMBAT_ANIMATIONS: Array[String] = [
+    "all_block_low",
+    "all_block_mid",
+    "all_idle_face_down_forbigguy",
+    "all_impct_facedwn",
+    "all_impct_hard_frnt_low",
+    "m03_blck_high",
+    "m03_idle_01",
+    "m03_kck_high_01",
+    "m03_kck_high_02",
+    "m03_kck_high_03",
+    "m03_kck_low_01",
+    "m03_kck_low_02",
+    "m03_kck_low_03",
+    "m03_movefwd",
+    "m03_movelft",
+    "m03_moverht",
+    "m03_pnch_high_01",
+    "m03_pnch_high_02",
+    "m03_pnch_high_03",
+    "m03_pnch_low_01",
+    "m03_pnch_low_02",
+    "m03_pnch_low_03",
+    "m03_stepbck",
+    "m03_stepfwd",
+    "m03_steplft",
+    "m03_steprht",
+]
 
 
 func _initialize() -> void:
@@ -76,10 +104,11 @@ func _run() -> void:
             return
     var full_candidate: bool = actual_names.size() in [53, 55]
     var combat_candidate: bool = actual_names.size() == 26
-    var combat_extras: Array[String] = [
-        "all_idle_face_down_forbigguy", "all_block_low", "all_block_mid",
-        "all_impct_hard_frnt_low", "all_impct_facedwn",
-    ]
+    if combat_candidate and actual_names != COMBAT_ANIMATIONS:
+        push_error("Combat opponent candidate animation set is not exact: "
+                + JSON.stringify(actual_names))
+        quit(1)
+        return
     for actual_name: String in actual_names:
         if full_candidate:
             if (not actual_name.begins_with("m03_")
