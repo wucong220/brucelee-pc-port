@@ -102,16 +102,43 @@ func _run() -> void:
             "duration": 29,
         },
     ]
+    var impact_fields: Dictionary = {
+        "impactlightfrontlow": ["normal", "low", "frontal"],
+        "impactlightfrontmid": ["normal", "medium", "frontal"],
+        "impactlightfronthigh": ["normal", "high", "frontal"],
+        "impactlightleftlow": ["normal", "low", "fromleft"],
+        "impactlightrightlow": ["normal", "low", "fromright"],
+        "impactbrutalleft": ["brutal", "high", "fromleft"],
+        "impactbrutalmid": ["brutal", "medium", "frontal"],
+        "impactbrutalright": ["brutal", "high", "fromright"],
+        "impacthardabove": ["hard", "high", "fromabove"],
+        "impacthardfronthigh": ["hard", "high", "frontal"],
+        "impacthardfrontlow": ["hard", "low", "frontal"],
+        "impacthardfrontmid": ["hard", "medium", "frontal"],
+        "impacthardlefthigh": ["hard", "high", "fromleft"],
+        "impacthardleftlow": ["hard", "low", "fromleft"],
+        "impacthardrighthigh": ["hard", "high", "fromright"],
+    }
     var results: Array = []
     for case: Dictionary in cases:
         fighter.reset_fighter(Vector3.ZERO)
+        var source_action: String = String(case["source_action"])
+        var fields: Array = impact_fields[source_action]
+        var reaction: Dictionary = fighter.reaction_for_incoming({
+            "strength": fields[0],
+            "height": fields[1],
+            "direction": fields[2],
+        }, false)
+        if String(reaction.get("source_action", "")) != source_action:
+            push_error("reaction_for_incoming did not select " + source_action)
+            quit(1)
+            return
+        if (int(reaction.get("exit_start_frame", -1)) != int(case["exit_frame"])
+                or int(reaction.get("animation_duration_frames", -1)) != int(case["duration"])):
+            push_error("reaction window mismatch for " + source_action)
+            quit(1)
+            return
         var expected: float = float(case["source_component"]) * fighter.source_units_to_world
-        var reaction: Dictionary = {
-            "source_action": String(case["source_action"]),
-            "exit_start_frame": int(case["exit_frame"]),
-            "animation_duration_frames": int(case["duration"]),
-            "linking_frame": 0,
-        }
         if not fighter.receive_hit(5.0, false, 0.0, 1.0, reaction):
             push_error("receive_hit rejected " + String(case["source_action"]))
             quit(1)
