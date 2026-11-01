@@ -20,12 +20,17 @@ def actions_from_config(path: Path) -> dict[str, str]:
     for key, entry in attacks.items():
         if not isinstance(key, str) or not isinstance(entry, dict):
             raise ValueError('attack config contains an invalid entry')
+        source_action = entry.get('source_action')
         animation = entry.get('animation')
         if animation is None:
             continue
+        if not isinstance(source_action, str) or not source_action:
+            raise ValueError(f'attack {key} has an invalid source_action')
         if not isinstance(animation, str) or not animation:
             raise ValueError(f'attack {key} has an invalid animation name')
-        actions[key] = 'adreno_200/animation/' + animation + '.anm'
+        if source_action in actions:
+            raise ValueError(f'duplicate source_action: {source_action}')
+        actions[source_action] = 'adreno_200/animation/' + animation + '.anm'
     if not actions:
         raise ValueError('attack config has no animations')
     return actions
