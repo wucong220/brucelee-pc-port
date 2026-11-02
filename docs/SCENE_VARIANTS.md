@@ -21,5 +21,7 @@
 
 - `DragonWarrior.cmd`: opens the main menu with Temple Yard A loaded
 - `DragonWarrior_TempleYardB.cmd`: opens the main menu with Temple Yard B loaded
+- `DragonWarrior_A_Direct.cmd`: starts Temple Yard A fight directly
+- `DragonWarrior_B_Direct.cmd`: starts Temple Yard B fight directly
 - Main menu `TEMPLE YARD A/B`: reloads and now starts the selected arena
   directly (`BRUCELEE_MAIN_MENU=0`)
