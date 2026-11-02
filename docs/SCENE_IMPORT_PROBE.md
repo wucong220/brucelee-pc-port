@@ -17,4 +17,19 @@ No scene-to-glTF converter exists in `tools/` yet. A correct importer must:
 4. Decide how far objects (`*_FarObjects`) and FX scenes are merged for one arena.
 5. Only then replace the procedural arena.
 
+## 2026-11-03 parser progress
+
+`tools/kdf_object.py` now recognizes the one-byte zero prefix used by scene
+external-reference tables (object tables have no prefix). The sample parses to:
+
+- `scene` frame with 3 children
+- 3 `object` nodes
+- each object has one `mesh` visual
+- refs include
+  `scene/hw/bl_templeyarda_nearobjects/meshes/bl_scene02a_hw_prop_brick*.mesh`
+  and `shaders/scene.shd` / one `.tex`
+
+The node/visual graph is now recoverable. Mesh conversion and arena merge are
+still not implemented; no procedural scene has been replaced yet.
+
 This is deliberately **not** implemented as a fake procedural stand-in. Current arena remains procedural until the mesh/reference graph is converted and verified.

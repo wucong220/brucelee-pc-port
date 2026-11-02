@@ -32,15 +32,22 @@ def _inspect_external_references(raw: bytes, container: dict) -> dict:
         and gap[:3] == b'\0\0\0'
     )
     count = declared_count + int(leading_sentinel)
-    if len(gap) != count * 3:
+    table_offset = 0
+    if (not leading_sentinel
+            and len(gap) == declared_count * 3 + 1
+            and gap[:1] == b'\0'):
+        # Scene CTX3 tables have a one-byte zero prefix before the triples.
+        table_offset = 1
+    if len(gap) != table_offset + count * 3:
         raise KdfError(
-            f'object external reference table has {len(gap)} bytes; expected {count * 3}'
+            f'object external reference table has {len(gap)} bytes; expected '
+            f'{table_offset + count * 3}'
         )
     strings = container['strings']
     references = []
     for ordinal in range(count):
         path_index, basename_index, extension_index = gap[
-            ordinal * 3:(ordinal + 1) * 3]
+            table_offset + ordinal * 3:table_offset + (ordinal + 1) * 3]
         if leading_sentinel and ordinal == 0:
             references.append({
                 'ordinal': ordinal,
