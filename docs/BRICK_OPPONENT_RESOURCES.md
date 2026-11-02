@@ -148,8 +148,10 @@ clip 正确、rage 扣除正确，并验证四个伤害为 10/9/11/8。
 
 AI 现在会在 rage 足够且玩家攻击进入威胁窗口时，以原型概率选择
 `parry_high_brick` 或 `parry_low_brick`；high parry 在 9–10 帧链到
-`parry_attack_brick`，实际伤害 10。原版 AI 何时进入 `candocounter` 仍未恢复，
-因此这是明确的 PC 原型防御选择；35 段候选没有 parry clip 时会安全退回普通格挡。
+`parry_attack_brick`，实际伤害 10。parry high/low 在前 25 帧吸收来袭攻击；
+`parry_attack_brick` 的 startup/active 也保持反制不被普通攻击打断，这是
+“parry 成功后占据这次交换”的 PC 原型选择。原版 AI 何时进入 `candocounter`
+仍未恢复；35 段候选没有 parry clip 时会安全退回普通格挡。
 
 ## 复现与检查
 

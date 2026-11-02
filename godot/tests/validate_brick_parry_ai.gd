@@ -33,8 +33,8 @@ func _run() -> void:
     for seed_value: int in range(1, 500):
         scene._reset_match()
         player.position = Vector3(0.0, 1.2, 0.0)
-        brick.position = Vector3(0.8, 1.2, 0.0)
-        player.request_attack("high_punch3" if seed_value % 2 == 1 else "kick")
+        brick.position = Vector3(0.05, 1.2, 0.0)
+        player.request_attack("high_kick" if seed_value % 2 == 1 else "kick")
         brick.rage = 66.0
         scene.ai_timer = 0.0
         rng.seed = seed_value
@@ -43,26 +43,33 @@ func _run() -> void:
             continue
         seen[brick.attack_kind] = true
         if brick.attack_kind == "parry_high_brick":
-            for step: int in range(80):
-                # Keep the incoming attack in a threat state so the recovered
-                # 9-10 frame parry chain can fire deterministically.
-                player.state = "startup"
-                player.state_time = 1.0
+            for step: int in range(100):
+                # Advance the real player attack and the real Brick parry.
+                player.position = Vector3(0.0, 1.2, 0.0)
+                brick.position = Vector3(0.05, 1.2, 0.0)
+                player._physics_process(1.0 / 60.0)
                 brick._physics_process(1.0 / 60.0)
                 if brick.attack_kind == "parry_attack_brick":
                     break
             if brick.attack_kind != "parry_attack_brick":
-                push_error("Brick high parry did not chain to parry_attack_brick")
+                push_error("Brick high parry did not chain to parry_attack_brick: kind="
+                        + brick.attack_kind + " state=" + brick.state
+                        + " player=" + player.state)
                 quit(1)
                 return
-            for step: int in range(80):
-                player.state = "startup"
-                player.state_time = 1.0
+            for step: int in range(100):
+                player.position = Vector3(0.0, 1.2, 0.0)
+                brick.position = Vector3(0.05, 1.2, 0.0)
+                player._physics_process(1.0 / 60.0)
                 brick._physics_process(1.0 / 60.0)
                 if player.health < PortFighter.MAX_HEALTH:
                     break
             if not is_equal_approx(player.health, 90.0):
-                push_error("Brick parry_attack damage mismatch: " + str(player.health))
+                push_error("Brick parry_attack damage mismatch: health=" + str(player.health)
+                        + " dmg=" + str(brick.ATTACKS["parry_attack_brick"]["damage"])
+                        + " brick=" + brick.state + "/" + brick.attack_kind
+                        + " player=" + player.state
+                        + " distance=" + str(brick.global_position.distance_to(player.global_position)))
                 quit(1)
                 return
         if seen.size() == 2:

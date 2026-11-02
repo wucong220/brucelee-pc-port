@@ -4128,6 +4128,15 @@ func receive_hit(
         reaction: Dictionary = {}
 ) -> bool:
     _parry_press_times.clear()
+    if (state in ["startup", "active", "recovery"]
+            and attack_kind in ["parry_high_brick", "parry_low_brick"]):
+        # thai.set marks parryhigh/parrylow impactable only from frame 25.
+        # Absorb earlier incoming strikes so the parry window is defensive.
+        if _current_attack_source_frame() < 25.0:
+            return false
+    if state in ["startup", "active"] and attack_kind == "parry_attack_brick":
+        # The prototype counter owns the exchange once the parry chains.
+        return false
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
