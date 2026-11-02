@@ -4,7 +4,8 @@ param(
     [switch]$SelfTest,
     [string]$BuildRoot = "",
     [string]$OutputDir = "",
-    [string]$GodotTempRoot = ""
+    [string]$GodotTempRoot = "",
+    [string]$RuntimeAssetRoot = ""
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -326,6 +327,24 @@ if (-not (Test-PckProjectSettings $exportedPck.FullName)) {
 
 Copy-Item -LiteralPath $exported.FullName -Destination $delivered -Force
 Copy-Item -LiteralPath $exportedPck.FullName -Destination (Join-Path $dist 'DragonWarrior_PC_Prototype.pck') -Force
+
+if (-not [string]::IsNullOrWhiteSpace($RuntimeAssetRoot)) {
+    if (-not (Test-Path -LiteralPath $RuntimeAssetRoot -PathType Container)) {
+        throw "RuntimeAssetRoot does not exist: $RuntimeAssetRoot"
+    }
+    foreach ($name in @('audio', 'menu', 'scene', 'ui')) {
+        $source = Join-Path $RuntimeAssetRoot $name
+        if (Test-Path -LiteralPath $source -PathType Container) {
+            Copy-Item -LiteralPath $source -Destination $dist -Recurse -Force
+        }
+    }
+    foreach ($name in @('launch.ps1', 'DragonWarrior_TempleYardB.cmd')) {
+        $source = Join-Path $RuntimeAssetRoot $name
+        if (Test-Path -LiteralPath $source -PathType Leaf) {
+            Copy-Item -LiteralPath $source -Destination (Join-Path $dist $name) -Force
+        }
+    }
+}
 
 Write-Host "Built: $delivered"
 Write-Host 'Reminder: This is a combat prototype, not the complete original game.'
