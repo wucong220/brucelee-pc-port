@@ -107,6 +107,10 @@ func _make_bar(parent: Node) -> ProgressBar:
     bar.max_value = 100.0
     bar.value = 100.0
     bar.show_percentage = false
+    var fill: StyleBoxTexture = StyleBoxTexture.new()
+    fill.texture = _try_load_hud_texture("BL_HUD_Lifebar_left.png")
+    if fill.texture != null:
+        bar.add_theme_stylebox_override("fill", fill)
     row.add_child(bar)
     return bar
 
@@ -127,20 +131,31 @@ func _make_rage_bar(parent: Node) -> ProgressBar:
     bar.max_value = 100.0
     bar.value = 0.0
     bar.show_percentage = false
+    var fill: StyleBoxTexture = StyleBoxTexture.new()
+    fill.texture = _try_load_hud_texture("BL_HUD_ChiBar_left.png")
+    if fill.texture != null:
+        bar.add_theme_stylebox_override("fill", fill)
     row.add_child(bar)
     return bar
 
 func _try_load_hud_icon() -> ImageTexture:
+    return _try_load_hud_texture("BL_HUD_Round_yellow_left.png")
+
+
+func _try_load_hud_texture(filename: String) -> ImageTexture:
+    var roots: Array[String] = []
+    roots.append(OS.get_executable_path().get_base_dir().path_join("ui/hud"))
     var local_app_data: String = OS.get_environment("LOCALAPPDATA")
-    if local_app_data.is_empty():
-        return null
-    var path: String = local_app_data.path_join(
-        "BruceLee-PC-Port/local-assets/gui/images/hud/bl_hud_round_yellow_left.png"
-    )
-    var image: Image = Image.new()
-    if image.load(path) != OK:
-        return null
-    return ImageTexture.create_from_image(image)
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
+            "BruceLee-PC-Port/local-assets/gui/images/hud"
+        ))
+    for root: String in roots:
+        var path: String = root.path_join(filename)
+        var image: Image = Image.new()
+        if image.load(path) == OK:
+            return ImageTexture.create_from_image(image)
+    return null
 
 func set_health(player_health: float, enemy_health: float) -> void:
     player_bar.value = player_health
