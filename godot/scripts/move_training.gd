@@ -145,6 +145,8 @@ func open() -> void:
 func close() -> void:
     state = "hidden"
     visible = false
+    if player != null:
+        player.set_physics_process(true)
     if computer != null:
         computer.set_physics_process(true)
 

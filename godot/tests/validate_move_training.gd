@@ -136,6 +136,12 @@ func _run() -> void:
         push_error("Endattack training did not advance")
         quit(1)
         return
+    training.close()
+    scene._on_menu_command("fight")
+    if not player.is_physics_processing():
+        push_error("Leaving training did not restore player physics")
+        quit(1)
+        return
     print("MOVE_TRAINING_VALIDATION=" + JSON.stringify({
         "entries": training.entries.size(),
         "start_selector": true,
