@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 ## Verify Brick grab hits put the victim into the merged grabbed clip and
 ## return to the evidence-backed downed state.
 
@@ -53,6 +53,16 @@ func _run() -> void:
             brick._physics_process(1.0 / 60.0)
             if player.state == cases[attack][0]:
                 saw_grabbed = true
+                player._animate_candidate()
+                if not player._candidate_clip_paths.has(cases[attack][0]):
+                    push_error("Merged grab clip is not loaded: " + attack)
+                    quit(1)
+                    return
+                if player.candidate_animation_clip != cases[attack][1]:
+                    push_error("Grab did not play merged clip: " + attack
+                            + " clip=" + player.candidate_animation_clip)
+                    quit(1)
+                    return
             if saw_grabbed and player.state == cases[attack][2]:
                 break
         if not saw_grabbed:
@@ -68,6 +78,29 @@ func _run() -> void:
             push_error("Grab damage mismatch for " + attack + ": " + str(player.health))
             quit(1)
             return
+    var lethal_cases: Dictionary = {
+        "grab1_brick": 5.0,
+        "grab2_brick": 19.0,
+    }
+    for attack: String in lethal_cases:
+        scene._reset_match()
+        player.position = Vector3(0.0, 1.2, 0.0)
+        brick.position = Vector3(0.3, 1.2, 0.0)
+        player.health = float(lethal_cases[attack])
+        if not brick.request_attack(attack):
+            push_error("Lethal grab request failed: " + attack)
+            quit(1)
+            return
+        for step: int in range(220):
+            player.position = Vector3(0.0, 1.2, 0.0)
+            brick.position = Vector3(0.3, 1.2, 0.0)
+            player._physics_process(1.0 / 60.0)
+            brick._physics_process(1.0 / 60.0)
+            if player.state in ["grabbed1", "grabbed2"]:
+                push_error("Lethal grab incorrectly entered grabbed state: " + attack)
+                quit(1)
+                return
+
     print("BRICK_GRAB_VICTIM_VALIDATION=" + JSON.stringify({
         "grab1_brick": "grabbed1 -> facedownidle",
         "grab2_brick": "grabbed2 -> faceupidle",

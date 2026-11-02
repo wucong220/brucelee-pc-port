@@ -3787,7 +3787,7 @@ func _try_attack_contact() -> void:
     _attack_connected = true
     _register_landed_hit(damage, blocked)
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
-    if not blocked and GRAB_VICTIM_DATA.has(attack_kind):
+    if not blocked and opponent.health > 0.0 and GRAB_VICTIM_DATA.has(attack_kind):
         opponent.begin_grabbed(attack_kind)
 
 
