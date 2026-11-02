@@ -267,10 +267,10 @@ const LINK_SEQUENCE_INDEX: int = 1
 # CFighter::CheckConditions @0x1b3db0 compares fighter+0x14c (rage) with
 # <100 / <0x42(66) / <0x21(33) for MaxRage/Rage2Thirds/RageThird.
 const RAGE_MAX: float = 100.0
-# PC arena footprint. The original arena dimensions are not recovered; this is
-# a larger prototype stage so the relative-camera orbit has room to move.
-const ARENA_HALF_X: float = 12.0
-const ARENA_HALF_Z: float = 7.0
+# PC arena footprint, derived from the original Temple Yard combatarea mesh:
+# 879.94 source units wide / 907.73 deep at 0.01038 world/source units.
+const ARENA_HALF_X: float = 4.55
+const ARENA_HALF_Z: float = 4.70
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
 # Source windows: stun->stun2 and stun2->stunfall [55,61]; stunfall->faceupko [71,79].
