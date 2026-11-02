@@ -234,6 +234,11 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
 }
 const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
 const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.8
+# Human hands rarely hit three keys inside one 0.8s total window. The combo
+# history now expires on a per-gap basis with an overall cap: each next press
+# may take up to COMBO_MAX_GAP, and the whole sequence must fit COMBO_MAX_TOTAL.
+const COMBO_MAX_GAP_SECONDS: float = 0.52
+const COMBO_MAX_TOTAL_SECONDS: float = 1.35
 const RAGE_MAX: float = 100.0
 const RAGE_GAIN_PER_HIT: float = 10.0
 # Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
@@ -3094,9 +3099,22 @@ func _clear_standing_combo_state() -> void:
 func _prune_standing_combo_input_history() -> void:
     if _standing_combo_input_history.is_empty():
         return
-    var first_time: float = float(_standing_combo_input_history.front()["time"])
-    if _time > first_time + STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS:
-        _clear_standing_combo_input_history()
+    # Drop the oldest presses until every adjacent pair is inside the per-gap
+    # budget and the whole remaining sequence fits the total budget.
+    while _standing_combo_input_history.size() >= 2:
+        var first_time: float = float(_standing_combo_input_history[0]["time"])
+        var second_time: float = float(_standing_combo_input_history[1]["time"])
+        if second_time - first_time > COMBO_MAX_GAP_SECONDS:
+            _standing_combo_input_history.pop_front()
+            continue
+        break
+    while _standing_combo_input_history.size() >= 2:
+        var head_time: float = float(_standing_combo_input_history.front()["time"])
+        var tail_time: float = float(_standing_combo_input_history.back()["time"])
+        if tail_time - head_time > COMBO_MAX_TOTAL_SECONDS:
+            _standing_combo_input_history.pop_front()
+            continue
+        break
 
 
 func _matching_standing_combo_attack() -> String:
