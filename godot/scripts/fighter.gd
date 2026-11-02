@@ -2416,10 +2416,18 @@ func _play_candidate_action(action: String, start_frame: int = 0) -> void:
     candidate_visual_blend_seconds_last = blend_seconds if blend_applied else 0.0
     candidate_visual_blend_source_action_last = previous_action if blend_applied else ""
     candidate_visual_blend_target_action_last = action if blend_applied else ""
+    # The candidate idle clip contains a visible two-beat body sway. After a
+    # solitary attack the port would loop that sway and make every move look
+    # like a failed recoil. Hold the first idle pose instead.
+    _candidate_animation.speed_scale = (
+        0.0 if action in ["idle", "idle2", "idle3"] else 1.0
+    )
     if blend_applied:
         _candidate_animation.play(candidate_animation_clip, blend_seconds)
     else:
         _candidate_animation.play(candidate_animation_clip)
+    if action in ["idle", "idle2", "idle3"]:
+        _candidate_animation.seek(0.0, true)
     if start_frame > 0:
         _candidate_animation.seek(
             float(start_frame) / SOURCE_FRAME_RATE, true
