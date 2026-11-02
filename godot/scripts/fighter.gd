@@ -4603,21 +4603,20 @@ func receive_hit(
             stun_next_state = String(native_stun["next_state"])
         elif stun_source == "impactlightfronthigh":
             stun_animation = "all_impct_light_frnt_high"
-            _native_link_start_frame("impactlightfronthigh", 13)
+            stun_exit_frame = _native_link_start_frame("impactlightfronthigh", 13)
         elif stun_source == "impactlightfrontlow":
             stun_animation = "all_impct_light_frnt_low"
-            _native_link_start_frame("impactlightfrontlow", 13)
+            stun_exit_frame = _native_link_start_frame("impactlightfrontlow", 13)
         elif stun_source == "impactlightfrontmid":
             stun_animation = "all_impct_crotch"
-            # Source link 131 allows [15,20]; choose 15 for this PC candidate.
-            stun_exit_frame = 15
+            stun_exit_frame = _native_link_start_frame("impactlightfrontmid", 14)
         elif stun_source.begins_with("impacthard"):
             stun_animation = "stun_hard"
-            _native_link_start_frame("impacthardfronthigh", 20)
+            stun_exit_frame = _native_link_start_frame("impacthardfronthigh", 20)
             stun_next_state = "faceupko"
         elif stun_source == "stunbrutalimpact":
             stun_animation = "stun_brutal"
-            _native_link_start_frame("stunbrutalimpact", 40)
+            stun_exit_frame = _native_link_start_frame("stunbrutalimpact", 40)
             stun_next_state = "facedownko"
         else:
             return false

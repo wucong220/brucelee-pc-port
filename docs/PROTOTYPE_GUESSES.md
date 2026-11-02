@@ -59,8 +59,8 @@
 | 21 | `startup/active/recovery` 三段相位 + `state_time` 计时 | `fighter.gd` 全状态机 | 部分证据（第 25 轮核对） | 全部攻击的帧边界现在由 `damage_time` 自动算出并校验；无伤害的 miss/parry 用出边 link 窗口（如 parryhigh `[9,10]`、specialkicklowmiss `[14,16]`）；`tests/test_attack_phase_windows.py` 会拦截任何手填漂移。相位命名/切换仍是移植结构，原版是纯动画帧推进 |
 | 22 | 每帧按对手位置重算 `facing`、直接写 `rotation.y` | `fighter.gd::_physics_process` | 部分证据（第 20 轮） | 转向现在受动作 `facing` 窗口约束（如 grab1 `[0,1]`、endattack1 反向 `[1,0]` 视为锁定）；`rotation.y` 仍每帧同步到当前 facing，视觉层与原版未完全闭合 |
 | 23 | 世界缩放 `1.8 / 173.4159` | `CANDIDATE_SOURCE_HEIGHT` / `CANDIDATE_HEIGHT` | 候选 | 数值来自候选模型高度，不是原版场景缩放 |
-| 24 | 根位移 raw Y 逐 clip 符号映射 | `fighter.gd` 注释 "Prototype only: per-clip first-Y sign" | 自创 | 原版 root motion 语义未闭合 |
-| 25 | `_attack_hit_landed` / `_attack_connected` / `_multi_impact_applied` 簿记 | `fighter.gd` | 自创 | 原版靠 impact 帧与状态，不存在这些布尔量 |
+| 24 | 根位移 raw Y 逐 clip 符号映射 | `fighter.gd::_load_attack_root_motion` | 部分证据（第 36 轮） | 符号不是手写表，而是取 positions 轨道第一个非零 Y 样本的符号；`reports/attack_root_motion_inventory.json` 明确 `positions_axis_semantics=UNVERIFIED`，所以轴语义仍是待验证假设 |
+| 25 | `_attack_hit_landed` / `_attack_connected` / `_multi_impact_applied` 簿记 | `fighter.gd` | 部分证据（第 36 轮） | 这些布尔量是移植层的「本招命中/已接触/已应用 impact」标记，对应原生 impact 帧与状态；命名和结构是移植的，但语义有据 |
 | 26 | 受击反应链（hitstun→blockstun→返回状态） | `fighter.gd::_advance_timed_states` | 部分证据（第 27 轮） | 受击/格挡反应已从原生 reaction link 生成（26+10 条）并优先选用；stun 链的时长、顺序、`impactstun→stun` 冲击反应都按原生 link/动作数据驱动；仅状态机骨架未接 CStateManager |
 | 27 | 三局两胜、KO、回合重置 | `main.gd` | 自创 | 原型规则 |
 | 28 | 音效映射 | `main.gd::_play_hit_audio` | 自创 | 只把候选文件按动作名对上，不是原版事件映射 |
