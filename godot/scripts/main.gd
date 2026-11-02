@@ -391,6 +391,14 @@ func _build_original_far_scene() -> void:
         if not entry_value is Dictionary:
             continue
         var entry: Dictionary = entry_value
+        var entry_name: String = String(entry.get("name", ""))
+        if entry_name in [
+            "bl_scene02a_hw_skydome",
+            "bl_scene02a_hw_alphagroup_foliage",
+            "bl_scene02a_hw_alphagroup_grass",
+            "bl_scene02a_hw_prop_redgate",
+        ]:
+            continue
         var glb_path: String = base.path_join(String(entry.get("file", "")))
         if not FileAccess.file_exists(glb_path):
             continue
