@@ -41,6 +41,8 @@ var _candidate_audio_error: Dictionary = {}
 var _voice_audio: Dictionary = {}
 var _voice_audio_error: Dictionary = {}
 var _active_voice: AudioStreamPlayer = null
+var _music_player: AudioStreamPlayer = null
+var _music_stream: AudioStream = null
 var ai_timer: float = 0.0
 var ai_guard_sequence: int = -1
 var ai_guard_decision: bool = false
@@ -481,6 +483,37 @@ func _build_combat_audio() -> void:
             continue
         _candidate_audio[event] = stream
     _load_bruce_voice_audio()
+    _load_menu_music()
+
+
+func _load_menu_music() -> void:
+    var roots: Array[String] = []
+    var env_root: String = OS.get_environment("BRUCELEE_MUSIC_ROOT")
+    if not env_root.is_empty():
+        roots.append(env_root)
+    roots.append(OS.get_executable_path().get_base_dir().path_join("audio/music"))
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
+            "BruceLee-PC-Port/bruce-music-20261103"
+        ))
+    for root: String in roots:
+        var path: String = root.path_join("Main_Theme_BL.wav")
+        if not FileAccess.file_exists(path):
+            continue
+        var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
+        if stream == null:
+            continue
+        stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+        stream.loop_end = int(stream.get_length() * float(stream.mix_rate))
+        _music_stream = stream
+        _music_player = AudioStreamPlayer.new()
+        _music_player.stream = stream
+        _music_player.volume_db = -12.0
+        _music_player.finished.connect(_music_player.play)
+        combat_audio.add_child(_music_player)
+        _music_player.play()
+        return
 
 
 func _load_bruce_voice_audio() -> void:
