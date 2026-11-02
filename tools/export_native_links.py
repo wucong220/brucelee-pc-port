@@ -60,8 +60,10 @@ def build(archive: Path) -> dict:
         "actions": action_rows,
         "links": link_rows,
         "note": (
-            "Derived metadata only. Link order is the native link scan order; "
-            "runtime behavior and the +500 event lifetime unit remain unverified."
+            "Derived metadata only. Link order is the native link scan order. "
+            "keysequence and keystatus entries are alternative sequences selected "
+            "by CLinkDescr::GetKeySequence(index = fighter+0x1c), not three steps; "
+            "the selector value is not yet recovered."
         ),
     }
 

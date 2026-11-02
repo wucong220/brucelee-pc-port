@@ -69,6 +69,12 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
 | `InputStatusCheck` | `0x1b020c` | link 要求的按键**状态**必须出现在当前 keystatus 向量里（按下/松开） |
 | `CheckConditions` | — | link `+0xb8` 的条件表（对手状态、怒气等） |
 
+`CLinkDescr::GetKeySequence(index)` 的实际实现是
+`return this + index * 0x14 + 0x30`：每条 link 有**多组备选序列**，由
+`fighter+0x1c` 选择，不是三步。当前移植把导出的 3 项当作步骤匹配，是已知近似；
+`+0x1c` 的写入点尚未在 139 个 `CFighter` 反编译函数中出现，详见
+`INPUT_CONFIG_FINDINGS.md`。
+
 四项全部通过才执行：
 
 1. `FollowLink`（`0x1b8040`）：目标动画索引大于当前索引时，只把 link 挂到

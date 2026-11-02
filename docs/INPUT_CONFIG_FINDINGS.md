@@ -73,6 +73,29 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
   因此检查允许跳过不匹配事件，也跳过对应字节非零的匹配事件。
   字节的写入和队列生命周期见下节；单凭这个函数不能证明最终招式触发。
 
+### `keysequence` 是“按索引选择的备选序列”，不是三步
+
+`CLinkDescr::GetKeySequence(unsigned int index)`（`0x1cf6d0`）的完整反编译只有一行：
+
+```c
+return this + param_1 * 0x14 + 0x30;
+```
+
+也就是说，每条 link 在 `+0x30` 起存了**多个 0x14 字节的备选序列**，由
+`CFighter +0x1c` 选择；`UserControlUpdate` 每次都传
+`*(uint *)(this + 0x1c)`。导出的 3 个 `keysequence` 项是**三种备选**，
+不是“三步连招”。
+
+- 在 `CFighter` 命名空间的 139 个反编译函数里，没有任何一处写
+  `this + 0x1c`；构造函数与 `Init` 也没有写它。
+- 它在单机流程里可能是 0，但按索引 0 取序列时 `lowpunch1` 与
+  `highpunch1` 都是 `[pressa]`、`lowkick1` 与 `highkick1` 都是
+  `[pressb]`，四个按键无法一一对应；按索引 1 取则是
+  a→`highpunch1`、b→`lowpunch1`、c→`highkick1`、d→`lowkick1`，四键完整对应。
+- 因此**索引的真实来源仍未闭合**（可能在游戏/配置层写入，未在已导出函数中
+  出现）。当前移植把 3 个备选当成 3 步匹配，是已知的近似，不能称为原生语义；
+  在拿到 `+0x1c` 的写入点之前不改动这一层。
+
 `tools/native_reaction_links.py` 校验这段序列检查的指令字和 ELF SHA-256。
 
 ## 事件标记与批量过期
