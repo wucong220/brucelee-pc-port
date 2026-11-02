@@ -37,5 +37,9 @@ animation accessor、bufferView 和二进制数据，按节点名称重映射 ch
 运行时已接入受击侧 `grabbed1`/`grabbed2`：Brick `grab1_brick`/`grab2_brick`
 命中后，玩家播放 `all_grabbed_01/02_forset03`，按档案分别回到 `facedownidle`
 和 `faceupidle`。`validate_brick_grab_victim.gd` 用真实物理帧验证了状态进入、
-返回、以及 6/20 伤害。`endattack`/grabcompl 攻击方链仍未接入；不能因为受击
-状态完成就声称完整 grabcompl/endattack 已完成。
+返回、以及 6/20 伤害。
+
+`endattack_brick` 命中后，玩家播放 `all_end_attack_01/02_forset03`，
+结束后进入 `faceupko`；`validate_brick_endattack.gd` 验证了完整
+grab → endattack → endattackcomp → faceupko 链。`endattack` 本身保持档案中的
+0 伤害，这是收招/终结动作，不是数据缺失。
