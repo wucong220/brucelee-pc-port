@@ -3329,9 +3329,11 @@ func _native_condition_ok(condition: String, link: Dictionary) -> bool:
                 return false
             return _opponent_distance() <= float(raw_grab) * source_units_to_world
         "ragethird":
-            return rage >= 33.0
+            # CheckConditions @1b3db0 compares rage < 0x21(33) => false.
+            return rage >= float(int(RAGE_MAX / 3.0))
         "rage2thirds":
-            return rage >= 66.0
+            # CheckConditions @1b3db0 compares rage < 0x42(66) => false.
+            return rage >= float(int(RAGE_MAX * 2.0 / 3.0))
         "healthzero":
             return opponent != null and is_instance_valid(opponent) and opponent.health <= 0.0
         "impact":

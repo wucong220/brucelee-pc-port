@@ -282,7 +282,9 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
 - 怒气改为数据驱动：动作 `action.rage` 正值是命中怒气增益
   （lowpunch1=5、highkick3=10），负值是特殊技消耗
   （specialpunchlowmiss/specialkicklowmiss=-66，命中动作=0），
-  link 路径按该值扣费；`RAGE_MAX=100` 和 AI 的 33/66 门槛仍为原型假设。
+  link 路径按该值扣费；`RAGE_MAX=100`、`ragethird=33`、`rage2thirds=66`
+  已由 `CFighter::CheckConditions @0x1b3db0` 的 `<100 / <0x42 / <0x21`
+  比较确认（详见 `docs/NATIVE_RAGE_UNIQUE_EVIDENCE.md`）。
 - 反应链的 13/15/20/40、23/21/14 帧回退已改读对应的出边 link 起始帧。
 
 - Brick 现在也加载自己的原生 link 表：`tools/export_native_links.py --set
@@ -292,7 +294,9 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
 - 原 `SPECIAL_RAGE_COSTS` 已从 `fighter.gd` 删除；玩家按动作 `action.rage`
   扣费/加怒，AI 专用成本保留在 `main.gd::AI_SPECIAL_RAGE_COSTS`（AI 决策仍是原型）。
 
-仍未完全处理：`unique` 的角色专属 clip 映射；`RAGE_MAX` 与 AI 怒气
-扣费。CI 新增 `godot-parse` 作业，会下载 Godot 4.7.2 对全部 GDScript
-做 `--check-only` 解析；运行时 Godot 回归和真实 EXE 构建仍只能在本机
-执行（候选资源和原始 APK 不在仓库内）。
+仍未完全处理：AI 专用成本表 `main.gd::AI_SPECIAL_RAGE_COSTS`（AI 出招决策
+本身是原型，不是反编译恢复的原版 AI）。`unique` 已确认是角色专属标记，
+目标动作的 `binary` 提供动画，不需要额外 clip 映射（见
+`docs/NATIVE_RAGE_UNIQUE_EVIDENCE.md`）。CI 新增 `godot-parse` 作业，会下载
+Godot 4.7.2 对全部 GDScript 做 `--check-only` 解析；运行时 Godot 回归和
+真实 EXE 构建仍只能在本机执行（候选资源和原始 APK 不在仓库内）。

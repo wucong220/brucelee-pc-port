@@ -730,9 +730,9 @@ func _think_ai(delta: float) -> void:
                 moves.append("endattack_brick")
             # Prototype AI choice: thai.set gates these on ragethird/rage2thirds;
             # the native AI decision is not recovered, so this only spends rage.
-            if computer.rage >= 33.0:
+            if computer.rage >= float(int(PortFighter.RAGE_MAX / 3.0)):
                 moves.append_array(["special_kick_high_brick", "special_kick_low_brick"])
-            if computer.rage >= 66.0:
+            if computer.rage >= float(int(PortFighter.RAGE_MAX * 2.0 / 3.0)):
                 moves.append_array([
                     "special_punch_high_brick", "special_punch_low_brick",
                     "grab1_brick", "grab2_brick",
