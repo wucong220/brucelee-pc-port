@@ -34,8 +34,10 @@ func _run() -> void:
         push_error("Candidate load failed")
         quit(1)
         return
+    var main_consts: Dictionary = scene.get_script().get_script_constant_map()
+    var ai_costs: Dictionary = main_consts["AI_SPECIAL_RAGE_COSTS"]
     for miss: String in CASES:
-        if not is_equal_approx(float(brick.SPECIAL_RAGE_COSTS.get(miss, 0.0)), 66.0):
+        if not is_equal_approx(float(ai_costs.get(miss, 0.0)), 66.0):
             push_error("Grab miss has no 66 rage cost: " + miss)
             quit(1)
             return

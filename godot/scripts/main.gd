@@ -40,6 +40,30 @@ var computer_rounds: int = 0
 var match_over: bool = false
 var round_reset_timer: float = -1.0
 
+# AI-only prototype costs: the native AI decision is not recovered, so the
+# Brick AI uses these thresholds/costs. They are not part of the player action
+# layer (the player spends per-action action.rage values).
+const AI_SPECIAL_RAGE_COSTS: Dictionary = {
+    "special_kick_high": 33.0,
+    "special_kick_low_miss": 66.0,
+    "special_punch_low_miss": 66.0,
+    "special_punch_high_miss": 66.0,
+    "grab1": 66.0,
+    "grab2": 66.0,
+    "grab1_miss_brick": 66.0,
+    "grab2_miss_brick": 66.0,
+    "grab1_miss": 66.0,
+    "grab2_miss": 66.0,
+    "special_kick_high_brick": 33.0,
+    "special_kick_low_brick": 33.0,
+    "special_punch_high_brick": 66.0,
+    "special_punch_low_brick": 66.0,
+    "parry_high_brick": 33.0,
+    "parry_low_brick": 30.0,
+    "grab1_brick": 66.0,
+    "grab2_brick": 66.0,
+}
+
 func _ready() -> void:
     PrototypeControls.ensure_default_actions()
     rng.seed = 0xB17E
@@ -680,7 +704,7 @@ func _think_ai(delta: float) -> void:
             and distance <= player.attack_reach_world(player.attack_kind, computer)):
         var parry_kind: String = ("parry_low_brick"
                 if _player_attack_is_low() else "parry_high_brick")
-        var parry_cost: float = float(PortFighter.SPECIAL_RAGE_COSTS.get(parry_kind, 0.0))
+        var parry_cost: float = float(AI_SPECIAL_RAGE_COSTS.get(parry_kind, 0.0))
         if (computer.rage >= parry_cost and computer.supports_attack(parry_kind)
                 and rng.randf() < 0.5):
             computer.guard_held = false
@@ -722,7 +746,7 @@ func _think_ai(delta: float) -> void:
             if not available.is_empty():
                 var chosen: String = available[rng.randi_range(0, available.size() - 1)]
                 if computer.request_attack(chosen):
-                    var cost: float = float(PortFighter.SPECIAL_RAGE_COSTS.get(chosen, 0.0))
+                    var cost: float = float(AI_SPECIAL_RAGE_COSTS.get(chosen, 0.0))
                     if cost > 0.0:
                         computer.rage = maxf(0.0, computer.rage - cost)
 

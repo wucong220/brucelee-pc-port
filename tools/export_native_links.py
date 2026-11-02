@@ -16,8 +16,8 @@ from kdf_fighting_set import read_archive_resource
 import kdf_combat_reactions as reactions
 
 
-def build(archive: Path) -> dict:
-    raw, info = read_archive_resource(archive, "adreno_200/set/brucelee.set")
+def build(archive: Path, set_path: str = "adreno_200/set/brucelee.set") -> dict:
+    raw, info = read_archive_resource(archive, set_path)
     _reader, _root, actions, links = reactions._parse_set(raw)
     action_rows = []
     for action in actions:
@@ -86,7 +86,7 @@ def build(archive: Path) -> dict:
     return {
         "schema_version": 1,
         "source": {
-            "set_path": "adreno_200/set/brucelee.set",
+            "set_path": set_path,
             "action_count": len(actions),
             "link_count": len(links),
             "set_sha256": (info.get("sha256") if isinstance(info, dict) and info.get("sha256") else hashlib.sha256(raw).hexdigest()),
@@ -96,8 +96,8 @@ def build(archive: Path) -> dict:
         "note": (
             "Derived metadata only. Link order is the native link scan order. "
             "keysequence and keystatus entries are alternative sequences selected "
-            "by CLinkDescr::GetKeySequence(index = fighter+0x1c), not three steps; "
-            "the selector value is not yet recovered."
+            "by CLinkDescr::GetKeySequence(index = fighter+0x1c). The port "
+            "selects the keyboard profile index 1."
         ),
     }
 
@@ -106,8 +106,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("archive", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--set", default="adreno_200/set/brucelee.set")
     args = parser.parse_args()
-    report = build(args.archive)
+    report = build(args.archive, args.set)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, separators=(",", ":")),
                            encoding="utf-8")

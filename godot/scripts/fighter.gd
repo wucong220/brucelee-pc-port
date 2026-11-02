@@ -235,6 +235,7 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
 # lifetime is 500 milliseconds. Expiry marks the whole vector consumed.
 const LINK_EVENT_LIFETIME_MS: int = 500
 const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
+const BRICK_NATIVE_LINKS_PATH: String = "res://data/native_links_brick.json"
 # adreno_200/input.config: control_profile 0 is the touch layout (a/b only),
 # 1 is the ZDK keyboard layout (a/b/c/d). CBeatEmUpMatch::LoadFighter receives
 # the current input layout and writes it to fighter+0x1c, which
@@ -242,28 +243,6 @@ const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
 # The PC port runs the keyboard layout, so variant 1 is the native sequence.
 const LINK_SEQUENCE_INDEX: int = 1
 const RAGE_MAX: float = 100.0
-const RAGE_GAIN_PER_HIT: float = 10.0
-# Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
-const SPECIAL_RAGE_COSTS: Dictionary = {
-    "special_kick_high": 33.0,
-    "special_kick_low_miss": 66.0,
-    "special_punch_low_miss": 66.0,
-    "special_punch_high_miss": 66.0,
-    "grab1": 66.0,
-    "grab2": 66.0,
-    "grab1_miss_brick": 66.0,
-    "grab2_miss_brick": 66.0,
-    "grab1_miss": 66.0,
-    "grab2_miss": 66.0,
-    "special_kick_high_brick": 33.0,
-    "special_kick_low_brick": 33.0,
-    "special_punch_high_brick": 66.0,
-    "special_punch_low_brick": 66.0,
-    "parry_high_brick": 33.0,
-    "parry_low_brick": 30.0,
-    "grab1_brick": 66.0,
-    "grab2_brick": 66.0,
-}
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
 # Source windows: stun->stun2 and stun2->stunfall [55,61]; stunfall->faceupko [71,79].
@@ -3538,9 +3517,13 @@ func _normalize_press_token(token: String) -> String:
 
 
 func _load_native_links() -> void:
-    var file: FileAccess = FileAccess.open(NATIVE_LINKS_PATH, FileAccess.READ)
+    var path: String = (
+        BRICK_NATIVE_LINKS_PATH if attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        else NATIVE_LINKS_PATH
+    )
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
     if file == null:
-        push_error("Native link metadata is missing: " + NATIVE_LINKS_PATH)
+        push_error("Native link metadata is missing: " + path)
         return
     var parsed: Variant = JSON.parse_string(file.get_as_text())
     if not parsed is Dictionary:

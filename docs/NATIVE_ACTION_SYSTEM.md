@@ -285,6 +285,13 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
   link 路径按该值扣费；`RAGE_MAX=100` 和 AI 的 33/66 门槛仍为原型假设。
 - 反应链的 13/15/20/40、23/21/14 帧回退已改读对应的出边 link 起始帧。
 
+- Brick 现在也加载自己的原生 link 表：`tools/export_native_links.py --set
+  adreno_200/set/thai.set` 生成 `godot/data/native_links_brick.json`（109 actions /
+  236 links），`_load_native_links()` 按 `attack_config_path` 选择该文件。Brick 的
+  `grab1miss brick → grab1 brick [10,11]` 等链路因此走原生 link，而不是旧 special chain。
+- 原 `SPECIAL_RAGE_COSTS` 已从 `fighter.gd` 删除；玩家按动作 `action.rage`
+  扣费/加怒，AI 专用成本保留在 `main.gd::AI_SPECIAL_RAGE_COSTS`（AI 决策仍是原型）。
+
 仍未完全处理：`unique` 的角色专属 clip 映射；`RAGE_MAX` 与 AI 怒气
 扣费。CI 新增 `godot-parse` 作业，会下载 Godot 4.7.2 对全部 GDScript
 做 `--check-only` 解析；运行时 Godot 回归和真实 EXE 构建仍只能在本机
