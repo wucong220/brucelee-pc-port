@@ -277,6 +277,48 @@ func _build_environment() -> void:
     _make_floor()
     _make_arena_line(-PortFighter.ARENA_HALF_X)
     _make_arena_line(PortFighter.ARENA_HALF_X)
+    _build_original_scene_props()
+
+
+func _build_original_scene_props() -> void:
+    var base: String = OS.get_executable_path().get_base_dir().path_join("scene")
+    if not DirAccess.dir_exists_absolute(base):
+        return
+    var texture_path: String = base.path_join("scene_prop.png")
+    var texture: Texture2D = null
+    if FileAccess.file_exists(texture_path):
+        var image: Image = Image.new()
+        if image.load(texture_path) == OK:
+            texture = ImageTexture.create_from_image(image)
+    var material: StandardMaterial3D = StandardMaterial3D.new()
+    material.albedo_texture = texture
+    material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)
+    material.roughness = 0.9
+    var root: Node3D = Node3D.new()
+    root.name = "OriginalSceneProps"
+    var scale_value: float = PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
+    for filename: String in [
+        "bl_scene02a_hw_prop_brick.glb",
+        "bl_scene02a_hw_prop_brick_01.glb",
+        "bl_scene02a_hw_prop_brick_02.glb",
+    ]:
+        var path: String = base.path_join(filename)
+        if not FileAccess.file_exists(path):
+            continue
+        var document: GLTFDocument = GLTFDocument.new()
+        var state: GLTFState = GLTFState.new()
+        if document.append_from_file(path, state) != OK:
+            continue
+        var instance: Node3D = document.generate_scene(state)
+        if instance == null:
+            continue
+        instance.position = Vector3(3.563, 0.0, -2.679)
+        instance.scale = Vector3.ONE * scale_value
+        for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
+            (mesh_node as MeshInstance3D).material_override = material
+        root.add_child(instance)
+    if root.get_child_count() > 0:
+        add_child(root)
 
 
 func _make_floor() -> void:
