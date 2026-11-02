@@ -53,6 +53,12 @@ parry 输入仍是原型实现，尚未换成 link 数据驱动的状态进入�
 `request_attack` 基础招”的回退仍然是原型机制，不是从 link 表读出来的；
 在拿到原生默认攻击入口之前，这部分继续标为 prototype。
 
+`CFighter::BasicUpdate`（`0x1b8330`）的完整反编译也确认了这一点：它只推进
+动画时钟、按帧区间记录当前帧、处理 `+0xf0/+0xf4` 的待执行 link、更新朝向/
+位移，**没有任何攻击按键分支**。`+0xf0/+0xf4` 只在 `BasicUpdate` 里执行
+`SetAnimation`，而这些带 `linking_frame` 的 link 目标几乎都是 `idle` 系列
+（回站立），不是攻击起手。
+
 `CFighter::UserControlUpdate`（`0x1b89c0`）每次更新依次遍历**当前招式的
 link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link 做四个检查：
 
