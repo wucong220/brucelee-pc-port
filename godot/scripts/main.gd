@@ -7,6 +7,7 @@ const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const MoveTraining = preload("res://scripts/move_training.gd")
+const MoveGallery = preload("res://scripts/move_gallery.gd")
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 const ROUNDS_TO_WIN: int = 2
 const ROUND_RESET_DELAY: float = 2.0
@@ -16,6 +17,7 @@ var computer: PortFighter
 var hud: PortHUD
 var prototype_menu: PortPrototypeMenu
 var move_training
+var move_gallery
 var fight_camera: Camera3D
 var combat_audio: Node
 var _candidate_audio: Dictionary = {}
@@ -58,6 +60,10 @@ func _ready() -> void:
     add_child(move_training)
     move_training.configure(self, player, computer)
     move_training.exit_requested.connect(_on_move_training_exit)
+    move_gallery = MoveGallery.new()
+    add_child(move_gallery)
+    move_gallery.configure(self, player, computer)
+    move_gallery.exit_requested.connect(_on_move_gallery_exit)
     var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
     main_menu_enabled = false if export_self_test else _should_show_main_menu()
     _reset_match()
@@ -390,6 +396,11 @@ func _on_menu_command(command: String) -> void:
             _leave_menu()
             hud.visible = false
             move_training.open()
+        "gallery":
+            training_mode = false
+            _leave_menu()
+            hud.visible = false
+            move_gallery.open()
         "training":
             if _training_available():
                 training_mode = true
@@ -408,6 +419,11 @@ func _on_menu_command(command: String) -> void:
             get_tree().quit()
 
 func _on_move_training_exit() -> void:
+    hud.visible = true
+    _open_main_menu()
+
+
+func _on_move_gallery_exit() -> void:
     hud.visible = true
     _open_main_menu()
 
@@ -567,7 +583,8 @@ func _physics_process(delta: float) -> void:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         return
-    if move_training != null and move_training.is_active():
+    if ((move_training != null and move_training.is_active())
+            or (move_gallery != null and move_gallery.is_active())):
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
@@ -724,11 +741,32 @@ func _player_attack_poses_guard_threat() -> bool:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-    if prototype_menu != null and prototype_menu.handle_input_event(event):
-        get_viewport().set_input_as_handled()
-        return
+    if prototype_menu != null:
+        # J is both a menu confirm and the punch key. Capture the command
+        # before handling, then let the confirming press throw a real punch
+        # when it starts a fight. Otherwise the first J is silently eaten by
+        # the menu and "J J J" produces only two attacks.
+        var menu_command: String = (
+            prototype_menu.selected_command() if prototype_menu.visible else ""
+        )
+        if prototype_menu.handle_input_event(event):
+            if (menu_command in ["fight", "training"]
+                    and not prototype_menu.visible
+                    and event.is_action_pressed(PrototypeControls.ATTACK_A)):
+                _handle_fighter_attack_input(
+                    player, event,
+                    PrototypeControls.ATTACK_A, PrototypeControls.ATTACK_B,
+                    PrototypeControls.ATTACK_C, PrototypeControls.ATTACK_D
+                )
+            get_viewport().set_input_as_handled()
+            return
     if move_training != null and move_training.handle_input_event(event):
         get_viewport().set_input_as_handled()
+        return
+    if move_gallery != null and move_gallery.handle_input_event(event):
+        get_viewport().set_input_as_handled()
+        return
+    if move_gallery != null and move_gallery.is_active():
         return
     if not PrototypeControls.is_press_edge(event):
         return
@@ -871,7 +909,8 @@ func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damag
     if done or training_completed:
         return
     _play_hit_audio(action, blocked)
-    if move_training != null and move_training.is_active():
+    if ((move_training != null and move_training.is_active())
+            or (move_gallery != null and move_gallery.is_active())):
         return
     if (training_mode and attacker == player and defender == computer
             and action == "attacktofloor" and damage > 0.0 and not blocked

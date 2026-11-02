@@ -173,6 +173,15 @@ func handle_input_event(event: InputEvent) -> bool:
             return true
         if event.is_action_pressed(PrototypeControls.MENU_ACCEPT):
             _start_at(selected_index)
+            # J starts the selected lesson and must also throw its first
+            # punch. Consuming it here alone would swallow one of three
+            # presses in a "J J J" input.
+            if event.is_action_pressed(PrototypeControls.ATTACK_A):
+                main._handle_fighter_attack_input(
+                    player, event,
+                    PrototypeControls.ATTACK_A, PrototypeControls.ATTACK_B,
+                    PrototypeControls.ATTACK_C, PrototypeControls.ATTACK_D
+                )
             return true
         if event.is_action_pressed(PrototypeControls.MENU_CANCEL) or event.is_action_pressed(PrototypeControls.PAUSE):
             close()
