@@ -146,8 +146,7 @@ func close() -> void:
     state = "hidden"
     visible = false
     if player != null:
-        player.training_step_lock = false
-        player.set_physics_process(true)
+            player.set_physics_process(true)
     if computer != null:
         computer.set_physics_process(true)
 
@@ -288,7 +287,6 @@ func _prepare_current() -> void:
         return
     success_timer = -1.0
     dummy_restart_timer = -1.0
-    player.training_step_lock = false
     player.set_physics_process(true)
     player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
     player.health = 9999.0
@@ -308,19 +306,16 @@ func _prepare_current() -> void:
         # camera S is the back/down direction.
         player.state = "idle"
         player.move_axis = Vector2(-1.0, 0.0)
-        player.training_step_lock = true
         player._animate_candidate()
     elif setup == "stepleft":
         # specialkicklowmiss / grab2miss are direct links from stepleft.
         player.state = "idle"
         player.move_axis = Vector2(0.0, 1.0)
-        player.training_step_lock = true
         player._animate_candidate()
     elif setup == "stepright":
         # grab1miss is a direct link from stepright.
         player.state = "idle"
         player.move_axis = Vector2(0.0, -1.0)
-        player.training_step_lock = true
         player._animate_candidate()
     elif setup == "parry_high":
         _begin_dummy_attack("high_punch")

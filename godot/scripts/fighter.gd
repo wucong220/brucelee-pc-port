@@ -3690,7 +3690,9 @@ func _polar_movement(speed: float) -> Vector3:
         return Vector3(move_axis.x, 0.0, move_axis.y).normalized() * speed
     if move_axis.length_squared() <= 0.000001:
         return Vector3.ZERO
-    var center: Vector3 = (global_position + opponent.global_position) * 0.5
+    # Orbit the opponent, not the moving midpoint: the midpoint moves as
+    # only one fighter moves and would otherwise make the radius drift.
+    var center: Vector3 = opponent.global_position
     var radial: Vector3 = global_position - center
     radial.y = 0.0
     if radial.length_squared() <= 0.000001:
@@ -3738,9 +3740,7 @@ func _physics_process(delta: float) -> void:
             and not _attack_connected):
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
-    if training_step_lock:
-        motion = Vector3.ZERO
-    elif _uses_standing_idle_rules() and not guard_held:
+    if _uses_standing_idle_rules() and not guard_held:
         motion = (_polar_movement(BASE_SPEED) if polar_movement_enabled
                 else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED)
     elif _uses_standing_idle_rules() and guard_held:
