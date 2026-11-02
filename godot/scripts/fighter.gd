@@ -2113,7 +2113,7 @@ func _try_load_candidate_visual() -> void:
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2",
             "endattack1", "endattack2", "stun", "stun_fall",
             "stun_hard", "stun_brutal",
-            "move", "moveleft", "moveright", "stepfwd", "stepback",
+            "move", "movefwd", "moveback", "moveleft", "moveright", "stepfwd", "stepback",
             "stepleft", "stepright"]:
         if not candidate_clips.has(action):
             continue
@@ -2194,7 +2194,7 @@ func _try_load_candidate_visual() -> void:
         move.loop_mode = Animation.LOOP_LINEAR
     for looping_return: String in [
         IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
-        "move", "moveleft", "moveright", "stepfwd", "stepback",
+        "move", "movefwd", "moveback", "moveleft", "moveright", "stepfwd", "stepback",
         "stepleft", "stepright",
     ]:
         if not _candidate_clip_paths.has(looping_return):
