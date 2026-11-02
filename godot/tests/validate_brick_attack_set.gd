@@ -22,6 +22,8 @@ const EXPECTED: Dictionary = {
     "parry_high_brick": "m03_parry_high",
     "parry_low_brick": "m03_parry_low",
     "parry_attack_brick": "m03_pnch_high_03",
+    "grab1_brick": "m03_grab_01",
+    "grab2_brick": "m03_grab_02",
 }
 
 func _initialize() -> void:
@@ -44,8 +46,8 @@ func _run() -> void:
         push_error("Brick candidate failed: " + brick.candidate_load_error)
         quit(1)
         return
-    if brick.ATTACKS.size() != 22:
-        push_error("Brick attack set did not load 21 config actions plus heavy: "
+    if brick.ATTACKS.size() != 24:
+        push_error("Brick attack set did not load 23 config actions plus heavy: "
                 + str(brick.ATTACKS.size()))
         quit(1)
         return

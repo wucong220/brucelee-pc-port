@@ -663,7 +663,10 @@ func _think_ai(delta: float) -> void:
             if computer.rage >= 33.0:
                 moves.append_array(["special_kick_high_brick", "special_kick_low_brick"])
             if computer.rage >= 66.0:
-                moves.append_array(["special_punch_high_brick", "special_punch_low_brick"])
+                moves.append_array([
+                    "special_punch_high_brick", "special_punch_low_brick",
+                    "grab1_brick", "grab2_brick",
+                ])
             var available: Array[String] = []
             for move: String in moves:
                 if (computer.supports_attack(move)

@@ -78,6 +78,8 @@ const BRICK_CLIPS: Dictionary = {
     "parry_high_brick": "m03_parry_high",
     "parry_low_brick": "m03_parry_low",
     "parry_attack_brick": "m03_pnch_high_03",
+    "grab1_brick": "m03_grab_01",
+    "grab2_brick": "m03_grab_02",
     "m03_blck_high": "m03_blck_high",
     "all_block_low": "all_block_low",
     "all_block_mid": "all_block_mid",
@@ -240,6 +242,8 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "special_punch_low_brick": 66.0,
     "parry_high_brick": 33.0,
     "parry_low_brick": 30.0,
+    "grab1_brick": 66.0,
+    "grab2_brick": 66.0,
 }
 const SPECIAL_CHAIN_MISSES: Dictionary = {
     "special_kick_low_miss": "special_kick_low_hit",
@@ -271,7 +275,9 @@ const STUN_FALL_CLIP: String = "all_stunned_fall"
 const STUN_DURATION_FRAMES: int = 55
 const STUN_FALL_DURATION_FRAMES: int = 71
 const STUN_IMPACT_ENTRY_FRAMES: int = 14
-const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
+const GRAB_ATTACKS: Dictionary = {
+    "grab1": true, "grab2": true, "grab1_brick": true, "grab2_brick": true,
+}
 const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
 const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
 const NON_CONTACT_ATTACKS: Dictionary = {
@@ -838,6 +844,8 @@ const THAI_ATTACK_DATA: Dictionary = {
     "parry_high_brick": ["parryhigh", "m03_parry_high", 43, 9, 1, 33, 0.0, 40.0, "larm", "high", "normal", "frontal"],
     "parry_low_brick": ["parrylow", "m03_parry_low", 41, 9, 1, 31, 0.0, 40.0, "larm", "low", "normal", "frontal"],
     "parry_attack_brick": ["parryattack", "m03_pnch_high_03", 35, 10, 5, 20, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1_brick": ["grab1 brick", "m03_grab_01", 90, 19, 2, 69, 6.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_brick": ["grab2 brick", "m03_grab_02", 78, 46, 3, 29, 20.0, 45.0, "larm", "high", "hard", "frontal"],
 }
 const THAI_REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -1799,6 +1807,7 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
         "special_kick_high_brick", "special_kick_low_brick",
         "special_punch_high_brick", "special_punch_low_brick",
         "parry_high_brick", "parry_low_brick", "parry_attack_brick",
+        "grab1_brick", "grab2_brick",
     ]
     for required_action: String in THAI_ATTACK_DATA:
         if not attacks.has(required_action):
@@ -2043,6 +2052,7 @@ func _try_load_candidate_visual() -> void:
             "special_kick_high_brick", "special_kick_low_brick",
             "special_punch_high_brick", "special_punch_low_brick",
             "parry_high_brick", "parry_low_brick", "parry_attack_brick",
+            "grab1_brick", "grab2_brick",
             "high_punch2", "low_punch2", "high_kick2", "low_kick2",
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
@@ -3234,7 +3244,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
+        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "grab1_brick", "grab2_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -4446,6 +4456,7 @@ func _animate_candidate() -> void:
                 "special_kick_high_brick", "special_kick_low_brick",
                 "special_punch_high_brick", "special_punch_low_brick",
                 "parry_high_brick", "parry_low_brick", "parry_attack_brick",
+                "grab1_brick", "grab2_brick",
                 "high_punch2", "low_punch2", "high_kick2", "low_kick2",
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",
