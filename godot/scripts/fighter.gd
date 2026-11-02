@@ -213,7 +213,6 @@ const FACEUP_IMPACT_EXIT_FRAME: int = 11
 const FACEUP_KO_RADIUS: float = 100.0
 const ATTACK_TO_FLOOR_CLIP: String = "m01_attack_to_floor"
 const ATTACK_TO_FLOOR_DURATION_FRAMES: int = 90
-const ATTACK_TO_FLOOR_ENTRY_FRAME: int = 9
 const ATTACK_TO_FLOOR_EXIT_START_FRAME: int = 80
 const ATTACK_TO_FLOOR_DAMAGE_START_FRAME: int = 18
 const ATTACK_TO_FLOOR_DAMAGE_END_FRAME: int = 23
@@ -3593,7 +3592,7 @@ func _begin_ground_attack(attack_state: String) -> void:
 func _begin_attack_to_floor() -> void:
     var previous_state: String = state
     state = "attacktofloor"
-    state_time = float(_native_entry_frame("attacktofloor", ATTACK_TO_FLOOR_ENTRY_FRAME)) / SOURCE_FRAME_RATE
+    state_time = float(_native_entry_frame("attacktofloor", 0)) / SOURCE_FRAME_RATE
     attack_kind = "attacktofloor"
     attack_sequence += 1
     _attack_connected = false
@@ -4624,20 +4623,20 @@ func receive_hit(
             stun_next_state = String(native_stun["next_state"])
         elif stun_source == "impactlightfronthigh":
             stun_animation = "all_impct_light_frnt_high"
-            stun_exit_frame = _native_link_start_frame("impactlightfronthigh", 13)
+            stun_exit_frame = _native_link_start_frame("impactlightfronthigh", 0)
         elif stun_source == "impactlightfrontlow":
             stun_animation = "all_impct_light_frnt_low"
-            stun_exit_frame = _native_link_start_frame("impactlightfrontlow", 13)
+            stun_exit_frame = _native_link_start_frame("impactlightfrontlow", 0)
         elif stun_source == "impactlightfrontmid":
             stun_animation = "all_impct_crotch"
-            stun_exit_frame = _native_link_start_frame("impactlightfrontmid", 14)
+            stun_exit_frame = _native_link_start_frame("impactlightfrontmid", 0)
         elif stun_source.begins_with("impacthard"):
             stun_animation = "stun_hard"
-            stun_exit_frame = _native_link_start_frame("impacthardfronthigh", 20)
+            stun_exit_frame = _native_link_start_frame("impacthardfronthigh", 0)
             stun_next_state = "faceupko"
         elif stun_source == "stunbrutalimpact":
             stun_animation = "stun_brutal"
-            stun_exit_frame = _native_link_start_frame("stunbrutalimpact", 40)
+            stun_exit_frame = _native_link_start_frame("stunbrutalimpact", 0)
             stun_next_state = "facedownko"
         else:
             return false
@@ -4745,11 +4744,11 @@ func receive_hit(
             and last_reaction_source_action == "impacthardfronthigh"):
         # Source link 113: healthzero -> faceupko at [23,29].
         state = "stunimpact"
-        state_time = float(_native_link_start_frame("impacthardfronthigh", 23)) / SOURCE_FRAME_RATE
+        state_time = float(_native_link_start_frame("impacthardfronthigh", 0)) / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_source_action = "impacthardfronthigh"
         last_reaction_animation = "all_impct_hard_frnt_high"
-        last_reaction_exit_frame = _native_link_start_frame("impacthardfronthigh", 23)
+        last_reaction_exit_frame = _native_link_start_frame("impacthardfronthigh", 0)
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true
         _stun_impact_next_state = "faceupko"
@@ -4766,11 +4765,11 @@ func receive_hit(
         # Source links 213/214/228: hard medium/low frontal lethal hits use
         # impacthardfrontlow; link 289 then enters facedownko at [21,23].
         state = "stunimpact"
-        state_time = float(_native_link_start_frame("impacthardfrontlow", 21)) / SOURCE_FRAME_RATE
+        state_time = float(_native_link_start_frame("impacthardfrontlow", 0)) / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_source_action = "impacthardfrontlow"
         last_reaction_animation = "all_impct_hard_frnt_low"
-        last_reaction_exit_frame = _native_link_start_frame("impacthardfrontlow", 21)
+        last_reaction_exit_frame = _native_link_start_frame("impacthardfrontlow", 0)
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true
         _stun_impact_next_state = "facedownko"
@@ -4986,7 +4985,7 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "attacktofloor" and _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP):
         requested = ATTACK_TO_FLOOR_CLIP
-        start_frame = _native_entry_frame("attacktofloor", ATTACK_TO_FLOOR_ENTRY_FRAME)
+        start_frame = _native_entry_frame("attacktofloor", 0)
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
     if requested == FACEUP_IMPACT_TO_FLOOR_CLIP:
