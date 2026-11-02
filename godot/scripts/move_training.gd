@@ -348,6 +348,19 @@ func _refresh_lesson(entry: Dictionary) -> void:
 func _process(delta: float) -> void:
     if state != "active":
         return
+    var entry: Dictionary = entries[current_index]
+    var setup: String = String(entry.get("setup", "idle"))
+    # Keep the training dummy in the lesson's requested state. Intermediate
+    # queued attacks must not push it into hitstun and invalidate a later
+    # special/grab/attack-to-floor condition.
+    if computer != null and setup != "parry_high" and setup != "parry_low" and setup != "parry_attack":
+        if setup == "endattack1" or setup == "endattack2":
+            computer.state = "hitstun"
+            computer.state_time = 1.0
+        elif setup == "target_down":
+            computer.state = "facedownidle"
+        else:
+            computer.state = "idle"
     if success_timer >= 0.0:
         success_timer -= delta
         if success_timer <= 0.0:
@@ -358,8 +371,6 @@ func _process(delta: float) -> void:
         if computer.state in ["startup", "active", "recovery"]:
             computer._physics_process(delta)
         elif dummy_restart_timer <= 0.0:
-            var entry: Dictionary = entries[current_index]
-            var setup: String = String(entry.get("setup", ""))
             if setup == "parry_high" or setup == "parry_low" or setup == "parry_attack":
                 computer.state = "idle"
                 _begin_dummy_attack(
