@@ -721,6 +721,9 @@ func _on_menu_command(command: String) -> void:
             _reset_match()
         "main_menu":
             _open_main_menu()
+        "temple_b":
+            OS.set_environment("BRUCELEE_SCENE", "templeyardb")
+            get_tree().reload_current_scene()
         "quit":
             get_tree().quit()
 
