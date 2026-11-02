@@ -580,7 +580,28 @@ func _update_fight_camera() -> void:
         var aspect: float = viewport_size.x / viewport_size.y
         distance *= maxf(1.0, (4.0 / 3.0) / aspect)
     var target: Vector3 = Vector3(center.x, 1.0, center.z)
-    fight_camera.global_position = target + Vector3(0.0, distance * 0.42, distance)
+    # Original camera keeps the fighter-to-fighter line parallel to the
+    # camera's horizontal axis: sit on the perpendicular bisector, not on a
+    # fixed world Z offset. This keeps both fighters centered and facing each
+    # other when W/S moves one of them in depth.
+    var separation: Vector3 = computer.global_position - player.global_position
+    separation.y = 0.0
+    var side: Vector3
+    if separation.length_squared() > 0.000001:
+        var axis: Vector3 = separation.normalized()
+        side = Vector3(-axis.z, 0.0, axis.x)
+    else:
+        side = Vector3(0.0, 0.0, 1.0)
+    var current_side: Vector3 = fight_camera.global_position - target
+    current_side.y = 0.0
+    if current_side.length_squared() > 0.000001 and side.dot(current_side) < 0.0:
+        # Both perpendicular directions keep the fighter line horizontal.
+        # Stay on the side the camera already occupies so crossing sides does
+        # not snap the view by 180 degrees.
+        side = -side
+    fight_camera.global_position = (
+        target + side * distance + Vector3(0.0, distance * 0.42, 0.0)
+    )
     fight_camera.look_at(target, Vector3.UP)
 
 
@@ -879,6 +900,18 @@ func _unhandled_input(event: InputEvent) -> void:
         return
     get_viewport().set_input_as_handled()
 
+func _facing_relative_token(token: String) -> String:
+    # Native horizontal link tokens are relative to facing: pressright is
+    # forward and pressleft is backward. Physical left/right swap when the
+    # fighter is facing left.
+    if player != null and player.facing < 0.0:
+        if token == "left":
+            return "right"
+        if token == "right":
+            return "left"
+    return token
+
+
 func _record_direction_press(event: InputEvent) -> void:
     # adreno_200/input.config fixedpad: an up press emits the "up" and "in"
     # virtual keys, a down press emits "down" and "out"; left/right emit one key.
@@ -891,9 +924,9 @@ func _record_direction_press(event: InputEvent) -> void:
         player.record_standing_combo_press("down")
         player.record_standing_combo_press("out")
     elif event.is_action_pressed(PrototypeControls.MOVE_LEFT):
-        player.record_standing_combo_press("left")
+        player.record_standing_combo_press(_facing_relative_token("left"))
     elif event.is_action_pressed(PrototypeControls.MOVE_RIGHT):
-        player.record_standing_combo_press("right")
+        player.record_standing_combo_press(_facing_relative_token("right"))
 
 
 func _handle_fighter_attack_input(

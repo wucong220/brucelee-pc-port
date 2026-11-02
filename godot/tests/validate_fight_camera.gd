@@ -40,6 +40,16 @@ func _run() -> void:
             player.global_position = pair[0]
             opponent.global_position = pair[1]
             scene._update_fight_camera()
+            var player_screen: Vector2 = camera.unproject_position(
+                player.global_position + Vector3(0.0, 1.2, 0.0)
+            )
+            var opponent_screen: Vector2 = camera.unproject_position(
+                opponent.global_position + Vector3(0.0, 1.2, 0.0)
+            )
+            if absf(player_screen.y - opponent_screen.y) > 2.0:
+                push_error("Fighter line is not parallel to the camera plane")
+                quit(1)
+                return
             for fighter_position: Vector3 in pair:
                 for x_offset: float in [-0.85, 0.85]:
                     for height: float in [0.0, 2.2]:
@@ -75,7 +85,17 @@ func _run() -> void:
                     endpoints[segment + 1][1], fraction
                 )
                 scene._update_fight_camera()
-                if has_previous and camera.global_position.distance_to(previous_camera) > 0.3:
+                var player_screen: Vector2 = camera.unproject_position(
+                    player.global_position + Vector3(0.0, 1.2, 0.0)
+                )
+                var opponent_screen: Vector2 = camera.unproject_position(
+                    opponent.global_position + Vector3(0.0, 1.2, 0.0)
+                )
+                if absf(player_screen.y - opponent_screen.y) > 2.0:
+                    push_error("Fighter line left the camera plane during a trajectory")
+                    quit(1)
+                    return
+                if has_previous and camera.global_position.distance_to(previous_camera) > 1.0:
                     push_error("Camera moved discontinuously during a continuous trajectory")
                     quit(1)
                     return
