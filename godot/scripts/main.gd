@@ -22,6 +22,9 @@ var fight_camera: Camera3D
 var combat_audio: Node
 var _candidate_audio: Dictionary = {}
 var _candidate_audio_error: Dictionary = {}
+var _voice_audio: Dictionary = {}
+var _voice_audio_error: Dictionary = {}
+var _active_voice: AudioStreamPlayer = null
 var ai_timer: float = 0.0
 var ai_guard_sequence: int = -1
 var ai_guard_decision: bool = false
@@ -309,6 +312,7 @@ func _build_fighters() -> void:
     computer.combat_ko.connect(_on_ko)
     player.combat_hit.connect(_on_hit)
     computer.combat_hit.connect(_on_hit)
+    player.attack_started.connect(_on_player_attack_started)
 
 func _reset_match() -> void:
     round_number = 1
@@ -457,6 +461,84 @@ func _build_combat_audio() -> void:
             _candidate_audio_error[event] = "candidate audio failed to load: " + path
             continue
         _candidate_audio[event] = stream
+    _load_bruce_voice_audio()
+
+
+func _load_bruce_voice_audio() -> void:
+    var voice_root: String = OS.get_environment("BRUCELEE_VOICE_ROOT")
+    if voice_root.is_empty():
+        var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+        if local_app_data.is_empty():
+            return
+        voice_root = local_app_data.path_join(
+            "BruceLee-PC-Port/bruce-voice-20261103/adreno_200/sounds/voices/bruce_lee"
+        )
+    var voices: Dictionary = {
+        "punch": "attack_light/Hit_Light_1_BL.wav",
+        "kick": "attack_light/Hit_Light_2_BL.wav",
+        "high_punch": "attack_light/Hit_Light_3_BL.wav",
+        "high_kick": "attack_light/Hit_Light_4_BL.wav",
+        "high_punch2": "attack_light/Hit_Light_5_BL.wav",
+        "low_punch2": "attack_light/Hit_Light_6_BL.wav",
+        "high_kick2": "attack_light/Hit_Light_8_BL.wav",
+        "low_kick2": "attack_light/Hit_Light_9_BL.wav",
+        "high_punch3": "attack_light/Hit_Light_3_BL.wav",
+        "low_punch3": "attack_light/Hit_Light_6_BL.wav",
+        "low_kick3": "attack_light/Hit_Light_9_BL.wav",
+        "high_kick3": "attack_light/Hit_Light_4_BL.wav",
+        "parry_high": "attack_light/Hit_Light_5_BL.wav",
+        "parry_attack": "attack_light/Hit_Light_1_BL.wav",
+        "facedownattack": "attack_light/Hit_Light_8_BL.wav",
+        "faceupattack": "attack_light/Hit_Light_9_BL.wav",
+        "attacktofloor": "attack_light/Hit_Light_9_BL.wav",
+        "special_kick_high": "special/m01_sp_kick_high.wav",
+        "special_kick_low_miss": "attack_light/Hit_Light_9_BL.wav",
+        "special_kick_low_hit": "attack_light/Hit_Light_9_BL.wav",
+        "special_punch_low_miss": "special/m01_sp_pnch_low.wav",
+        "special_punch_low_hit": "special/m01_sp_pnch_low.wav",
+        "special_punch_high_miss": "special/M01_SP_Pnch_High.avi_OPTION_2.wav",
+        "special_punch_high_hit": "special/M01_SP_Pnch_High.avi_OPTION_2.wav",
+        "grab1": "special/m01_grab_01.wav",
+        "grab1_miss": "special/m01_grab_01.wav",
+        "grab2": "special/M01_Grab_02_Back_Breaker.wav",
+        "grab2_miss": "special/M01_Grab_02_Back_Breaker.wav",
+        "endattack1": "special/M01_End_Attack_01.avi _BL_Slow_Scream_A.wav",
+        "endattack2": "special/M01_End_Attack_02.avi _BL_Slow_Scream_B.wav",
+    }
+    for action: String in voices:
+        var filename: String = String(voices[action])
+        var path: String = voice_root.path_join(filename)
+        var error: String = CandidatePathGuard.external_path_error(
+            path, "Bruce voice audio"
+        )
+        if not error.is_empty():
+            _voice_audio_error[action] = error
+            continue
+        var stream: AudioStream = AudioStreamWAV.load_from_file(path)
+        if stream == null:
+            _voice_audio_error[action] = "Bruce voice failed to load: " + path
+            continue
+        _voice_audio[action] = stream
+
+
+func _on_player_attack_started(action: String) -> void:
+    if _voice_audio.is_empty():
+        return
+    var stream: AudioStream = _voice_audio.get(action)
+    if stream == null:
+        stream = _voice_audio.get("punch")
+    if stream == null:
+        return
+    if is_instance_valid(_active_voice):
+        _active_voice.stop()
+        _active_voice.queue_free()
+    var voice: AudioStreamPlayer = AudioStreamPlayer.new()
+    voice.stream = stream
+    voice.finished.connect(voice.queue_free)
+    combat_audio.add_child(voice)
+    _active_voice = voice
+    voice.play()
+
 
 func _play_hit_audio(action: String, blocked: bool) -> void:
     var event: String = ""
