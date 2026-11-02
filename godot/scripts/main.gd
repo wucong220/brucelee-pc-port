@@ -995,6 +995,13 @@ func _handle_fighter_attack_input(
     # directions are separate key presses (see _record_direction_press) and
     # native link conditions read held state via InputStatusCheck, so they must
     # not be folded into the attack event.
+    # SPECIAL LOW KICK: make the intended stepleft + low-kick command direct
+    # instead of depending on the transient miss-link window.
+    if (event.is_action_pressed(action_d)
+            and fighter.is_player and fighter.state == "idle"
+            and fighter._native_movement_action() == "stepleft"):
+        if fighter.request_attack("special_kick_low_hit"):
+            return true
     if event.is_action_pressed(action_a):
         fighter.record_standing_combo_press("a")
     elif event.is_action_pressed(action_b):
