@@ -61,7 +61,7 @@
 | 23 | 世界缩放 `1.8 / 173.4159` | `CANDIDATE_SOURCE_HEIGHT` / `CANDIDATE_HEIGHT` | 候选 | 数值来自候选模型高度，不是原版场景缩放 |
 | 24 | 根位移 raw Y 逐 clip 符号映射 | `fighter.gd` 注释 "Prototype only: per-clip first-Y sign" | 自创 | 原版 root motion 语义未闭合 |
 | 25 | `_attack_hit_landed` / `_attack_connected` / `_multi_impact_applied` 簿记 | `fighter.gd` | 自创 | 原版靠 impact 帧与状态，不存在这些布尔量 |
-| 26 | 受击反应链（hitstun→blockstun→返回状态） | `fighter.gd::_advance_timed_states` | 部分证据（第 27 轮） | 受击/格挡反应已从原生 reaction link 生成（26+10 条）并优先选用；stun 链的时长与**顺序**都已按原生出边 link 驱动；`impactstun→stun` 仍按反应强度映射选择，未接 CStateManager |
+| 26 | 受击反应链（hitstun→blockstun→返回状态） | `fighter.gd::_advance_timed_states` | 部分证据（第 27 轮） | 受击/格挡反应已从原生 reaction link 生成（26+10 条）并优先选用；stun 链的时长、顺序、`impactstun→stun` 冲击反应都按原生 link/动作数据驱动；仅状态机骨架未接 CStateManager |
 | 27 | 三局两胜、KO、回合重置 | `main.gd` | 自创 | 原型规则 |
 | 28 | 音效映射 | `main.gd::_play_hit_audio` | 自创 | 只把候选文件按动作名对上，不是原版事件映射 |
 | 29 | 双方初始站位、摄像机取景 | `main.gd` | 自创 | 注释已写 prototype framing |

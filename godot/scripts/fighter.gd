@@ -2568,6 +2568,43 @@ func _advance_stun_state(delta: float) -> void:
     _begin_faceup_ko(0.0)
 
 
+func _stun_impact_reaction(impact: Dictionary) -> Dictionary:
+    # Recovered stun-impact targets (pose "stun") and their outgoing links.
+    var strength: String = String(impact.get("strength", ""))
+    var height: String = String(impact.get("height", ""))
+    var wanted: String = ""
+    if height == "medium":
+        wanted = "stunmediumimpact"
+    elif strength == "hard":
+        wanted = "stunhardimpact"
+    elif strength == "brutal":
+        wanted = "stunbrutalimpact"
+    elif strength == "normal":
+        wanted = "stunlighthighimpact" if height == "high" else (
+            "stunlightlowimpact" if height == "low" else "stunmediumimpact")
+    if wanted.is_empty():
+        return {}
+    var row: Dictionary = _native_actions.get(wanted, {})
+    if row.is_empty() or String(row.get("pose", "")) != "stun":
+        return {}
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != wanted:
+            continue
+        var target: String = _link_text(link, "to")
+        if target not in ["faceupko", "facedownko", "stunfall"]:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.is_empty():
+            continue
+        return {
+            "target": wanted,
+            "animation": String(row.get("animation", "")),
+            "exit_frame": int(window[0]),
+            "next_state": target,
+        }
+    return {}
+
+
 func _has_native_link(source: String, target: String) -> bool:
     for link: Dictionary in _native_links:
         if _link_text(link, "from") == source and _link_text(link, "to") == target:
@@ -4449,10 +4486,16 @@ func receive_hit(
     # their own evidence-backed transitions.
     if state in ["stun", "stun2"] and not blocked:
         var stun_source: String = String(reaction.get("source_action", ""))
-        var stun_animation: String
-        var stun_exit_frame: int
+        var stun_animation: String = ""
+        var stun_exit_frame: int = 0
         var stun_next_state: String = "stunfall"
-        if stun_source == "impactlightfronthigh":
+        var native_stun: Dictionary = _stun_impact_reaction(reaction)
+        if (not native_stun.is_empty()
+                and _candidate_clip_paths.has(String(native_stun["animation"]))):
+            stun_animation = String(native_stun["animation"])
+            stun_exit_frame = int(native_stun["exit_frame"])
+            stun_next_state = String(native_stun["next_state"])
+        elif stun_source == "impactlightfronthigh":
             stun_animation = "all_impct_light_frnt_high"
             stun_exit_frame = 13
         elif stun_source == "impactlightfrontlow":

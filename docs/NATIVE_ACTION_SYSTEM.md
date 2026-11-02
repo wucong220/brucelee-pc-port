@@ -151,6 +151,13 @@ reaction clip；没有原生条目/片段时仍回退到 `REACTION_PROFILES`。�
 不再写死分支。`_advance_stun_impact_state` 的 `impactstun→stun` 仍由反应强度
 映射选择。
 
+**第 31 轮补充**：`impactstun→stun` 的冲击反应也改成查原生 stun 目标。
+`_stun_impact_reaction()` 按来袭 impact 的 strength/height 选择
+`stunlighthighimpact / stunlightlowimpact / stunmediumimpact / stunhardimpact /
+stunbrutalimpact`，动画取该动作 `animation`，收招帧与下一状态取其到
+`faceupko/facedownko/stunfall` 的出边 `time`。`validate_native_reactions.gd`
+验证 hard→`stunhardimpact`/`faceupko`、brutal→`stunbrutalimpact`/`facedownko`。
+
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的
 方向/特殊招测试已删除——它们验证的是被删掉的队列/时间窗语义，不再适用。

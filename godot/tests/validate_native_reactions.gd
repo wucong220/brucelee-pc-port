@@ -64,5 +64,22 @@ func _run() -> void:
         quit(1)
         return
 
+    var stun_hard: Dictionary = player._stun_impact_reaction({"strength": "hard", "height": "high"})
+    checks["stun_hard"] = String(stun_hard.get("target", ""))
+    checks["stun_hard_next"] = String(stun_hard.get("next_state", ""))
+    if (String(stun_hard.get("target", "")) != "stunhardimpact"
+            or String(stun_hard.get("next_state", "")) != "faceupko"
+            or int(stun_hard.get("exit_frame", -1)) != 20):
+        push_error("Stun-hard impact lookup is wrong: " + str(stun_hard))
+        quit(1)
+        return
+    var stun_brutal: Dictionary = player._stun_impact_reaction({"strength": "brutal", "height": "high"})
+    checks["stun_brutal"] = String(stun_brutal.get("target", ""))
+    if (String(stun_brutal.get("target", "")) != "stunbrutalimpact"
+            or String(stun_brutal.get("next_state", "")) != "facedownko"):
+        push_error("Stun-brutal impact lookup is wrong: " + str(stun_brutal))
+        quit(1)
+        return
+
     print("NATIVE_REACTION_VALIDATION=" + JSON.stringify(checks))
     quit(0)
