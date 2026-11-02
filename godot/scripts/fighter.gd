@@ -4556,10 +4556,11 @@ func receive_hit(
         REACTION_ROOT_PUSH_SOURCE.get(String(reaction.get("source_action", "")), -1.0)
     )
     if reaction_root_source >= 0.0:
-        # Different reactions use a matching raw position component as the
-        # prototype push input. Native axis/sign semantics and the final
-        # knockback mapping remain unverified.
+        # The reaction's decoded root position component is the push input.
         push = reaction_root_source * source_units_to_world
+    else:
+        # No recovered reaction root: do not apply the invented prototype push.
+        push = 0.0
     var brick_facedown_impact: bool = (
         state_before == "facedownidle"
         and not blocked

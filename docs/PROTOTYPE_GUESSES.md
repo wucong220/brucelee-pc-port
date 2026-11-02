@@ -24,7 +24,7 @@
 
 | # | 规则 | 位置 | 状态 | 说明 |
 |---|---|---|---|---|
-| 11 | `prototype_push` | `fighting_set_low_attacks.json` 字段 | 部分证据（第 32 轮） | 命中推位移优先用 `REACTION_ROOT_PUSH_SOURCE[reaction.source_action] * source_units_to_world`（解码反应位移）；`prototype_push` 只在反应没有 root push 数据时回退 |
+| 11 | `prototype_push` | `fighting_set_low_attacks.json` 字段 | 已删除（第 32 轮） | 命中推位移只用 `REACTION_ROOT_PUSH_SOURCE[reaction.source_action] * source_units_to_world`；没有反应 root 数据时不推位移（不再回退 prototype_push），字段仅保留在配置校验里 |
 | 12 | 命中距离公式与候选缩放 | `fighter.gd::attack_reach_world` | 证据 + 候选 | 公式来自原生；`173.416 → 1.8` 的候选缩放是 CANDIDATE |
 | 13 | hitstun/blockstun 时长 | `fighter.gd` reaction 映射 | 证据 | 来自 `brucelee.set` reaction return frame |
 | 14 | AI 出招/格挡决策 | `main.gd` AI 分支 | 自创 | 原型行为，不是原版 AI |
