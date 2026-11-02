@@ -24,6 +24,7 @@ func _run() -> void:
             opponent.reset_fighter(Vector3(1.0, 1.2, 0.0))
             player.move_axis = Vector2(-1.0, -0.6)
             opponent.move_axis = Vector2(1.0, 0.6)
+            scene._restart_fight_camera()
             scene._update_fight_camera()
             var previous: Vector3 = camera.global_position
             var maximum_speed: float = 0.0
