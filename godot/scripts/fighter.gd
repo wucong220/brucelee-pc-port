@@ -71,6 +71,10 @@ const BRICK_CLIPS: Dictionary = {
     "low_kick": "m03_kck_low_02",
     "low_kick2": "m03_kck_low_03",
     "low_kick3": "m03_kck_low_01",
+    "special_kick_high_brick": "m03_sp_kck_high",
+    "special_kick_low_brick": "m03_sp_kck_low",
+    "special_punch_high_brick": "m03_sp_pnch_high",
+    "special_punch_low_brick": "m03_sp_pnch_low",
     "m03_blck_high": "m03_blck_high",
     "all_block_low": "all_block_low",
     "all_block_mid": "all_block_mid",
@@ -227,6 +231,10 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "grab2": 66.0,
     "grab1_miss": 66.0,
     "grab2_miss": 66.0,
+    "special_kick_high_brick": 33.0,
+    "special_kick_low_brick": 33.0,
+    "special_punch_high_brick": 66.0,
+    "special_punch_low_brick": 66.0,
 }
 const SPECIAL_CHAIN_MISSES: Dictionary = {
     "special_kick_low_miss": "special_kick_low_hit",
@@ -815,6 +823,10 @@ const THAI_ATTACK_DATA: Dictionary = {
     "low_kick": ["lowkick1", "m03_kck_low_02", 46, 6, 5, 35, 5.0, 65.0, "lleg", "medium", "normal", "frontal"],
     "low_kick2": ["lowkick2", "m03_kck_low_03", 37, 8, 4, 25, 6.0, 65.0, "rleg", "medium", "normal", "frontal"],
     "low_kick3": ["lowkick3", "m03_kck_low_01", 41, 9, 3, 29, 7.0, 70.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high_brick": ["specialkickhigh brick", "m03_sp_kck_high", 73, 23, 6, 44, 10.0, 55.0, "lleg", "high", "hard", "frontal"],
+    "special_kick_low_brick": ["specialkicklow brick", "m03_sp_kck_low", 56, 13, 5, 38, 9.0, 75.0, "rleg", "low", "hard", "fromleft"],
+    "special_punch_high_brick": ["specialpunchhigh brick", "m03_sp_pnch_high", 54, 11, 4, 39, 11.0, 65.0, "rarm", "high", "hard", "fromright"],
+    "special_punch_low_brick": ["specialpunchlow brick", "m03_sp_pnch_low", 44, 15, 4, 25, 8.0, 75.0, "rarm", "medium", "brutal", "frontal"],
 }
 const THAI_REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -1773,6 +1785,8 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
         "low_punch", "low_punch2", "low_punch3",
         "high_kick", "high_kick2", "high_kick3",
         "low_kick", "low_kick2", "low_kick3",
+        "special_kick_high_brick", "special_kick_low_brick",
+        "special_punch_high_brick", "special_punch_low_brick",
     ]
     for required_action: String in THAI_ATTACK_DATA:
         if not attacks.has(required_action):
@@ -2014,6 +2028,8 @@ func _try_load_candidate_visual() -> void:
             "low_punch", "low_kick",
             "high_punch3", "low_punch3", "low_kick3", "high_kick3",
             "special_kick_high",
+            "special_kick_high_brick", "special_kick_low_brick",
+            "special_punch_high_brick", "special_punch_low_brick",
             "high_punch2", "low_punch2", "high_kick2", "low_kick2",
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
@@ -3205,7 +3221,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
+        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -4404,6 +4420,8 @@ func _animate_candidate() -> void:
             requested = "kick"
         elif attack_kind in ["high_punch", "high_kick", "low_punch", "low_kick",
                 "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high",
+                "special_kick_high_brick", "special_kick_low_brick",
+                "special_punch_high_brick", "special_punch_low_brick",
                 "high_punch2", "low_punch2", "high_kick2", "low_kick2",
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",

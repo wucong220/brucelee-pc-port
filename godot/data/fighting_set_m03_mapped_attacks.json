@@ -7,7 +7,7 @@
     "fighting_set": "adreno_200/set/thai.set",
     "radiusscale_present": false,
     "evidence_report": "reports/brick_thai_low_attack_evidence.json",
-    "scope": "Rules for the 12 recovered base punch/kick clips plus the four current aliases. Full Thai special/grab/knockdown set and AI selection remain unverified.",
+    "scope": "Rules for the 12 recovered base punch/kick clips, the four current aliases, and the four recovered Brick specials. Grab/endattack/knockdown and the native AI selection remain unverified; special selection is a PC prototype rage gate.",
     "prototype_push_status": "UNVERIFIED",
     "missing_return_actions": [
       "facedownidle",
@@ -33,7 +33,11 @@
       "m03_kck_high_02": 30.0,
       "m03_kck_high_03": 45.0,
       "m03_kck_low_02": 50.0,
-      "m03_kck_low_03": 50.0
+      "m03_kck_low_03": 50.0,
+      "m03_sp_kck_high": 45.0,
+      "m03_sp_kck_low": 45.0,
+      "m03_sp_pnch_high": 45.0,
+      "m03_sp_pnch_low": 45.0
     }
   },
   "reaction_profiles": {
@@ -345,6 +349,74 @@
         "height": "low",
         "strength": "hard",
         "direction": "fromright"
+      }
+    },
+    "special_kick_high_brick": {
+      "source_action": "specialkickhigh brick",
+      "animation": "m03_sp_kck_high",
+      "animation_frame_count": 73,
+      "startup_frames": 23,
+      "active_frames": 6,
+      "recovery_frames": 44,
+      "damage": 10.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 55.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal"
+      }
+    },
+    "special_kick_low_brick": {
+      "source_action": "specialkicklow brick",
+      "animation": "m03_sp_kck_low",
+      "animation_frame_count": 56,
+      "startup_frames": 13,
+      "active_frames": 5,
+      "recovery_frames": 38,
+      "damage": 9.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "rleg",
+        "height": "low",
+        "strength": "hard",
+        "direction": "fromleft"
+      }
+    },
+    "special_punch_high_brick": {
+      "source_action": "specialpunchhigh brick",
+      "animation": "m03_sp_pnch_high",
+      "animation_frame_count": 54,
+      "startup_frames": 11,
+      "active_frames": 4,
+      "recovery_frames": 39,
+      "damage": 11.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "rarm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "fromright"
+      }
+    },
+    "special_punch_low_brick": {
+      "source_action": "specialpunchlow brick",
+      "animation": "m03_sp_pnch_low",
+      "animation_frame_count": 44,
+      "startup_frames": 15,
+      "active_frames": 4,
+      "recovery_frames": 25,
+      "damage": 8.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "rarm",
+        "height": "medium",
+        "strength": "brutal",
+        "direction": "frontal"
       }
     }
   }

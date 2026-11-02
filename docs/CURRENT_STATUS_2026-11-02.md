@@ -12,11 +12,12 @@
   - Bruce 59 段：`D:\BruceLeeWork\idle3-candidate-20261101\bruce_candidate_59_move.glb`
   - Brick 31 段 combat：`D:\BruceLeeWork\brick_candidate_combat_31_20261102.glb`，
     SHA-256 `e491fbdb822a9b25b7337f930b8041349c85bd4e6a831f7a66b606aa288b4b53`
-- Brick 已接入：12 条高低拳脚、方向移动/step、高/低/中格挡、轻/硬受击、
-  高 KO、faceupko、扩展 AI 招式池。
+- Brick 已接入：12 条高低拳脚、4 条 special（`m03_sp_kck_high/low`、
+  `m03_sp_pnch_high/low`，PC 原型 rage 门控）、方向移动/step、高/低/中格挡、
+  轻/硬受击、高 KO、faceupko、扩展 AI 招式池。
 - 对局已接入：三局两胜、2 秒回合重置、HUD 回合比分、R 重开整场、训练不计分。
-- 仍未接入：Brick 完整 special/grab/endattack、AI 主动 parry/attacktofloor、
-  knockdown、原版选角/关卡/存档、逐帧录像与 GPU 视觉对照。
+- 仍未接入：Brick grab/endattack、AI 主动 parry/attacktofloor、knockdown、
+  原版选角/关卡/存档、逐帧录像与 GPU 视觉对照。
 
 构建注意：Godot 会把 `tmpproject.binary` 写到 `TEMP`；若该目录不可写，
 PCK 的 `project.binary` 会变成 0 字节，release EXE 启动挂起。显式传入可写目录：

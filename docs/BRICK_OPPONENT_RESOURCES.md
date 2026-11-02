@@ -122,9 +122,14 @@ Godot 验证为 69 骨、3 个蒙皮面、31 条动画；战斗、移动、高/�
 - Godot 验证：69 骨、3 个蒙皮面、35 条动画，退出码 0
 
 `validate_opponent_candidate.gd` 已接受这个精确的 35 段集合；31 段候选回归仍通过。
-目前运行时未把 4 个 special 加入 Brick AI 招式池：`thai.set` 的入口条件还要求
-`ragethird`、`candobasicattacks`/`combolevel3` 和特定输入序列，AI 选择这些动作
-的原始决策尚无证据。`parryhigh`/`parrylow`/`parryattack` 也已确认存在，其中
+4 个 special 现在进入 Brick AI 招式池：只有 rage 达到 33 时才会加入两个 kick
+special，达到 66 时才加入两个 punch special，出招后扣除相应费用。原生
+`thai.set` 的选择条件还要求 `candobasicattacks`/`combolevel3` 和特定输入序列；
+这里的“rage 达标后随机选择”是明确的 PC 原型 AI，不是原版选择逻辑。
+`validate_brick_special_ai.gd` 用真实 `_think_ai` 验证四个 special 都能被选中、
+clip 正确、rage 扣除正确，并验证四个伤害为 10/9/11/8。
+
+`parryhigh`/`parrylow`/`parryattack` 也已确认存在，其中
 `parryhigh -> parryattack` 有 9–10 帧链接、`parryattack` 伤害 10、半径 65；
 但 AI 何时进入 `candocounter` 仍未恢复，因此不把它们伪装成已接入的 AI 行为。
 

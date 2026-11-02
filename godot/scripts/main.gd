@@ -640,13 +640,23 @@ func _think_ai(delta: float) -> void:
                 "high_kick", "high_kick2", "high_kick3",
                 "low_kick", "low_kick2", "low_kick3",
             ]
+            # Prototype AI choice: thai.set gates these on ragethird/rage2thirds;
+            # the native AI decision is not recovered, so this only spends rage.
+            if computer.rage >= 33.0:
+                moves.append_array(["special_kick_high_brick", "special_kick_low_brick"])
+            if computer.rage >= 66.0:
+                moves.append_array(["special_punch_high_brick", "special_punch_low_brick"])
             var available: Array[String] = []
             for move: String in moves:
                 if (computer.supports_attack(move)
                         and computer.attack_reach_world(move, player) >= distance):
                     available.append(move)
             if not available.is_empty():
-                computer.request_attack(available[rng.randi_range(0, available.size() - 1)])
+                var chosen: String = available[rng.randi_range(0, available.size() - 1)]
+                if computer.request_attack(chosen):
+                    var cost: float = float(PortFighter.SPECIAL_RAGE_COSTS.get(chosen, 0.0))
+                    if cost > 0.0:
+                        computer.rage = maxf(0.0, computer.rage - cost)
 
 
 func _player_attack_poses_guard_threat() -> bool:
