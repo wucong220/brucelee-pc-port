@@ -3885,6 +3885,10 @@ func _apply_attack_start_frame(kind: String, start_frame: int) -> void:
 func _begin_chained_attack(
         kind: String, start_frame: int = 0, blend_frames: int = 0
 ) -> void:
+    # SPECIAL LOW KICK's native first link is the miss/fail animation. It is
+    # not useful as a playable move; go straight to the hit variant.
+    if kind == "special_kick_low_miss" and ATTACKS.has("special_kick_low_hit"):
+        kind = "special_kick_low_hit"
     attack_kind = kind
     var rage_cost: float = _action_rage_value(kind)
     if rage_cost < 0.0:
