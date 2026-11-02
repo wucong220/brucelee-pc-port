@@ -350,8 +350,10 @@ class TestFightingConfig(unittest.TestCase):
             "m03_sp_kck_low": 45.0,
             "m03_sp_pnch_high": 45.0,
             "m03_sp_pnch_low": 45.0,
+            "m03_parry_high": 40.0,
+            "m03_parry_low": 40.0,
         })
-        self.assertEqual(len(data["attacks"]), 18)
+        self.assertEqual(len(data["attacks"]), 21)
         high_punch = data["attacks"]["high_punch"]
         self.assertEqual(high_punch["source_action"], "highpunch1")
         self.assertEqual(high_punch["animation"], "m03_pnch_high_01")
@@ -394,6 +396,17 @@ class TestFightingConfig(unittest.TestCase):
         self.assertEqual(special["source_impact"]["attack_radius"], 55.0)
         self.assertEqual(special["source_impact"]["body_part"], "lleg")
         self.assertEqual(special["source_impact"]["strength"], "hard")
+        parry = data["attacks"]["parry_attack_brick"]
+        self.assertEqual(parry["source_action"], "parryattack")
+        self.assertEqual(parry["animation"], "m03_pnch_high_03")
+        self.assertEqual(
+            [parry[key] for key in (
+                "animation_frame_count", "startup_frames", "active_frames", "recovery_frames"
+            )],
+            [35, 10, 5, 20],
+        )
+        self.assertEqual(parry["damage"], 10.0)
+        self.assertEqual(parry["source_impact"]["attack_radius"], 65.0)
         for group in data["reaction_profiles"].values():
             for profile in group.values():
                 self.assertFalse(profile["clip_implemented"])

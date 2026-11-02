@@ -7,7 +7,7 @@
     "fighting_set": "adreno_200/set/thai.set",
     "radiusscale_present": false,
     "evidence_report": "reports/brick_thai_low_attack_evidence.json",
-    "scope": "Rules for the 12 recovered base punch/kick clips, the four current aliases, and the four recovered Brick specials. Grab/endattack/knockdown and the native AI selection remain unverified; special selection is a PC prototype rage gate.",
+    "scope": "Rules for the 12 recovered base punch/kick clips, the four current aliases, the four recovered Brick specials, and the parry high/low/attack chain. Grab/endattack/knockdown and the native AI selection remain unverified; special and parry selection are PC prototype choices.",
     "prototype_push_status": "UNVERIFIED",
     "missing_return_actions": [
       "facedownidle",
@@ -37,7 +37,9 @@
       "m03_sp_kck_high": 45.0,
       "m03_sp_kck_low": 45.0,
       "m03_sp_pnch_high": 45.0,
-      "m03_sp_pnch_low": 45.0
+      "m03_sp_pnch_low": 45.0,
+      "m03_parry_high": 40.0,
+      "m03_parry_low": 40.0
     }
   },
   "reaction_profiles": {
@@ -416,6 +418,57 @@
         "body_part": "rarm",
         "height": "medium",
         "strength": "brutal",
+        "direction": "frontal"
+      }
+    },
+    "parry_high_brick": {
+      "source_action": "parryhigh",
+      "animation": "m03_parry_high",
+      "animation_frame_count": 43,
+      "startup_frames": 9,
+      "active_frames": 1,
+      "recovery_frames": 33,
+      "damage": 0.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 40.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "parry_low_brick": {
+      "source_action": "parrylow",
+      "animation": "m03_parry_low",
+      "animation_frame_count": 41,
+      "startup_frames": 9,
+      "active_frames": 1,
+      "recovery_frames": 31,
+      "damage": 0.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 40.0,
+        "body_part": "larm",
+        "height": "low",
+        "strength": "normal",
+        "direction": "frontal"
+      }
+    },
+    "parry_attack_brick": {
+      "source_action": "parryattack",
+      "animation": "m03_pnch_high_03",
+      "animation_frame_count": 35,
+      "startup_frames": 10,
+      "active_frames": 5,
+      "recovery_frames": 20,
+      "damage": 10.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "rarm",
+        "height": "high",
+        "strength": "hard",
         "direction": "frontal"
       }
     }

@@ -129,9 +129,27 @@ special，达到 66 时才加入两个 punch special，出招后扣除相应费�
 `validate_brick_special_ai.gd` 用真实 `_think_ai` 验证四个 special 都能被选中、
 clip 正确、rage 扣除正确，并验证四个伤害为 10/9/11/8。
 
-`parryhigh`/`parrylow`/`parryattack` 也已确认存在，其中
-`parryhigh -> parryattack` 有 9–10 帧链接、`parryattack` 伤害 10、半径 65；
-但 AI 何时进入 `candocounter` 仍未恢复，因此不把它们伪装成已接入的 AI 行为。
+## 37 段候选（parry）
+
+`parryhigh`/`parrylow`/`parryattack` 也已确认存在：
+
+- `parryhigh`：`m03_parry_high`，43 帧，半径 40，无伤害
+- `parrylow`：`m03_parry_low`，41 帧，半径 40，无伤害
+- `parryattack`：复用 `m03_pnch_high_03`，35 帧，10–14 帧造成 10 伤害，
+  半径 65，`rarm/high/hard/frontal`
+- `parryhigh -> parryattack` 链接窗口 9–10 帧
+
+37 段候选：
+
+- `D:\BruceLeeWork\brick_candidate_combat_37_20261102.glb`
+- 1,627,492 字节
+- SHA-256 `ecd5f0d3e3b831bbc31b6772577a2b537ed5488254e3fb8a8a4079568931499c`
+- Godot 验证：69 骨、3 个蒙皮面、37 条动画，退出码 0
+
+AI 现在会在 rage 足够且玩家攻击进入威胁窗口时，以原型概率选择
+`parry_high_brick` 或 `parry_low_brick`；high parry 在 9–10 帧链到
+`parry_attack_brick`，实际伤害 10。原版 AI 何时进入 `candocounter` 仍未恢复，
+因此这是明确的 PC 原型防御选择；35 段候选没有 parry clip 时会安全退回普通格挡。
 
 ## 复现与检查
 

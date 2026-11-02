@@ -75,6 +75,9 @@ const BRICK_CLIPS: Dictionary = {
     "special_kick_low_brick": "m03_sp_kck_low",
     "special_punch_high_brick": "m03_sp_pnch_high",
     "special_punch_low_brick": "m03_sp_pnch_low",
+    "parry_high_brick": "m03_parry_high",
+    "parry_low_brick": "m03_parry_low",
+    "parry_attack_brick": "m03_pnch_high_03",
     "m03_blck_high": "m03_blck_high",
     "all_block_low": "all_block_low",
     "all_block_mid": "all_block_mid",
@@ -235,6 +238,8 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "special_kick_low_brick": 33.0,
     "special_punch_high_brick": 66.0,
     "special_punch_low_brick": 66.0,
+    "parry_high_brick": 33.0,
+    "parry_low_brick": 30.0,
 }
 const SPECIAL_CHAIN_MISSES: Dictionary = {
     "special_kick_low_miss": "special_kick_low_hit",
@@ -269,7 +274,10 @@ const STUN_IMPACT_ENTRY_FRAMES: int = 14
 const GRAB_ATTACKS: Dictionary = {"grab1": true, "grab2": true}
 const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
 const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
-const NON_CONTACT_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true, "parry_low": true}
+const NON_CONTACT_ATTACKS: Dictionary = {
+    "endattack1": true, "endattack2": true, "parry_low": true,
+    "parry_high_brick": true, "parry_low_brick": true,
+}
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.
@@ -827,6 +835,9 @@ const THAI_ATTACK_DATA: Dictionary = {
     "special_kick_low_brick": ["specialkicklow brick", "m03_sp_kck_low", 56, 13, 5, 38, 9.0, 75.0, "rleg", "low", "hard", "fromleft"],
     "special_punch_high_brick": ["specialpunchhigh brick", "m03_sp_pnch_high", 54, 11, 4, 39, 11.0, 65.0, "rarm", "high", "hard", "fromright"],
     "special_punch_low_brick": ["specialpunchlow brick", "m03_sp_pnch_low", 44, 15, 4, 25, 8.0, 75.0, "rarm", "medium", "brutal", "frontal"],
+    "parry_high_brick": ["parryhigh", "m03_parry_high", 43, 9, 1, 33, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_low_brick": ["parrylow", "m03_parry_low", 41, 9, 1, 31, 0.0, 40.0, "larm", "low", "normal", "frontal"],
+    "parry_attack_brick": ["parryattack", "m03_pnch_high_03", 35, 10, 5, 20, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
 }
 const THAI_REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -1787,6 +1798,7 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
         "low_kick", "low_kick2", "low_kick3",
         "special_kick_high_brick", "special_kick_low_brick",
         "special_punch_high_brick", "special_punch_low_brick",
+        "parry_high_brick", "parry_low_brick", "parry_attack_brick",
     ]
     for required_action: String in THAI_ATTACK_DATA:
         if not attacks.has(required_action):
@@ -2030,6 +2042,7 @@ func _try_load_candidate_visual() -> void:
             "special_kick_high",
             "special_kick_high_brick", "special_kick_low_brick",
             "special_punch_high_brick", "special_punch_low_brick",
+            "parry_high_brick", "parry_low_brick", "parry_attack_brick",
             "high_punch2", "low_punch2", "high_kick2", "low_kick2",
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
@@ -3221,7 +3234,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
+        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -3531,7 +3544,7 @@ func _try_multi_impact_contacts() -> void:
 
 
 func _try_special_chain() -> void:
-    if attack_kind == "parry_high":
+    if attack_kind in ["parry_high", "parry_high_brick"]:
         var parry_frame: float = _current_attack_source_frame()
         if parry_frame + 0.0001 < 9.0 or parry_frame > 10.0001:
             return
@@ -3544,7 +3557,8 @@ func _try_special_chain() -> void:
         var reach: float = opponent.attack_reach_world(opponent.attack_kind, self)
         if reach <= 0.0 or distance > reach:
             return
-        _begin_chained_attack("parry_attack")
+        _begin_chained_attack("parry_attack" if attack_kind == "parry_high"
+                else "parry_attack_brick")
         return
     if not SPECIAL_CHAIN_MISSES.has(attack_kind):
         return
@@ -4422,6 +4436,7 @@ func _animate_candidate() -> void:
                 "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high",
                 "special_kick_high_brick", "special_kick_low_brick",
                 "special_punch_high_brick", "special_punch_low_brick",
+                "parry_high_brick", "parry_low_brick", "parry_attack_brick",
                 "high_punch2", "low_punch2", "high_kick2", "low_kick2",
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",
