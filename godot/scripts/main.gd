@@ -39,6 +39,7 @@ var _procedural_floor: Node3D = null
 var _procedural_arena_lines: Array[MeshInstance3D] = []
 var _procedural_arena_hidden: bool = false
 var _far_scene_texture_count: int = 0
+var _world_environment: WorldEnvironment = null
 var combat_audio: Node
 var _candidate_audio: Dictionary = {}
 var _candidate_audio_error: Dictionary = {}
@@ -283,6 +284,7 @@ func _run_export_self_test() -> void:
 
 func _build_environment() -> void:
     var environment: WorldEnvironment = WorldEnvironment.new()
+    _world_environment = environment
     environment.environment = Environment.new()
     environment.environment.background_mode = Environment.BG_COLOR
     environment.environment.background_color = Color(0.07, 0.10, 0.16)
@@ -445,6 +447,27 @@ func _build_original_far_scene() -> void:
             _procedural_floor.visible = false
         for line: MeshInstance3D in _procedural_arena_lines:
             line.visible = false
+        _apply_original_sky()
+
+
+func _apply_original_sky() -> void:
+    if _world_environment == null:
+        return
+    var path: String = OS.get_executable_path().get_base_dir().path_join(
+        "scene/far/43065bc82b9e537df7e860c053971940671c739f.png"
+    )
+    if not FileAccess.file_exists(path):
+        return
+    var image: Image = Image.new()
+    if image.load(path) != OK:
+        return
+    var texture: ImageTexture = ImageTexture.create_from_image(image)
+    var panorama: PanoramaSkyMaterial = PanoramaSkyMaterial.new()
+    panorama.panorama = texture
+    var sky: Sky = Sky.new()
+    sky.sky_material = panorama
+    _world_environment.environment.sky = sky
+    _world_environment.environment.background_mode = Environment.BG_SKY
 
 
 func _build_fighters() -> void:
