@@ -27,7 +27,9 @@
   `endattack_brick` 收招（0 伤害）→ `endattackcomp1/2` → `faceupko`、
   方向移动/step、高/低/中格挡、轻/硬受击、高 KO、faceupko、扩展 AI 招式池。
 - 对局已接入：三局两胜、2 秒回合重置、HUD 回合比分、R 重开整场、训练不计分。
-- 仍未接入：Brick knockdown、原版选角/关卡/存档、逐帧录像与 GPU 视觉对照。
+- 仍未接入：原版选角/关卡/存档、逐帧录像与 GPU 视觉对照。
+- knockdown 已由真实物理回归覆盖：致命轻击命中后
+  `impactstun -> stun -> stun2 -> stunfall -> faceupko`。
 
 构建注意：Godot 会把 `tmpproject.binary` 写到 `TEMP`；若该目录不可写，
 PCK 的 `project.binary` 会变成 0 字节，release EXE 启动挂起。显式传入可写目录：
