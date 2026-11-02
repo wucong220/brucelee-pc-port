@@ -35,6 +35,11 @@ func _run() -> void:
         quit(1)
         return
     for miss: String in CASES:
+        if not is_equal_approx(float(brick.SPECIAL_RAGE_COSTS.get(miss, 0.0)), 66.0):
+            push_error("Grab miss has no 66 rage cost: " + miss)
+            quit(1)
+            return
+    for miss: String in CASES:
         scene._reset_match()
         player.position = Vector3(0.0, 1.2, 0.0)
         brick.position = Vector3(0.3, 1.2, 0.0)

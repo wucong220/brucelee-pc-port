@@ -242,6 +242,8 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "special_punch_high_miss": 66.0,
     "grab1": 66.0,
     "grab2": 66.0,
+    "grab1_miss_brick": 66.0,
+    "grab2_miss_brick": 66.0,
     "grab1_miss": 66.0,
     "grab2_miss": 66.0,
     "special_kick_high_brick": 33.0,
