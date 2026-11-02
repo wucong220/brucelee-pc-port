@@ -102,6 +102,32 @@ OPPONENT_CANDIDATE_VALIDATION={"animations":[{"length":4.0,"name":"m03_idle_01",
 Godot 验证为 69 骨、3 个蒙皮面、31 条动画；战斗、移动、高/低/中格挡、
 轻/硬受击、高 KO 以及 faceupko 终态均通过。该候选仍在仓库外，不进入 Git。
 
+## 35 段候选（含 special，本地）
+
+`adreno_200/set/thai.set` 中确有 Brick 专用 special：
+
+| action | animation | 伤害帧 | 伤害 | 攻击半径 | 部位/高度/强度/方向 |
+|---|---|---:|---:|---:|---|
+| `specialkickhigh brick` | `m03_sp_kck_high` | 23–28 | 10 | 55 | lleg/high/hard/frontal |
+| `specialkicklow brick` | `m03_sp_kck_low` | 13–17 | 9 | 75 | rleg/low/hard/fromleft |
+| `specialpunchhigh brick` | `m03_sp_pnch_high` | 11–14 | 11 | 65 | rarm/high/hard/fromright |
+| `specialpunchlow brick` | `m03_sp_pnch_low` | 15–18 | 8 | 75 | rarm/medium/brutal/frontal |
+
+这些动作在 31 段候选之外另建 35 段候选，仍只保存在仓库外：
+
+- `D:\BruceLeeWork\brick_candidate_combat_35_20261102.glb`
+- 1,551,624 字节
+- SHA-256 `ea69f9e06c45c14c550b72f913747e3d260ce508d9dbadd0f5985bc8e4443a14`
+- 22 个原生 Brick clip + 4 个 special + 9 个 Bruce retarget 反应/格挡
+- Godot 验证：69 骨、3 个蒙皮面、35 条动画，退出码 0
+
+`validate_opponent_candidate.gd` 已接受这个精确的 35 段集合；31 段候选回归仍通过。
+目前运行时未把 4 个 special 加入 Brick AI 招式池：`thai.set` 的入口条件还要求
+`ragethird`、`candobasicattacks`/`combolevel3` 和特定输入序列，AI 选择这些动作
+的原始决策尚无证据。`parryhigh`/`parrylow`/`parryattack` 也已确认存在，其中
+`parryhigh -> parryattack` 有 9–10 帧链接、`parryattack` 伤害 10、半径 65；
+但 AI 何时进入 `candocounter` 仍未恢复，因此不把它们伪装成已接入的 AI 行为。
+
 ## 复现与检查
 
 ```powershell
