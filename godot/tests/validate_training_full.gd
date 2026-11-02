@@ -48,6 +48,10 @@ func _run() -> void:
     var training = scene.get("move_training")
     player.set_physics_process(false)
     computer.set_physics_process(false)
+    if training.entries.size() != 27:
+        push_error("Move-training catalog is not 27 entries: " + str(training.entries.size()))
+        quit(1)
+        return
     training.open()
     for index: int in range(training.entries.size()):
         var entry: Dictionary = training.entries[index]
