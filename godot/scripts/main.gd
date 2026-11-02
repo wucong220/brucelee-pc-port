@@ -847,51 +847,24 @@ func _handle_fighter_attack_input(
         action_c: String,
         action_d: String
 ) -> bool:
-    # Prototype direction modifiers: up/down come from the movement axes, and
-    # in/out are toward/away from the opponent after applying the fighter's
-    # facing. They are PC-only and not recovered Android physical keys.
-    var modifiers: Array = _standing_combo_modifiers(fighter)
-    # Every attack key now goes through the native link table; there is no
-    # default-attack fallback. A press that matches no link does nothing.
+    # An attack press records only the virtual key that was pressed. Held
+    # directions are separate key presses (see _record_direction_press) and
+    # native link conditions read held state via InputStatusCheck, so they must
+    # not be folded into the attack event.
     if event.is_action_pressed(action_a):
-        fighter.record_standing_combo_press("a", modifiers)
+        fighter.record_standing_combo_press("a")
     elif event.is_action_pressed(action_b):
-        fighter.record_standing_combo_press("b", modifiers)
+        fighter.record_standing_combo_press("b")
     elif event.is_action_pressed(action_c):
-        fighter.record_standing_combo_press("c", modifiers)
+        fighter.record_standing_combo_press("c")
     elif event.is_action_pressed(action_d):
-        fighter.record_standing_combo_press("d", modifiers)
+        fighter.record_standing_combo_press("d")
     elif event.is_action_pressed(PrototypeControls.RESTART):
         return false
     else:
         return false
     return true
 
-
-func _standing_combo_modifiers(fighter: PortFighter) -> Array:
-    var modifiers: Array = []
-    # Read the live action state only. Sampling fighter.move_axis here would
-    # reuse the previous physics frame when a direction has just been released.
-    var vertical: float = Input.get_axis(
-        PrototypeControls.MOVE_UP, PrototypeControls.MOVE_DOWN
-    )
-    var horizontal: float = Input.get_axis(
-        PrototypeControls.MOVE_LEFT, PrototypeControls.MOVE_RIGHT
-    )
-    if vertical < -0.5:
-        modifiers.append("up")
-    elif vertical > 0.5:
-        modifiers.append("down")
-    var toward: float = horizontal * fighter.facing
-    if toward > 0.5:
-        modifiers.append("in")
-    elif toward < -0.5:
-        modifiers.append("out")
-    if horizontal < -0.5:
-        modifiers.append("left")
-    elif horizontal > 0.5:
-        modifiers.append("right")
-    return modifiers
 
 func _training_available() -> bool:
     var player_clips: Dictionary = player.get("_candidate_clip_paths")

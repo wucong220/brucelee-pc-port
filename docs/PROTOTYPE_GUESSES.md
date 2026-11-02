@@ -17,7 +17,7 @@
 | 6 | 招架 = 0.5s 内按三次 Shift | `fighter.gd::record_parry_press` | 已删除（第 14 轮） | 改为原生 `candocounter` link：下+右，`countertime`+`ragethird`；吸收窗口读 `impactable` 组（parryhigh 第 30 帧前） |
 | 7 | 地面攻击输入 `aaa/abb/bcc/bdd`、`K,L,L`/`K,U,U` | `fighter.gd` 地面序列 / `main.gd` | 已删除（第 11 轮） | 改为 `facedownidle/faceupidle` 的直接 link（单键） |
 | 8 | Heavy 作为无来源独立招式 | `fighter.gd` `heavy` 元数据 | 已删除（第 17 轮） | 原注释即写 "No recovered fighting-set mapping for this prototype attack yet"；数据里没有 heavy，已从代码、AI、训练、测试中移除 |
-| 9 | 抓取距离 0.7 | `PROTOTYPE_GRAB_DISTANCE` | 部分证据（第 19 轮） | link 条件 `grabdistance` 改用动作 `attack.grab_distance`（grab1=70、endattack1=150，按 source→world 换算）；常量只作缺数据回退 |
+| 9 | 抓取距离 0.7 | `PROTOTYPE_GRAB_DISTANCE` | 已删除（第 35 轮） | link 条件只用动作 `attack.grab_distance`（source→world）；缺数据时 fail closed，不再回退 0.7，常量已删 |
 | 10 | 怒气消耗 33/66 | `SPECIAL_RAGE_COSTS` / `PARRY_RAGE_COSTS` | 部分修复（第 21 轮） | 原生 link 路径不再扣怒气（`ragethird`/`rage2thirds` 只做门槛）；AI 分支仍按原型扣费 |
 
 ## 战斗数值与判定
@@ -35,7 +35,7 @@
 | # | 规则 | 位置 | 状态 | 说明 |
 |---|---|---|---|---|
 | 16 | 25 课目录、起点选择、成功条件 | `move_training_catalog.json` / `move_training.gd` | 自创 | 训练页本身是 PC 原型功能 |
-| 17 | `_prime_source_attack` 固定 `state_time = 1.5` | `move_training.gd` | 已修复（第 8/13 轮） | 现在按目标/入口 link 的帧窗口计算 `state_time` |
+| 17 | `_prime_source_attack` 固定 `state_time = 1.5` | `move_training.gd` | 已修复（第 8/13/35 轮） | 按目标/入口 link 的帧窗口计算；无窗口时回退动画起点 0，不再用 1.5 秒 |
 | 18 | 训练时每帧强制木桩状态 | `move_training.gd::_process` | 自创 | 为了让中间攻击不破坏 special/grab 条件 |
 | 19 | 欣赏模式直接写 `state`、强制 `request_attack` | `move_gallery.gd` | 保留为预览功能 | 欣赏模式不是输入路径，只是逐招播放；真实对战/训练已走原生 link |
 | 20 | 主菜单/暂停/训练/欣赏界面 | `prototype_menu.gd` 等 | 自创 | PC 原型 UI，不是原版菜单 |

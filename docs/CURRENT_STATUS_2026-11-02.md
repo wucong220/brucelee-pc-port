@@ -2,7 +2,7 @@
 
 - 当前分支：`codex/training-hints`
 - 当前主线：以 `git log -1` 为准；本文件记录时合并到 PR #252 后的 main。
-- 当前测试口径：Python 3.12 `unittest discover -s tests` 为 289 项、通过 288、跳过 1。
+- 当前测试口径：Python 3.12 `unittest discover -s tests` 为 291 项、通过 290、跳过 1。
 - Windows 发行：用可写 `-BuildRoot`/`-GodotTempRoot` 构建后，
   `validate_windows_exe.ps1 -SkipBuild` 返回 `WINDOWS_EXE_VALIDATION=PASS`；
   PCK 内 `project.binary` 为 710 字节，EXE 自检确认 Bruce/Brick 候选、纹理、

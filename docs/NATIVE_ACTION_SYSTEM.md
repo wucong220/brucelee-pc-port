@@ -208,9 +208,9 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
 
 `CLinkDescr::GetKeySequence(index)` 的实际实现是
 `return this + index * 0x14 + 0x30`：每条 link 有**多组备选序列**，由
-`fighter+0x1c` 选择，不是三步。当前移植把导出的 3 项当作步骤匹配，是已知近似；
-`+0x1c` 的写入点尚未在 139 个 `CFighter` 反编译函数中出现，详见
-`INPUT_CONFIG_FINDINGS.md`。
+`fighter+0x1c` 选择（该值来自 `CSettings.input_layout`）。当前移植按
+`LINK_SEQUENCE_INDEX = 1` 选择键盘布局这一组，不是把 3 项当成三个步骤；
+`+0x1c` 的写入点见 `INPUT_CONFIG_FINDINGS.md`。
 
 四项全部通过才执行：
 
@@ -244,3 +244,36 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
 做 TimeWindowCheck + InputSequenceCheck + InputStatusCheck + CheckConditions，
 通过后 FollowLink 并 ConsumeEvents**。在这条链路替换掉之前，任何时间窗、
 队列、优先级参数都只是猜测。
+
+## ChatGPT 审查后的修复（2026-11-02）
+
+审查结论为 Request Changes，指出两个 P1 和若干 P2。已修复：
+
+- **P1-1**：`main.gd` 不再把仍按住的方向塞进攻击事件；`_standing_combo_modifiers()`
+  已删除。方向键按下本来就是独立事件（`_record_direction_press()`），
+  `InputStatusCheck` 继续读按住状态。
+- **P1-2**：`_consume_link_events()` 对空 `steps` 直接返回，修复
+  `steps[-1]` 越界；新增 `validate_real_key_path.gd` 覆盖真实键盘路径、
+  空序列衔接和 `parryhigh→parryattack`。
+- **P2 entry_frame**：`_begin_chained_attack(kind, start_frame)` 按
+  link `entry_frame` 进入目标动画的对应帧；`_native_entry_frame()` 从
+  `native_links.json` 读取（attacktofloor=9）。
+- **P2 收招 link**：`_native_recovery_return()` 用当前动作到
+  `idle/idle2/idle3` 的出边决定收招状态与 entry_frame（lowpunch3→idle2
+  `[51,81]` entry 5、specialpunchhighmiss→idle2 `[116,122]`、
+  specialkickhigh→idle3 `[53,57]`）。
+- **P2 动作状态/退出帧**：facedownattack/faceupattack/attacktofloor 的退出帧、
+  impactstun 起始帧均改读 link 窗口（`_native_link_start_frame`）。
+- **P2 pose 条件**：`oppposestand/oppposelaying/oppposestun` 改为对手动作
+  `pose`（stand/laying/stun/crouch/jump），不再用状态枚举近似。
+- **P2 linking_frame**：`_native_link_window_ok()` 现在要求当前帧达到
+  `linking_frame` 才允许 FollowLink。
+- **数据/回退**：`native_links.json` 现在写入 `source.set_sha256`；
+  `grabdistance` 无数据时 fail closed（不再退回 0.7）；
+  `source_state_time_for_target` 无窗口时回退动画起点 0，不再用 1.5 秒。
+- 新增 `validate_p2_recovered_links.gd` 覆盖 entry_frame、收招 link 和 pose。
+
+仍未完全处理：`unique`/`blending` 只导出未参与行为；`ConsumeEvents` 的
+重复 token 语义还需专门验证；怒气 100/+10、AI 怒气扣费 33/66、
+反应链部分 13/15/20/40 帧回退仍是原型假设。工作流只跑 Python 与
+build-path 检查，没有 Godot 回归或真实 EXE 构建。

@@ -7,6 +7,7 @@ key status, time windows and flags. No original payload is written.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -84,7 +85,7 @@ def build(archive: Path) -> dict:
             "set_path": "adreno_200/set/brucelee.set",
             "action_count": len(actions),
             "link_count": len(links),
-            "set_sha256": info.get("sha256") if isinstance(info, dict) else None,
+            "set_sha256": (info.get("sha256") if isinstance(info, dict) and info.get("sha256") else hashlib.sha256(raw).hexdigest()),
         },
         "actions": action_rows,
         "links": link_rows,

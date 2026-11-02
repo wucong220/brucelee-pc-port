@@ -264,7 +264,6 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "grab1_brick": 66.0,
     "grab2_brick": 66.0,
 }
-const PROTOTYPE_GRAB_DISTANCE: float = 0.7
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
 # Source windows: stun->stun2 and stun2->stunfall [55,61]; stunfall->faceupko [71,79].
@@ -2479,10 +2478,10 @@ func _queue_candidate_visual_blend(seconds: float) -> void:
         candidate_visual_blend_pending_seconds = 0.0
 
 
-func _enter_locomotion_state(next_state: String) -> void:
+func _enter_locomotion_state(next_state: String, start_frame: int = 0) -> void:
     var previous_state: String = state
     state = next_state
-    state_time = 0.0
+    state_time = float(start_frame) / SOURCE_FRAME_RATE
     attack_kind = ""
     _clear_link_state()
     _clear_reaction_tracking()
@@ -2672,7 +2671,7 @@ func _advance_return_state(delta: float) -> void:
                 )):
             _try_facedown_attack_contact()
         state_time = after
-        if _reached_source_frame(state_time, FACEDOWN_ATTACK_EXIT_FRAME):
+        if _reached_source_frame(state_time, _native_link_start_frame("facedownattack", FACEDOWN_ATTACK_EXIT_FRAME)):
             _enter_locomotion_state("idle")
         return
     if state == "impacttofloor":
@@ -2711,7 +2710,7 @@ func _advance_return_state(delta: float) -> void:
                     ATTACK_TO_FLOOR_DAMAGE_END_FRAME)):
             _try_attack_to_floor_contact()
         state_time = after
-        if _reached_source_frame(state_time, ATTACK_TO_FLOOR_EXIT_START_FRAME):
+        if _reached_source_frame(state_time, _native_link_start_frame("attacktofloor", ATTACK_TO_FLOOR_EXIT_START_FRAME)):
             # The recovered direct edge is idle2 [80,90]. Frame 80 is the
             # deterministic earliest-frame candidate; native timing is unverified.
             _enter_locomotion_state("idle2")
@@ -2728,7 +2727,7 @@ func _advance_return_state(delta: float) -> void:
                 )):
             _try_faceup_attack_contact()
         state_time = after
-        if _reached_source_frame(state_time, FACEUP_ATTACK_EXIT_FRAME):
+        if _reached_source_frame(state_time, _native_link_start_frame("faceupattack", FACEUP_ATTACK_EXIT_FRAME)):
             _enter_locomotion_state("idle")
         return
 
@@ -3157,7 +3156,7 @@ func source_state_time_for_target(source_kind: String, target_action: String) ->
     # so training and preview scenarios exercise a real link instead of a fixed
     # 1.5 s recovery guess.
     if not ATTACKS.has(source_kind):
-        return 1.5
+        return 0.0
     var action: String = str(ATTACKS[source_kind].get("source_action", ""))
     var target_native: String = target_action
     if ATTACKS.has(target_action):
@@ -3193,7 +3192,7 @@ func source_state_time_for_target(source_kind: String, target_action: String) ->
         if window.size() >= 3:
             frame = maxf(frame, float(window[2]) + 1.0)
         return maxf((frame_count - frame) / SOURCE_FRAME_RATE, 1.0 / SOURCE_FRAME_RATE)
-    return 1.5
+    return 0.0
 
 
 func link_requirements_for_target(target_kind: String) -> Dictionary:
@@ -3229,6 +3228,9 @@ func _native_link_window_ok(link: Dictionary) -> bool:
     var end: float = float(window[1])
     if window.size() >= 3:
         start = maxf(start, float(window[2]))
+    var linking_frame: int = int(link.get("linking_frame", 0))
+    if linking_frame > 0 and frame + 0.0001 < float(linking_frame):
+        return false
     return frame + 0.0001 >= start and frame <= end + 0.0001
 
 
@@ -3293,17 +3295,36 @@ func _opponent_distance() -> float:
         opponent.global_position.z - global_position.z).length()
 
 
+func _fighter_pose() -> String:
+    # Recovered action pose: stand / laying / crouch / stun / jump.
+    if state in ["hitstun", "blockstun", "stun", "stun2", "stunfall",
+            "stunimpact", "impactstun"]:
+        return "stun"
+    if state in ["facedownidle", "facedownko", "facedowngetup", "facedownattack",
+            "impactfacedown", "impacttofloor", "faceupidle", "faceupko",
+            "faceupgetup", "faceupattack", "impactfaceup", "attacktofloor"]:
+        return "laying"
+    var action: String = _current_action_name()
+    var row: Dictionary = _native_actions.get(action, {})
+    var pose: String = String(row.get("pose", ""))
+    if not pose.is_empty():
+        return pose
+    if state in ["idle", "idle2", "idle3"]:
+        return "stand"
+    return ""
+
+
 func _native_condition_ok(condition: String, link: Dictionary) -> bool:
     match condition:
         "oppposestun":
             return opponent != null and is_instance_valid(opponent) \
-                and opponent.state in ["hitstun", "stun", "stun2"]
+                and opponent._fighter_pose() == "stun"
         "oppposelaying":
             return opponent != null and is_instance_valid(opponent) \
-                and opponent.state in ["facedownidle", "facedownko", "faceupidle", "faceupko", "laying"]
+                and opponent._fighter_pose() == "laying"
         "oppposestand":
             return opponent != null and is_instance_valid(opponent) \
-                and opponent.state in ["idle", "idle2", "idle3"]
+                and opponent._fighter_pose() == "stand"
         "oppnotblocking":
             return opponent == null or not opponent.guard_held
         "grabdistance":
@@ -3312,7 +3333,8 @@ func _native_condition_ok(condition: String, link: Dictionary) -> bool:
             var raw_grab: Variant = _native_actions.get(
                 to_action, {}).get("grab_distance")
             if raw_grab == null:
-                return _opponent_distance() <= PROTOTYPE_GRAB_DISTANCE
+                # No recovered grab_distance: fail closed rather than guess.
+                return false
             return _opponent_distance() <= float(raw_grab) * source_units_to_world
         "ragethird":
             return rage >= 33.0
@@ -3398,6 +3420,9 @@ func _native_target_kind(link: Dictionary) -> String:
 func _consume_link_events(link: Dictionary) -> void:
     # krm::CFighter::ConsumeEvents: mark the matched events consumed.
     var steps: Array = link["steps"]
+    if steps.is_empty():
+        # Automatic follow-ups have no input step; nothing to consume.
+        return
     var required: int = steps.size() - 1
     for event_index: int in range(_link_events.size() - 1, -1, -1):
         var event: Dictionary = _link_events[event_index]
@@ -3463,7 +3488,9 @@ func _try_follow_links() -> bool:
         _consume_link_events(link)
         if consume_all:
             _clear_link_events()
-        _begin_chained_attack(target)
+        _begin_chained_attack(
+            target, int(link.get("entry_frame", 0))
+        )
         return true
     return false
 
@@ -3569,7 +3596,7 @@ func _begin_ground_attack(attack_state: String) -> void:
 func _begin_attack_to_floor() -> void:
     var previous_state: String = state
     state = "attacktofloor"
-    state_time = float(ATTACK_TO_FLOOR_ENTRY_FRAME) / SOURCE_FRAME_RATE
+    state_time = float(_native_entry_frame("attacktofloor", ATTACK_TO_FLOOR_ENTRY_FRAME)) / SOURCE_FRAME_RATE
     attack_kind = "attacktofloor"
     attack_sequence += 1
     _attack_connected = false
@@ -3770,7 +3797,28 @@ func _try_multi_impact_contacts() -> void:
         combat_hit.emit(self, opponent, attack_kind, damage, blocked)
 
 
-func _begin_chained_attack(kind: String) -> void:
+func _apply_attack_start_frame(kind: String, start_frame: int) -> void:
+    # FollowLink entry_frame: the target animation starts at this source frame.
+    var details: Dictionary = ATTACKS.get(kind, {})
+    if details.is_empty():
+        return
+    var fps: float = SOURCE_FRAME_RATE
+    var startup_frames: float = float(details.get("startup", 0.0)) * fps
+    var active_frames: float = float(details.get("active", 0.0)) * fps
+    var total_frames: float = float(details.get("animation_frame_count", 0))
+    var frame: float = clampf(float(start_frame), 0.0, maxf(total_frames - 1.0, 0.0))
+    if frame < startup_frames:
+        state = "startup"
+        state_time = (startup_frames - frame) / fps
+    elif frame < startup_frames + active_frames:
+        state = "active"
+        state_time = (startup_frames + active_frames - frame) / fps
+    else:
+        state = "recovery"
+        state_time = maxf((total_frames - frame) / fps, 0.0)
+
+
+func _begin_chained_attack(kind: String, start_frame: int = 0) -> void:
     attack_kind = kind
     attack_sequence += 1
     _attack_connected = false
@@ -3778,11 +3826,54 @@ func _begin_chained_attack(kind: String) -> void:
     _grab_connected = false
     _endattack_victim_started = false
     _multi_impact_applied.clear()
-    state = "startup"
-    state_time = float(ATTACKS[kind]["startup"])
+    _apply_attack_start_frame(kind, start_frame)
     _seed_attack_root_motion()
     _restart_candidate_action()
     attack_started.emit(kind)
+
+
+func _native_entry_frame(target_action: String, fallback: int) -> int:
+    # FollowLink entry_frame recorded on links that target this action.
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != target_action:
+            continue
+        var entry_value: Variant = link.get("entry_frame")
+        if typeof(entry_value) == TYPE_INT or typeof(entry_value) == TYPE_FLOAT:
+            return int(entry_value)
+    return fallback
+
+
+func _native_link_start_frame(source_action: String, fallback: int) -> int:
+    # Window start of the action's outgoing link (return/exit frame).
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != source_action:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() >= 2:
+            return int(window[0])
+    return fallback
+
+
+func _native_recovery_return() -> Dictionary:
+    # The end-of-attack state comes from the current action's outgoing link to
+    # idle/idle2/idle3 (for example lowpunch3 -> idle2 [51,81], entry_frame 5).
+    var action: String = _current_action_name()
+    if action.is_empty():
+        return {}
+    var frame: float = _current_attack_source_frame()
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != action:
+            continue
+        var target: String = _link_text(link, "to")
+        if target not in ["idle", "idle2", "idle3"]:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() >= 2 and frame + 0.0001 >= float(window[0]):
+            return {
+                "state": target,
+                "entry_frame": int(link.get("entry_frame", 0)),
+            }
+    return {}
 
 
 func _advance_state() -> void:
@@ -3799,20 +3890,17 @@ func _advance_state() -> void:
             attack_kind = ""
             _restart_candidate_action()
         "recovery", "hitstun", "blockstun":
-            var next_state: String = "idle"
-            if state == "recovery" and attack_kind == "special_punch_high_miss":
-                # Recovered miss_return targets idle2 [116,122]; keep idle
-                # as the fallback when the candidate lacks that clip.
-                if _candidate_clip_paths.has(IDLE2_CLIP):
-                    next_state = "idle2"
-            elif state == "recovery" and attack_kind == "special_kick_high":
-                # Recovered return targets idle3 [53,57]; keep idle as the
-                # fallback until a candidate supplies m01_idle_03.
-                if _candidate_clip_paths.has(IDLE3_CLIP):
-                    next_state = "idle3"
-            elif state != "recovery":
-                next_state = _verified_post_hit_return_state()
-            _enter_locomotion_state(next_state)
+            if state == "recovery":
+                var native_return: Dictionary = _native_recovery_return()
+                if not native_return.is_empty():
+                    _enter_locomotion_state(
+                        String(native_return["state"]),
+                        int(native_return.get("entry_frame", 0))
+                    )
+                    return
+                _enter_locomotion_state("idle")
+                return
+            _enter_locomotion_state(_verified_post_hit_return_state())
 
 
 func _try_facedown_attack_contact() -> void:
@@ -4673,12 +4761,12 @@ func receive_hit(
         # Source impactstun high/low links land at [14,17] before stun; this
         # prototype plays the matching impact reaction for 14 frames first.
         state = "impactstun"
-        state_time = float(STUN_IMPACT_ENTRY_FRAMES) / SOURCE_FRAME_RATE
+        state_time = float(_native_link_start_frame("impactstunhigh", STUN_IMPACT_ENTRY_FRAMES)) / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_group = "hit"
         last_reaction_source_action = "impactstun"
         last_reaction_animation = stun_entry_clip
-        last_reaction_exit_frame = STUN_IMPACT_ENTRY_FRAMES
+        last_reaction_exit_frame = _native_link_start_frame("impactstunhigh", STUN_IMPACT_ENTRY_FRAMES)
         last_reaction_clip_implemented = true
         _restart_candidate_action()
         return true
@@ -4858,7 +4946,7 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "attacktofloor" and _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP):
         requested = ATTACK_TO_FLOOR_CLIP
-        start_frame = ATTACK_TO_FLOOR_ENTRY_FRAME
+        start_frame = _native_entry_frame("attacktofloor", ATTACK_TO_FLOOR_ENTRY_FRAME)
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
     if requested == FACEUP_IMPACT_TO_FLOOR_CLIP:
