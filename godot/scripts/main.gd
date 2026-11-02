@@ -612,9 +612,19 @@ func _physics_process(delta: float) -> void:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         return
-    if ((move_training != null and move_training.is_active())
-            or (move_gallery != null and move_gallery.is_active())):
-        player.move_axis = Vector2.ZERO
+    if move_training != null and move_training.is_active():
+        # Training lessons such as SPECIAL HIGH KICK start from a held movement
+        # action (stepback/stepleft). Keep reading the movement axis instead of
+        # zeroing it, otherwise W/A/S/D can never enter the prerequisite state.
+        player.move_axis = Input.get_vector(
+            PrototypeControls.MOVE_LEFT, PrototypeControls.MOVE_RIGHT,
+            PrototypeControls.MOVE_UP, PrototypeControls.MOVE_DOWN, 0.2
+        )
+        computer.move_axis = Vector2.ZERO
+        _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
+        return
+    if move_gallery != null and move_gallery.is_active():
+        player.move_axis = move_gallery.current_movement_axis()
         computer.move_axis = Vector2.ZERO
         _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
         return

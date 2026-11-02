@@ -265,6 +265,19 @@ func _play_sequence_step(entry: Dictionary) -> void:
     _refresh_labels(entry, action, started)
 
 
+func current_movement_axis() -> Vector2:
+    if sequence.is_empty() or sequence_index < 0 or sequence_index >= sequence.size():
+        return Vector2.ZERO
+    var action: String = sequence[sequence_index]
+    if action == "stepback":
+        return Vector2(0.0, 1.0)
+    if action == "stepleft":
+        return Vector2(-1.0, 0.0)
+    if action == "stepright":
+        return Vector2(1.0, 0.0)
+    return Vector2.ZERO
+
+
 func _start_action(action: String) -> bool:
     if action in ["stepback", "stepleft", "stepright"]:
         player.state = "idle"
