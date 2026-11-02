@@ -34,13 +34,22 @@
 `high_punch`、事件不重复触发）、`validate_move_gallery.gd`（27 招）、
 `validate_menu_confirm_attack.gd`、`smoke_test.gd`。
 
-**训练（2026-11-02 第 8 轮）**：27 课的前置和按键改成从 `native_links.json`
-索引 1 的序列自动生成；`special_kick_high` 用 `stepback` 前置、
-`special_kick_low` 用 `stepleft` + miss→hit 自动 link。`validate_training_full`
-目前通过 1–14，15 起失败：`specialpunchlowmiss` 的 link 需要三键
-`out,right,a` 才能匹配，但同一帧里 `highpunch1` 的单键 `a` link 在全局顺序里
-更靠前，会先把 `a` 消费掉。原版是按**当前动画自己的 link 表**扫描，该表可能
-不包含低阶 link；这份表的构建/排序规则还没恢复，所以 15 起先停住，不靠自定优先级硬修。
+**训练（2026-11-02 第 9 轮）**：每动画 link 表的构建方式已定位。
+`CFighter::LoadFightingSetFromKDF` 在加载时为**每个动画**单独建表
+（`+0xf8/+0x100/+0x104/+0x108`）：遍历全部 link，只有当 link 的**目标动画名**
+出现在该动画自己声明的名字向量里（`CAnimationDescr +0x24/+0x28/+0x2c/+0x30`），
+才把 link 追加进这张表。所以 `UserControlUpdate` 扫的是**预过滤后的每动画表**，
+不是全局 396 条。
+
+- 这些声明名字由 `CAnimationDescr::ParseFromKDF` 填充，具体 KDF 字段还没定位；
+  ANM 头只有 `properties/anmobjects/anmheader/anmdata/anmstatic`，不含该列表。
+- 动画 `ordinal` 不是连招顺序（`lowpunch1=22`、`highpunch1=13`），所以“只允许
+  目标索引大于当前索引”的过滤是错的，已回退。
+
+因此 `validate_training_full` 仍通过 1–14，15 起失败：`specialpunchlowmiss`
+的三键 `out,right,a` 会被同表的单键 `highpunch1`（`a`）抢先消费，说明真正的每动画
+表里不含那条低阶 link。下一步必须先恢复 `ParseFromKDF` 里这份目标名字向量，
+再按每动画表过滤，不能再用全局顺序或自定优先级硬修。
 
 三段 `startup/active/recovery` 状态机、地面攻击和 parry 输入仍是原型实现，
 尚未换成 link 数据驱动的状态进入。

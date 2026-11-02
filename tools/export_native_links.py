@@ -30,6 +30,7 @@ def build(archive: Path) -> dict:
             "name": str(action.get("name", "")),
             "pose": action.get("pose"),
             "animation": binary.get("basename"),
+            "ordinal": binary.get("ordinal"),
             "groups": groups,
         })
     link_rows = []
