@@ -16,9 +16,12 @@
     SHA-256 `e491fbdb822a9b25b7337f930b8041349c85bd4e6a831f7a66b606aa288b4b53`
   - Brick 41 段 combat：`D:\BruceLeeWork\brick_candidate_combat_41_20261102.glb`，
     SHA-256 `51ec663be9b726c9cf4c7baee04045607a2b66d976989c2f6673c9eb0228e4a8`
+  - Brick 42 段 combat（含 grab miss）：`D:\BruceLeeWork\brick_candidate_combat_42_20261102.glb`，
+    SHA-256 `b3ba723a3de1b842ae8fd68ddcb4508924dddc833067d0e5043304aba523640e`
 - Brick 已接入：12 条高低拳脚、4 条 special（`m03_sp_kck_high/low`、
   `m03_sp_pnch_high/low`，PC 原型 rage 门控）、parry high/low 与
   `parry_high -> parry_attack` 链、`grab1/grab2`（6/20 伤害，PC 原型 rage 66）、
+  `grab1miss/2miss -> grab` 链、
   `attack_to_floor` 倒地追击（6 伤害）、grab 受害者 `grabbed1/grabbed2`
   （`all_grabbed_01/02_forset03`，分别回 `facedownidle`/`faceupidle`）、
   `endattack_brick` 收招（0 伤害）→ `endattackcomp1/2` → `faceupko`、

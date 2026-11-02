@@ -56,7 +56,7 @@ def audit(binding: dict, source: dict, target: dict, *, allow_object_track_misma
         raise KdfError('source skeleton has ambiguous node path')
     mappings, seen = [], set()
     checked_fields = set()
-    for item in binding['bindings']:
+    for source_index, item in enumerate(binding['bindings']):
         source_node = source_ids.get(item['nodeid'])
         if (source_node is None or source_node['name'] != item['node_name']
                 or source_node['type'] != item['node_type']
@@ -65,16 +65,33 @@ def audit(binding: dict, source: dict, target: dict, *, allow_object_track_misma
         path = source_paths[item['nodeid']]
         destination = target_by_path.get(path)
         if destination is None and allow_object_track_mismatch and item['node_type'] == 'object':
-            role = 'hair' if 'hair' in source_node['name'] else (
-                'body' if 'body' in source_node['name'] else None)
+            role = ('hair' if 'hair' in source_node['name'] else
+                    'body' if 'body' in source_node['name'] else
+                    'character' if source_node['name'] == 'character' else None)
             matches = [
                 (target_path, target_node)
                 for target_path, target_node in target_by_path.items()
                 if (role is not None and target_path[-1][0] == 'object'
                     and role in target_path[-1][1])
             ]
+            if role == 'body' and len(matches) > 1:
+                # Prefer the same mesh variant suffix, e.g. body_hw_kinetic.
+                marker = source_node['name'].split('_body', 1)[-1]
+                preferred = [
+                    match for match in matches
+                    if marker in match[1]['name']
+                ]
+                if len(preferred) == 1:
+                    matches = preferred
+            if role == 'hair' and not matches:
+                # Hair is a rigid attachment in the source; the target may
+                # legitimately have no hair object. Drop that track only.
+                continue
             if len(matches) != 1:
-                raise KdfError('target skeleton has ambiguous or missing object role mapping')
+                raise KdfError(
+                    'target skeleton has ambiguous or missing object role mapping: '
+                    + source_node['name'] + ' role=' + str(role)
+                    + ' matches=' + repr([item[1]['name'] for item in matches]))
             path, destination = matches[0]
         if destination is None:
             raise KdfError('target skeleton lacks matching typed path')
@@ -93,6 +110,7 @@ def audit(binding: dict, source: dict, target: dict, *, allow_object_track_misma
             raise KdfError('multiple tracks target the same node channel')
         seen.add(key)
         entry = {
+            'source_index': source_index,
             'track': item['track'], 'channel': item['target'],
             'path': [list(part) for part in path],
             'source_offset': item['offset'], 'target_offset': index,

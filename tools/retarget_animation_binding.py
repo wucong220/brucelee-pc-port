@@ -28,12 +28,17 @@ def retarget_candidate(binding: dict, source: dict, target: dict, *,
         raise KdfError('candidate source identity or target identity does not match')
     result = audit(binding, source, target, allow_object_track_mismatch=True)
     mapped = []
-    for original, identity in zip(binding['bindings'], result['mappings'], strict=True):
+    for identity in result['mappings']:
+        original = binding['bindings'][identity['source_index']]
         item = deepcopy(original)
         item['nodeid'] = identity['target_nodeid']
         item['offset'] = identity['target_offset']
         item['node_name'] = identity.get('target_node_name', original['node_name'])
         mapped.append(item)
+    public_mapping = [
+        {key: value for key, value in item.items() if key != 'source_index'}
+        for item in result['mappings']
+    ]
     return {
         'status': 'experimental-cross-skeleton-candidate',
         'mapping_status': result['status'],
@@ -44,6 +49,6 @@ def retarget_candidate(binding: dict, source: dict, target: dict, *,
         'source_skeleton_reference': expected_reference,
         'headers': deepcopy(binding['headers']),
         'bindings': mapped,
-        'mapping': result['mappings'],
+        'mapping': public_mapping,
         'semantics': 'unverified; values unchanged; no transform composition',
     }
