@@ -1,8 +1,9 @@
 extends SceneTree
-## Validate prototype framing at arena extremes; this is not original-camera evidence.
+## Validate the native CBeatEmUpCamera follow pose (not the old prototype orbit).
 
 func _initialize() -> void:
     call_deferred("_run")
+
 
 func _run() -> void:
     var scene: Node = load("res://scenes/main.tscn").instantiate()
@@ -16,125 +17,55 @@ func _run() -> void:
     opponent.set_physics_process(false)
     var camera: Camera3D = scene.get("fight_camera")
     await process_frame
-    var viewport_size: Vector2 = root.get_visible_rect().size
-    if viewport_size.x < 1.0 or viewport_size.y < 1.0:
-        push_error("Camera test has no viewport size")
-        quit(1)
-        return
+
     var cases: Array = [
         [Vector3(-0.25, 1.2, 0.0), Vector3(0.25, 1.2, 0.0)],
         [Vector3(-2.0, 1.2, 0.0), Vector3(2.0, 1.2, 0.0)],
         [Vector3(-6.8, 1.2, -3.0), Vector3(6.8, 1.2, 3.0)],
         [Vector3(6.8, 1.2, -3.0), Vector3(-6.8, 1.2, 3.0)],
-        [Vector3(6.8, 1.2, 3.0), Vector3(6.3, 1.2, 3.0)],
-        [Vector3(-6.8, 1.2, -3.0), Vector3(-6.3, 1.2, -3.0)],
     ]
-    var tested_viewports: Array[Vector2] = []
-    for window_size: Vector2i in [Vector2i(1280, 720), Vector2i(800, 600), Vector2i(480, 900)]:
-        root.size = window_size
-        root.content_scale_size = window_size
-        await process_frame
-        viewport_size = root.get_visible_rect().size
-        tested_viewports.append(viewport_size)
-        for pair: Array in cases:
-            player.global_position = pair[0]
-            opponent.global_position = pair[1]
-            scene._update_fight_camera()
-            var player_screen: Vector2 = camera.unproject_position(
-                player.global_position + Vector3(0.0, 1.2, 0.0)
-            )
-            var opponent_screen: Vector2 = camera.unproject_position(
-                opponent.global_position + Vector3(0.0, 1.2, 0.0)
-            )
-            if absf(player_screen.y - opponent_screen.y) > 2.0:
-                push_error("Fighter line is not parallel to the camera plane")
-                quit(1)
-                return
-            for fighter_position: Vector3 in pair:
-                for x_offset: float in [-0.85, 0.85]:
-                    for height: float in [0.0, 2.2]:
-                        var point: Vector3 = Vector3(
-                            fighter_position.x + x_offset, height, fighter_position.z
-                        )
-                        var projected: Vector2 = camera.unproject_position(point)
-                        if (camera.is_position_behind(point)
-                                or projected.x < viewport_size.x * 0.05
-                                or projected.x > viewport_size.x * 0.95
-                                or projected.y < viewport_size.y * 0.10
-                                or projected.y > viewport_size.y * 0.90):
-                            push_error("Fighter outside camera margin: %s -> %s, viewport %s"
-                                    % [point, projected, viewport_size])
-                            quit(1)
-                            return
-        # Move continuously through separation, depth offset and exchanged sides.
-        # Resets intentionally snap and are not included in this continuity check.
-        var endpoints: Array = [
-            [Vector3(-0.25, 1.2, 0.0), Vector3(0.25, 1.2, 0.0)],
-            [Vector3(-6.8, 1.2, -3.0), Vector3(6.8, 1.2, 3.0)],
-            [Vector3(6.8, 1.2, -3.0), Vector3(-6.8, 1.2, 3.0)],
-        ]
-        var previous_camera: Vector3 = Vector3.ZERO
-        var has_previous: bool = false
-        for segment: int in range(endpoints.size() - 1):
-            for step: int in range(241):
-                var fraction: float = float(step) / 240.0
-                player.global_position = endpoints[segment][0].lerp(
-                    endpoints[segment + 1][0], fraction
-                )
-                opponent.global_position = endpoints[segment][1].lerp(
-                    endpoints[segment + 1][1], fraction
-                )
-                scene._update_fight_camera()
-                var player_screen: Vector2 = camera.unproject_position(
-                    player.global_position + Vector3(0.0, 1.2, 0.0)
-                )
-                var opponent_screen: Vector2 = camera.unproject_position(
-                    opponent.global_position + Vector3(0.0, 1.2, 0.0)
-                )
-                if absf(player_screen.y - opponent_screen.y) > 2.0:
-                    push_error("Fighter line left the camera plane during a trajectory")
-                    quit(1)
-                    return
-                if has_previous and camera.global_position.distance_to(previous_camera) > 1.0:
-                    push_error("Camera moved discontinuously during a continuous trajectory")
-                    quit(1)
-                    return
-                previous_camera = camera.global_position
-                has_previous = true
-                for fighter_position: Vector3 in [player.global_position, opponent.global_position]:
-                    for x_offset: float in [-0.85, 0.85]:
-                        for height: float in [0.0, 2.2]:
-                            var point: Vector3 = Vector3(
-                                fighter_position.x + x_offset, height, fighter_position.z
-                            )
-                            var projected: Vector2 = camera.unproject_position(point)
-                            if (camera.is_position_behind(point)
-                                    or projected.x < viewport_size.x * 0.05
-                                    or projected.x > viewport_size.x * 0.95
-                                    or projected.y < viewport_size.y * 0.10
-                                    or projected.y > viewport_size.y * 0.90):
-                                push_error("Fighter left camera margin during trajectory")
-                                quit(1)
-                                return
-    root.size = Vector2i(1280, 720)
-    root.content_scale_size = Vector2i(1280, 720)
-    await process_frame
-    player.global_position = Vector3(-0.25, 1.2, 0.0)
-    opponent.global_position = Vector3(0.25, 1.2, 0.0)
-    scene._update_fight_camera()
-    var feet: Vector3 = Vector3(0.0, 0.0, 0.0)
-    var head: Vector3 = Vector3(0.0, 1.8, 0.0)
-    var current_height: float = camera.unproject_position(feet).distance_to(
-        camera.unproject_position(head)
-    )
-    camera.global_position = Vector3(0.0, 6.0, 12.5)
-    camera.look_at(Vector3(0.0, 1.1, 0.0), Vector3.UP)
-    var old_height: float = camera.unproject_position(feet).distance_to(
-        camera.unproject_position(head)
-    )
-    if current_height < old_height * 1.5:
-        push_error("Close-range camera did not improve character visibility")
+    for pair: Array in cases:
+        player.global_position = pair[0]
+        opponent.global_position = pair[1]
+        scene._restart_fight_camera()
+        scene._update_fight_camera(1.0 / 60.0)
+        var player_screen: Vector2 = camera.unproject_position(
+            player.global_position + Vector3(0.0, 1.2, 0.0)
+        )
+        var opponent_screen: Vector2 = camera.unproject_position(
+            opponent.global_position + Vector3(0.0, 1.2, 0.0)
+        )
+        if player_screen.x >= opponent_screen.x:
+            push_error("native camera did not keep player left: %s >= %s"
+                    % [player_screen, opponent_screen])
+            quit(1)
+            return
+        var a: Vector3 = scene._camera_fighter_point(player)
+        var b: Vector3 = scene._camera_fighter_point(opponent)
+        var pose: Dictionary = scene._native_camera_pose(a, b, scene._camera_aspect_scale())
+        var target: Vector3 = pose["target"] * scene.CAM_SOURCE_UNITS_TO_WORLD
+        if absf(camera.global_position.y - target.y) > 0.001:
+            push_error("native camera is not level with its look-at point")
+            quit(1)
+            return
+        if camera.global_position.distance_to(target) < 2.70:
+            push_error("native camera violated the 275 source-unit minimum")
+            quit(1)
+            return
+
+    # Side is a persistent match flag, not a per-frame auto-side.
+    player.global_position = Vector3(-1.0, 1.2, 0.0)
+    opponent.global_position = Vector3(1.0, 1.2, 0.0)
+    scene._cam_side = 0
+    scene._restart_fight_camera()
+    scene._update_fight_camera(1.0 / 60.0)
+    var side_zero: Vector3 = camera.global_position
+    scene._cam_side = 1
+    scene._restart_fight_camera()
+    scene._update_fight_camera(1.0 / 60.0)
+    if camera.global_position.is_equal_approx(side_zero):
+        push_error("native camera side flag did not mirror the camera")
         quit(1)
         return
-    print("FIGHT_CAMERA_VALIDATION=passed viewports=" + str(tested_viewports))
+    print("FIGHT_CAMERA_VALIDATION=passed")
     quit(0)

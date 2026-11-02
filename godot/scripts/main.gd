@@ -12,6 +12,17 @@ const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 const ROUNDS_TO_WIN: int = 2
 const ROUND_RESET_DELAY: float = 2.0
 
+# CBeatEmUpCamera::Update, native Z-up formula ported to Godot axes.
+const CAM_SOURCE_UNITS_TO_WORLD: float = (
+    PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
+)
+const CAM_UPDATE_HZ: float = 60.0
+const CAM_SMOOTH_OLD: float = 0.8
+const CAM_MIN_DISTANCE: float = 275.0
+const CAM_TARGET_HEIGHT: float = 112.0
+const CAM_ELEVATION: float = 0.0
+const CAM_SIDE: int = 0
+
 var player: PortFighter
 var computer: PortFighter
 var hud: PortHUD
@@ -19,6 +30,11 @@ var prototype_menu: PortPrototypeMenu
 var move_training
 var move_gallery
 var fight_camera: Camera3D
+var _cam_smooth_a: Vector3 = Vector3.ZERO
+var _cam_smooth_b: Vector3 = Vector3.ZERO
+var _cam_zoom: float = 0.0
+var _cam_side: int = CAM_SIDE
+var _cam_initialized: bool = false
 var combat_audio: Node
 var _candidate_audio: Dictionary = {}
 var _candidate_audio_error: Dictionary = {}
@@ -350,6 +366,7 @@ func _reset_round() -> void:
         "TRAINING · K L L / K U U" if training_mode
         else "ROUND %d · FIGHT" % round_number
     )
+    _restart_fight_camera()
     _update_fight_camera()
 
 
@@ -611,7 +628,7 @@ func _exit_tree() -> void:
 
 func _process(_delta: float) -> void:
     _update_player_key_status()
-    _update_fight_camera()
+    _update_fight_camera(_delta)
 
 
 func _update_player_key_status() -> void:
@@ -638,39 +655,60 @@ func _update_player_key_status() -> void:
     status["out"] = toward < -0.5
     player.set_key_status(status)
 
-func _update_fight_camera() -> void:
+func _camera_fighter_point(fighter: PortFighter) -> Vector3:
+    return Vector3(
+        fighter.global_position.x,
+        fighter.global_position.y - PortFighter.PLAYER_ORIGIN_HEIGHT,
+        fighter.global_position.z
+    ) / CAM_SOURCE_UNITS_TO_WORLD
+
+
+func _camera_aspect_scale() -> float:
+    var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+    if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+        return 1.0
+    var aspect: float = viewport_size.x / viewport_size.y
+    return maxf(1.0, (4.0 / 3.0) / aspect)
+
+
+func _native_camera_pose(a: Vector3, b: Vector3, aspect_scale: float) -> Dictionary:
+    var d: Vector3 = b - a
+    var length: float = d.length()
+    var midpoint: Vector3 = (a + b) * 0.5
+    var target: Vector3 = midpoint + Vector3(0.0, CAM_TARGET_HEIGHT, 0.0)
+    var u: Vector3 = d / maxf(length, 0.0001)
+    var lateral: Vector3 = Vector3(-u.z, 0.0, u.x)
+    if _cam_side != 0:
+        lateral = -lateral
+    var distance: float = maxf(length, CAM_MIN_DISTANCE) * aspect_scale
+    var position: Vector3 = target + lateral * distance
+    position.y += CAM_ELEVATION
+    return {"position": position, "target": target}
+
+
+func _restart_fight_camera() -> void:
+    _cam_smooth_a = _camera_fighter_point(player) if is_instance_valid(player) else Vector3(-100, 0, 0)
+    _cam_smooth_b = _camera_fighter_point(computer) if is_instance_valid(computer) else Vector3(100, 0, 0)
+    _cam_zoom = 0.0
+    _cam_initialized = true
+
+
+func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
     if (not is_instance_valid(fight_camera) or not is_instance_valid(player)
             or not is_instance_valid(computer)):
         return
-    var center: Vector3 = (player.global_position + computer.global_position) * 0.5
-    var x_separation: float = absf(player.global_position.x - computer.global_position.x)
-    var z_separation: float = absf(player.global_position.z - computer.global_position.z)
-    # These are prototype framing choices, not measurements of the original camera.
-    var distance: float = 7.0 + maxf(0.0, x_separation - 6.0) * 0.5 + z_separation * 0.65
-    var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-    if viewport_size.x > 0.0 and viewport_size.y > 0.0:
-        var aspect: float = viewport_size.x / viewport_size.y
-        distance *= maxf(1.0, (4.0 / 3.0) / aspect)
-    var target: Vector3 = Vector3(center.x, 1.0, center.z)
-    # Original camera keeps the fighter-to-fighter line parallel to the
-    # camera's horizontal axis: sit on the perpendicular bisector, not on a
-    # fixed world Z offset. This keeps both fighters centered and facing each
-    # other when W/S moves one of them in depth.
-    var separation: Vector3 = computer.global_position - player.global_position
-    separation.y = 0.0
-    var side: Vector3
-    if separation.length_squared() > 0.000001:
-        var axis: Vector3 = separation.normalized()
-        # Place the camera so its screen-right is player -> opponent. The
-        # player therefore stays on screen-left; the side lock below prevents
-        # either fighter from crossing and making the view flip.
-        side = Vector3(-axis.z, 0.0, axis.x)
-    else:
-        side = Vector3(0.0, 0.0, 1.0)
-    fight_camera.global_position = (
-        target + side * distance + Vector3(0.0, distance * 0.42, 0.0)
+    if not _cam_initialized:
+        _restart_fight_camera()
+    var a: Vector3 = _camera_fighter_point(player)
+    var b: Vector3 = _camera_fighter_point(computer)
+    var alpha: float = 1.0 - pow(CAM_SMOOTH_OLD, maxf(delta, 0.0) * CAM_UPDATE_HZ)
+    _cam_smooth_a = _cam_smooth_a.lerp(a, alpha)
+    _cam_smooth_b = _cam_smooth_b.lerp(b, alpha)
+    var pose: Dictionary = _native_camera_pose(
+        _cam_smooth_a, _cam_smooth_b, _camera_aspect_scale()
     )
-    fight_camera.look_at(target, Vector3.UP)
+    fight_camera.global_position = (pose["position"] as Vector3) * CAM_SOURCE_UNITS_TO_WORLD
+    fight_camera.look_at((pose["target"] as Vector3) * CAM_SOURCE_UNITS_TO_WORLD, Vector3.UP)
 
 
 
