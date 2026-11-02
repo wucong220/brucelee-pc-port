@@ -172,6 +172,19 @@ AI 在 rage 66 时会把 `grab1_brick`/`grab2_brick` 加入候选池，实际伤
 `all_end_attack_*` 受害方动画仍未接入，因为还缺完整 grab/stun 状态机和对应 clip；
 不会把它们伪装成已完成。
 
+## 40 段候选（attacktofloor）
+
+`attacktofloor` 使用原生 `m03_attack_to_floor`：61 帧，11–15 帧造成 6 伤害，
+半径 35，`lleg/low/normal/frontal`。
+
+- `D:\BruceLeeWork\brick_candidate_combat_40_20261102.glb`
+- 1,859,564 字节
+- SHA-256 `80fda99f3b668582049561b6c2fe41562c698a698c6872a01ccf241c17ff8078`
+- Godot 验证：69 骨、3 个蒙皮面、40 条动画，退出码 0
+
+AI 在玩家处于 `facedownidle`/`faceupidle` 时会选择 `attack_to_floor_brick`；
+测试验证真实选择、clip、6 伤害。目标不是倒地状态时不会选这招。
+
 ## 复现与检查
 
 ```powershell

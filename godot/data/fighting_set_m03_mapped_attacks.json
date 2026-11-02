@@ -7,7 +7,7 @@
     "fighting_set": "adreno_200/set/thai.set",
     "radiusscale_present": false,
     "evidence_report": "reports/brick_thai_low_attack_evidence.json",
-    "scope": "Rules for the 12 recovered base punch/kick clips, the four current aliases, the four recovered Brick specials, the parry high/low/attack chain, and grab1/grab2. Grab completion/endattack/knockdown and the native AI selection remain unverified; special, parry and grab selection are PC prototype choices.",
+    "scope": "Rules for the 12 recovered base punch/kick clips, the four current aliases, the four recovered Brick specials, the parry high/low/attack chain, grab1/grab2, and attacktofloor. Grab completion/endattack/knockdown and the native AI selection remain unverified; special, parry and grab selection are PC prototype choices.",
     "prototype_push_status": "UNVERIFIED",
     "missing_return_actions": [
       "facedownidle",
@@ -41,7 +41,8 @@
       "m03_parry_high": 40.0,
       "m03_parry_low": 40.0,
       "m03_grab_01": 45.0,
-      "m03_grab_02": 45.0
+      "m03_grab_02": 45.0,
+      "m03_attack_to_floor": 35.0
     }
   },
   "reaction_profiles": {
@@ -505,6 +506,23 @@
         "body_part": "larm",
         "height": "high",
         "strength": "hard",
+        "direction": "frontal"
+      }
+    },
+    "attack_to_floor_brick": {
+      "source_action": "attacktofloor",
+      "animation": "m03_attack_to_floor",
+      "animation_frame_count": 61,
+      "startup_frames": 11,
+      "active_frames": 5,
+      "recovery_frames": 45,
+      "damage": 6.0,
+      "prototype_push": 0.0,
+      "source_impact": {
+        "attack_radius": 35.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "normal",
         "direction": "frontal"
       }
     }
