@@ -5,7 +5,7 @@
 | 项目 | 判断 | 优先级 | 处理 |
 |---|---|---|---|
 | `startup/active/recovery` 状态 | 可接受并标注 | P2 | 保留 Godot 状态机；所有边界由 `animation_frame_count`、`damage_time`、link 窗口计算，不手填；命中用精确 `damage_time`；大 delta 逐阶段/逐窗口处理。`validate_time_step_invariance` 覆盖 `F(0.4)=F(0.1×4)`。文档明确这是 Godot 调度状态，不是原生状态枚举。 |
-| Root Motion raw Y 轴 | 需要更多反编译证据 | P1（原生等价性） | 原始 positions 不改；轴/符号/facing 转换隔离到 `_root_motion_delta_to_pc_world()`；每个 clip 标 `EMPIRICAL` 或 `UNVERIFIED`；不能宣称原生等价。待查链路：`gid_Positions → GetOutput → UpdateBinding → 动画采样 → 角色变换`，覆盖 X/Y、反向、左右 facing。 |
+| Root Motion raw 轴 | 轴语义已核对 | 已解决（轴） | 源 movement tracks 验证：`movefwd/stepfwd = -Y`、`moveback/stepback = +Y`、`steplft = +X`、`steprht = -X`。`_root_motion_delta_to_pc_world()` 统一用源轴；单 clip 动画映射仍标 `EMPIRICAL`/`UNVERIFIED`，不宣称每个攻击的完整原生轨迹 |
 | 世界缩放 `1.8/173.4159` | 可接受并标注 | P2 | `1.8` 是 `PC_TARGET_CHARACTER_HEIGHT`（PC/候选模型约定），`173.4159` 是 Skl source height；只保留 `source_units_to_world` 单一转换入口；原始半径/距离/root 始终 source units。 |
 | `_attack_hit_landed/_attack_connected/_multi_impact_applied` | 可接受并标注 | P2 | 三者分别表示命中落地/已接触/多段 impact 去重；每次新攻击开始清空，不能污染下一攻击；补生命周期与去重测试。`validate_hit_bookkeeping_lifecycle` 覆盖清空。 |
 

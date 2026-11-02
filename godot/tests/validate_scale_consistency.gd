@@ -33,7 +33,7 @@ func _run() -> void:
     var root_delta: Vector3 = p._root_motion_delta_to_pc_world(
         Vector3(1.0, 2.0, 0.0), "unknown_clip"
     )
-    if absf(root_delta.x - 2.0 * expected) > 0.0001 or absf(root_delta.z - 1.0 * expected) > 0.0001:
+    if absf(root_delta.x - (-2.0) * expected) > 0.0001 or absf(root_delta.z - (-1.0) * expected) > 0.0001:
         push_error("root-motion adapter uses a different scale: " + str(root_delta))
         quit(1)
         return
