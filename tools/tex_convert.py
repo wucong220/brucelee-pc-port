@@ -29,6 +29,7 @@ _PIXEL_FORMATS = {
     'r8g8b8': {'kind': 'direct', 'stride': 3, 'descriptor_marker': 0x00640000},
     'r8g8b8a8': {'kind': 'direct', 'stride': 4},
     'atc_rgb': {'kind': 'atc_rgb', 'stride': 8},
+    'atc_rgba_interpolated': {'kind': 'atc_rgba_interpolated', 'stride': 16},
 }
 
 
@@ -79,7 +80,7 @@ def _mip_dimensions(width: int, height: int, level: int) -> tuple[int, int]:
 
 def _mip_elements(width: int, height: int, level: int, pixel_format: str) -> int:
     level_width, level_height = _mip_dimensions(width, height, level)
-    if pixel_format == 'atc_rgb':
+    if pixel_format in ('atc_rgb', 'atc_rgba_interpolated'):
         return ((level_width + 3) // 4) * ((level_height + 3) // 4)
     return level_width * level_height
 
@@ -253,6 +254,53 @@ def _atc_rgb_palette(block: bytes) -> tuple[tuple[int, int, int], ...]:
     )
 
 
+def _decode_atc_rgba_interpolated(encoded: bytes, width: int, height: int) -> bytes:
+    """Decode ATC RGBA interpolated: 8-byte ATC RGB + BC3-style alpha block."""
+    blocks_wide = (width + 3) // 4
+    blocks_high = (height + 3) // 4
+    expected_bytes = blocks_wide * blocks_high * 16
+    if len(encoded) != expected_bytes:
+        raise TextureError(
+            f'ATC RGBA interpolated payload has {len(encoded)} bytes; expected {expected_bytes}'
+        )
+    output = bytearray(width * height * 4)
+    source = 0
+    for block_y in range(blocks_high):
+        for block_x in range(blocks_wide):
+            block = encoded[source:source + 16]
+            palette = _atc_rgb_palette(block[:8])
+            color_indexes = int.from_bytes(block[4:8], 'little')
+            alpha0 = block[8]
+            alpha1 = block[9]
+            alpha_bits = int.from_bytes(block[10:16], 'little')
+            if alpha0 > alpha1:
+                alphas = [alpha0, alpha1] + [
+                    ((7 - index) * alpha0 + index * alpha1) // 7
+                    for index in range(1, 7)
+                ]
+            else:
+                alphas = [alpha0, alpha1] + [
+                    ((5 - index) * alpha0 + index * alpha1) // 5
+                    for index in range(1, 5)
+                ] + [0, 255]
+            for local_y in range(4):
+                target_y = block_y * 4 + local_y
+                if target_y >= height:
+                    continue
+                for local_x in range(4):
+                    target_x = block_x * 4 + local_x
+                    if target_x >= width:
+                        continue
+                    pixel_index = local_y * 4 + local_x
+                    index = (alpha_bits >> (3 * pixel_index)) & 7
+                    alpha = alphas[index]
+                    red, green, blue = palette[(color_indexes >> (pixel_index * 2)) & 3]
+                    target = (target_y * width + target_x) * 4
+                    output[target:target + 4] = bytes((red, green, blue, alpha))
+            source += 16
+    return bytes(output)
+
+
 def _decode_atc_rgb(encoded: bytes, width: int, height: int) -> bytes:
     """Decode a standard ATC RGB base level and clip partial edge blocks."""
     blocks_wide = (width + 3) // 4
@@ -339,6 +387,9 @@ def parse_texture(raw: bytes) -> dict:
     base_payload = raw[payload_offset:base_payload_end]
     if pixel_format == 'atc_rgb':
         pixels = _decode_atc_rgb(base_payload, width, height)
+        pixel_decoding = 'block_decoded'
+    elif pixel_format == 'atc_rgba_interpolated':
+        pixels = _decode_atc_rgba_interpolated(base_payload, width, height)
         pixel_decoding = 'block_decoded'
     elif pixel_format == 'r8g8b8':
         pixels = _expand_rgb_to_rgba(base_payload)
