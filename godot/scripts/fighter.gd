@@ -3276,9 +3276,14 @@ func _native_condition_ok(condition: String) -> bool:
         "impact":
             return _attack_hit_landed
         "countertime":
-            return (opponent != null and is_instance_valid(opponent)
-                    and opponent.state in ["startup", "active"]
-                    and not String(opponent.attack_kind).is_empty())
+            # IsInCounterTime: the opponent's animation frame must be inside its
+            # animation counter window (+0xd8..+0xdc). No action record in
+            # brucelee.set or thai.set contains counter_time, so the parsed
+            # window is [0,0]; the recovered condition is the attack's first frame.
+            if opponent == null or not is_instance_valid(opponent):
+                return false
+            var counter_frame: float = opponent._current_attack_source_frame()
+            return counter_frame >= -0.01 and counter_frame <= 0.6
         _:
             # countertime and oppattack* belong to the counter/reaction links,
             # which this port does not drive yet; fail closed.

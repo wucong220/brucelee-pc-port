@@ -82,8 +82,9 @@
   条件 `countertime` + `ragethird`；`parryattack` 是从 `parryhigh` 的空序列
   自动衔接
 - `counter_time` 字段确实存在于 `CAnimationDescr`（`+0xd8/+0xdc`，KDF 键名
-  `counter_time`），但 `brucelee.set` 的动作记录里没有该字段，解析结果为 0；
-  所以 `countertime` 暂按“对手处于 startup/active 攻击阶段”实现，标为近似
+  `counter_time`），但 `brucelee.set` 和 `thai.set` 的动作记录里都没有该字段，
+  解析结果为 `[0,0]`；因此 `countertime` 的恢复实现是“对手动画帧 0”
+  （攻击起手那一帧），不再用 startup/active 的宽泛近似
 - 原生没有 `parry_low`；训练和招式目录已移除该课，现有 25 项
 
 三段 `startup/active/recovery` 状态机仍是原型实现；`heavy` 仍无原生 link。

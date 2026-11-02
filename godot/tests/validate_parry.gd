@@ -44,10 +44,11 @@ func _run() -> void:
     player.health = 9999.0
     player.rage = 100.0
     computer.health = 9999.0
-    # The opponent is mid-attack: that is the counter_time condition input.
+    # The opponent is at its attack's first frame: the recovered counter_time
+    # window is [0,0], so that single frame is the counter condition.
     computer.attack_kind = "high_punch"
-    computer.state = "active"
-    computer.state_time = 0.2
+    computer.state = "startup"
+    computer.state_time = float(computer.ATTACKS["high_punch"]["startup"])
     player.record_standing_combo_press("down")
     player.record_standing_combo_press("right")
     checks["parry"] = player.attack_kind
