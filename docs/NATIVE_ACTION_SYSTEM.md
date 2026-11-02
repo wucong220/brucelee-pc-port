@@ -34,22 +34,26 @@
 `high_punch`、事件不重复触发）、`validate_move_gallery.gd`（27 招）、
 `validate_menu_confirm_attack.gd`、`smoke_test.gd`。
 
-**训练（2026-11-02 第 9 轮）**：每动画 link 表的构建方式已定位。
-`CFighter::LoadFightingSetFromKDF` 在加载时为**每个动画**单独建表
-（`+0xf8/+0x100/+0x104/+0x108`）：遍历全部 link，只有当 link 的**目标动画名**
-出现在该动画自己声明的名字向量里（`CAnimationDescr +0x24/+0x28/+0x2c/+0x30`），
-才把 link 追加进这张表。所以 `UserControlUpdate` 扫的是**预过滤后的每动画表**，
-不是全局 396 条。
+**训练（2026-11-02 第 13 轮）：26 课全部通过**
+`CFighter::LoadFightingSetFromKDF` 为每个动画单独建表
+（`+0xf8/+0x100/+0x104/+0x108`）：遍历全部 link，把 link 的 `from_group`
+与动画自己的**组名向量**比对，命中的追加进这张表。该向量由
+`CAnimationDescr::ParseFromKDF` 从 KDF 的 **`groups`** 字段填充
+（Ghidra 里 `DAT_0023e660 + 0x23e200` 解析出的字符串就是 `groups`）。
+因此每动画表 = “当前动画拥有的各组名下、按全局顺序的 link”，与移植里的
+`_native_link_applies` 组过滤等价；不存在额外的隐藏白名单。
 
-- 这些声明名字由 `CAnimationDescr::ParseFromKDF` 填充，具体 KDF 字段还没定位；
-  ANM 头只有 `properties/anmobjects/anmheader/anmdata/anmstatic`，不含该列表。
-- 动画 `ordinal` 不是连招顺序（`lowpunch1=22`、`highpunch1=13`），所以“只允许
-  目标索引大于当前索引”的过滤是错的，已回退。
+之前 15 课失败不是 link 表问题，而是**前置选错**：
+- `highpunch3` 的 `combolevel3=[0,85]` 与 `candobasicattacks=[21,85]` 重叠，
+  单键 `highpunch1` 的 `a` 会合法抢先
+- `highpunch2` 的 `combolevel3=[14,31]` 与 `candobasicattacks=[32,81]` **不重叠**，
+  在 14–31 帧里只有 miss link 可用
+把 `special_punch_low/high` 的前置改成 `high_punch2` 后，15、16 通过；
+`grab1/grab2` 用 `stepright`/`stepleft` 前置也通过。26 课现在全部 PASS。
 
-因此 `validate_training_full` 仍通过 1–14，15 起失败：`specialpunchlowmiss`
-的三键 `out,right,a` 会被同表的单键 `highpunch1`（`a`）抢先消费，说明真正的每动画
-表里不含那条低阶 link。下一步必须先恢复 `ParseFromKDF` 里这份目标名字向量，
-再按每动画表过滤，不能再用全局顺序或自定优先级硬修。
+`heavy` 没有原生 link，已从训练与招式欣赏目录移除（26 项），自由对战里仍是
+回退攻击，等找到原生入口再处理。动画 `ordinal` 不是连招顺序
+（`lowpunch1=22`、`highpunch1=13`），不能用它做过滤。
 
 **attacktofloor 输入已改成原生 link（第 10 轮）**
 - 删除了 `try_attack_to_floor_press`、`AttackToFloorInputResult`、

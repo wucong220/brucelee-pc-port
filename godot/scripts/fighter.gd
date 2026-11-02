@@ -3155,6 +3155,15 @@ func source_state_time_for_target(source_kind: String, target_action: String) ->
         var target_source: String = str(ATTACKS[target_action].get("source_action", ""))
         if not target_source.is_empty():
             target_native = target_source
+    # If the target is reached from another action (for example a miss action
+    # followed by an automatic hit link), prime at the entry link instead.
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != target_native:
+            continue
+        var entry_source: String = _link_text(link, "from")
+        if not entry_source.is_empty() and not kind_for_action(entry_source).is_empty():
+            target_native = entry_source
+        break
     var frame_count: float = float(ATTACKS[source_kind]["animation_frame_count"])
     for link: Dictionary in _native_links:
         if _link_text(link, "to") != target_native:
@@ -3190,11 +3199,10 @@ func link_requirements_for_target(target_kind: String) -> Dictionary:
     for link: Dictionary in _native_links:
         if _link_text(link, "to") != native_target:
             continue
-        for step: Variant in Array(link.get("status", [])):
-            for pair_value: Variant in Array(step):
-                var pair: Array = pair_value
-                if pair.size() >= 2:
-                    result[str(pair[0])] = str(pair[1]) == "pressed"
+        for pair_value: Variant in Array(link.get("status", [])):
+            var pair: Array = pair_value
+            if pair.size() >= 2:
+                result[str(pair[0])] = str(pair[1]) == "pressed"
         return result
     return result
 

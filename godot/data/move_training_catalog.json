@@ -160,7 +160,7 @@
    "label": "SPECIAL LOW PUNCH",
    "group": "SPECIAL",
    "input": "DOWN+J, OUT+J, OUT+J",
-   "setup": "source_high_punch3",
+   "setup": "source_high_punch2",
    "actions": [
     "special_punch_low_hit"
    ],
@@ -171,7 +171,7 @@
    "label": "SPECIAL HIGH PUNCH",
    "group": "SPECIAL",
    "input": "UP+J three times",
-   "setup": "source_high_punch3",
+   "setup": "source_high_punch2",
    "actions": [
     "special_punch_high_hit"
    ],
@@ -214,8 +214,8 @@
    "id": "grab1",
    "label": "GRAB 1",
    "group": "GRAB",
-   "input": "LEFT+J, J, J after punch",
-   "setup": "source_punch",
+   "input": "D (step right) + J",
+   "setup": "stepright",
    "actions": [
     "grab1"
    ],
@@ -225,8 +225,8 @@
    "id": "grab2",
    "label": "GRAB 2",
    "group": "GRAB",
-   "input": "LEFT+K, L, L after kick",
-   "setup": "source_kick",
+   "input": "A (step left) + L",
+   "setup": "stepleft",
    "actions": [
     "grab2"
    ],
@@ -284,17 +284,6 @@
    "setup": "player_faceup",
    "actions": [
     "faceupattack"
-   ],
-   "success": "hit"
-  },
-  {
-   "id": "heavy",
-   "label": "HEAVY KICK",
-   "group": "BASIC",
-   "input": "L",
-   "setup": "idle",
-   "actions": [
-    "heavy"
    ],
    "success": "hit"
   }

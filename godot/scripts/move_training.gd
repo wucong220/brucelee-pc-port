@@ -283,9 +283,14 @@ func _prepare_current() -> void:
         player.move_axis = Vector2(0.0, 1.0)
         player._animate_candidate()
     elif setup == "stepleft":
-        # specialkicklowmiss is a direct link from the stepleft movement action.
+        # specialkicklowmiss / grab2miss are direct links from stepleft.
         player.state = "idle"
         player.move_axis = Vector2(-1.0, 0.0)
+        player._animate_candidate()
+    elif setup == "stepright":
+        # grab1miss is a direct link from stepright.
+        player.state = "idle"
+        player.move_axis = Vector2(1.0, 0.0)
         player._animate_candidate()
     elif setup == "parry_high":
         _begin_dummy_attack("high_punch")
@@ -324,6 +329,8 @@ func _setup_explanation(setup: String) -> String:
         return "HOLD S TO STEP BACK"
     if setup == "stepleft":
         return "HOLD A TO STEP LEFT"
+    if setup == "stepright":
+        return "HOLD D TO STEP RIGHT"
     if setup == "target_down":
         return "TARGET ALREADY DOWN"
     if setup == "player_down":
