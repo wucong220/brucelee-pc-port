@@ -32,5 +32,10 @@ BRUCE_VICTIM_CANDIDATE_VALIDATION={"animations":63,"victim_clips":[
 animation accessor、bufferView 和二进制数据，按节点名称重映射 channel，不重建
 网格、材质或 skin。工具已有 Python 回归测试。
 
-该候选仍只保存在仓库外，不进入 Git。下一步才实现 Bruce 的 grabbed 状态和
-Brick 的 grabcompl/endattack 状态机，不能仅凭候选加载成功就声称行为已完成。
+该候选仍只保存在仓库外，不进入 Git。
+
+运行时已接入受击侧 `grabbed1`/`grabbed2`：Brick `grab1_brick`/`grab2_brick`
+命中后，玩家播放 `all_grabbed_01/02_forset03`，按档案分别回到 `facedownidle`
+和 `faceupidle`。`validate_brick_grab_victim.gd` 用真实物理帧验证了状态进入、
+返回、以及 6/20 伤害。`endattack`/grabcompl 攻击方链仍未接入；不能因为受击
+状态完成就声称完整 grabcompl/endattack 已完成。
