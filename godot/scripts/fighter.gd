@@ -4251,15 +4251,16 @@ func _native_movement_action() -> String:
     # net movement vector so holding A (stepback) survives pressing D + L.
     if not held_directions.is_empty():
         # Native link status: left=stepback, right=stepfwd, in/up=stepright,
-        # out/down=stepleft. A/D are radial, W/S angular.
+        # out/down=stepleft. Vertical setup keys take priority when a second
+        # direction is pressed for a special command (S + D, W + A, ...).
+        if bool(held_directions.get("down", false)):
+            return "stepleft"
+        if bool(held_directions.get("up", false)):
+            return "stepright"
         if bool(held_directions.get("left", false)):
             return "stepback"
         if bool(held_directions.get("right", false)):
             return "stepfwd"
-        if bool(held_directions.get("up", false)):
-            return "stepright"
-        if bool(held_directions.get("down", false)):
-            return "stepleft"
     var x: float = move_axis.x
     var y: float = move_axis.y
     if absf(x) <= 0.001 and absf(y) <= 0.001:
