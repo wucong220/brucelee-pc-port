@@ -447,7 +447,6 @@ func _build_original_far_scene() -> void:
             _procedural_floor.visible = false
         for line: MeshInstance3D in _procedural_arena_lines:
             line.visible = false
-        _apply_original_sky()
 
 
 func _apply_original_sky() -> void:
