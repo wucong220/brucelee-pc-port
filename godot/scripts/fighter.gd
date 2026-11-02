@@ -3257,6 +3257,8 @@ func _try_begin_pending_standing_combo() -> bool:
     if not supports_attack(_standing_combo_pending_attack):
         _clear_standing_combo_state()
         return false
+    if special_cost > 0.0:
+        rage = maxf(0.0, rage - special_cost)
     if not window_ready and not endattack_window_override:
         if _queued_attacks.is_empty():
             _clear_standing_combo_state()
@@ -3268,8 +3270,6 @@ func _try_begin_pending_standing_combo() -> bool:
         _clear_standing_combo_state()
         return true
     var next_attack: String = _standing_combo_pending_attack
-    if special_cost > 0.0:
-        rage = maxf(0.0, rage - special_cost)
     if not _queued_attacks.is_empty():
         # The intermediate attack keys were queued as real attacks. Put the
         # combo target after them so every press produces a visible attack and
