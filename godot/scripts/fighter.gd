@@ -3501,10 +3501,7 @@ func _advance_timed_states(delta: float) -> void:
     if state in ["endattackcomp1", "endattackcomp2"]:
         state_time -= delta
         if state_time <= 0.000001:
-            state = "faceupko"
-            state_time = 0.0
-            attack_kind = ""
-            _restart_candidate_action()
+            _begin_faceup_ko(0.0)
         return
     if state == "impactstun":
         _advance_impactstun_state(delta)

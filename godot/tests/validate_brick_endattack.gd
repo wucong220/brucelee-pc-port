@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 ## Verify the 0-damage Brick endattack is a finisher: it consumes the grabbed
 ## victim and plays the matching endattackcomp clip, ending in faceupko.
 
@@ -35,6 +35,8 @@ func _run() -> void:
         push_error("Candidate load failed")
         quit(1)
         return
+    var ko_seen: Array[int] = [0]
+    player.combat_ko.connect(func(_fighter): ko_seen[0] += 1)
     for grab: String in CASES:
         scene._reset_match()
         player.position = Vector3(0.0, 1.2, 0.0)
@@ -81,6 +83,15 @@ func _run() -> void:
             return
         if player.state != "faceupko":
             push_error("Endattack victim did not end in faceupko: " + player.state)
+            quit(1)
+            return
+        var expected_ko: int = 1 if grab == "grab1_brick" else 2
+        if ko_seen[0] != expected_ko:
+            push_error("Endattack did not emit combat_ko: " + str(ko_seen[0]))
+            quit(1)
+            return
+        if int(scene.get("computer_rounds")) != 1:
+            push_error("Endattack KO did not reach round scoring")
             quit(1)
             return
     print("BRICK_ENDATTACK_VALIDATION=" + JSON.stringify({
