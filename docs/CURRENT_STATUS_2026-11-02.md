@@ -15,8 +15,9 @@
 - Brick 已接入：12 条高低拳脚、4 条 special（`m03_sp_kck_high/low`、
   `m03_sp_pnch_high/low`，PC 原型 rage 门控）、parry high/low 与
   `parry_high -> parry_attack` 链、`grab1/grab2`（6/20 伤害，PC 原型 rage 66）、
-  `attack_to_floor` 倒地追击（6 伤害）、方向移动/step、高/低/中格挡、
-  轻/硬受击、高 KO、faceupko、扩展 AI 招式池。
+  `attack_to_floor` 倒地追击（6 伤害）、grab 受害者 `grabbed1/grabbed2`
+  （`all_grabbed_01/02_forset03`，分别回 `facedownidle`/`faceupidle`）、
+  方向移动/step、高/低/中格挡、轻/硬受击、高 KO、faceupko、扩展 AI 招式池。
 - 对局已接入：三局两胜、2 秒回合重置、HUD 回合比分、R 重开整场、训练不计分。
 - 仍未接入：Brick grabcompl/endattack、knockdown、原版选角/关卡/存档、
   逐帧录像与 GPU 视觉对照。

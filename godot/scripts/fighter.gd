@@ -41,6 +41,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "grab2": "m01_grab_02",
     "grab1_miss": "m02_grab_01",
     "grab2_miss": "m02_grab_01",
+    "grabbed1": "all_grabbed_01_forset03",
+    "grabbed2": "all_grabbed_02_forset03",
     "endattack1": "m01_end_attack_01",
     "endattack2": "m01_end_attack_02",
     "stun": "all_stunned",
@@ -278,6 +280,11 @@ const STUN_FALL_DURATION_FRAMES: int = 71
 const STUN_IMPACT_ENTRY_FRAMES: int = 14
 const GRAB_ATTACKS: Dictionary = {
     "grab1": true, "grab2": true, "grab1_brick": true, "grab2_brick": true,
+}
+# Victim state after a Brick grab hit; source grabcompl1/2 -> facedown/faceup.
+const GRAB_VICTIM_DATA: Dictionary = {
+    "grab1_brick": ["grabbed1", 90, "facedownidle"],
+    "grab2_brick": ["grabbed2", 78, "faceupidle"],
 }
 const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
 const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
@@ -2059,7 +2066,7 @@ func _try_load_candidate_visual() -> void:
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
             "special_punch_high_miss", "special_punch_high_hit",
-            "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
+            "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2",
             "endattack1", "endattack2", "stun", "stun_fall",
             "stun_hard", "stun_brutal", "heavy",
             "move", "moveleft", "moveright", "stepfwd", "stepback",
@@ -3246,7 +3253,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "grab1_brick", "grab2_brick", "attack_to_floor_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "endattack1", "endattack2":
+        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "grab1_brick", "grab2_brick", "attack_to_floor_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -3456,6 +3463,14 @@ func _physics_process(delta: float) -> void:
     _animate_candidate()
 
 func _advance_timed_states(delta: float) -> void:
+    if state in ["grabbed1", "grabbed2"]:
+        state_time -= delta
+        if state_time <= 0.000001:
+            state = "facedownidle" if state == "grabbed1" else "faceupidle"
+            state_time = 0.0
+            attack_kind = ""
+            _restart_candidate_action()
+        return
     if state == "impactstun":
         _advance_impactstun_state(delta)
         return
@@ -3610,6 +3625,11 @@ func _advance_state() -> void:
         "active":
             state = "recovery"
             state_time = float(ATTACKS[attack_kind]["recovery"])
+        "grabbed1", "grabbed2":
+            state = "facedownidle" if state == "grabbed1" else "faceupidle"
+            state_time = 0.0
+            attack_kind = ""
+            _restart_candidate_action()
         "recovery", "hitstun", "blockstun":
             var next_state: String = "idle"
             if state == "recovery" and attack_kind == "special_punch_high_miss":
@@ -3696,6 +3716,21 @@ func _register_landed_hit(damage: float, blocked: bool) -> void:
         rage = minf(RAGE_MAX, rage + RAGE_GAIN_PER_HIT)
 
 
+func begin_grabbed(kind: String) -> bool:
+    var data: Array = GRAB_VICTIM_DATA.get(kind, [])
+    if data.is_empty():
+        return false
+    var clip_key: String = String(data[0])
+    if not _candidate_clip_paths.has(clip_key):
+        return false
+    state = clip_key
+    state_time = float(data[1]) / SOURCE_FRAME_RATE
+    attack_kind = ""
+    _attack_connected = false
+    _restart_candidate_action()
+    return true
+
+
 func _try_attack_contact() -> void:
     if (opponent == null or not is_instance_valid(opponent)
             or opponent.state in ["ko", "facedownko"]):
@@ -3752,6 +3787,8 @@ func _try_attack_contact() -> void:
     _attack_connected = true
     _register_landed_hit(damage, blocked)
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
+    if not blocked and opponent.health > 0.0 and GRAB_VICTIM_DATA.has(attack_kind):
+        opponent.begin_grabbed(attack_kind)
 
 
 func current_source_animation() -> String:
@@ -4463,9 +4500,11 @@ func _animate_candidate() -> void:
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",
                 "special_punch_high_miss", "special_punch_high_hit",
-                "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss",
+                "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2",
                 "endattack1", "endattack2"]:
             requested = attack_kind
+    elif state in ["grabbed1", "grabbed2"] and _candidate_clip_paths.has(state):
+        requested = state
     elif state in ["stun", "stun2"] and _candidate_clip_paths.has("stun"):
         requested = "stun"
     elif state == "stunfall" and _candidate_clip_paths.has("stun_fall"):
