@@ -96,6 +96,12 @@ endattack1=150、grab2=90、specialpunchlowhit=120），条件按
 `facing` 窗口到 `native_links.json`；`_facing_window_ok()` 只在当前动作的
 `facing` 帧区间内允许转身（grab1 `[0,1]`，endattack1 的 `[1,0]` 视为锁定）。
 
+**第 21 轮补充**：删除了自创的 `_try_special_chain`、
+`SPECIAL_CHAIN_WINDOW/MISSES` 和 `special_punch_low_miss` 提前收招帧。
+miss→hit（special/grab）与 parry→parryattack 都由原生空序列 link 完成；
+link 路径也不再按 `SPECIAL_RAGE_COSTS` 扣怒气（原生只有 `ragethird`/`rage2thirds`
+门槛，没有按 link 收费的字段）。训练 25 课与招架测试仍全过。
+
 **三段相位的帧边界已核对（第 18 轮）**
 `startup/active/recovery` 不是凭空编的时长：每一招来自 `brucelee.set` 的
 `attack.impacts[].damage_time` 和动画总帧数。以 `lowpunch1` 为例，

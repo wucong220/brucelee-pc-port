@@ -264,28 +264,6 @@ const SPECIAL_RAGE_COSTS: Dictionary = {
     "grab1_brick": 66.0,
     "grab2_brick": 66.0,
 }
-const SPECIAL_CHAIN_MISSES: Dictionary = {
-    "special_kick_low_miss": "special_kick_low_hit",
-    "special_punch_low_miss": "special_punch_low_hit",
-    "special_punch_high_miss": "special_punch_high_hit",
-    "parry_high": "parry_attack",
-    "grab1_miss": "grab1",
-    "grab2_miss": "grab2",
-    "grab1_miss_brick": "grab1_brick",
-    "grab2_miss_brick": "grab2_brick",
-}
-const SPECIAL_CHAIN_WINDOW: Dictionary = {
-    "special_kick_low_miss": [14, 16],
-    "special_punch_low_miss": [8, 9],
-    "special_punch_high_miss": [6, 7],
-    "grab1_miss": [8, 9],
-    "grab2_miss": [8, 9],
-    "grab1_miss_brick": [10, 11],
-    "grab2_miss_brick": [10, 11],
-}
-# Recovered miss_return is [22,25]; choose its first frame as the PC
-# candidate exit while retaining the 33-frame source animation metadata.
-const SPECIAL_PUNCH_LOW_MISS_RETURN_FRAME: float = 22.0
 const PROTOTYPE_GRAB_DISTANCE: float = 0.7
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
@@ -3383,11 +3361,8 @@ func _try_follow_links() -> bool:
             return true
         if not ATTACKS.has(target):
             continue
-        var cost: float = float(SPECIAL_RAGE_COSTS.get(target, 0.0))
-        if cost > 0.0 and rage < cost:
-            continue
-        if cost > 0.0:
-            rage = maxf(0.0, rage - cost)
+        # The native link conditions (ragethird / rage2thirds) gate on the
+        # meter; the set has no per-link rage cost field, so do not spend here.
         _consume_link_events(link)
         if consume_all:
             _clear_link_events()
@@ -3578,8 +3553,7 @@ func _physics_process(delta: float) -> void:
     if (state == "active" and ATTACKS.has(attack_kind)
             and not NON_CONTACT_ATTACKS.has(attack_kind)
             and Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty()
-            and not _attack_connected
-            and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
+            and not _attack_connected):
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
     if _uses_standing_idle_rules() and not guard_held:
@@ -3636,9 +3610,8 @@ func _advance_timed_states(delta: float) -> void:
             if not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty():
                 _try_multi_impact_contacts()
             elif (not _attack_connected
-                    and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
+                    ):
                 _try_attack_contact()
-        _try_special_chain()
         if (state == "active"
                 and ATTACKS.has(attack_kind)
                 and not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty()
@@ -3651,18 +3624,6 @@ func _advance_timed_states(delta: float) -> void:
             state_time -= multi_frame_step
             _apply_attack_root_motion()
             continue
-        if state == "recovery" and attack_kind == "special_punch_low_miss":
-            var return_state_time: float = maxf(
-                (float(ATTACKS[attack_kind]["animation_frame_count"])
-                    - SPECIAL_PUNCH_LOW_MISS_RETURN_FRAME) / SOURCE_FRAME_RATE,
-                0.0
-            )
-            if state_time - remaining <= return_state_time + 0.000001:
-                remaining -= maxf(state_time - return_state_time, 0.0)
-                state_time = return_state_time
-                _apply_attack_root_motion()
-                _advance_state()
-                return
         if remaining < state_time:
             state_time -= remaining
             _apply_attack_root_motion()
@@ -3709,41 +3670,6 @@ func _try_multi_impact_contacts() -> void:
         _attack_connected = true
         _register_landed_hit(damage, blocked)
         combat_hit.emit(self, opponent, attack_kind, damage, blocked)
-
-
-func _try_special_chain() -> void:
-    if attack_kind in ["parry_high", "parry_high_brick"]:
-        var parry_frame: float = _current_attack_source_frame()
-        if parry_frame + 0.0001 < 9.0 or parry_frame > 10.0001:
-            return
-        if (opponent == null or not is_instance_valid(opponent)
-                or opponent.state not in ["startup", "active"]):
-            return
-        var distance: float = Vector2(
-            opponent.global_position.x - global_position.x,
-            opponent.global_position.z - global_position.z).length()
-        var reach: float = opponent.attack_reach_world(opponent.attack_kind, self)
-        if reach <= 0.0 or distance > reach:
-            return
-        _begin_chained_attack("parry_attack" if attack_kind == "parry_high"
-                else "parry_attack_brick")
-        return
-    if not SPECIAL_CHAIN_MISSES.has(attack_kind):
-        return
-    var window: Array = SPECIAL_CHAIN_WINDOW[attack_kind]
-    var frame: float = _current_attack_source_frame()
-    if frame + 0.0001 < float(window[0]) or frame > float(window[1]) + 0.0001:
-        return
-    if (opponent == null or not is_instance_valid(opponent)
-            or opponent.guard_held
-            or opponent.state not in ["idle", "idle2", "idle3"]):
-        return
-    var distance: float = Vector2(
-        opponent.global_position.x - global_position.x,
-        opponent.global_position.z - global_position.z).length()
-    if distance > PROTOTYPE_GRAB_DISTANCE:
-        return
-    _begin_chained_attack(String(SPECIAL_CHAIN_MISSES[attack_kind]))
 
 
 func _begin_chained_attack(kind: String) -> void:
