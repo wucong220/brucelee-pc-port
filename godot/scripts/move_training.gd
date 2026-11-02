@@ -181,7 +181,7 @@ func handle_input_event(event: InputEvent) -> bool:
         if event.is_action_pressed(PrototypeControls.RESTART):
             _prepare_current()
             return true
-        if event.is_action_pressed(PrototypeControls.MENU_CANCEL) or event.is_action_pressed(PrototypeControls.PAUSE):
+        if event.is_action_pressed(PrototypeControls.PAUSE):
             close()
             exit_requested.emit()
             return true
@@ -328,7 +328,9 @@ func _process(delta: float) -> void:
             var setup: String = String(entry.get("setup", ""))
             if setup == "parry_high" or setup == "parry_low" or setup == "parry_attack":
                 computer.state = "idle"
-                _begin_dummy_attack("high_punch" if setup == "parry_high" else "low_kick")
+                _begin_dummy_attack(
+                    "high_punch" if setup in ["parry_high", "parry_attack"] else "low_kick"
+                )
 
 
 func _advance() -> void:

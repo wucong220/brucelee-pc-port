@@ -1,6 +1,8 @@
 extends SceneTree
 ## Exercise the move-training catalog, start selector, lock and success path.
 
+const PrototypeControls = preload("res://scripts/prototype_controls.gd")
+
 func _initialize() -> void:
     call_deferred("_run")
 
@@ -55,6 +57,13 @@ func _run() -> void:
     training._start_at(0)
     if training.state != "active" or training.current_index != 0:
         push_error("Move training did not start at the chosen lesson")
+        quit(1)
+        return
+    var attack_d: InputEventAction = InputEventAction.new()
+    attack_d.action = PrototypeControls.ATTACK_D
+    attack_d.pressed = true
+    if training.handle_input_event(attack_d):
+        push_error("Training consumed the B/U attack key as a menu cancel")
         quit(1)
         return
     player.position = Vector3(0.0, 1.2, 0.0)
