@@ -317,8 +317,63 @@ func _scene_variant() -> String:
     return OS.get_environment("BRUCELEE_SCENE").to_lower()
 
 
+func _build_near_manifest(scene_root: String) -> void:
+    var base: String = OS.get_executable_path().get_base_dir().path_join(scene_root)
+    var manifest_path: String = base.path_join("near_manifest.json")
+    if not FileAccess.file_exists(manifest_path):
+        return
+    var file: FileAccess = FileAccess.open(manifest_path, FileAccess.READ)
+    if file == null:
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Array:
+        return
+    var material: StandardMaterial3D = StandardMaterial3D.new()
+    material.albedo_color = Color(0.42, 0.38, 0.30, 1.0)
+    material.roughness = 0.9
+    var root: Node3D = Node3D.new()
+    root.name = "OriginalSceneProps"
+    var scale_value: float = PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
+    for entry_value: Variant in parsed:
+        if not entry_value is Dictionary:
+            continue
+        var entry: Dictionary = entry_value
+        var glb_path: String = base.path_join(String(entry.get("file", "")))
+        if not FileAccess.file_exists(glb_path):
+            continue
+        var document: GLTFDocument = GLTFDocument.new()
+        var state: GLTFState = GLTFState.new()
+        if document.append_from_file(glb_path, state) != OK:
+            continue
+        var instance: Node3D = document.generate_scene(state)
+        if instance == null:
+            continue
+        var pos: Array = entry.get("position", [0.0, 0.0, 0.0])
+        instance.position = Vector3(float(pos[0]), float(pos[2]), -float(pos[1])) * scale_value
+        instance.scale = Vector3.ONE * scale_value
+        var entry_material: StandardMaterial3D = material
+        var texture_name: String = String(entry.get("texture", ""))
+        if not texture_name.is_empty():
+            var texture_path: String = base.path_join(texture_name)
+            if FileAccess.file_exists(texture_path):
+                var image: Image = Image.new()
+                if image.load(texture_path) == OK:
+                    entry_material = StandardMaterial3D.new()
+                    entry_material.albedo_texture = ImageTexture.create_from_image(image)
+                    entry_material.albedo_color = Color.WHITE
+                    entry_material.roughness = 0.9
+        for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
+            (mesh_node as MeshInstance3D).material_override = entry_material
+        root.add_child(instance)
+    if root.get_child_count() > 0:
+        add_child(root)
+
+
 func _build_original_scene_props() -> void:
-    if _scene_variant() in ["halla", "templeyardb"]:
+    if _scene_variant() == "halla":
+        return
+    if _scene_variant() == "templeyardb":
+        _build_near_manifest("scene/templeyardb/near")
         return
     var base: String = OS.get_executable_path().get_base_dir().path_join("scene")
     if not DirAccess.dir_exists_absolute(base):
