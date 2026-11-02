@@ -7,7 +7,7 @@
 | B1 | `prototype_push` | 已删除 | 从两份攻击 JSON 和解析器移除；命中推位移只用反应 root 数据。提交 `8ce9323` |
 | B2 | 候选混合常量 | 已删除 | attacktofloor/facedown 混合帧改读 link `blending`（6/10/6）。提交 `2e25df0`、`33ccf2d` |
 | B3 | 残余反应/入口 fallback 数字 | 已清理 | `_native_link_start_frame(..., N)`、`_native_entry_frame(..., N)` 的 N 全部改为 0（数据缺失即 fail closed）；`tests/test_native_link_frame_coverage.py` 校验每个调用都有对应 link |
-| B4 | `startup/active/recovery` 相位枚举 | 保留（结构） | 帧边界全部由 `animation_frame_count`/`damage_time`/link 窗口数据驱动；但状态标签和 `state_time` 计时骨架仍是移植写法。彻底改成纯动画帧需要重写大量测试和调用，暂列为结构近似 |
+| B4 | `startup/active/recovery` 相位枚举 | 保留（结构） | 帧边界全部由 `animation_frame_count`/`damage_time`/link 窗口数据驱动；但状态标签和 `state_time` 计时骨架仍是移植写法。第 5/6 轮尝试把 attack advance 改成绝对帧时钟，`smoke_test` 的 blockstun 反应出现重复接触/退回 hitstun，已两度回退；需同时重构 contact 触发边界，暂列为结构近似 |
 | B5 | `_attack_hit_landed/_attack_connected/_multi_impact_applied` | 保留（簿记） | 语义对应原生 impact 帧/已接触/已应用状态；变量名与布尔结构与原生字段不同，属移植层簿记 |
 | B6 | 根位移轴语义 | 保留（UNVERIFIED） | 符号取 positions 首个非零 Y；`reports/attack_root_motion_inventory.json` 明确 `positions_axis_semantics=UNVERIFIED`；统一 -Y 映射实测被 `m01_sp_kick_low`(+X/+Y) 打破，已回退 |
 | B7 | 世界缩放 `1.8/173.4159` | 保留（候选） | `source_height=173.415954589844` 来自 Skl 数据；`world_height=1.8` 是 PC 坐标约定，不是原版场景缩放 |
