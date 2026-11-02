@@ -18,6 +18,11 @@
   `animation reference or skeleton SHA-256 does not match expectation`.
   The correct source skeleton reference for `all_sp_pnch_low_forset04` is still
   unidentified.
+- Also tried `BL_Ken_Goodall_01_High.Skl` (`9FC87D19…722B`): same
+  `animation reference or skeleton SHA-256` rejection.
+- Also tried `bl_brucelee_01_High.Skl` (`4A6D4532…2E3`): converter rejects
+  `candidate source identity or target identity does not match`.
+  No successful retarget; no Brick brutal clip was merged.
 
 ## `m02_movefwd`
 
