@@ -17,3 +17,11 @@
 - B1/B2/B3 是实际代码删除，测试已覆盖。
 - B4/B5/B7 没有更多原生数据前只能保留并明确标注，不能假装“已还原”。
 - B6 已做实验证伪统一映射；需要 native root transform 的轴变换证据才能继续。
+
+
+## 2026-11-02 追加验证
+
+- `BRUCE_GRAB_ENDATTACK_VALIDATION={"grab_state":"grabbed1","endattack_state":"endattackcomp1"}`：
+  在 63 段 Bruce 与 46 段 Brick 受害者候选上，Bruce `grab1 -> grabbed1 -> endattack1 -> endattackcomp1` 已实测通过。
+- `validate_brick_grab_victim`、`validate_move_gallery`、`validate_training_full`、`validate_move_training` 均通过。
+- B4 相位枚举的两次帧时钟尝试仍分别被 `smoke_test` 的 blockstun 接触和 large-delta 窗口测试拦下，已回退；当前不把失败实现留在仓库。
