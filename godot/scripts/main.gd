@@ -249,6 +249,10 @@ func _run_export_self_test() -> void:
             get_node_or_null("OriginalSceneProps").get_child_count()
             if get_node_or_null("OriginalSceneProps") != null else 0
         ),
+        "far_scene_prop_count": (
+            get_node_or_null("OriginalFarScene").get_child_count()
+            if get_node_or_null("OriginalFarScene") != null else 0
+        ),
         "opponent_candidate_loaded": computer.candidate_loaded,
         "opponent_idle_clip": opponent_idle_clip,
         "opponent_textures_loaded": computer.candidate_textures_loaded,
@@ -282,6 +286,7 @@ func _build_environment() -> void:
     _make_arena_line(-PortFighter.ARENA_HALF_X)
     _make_arena_line(PortFighter.ARENA_HALF_X)
     _build_original_scene_props()
+    _build_original_far_scene()
 
 
 func _build_original_scene_props() -> void:
@@ -356,6 +361,47 @@ func _make_arena_line(x: float) -> void:
     material.albedo_color = Color(0.9, 0.72, 0.42)
     visual.material_override = material
     add_child(visual)
+
+func _build_original_far_scene() -> void:
+    var base: String = OS.get_executable_path().get_base_dir().path_join("scene/far")
+    var manifest_path: String = base.path_join("far_manifest.json")
+    if not FileAccess.file_exists(manifest_path):
+        return
+    var file: FileAccess = FileAccess.open(manifest_path, FileAccess.READ)
+    if file == null:
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Array:
+        return
+    var material: StandardMaterial3D = StandardMaterial3D.new()
+    material.albedo_color = Color(0.42, 0.38, 0.30, 1.0)
+    material.roughness = 0.95
+    var root: Node3D = Node3D.new()
+    root.name = "OriginalFarScene"
+    var scale_value: float = PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
+    for entry_value: Variant in parsed:
+        if not entry_value is Dictionary:
+            continue
+        var entry: Dictionary = entry_value
+        var glb_path: String = base.path_join(String(entry.get("file", "")))
+        if not FileAccess.file_exists(glb_path):
+            continue
+        var document: GLTFDocument = GLTFDocument.new()
+        var state: GLTFState = GLTFState.new()
+        if document.append_from_file(glb_path, state) != OK:
+            continue
+        var instance: Node3D = document.generate_scene(state)
+        if instance == null:
+            continue
+        var pos: Array = entry.get("position", [0.0, 0.0, 0.0])
+        instance.position = Vector3(float(pos[0]), float(pos[2]), -float(pos[1])) * scale_value
+        instance.scale = Vector3.ONE * scale_value
+        for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
+            (mesh_node as MeshInstance3D).material_override = material
+        root.add_child(instance)
+    if root.get_child_count() > 0:
+        add_child(root)
+
 
 func _build_fighters() -> void:
     player = PortFighter.new()
