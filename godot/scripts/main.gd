@@ -38,6 +38,7 @@ var _cam_initialized: bool = false
 var _procedural_floor: Node3D = null
 var _procedural_arena_lines: Array[MeshInstance3D] = []
 var _procedural_arena_hidden: bool = false
+var _far_scene_texture_count: int = 0
 var combat_audio: Node
 var _candidate_audio: Dictionary = {}
 var _candidate_audio_error: Dictionary = {}
@@ -257,6 +258,7 @@ func _run_export_self_test() -> void:
             if get_node_or_null("OriginalFarScene") != null else 0
         ),
         "procedural_arena_hidden": _procedural_arena_hidden,
+        "far_scene_texture_count": _far_scene_texture_count,
         "opponent_candidate_loaded": computer.candidate_loaded,
         "opponent_idle_clip": opponent_idle_clip,
         "opponent_textures_loaded": computer.candidate_textures_loaded,
@@ -413,6 +415,7 @@ func _build_original_far_scene() -> void:
                     material.albedo_texture = ImageTexture.create_from_image(image)
                     material.albedo_color = Color.WHITE
                     material.roughness = 0.95
+                    _far_scene_texture_count += 1
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             (mesh_node as MeshInstance3D).material_override = material
         root.add_child(instance)
