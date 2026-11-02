@@ -373,9 +373,9 @@ func _build_original_far_scene() -> void:
     var parsed: Variant = JSON.parse_string(file.get_as_text())
     if not parsed is Array:
         return
-    var material: StandardMaterial3D = StandardMaterial3D.new()
-    material.albedo_color = Color(0.42, 0.38, 0.30, 1.0)
-    material.roughness = 0.95
+    var fallback_material: StandardMaterial3D = StandardMaterial3D.new()
+    fallback_material.albedo_color = Color(0.42, 0.38, 0.30, 1.0)
+    fallback_material.roughness = 0.95
     var root: Node3D = Node3D.new()
     root.name = "OriginalFarScene"
     var scale_value: float = PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
@@ -396,6 +396,17 @@ func _build_original_far_scene() -> void:
         var pos: Array = entry.get("position", [0.0, 0.0, 0.0])
         instance.position = Vector3(float(pos[0]), float(pos[2]), -float(pos[1])) * scale_value
         instance.scale = Vector3.ONE * scale_value
+        var material: StandardMaterial3D = fallback_material
+        var texture_name: String = String(entry.get("texture", ""))
+        if not texture_name.is_empty():
+            var texture_path: String = base.path_join(texture_name)
+            if FileAccess.file_exists(texture_path):
+                var image: Image = Image.new()
+                if image.load(texture_path) == OK:
+                    material = StandardMaterial3D.new()
+                    material.albedo_texture = ImageTexture.create_from_image(image)
+                    material.albedo_color = Color.WHITE
+                    material.roughness = 0.95
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             (mesh_node as MeshInstance3D).material_override = material
         root.add_child(instance)
