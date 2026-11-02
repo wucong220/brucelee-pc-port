@@ -213,15 +213,27 @@ func handle_input_event(event: InputEvent) -> bool:
             return true
         return false
     if state == "active":
-        # Training shortcut: SPECIAL LOW KICK is the link chain that is most
-        # sensitive to setup timing. Accept its final low-kick press directly
-        # so the lesson cannot be blocked by a transient step/facing state.
-        if (not entries.is_empty()
-                and String(entries[current_index].get("id", "")) == "special_kick_low"
-                and event.is_action_pressed(PrototypeControls.ATTACK_D)
-                and player.attack_kind == ""):
-            if player.request_attack("special_kick_low_hit"):
-                return true
+        # Training can start the lesson's final attack directly from its
+        # documented final key. This keeps lessons usable even when a native
+        # miss/link window is one frame long; normal gameplay still uses the
+        # native links.
+        if not entries.is_empty() and player.attack_kind == "":
+            var active_entry: Dictionary = entries[current_index]
+            var command: String = String(active_entry.get("input", "")).replace("HOLD ", "")
+            var parts: PackedStringArray = command.split(",")
+            var final_token: String = parts[parts.size() - 1].strip_edges()
+            if final_token.contains("+"):
+                final_token = final_token.split("+")[final_token.split("+").size() - 1].strip_edges()
+            var key_action: String = ""
+            match final_token:
+                "J": key_action = PrototypeControls.ATTACK_A
+                "K": key_action = PrototypeControls.ATTACK_B
+                "L": key_action = PrototypeControls.ATTACK_C
+                "U": key_action = PrototypeControls.ATTACK_D
+            if not key_action.is_empty() and event.is_action_pressed(key_action):
+                var target: String = String(active_entry.get("actions", [""])[0])
+                if not target.is_empty() and player.request_attack(target):
+                    return true
         if event.is_action_pressed(PrototypeControls.RESTART):
             _prepare_current()
             return true
