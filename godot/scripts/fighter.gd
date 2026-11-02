@@ -3340,6 +3340,12 @@ func _native_condition_ok(condition: String, link: Dictionary) -> bool:
         "grabdistance":
             # The action's attack record stores grab_distance in source units.
             var to_action: String = _link_text(link, "to")
+            if to_action == "specialkicklowhit":
+                # SPECIAL LOW KICK's hit link is a kick, not a grab; the
+                # recovered grab_distance is too strict for the kick radius.
+                var low_kind: String = String(_action_to_attack.get(to_action, ""))
+                if not low_kind.is_empty() and ATTACKS.has(low_kind):
+                    return _opponent_distance() <= attack_reach_world(low_kind, opponent)
             var raw_grab: Variant = _native_actions.get(
                 to_action, {}).get("grab_distance")
             if raw_grab == null:
