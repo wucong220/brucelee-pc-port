@@ -42,6 +42,7 @@ def build(archive: Path) -> dict:
             "height": first_impact.get("height"),
             "strength": first_impact.get("strength"),
             "direction": first_impact.get("direction"),
+            "damage_time": first_impact.get("damage_time"),
         }
         if not any(impact_summary.values()):
             impact_summary = None

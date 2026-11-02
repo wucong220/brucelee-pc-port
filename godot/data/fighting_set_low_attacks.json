@@ -1,929 +1,929 @@
 {
-  "schema_version": 4,
-  "source_archive": "brucelee.set",
-  "frame_rate": 30.0,
-  "source_geometry": {
-    "source_height": 173.415954589844,
-    "world_height": 1.8,
-    "radius_scale": 1.0,
-    "idle_source_archive": "Default.set",
-    "animation_radii": {
-      "m01_idle_01": 25.0,
-      "m01_pnch_low_01": 40.0,
-      "m01_kick_low_01": 50.0,
-      "m01_pnch_high_01": 45.0,
-      "m01_kick_high_01": 60.0,
-      "all_impct_light_frnt_low": 40.0,
-      "all_impct_light_frnt_mid": 40.0,
-      "all_impct_light_frnt_high": 40.0,
-      "all_block_low": 40.0,
-      "all_block_mid": 40.0,
-      "all_block_high": 40.0,
-      "m01_pnch_high_03": 60.0,
-      "m01_pnch_low_03": 40.0,
-      "m01_kick_low_03": 50.0,
-      "m01_sp_kick_jump_01": 60.0,
-      "m01_kck_front_step": 65.0,
-      "m01_pnch_high_02": 45.0,
-      "m01_pnch_low_02": 40.0,
-      "m01_kick_high_02": 60.0,
-      "m01_kick_low_02": 50.0,
-      "m01_sp_kick_low_fail": 25.0,
-      "m01_sp_kick_low": 25.0,
-      "m01_sp_pnch_low_fail": 25.0,
-      "m01_sp_pnch_low": 25.0,
-      "all_impct_hard_frnt_high": 80.0,
-      "m01_sp_pnch_high_fail": 40.0,
-      "m01_sp_pnch_high": 25.0,
-      "m01_parry_high": 40.0,
-      "m01_grab_01": 40.0,
-      "m01_grab_02": 25.0,
-      "m01_end_attack_01": 45.0,
-      "m01_end_attack_02": 45.0,
-      "m02_grab_01": 25.0
-    }
-  },
-  "reaction_profiles": {
-    "hit": {
-      "low": {
-        "source_action": "impactlightfrontlow",
-        "animation": "all_impct_light_frnt_low",
-        "exit_start_frame": 13,
-        "animation_duration_frames": 17,
-        "linking_frame": 0
-      },
-      "medium": {
-        "source_action": "impactlightfrontmid",
-        "animation": "all_impct_light_frnt_mid",
-        "exit_start_frame": 14,
-        "animation_duration_frames": 16,
-        "linking_frame": 0
-      },
-      "high": {
-        "source_action": "impactlightfronthigh",
-        "animation": "all_impct_light_frnt_high",
-        "exit_start_frame": 13,
-        "animation_duration_frames": 17,
-        "linking_frame": 0
-      }
-    },
-    "block": {
-      "low": {
-        "source_action": "lowblock",
-        "animation": "all_block_low",
-        "exit_start_frame": 12,
-        "animation_duration_frames": 23,
-        "linking_frame": 14
-      },
-      "medium": {
-        "source_action": "midblock",
-        "animation": "all_block_mid",
-        "exit_start_frame": 12,
-        "animation_duration_frames": 14,
-        "linking_frame": 0
-      },
-      "high": {
-        "source_action": "highblock",
-        "animation": "all_block_high",
-        "exit_start_frame": 12,
-        "animation_duration_frames": 14,
-        "linking_frame": 0
-      }
-    }
-  },
-  "attacks": {
-    "punch": {
-      "source_action": "lowpunch1",
-      "animation": "m01_pnch_low_01",
-      "animation_frame_count": 69,
-      "startup_frames": 5,
-      "active_frames": 4,
-      "recovery_frames": 60,
-      "damage": 5.0,
-      "prototype_push": 0.2,
-      "source_impact": {
-        "attack_radius": 70.0,
-        "body_part": "larm",
-        "height": "medium",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "kick": {
-      "source_action": "lowkick1",
-      "animation": "m01_kick_low_01",
-      "animation_frame_count": 86,
-      "startup_frames": 7,
-      "active_frames": 4,
-      "recovery_frames": 75,
-      "damage": 5.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 70.0,
-        "body_part": "lleg",
-        "height": "low",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "high_punch": {
-      "source_action": "highpunch1",
-      "animation": "m01_pnch_high_01",
-      "animation_frame_count": 101,
-      "startup_frames": 4,
-      "active_frames": 4,
-      "recovery_frames": 93,
-      "damage": 5.0,
-      "prototype_push": 0.2,
-      "source_impact": {
-        "attack_radius": 70.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "high_kick": {
-      "source_action": "highkick1",
-      "animation": "m01_kick_high_01",
-      "animation_frame_count": 73,
-      "startup_frames": 7,
-      "active_frames": 4,
-      "recovery_frames": 62,
-      "damage": 6.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 75.0,
-        "body_part": "lleg",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "high_punch3": {
-      "source_action": "highpunch3",
-      "animation": "m01_pnch_high_03",
-      "animation_frame_count": 85,
-      "startup_frames": 5,
-      "active_frames": 4,
-      "recovery_frames": 76,
-      "damage": 6.0,
-      "prototype_push": 0.2,
-      "source_impact": {
-        "attack_radius": 70.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "hard",
-        "direction": "fromright"
-      }
-    },
-    "low_punch3": {
-      "source_action": "lowpunch3",
-      "animation": "m01_pnch_low_03",
-      "animation_frame_count": 81,
-      "startup_frames": 8,
-      "active_frames": 4,
-      "recovery_frames": 69,
-      "damage": 7.0,
-      "prototype_push": 0.2,
-      "source_impact": {
-        "attack_radius": 75.0,
-        "body_part": "larm",
-        "height": "medium",
-        "strength": "hard",
-        "direction": "frontal"
-      }
-    },
-    "low_kick3": {
-      "source_action": "lowkick3",
-      "animation": "m01_kick_low_03",
-      "animation_frame_count": 56,
-      "startup_frames": 8,
-      "active_frames": 3,
-      "recovery_frames": 45,
-      "damage": 5.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 70.0,
-        "body_part": "lleg",
-        "height": "medium",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "high_kick3": {
-      "source_action": "highkick3",
-      "animation": "m01_sp_kick_jump_01",
-      "animation_frame_count": 51,
-      "startup_frames": 10,
-      "active_frames": 4,
-      "recovery_frames": 37,
-      "damage": 8.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 80.0,
-        "body_part": "lleg",
-        "height": "high",
-        "strength": "hard",
-        "direction": "fromright"
-      }
-    },
-    "special_kick_high": {
-      "source_action": "specialkickhigh",
-      "animation": "m01_kck_front_step",
-      "animation_frame_count": 57,
-      "startup_frames": 11,
-      "active_frames": 5,
-      "recovery_frames": 41,
-      "damage": 12.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 115.0,
-        "body_part": "lleg",
-        "height": "high",
-        "strength": "hard",
-        "direction": "frontal"
-      }
-    },
-    "high_punch2": {
-      "source_action": "highpunch2",
-      "animation": "m01_pnch_high_02",
-      "animation_frame_count": 81,
-      "startup_frames": 6,
-      "active_frames": 3,
-      "recovery_frames": 72,
-      "damage": 5.0,
-      "prototype_push": 0.3,
-      "source_impact": {
-        "attack_radius": 75.0,
-        "body_part": "rarm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "fromleft"
-      }
-    },
-    "low_punch2": {
-      "source_action": "lowpunch2",
-      "animation": "m01_pnch_low_02",
-      "animation_frame_count": 65,
-      "startup_frames": 5,
-      "active_frames": 4,
-      "recovery_frames": 56,
-      "damage": 6.0,
-      "prototype_push": 0.3,
-      "source_impact": {
-        "attack_radius": 75.0,
-        "body_part": "larm",
-        "height": "medium",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "high_kick2": {
-      "source_action": "highkick2",
-      "animation": "m01_kick_high_02",
-      "animation_frame_count": 95,
-      "startup_frames": 8,
-      "active_frames": 3,
-      "recovery_frames": 84,
-      "damage": 5.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 80.0,
-        "body_part": "lleg",
-        "height": "high",
-        "strength": "normal",
-        "direction": "fromleft"
-      }
-    },
-    "low_kick2": {
-      "source_action": "lowkick2",
-      "animation": "m01_kick_low_02",
-      "animation_frame_count": 27,
-      "startup_frames": 7,
-      "active_frames": 4,
-      "recovery_frames": 16,
-      "damage": 5.0,
-      "prototype_push": 0.3,
-      "source_impact": {
-        "attack_radius": 70.0,
-        "body_part": "lleg",
-        "height": "low",
-        "strength": "normal",
-        "direction": "fromleft"
-      }
-    },
-    "special_kick_low_miss": {
-      "source_action": "specialkicklowmiss",
-      "animation": "m01_sp_kick_low_fail",
-      "animation_frame_count": 50,
-      "startup_frames": 14,
-      "active_frames": 2,
-      "recovery_frames": 34,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 25.0,
-        "body_part": "lleg",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "special_kick_low_hit": {
-      "source_action": "specialkicklowhit",
-      "animation": "m01_sp_kick_low",
-      "animation_frame_count": 39,
-      "startup_frames": 13,
-      "active_frames": 8,
-      "recovery_frames": 18,
-      "damage": 15.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 45.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "hard",
-        "direction": "frontal"
-      }
-    },
-    "special_punch_low_miss": {
-      "source_action": "specialpunchlowmiss",
-      "animation": "m01_sp_pnch_low_fail",
-      "animation_frame_count": 33,
-      "startup_frames": 8,
-      "active_frames": 2,
-      "recovery_frames": 23,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 25.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "special_punch_low_hit": {
-      "source_action": "specialpunchlowhit",
-      "animation": "m01_sp_pnch_low",
-      "animation_frame_count": 178,
-      "startup_frames": 5,
-      "active_frames": 11,
-      "recovery_frames": 162,
-      "damage": 15.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 45.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "hard",
-        "direction": "frontal"
-      }
-    },
-    "special_punch_high_miss": {
-      "source_action": "specialpunchhighmiss",
-      "animation": "m01_sp_pnch_high_fail",
-      "animation_frame_count": 122,
-      "startup_frames": 6,
-      "active_frames": 2,
-      "recovery_frames": 114,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 45.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "special_punch_high_hit": {
-      "source_action": "specialpunchhighhit",
-      "animation": "m01_sp_pnch_high",
-      "animation_frame_count": 80,
-      "startup_frames": 3,
-      "active_frames": 47,
-      "recovery_frames": 30,
-      "damage": 21.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 70.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      },
-      "multi_impacts": [
-        {
-          "damage": 4.0,
-          "damage_time": [
-            3,
-            7
-          ],
-          "attack_radius": 70.0,
-          "body_part": "larm",
-          "height": "high",
-          "strength": "normal",
-          "direction": "frontal"
-        },
-        {
-          "damage": 4.0,
-          "damage_time": [
-            17,
-            22
-          ],
-          "attack_radius": 70.0,
-          "body_part": "rarm",
-          "height": "high",
-          "strength": "normal",
-          "direction": "frontal"
-        },
-        {
-          "damage": 13.0,
-          "damage_time": [
-            43,
-            49
-          ],
-          "attack_radius": 75.0,
-          "body_part": "larm",
-          "height": "high",
-          "strength": "hard",
-          "direction": "frontal"
-        }
-      ]
-    },
-    "parry_high": {
-      "source_action": "parryhigh",
-      "animation": "m01_parry_high",
-      "animation_frame_count": 62,
-      "startup_frames": 9,
-      "active_frames": 2,
-      "recovery_frames": 51,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 40.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "parry_attack": {
-      "source_action": "parryattack",
-      "animation": "m01_pnch_high_03",
-      "animation_frame_count": 85,
-      "startup_frames": 4,
-      "active_frames": 5,
-      "recovery_frames": 76,
-      "damage": 10.0,
-      "prototype_push": 0.35,
-      "source_impact": {
-        "attack_radius": 75.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "hard",
-        "direction": "frontal"
-      }
-    },
-    "grab1": {
-      "source_action": "grab1",
-      "animation": "m01_grab_01",
-      "animation_frame_count": 150,
-      "startup_frames": 45,
-      "active_frames": 77,
-      "recovery_frames": 28,
-      "damage": 20.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 45.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      },
-      "multi_impacts": [
-        {
-          "damage": 6.0,
-          "damage_time": [
-            45,
-            46
-          ],
-          "attack_radius": 45.0,
-          "body_part": "larm",
-          "height": "high",
-          "strength": "normal",
-          "direction": "frontal"
-        },
-        {
-          "damage": 5.0,
-          "damage_time": [
-            71,
-            73
-          ],
-          "attack_radius": 45.0,
-          "body_part": "larm",
-          "height": "high",
-          "strength": "hard",
-          "direction": "frontal"
-        },
-        {
-          "damage": 9.0,
-          "damage_time": [
-            121,
-            122
-          ],
-          "attack_radius": 45.0,
-          "body_part": "larm",
-          "height": "high",
-          "strength": "hard",
-          "direction": "frontal"
-        }
-      ]
-    },
-    "grab2": {
-      "source_action": "grab2",
-      "animation": "m01_grab_02",
-      "animation_frame_count": 180,
-      "startup_frames": 4,
-      "active_frames": 72,
-      "recovery_frames": 104,
-      "damage": 20.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 45.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      },
-      "multi_impacts": [
-        {
-          "damage": 5.0,
-          "damage_time": [
-            4,
-            5
-          ],
-          "attack_radius": 45.0,
-          "body_part": "larm",
-          "height": "high",
-          "strength": "normal",
-          "direction": "frontal"
-        },
-        {
-          "damage": 15.0,
-          "damage_time": [
-            75,
-            76
-          ],
-          "attack_radius": 45.0,
-          "body_part": "larm",
-          "height": "high",
-          "strength": "hard",
-          "direction": "frontal"
-        }
-      ]
-    },
-    "endattack1": {
-      "source_action": "endattack1",
-      "animation": "m01_end_attack_01",
-      "animation_frame_count": 377,
-      "startup_frames": 1,
-      "active_frames": 0,
-      "recovery_frames": 376,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 65.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "endattack2": {
-      "source_action": "endattack2",
-      "animation": "m01_end_attack_02",
-      "animation_frame_count": 235,
-      "startup_frames": 1,
-      "active_frames": 0,
-      "recovery_frames": 234,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 75.0,
-        "body_part": "rleg",
-        "height": "high",
-        "strength": "hard",
-        "direction": "frontal"
-      }
-    },
-    "grab1_miss": {
-      "source_action": "grab1miss",
-      "animation": "m02_grab_01",
-      "animation_frame_count": 47,
-      "startup_frames": 5,
-      "active_frames": 3,
-      "recovery_frames": 39,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 45.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "grab2_miss": {
-      "source_action": "grab2miss",
-      "animation": "m02_grab_01",
-      "animation_frame_count": 47,
-      "startup_frames": 4,
-      "active_frames": 4,
-      "recovery_frames": 39,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 45.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    },
-    "parry_low": {
-      "source_action": "parrylow",
-      "animation": "m01_kick_low_02",
-      "animation_frame_count": 27,
-      "startup_frames": 17,
-      "active_frames": 1,
-      "recovery_frames": 9,
-      "damage": 0.0,
-      "prototype_push": 0.0,
-      "source_impact": {
-        "attack_radius": 40.0,
-        "body_part": "larm",
-        "height": "low",
-        "strength": "normal",
-        "direction": "frontal"
-      }
-    }
-  },
-  "exact_reactions": {
-    "hit": [
-      {
-        "strength": "hard",
-        "height": "medium",
-        "direction": "frontal",
-        "source_action": "impacthardfrontmid",
-        "animation": "all_impct_crotch",
-        "animation_radius": 40.0,
-        "exit_start_frame": 27,
-        "animation_duration_frames": 30,
-        "linking_frame": 0,
-        "return_action": "idle",
-        "return_implemented": true,
-        "clip_implemented": false
-      },
-      {
-        "strength": "hard",
-        "height": "low",
-        "direction": "fromright",
-        "source_action": "impacthardrightlow",
-        "animation": "all_impct_hard_rht_low",
-        "animation_radius": 70.0,
-        "exit_start_frame": 23,
-        "animation_duration_frames": 25,
-        "linking_frame": 0,
-        "return_action": "facedownidle",
-        "return_implemented": false,
-        "clip_implemented": false
-      },
-      {
-        "strength": "hard",
-        "height": "high",
-        "direction": "fromright",
-        "source_action": "impacthardrighthigh",
-        "animation": "all_impct_hard_rht_high",
-        "animation_radius": 80.0,
-        "exit_start_frame": 26,
-        "animation_duration_frames": 29,
-        "linking_frame": 0,
-        "return_action": "faceupidle",
-        "return_implemented": true,
-        "clip_implemented": false
-      },
-      {
-        "strength": "hard",
-        "height": "high",
-        "direction": "frontal",
-        "source_action": "impacthardfronthigh",
-        "animation": "all_impct_hard_frnt_high",
-        "animation_radius": 80.0,
-        "exit_start_frame": 23,
-        "animation_duration_frames": 35,
-        "linking_frame": 0,
-        "return_action": "faceupidle",
-        "return_implemented": true,
-        "clip_implemented": false
-      },
-      {
-        "strength": "brutal",
-        "height": "medium",
-        "direction": "frontal",
-        "source_action": "impactbrutalmid",
-        "animation": "all_sp_pnch_low_forset04",
-        "animation_radius": 60.0,
-        "entry_frame": 6,
-        "exit_start_frame": 25,
-        "animation_duration_frames": 28,
-        "linking_frame": 0,
-        "return_action": "facedownidle",
-        "return_implemented": false,
-        "clip_implemented": false
-      },
-      {
-        "strength": "brutal",
-        "height": "high",
-        "direction": "fromleft",
-        "source_action": "impactbrutalleft",
-        "animation": "all_impct_spectacular_lft",
-        "animation_radius": 85.0,
-        "entry_frame": 0,
-        "exit_start_frame": 39,
-        "animation_duration_frames": 45,
-        "linking_frame": 0,
-        "return_action": "facedownidle",
-        "return_implemented": false,
-        "clip_implemented": false
-      },
-      {
-        "strength": "brutal",
-        "height": "high",
-        "direction": "fromright",
-        "source_action": "impactbrutalright",
-        "animation": "all_impct_spectacular_rht",
-        "animation_radius": 25.0,
-        "entry_frame": 0,
-        "exit_start_frame": 41,
-        "animation_duration_frames": 45,
-        "linking_frame": 0,
-        "return_action": "facedownidle",
-        "return_implemented": false,
-        "clip_implemented": false
-      },
-      {
-        "strength": "normal",
-        "height": "high",
-        "direction": "fromleft",
-        "source_action": "impactlightlefthigh",
-        "animation": "all_impct_light_lft_high",
-        "animation_radius": 40.0,
-        "entry_frame": 0,
-        "exit_start_frame": 15,
-        "animation_duration_frames": 17,
-        "linking_frame": 0,
-        "return_action": "idle",
-        "return_implemented": true,
-        "clip_implemented": false
-      },
-      {
-        "strength": "normal",
-        "height": "high",
-        "direction": "fromright",
-        "source_action": "impactlightrighthigh",
-        "animation": "all_impct_light_rht_high",
-        "animation_radius": 40.0,
-        "entry_frame": 0,
-        "exit_start_frame": 15,
-        "animation_duration_frames": 17,
-        "linking_frame": 0,
-        "return_action": "idle",
-        "return_implemented": true,
-        "clip_implemented": false
-      },
-      {
-        "strength": "normal",
-        "height": "low",
-        "direction": "fromleft",
-        "source_action": "impactlightleftlow",
-        "animation": "all_impct_light_lft_low",
-        "animation_radius": 40.0,
-        "entry_frame": 0,
-        "exit_start_frame": 15,
-        "animation_duration_frames": 17,
-        "linking_frame": 0,
-        "return_action": "idle",
-        "return_implemented": true,
-        "clip_implemented": false
-      },
-      {
-        "strength": "normal",
-        "height": "low",
-        "direction": "fromright",
-        "source_action": "impactlightrightlow",
-        "animation": "all_impct_light_rht_low",
-        "animation_radius": 40.0,
-        "entry_frame": 0,
-        "exit_start_frame": 13,
-        "animation_duration_frames": 17,
-        "linking_frame": 0,
-        "return_action": "idle",
-        "return_implemented": true,
-        "clip_implemented": false
-      },
-      {
-        "strength": "hard",
-        "height": "low",
-        "direction": "fromleft",
-        "source_action": "impacthardleftlow",
-        "animation": "all_impct_hard_lft_low",
-        "animation_radius": 80.0,
-        "entry_frame": 0,
-        "exit_start_frame": 25,
-        "animation_duration_frames": 29,
-        "linking_frame": 0,
-        "return_action": "faceupidle",
-        "return_implemented": false,
-        "clip_implemented": false
-      },
-      {
-        "strength": "hard",
-        "height": "high",
-        "direction": "fromleft",
-        "source_action": "impacthardlefthigh",
-        "animation": "all_impct_hard_lft_high",
-        "animation_radius": 80.0,
-        "entry_frame": 0,
-        "exit_start_frame": 26,
-        "animation_duration_frames": 29,
-        "linking_frame": 0,
-        "return_action": "faceupidle",
-        "return_implemented": false,
-        "clip_implemented": false
-      },
-      {
-        "strength": "hard",
-        "height": "high",
-        "direction": "fromabove",
-        "source_action": "impacthardabove",
-        "animation": "all_impct_hard_above",
-        "animation_radius": 70.0,
-        "entry_frame": 0,
-        "exit_start_frame": 17,
-        "animation_duration_frames": 17,
-        "linking_frame": 0,
-        "return_action": "facedownidle",
-        "return_implemented": false,
-        "clip_implemented": false
-      },
-      {
-        "strength": "hard",
-        "height": "low",
-        "direction": "frontal",
-        "source_action": "impacthardfrontlow",
-        "animation": "all_impct_hard_frnt_low",
-        "animation_radius": 70.0,
-        "entry_frame": 0,
-        "exit_start_frame": 20,
-        "animation_duration_frames": 23,
-        "linking_frame": 0,
-        "return_action": "facedownidle",
-        "return_implemented": false,
-        "clip_implemented": false
-      }
-    ],
-    "block": [
-      {
-        "strength": "hard",
-        "height": "",
-        "direction": "",
-        "source_action": "highblockhard",
-        "animation": "all_block_high_hard",
-        "animation_radius": 25.0,
-        "exit_start_frame": 11,
-        "animation_duration_frames": 14,
-        "linking_frame": 0,
-        "return_action": "idle2",
-        "return_implemented": false,
-        "clip_implemented": false
-      },
-      {
-        "strength": "brutal",
-        "height": "",
-        "direction": "",
-        "source_action": "highblockbrutal",
-        "animation": "all_block_high_brutal",
-        "animation_radius": 25.0,
-        "exit_start_frame": 17,
-        "animation_duration_frames": 20,
-        "linking_frame": 0,
-        "return_action": "idle2",
-        "return_implemented": false,
-        "clip_implemented": false
-      }
-    ]
+ "schema_version": 4,
+ "source_archive": "brucelee.set",
+ "frame_rate": 30.0,
+ "source_geometry": {
+  "source_height": 173.415954589844,
+  "world_height": 1.8,
+  "radius_scale": 1.0,
+  "idle_source_archive": "Default.set",
+  "animation_radii": {
+   "m01_idle_01": 25.0,
+   "m01_pnch_low_01": 40.0,
+   "m01_kick_low_01": 50.0,
+   "m01_pnch_high_01": 45.0,
+   "m01_kick_high_01": 60.0,
+   "all_impct_light_frnt_low": 40.0,
+   "all_impct_light_frnt_mid": 40.0,
+   "all_impct_light_frnt_high": 40.0,
+   "all_block_low": 40.0,
+   "all_block_mid": 40.0,
+   "all_block_high": 40.0,
+   "m01_pnch_high_03": 60.0,
+   "m01_pnch_low_03": 40.0,
+   "m01_kick_low_03": 50.0,
+   "m01_sp_kick_jump_01": 60.0,
+   "m01_kck_front_step": 65.0,
+   "m01_pnch_high_02": 45.0,
+   "m01_pnch_low_02": 40.0,
+   "m01_kick_high_02": 60.0,
+   "m01_kick_low_02": 50.0,
+   "m01_sp_kick_low_fail": 25.0,
+   "m01_sp_kick_low": 25.0,
+   "m01_sp_pnch_low_fail": 25.0,
+   "m01_sp_pnch_low": 25.0,
+   "all_impct_hard_frnt_high": 80.0,
+   "m01_sp_pnch_high_fail": 40.0,
+   "m01_sp_pnch_high": 25.0,
+   "m01_parry_high": 40.0,
+   "m01_grab_01": 40.0,
+   "m01_grab_02": 25.0,
+   "m01_end_attack_01": 45.0,
+   "m01_end_attack_02": 45.0,
+   "m02_grab_01": 25.0
   }
+ },
+ "reaction_profiles": {
+  "hit": {
+   "low": {
+    "source_action": "impactlightfrontlow",
+    "animation": "all_impct_light_frnt_low",
+    "exit_start_frame": 13,
+    "animation_duration_frames": 17,
+    "linking_frame": 0
+   },
+   "medium": {
+    "source_action": "impactlightfrontmid",
+    "animation": "all_impct_light_frnt_mid",
+    "exit_start_frame": 14,
+    "animation_duration_frames": 16,
+    "linking_frame": 0
+   },
+   "high": {
+    "source_action": "impactlightfronthigh",
+    "animation": "all_impct_light_frnt_high",
+    "exit_start_frame": 13,
+    "animation_duration_frames": 17,
+    "linking_frame": 0
+   }
+  },
+  "block": {
+   "low": {
+    "source_action": "lowblock",
+    "animation": "all_block_low",
+    "exit_start_frame": 12,
+    "animation_duration_frames": 23,
+    "linking_frame": 14
+   },
+   "medium": {
+    "source_action": "midblock",
+    "animation": "all_block_mid",
+    "exit_start_frame": 12,
+    "animation_duration_frames": 14,
+    "linking_frame": 0
+   },
+   "high": {
+    "source_action": "highblock",
+    "animation": "all_block_high",
+    "exit_start_frame": 12,
+    "animation_duration_frames": 14,
+    "linking_frame": 0
+   }
+  }
+ },
+ "attacks": {
+  "punch": {
+   "source_action": "lowpunch1",
+   "animation": "m01_pnch_low_01",
+   "animation_frame_count": 69,
+   "startup_frames": 5,
+   "active_frames": 4,
+   "recovery_frames": 60,
+   "damage": 5.0,
+   "prototype_push": 0.2,
+   "source_impact": {
+    "attack_radius": 70.0,
+    "body_part": "larm",
+    "height": "medium",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "kick": {
+   "source_action": "lowkick1",
+   "animation": "m01_kick_low_01",
+   "animation_frame_count": 86,
+   "startup_frames": 7,
+   "active_frames": 4,
+   "recovery_frames": 75,
+   "damage": 5.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 70.0,
+    "body_part": "lleg",
+    "height": "low",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "high_punch": {
+   "source_action": "highpunch1",
+   "animation": "m01_pnch_high_01",
+   "animation_frame_count": 101,
+   "startup_frames": 4,
+   "active_frames": 4,
+   "recovery_frames": 93,
+   "damage": 5.0,
+   "prototype_push": 0.2,
+   "source_impact": {
+    "attack_radius": 70.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "high_kick": {
+   "source_action": "highkick1",
+   "animation": "m01_kick_high_01",
+   "animation_frame_count": 73,
+   "startup_frames": 7,
+   "active_frames": 4,
+   "recovery_frames": 62,
+   "damage": 6.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 75.0,
+    "body_part": "lleg",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "high_punch3": {
+   "source_action": "highpunch3",
+   "animation": "m01_pnch_high_03",
+   "animation_frame_count": 85,
+   "startup_frames": 5,
+   "active_frames": 4,
+   "recovery_frames": 76,
+   "damage": 6.0,
+   "prototype_push": 0.2,
+   "source_impact": {
+    "attack_radius": 70.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromright"
+   }
+  },
+  "low_punch3": {
+   "source_action": "lowpunch3",
+   "animation": "m01_pnch_low_03",
+   "animation_frame_count": 81,
+   "startup_frames": 8,
+   "active_frames": 4,
+   "recovery_frames": 69,
+   "damage": 7.0,
+   "prototype_push": 0.2,
+   "source_impact": {
+    "attack_radius": 75.0,
+    "body_part": "larm",
+    "height": "medium",
+    "strength": "hard",
+    "direction": "frontal"
+   }
+  },
+  "low_kick3": {
+   "source_action": "lowkick3",
+   "animation": "m01_kick_low_03",
+   "animation_frame_count": 56,
+   "startup_frames": 8,
+   "active_frames": 3,
+   "recovery_frames": 45,
+   "damage": 5.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 70.0,
+    "body_part": "lleg",
+    "height": "medium",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "high_kick3": {
+   "source_action": "highkick3",
+   "animation": "m01_sp_kick_jump_01",
+   "animation_frame_count": 51,
+   "startup_frames": 10,
+   "active_frames": 4,
+   "recovery_frames": 37,
+   "damage": 8.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 80.0,
+    "body_part": "lleg",
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromright"
+   }
+  },
+  "special_kick_high": {
+   "source_action": "specialkickhigh",
+   "animation": "m01_kck_front_step",
+   "animation_frame_count": 57,
+   "startup_frames": 11,
+   "active_frames": 5,
+   "recovery_frames": 41,
+   "damage": 12.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 115.0,
+    "body_part": "lleg",
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal"
+   }
+  },
+  "high_punch2": {
+   "source_action": "highpunch2",
+   "animation": "m01_pnch_high_02",
+   "animation_frame_count": 81,
+   "startup_frames": 6,
+   "active_frames": 3,
+   "recovery_frames": 72,
+   "damage": 5.0,
+   "prototype_push": 0.3,
+   "source_impact": {
+    "attack_radius": 75.0,
+    "body_part": "rarm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "fromleft"
+   }
+  },
+  "low_punch2": {
+   "source_action": "lowpunch2",
+   "animation": "m01_pnch_low_02",
+   "animation_frame_count": 65,
+   "startup_frames": 5,
+   "active_frames": 4,
+   "recovery_frames": 56,
+   "damage": 6.0,
+   "prototype_push": 0.3,
+   "source_impact": {
+    "attack_radius": 75.0,
+    "body_part": "larm",
+    "height": "medium",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "high_kick2": {
+   "source_action": "highkick2",
+   "animation": "m01_kick_high_02",
+   "animation_frame_count": 95,
+   "startup_frames": 8,
+   "active_frames": 3,
+   "recovery_frames": 84,
+   "damage": 5.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 80.0,
+    "body_part": "lleg",
+    "height": "high",
+    "strength": "normal",
+    "direction": "fromleft"
+   }
+  },
+  "low_kick2": {
+   "source_action": "lowkick2",
+   "animation": "m01_kick_low_02",
+   "animation_frame_count": 27,
+   "startup_frames": 7,
+   "active_frames": 4,
+   "recovery_frames": 16,
+   "damage": 5.0,
+   "prototype_push": 0.3,
+   "source_impact": {
+    "attack_radius": 70.0,
+    "body_part": "lleg",
+    "height": "low",
+    "strength": "normal",
+    "direction": "fromleft"
+   }
+  },
+  "special_kick_low_miss": {
+   "source_action": "specialkicklowmiss",
+   "animation": "m01_sp_kick_low_fail",
+   "animation_frame_count": 50,
+   "startup_frames": 14,
+   "active_frames": 3,
+   "recovery_frames": 33,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 25.0,
+    "body_part": "lleg",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "special_kick_low_hit": {
+   "source_action": "specialkicklowhit",
+   "animation": "m01_sp_kick_low",
+   "animation_frame_count": 39,
+   "startup_frames": 13,
+   "active_frames": 8,
+   "recovery_frames": 18,
+   "damage": 15.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 45.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal"
+   }
+  },
+  "special_punch_low_miss": {
+   "source_action": "specialpunchlowmiss",
+   "animation": "m01_sp_pnch_low_fail",
+   "animation_frame_count": 33,
+   "startup_frames": 8,
+   "active_frames": 2,
+   "recovery_frames": 23,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 25.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "special_punch_low_hit": {
+   "source_action": "specialpunchlowhit",
+   "animation": "m01_sp_pnch_low",
+   "animation_frame_count": 178,
+   "startup_frames": 5,
+   "active_frames": 11,
+   "recovery_frames": 162,
+   "damage": 15.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 45.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal"
+   }
+  },
+  "special_punch_high_miss": {
+   "source_action": "specialpunchhighmiss",
+   "animation": "m01_sp_pnch_high_fail",
+   "animation_frame_count": 122,
+   "startup_frames": 6,
+   "active_frames": 4,
+   "recovery_frames": 112,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 45.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "special_punch_high_hit": {
+   "source_action": "specialpunchhighhit",
+   "animation": "m01_sp_pnch_high",
+   "animation_frame_count": 80,
+   "startup_frames": 3,
+   "active_frames": 47,
+   "recovery_frames": 30,
+   "damage": 21.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 70.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   },
+   "multi_impacts": [
+    {
+     "damage": 4.0,
+     "damage_time": [
+      3,
+      7
+     ],
+     "attack_radius": 70.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 4.0,
+     "damage_time": [
+      17,
+      22
+     ],
+     "attack_radius": 70.0,
+     "body_part": "rarm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 13.0,
+     "damage_time": [
+      43,
+      49
+     ],
+     "attack_radius": 75.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ]
+  },
+  "parry_high": {
+   "source_action": "parryhigh",
+   "animation": "m01_parry_high",
+   "animation_frame_count": 62,
+   "startup_frames": 9,
+   "active_frames": 2,
+   "recovery_frames": 51,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 40.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "parry_attack": {
+   "source_action": "parryattack",
+   "animation": "m01_pnch_high_03",
+   "animation_frame_count": 85,
+   "startup_frames": 4,
+   "active_frames": 5,
+   "recovery_frames": 76,
+   "damage": 10.0,
+   "prototype_push": 0.35,
+   "source_impact": {
+    "attack_radius": 75.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal"
+   }
+  },
+  "grab1": {
+   "source_action": "grab1",
+   "animation": "m01_grab_01",
+   "animation_frame_count": 150,
+   "startup_frames": 45,
+   "active_frames": 78,
+   "recovery_frames": 27,
+   "damage": 20.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 45.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   },
+   "multi_impacts": [
+    {
+     "damage": 6.0,
+     "damage_time": [
+      45,
+      46
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 5.0,
+     "damage_time": [
+      71,
+      73
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    },
+    {
+     "damage": 9.0,
+     "damage_time": [
+      121,
+      122
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ]
+  },
+  "grab2": {
+   "source_action": "grab2",
+   "animation": "m01_grab_02",
+   "animation_frame_count": 180,
+   "startup_frames": 4,
+   "active_frames": 73,
+   "recovery_frames": 103,
+   "damage": 20.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 45.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   },
+   "multi_impacts": [
+    {
+     "damage": 5.0,
+     "damage_time": [
+      4,
+      5
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 15.0,
+     "damage_time": [
+      75,
+      76
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ]
+  },
+  "endattack1": {
+   "source_action": "endattack1",
+   "animation": "m01_end_attack_01",
+   "animation_frame_count": 377,
+   "startup_frames": 0,
+   "active_frames": 1,
+   "recovery_frames": 376,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 65.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "endattack2": {
+   "source_action": "endattack2",
+   "animation": "m01_end_attack_02",
+   "animation_frame_count": 235,
+   "startup_frames": 20,
+   "active_frames": 4,
+   "recovery_frames": 211,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 75.0,
+    "body_part": "rleg",
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal"
+   }
+  },
+  "grab1_miss": {
+   "source_action": "grab1miss",
+   "animation": "m02_grab_01",
+   "animation_frame_count": 47,
+   "startup_frames": 5,
+   "active_frames": 3,
+   "recovery_frames": 39,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 45.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "grab2_miss": {
+   "source_action": "grab2miss",
+   "animation": "m02_grab_01",
+   "animation_frame_count": 47,
+   "startup_frames": 4,
+   "active_frames": 4,
+   "recovery_frames": 39,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 45.0,
+    "body_part": "larm",
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  },
+  "parry_low": {
+   "source_action": "parrylow",
+   "animation": "m01_kick_low_02",
+   "animation_frame_count": 27,
+   "startup_frames": 0,
+   "active_frames": 0,
+   "recovery_frames": 27,
+   "damage": 0.0,
+   "prototype_push": 0.0,
+   "source_impact": {
+    "attack_radius": 40.0,
+    "body_part": "larm",
+    "height": "low",
+    "strength": "normal",
+    "direction": "frontal"
+   }
+  }
+ },
+ "exact_reactions": {
+  "hit": [
+   {
+    "strength": "hard",
+    "height": "medium",
+    "direction": "frontal",
+    "source_action": "impacthardfrontmid",
+    "animation": "all_impct_crotch",
+    "animation_radius": 40.0,
+    "exit_start_frame": 27,
+    "animation_duration_frames": 30,
+    "linking_frame": 0,
+    "return_action": "idle",
+    "return_implemented": true,
+    "clip_implemented": false
+   },
+   {
+    "strength": "hard",
+    "height": "low",
+    "direction": "fromright",
+    "source_action": "impacthardrightlow",
+    "animation": "all_impct_hard_rht_low",
+    "animation_radius": 70.0,
+    "exit_start_frame": 23,
+    "animation_duration_frames": 25,
+    "linking_frame": 0,
+    "return_action": "facedownidle",
+    "return_implemented": false,
+    "clip_implemented": false
+   },
+   {
+    "strength": "hard",
+    "height": "high",
+    "direction": "fromright",
+    "source_action": "impacthardrighthigh",
+    "animation": "all_impct_hard_rht_high",
+    "animation_radius": 80.0,
+    "exit_start_frame": 26,
+    "animation_duration_frames": 29,
+    "linking_frame": 0,
+    "return_action": "faceupidle",
+    "return_implemented": true,
+    "clip_implemented": false
+   },
+   {
+    "strength": "hard",
+    "height": "high",
+    "direction": "frontal",
+    "source_action": "impacthardfronthigh",
+    "animation": "all_impct_hard_frnt_high",
+    "animation_radius": 80.0,
+    "exit_start_frame": 23,
+    "animation_duration_frames": 35,
+    "linking_frame": 0,
+    "return_action": "faceupidle",
+    "return_implemented": true,
+    "clip_implemented": false
+   },
+   {
+    "strength": "brutal",
+    "height": "medium",
+    "direction": "frontal",
+    "source_action": "impactbrutalmid",
+    "animation": "all_sp_pnch_low_forset04",
+    "animation_radius": 60.0,
+    "entry_frame": 6,
+    "exit_start_frame": 25,
+    "animation_duration_frames": 28,
+    "linking_frame": 0,
+    "return_action": "facedownidle",
+    "return_implemented": false,
+    "clip_implemented": false
+   },
+   {
+    "strength": "brutal",
+    "height": "high",
+    "direction": "fromleft",
+    "source_action": "impactbrutalleft",
+    "animation": "all_impct_spectacular_lft",
+    "animation_radius": 85.0,
+    "entry_frame": 0,
+    "exit_start_frame": 39,
+    "animation_duration_frames": 45,
+    "linking_frame": 0,
+    "return_action": "facedownidle",
+    "return_implemented": false,
+    "clip_implemented": false
+   },
+   {
+    "strength": "brutal",
+    "height": "high",
+    "direction": "fromright",
+    "source_action": "impactbrutalright",
+    "animation": "all_impct_spectacular_rht",
+    "animation_radius": 25.0,
+    "entry_frame": 0,
+    "exit_start_frame": 41,
+    "animation_duration_frames": 45,
+    "linking_frame": 0,
+    "return_action": "facedownidle",
+    "return_implemented": false,
+    "clip_implemented": false
+   },
+   {
+    "strength": "normal",
+    "height": "high",
+    "direction": "fromleft",
+    "source_action": "impactlightlefthigh",
+    "animation": "all_impct_light_lft_high",
+    "animation_radius": 40.0,
+    "entry_frame": 0,
+    "exit_start_frame": 15,
+    "animation_duration_frames": 17,
+    "linking_frame": 0,
+    "return_action": "idle",
+    "return_implemented": true,
+    "clip_implemented": false
+   },
+   {
+    "strength": "normal",
+    "height": "high",
+    "direction": "fromright",
+    "source_action": "impactlightrighthigh",
+    "animation": "all_impct_light_rht_high",
+    "animation_radius": 40.0,
+    "entry_frame": 0,
+    "exit_start_frame": 15,
+    "animation_duration_frames": 17,
+    "linking_frame": 0,
+    "return_action": "idle",
+    "return_implemented": true,
+    "clip_implemented": false
+   },
+   {
+    "strength": "normal",
+    "height": "low",
+    "direction": "fromleft",
+    "source_action": "impactlightleftlow",
+    "animation": "all_impct_light_lft_low",
+    "animation_radius": 40.0,
+    "entry_frame": 0,
+    "exit_start_frame": 15,
+    "animation_duration_frames": 17,
+    "linking_frame": 0,
+    "return_action": "idle",
+    "return_implemented": true,
+    "clip_implemented": false
+   },
+   {
+    "strength": "normal",
+    "height": "low",
+    "direction": "fromright",
+    "source_action": "impactlightrightlow",
+    "animation": "all_impct_light_rht_low",
+    "animation_radius": 40.0,
+    "entry_frame": 0,
+    "exit_start_frame": 13,
+    "animation_duration_frames": 17,
+    "linking_frame": 0,
+    "return_action": "idle",
+    "return_implemented": true,
+    "clip_implemented": false
+   },
+   {
+    "strength": "hard",
+    "height": "low",
+    "direction": "fromleft",
+    "source_action": "impacthardleftlow",
+    "animation": "all_impct_hard_lft_low",
+    "animation_radius": 80.0,
+    "entry_frame": 0,
+    "exit_start_frame": 25,
+    "animation_duration_frames": 29,
+    "linking_frame": 0,
+    "return_action": "faceupidle",
+    "return_implemented": false,
+    "clip_implemented": false
+   },
+   {
+    "strength": "hard",
+    "height": "high",
+    "direction": "fromleft",
+    "source_action": "impacthardlefthigh",
+    "animation": "all_impct_hard_lft_high",
+    "animation_radius": 80.0,
+    "entry_frame": 0,
+    "exit_start_frame": 26,
+    "animation_duration_frames": 29,
+    "linking_frame": 0,
+    "return_action": "faceupidle",
+    "return_implemented": false,
+    "clip_implemented": false
+   },
+   {
+    "strength": "hard",
+    "height": "high",
+    "direction": "fromabove",
+    "source_action": "impacthardabove",
+    "animation": "all_impct_hard_above",
+    "animation_radius": 70.0,
+    "entry_frame": 0,
+    "exit_start_frame": 17,
+    "animation_duration_frames": 17,
+    "linking_frame": 0,
+    "return_action": "facedownidle",
+    "return_implemented": false,
+    "clip_implemented": false
+   },
+   {
+    "strength": "hard",
+    "height": "low",
+    "direction": "frontal",
+    "source_action": "impacthardfrontlow",
+    "animation": "all_impct_hard_frnt_low",
+    "animation_radius": 70.0,
+    "entry_frame": 0,
+    "exit_start_frame": 20,
+    "animation_duration_frames": 23,
+    "linking_frame": 0,
+    "return_action": "facedownidle",
+    "return_implemented": false,
+    "clip_implemented": false
+   }
+  ],
+  "block": [
+   {
+    "strength": "hard",
+    "height": "",
+    "direction": "",
+    "source_action": "highblockhard",
+    "animation": "all_block_high_hard",
+    "animation_radius": 25.0,
+    "exit_start_frame": 11,
+    "animation_duration_frames": 14,
+    "linking_frame": 0,
+    "return_action": "idle2",
+    "return_implemented": false,
+    "clip_implemented": false
+   },
+   {
+    "strength": "brutal",
+    "height": "",
+    "direction": "",
+    "source_action": "highblockbrutal",
+    "animation": "all_block_high_brutal",
+    "animation_radius": 25.0,
+    "exit_start_frame": 17,
+    "animation_duration_frames": 20,
+    "linking_frame": 0,
+    "return_action": "idle2",
+    "return_implemented": false,
+    "clip_implemented": false
+   }
+  ]
+ }
 }

@@ -121,6 +121,13 @@ highkick3 = high/hard/fromright）。这些条件主要服务于 `impact*/block*
 结构，但相位**边界是数据算出来的**，不是自创数值。真正还未替换的是用相位枚举
 代替原版的纯动画帧推进（`BasicUpdate` + `CurrentAnimFinished`）。
 
+**第 25 轮**：所有招式的 `startup/active/recovery` 已按 `damage_time` 重新算出并
+修正了此前手填偏差（endattack2 由 1/0/234 改为 20/4/211，grab1 active 77→78，
+grab2 72→73，specialpunchhighmiss 2→4）。无伤害动作（miss/parry）改用其出边
+link 窗口：specialkicklowmiss `[14,16]` → 14/3/33、specialpunchlowmiss `[8,9]` →
+8/2/23、parryhigh `[9,10]` → 9/2/51。新增 `tests/test_attack_phase_windows.py`
+对全部招式校验，任何手填漂移都会失败。
+
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的
 方向/特殊招测试已删除——它们验证的是被删掉的队列/时间窗语义，不再适用。
