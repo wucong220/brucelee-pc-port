@@ -30,7 +30,8 @@
     {"id": "endattack2", "label": "END ATTACK 2", "group": "GRAB", "input": "UP+IN+J, L, L", "setup": "endattack2", "actions": ["endattack2"], "success": "started"},
 
     {"id": "attacktofloor", "label": "ATTACK TO FLOOR", "group": "GROUND", "input": "K L L against downed target", "setup": "target_down", "actions": ["attacktofloor"], "success": "hit"},
-    {"id": "facedownattack", "label": "GROUND ATTACK", "group": "GROUND", "input": "J J J while downed", "setup": "player_down", "actions": ["facedownattack"], "success": "hit"},
+    {"id": "facedownattack", "label": "FACEDOWN ATTACK", "group": "GROUND", "input": "J J J while face-down", "setup": "player_down", "actions": ["facedownattack"], "success": "hit"},
+    {"id": "faceupattack", "label": "FACEUP ATTACK", "group": "GROUND", "input": "J J J while face-up", "setup": "player_faceup", "actions": ["faceupattack"], "success": "hit"},
     {"id": "heavy", "label": "HEAVY KICK", "group": "BASIC", "input": "L", "setup": "idle", "actions": ["heavy"], "success": "hit"}
   ]
 }

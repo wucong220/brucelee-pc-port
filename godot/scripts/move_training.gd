@@ -284,6 +284,9 @@ func _prepare_current() -> void:
     elif setup == "player_down":
         player.state = "facedownidle"
         player._animate_candidate()
+    elif setup == "player_faceup":
+        player.state = "faceupidle"
+        player._animate_candidate()
     _refresh_lesson(entry)
     status_label.add_theme_color_override("font_color", Color(0.82, 0.86, 0.92))
     status_label.text = "WAITING FOR " + String(entry.get("label", "")) + " ..."
