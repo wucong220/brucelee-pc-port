@@ -272,10 +272,6 @@ const SPECIAL_CHAIN_MISSES: Dictionary = {
     "grab1_miss_brick": "grab1_brick",
     "grab2_miss_brick": "grab2_brick",
 }
-const SPECIAL_REQUIRES_STEPBACK: Dictionary = {
-    "special_kick_high": true,
-    "special_kick_low_miss": true,
-}
 const SPECIAL_CHAIN_WINDOW: Dictionary = {
     "special_kick_low_miss": [14, 16],
     "special_punch_low_miss": [8, 9],
@@ -1229,7 +1225,6 @@ var last_reaction_clip_implemented: bool = false
 var facing: float = 1.0
 var combo_hits: int = 0
 var rage: float = 0.0
-var _special_stepback_origin: bool = false
 var _multi_impact_applied: Array = []
 var _attack_hit_landed: bool = false
 var _grab_connected: bool = false
@@ -2981,8 +2976,6 @@ func record_standing_combo_press(
         var token: String = String(modifier)
         if not tokens.has(token):
             tokens.append(token)
-    if tokens.has("b") and (tokens.has("out") or tokens.has("left")):
-        _special_stepback_origin = true
     _link_events.append({"tokens": tokens, "consumed": false})
     while _link_events.size() > LINK_EVENT_LIMIT:
         _link_events.pop_front()
@@ -3048,7 +3041,6 @@ func _clear_link_events() -> void:
 
 
 func _clear_link_state() -> void:
-    _special_stepback_origin = false
     _clear_link_events()
 
 
@@ -3056,6 +3048,15 @@ func _link_sequence_matches(entry: Dictionary) -> bool:
     # krm::CFighter::InputSequenceCheck: scan events backwards, skip unconsumed
     # matches only when the step matches, and skip every consumed event.
     var steps: Array = entry["steps"]
+    if steps.is_empty():
+        return true
+    var has_key: bool = false
+    for step: Variant in steps:
+        if not Array(step).is_empty():
+            has_key = true
+            break
+    if not has_key:
+        return true
     var required: int = steps.size() - 1
     for event_index: int in range(_link_events.size() - 1, -1, -1):
         var event: Dictionary = _link_events[event_index]
