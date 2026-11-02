@@ -1175,6 +1175,7 @@ var _attack_root_sequence: int = -1
 var _attack_root_previous_frame: float = -1.0
 var _attack_root_previous_value: Vector3 = Vector3.ZERO
 var _attack_connected: bool = false
+var _parry_absorbed: bool = false
 var _link_events: Array[Dictionary] = []
 # Link metadata exported from brucelee.set (link order, group windows,
 # keysequence, keystatus, conditions, time, entry/linking frames).
@@ -3497,6 +3498,36 @@ func _consume_link_events(link: Dictionary) -> void:
             return
 
 
+func _auto_link_release_ok(link: Dictionary) -> bool:
+    # A small class of automatic links is gated by the source action's
+    # impactable window. parryhigh -> parryattack is the concrete case: the
+    # link is [9,10], but parryhigh only becomes impactable at frame 30, and
+    # the parry absorb must survive until then. Keep the native link shape but
+    # release it when the absorb happened or the impactable window opened.
+    var steps: Array = Array(link.get("steps", []))
+    if not steps.is_empty():
+        return true
+    var source: String = _link_text(link, "from")
+    if source.is_empty():
+        return true
+    var row: Dictionary = _native_actions.get(source, {})
+    if row.is_empty() or row.get("impact") != null:
+        return true
+    var groups: Variant = row.get("groups")
+    if not groups is Dictionary:
+        return true
+    var impactable: Variant = Dictionary(groups).get("impactable")
+    if not impactable is Array or Array(impactable).size() < 2:
+        return true
+    var window: Array = _native_link_window(link)
+    if window.size() < 2:
+        return true
+    var impactable_start: int = int(Array(impactable)[0])
+    if impactable_start <= int(window[1]):
+        return true
+    return _parry_absorbed or _current_attack_source_frame() >= float(impactable_start)
+
+
 func _try_follow_links() -> bool:
     # krm::CFighter::UserControlUpdate: walk the current animation's links in
     # native order. TimeWindowCheck + InputSequenceCheck + InputStatusCheck +
@@ -3518,6 +3549,8 @@ func _try_follow_links() -> bool:
         if not _native_link_unique_ok(link):
             continue
         if not _native_link_window_ok(link, previous_scan_frame):
+            continue
+        if not _auto_link_release_ok(link):
             continue
         if not _link_sequence_matches(link):
             continue
@@ -3721,6 +3754,7 @@ func request_attack(kind: String) -> bool:
     attack_kind = kind
     attack_sequence += 1
     _attack_connected = false
+    _parry_absorbed = false
     _attack_hit_landed = false
     _grab_connected = false
     _endattack_victim_started = false
@@ -3949,6 +3983,7 @@ func _begin_chained_attack(
         rage = maxf(0.0, rage + rage_cost)
     attack_sequence += 1
     _attack_connected = false
+    _parry_absorbed = false
     _attack_hit_landed = false
     _grab_connected = false
     _endattack_victim_started = false
@@ -4170,6 +4205,13 @@ func _try_attack_contact() -> void:
             or opponent.state in ["ko", "facedownko"]):
         return
     var details: Dictionary = ATTACKS[attack_kind]
+    var damage: float = float(details["damage"])
+    # Recovered miss/parry actions carry damage 0; they must not put the
+    # opponent into hitstun or invalidate oppposestand before the follow-up
+    # link resolves.
+    if damage <= 0.0:
+        _attack_connected = true
+        return
     var dx: float = opponent.global_position.x - global_position.x
     var dz: float = opponent.global_position.z - global_position.z
     var distance: float = Vector2(dx, dz).length()
@@ -4177,7 +4219,6 @@ func _try_attack_contact() -> void:
         return
     if dx * facing < -0.1:
         return
-    var damage: float = float(details["damage"])
     var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
     var reaction: Dictionary = {}
     if details.has("source_impact"):
@@ -4740,6 +4781,7 @@ func receive_hit(
         var impactable_start: int = _action_impactable_start(attack_kind)
         var absorb_until: float = float(impactable_start) if impactable_start >= 0 else 25.0
         if _current_attack_source_frame() < absorb_until:
+            _parry_absorbed = true
             parry_succeeded.emit(attack_kind)
             return false
     if (state in ["startup", "active", "recovery"]
@@ -5000,6 +5042,7 @@ func reset_fighter(start_position: Vector3) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
+    _parry_absorbed = false
     _clear_link_state()
     last_reaction_group = ""
     last_reaction_source_action = ""

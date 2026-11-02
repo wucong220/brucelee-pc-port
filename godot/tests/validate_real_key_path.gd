@@ -59,11 +59,14 @@ func _run() -> void:
         quit(1)
         return
 
-    # 3) parryhigh -> parryattack [9,10] with a pending event must auto-chain.
+    # 3) parryhigh -> parryattack [9,10] with an absorbed hit must auto-chain;
+    # the native impactable window starts at 30, so an unabsorbed parry must not
+    # be cut short at frame 9.
     player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
     player.attack_kind = "parry_high"
     player.state = "active"
     player.state_time = float(player.ATTACKS["parry_high"]["active"])
+    player._parry_absorbed = true
     player._link_events.clear()
     player._link_events.append({"tokens": ["b"], "consumed": false, "time_ms": int(player._time * 1000.0)})
     var followed: bool = player._try_follow_links()
