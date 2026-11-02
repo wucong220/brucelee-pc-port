@@ -35,6 +35,19 @@ func _run() -> void:
         player.health = 9999.0
         computer.health = 9999.0
         player.rage = 100.0
+        var source: String = String(entry.get("from_attack", ""))
+        if source.is_empty():
+            var source_list: Array = entry.get("from_attack_in", [])
+            if not source_list.is_empty():
+                source = String(source_list[0])
+        if not source.is_empty():
+            player.state = "recovery"
+            player.attack_kind = source
+            player.state_time = 1.0
+            player._attack_hit_landed = true
+        if String(entry["attack"]).begins_with("endattack"):
+            computer.state = "hitstun"
+            computer.state_time = 1.0
         var started: Array[String] = []
         player.attack_started.connect(func(action: String): started.append(action))
         for step_value: Variant in steps:
@@ -59,6 +72,12 @@ func _run() -> void:
             quit(1)
             return
         print(str(entry["attack"]) + " => " + str(started))
+        if ((not String(entry.get("from_attack", "")).is_empty()
+                or String(entry["attack"]).begins_with("endattack"))
+                and started.back() != String(entry["attack"])):
+            push_error("Sourced combo target was not final: " + str(entry["attack"]) + " -> " + str(started))
+            quit(1)
+            return
         checked += 1
     # Directional target check: the same three steps must not degrade to plain
     # punches when up/in modifiers are present.
