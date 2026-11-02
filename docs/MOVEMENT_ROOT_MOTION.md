@@ -9,6 +9,7 @@ File: `godot/data/movement_root_motion.json`
 Clips currently extracted:
 
 - `m01_stepfwd`
+- `m02_movefwd` (Ken→Bruce retarget, `CANDIDATE`)
 - `m01_stepbck`
 - `m01_steprht`
 - `m01_steplft`
@@ -16,12 +17,15 @@ Clips currently extracted:
 - `m01_movelft`
 - `m01_moverht`
 
-Missing for a complete native chain:
+`m02_movefwd` was extracted from the original set but its ANM skeleton is Ken.
+It was converted through the converter's `--retarget-animation` path
+(`BL_Ken_Goodall_01_High.Skl` → `bl_brucelee_01_High.Skl`) and merged as
+`bruce_candidate_92_movefwd_20261103.glb`. This is a candidate cross-skeleton
+clip, not a frame-verified native result.
 
-- `m02_movefwd` — original ANM extracted to
-  `D:\BruceLeeWork\anim_movefwd\`, but its skeleton reference does not match the
-  current Bruce candidate; it needs a separate retarget/严格骨架 path.
-- `m02_moveback` etc. are not in the current candidate.
+Implementation: `fighter.gd` now samples these tracks in
+`_locomotion_root_delta()`, applies them through the existing facing/scale
+adapter, chains `step* -> move*` at frame 4, and reseeds the root accumulator
+when an action changes or a move track wraps. Training keeps its dummy close
+to the player while a step lesson is active.
 
-The next implementation step is a `step -> move` action chain plus a root
-position accumulator; no velocity formula is used for the final path.
