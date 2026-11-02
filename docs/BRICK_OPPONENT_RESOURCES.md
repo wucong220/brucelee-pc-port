@@ -224,6 +224,16 @@ faceupko，且 endattack 本身保持 0 伤害。
 `validate_brick_grab_miss.gd` 验证 `grab1_miss_brick -> grab1_brick -> grabbed1`
 （6 伤害）和 `grab2_miss_brick -> grab2_brick -> grabbed2`（20 伤害）。
 
+## knockdown 回归
+
+`validate_brick_knockdown.gd` 在玩家 1 HP 时用 Brick `low_kick` 真实命中，实测状态为：
+
+```text
+impactstun -> stun -> stun2 -> stunfall -> faceupko
+```
+
+这说明 knockdown 不是缺失动作，而是已有受击链；Brick 要主动“打出 knockdown”，仍需带对应受击来源的攻击数据。
+
 ## 复现与检查
 
 ```powershell
