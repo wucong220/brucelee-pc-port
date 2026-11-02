@@ -58,7 +58,33 @@ func _run() -> void:
             push_error("Combo swallowed a press: " + str(entry["attack"]) + " " + str(steps) + " -> " + str(started))
             quit(1)
             return
+        print(str(entry["attack"]) + " => " + str(started))
         checked += 1
+    # Directional target check: the same three steps must not degrade to plain
+    # punches when up/in modifiers are present.
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    computer.reset_fighter(Vector3(0.3, 1.2, 0.0))
+    player.health = 9999.0
+    computer.health = 9999.0
+    player.rage = 100.0
+    player.state = "recovery"
+    player.attack_kind = "high_punch2"
+    player.state_time = 1.0
+    player._attack_hit_landed = true
+    var directional: Array[String] = []
+    player.attack_started.connect(func(action: String): directional.append(action))
+    _press(player, "a", ["up"])
+    _press(player, "a", ["in"])
+    _press(player, "a", ["in"])
+    for _frame: int in range(600):
+        player.position = Vector3(0.0, 1.2, 0.0)
+        computer.position = Vector3(0.3, 1.2, 0.0)
+        player._physics_process(1.0 / 60.0)
+    if directional.is_empty() or directional.back() != "high_punch3":
+        push_error("Directional combo target was not final: " + str(directional))
+        quit(1)
+        return
+    checked += 1
     print("ALL_COMBO_QUEUE_VALIDATION=" + JSON.stringify({"sequences": checked}))
     quit(0)
 
