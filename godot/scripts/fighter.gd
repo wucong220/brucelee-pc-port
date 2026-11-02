@@ -4189,11 +4189,17 @@ func _native_movement_action() -> String:
     var y: float = move_axis.y
     if absf(x) <= 0.001 and absf(y) <= 0.001:
         return ""
-    if absf(x) >= absf(y):
-        var horizontal: String = "stepleft" if x < 0.0 else "stepright"
-        if _native_actions.has(horizontal):
-            return horizontal
+    # Holding S (down/back) defines the stepback link even while D is pressed
+    # to enter SPECIAL HIGH KICK. Do not let the diagonal x component replace
+    # stepback with stepright.
+    if absf(y) > 0.001:
+        var vertical: String = "stepback" if y > 0.0 else "stepfwd"
+        if _native_actions.has(vertical):
+            return vertical
         return _movement_action()
+    var horizontal: String = "stepleft" if x < 0.0 else "stepright"
+    if _native_actions.has(horizontal):
+        return horizontal
     return _movement_action()
 
 
