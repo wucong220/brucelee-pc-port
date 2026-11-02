@@ -3017,11 +3017,10 @@ func record_standing_combo_press(
     _standing_combo_pending_source_sequence = attack_sequence
     _standing_combo_pending_source_kind = attack_kind
     _clear_standing_combo_input_history()
-    # The sequence is complete even when its target must wait for an attack
-    # window or for the current queued attacks. Do not let the caller add a
-    # fallback attack on top of the pending combo.
-    _try_begin_pending_standing_combo()
-    return true
+    # Return true only when the combo target was actually queued or started.
+    # If rage/stepback/window validation rejected it, the caller must still
+    # receive a real fallback attack instead of swallowing the final press.
+    return _try_begin_pending_standing_combo()
 
 
 func record_parry_press(kind: String = "parry_high") -> bool:
@@ -3204,16 +3203,17 @@ func _try_begin_pending_standing_combo() -> bool:
             or attack_sequence != _standing_combo_pending_source_sequence):
         _clear_standing_combo_state()
         return false
-    if not _candobasicattack_window_contains_current_frame():
-        # endmove is a prototype extension: its source link is from_group
-        # candobasicattacks and requires oppposestun; allow the endmove input
-        # while the actual unblocked hitstun overlap exists, even if the base
-        # action's recorded combo window starts later.
-        if not (ENDATTACK_ATTACKS.has(_standing_combo_pending_attack)
-                and _attack_hit_landed
-                and opponent != null and is_instance_valid(opponent)
-                and opponent.state in ["hitstun", "stun", "stun2"]):
-            return false
+    var window_ready: bool = _candobasicattack_window_contains_current_frame()
+    # endmove is a prototype extension: its source link is from_group
+    # candobasicattacks and requires oppposestun; allow the endmove input
+    # while the actual unblocked hitstun overlap exists, even if the base
+    # action's recorded combo window starts later.
+    var endattack_window_override: bool = (
+        ENDATTACK_ATTACKS.has(_standing_combo_pending_attack)
+        and _attack_hit_landed
+        and opponent != null and is_instance_valid(opponent)
+        and opponent.state in ["hitstun", "stun", "stun2"]
+    )
     var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
             _standing_combo_pending_attack, 0.0))
     if special_cost > 0.0 and rage < special_cost:
@@ -3257,6 +3257,16 @@ func _try_begin_pending_standing_combo() -> bool:
     if not supports_attack(_standing_combo_pending_attack):
         _clear_standing_combo_state()
         return false
+    if not window_ready and not endattack_window_override:
+        if _queued_attacks.is_empty():
+            _clear_standing_combo_state()
+            return false
+        # The input already matched, but the source window is not active yet.
+        # Queue the target behind the real intermediate attacks rather than
+        # dropping it or adding a fallback on top of it.
+        _queued_attacks.append(_standing_combo_pending_attack)
+        _clear_standing_combo_state()
+        return true
     var next_attack: String = _standing_combo_pending_attack
     if special_cost > 0.0:
         rage = maxf(0.0, rage - special_cost)
@@ -4281,6 +4291,7 @@ func receive_hit(
         reaction: Dictionary = {}
 ) -> bool:
     _parry_press_times.clear()
+    _queued_attacks.clear()
     if (state in ["startup", "active", "recovery"]
             and attack_kind in ["parry_high", "parry_low"]):
         # Player parry mirrors the Brick parry windows; absorbing an incoming

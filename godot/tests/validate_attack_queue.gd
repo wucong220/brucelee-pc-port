@@ -51,6 +51,10 @@ func _run() -> void:
             push_error("Sequence " + case_name + " swallowed an attack: " + str(started))
             quit(1)
             return
+        if case_name == "aaa" and started[-1] != "high_punch":
+            push_error("A/A/A target was not the final attack: " + str(started))
+            quit(1)
+            return
         if not player._queued_attacks.is_empty() or player.state not in ["idle", "idle2", "idle3"]:
             push_error("Sequence " + case_name + " did not drain the attack queue")
             quit(1)
