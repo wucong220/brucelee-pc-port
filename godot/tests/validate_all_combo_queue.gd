@@ -72,9 +72,12 @@ func _run() -> void:
             quit(1)
             return
         print(str(entry["attack"]) + " => " + str(started))
-        if ((not String(entry.get("from_attack", "")).is_empty()
-                or String(entry["attack"]).begins_with("endattack"))
-                and started.back() != String(entry["attack"])):
+        var has_source: bool = (
+            not String(entry.get("from_attack", "")).is_empty()
+            or not Array(entry.get("from_attack_in", [])).is_empty()
+            or String(entry["attack"]).begins_with("endattack")
+        )
+        if has_source and started.back() != String(entry["attack"]):
             push_error("Sourced combo target was not final: " + str(entry["attack"]) + " -> " + str(started))
             quit(1)
             return
