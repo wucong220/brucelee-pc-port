@@ -51,6 +51,9 @@ var _music_stream: AudioStream = null
 var _music_streams: Dictionary = {}
 var _result_audio: Dictionary = {}
 var _result_player: AudioStreamPlayer = null
+var _game_text_textures: Dictionary = {}
+var _game_text_rect: TextureRect = null
+var _game_text_timer: float = 0.0
 var ai_timer: float = 0.0
 var ai_guard_sequence: int = -1
 var ai_guard_decision: bool = false
@@ -105,6 +108,7 @@ func _ready() -> void:
     var startup_audio: int = Time.get_ticks_msec()
     hud = PortHUD.new()
     add_child(hud)
+    _build_game_text_overlay()
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
         hud.footer.text = (
             "J J J | J K K | K L L | K U U | "
@@ -470,6 +474,49 @@ func _apply_original_sky() -> void:
     _world_environment.environment.background_mode = Environment.BG_SKY
 
 
+func _build_game_text_overlay() -> void:
+    var layer: CanvasLayer = CanvasLayer.new()
+    layer.layer = 15
+    add_child(layer)
+    var shader: Shader = Shader.new()
+    shader.code = """
+shader_type canvas_item;
+void fragment() {
+    vec4 tex = texture(TEXTURE, UV);
+    COLOR = vec4(1.0, 1.0, 1.0, tex.a);
+}
+"""
+    var material: ShaderMaterial = ShaderMaterial.new()
+    material.shader = shader
+    _game_text_rect = TextureRect.new()
+    _game_text_rect.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+    _game_text_rect.size = Vector2(512.0, 256.0)
+    _game_text_rect.position = Vector2(-256.0, -128.0)
+    _game_text_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    _game_text_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    _game_text_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+    _game_text_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _game_text_rect.material = material
+    _game_text_rect.visible = false
+    layer.add_child(_game_text_rect)
+    var base: String = OS.get_executable_path().get_base_dir().path_join("ui/gametext")
+    for key: String in ["READY", "FIGHT", "YOU_WIN", "YOU_LOSE", "TIME_IS_UP"]:
+        var path: String = base.path_join("BL_gameText-%s.png" % key)
+        if not FileAccess.file_exists(path):
+            continue
+        var image: Image = Image.new()
+        if image.load(path) == OK:
+            _game_text_textures[key] = ImageTexture.create_from_image(image)
+
+
+func _show_game_text(key: String, duration: float) -> void:
+    if _game_text_rect == null or not _game_text_textures.has(key):
+        return
+    _game_text_rect.texture = _game_text_textures[key]
+    _game_text_rect.visible = true
+    _game_text_timer = duration
+
+
 func _build_fighters() -> void:
     player = PortFighter.new()
     player.configure("Bruce (placeholder)", true, Color(0.85, 0.56, 0.18))
@@ -741,9 +788,11 @@ func _play_result_audio(key: String) -> void:
 
 func _start_round_intro() -> void:
     _play_result_audio("ready")
+    _show_game_text("READY", 0.75)
     await get_tree().create_timer(0.8).timeout
     if not done:
         _play_result_audio("fight")
+        _show_game_text("FIGHT", 1.0)
 
 
 func _load_bruce_voice_audio() -> void:
@@ -951,6 +1000,10 @@ func _exit_tree() -> void:
     combat_audio = null
 
 func _process(_delta: float) -> void:
+    if _game_text_timer > 0.0:
+        _game_text_timer -= _delta
+        if _game_text_timer <= 0.0 and _game_text_rect != null:
+            _game_text_rect.visible = false
     _update_player_key_status()
     _update_fight_camera(_delta)
 
@@ -1440,6 +1493,7 @@ func _on_ko(fighter: PortFighter) -> void:
             "YOU WIN THE MATCH  ·  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
             else "YOU LOSE THE MATCH  ·  R TO RESTART"
         )
+        _show_game_text("YOU_WIN" if player_rounds >= ROUNDS_TO_WIN else "YOU_LOSE", 2.0)
         _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
         return
     round_reset_timer = ROUND_RESET_DELAY

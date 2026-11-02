@@ -124,7 +124,7 @@ def _validate_mip_layout(
                 raise TextureError(
                     'observed r8g8b8 profile requires exactly one mip descriptor'
                 )
-        elif mip_count != expected_levels:
+        elif mip_count != expected_levels and not (mip_count == 1 and group_count == 1):
             raise TextureError(
                 f'texture mips metadata declares {mip_count} levels; '
                 f'{width}x{height} requires {expected_levels}'
