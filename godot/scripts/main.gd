@@ -559,7 +559,6 @@ func _update_fight_camera() -> void:
     fight_camera.global_position = target + Vector3(0.0, distance * 0.42, distance)
     fight_camera.look_at(target, Vector3.UP)
 
-var _parry_input_was_pressed: bool = false
 
 
 func _sync_guard_state(pressed: bool) -> void:
@@ -568,26 +567,6 @@ func _sync_guard_state(pressed: bool) -> void:
     elif not pressed and player.guard_held:
         player.end_guard()
     player.guard_held = pressed
-
-
-func _update_parry_input() -> void:
-    var down_pressed: bool = Input.is_action_pressed("prototype_move_down")
-    var toward_action: String = ("prototype_move_right"
-            if player.facing >= 0.0 else "prototype_move_left")
-    var toward_pressed: bool = Input.is_action_pressed(toward_action)
-    var pressed: bool = down_pressed and toward_pressed
-    if (pressed and not _parry_input_was_pressed
-            and player.guard_held
-            and player.state in ["idle", "idle2"]
-            and computer.state in ["startup", "active"]):
-        var distance: float = Vector2(
-            player.position.x - computer.position.x,
-            player.position.z - computer.position.z).length()
-        if distance <= computer.attack_reach_world(computer.attack_kind, player):
-            var parry_kind: String = ("parry_low"
-                    if _incoming_attack_is_low() else "parry_high")
-            player.record_parry_press(parry_kind)
-    _parry_input_was_pressed = pressed
 
 
 func _incoming_attack_is_low() -> bool:
@@ -614,7 +593,6 @@ func _physics_process(delta: float) -> void:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
-        _update_parry_input()
         return
     hud.set_context_hint(_contextual_controls())
     if round_reset_timer > 0.0:
@@ -641,7 +619,6 @@ func _physics_process(delta: float) -> void:
         0.2
     )
     _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
-    _update_parry_input()
     if training_mode:
         computer.move_axis = Vector2.ZERO
         computer.guard_held = false

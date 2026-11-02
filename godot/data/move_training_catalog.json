@@ -189,17 +189,6 @@
    "success": "parry"
   },
   {
-   "id": "parry_low",
-   "label": "PARRY LOW",
-   "group": "DEFENSE",
-   "input": "GUARD x3 against low attack",
-   "setup": "parry_low",
-   "actions": [
-    "parry_low"
-   ],
-   "success": "parry"
-  },
-  {
    "id": "parry_attack",
    "label": "PARRY COUNTER",
    "group": "DEFENSE",

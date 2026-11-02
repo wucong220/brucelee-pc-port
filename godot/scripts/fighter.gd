@@ -313,7 +313,6 @@ const ENDATTACK_VICTIM_DATA: Dictionary = {
     "grabbed1": ["endattackcomp1", 93],
     "grabbed2": ["endattackcomp2", 130],
 }
-const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
 const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
 const NON_CONTACT_ATTACKS: Dictionary = {
     "endattack1": true, "endattack2": true, "parry_low": true,
@@ -1224,7 +1223,6 @@ var _attack_hit_landed: bool = false
 var _grab_connected: bool = false
 var _endattack_victim_started: bool = false
 var _stun_impact_next_state: String = "stunfall"
-var _parry_press_times: Array = []
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
 var candidate_animation_clip: String = ""
@@ -2930,35 +2928,6 @@ func record_standing_combo_press(
     return _try_follow_links()
 
 
-func record_parry_press(kind: String = "parry_high") -> bool:
-    if state not in ["idle", "idle2", "idle3"]:
-        _parry_press_times.clear()
-        return false
-    _parry_press_times = _parry_press_times.filter(
-        func(value: float) -> bool: return _time - value <= 0.5)
-    _parry_press_times.append(_time)
-    if _parry_press_times.size() < 3:
-        return false
-    _parry_press_times.clear()
-    if not PARRY_RAGE_COSTS.has(kind) or not supports_attack(kind):
-        return false
-    var cost: float = float(PARRY_RAGE_COSTS[kind])
-    if rage < cost:
-        return false
-    rage -= cost
-    attack_kind = kind
-    attack_sequence += 1
-    _attack_connected = false
-    _attack_hit_landed = false
-    _grab_connected = false
-    _endattack_victim_started = false
-    _multi_impact_applied.clear()
-    state = "startup"
-    state_time = float(ATTACKS[kind]["startup"])
-    _restart_candidate_action()
-    return true
-
-
 func begin_guard() -> void:
     # Decompiled guard path rejects link input, so the event queue is dropped.
     guard_held = true
@@ -2967,7 +2936,6 @@ func begin_guard() -> void:
 
 func end_guard() -> void:
     guard_held = false
-    _parry_press_times.clear()
 
 
 func _accepts_link_input(virtual_key: String) -> bool:
@@ -3307,6 +3275,10 @@ func _native_condition_ok(condition: String) -> bool:
             return opponent != null and is_instance_valid(opponent) and opponent.health <= 0.0
         "impact":
             return _attack_hit_landed
+        "countertime":
+            return (opponent != null and is_instance_valid(opponent)
+                    and opponent.state in ["startup", "active"]
+                    and not String(opponent.attack_kind).is_empty())
         _:
             # countertime and oppattack* belong to the counter/reaction links,
             # which this port does not drive yet; fail closed.
@@ -4359,7 +4331,6 @@ func receive_hit(
         direction: float,
         reaction: Dictionary = {}
 ) -> bool:
-    _parry_press_times.clear()
     if (state in ["startup", "active", "recovery"]
             and attack_kind in ["parry_high", "parry_low"]):
         # Player parry mirrors the Brick parry windows; absorbing an incoming
@@ -4631,7 +4602,6 @@ func reset_fighter(start_position: Vector3) -> void:
     _grab_connected = false
     _endattack_victim_started = false
     _multi_impact_applied.clear()
-    _parry_press_times.clear()
     if candidate_loaded:
         if _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position

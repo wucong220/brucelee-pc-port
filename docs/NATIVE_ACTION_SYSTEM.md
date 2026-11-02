@@ -75,8 +75,18 @@
 - `main.gd`、`move_gallery.gd`、`validate_facedown_attack` 全部改走
   `record_standing_combo_press`
 
-三段 `startup/active/recovery` 状态机和 parry 输入仍是原型实现，尚未换成
-link 数据驱动。
+**parry 输入已改成原生 link（第 14 轮）**
+- 删除 `record_parry_press`、`PARRY_RAGE_COSTS`、`_parry_press_times`、`main.gd`
+  的 `_update_parry_input`（Shift 三次 + guard 的原型）
+- 原生 `parryhigh`：`candocounter` 组、variant 1 序列 `down,right`，
+  条件 `countertime` + `ragethird`；`parryattack` 是从 `parryhigh` 的空序列
+  自动衔接
+- `counter_time` 字段确实存在于 `CAnimationDescr`（`+0xd8/+0xdc`，KDF 键名
+  `counter_time`），但 `brucelee.set` 的动作记录里没有该字段，解析结果为 0；
+  所以 `countertime` 暂按“对手处于 startup/active 攻击阶段”实现，标为近似
+- 原生没有 `parry_low`；训练和招式目录已移除该课，现有 25 项
+
+三段 `startup/active/recovery` 状态机仍是原型实现；`heavy` 仍无原生 link。
 
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的

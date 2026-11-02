@@ -48,7 +48,7 @@ func _run() -> void:
     var training = scene.get("move_training")
     player.set_physics_process(false)
     computer.set_physics_process(false)
-    if training.entries.size() != 26:
+    if training.entries.size() != 25:
         push_error("Move-training catalog is not 27 entries: " + str(training.entries.size()))
         quit(1)
         return
@@ -79,11 +79,6 @@ func _run() -> void:
 
 func _play(player: PortFighter, computer: PortFighter, entry: Dictionary) -> void:
     var id: String = String(entry["id"])
-    if id == "parry_high" or id == "parry_low" or id == "parry_attack":
-        var kind: String = "parry_high" if id != "parry_low" else "parry_low"
-        for _press: int in range(3):
-            player.record_parry_press(kind)
-        return
     var actions: Array = entry.get("actions", [])
     var sequence: Array[String] = []
     if not actions.is_empty():

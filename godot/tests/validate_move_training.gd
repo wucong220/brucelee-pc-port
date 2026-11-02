@@ -31,7 +31,7 @@ func _run() -> void:
         push_error("Move training catalog did not load")
         quit(1)
         return
-    if training.entries.size() != 26:
+    if training.entries.size() != 25:
         push_error("Move training catalog size is " + str(training.entries.size()))
         quit(1)
         return
@@ -133,8 +133,9 @@ func _run() -> void:
         quit(1)
         return
     training._start_at(16)
-    for _press: int in range(3):
-        player.record_parry_press("parry_high")
+    # Native parry link: down + toward (right) while the opponent attacks.
+    player.record_standing_combo_press("down")
+    player.record_standing_combo_press("right")
     for _frame: int in range(240):
         player.position = Vector3(0.0, 1.2, 0.0)
         computer.position = Vector3(0.3, 1.2, 0.0)
@@ -146,7 +147,7 @@ func _run() -> void:
         push_error("Parry training did not observe a real parry")
         quit(1)
         return
-    training._start_at(21)
+    training._start_at(20)
     player.state = "idle"
     if not player.request_attack("endattack1"):
         push_error("Endattack training setup failed")

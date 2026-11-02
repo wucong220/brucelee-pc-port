@@ -27,7 +27,7 @@ func _run() -> void:
         push_error("Move gallery is missing from the main scene")
         quit(1)
         return
-    if gallery.entries.size() != 26:
+    if gallery.entries.size() != 25:
         push_error("Move gallery catalog is " + str(gallery.entries.size()))
         quit(1)
         return
