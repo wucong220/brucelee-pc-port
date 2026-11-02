@@ -49,7 +49,38 @@
 | `CBeatEmUpGame::Update` 按最后事件 `+500` 批量过期 | `0x17c1d8–0x17c294` | 未实现，改用 0.52/1.35 秒 |
 | `CStateManager::PreUpdate/PostUpdate`、`SetState` | `docs/FIGHTING_SET_FINDINGS.md` | 未接入，原型自写状态机 |
 
+## 第二轮审计（反编译之后新增）
+
+以下是在 Ghidra 反编译 `UserControlUpdate/InputStatusCheck/TimeWindowCheck/FollowLink`
+之后，才确认属于“原型抽象”而不是原版机制的部分。
+
+| # | 规则 | 位置 | 状态 | 说明 |
+|---|---|---|---|---|
+| 21 | `startup/active/recovery` 三段相位 + `state_time` 计时 | `fighter.gd` 全状态机 | 自创抽象 | 原版按**动画帧**推进，link 窗口用 `[+0xcc,+0xd0]` 帧区间；三段相位是原型为了命中判定自己加的。帧数边界来自 impact/frame_count，但相位命名与切换不是原版结构 |
+| 22 | 每帧按对手位置重算 `facing`、直接写 `rotation.y` | `fighter.gd::_physics_process` | 自创 | 原版由条件表 `+0xb8`（`oppposestun` 等）和动画决定朝向，没有这种每帧吸附 |
+| 23 | 世界缩放 `1.8 / 173.4159` | `CANDIDATE_SOURCE_HEIGHT` / `CANDIDATE_HEIGHT` | 候选 | 数值来自候选模型高度，不是原版场景缩放 |
+| 24 | 根位移 raw Y 逐 clip 符号映射 | `fighter.gd` 注释 "Prototype only: per-clip first-Y sign" | 自创 | 原版 root motion 语义未闭合 |
+| 25 | `_attack_hit_landed` / `_attack_connected` / `_multi_impact_applied` 簿记 | `fighter.gd` | 自创 | 原版靠 impact 帧与状态，不存在这些布尔量 |
+| 26 | 受击反应链（hitstun→blockstun→返回状态） | `fighter.gd::_advance_timed_states` | 部分证据 | 单条 reaction 的返回帧有证据；整条链的顺序是原型拼的 |
+| 27 | 三局两胜、KO、回合重置 | `main.gd` | 自创 | 原型规则 |
+| 28 | 音效映射 | `main.gd::_play_hit_audio` | 自创 | 只把候选文件按动作名对上，不是原版事件映射 |
+| 29 | 双方初始站位、摄像机取景 | `main.gd` | 自创 | 注释已写 prototype framing |
+| 30 | `record_virtual_press` 的地面四条序列 | `fighter.gd` | 候选 | 原版 `keysequence` 数据存在，PC 映射是原型选择 |
+| 31 | 招架 = 0.5 秒内三次 Shift | `fighter.gd::record_parry_press` | 候选 | 反编译里 `parry` 走的是 link + `InputStatusCheck`，没有找到“三次按键”的对应实现 |
+| 32 | Gallery 每招播放时长 = `startup+active+recovery+0.9s` | `move_gallery.gd::_duration` | 自创 | 原版按动画长度和 link 推进，没有这种定时切招 |
+
+## 反编译后确认“该做但没做”的原版机制
+
+| 机制 | 原生位置 | 原型现状 |
+|---|---|---|
+| `InputStatusCheck`：link 要求的方向键**按住状态** | `0x1b020c` | 完全没实现，只在按键瞬间采样一次方向 |
+| `CheckConditions`：link `+0xb8` 条件表全量 | `UserControlUpdate` 内调用 | 只实现了 `oppposestun`、怒气等少数条件 |
+| link `+0xe0` 非零时消费**整个事件向量** | `UserControlUpdate` | 没实现 |
+| `FollowLink` 按**目标动画索引**延迟 link（`+0xf0/+0xf4`） | `0x1b8040` | 用 FIFO 攻击队列替代 |
+| `TimeWindowCheck` 的动画帧窗口 | `0x1b1ee0` | 用时间窗替代 |
+
 ## 结论
+
 
 真正“瞎搞”的核心不是数值，而是 **输入与状态的两条主路径**：
 
