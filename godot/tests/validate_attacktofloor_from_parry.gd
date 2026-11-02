@@ -37,13 +37,8 @@ func _run() -> void:
         push_error("parry_high active frame is outside its recovered group window")
         quit(1)
         return
-    player.try_attack_to_floor_press("b")
-    player.try_attack_to_floor_press("c")
-    var result: PortFighter.AttackToFloorInputResult = player.try_attack_to_floor_press("c")
-    if result != PortFighter.AttackToFloorInputResult.STARTED:
-        push_error("parry attacktofloor input did not start: " + str(result))
-        quit(1)
-        return
+    # Native keyboard layout: C is the single-key attacktofloor link.
+    player.record_standing_combo_press("c")
     if player.state != "attacktofloor":
         push_error("parry input did not enter attacktofloor: " + player.state)
         quit(1)

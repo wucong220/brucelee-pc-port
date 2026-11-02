@@ -247,12 +247,9 @@ func _start_attack(player: PortFighter, brick: PortFighter) -> bool:
     brick._enter_locomotion_state("facedownidle")
     brick._animate_candidate()
     player.facing = 1.0
-    if (player.try_attack_to_floor_press("b")
-            != PortFighter.AttackToFloorInputResult.BUFFERED
-            or player.try_attack_to_floor_press("c")
-            != PortFighter.AttackToFloorInputResult.BUFFERED
-            or player.try_attack_to_floor_press("c")
-            != PortFighter.AttackToFloorInputResult.STARTED):
+    # Native keyboard layout: C is the single-key attacktofloor link.
+    player.record_standing_combo_press("c")
+    if player.state != "attacktofloor":
         push_error("Could not start the attacktofloor test sequence")
         return false
     player._attack_connected = false

@@ -124,7 +124,8 @@ func _check_training(scene: Node, player: PortFighter, brick: PortFighter) -> bo
             push_error("Training reset retained state on attempt %d" % attempt)
             return false
         player.candidate_visual_blending_enabled = (attempt % 2 == 1)
-        for key: int in [KEY_K, KEY_L, KEY_L]:
+        # Native keyboard layout: L (c) is the single-key attacktofloor link.
+        for key: int in [KEY_L]:
             _press_key(scene, key)
         if player.state != "attacktofloor":
             push_error("Training attack did not start on attempt %d" % attempt)
@@ -163,17 +164,16 @@ func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter
     brick.reset_fighter(Vector3(0.25, 1.2, 0.0))
     brick._enter_locomotion_state("facedownidle")
     player.facing = 1.0
-    _press_key(scene, KEY_K)
-    if player.state != "idle":
-        push_error("attacktofloor prefix started an ordinary attack or state")
+    _press_key(scene, KEY_J)
+    if player.state == "attacktofloor":
+        push_error("A started attacktofloor")
         return false
-    _press_key(scene, KEY_L)
-    if player.state != "idle":
-        push_error("Incomplete attacktofloor sequence started")
-        return false
+    player.reset_fighter(Vector3.ZERO)
+    brick._enter_locomotion_state("facedownidle")
+    player.facing = 1.0
     _press_key(scene, KEY_L)
     if player.state != "attacktofloor":
-        push_error("Complete attacktofloor sequence did not start")
+        push_error("C did not start the native attacktofloor link: " + player.state)
         return false
     player._animate_candidate()
     if player.candidate_animation_clip != player._candidate_clip_paths[PortFighter.ATTACK_TO_FLOOR_CLIP]:
@@ -207,45 +207,33 @@ func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter
     if player.candidate_visual_blend_seconds_last != 0.0:
         push_error("default-off attacktofloor return applied a visual blend")
         return false
-    # Standing opponent keeps the ordinary kick path; the target action is the gate.
+    # Standing opponent keeps the ordinary low-kick path.
     brick._enter_locomotion_state("idle")
-    _press_key(scene, KEY_K)
+    _press_key(scene, KEY_U)
     if player.state != "startup" or player.attack_kind != "kick":
         push_error("attacktofloor started without a laying opponent")
         return false
-    # A lone c is not a valid prefix and must keep the ordinary heavy fallback.
+    # A straight kick against a standing opponent stays the ordinary high kick.
     player._enter_locomotion_state("idle")
-    brick._enter_locomotion_state("facedownidle")
+    brick._enter_locomotion_state("idle")
     _press_key(scene, KEY_L)
-    if player.state != "startup" or player.attack_kind != "heavy":
-        push_error("a lone c was incorrectly consumed as an attacktofloor prefix")
+    if player.state != "startup" or player.attack_kind != "high_kick":
+        push_error("laying-only gate did not keep the ordinary high kick")
         return false
 
     for source_state: String in ["idle", "idle2"]:
-        for sequence: Array in PortFighter.ATTACK_TO_FLOOR_SEQUENCES:
-            player._enter_locomotion_state(source_state)
-            brick._enter_locomotion_state("facedownidle")
-            for key_index: int in range(sequence.size()):
-                var key_value: Variant = sequence[key_index]
-                _press_virtual_key(scene, String(key_value))
-                var expected_state: String = (
-                    "attacktofloor"
-                    if key_index == sequence.size() - 1
-                    else source_state
-                )
-                if player.state != expected_state:
-                    push_error("attacktofloor main input produced the wrong state")
-                    return false
-            if player.state != "attacktofloor":
-                push_error("attacktofloor rejected source state or sequence")
-                return false
+        player._enter_locomotion_state(source_state)
+        brick._enter_locomotion_state("facedownidle")
+        _press_key(scene, KEY_L)
+        if player.state != "attacktofloor":
+            push_error("attacktofloor rejected source state " + source_state)
+            return false
             player._enter_locomotion_state("idle")
 
     # Crossing the damage window in one large step still performs one contact.
     brick._enter_locomotion_state("facedownidle")
     player._enter_locomotion_state("idle")
-    for key_value: Variant in ["b", "c", "c"]:
-        player.record_attack_to_floor_press(String(key_value))
+    player.record_standing_combo_press("c")
     var health: float = brick.health
     player._advance_timed_states(24.01 / PortFighter.SOURCE_FRAME_RATE)
     if absf(brick.health - (health - 6.0)) > 0.001:
@@ -285,8 +273,8 @@ func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter
             )
             saved_clip = player._candidate_clip_paths[missing_key]
             player._candidate_clip_paths.erase(missing_key)
-            if (player.try_attack_to_floor_press("b")
-                    != PortFighter.AttackToFloorInputResult.IGNORED):
+            player.record_standing_combo_press("c")
+            if player.state == "attacktofloor":
                 push_error("attacktofloor accepted a missing clip")
                 return false
             player._candidate_clip_paths[missing_key] = saved_clip
@@ -296,8 +284,7 @@ func _check_attack_to_floor(scene: Node, player: PortFighter, brick: PortFighter
         if is_miss_case:
             _ground_pose_combat_hit_count = 0
             player.combat_hit.connect(_count_ground_pose_combat_hit)
-        for key_value: Variant in ["b", "c", "c"]:
-            player.record_attack_to_floor_press(String(key_value))
+        player.record_standing_combo_press("c")
         if player.state != "attacktofloor":
             push_error("attacktofloor did not start before contact missed: " + case_name)
             return false
@@ -383,66 +370,24 @@ func _check_candidate_visual_blending(player: PortFighter, brick: PortFighter) -
 func _check_attack_to_floor_input_resets(player: PortFighter, brick: PortFighter) -> bool:
     brick._enter_locomotion_state("facedownidle")
     player._enter_locomotion_state("idle")
-    # c/d cannot alias into a later bcc/bdd chain.
-    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.IGNORED:
-        push_error("attacktofloor accepted c as an initial prefix")
+    # A is not the attacktofloor key.
+    player.record_standing_combo_press("a")
+    if player.state == "attacktofloor":
+        push_error("attacktofloor accepted A")
         return false
-    if player.try_attack_to_floor_press("b") != PortFighter.AttackToFloorInputResult.BUFFERED:
-        push_error("attacktofloor did not buffer the valid b prefix")
-        return false
-    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.BUFFERED:
-        push_error("attacktofloor did not buffer the valid bc prefix")
-        return false
-    # This is the regression from subsequence matching: b,c,d,c must not match b,c,c.
-    if player.try_attack_to_floor_press("d") != PortFighter.AttackToFloorInputResult.IGNORED:
-        push_error("attacktofloor did not reject d after the bc prefix")
-        return false
-    if not player._ground_attack_input_history.is_empty():
-        push_error("attacktofloor retained history after a non-prefix input")
-        return false
-    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.IGNORED:
-        push_error("attacktofloor reused history after a non-prefix input")
-        return false
-    if player.state != "idle":
-        push_error("attacktofloor non-prefix input started a state")
-        return false
-
-    player._time = 10.0
-    if player.try_attack_to_floor_press("b") != PortFighter.AttackToFloorInputResult.BUFFERED:
-        push_error("attacktofloor timeout setup did not buffer b")
-        return false
-    player._time += PortFighter.GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS + 0.001
-    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.IGNORED:
-        push_error("attacktofloor reused a timed-out b prefix")
-        return false
-    if player.try_attack_to_floor_press("b") != PortFighter.AttackToFloorInputResult.BUFFERED:
-        push_error("attacktofloor could not restart after a timeout")
-        return false
-    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.BUFFERED:
-        push_error("attacktofloor lost the restarted bc prefix")
-        return false
-    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.STARTED:
-        push_error("attacktofloor rejected the complete sequence after a timeout")
-        return false
-
-    player._enter_locomotion_state("idle")
-    if player.try_attack_to_floor_press("b") != PortFighter.AttackToFloorInputResult.BUFFERED:
-        push_error("attacktofloor state-change setup did not buffer b")
-        return false
-    # Exercise a state change even if a future caller bypasses the conventional
-    # _enter_locomotion_state() history clear.
-    player.state = "idle2"
-    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.IGNORED:
-        push_error("attacktofloor reused history across an idle/idle2 state change")
-        return false
-
-    player._enter_locomotion_state("idle")
-    if player.try_attack_to_floor_press("b") != PortFighter.AttackToFloorInputResult.BUFFERED:
-        push_error("attacktofloor reset setup did not buffer b")
-        return false
+    # C is the native keyboard-layout attacktofloor link.
     player.reset_fighter(Vector3.ZERO)
-    if player.try_attack_to_floor_press("c") != PortFighter.AttackToFloorInputResult.IGNORED:
-        push_error("attacktofloor reused history across reset_fighter")
+    player._enter_locomotion_state("idle")
+    brick._enter_locomotion_state("facedownidle")
+    player.record_standing_combo_press("c")
+    if player.state != "attacktofloor":
+        push_error("attacktofloor did not start on C: " + player.state)
+        return false
+    # reset_fighter() clears the state.
+    player.reset_fighter(Vector3.ZERO)
+    player._enter_locomotion_state("idle")
+    if player.state == "attacktofloor":
+        push_error("attacktofloor survived reset_fighter")
         return false
     return true
 
@@ -612,13 +557,10 @@ func _start_attack_to_floor(player: PortFighter, brick: PortFighter) -> bool:
     brick.reset_fighter(Vector3(0.25, 1.2, 0.0))
     brick._enter_locomotion_state("facedownidle")
     player.facing = 1.0
-    if (player.try_attack_to_floor_press("b")
-            != PortFighter.AttackToFloorInputResult.BUFFERED
-            or player.try_attack_to_floor_press("c")
-            != PortFighter.AttackToFloorInputResult.BUFFERED
-            or player.try_attack_to_floor_press("c")
-            != PortFighter.AttackToFloorInputResult.STARTED):
-        push_error("attacktofloor validation setup did not start")
+    # Native keyboard layout: C is the single-key attacktofloor link.
+    player.record_standing_combo_press("c")
+    if player.state != "attacktofloor":
+        push_error("attacktofloor validation setup did not start: " + player.state)
         return false
     player._attack_connected = false
     return true

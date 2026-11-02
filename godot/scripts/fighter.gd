@@ -232,7 +232,6 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
     "strength": "normal", "height": "low", "direction": "frontal",
     "body_part": "lleg", "attack_radius": ATTACK_TO_FLOOR_RADIUS,
 }
-const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
 # Link input follows the decompiled CFighter::UserControlUpdate model: events
 # stay in a queue with a consumed bit, and every physics update re-evaluates
 # each link against the current animation's frame window. There is no
@@ -660,11 +659,6 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
     },
 }
 
-enum AttackToFloorInputResult {
-    IGNORED,
-    BUFFERED,
-    STARTED,
-}
 
 enum AttackToFloorSequenceMatch {
     NO_MATCH,
@@ -3420,6 +3414,9 @@ func _try_follow_links() -> bool:
             continue
         var consume_all: bool = _link_text(link, "input_reset") == "true"
         if target == "attacktofloor":
+            if (not _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP)
+                    or not _candidate_clip_paths.has(IDLE2_CLIP)):
+                continue
             _consume_link_events(link)
             if consume_all:
                 _clear_link_events()
@@ -3532,92 +3529,6 @@ func _prune_ground_attack_input_history() -> void:
     var last_time: float = float(_ground_attack_input_history.back()["time"])
     if _time > last_time + GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS:
         _clear_ground_attack_input_history()
-
-
-func try_attack_to_floor_press(
-        virtual_key: String
-) -> AttackToFloorInputResult:
-    # Prototype-only mapping for recovered b/c/d sequences. Native key status,
-    # source-frame clocks, link order and deferred third-value timing remain unverified.
-    if (state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]
-            or attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            or virtual_key not in ["b", "c", "d"]):
-        _clear_ground_attack_input_history()
-        return AttackToFloorInputResult.IGNORED
-    if state in ["startup", "active", "recovery"]:
-        # candobasicattacks links can select attacktofloor from a current
-        # group member window; Heavy has no recovered window and stays closed.
-        if (attack_kind == "heavy"
-                or not CANDOBASICATTACK_WINDOWS.has(attack_kind)
-                or not _candobasicattack_window_contains_current_frame()):
-            _clear_ground_attack_input_history()
-            return AttackToFloorInputResult.IGNORED
-    if (not _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP)
-            or not _candidate_clip_paths.has(IDLE2_CLIP)):
-        _clear_ground_attack_input_history()
-        return AttackToFloorInputResult.IGNORED
-    if opponent == null or not is_instance_valid(opponent) or opponent.current_source_pose() != "laying":
-        _clear_ground_attack_input_history()
-        return AttackToFloorInputResult.IGNORED
-    _prune_ground_attack_input_history()
-    var input_owner: String = (
-        "attacktofloor:attack:" + attack_kind + ":" + str(attack_sequence)
-        if state in ["startup", "active", "recovery"]
-        else "attacktofloor:" + state
-    )
-    if _ground_attack_input_owner != input_owner:
-        _clear_ground_attack_input_history()
-        _ground_attack_input_owner = input_owner
-    _ground_attack_input_history.append({"key": virtual_key, "time": _time})
-    var match_state: AttackToFloorSequenceMatch = _specific_sequence_match_state(
-        ATTACK_TO_FLOOR_SEQUENCES
-    )
-    if match_state == AttackToFloorSequenceMatch.COMPLETE:
-        _begin_attack_to_floor()
-        return AttackToFloorInputResult.STARTED
-    if match_state == AttackToFloorSequenceMatch.PREFIX:
-        return AttackToFloorInputResult.BUFFERED
-    # A non-prefix input discards the whole chain. A leading b can begin a new
-    # chain; c/d falls back to their ordinary input path.
-    _clear_ground_attack_input_history()
-    if virtual_key == "b":
-        _ground_attack_input_owner = input_owner
-        _ground_attack_input_history.append({"key": "b", "time": _time})
-        return AttackToFloorInputResult.BUFFERED
-    return AttackToFloorInputResult.IGNORED
-
-
-func _specific_sequence_match_state(sequences: Array) -> AttackToFloorSequenceMatch:
-    if _ground_attack_input_history.is_empty():
-        return AttackToFloorSequenceMatch.NO_MATCH
-    var observed: Array[String] = []
-    for event_value: Variant in _ground_attack_input_history:
-        if not event_value is Dictionary:
-            return AttackToFloorSequenceMatch.NO_MATCH
-        var event: Dictionary = event_value
-        observed.append(String(event.get("key", "")))
-    var has_prefix: bool = false
-    for sequence_value: Variant in sequences:
-        var sequence: Array = sequence_value
-        if observed.size() > sequence.size():
-            continue
-        var matches_prefix: bool = true
-        for index: int in range(observed.size()):
-            if observed[index] != String(sequence[index]):
-                matches_prefix = false
-                break
-        if not matches_prefix:
-            continue
-        if observed.size() == sequence.size():
-            return AttackToFloorSequenceMatch.COMPLETE
-        has_prefix = true
-    if has_prefix:
-        return AttackToFloorSequenceMatch.PREFIX
-    return AttackToFloorSequenceMatch.NO_MATCH
-
-
-func record_attack_to_floor_press(virtual_key: String) -> bool:
-    return try_attack_to_floor_press(virtual_key) == AttackToFloorInputResult.STARTED
 
 
 func _begin_attack_to_floor() -> void:

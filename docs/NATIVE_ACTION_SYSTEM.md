@@ -51,8 +51,18 @@
 表里不含那条低阶 link。下一步必须先恢复 `ParseFromKDF` 里这份目标名字向量，
 再按每动画表过滤，不能再用全局顺序或自定优先级硬修。
 
-三段 `startup/active/recovery` 状态机、地面攻击和 parry 输入仍是原型实现，
-尚未换成 link 数据驱动的状态进入。
+**attacktofloor 输入已改成原生 link（第 10 轮）**
+- 删除了 `try_attack_to_floor_press`、`AttackToFloorInputResult`、
+  `ATTACK_TO_FLOOR_SEQUENCES` 和 `_ground_attack_input_history` 里对应的
+  原型路径；`main.gd` 的 b/c/d 不再拦截
+- 键盘布局索引 1 下，`candobasicattacks -> attacktofloor` 的序列是单键
+  `c`（C 键），条件 `oppposelaying`，窗口按当前动作的
+  `candobasicattacks` 组
+- `validate_ground_pose`、`validate_attacktofloor_from_parry`、
+  `validate_brick_facedown_impact` 已改成单键 C 驱动
+
+三段 `startup/active/recovery` 状态机、facedown/faceup 的
+`record_virtual_press` 输入和 parry 输入仍是原型实现，尚未换成 link 数据驱动。
 
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的
