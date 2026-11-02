@@ -43,6 +43,7 @@ var _voice_audio_error: Dictionary = {}
 var _active_voice: AudioStreamPlayer = null
 var _music_player: AudioStreamPlayer = null
 var _music_stream: AudioStream = null
+var _music_streams: Dictionary = {}
 var _result_audio: Dictionary = {}
 var _result_player: AudioStreamPlayer = null
 var ai_timer: float = 0.0
@@ -391,6 +392,7 @@ func _should_show_main_menu() -> bool:
     return not OS.has_feature("editor")
 
 func _open_main_menu() -> void:
+    _play_music("menu")
     main_menu_active = true
     menu_paused = false
     player.move_axis = Vector2.ZERO
@@ -415,6 +417,8 @@ func _leave_menu() -> void:
     get_tree().paused = false
 
 func _on_menu_command(command: String) -> void:
+    if command in ["fight", "training", "move_training", "gallery"]:
+        _play_music("fight")
     match command:
         "fight":
             training_mode = false
@@ -504,23 +508,39 @@ func _load_menu_music() -> void:
         roots.append(local_app_data.path_join(
             "BruceLee-PC-Port/bruce-music-20261103"
         ))
+    _music_streams.clear()
     for root: String in roots:
-        var path: String = root.path_join("Main_Theme_BL.wav")
-        if not FileAccess.file_exists(path):
-            continue
-        var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
-        if stream == null:
-            continue
-        stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-        stream.loop_end = int(stream.get_length() * float(stream.mix_rate))
-        _music_stream = stream
-        _music_player = AudioStreamPlayer.new()
-        _music_player.stream = stream
-        _music_player.volume_db = -12.0
-        _music_player.finished.connect(_music_player.play)
-        combat_audio.add_child(_music_player)
-        _music_player.play()
+        for key: String in ["menu", "fight"]:
+            var filename: String = (
+                "Main_Theme_BL.wav" if key == "menu" else "Tournament_Day_BL.wav"
+            )
+            var path: String = root.path_join(filename)
+            if not FileAccess.file_exists(path):
+                continue
+            var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
+            if stream == null:
+                continue
+            stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+            stream.loop_end = int(stream.get_length() * float(stream.mix_rate))
+            _music_streams[key] = stream
+    if _music_streams.is_empty():
         return
+    _music_player = AudioStreamPlayer.new()
+    _music_player.volume_db = -12.0
+    _music_player.finished.connect(_music_player.play)
+    combat_audio.add_child(_music_player)
+    _play_music("menu")
+
+
+func _play_music(key: String) -> void:
+    if _music_player == null or not _music_streams.has(key):
+        return
+    var stream: AudioStream = _music_streams[key]
+    if _music_player.stream == stream and _music_player.playing:
+        return
+    _music_stream = stream
+    _music_player.stream = stream
+    _music_player.play()
 
 
 func _load_result_audio() -> void:
