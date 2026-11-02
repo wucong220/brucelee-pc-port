@@ -421,7 +421,8 @@ func _build_original_far_scene() -> void:
             continue
         var entry: Dictionary = entry_value
         var entry_name: String = String(entry.get("name", ""))
-        if "skydome" in entry_name:
+        if "skydome" in entry_name or (
+                _scene_variant() == "templeyardb" and "bigtemple" in entry_name):
             continue
         var glb_path: String = base.path_join(String(entry.get("file", "")))
         if not FileAccess.file_exists(glb_path):
