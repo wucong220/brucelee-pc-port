@@ -1181,6 +1181,8 @@ var _link_events: Array[Dictionary] = []
 var _native_actions: Dictionary = {}
 var _native_reactions: Dictionary = {"hit": [], "block": []}
 var _native_links: Array = []
+var _link_scan_action: String = ""
+var _link_scan_previous_frame: float = -1.0
 var _action_to_attack: Dictionary = {}
 var _key_status: Dictionary = {}
 var last_reaction_group: String = ""
@@ -3233,7 +3235,7 @@ func link_requirements_for_target(target_kind: String) -> Dictionary:
     return result
 
 
-func _native_link_window_ok(link: Dictionary) -> bool:
+func _native_link_window_ok(link: Dictionary, previous_frame: float = -1.0) -> bool:
     if state in ["idle", "idle2", "idle3", "facedownidle", "faceupidle"]:
         return true
     var window: Array = _native_link_window(link)
@@ -3249,6 +3251,12 @@ func _native_link_window_ok(link: Dictionary) -> bool:
     var linking_frame: int = int(link.get("linking_frame", 0))
     if linking_frame > 0 and frame + 0.0001 < float(linking_frame):
         return false
+    # A large physics delta can jump over a 2-3 frame automatic link window.
+    # Treat the interval [previous_frame, frame] as open if it overlaps the
+    # native window, instead of requiring the post-step frame to be inside it.
+    if previous_frame >= 0.0:
+        return (previous_frame <= end + 0.0001
+                and frame + 0.0001 >= start)
     return frame + 0.0001 >= start and frame <= end + 0.0001
 
 
@@ -3470,12 +3478,19 @@ func _try_follow_links() -> bool:
             "facedownidle", "faceupidle"]:
         return false
     _expire_link_events()
+    var scan_action: String = _current_action_name()
+    var scan_frame: float = _current_attack_source_frame()
+    if scan_action != _link_scan_action:
+        _link_scan_previous_frame = -1.0
+    var previous_scan_frame: float = _link_scan_previous_frame
+    _link_scan_action = scan_action
+    _link_scan_previous_frame = scan_frame
     for link: Dictionary in _native_links:
         if not _native_link_applies(link):
             continue
         if not _native_link_unique_ok(link):
             continue
-        if not _native_link_window_ok(link):
+        if not _native_link_window_ok(link, previous_scan_frame):
             continue
         if not _link_sequence_matches(link):
             continue
