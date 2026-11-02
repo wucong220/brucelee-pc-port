@@ -2467,8 +2467,10 @@ func _enter_locomotion_state(next_state: String, start_frame: int = 0) -> void:
             and _candidate_animation != null
             and _candidate_animation.is_playing()):
         _queue_candidate_visual_blend(
-            float(CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES)
-                    / SOURCE_FRAME_RATE
+            float(_native_link_blending_from(
+                        "attacktofloor", "idle2",
+                        CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES
+                    )) / SOURCE_FRAME_RATE
         )
     else:
         _restart_candidate_action()
@@ -3604,7 +3606,7 @@ func _begin_attack_to_floor() -> void:
             and _candidate_animation != null
             and _candidate_animation.is_playing()):
         _queue_candidate_visual_blend(
-            float(CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES) / SOURCE_FRAME_RATE
+            float(_native_link_blending_to("attacktofloor", CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES)) / SOURCE_FRAME_RATE
         )
     else:
         _restart_candidate_action()
@@ -3836,6 +3838,28 @@ func _begin_chained_attack(
     if blend_frames > 0:
         _queue_candidate_visual_blend(float(blend_frames) / SOURCE_FRAME_RATE)
     attack_started.emit(kind)
+
+
+func _native_link_blending_to(target_action: String, fallback: int) -> int:
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != target_action:
+            continue
+        var blending: int = int(link.get("blending", 0))
+        if blending > 0:
+            return blending
+    return fallback
+
+
+func _native_link_blending_from(source_action: String, target_action: String, fallback: int) -> int:
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != source_action:
+            continue
+        if _link_text(link, "to") != target_action:
+            continue
+        var blending: int = int(link.get("blending", 0))
+        if blending > 0:
+            return blending
+    return fallback
 
 
 func _native_entry_frame(target_action: String, fallback: int) -> int:
@@ -4805,8 +4829,10 @@ func receive_hit(
                 and _candidate_animation != null
                 and _candidate_animation.is_playing()):
             _queue_candidate_visual_blend(
-                float(CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES)
-                        / SOURCE_FRAME_RATE
+                float(_native_link_blending_from(
+                    "facedownidle", "impactfacedown",
+                    CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES
+                )) / SOURCE_FRAME_RATE
             )
         else:
             _restart_candidate_action()
