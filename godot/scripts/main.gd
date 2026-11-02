@@ -405,8 +405,6 @@ func _build_original_far_scene() -> void:
         var entry_name: String = String(entry.get("name", ""))
         if entry_name in [
             "bl_scene02a_hw_skydome",
-            "bl_scene02a_hw_alphagroup_foliage",
-            "bl_scene02a_hw_alphagroup_grass",
             "bl_scene02a_hw_prop_redgate",
         ]:
             continue
@@ -435,6 +433,9 @@ func _build_original_far_scene() -> void:
                     material.albedo_color = Color.WHITE
                     material.roughness = 0.95
                     _far_scene_texture_count += 1
+        if "alphagroup" in entry_name:
+            material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+            material.alpha_scissor_threshold = 0.5
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             (mesh_node as MeshInstance3D).material_override = material
         root.add_child(instance)
