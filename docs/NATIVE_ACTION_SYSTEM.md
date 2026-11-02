@@ -140,6 +140,12 @@ reaction clip；没有原生条目/片段时仍回退到 `REACTION_PROFILES`。�
 `validate_native_reactions.gd` 验证 hard/high/frontal 命中会选中
 `impacthardfronthigh`（`all_impct_hard_frnt_high`）。
 
+**第 28 轮补充**：stun 链的时长也改成读原生 link 窗口。`stun→stun2` 和
+`stun2→stunfall` 都是 `[55,61]`，`stunfall→faceupko` 是 `[71,79]`；
+`_stun_step_seconds()` 用这些窗口起点计算状态时长，常量 55/71 只作回退。
+顺带修正旧代码把 `stun2` 时长写成 71（应为 55）的偏差。
+`tests/test_stun_chain_frames.py` 锁定常量与 link 窗口一致。
+
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的
 方向/特殊招测试已删除——它们验证的是被删掉的队列/时间窗语义，不再适用。

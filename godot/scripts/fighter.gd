@@ -2531,12 +2531,22 @@ func _verified_post_hit_return_state() -> String:
     return "idle"
 
 
+func _stun_step_seconds(source: String, target: String, fallback_frames: int) -> float:
+    # Duration of a stun state comes from its outgoing link window start.
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") == source and _link_text(link, "to") == target:
+            var window: Array = Array(link.get("time", []))
+            if not window.is_empty():
+                return float(window[0]) / SOURCE_FRAME_RATE
+    return float(fallback_frames) / SOURCE_FRAME_RATE
+
+
 func _advance_impactstun_state(delta: float) -> void:
     state_time -= delta
     if state_time > 0.000001:
         return
     state = "stun"
-    state_time = float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+    state_time = _stun_step_seconds("stun", "stun2", STUN_DURATION_FRAMES)
 
 
 func _advance_stun_state(delta: float) -> void:
@@ -2545,10 +2555,10 @@ func _advance_stun_state(delta: float) -> void:
         return
     if state == "stun":
         state = "stun2"
-        state_time = float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+        state_time = _stun_step_seconds("stun", "stun2", STUN_DURATION_FRAMES)
     elif state == "stun2":
         state = "stunfall"
-        state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
+        state_time = _stun_step_seconds("stun2", "stunfall", STUN_DURATION_FRAMES)
     else:
         _begin_faceup_ko(0.0)
 
@@ -2559,7 +2569,7 @@ func _advance_stun_impact_state(delta: float) -> void:
         return
     if _stun_impact_next_state == "stunfall":
         state = "stunfall"
-        state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
+        state_time = _stun_step_seconds("stunfall", "faceupko", STUN_FALL_DURATION_FRAMES)
     elif _stun_impact_next_state == "faceupko":
         _begin_faceup_ko(0.0)
     elif _stun_impact_next_state == "facedownko":
