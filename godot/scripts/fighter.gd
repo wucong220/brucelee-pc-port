@@ -103,9 +103,6 @@ const BRICK_CLIPS: Dictionary = {
 const SOURCE_FRAME_RATE: float = 30.0
 const SOURCE_CHARACTER_HEIGHT: float = CANDIDATE_SOURCE_HEIGHT
 const WORLD_CHARACTER_HEIGHT: float = CANDIDATE_HEIGHT
-const CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES: int = 6
-const CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES: int = 10
-const CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES: int = 6
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
@@ -2469,7 +2466,7 @@ func _enter_locomotion_state(next_state: String, start_frame: int = 0) -> void:
         _queue_candidate_visual_blend(
             float(_native_link_blending_from(
                         "attacktofloor", "idle2",
-                        CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES
+                        0
                     )) / SOURCE_FRAME_RATE
         )
     else:
@@ -3606,7 +3603,7 @@ func _begin_attack_to_floor() -> void:
             and _candidate_animation != null
             and _candidate_animation.is_playing()):
         _queue_candidate_visual_blend(
-            float(_native_link_blending_to("attacktofloor", CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES)) / SOURCE_FRAME_RATE
+            float(_native_link_blending_to("attacktofloor", 0)) / SOURCE_FRAME_RATE
         )
     else:
         _restart_candidate_action()
@@ -4831,7 +4828,7 @@ func receive_hit(
             _queue_candidate_visual_blend(
                 float(_native_link_blending_from(
                     "facedownidle", "impactfacedown",
-                    CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES
+                    0
                 )) / SOURCE_FRAME_RATE
             )
         else:
