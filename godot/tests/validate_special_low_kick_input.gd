@@ -26,6 +26,10 @@ func _run() -> void:
             index = i
     training._start_at(index)
     Input.action_press(Controls.MOVE_DOWN)
+    for _hold: int in range(60):
+        scene._physics_process(1.0 / 60.0)
+        player._physics_process(1.0 / 60.0)
+        training._process(1.0 / 60.0)
     Input.action_press(Controls.MOVE_RIGHT)
     player.record_standing_combo_press("right")
     player.record_standing_combo_press("d")

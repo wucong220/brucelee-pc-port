@@ -1162,6 +1162,7 @@ var is_player: bool = true
 var health: float = MAX_HEALTH
 var move_axis: Vector2 = Vector2.ZERO
 var polar_movement_enabled: bool = false
+var training_step_lock: bool = false
 var held_directions: Dictionary = {}
 var guard_held: bool = false
 var opponent: PortFighter
@@ -3731,7 +3732,9 @@ func _physics_process(delta: float) -> void:
             and not _attack_connected):
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
-    if _uses_standing_idle_rules() and not guard_held:
+    if training_step_lock:
+        motion = Vector3.ZERO
+    elif _uses_standing_idle_rules() and not guard_held:
         motion = (_polar_movement(BASE_SPEED) if polar_movement_enabled
                 else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED)
     elif _uses_standing_idle_rules() and guard_held:
