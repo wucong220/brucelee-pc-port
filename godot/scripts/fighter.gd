@@ -3259,8 +3259,8 @@ func _try_follow_links() -> bool:
     if cost > 0.0:
         rage = maxf(0.0, rage - cost)
     _consume_link_events(best)
-    # The native +0xe0 flag consumes the whole event vector after a link.
-    _clear_link_events()
+    # Native ConsumeEvents marks only the matched events. Link +0xe0 (whole
+    # vector) is not in the current link table yet, so unmatched events stay.
     _begin_chained_attack(target)
     return true
 
@@ -3653,6 +3653,7 @@ func _begin_chained_attack(kind: String) -> void:
     _attack_hit_landed = false
     _grab_connected = false
     _endattack_victim_started = false
+    _multi_impact_applied.clear()
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
     _seed_attack_root_motion()
