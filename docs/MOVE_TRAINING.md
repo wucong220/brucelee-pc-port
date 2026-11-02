@@ -26,14 +26,14 @@ QUIT GAME
 
 ## 目录
 
-`godot/data/move_training_catalog.json` 共 26 项，按逻辑招式分组：
+`godot/data/move_training_catalog.json` 共 27 项，按逻辑招式分组：
 
 - BASIC 4
 - COMBO 8
 - SPECIAL 4
 - DEFENSE 3
 - GRAB 4
-- GROUND 2
+- GROUND 3（含 faceupattack）
 - BASIC/HEAVY 1
 
 `special_kick_low`、`special_punch_low`、`special_punch_high` 只列出命中动作，

@@ -7,13 +7,13 @@ CATALOG = ROOT / "godot" / "data" / "move_training_catalog.json"
 PLAYER_CONFIG = ROOT / "godot" / "data" / "fighting_set_low_attacks.json"
 
 SUCCESS = {"hit", "parry", "started"}
-EXTRA_ATTACK_ACTIONS = {"attacktofloor", "facedownattack", "heavy"}
+EXTRA_ATTACK_ACTIONS = {"attacktofloor", "facedownattack", "faceupattack", "heavy"}
 SETUPS = {
     "idle", "source_punch", "source_kick", "source_high_punch",
     "source_high_kick", "source_high_punch2", "source_low_punch2",
     "source_low_kick2", "source_high_kick2", "source_high_punch3",
     "parry_high", "parry_low", "parry_attack",
-    "endattack1", "endattack2", "target_down", "player_down",
+    "endattack1", "endattack2", "target_down", "player_down", "player_faceup",
 }
 
 
@@ -24,7 +24,7 @@ class MoveTrainingCatalogTest(unittest.TestCase):
         self.attacks = json.loads(PLAYER_CONFIG.read_text(encoding="utf-8"))["attacks"]
 
     def test_catalog_is_sequential_and_unique(self):
-        self.assertEqual(len(self.entries), 26)
+        self.assertEqual(len(self.entries), 27)
         ids = [entry["id"] for entry in self.entries]
         self.assertEqual(len(ids), len(set(ids)))
         groups = [entry["group"] for entry in self.entries]

@@ -31,7 +31,7 @@ func _run() -> void:
         push_error("Move training catalog did not load")
         quit(1)
         return
-    if training.entries.size() != 26:
+    if training.entries.size() != 27:
         push_error("Move training catalog size is " + str(training.entries.size()))
         quit(1)
         return
