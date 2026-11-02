@@ -694,7 +694,7 @@ func _think_ai(delta: float) -> void:
         ai_timer = rng.randf_range(0.45, 0.95)
         if in_attack_reach:
             var moves: Array[String] = [
-                "punch", "kick", "heavy",
+                "punch", "kick",
                 "high_punch", "high_punch2", "high_punch3",
                 "low_punch", "low_punch2", "low_punch3",
                 "high_kick", "high_kick2", "high_kick3",

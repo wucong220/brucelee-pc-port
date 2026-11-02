@@ -461,7 +461,7 @@ func _on_combat_hit(
     var actions: Array = entry.get("actions", [])
     if action in actions:
         _success()
-    elif action in ["punch", "kick", "high_punch", "high_kick", "heavy"]:
+    elif action in ["punch", "kick", "high_punch", "high_kick"]:
         return
 
 

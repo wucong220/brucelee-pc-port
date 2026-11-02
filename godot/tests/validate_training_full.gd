@@ -26,7 +26,6 @@ const SEQUENCES: Dictionary = {
     "attacktofloor": [["b"], ["c"], ["c"]],
     "facedownattack": [["a"], ["a"], ["a"]],
     "faceupattack": [["a"], ["a"], ["a"]],
-    "heavy": [["c"]],
 }
 
 func _initialize() -> void:

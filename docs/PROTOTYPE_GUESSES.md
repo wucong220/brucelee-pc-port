@@ -16,7 +16,7 @@
 | 5 | 每次按键入队、目标排最后 | `fighter.gd::request_attack_or_queue` / `_try_begin_pending_standing_combo` | 自创 | 原版是 `InputSequenceCheck → FollowLink → ConsumeEvents` 的事件消费模型，不是 FIFO 攻击队列 |
 | 6 | 招架 = 0.5s 内按三次 Shift | `fighter.gd::record_parry_press` | 候选 | 三连按与 0.5s 窗口没有原生证据 |
 | 7 | 地面攻击输入 `aaa/abb/bcc/bdd`、`K,L,L`/`K,U,U` | `fighter.gd` 地面序列 / `main.gd` | 候选 | 原版 keysequence 数据存在，PC 物理键映射是原型选择 |
-| 8 | Heavy 作为无来源独立招式 | `fighter.gd` `heavy` 元数据 | 自创 | 注释已写 "No recovered fighting-set mapping for this prototype attack yet" |
+| 8 | Heavy 作为无来源独立招式 | `fighter.gd` `heavy` 元数据 | 已删除（第 17 轮） | 原注释即写 "No recovered fighting-set mapping for this prototype attack yet"；数据里没有 heavy，已从代码、AI、训练、测试中移除 |
 | 9 | 抓取距离 0.7 | `PROTOTYPE_GRAB_DISTANCE` | 自创 | 原版 grabdistance 语义未闭合 |
 | 10 | 怒气消耗 33/66 | `SPECIAL_RAGE_COSTS` / `PARRY_RAGE_COSTS` | 自创 | 注释已写 "Prototype meter" |
 

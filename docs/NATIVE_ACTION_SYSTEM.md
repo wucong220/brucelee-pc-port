@@ -51,8 +51,7 @@
 把 `special_punch_low/high` 的前置改成 `high_punch2` 后，15、16 通过；
 `grab1/grab2` 用 `stepright`/`stepleft` 前置也通过。26 课现在全部 PASS。
 
-`heavy` 没有原生 link，已从训练与招式欣赏目录移除（26 项），自由对战里仍是
-回退攻击，等找到原生入口再处理。动画 `ordinal` 不是连招顺序
+`heavy` 数据里根本不存在，第 17 轮已从代码、AI 出招表、训练和测试中完全删除。动画 `ordinal` 不是连招顺序
 （`lowpunch1=22`、`highpunch1=13`），不能用它做过滤。
 
 **attacktofloor 输入已改成原生 link（第 10 轮）**
@@ -87,7 +86,7 @@
   （攻击起手那一帧），不再用 startup/active 的宽泛近似
 - 原生没有 `parry_low`；训练和招式目录已移除该课，现有 25 项
 
-三段 `startup/active/recovery` 状态机仍是原型实现；`heavy` 仍无原生 link。
+三段 `startup/active/recovery` 状态机仍是原型实现。
 
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的

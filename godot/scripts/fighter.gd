@@ -27,7 +27,6 @@ const CANDIDATE_CLIPS: Dictionary = {
     "special_kick_high": "m01_kck_front_step",
     "high_punch2": "m01_pnch_high_02",
     "low_punch2": "m01_pnch_low_02",
-    "heavy": "m01_kick_high_01",
     "high_kick2": "m01_kick_high_02",
     "low_kick2": "m01_kick_low_02",
     "special_kick_low_miss": "m01_sp_kick_low_fail",
@@ -110,11 +109,6 @@ const CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES: int = 6
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
-const HEAVY_ATTACK: Dictionary = {
-    # No recovered fighting-set mapping for this prototype attack yet.
-    "startup": 0.33, "active": 0.10, "recovery": 0.42,
-    "range": 1.85, "damage": 19.0, "push": 0.55,
-}
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
 const BRICK_ATTACK_CONFIG_PATH: String = "res://data/fighting_set_m03_mapped_attacks.json"
 const ATTACK_ROOT_MOTION_PATH: String = "res://data/attack_root_motion.json"
@@ -1438,7 +1432,6 @@ func _load_attack_definitions() -> bool:
     var loaded: Dictionary = _parse_attack_config(parsed)
     if loaded.is_empty():
         return false
-    loaded["heavy"] = HEAVY_ATTACK
     ATTACKS = loaded
     return true
 
@@ -2060,7 +2053,7 @@ func _try_load_candidate_visual() -> void:
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2",
             "endattack1", "endattack2", "stun", "stun_fall",
-            "stun_hard", "stun_brutal", "heavy",
+            "stun_hard", "stun_brutal",
             "move", "moveleft", "moveright", "stepfwd", "stepback",
             "stepleft", "stepright"]:
         if not candidate_clips.has(action):
@@ -2464,11 +2457,6 @@ func supports_attack(kind: String) -> bool:
     if not ATTACKS.has(kind):
         return false
     if candidate_loaded and not _candidate_clip_paths.has(kind):
-        # Heavy has no separate recovered animation; its visual path reuses kick.
-        if (kind == "heavy"
-                and attack_config_path != BRICK_ATTACK_CONFIG_PATH
-                and _candidate_clip_paths.has("kick")):
-            return true
         return false
     return true
 
@@ -2951,8 +2939,6 @@ func _accepts_link_input(virtual_key: String) -> bool:
             or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery",
                 "facedownidle", "faceupidle"]):
         return false
-    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
-        return false
     return true
 
 
@@ -3044,8 +3030,6 @@ func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
 
 func _current_attack_source_frame() -> float:
     if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
-        return -1.0
-    if attack_kind == "heavy":
         return -1.0
     var details: Dictionary = ATTACKS[attack_kind]
     var remaining_frames: float = state_time * SOURCE_FRAME_RATE
@@ -3327,8 +3311,6 @@ func _try_follow_links() -> bool:
     if state not in ["idle", "idle2", "idle3", "startup", "active", "recovery",
             "facedownidle", "faceupidle"]:
         return false
-    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
-        return false
     _expire_link_events()
     for link: Dictionary in _native_links:
         if not _native_link_applies(link):
@@ -3448,7 +3430,7 @@ func _load_native_links() -> void:
             _action_to_attack[source_action] = kind
     # These actions are code-defined in the port and have no low-attacks JSON
     # source_action; their native action name is the attack kind itself.
-    for alias: String in ["facedownattack", "faceupattack", "attacktofloor", "heavy"]:
+    for alias: String in ["facedownattack", "faceupattack", "attacktofloor"]:
         if ATTACKS.has(alias) and not _action_to_attack.has(alias):
             _action_to_attack[alias] = alias
 
@@ -3461,7 +3443,7 @@ func _candidate_action_for_attack(kind: String) -> String:
     match kind:
         "punch":
             return "punch"
-        "kick", "heavy":
+        "kick":
             return "kick"
         "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick", "grab1_miss_brick", "grab2_miss_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattack1", "endattack2":
             return kind
@@ -3940,13 +3922,8 @@ func current_source_animation() -> String:
     if (state in ["hitstun", "blockstun"]
             and not last_reaction_animation.is_empty()):
         return last_reaction_animation
-    if (state in ["startup", "active", "recovery"]
-            and attack_kind != "heavy" and ATTACKS.has(attack_kind)):
+    if state in ["startup", "active", "recovery"] and ATTACKS.has(attack_kind):
         return String(ATTACKS[attack_kind]["animation"])
-    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
-        if _candidate_clip_paths.has("heavy"):
-            return String(candidate_clips.get("heavy", CANDIDATE_CLIPS["kick"]))
-        return String(candidate_clips.get("kick", CANDIDATE_CLIPS["kick"]))
     if state in ["stun", "stun2"]:
         return STUN_CLIP
     if state == "stunfall":
@@ -4655,8 +4632,6 @@ func _animate_candidate() -> void:
     if state in ["startup", "active", "recovery"]:
         if attack_kind == "punch":
             requested = "punch"
-        elif attack_kind == "heavy":
-            requested = "heavy" if _candidate_clip_paths.has("heavy") else "kick"
         elif attack_kind == "kick":
             requested = "kick"
         elif attack_kind in ["high_punch", "high_kick", "low_punch", "low_kick",
