@@ -245,6 +245,10 @@ func _run_export_self_test() -> void:
         "result_audio_loaded": _result_audio.size(),
         "menu_background_loaded": prototype_menu != null and prototype_menu.background_loaded,
         "menu_accept_sfx_loaded": prototype_menu != null and prototype_menu.accept_sfx != null,
+        "scene_prop_count": (
+            get_node_or_null("OriginalSceneProps").get_child_count()
+            if get_node_or_null("OriginalSceneProps") != null else 0
+        ),
         "opponent_candidate_loaded": computer.candidate_loaded,
         "opponent_idle_clip": opponent_idle_clip,
         "opponent_textures_loaded": computer.candidate_textures_loaded,
