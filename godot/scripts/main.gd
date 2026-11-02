@@ -244,37 +244,10 @@ func _build_environment() -> void:
     fight_camera.current = true
     add_child(fight_camera)
     fight_camera.look_at(Vector3(0.0, 1.1, 0.0), Vector3.UP)
-    _try_add_local_background()
     _make_floor()
-    _make_arena_line(-7.0)
-    _make_arena_line(7.0)
+    _make_arena_line(-PortFighter.ARENA_HALF_X)
+    _make_arena_line(PortFighter.ARENA_HALF_X)
 
-func _try_add_local_background() -> void:
-    var image_path: String = OS.get_environment("BRUCELEE_BACKGROUND_PATH")
-    if image_path.is_empty():
-        var local_app_data: String = OS.get_environment("LOCALAPPDATA")
-        if local_app_data.is_empty():
-            return
-        image_path = local_app_data.path_join(
-            "BruceLee-PC-Port/local-assets/sprites/background.png"
-        )
-    var image: Image = Image.new()
-    if image.load(image_path) != OK:
-        return
-    var texture: ImageTexture = ImageTexture.create_from_image(image)
-    var quad: QuadMesh = QuadMesh.new()
-    quad.size = Vector2(15.0, 7.5)
-    var backdrop: MeshInstance3D = MeshInstance3D.new()
-    backdrop.name = "LocalOriginalBackground"
-    backdrop.mesh = quad
-    backdrop.position = Vector3(0.0, 3.45, -3.9)
-    var material: StandardMaterial3D = StandardMaterial3D.new()
-    material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-    material.albedo_texture = texture
-    material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-    material.cull_mode = BaseMaterial3D.CULL_DISABLED
-    backdrop.material_override = material
-    add_child(backdrop)
 
 func _make_floor() -> void:
     var floor: StaticBody3D = StaticBody3D.new()
@@ -284,7 +257,7 @@ func _make_floor() -> void:
     floor.position = Vector3(0.0, -0.22, 0.0)
     var shape: CollisionShape3D = CollisionShape3D.new()
     var box: BoxShape3D = BoxShape3D.new()
-    box.size = Vector3(15.0, 0.45, 8.0)
+    box.size = Vector3(PortFighter.ARENA_HALF_X * 2.0, 0.45, PortFighter.ARENA_HALF_Z * 2.0)
     shape.shape = box
     floor.add_child(shape)
     var visual: MeshInstance3D = MeshInstance3D.new()
@@ -300,7 +273,7 @@ func _make_floor() -> void:
 func _make_arena_line(x: float) -> void:
     var visual: MeshInstance3D = MeshInstance3D.new()
     var mesh: BoxMesh = BoxMesh.new()
-    mesh.size = Vector3(0.05, 0.02, 7.0)
+    mesh.size = Vector3(0.05, 0.02, PortFighter.ARENA_HALF_Z * 2.0 - 1.0)
     visual.mesh = mesh
     visual.position = Vector3(x, 0.02, 0.0)
     var material: StandardMaterial3D = StandardMaterial3D.new()

@@ -255,6 +255,10 @@ const LINK_SEQUENCE_INDEX: int = 1
 # CFighter::CheckConditions @0x1b3db0 compares fighter+0x14c (rage) with
 # <100 / <0x42(66) / <0x21(33) for MaxRage/Rage2Thirds/RageThird.
 const RAGE_MAX: float = 100.0
+# PC arena footprint. The original arena dimensions are not recovered; this is
+# a larger prototype stage so the relative-camera orbit has room to move.
+const ARENA_HALF_X: float = 12.0
+const ARENA_HALF_Z: float = 7.0
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
 # Source windows: stun->stun2 and stun2->stunfall [55,61]; stunfall->faceupko [71,79].
@@ -1325,8 +1329,8 @@ func _apply_attack_root_motion() -> void:
     var delta: Vector3 = current - _attack_root_previous_value
     if delta.length_squared() > 0.0:
         var motion: Vector3 = _root_motion_delta_to_pc_world(delta, animation_name)
-        position.x = clampf(position.x + motion.x, -6.8, 6.8)
-        position.z = clampf(position.z + motion.z, -3.0, 3.0)
+        position.x = clampf(position.x + motion.x, -ARENA_HALF_X, ARENA_HALF_X)
+        position.z = clampf(position.z + motion.z, -ARENA_HALF_Z, ARENA_HALF_Z)
     _attack_root_previous_frame = frame
     _attack_root_previous_value = current
 
@@ -3736,8 +3740,8 @@ func _physics_process(delta: float) -> void:
     else:
         velocity.y -= 12.0 * delta
     move_and_slide()
-    position.x = clampf(position.x, -6.8, 6.8)
-    position.z = clampf(position.z, -3.0, 3.0)
+    position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
+    position.z = clampf(position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
     _animate_visuals()
     _animate_candidate()
 
@@ -4723,7 +4727,7 @@ func receive_hit(
         if stun_push_source >= 0.0:
             position.x = clampf(
                 position.x + direction * stun_push_source * source_units_to_world,
-                -6.8, 6.8
+                -ARENA_HALF_X, ARENA_HALF_X
             )
         health = maxf(0.0, health - amount)
         state = "stunimpact"
@@ -4809,7 +4813,7 @@ func receive_hit(
         last_reaction_exit_frame = -1
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = false
-    position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
+    position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -ARENA_HALF_X, ARENA_HALF_X)
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("all_impct_hard_frnt_high")
             and last_reaction_source_action == "impacthardfronthigh"):
