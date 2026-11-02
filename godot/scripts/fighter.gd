@@ -4,6 +4,8 @@ class_name PortFighter
 
 signal combat_hit(attacker: PortFighter, defender: PortFighter, action: String, damage: float, blocked: bool)
 signal combat_ko(fighter: PortFighter)
+signal attack_started(action: String)
+signal parry_succeeded(action: String)
 
 const BASE_SPEED: float = 3.6
 const MAX_HEALTH: float = 100.0
@@ -3389,6 +3391,7 @@ func _begin_attack_to_floor() -> void:
     attack_kind = "attacktofloor"
     attack_sequence += 1
     _attack_connected = false
+    attack_started.emit("attacktofloor")
     _clear_ground_attack_input_history()
     if (candidate_visual_blending_enabled
             and previous_state in ["idle", "idle2", "idle3"]
@@ -3458,6 +3461,7 @@ func request_attack(kind: String) -> bool:
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
     _seed_attack_root_motion()
+    attack_started.emit(kind)
     return true
 
 func _physics_process(delta: float) -> void:
@@ -3661,6 +3665,7 @@ func _begin_chained_attack(kind: String) -> void:
     state_time = float(ATTACKS[kind]["startup"])
     _seed_attack_root_motion()
     _restart_candidate_action()
+    attack_started.emit(kind)
 
 
 func _advance_state() -> void:
@@ -4239,12 +4244,20 @@ func receive_hit(
 ) -> bool:
     _parry_press_times.clear()
     if (state in ["startup", "active", "recovery"]
+            and attack_kind in ["parry_high", "parry_low"]):
+        # Player parry mirrors the Brick parry windows; absorbing an incoming
+        # strike before frame 25 is the defensive success event.
+        if _current_attack_source_frame() < 25.0:
+            parry_succeeded.emit(attack_kind)
+            return false
+    if (state in ["startup", "active", "recovery"]
             and attack_kind in ["parry_high_brick", "parry_low_brick"]):
         # thai.set marks parryhigh/parrylow impactable only from frame 25.
         # Absorb earlier incoming strikes so the parry window is defensive.
         if _current_attack_source_frame() < 25.0:
             return false
-    if state in ["startup", "active"] and attack_kind == "parry_attack_brick":
+    if (state in ["startup", "active"]
+            and attack_kind in ["parry_attack", "parry_attack_brick"]):
         # The prototype counter owns the exchange once the parry chains.
         return false
     # faceupgetup and faceupattack still keep unverified incoming hits

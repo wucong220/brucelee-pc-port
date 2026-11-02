@@ -6,6 +6,7 @@ const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
+const MoveTraining = preload("res://scripts/move_training.gd")
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 const ROUNDS_TO_WIN: int = 2
 const ROUND_RESET_DELAY: float = 2.0
@@ -14,6 +15,7 @@ var player: PortFighter
 var computer: PortFighter
 var hud: PortHUD
 var prototype_menu: PortPrototypeMenu
+var move_training
 var fight_camera: Camera3D
 var combat_audio: Node
 var _candidate_audio: Dictionary = {}
@@ -52,6 +54,10 @@ func _ready() -> void:
     prototype_menu = PortPrototypeMenu.new()
     add_child(prototype_menu)
     prototype_menu.command_requested.connect(_on_menu_command)
+    move_training = MoveTraining.new()
+    add_child(move_training)
+    move_training.configure(self, player, computer)
+    move_training.exit_requested.connect(_on_move_training_exit)
     var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
     main_menu_enabled = false if export_self_test else _should_show_main_menu()
     _reset_match()
@@ -379,6 +385,11 @@ func _on_menu_command(command: String) -> void:
             training_mode = false
             _leave_menu()
             _reset_match()
+        "move_training":
+            training_mode = false
+            _leave_menu()
+            hud.visible = false
+            move_training.open()
         "training":
             if _training_available():
                 training_mode = true
@@ -395,6 +406,11 @@ func _on_menu_command(command: String) -> void:
             _open_main_menu()
         "quit":
             get_tree().quit()
+
+func _on_move_training_exit() -> void:
+    hud.visible = true
+    _open_main_menu()
+
 
 func _build_combat_audio() -> void:
     combat_audio = Node.new()
@@ -551,6 +567,12 @@ func _physics_process(delta: float) -> void:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         return
+    if move_training != null and move_training.is_active():
+        player.move_axis = Vector2.ZERO
+        computer.move_axis = Vector2.ZERO
+        _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
+        _update_parry_input()
+        return
     hud.set_context_hint(_contextual_controls())
     if round_reset_timer > 0.0:
         player.move_axis = Vector2.ZERO
@@ -705,6 +727,9 @@ func _unhandled_input(event: InputEvent) -> void:
     if prototype_menu != null and prototype_menu.handle_input_event(event):
         get_viewport().set_input_as_handled()
         return
+    if move_training != null and move_training.handle_input_event(event):
+        get_viewport().set_input_as_handled()
+        return
     if not PrototypeControls.is_press_edge(event):
         return
     if event.is_action_pressed(PrototypeControls.PAUSE):
@@ -846,6 +871,8 @@ func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damag
     if done or training_completed:
         return
     _play_hit_audio(action, blocked)
+    if move_training != null and move_training.is_active():
+        return
     if (training_mode and attacker == player and defender == computer
             and action == "attacktofloor" and damage > 0.0 and not blocked
             and defender.state == "impactfacedown"):
