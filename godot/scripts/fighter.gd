@@ -1477,14 +1477,13 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         for key: String in [
                 "source_action", "animation", "animation_frame_count",
                 "startup_frames", "active_frames", "recovery_frames",
-                "damage", "prototype_push", "source_impact"]:
+                "damage", "source_impact"]:
             if not entry.has(key):
                 return _reject_attack_config(action + " lacks " + key)
         if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
                 or not _is_number(entry["recovery_frames"])
                 or not _is_number(entry["animation_frame_count"])
-                or not _is_number(entry["damage"])
-                or not _is_number(entry["prototype_push"])):
+                or not _is_number(entry["damage"])):
             return _reject_attack_config(action + " contains non-numeric values")
         var startup_frames: int = int(entry["startup_frames"])
         var active_frames: int = int(entry["active_frames"])
@@ -1514,8 +1513,7 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         if frame_count != expected_frame_count:
             return _reject_attack_config(action + " animation frame count is not " + str(expected_frame_count))
         var damage: float = float(entry["damage"])
-        var push: float = float(entry["prototype_push"])
-        if (damage < 0.0 or push < 0.0
+        if (damage < 0.0
                 or absf(damage - float(expected["damage"])) > 0.001):
             return _reject_attack_config(action + " has invalid numeric values")
         var impact_value: Variant = entry["source_impact"]
@@ -1574,7 +1572,6 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             "active": float(active_frames) / SOURCE_FRAME_RATE,
             "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
             "damage": damage,
-            "push": push,
             "source_action": String(entry["source_action"]),
             "animation": String(entry["animation"]),
             "animation_frame_count": frame_count,
@@ -1775,14 +1772,13 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
         for key: String in [
                 "source_action", "animation", "animation_frame_count",
                 "startup_frames", "active_frames", "recovery_frames",
-                "damage", "prototype_push", "source_impact"]:
+                "damage", "source_impact"]:
             if not entry.has(key):
                 return _reject_attack_config(action + " lacks " + key)
         if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
                 or not _is_number(entry["recovery_frames"])
                 or not _is_number(entry["animation_frame_count"])
-                or not _is_number(entry["damage"])
-                or not _is_number(entry["prototype_push"])):
+                or not _is_number(entry["damage"])):
             return _reject_attack_config(action + " contains non-numeric values")
         var startup_frames: int = int(entry["startup_frames"])
         var active_frames: int = int(entry["active_frames"])
@@ -1803,8 +1799,7 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
                 or startup_frames != int(expected[3])
                 or active_frames != int(expected[4])
                 or recovery_frames != int(expected[5])
-                or absf(float(entry["damage"]) - float(expected[6])) > 0.001
-                or absf(float(entry["prototype_push"])) > 0.001):
+                or absf(float(entry["damage"]) - float(expected[6])) > 0.001):
             return _reject_attack_config(action + " does not match recovered thai.set frames")
         var impact_value: Variant = entry["source_impact"]
         if not impact_value is Dictionary:
@@ -1825,7 +1820,6 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
             "active": float(active_frames) / SOURCE_FRAME_RATE,
             "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
             "damage": float(entry["damage"]),
-            "push": float(entry["prototype_push"]),
             "source_action": String(entry["source_action"]),
             "animation": String(entry["animation"]),
             "animation_frame_count": frame_count,
@@ -4075,7 +4069,7 @@ func _try_attack_contact() -> void:
         opponent.begin_facedown_impact(damage)
     else:
         accepted = opponent.receive_hit(
-            damage, blocked, float(details["push"]), facing, reaction
+            damage, blocked, 0.0, facing, reaction
         )
     if not accepted:
         return

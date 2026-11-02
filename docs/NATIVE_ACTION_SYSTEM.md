@@ -291,6 +291,7 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
   adreno_200/set/thai.set` 生成 `godot/data/native_links_brick.json`（109 actions /
   236 links），`_load_native_links()` 按 `attack_config_path` 选择该文件。Brick 的
   `grab1miss brick → grab1 brick [10,11]` 等链路因此走原生 link，而不是旧 special chain。
+- `prototype_push` 字段已从攻击配置与解析器彻底删除；命中推位移只来自反应 root 数据。
 - 原 `SPECIAL_RAGE_COSTS` 已从 `fighter.gd` 删除；玩家按动作 `action.rage`
   扣费/加怒，AI 专用成本保留在 `main.gd::AI_SPECIAL_RAGE_COSTS`（AI 决策仍是原型）。
 

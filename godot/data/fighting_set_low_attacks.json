@@ -100,7 +100,6 @@
    "active_frames": 4,
    "recovery_frames": 60,
    "damage": 5.0,
-   "prototype_push": 0.2,
    "source_impact": {
     "attack_radius": 70.0,
     "body_part": "larm",
@@ -117,7 +116,6 @@
    "active_frames": 4,
    "recovery_frames": 75,
    "damage": 5.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 70.0,
     "body_part": "lleg",
@@ -134,7 +132,6 @@
    "active_frames": 4,
    "recovery_frames": 93,
    "damage": 5.0,
-   "prototype_push": 0.2,
    "source_impact": {
     "attack_radius": 70.0,
     "body_part": "larm",
@@ -151,7 +148,6 @@
    "active_frames": 4,
    "recovery_frames": 62,
    "damage": 6.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 75.0,
     "body_part": "lleg",
@@ -168,7 +164,6 @@
    "active_frames": 4,
    "recovery_frames": 76,
    "damage": 6.0,
-   "prototype_push": 0.2,
    "source_impact": {
     "attack_radius": 70.0,
     "body_part": "larm",
@@ -185,7 +180,6 @@
    "active_frames": 4,
    "recovery_frames": 69,
    "damage": 7.0,
-   "prototype_push": 0.2,
    "source_impact": {
     "attack_radius": 75.0,
     "body_part": "larm",
@@ -202,7 +196,6 @@
    "active_frames": 3,
    "recovery_frames": 45,
    "damage": 5.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 70.0,
     "body_part": "lleg",
@@ -219,7 +212,6 @@
    "active_frames": 4,
    "recovery_frames": 37,
    "damage": 8.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 80.0,
     "body_part": "lleg",
@@ -236,7 +228,6 @@
    "active_frames": 5,
    "recovery_frames": 41,
    "damage": 12.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 115.0,
     "body_part": "lleg",
@@ -253,7 +244,6 @@
    "active_frames": 3,
    "recovery_frames": 72,
    "damage": 5.0,
-   "prototype_push": 0.3,
    "source_impact": {
     "attack_radius": 75.0,
     "body_part": "rarm",
@@ -270,7 +260,6 @@
    "active_frames": 4,
    "recovery_frames": 56,
    "damage": 6.0,
-   "prototype_push": 0.3,
    "source_impact": {
     "attack_radius": 75.0,
     "body_part": "larm",
@@ -287,7 +276,6 @@
    "active_frames": 3,
    "recovery_frames": 84,
    "damage": 5.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 80.0,
     "body_part": "lleg",
@@ -304,7 +292,6 @@
    "active_frames": 4,
    "recovery_frames": 16,
    "damage": 5.0,
-   "prototype_push": 0.3,
    "source_impact": {
     "attack_radius": 70.0,
     "body_part": "lleg",
@@ -321,7 +308,6 @@
    "active_frames": 3,
    "recovery_frames": 33,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 25.0,
     "body_part": "lleg",
@@ -338,7 +324,6 @@
    "active_frames": 8,
    "recovery_frames": 18,
    "damage": 15.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 45.0,
     "body_part": "larm",
@@ -355,7 +340,6 @@
    "active_frames": 2,
    "recovery_frames": 23,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 25.0,
     "body_part": "larm",
@@ -372,7 +356,6 @@
    "active_frames": 11,
    "recovery_frames": 162,
    "damage": 15.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 45.0,
     "body_part": "larm",
@@ -389,7 +372,6 @@
    "active_frames": 4,
    "recovery_frames": 112,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 45.0,
     "body_part": "larm",
@@ -406,7 +388,6 @@
    "active_frames": 47,
    "recovery_frames": 30,
    "damage": 21.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 70.0,
     "body_part": "larm",
@@ -461,7 +442,6 @@
    "active_frames": 2,
    "recovery_frames": 51,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 40.0,
     "body_part": "larm",
@@ -478,7 +458,6 @@
    "active_frames": 5,
    "recovery_frames": 76,
    "damage": 10.0,
-   "prototype_push": 0.35,
    "source_impact": {
     "attack_radius": 75.0,
     "body_part": "larm",
@@ -495,7 +474,6 @@
    "active_frames": 78,
    "recovery_frames": 27,
    "damage": 20.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 45.0,
     "body_part": "larm",
@@ -550,7 +528,6 @@
    "active_frames": 73,
    "recovery_frames": 103,
    "damage": 20.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 45.0,
     "body_part": "larm",
@@ -593,7 +570,6 @@
    "active_frames": 1,
    "recovery_frames": 376,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 65.0,
     "body_part": "larm",
@@ -610,7 +586,6 @@
    "active_frames": 4,
    "recovery_frames": 211,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 75.0,
     "body_part": "rleg",
@@ -627,7 +602,6 @@
    "active_frames": 3,
    "recovery_frames": 39,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 45.0,
     "body_part": "larm",
@@ -644,7 +618,6 @@
    "active_frames": 4,
    "recovery_frames": 39,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 45.0,
     "body_part": "larm",
@@ -661,7 +634,6 @@
    "active_frames": 0,
    "recovery_frames": 27,
    "damage": 0.0,
-   "prototype_push": 0.0,
    "source_impact": {
     "attack_radius": 40.0,
     "body_part": "larm",
