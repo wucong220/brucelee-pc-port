@@ -51,6 +51,25 @@ func _run() -> void:
         push_error("GALLERY_FAILURES=" + str(failures))
         quit(1)
         return
+    var sequence_expectations: Dictionary = {
+        "high_punch3": ["punch", "high_punch", "high_punch2", "high_punch3"],
+        "special_kick_high": ["stepback", "special_kick_high"],
+        "grab1": ["stepright", "grab1"],
+    }
+    for entry_id: String in sequence_expectations:
+        var sequence_entry: Dictionary = gallery._entry_by_id(entry_id)
+        var expected_index: int = gallery.entries.find(sequence_entry)
+        if expected_index < 0:
+            push_error("Missing gallery entry " + entry_id)
+            quit(1)
+            return
+        gallery.index = expected_index
+        gallery._play_current()
+        if Array(gallery.sequence) != Array(sequence_expectations[entry_id]):
+            push_error("Gallery prerequisite sequence mismatch for " + entry_id
+                    + ": " + str(gallery.sequence))
+            quit(1)
+            return
     print("MOVE_GALLERY_VALIDATION=" + JSON.stringify({
         "entries": gallery.entries.size(),
         "all_playable": true,

@@ -79,7 +79,7 @@ func _check_nonlethal_reaction(player: PortFighter, brick: PortFighter) -> bool:
     _combat_hit_count = 0
     _combat_hit_blocked = false
     player._advance_timed_states(
-        (18.01 - float(PortFighter.ATTACK_TO_FLOOR_ENTRY_FRAME))
+        (18.01 - float(brick._native_entry_frame("attacktofloor", 0)))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     if (brick.state != "impactfacedown"
@@ -110,7 +110,7 @@ func _check_nonlethal_reaction(player: PortFighter, brick: PortFighter) -> bool:
         }))
         return false
     var expected_blend_seconds: float = (
-        float(PortFighter.CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES)
+        float(brick._native_link_blending_from("facedownidle", "impactfacedown", 0))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     if (absf(brick.candidate_visual_blend_seconds_last - expected_blend_seconds) > 0.000001
@@ -132,7 +132,7 @@ func _check_frame_boundary(player: PortFighter, brick: PortFighter) -> bool:
     if not _start_attack(player, brick):
         return false
     player._advance_timed_states(
-        (18.01 - float(PortFighter.ATTACK_TO_FLOOR_ENTRY_FRAME))
+        (18.01 - float(brick._native_entry_frame("attacktofloor", 0)))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     if brick.state != "impactfacedown":
@@ -157,7 +157,7 @@ func _check_guard_does_not_block(player: PortFighter, brick: PortFighter) -> boo
     _combat_hit_count = 0
     _combat_hit_blocked = false
     player._advance_timed_states(
-        (18.01 - float(PortFighter.ATTACK_TO_FLOOR_ENTRY_FRAME))
+        (18.01 - float(brick._native_entry_frame("attacktofloor", 0)))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     if (brick.state != "impactfacedown"
@@ -178,7 +178,7 @@ func _check_lethal_priority(player: PortFighter, brick: PortFighter) -> bool:
     _combat_hit_count = 0
     _combat_hit_blocked = false
     player._advance_timed_states(
-        (18.01 - float(PortFighter.ATTACK_TO_FLOOR_ENTRY_FRAME))
+        (18.01 - float(brick._native_entry_frame("attacktofloor", 0)))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     if (brick.state != "facedownko"
@@ -202,7 +202,7 @@ func _check_missing_clip_fails_closed(player: PortFighter, brick: PortFighter) -
     _combat_hit_count = 0
     _combat_hit_blocked = false
     player._advance_timed_states(
-        (18.01 - float(PortFighter.ATTACK_TO_FLOOR_ENTRY_FRAME))
+        (18.01 - float(brick._native_entry_frame("attacktofloor", 0)))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     var failed_closed: bool = (

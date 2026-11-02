@@ -20,6 +20,8 @@ var index: int = 0
 var state: String = "hidden"
 var timer: float = 0.0
 var play_error: String = ""
+var sequence: Array[String] = []
+var sequence_index: int = 0
 
 var root: Control
 var panel: PanelContainer
@@ -172,18 +174,39 @@ func _play_current() -> void:
         return
     play_error = ""
     timer = 0.0
-    var entry: Dictionary = entries[index]
-    player.set_physics_process(true)
-    player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
-    player.health = 9999.0
-    player.rage = 100.0
-    computer.set_physics_process(false)
-    computer.reset_fighter(Vector3(0.25, 1.20, 0.0))
-    computer.health = 9999.0
-    computer.state = "idle"
-    computer.attack_kind = ""
-    computer._animate_candidate()
+    sequence = _action_sequence_for_entry(entries[index])
+    sequence_index = 0
+    _play_sequence_step(entries[index])
 
+
+func _entry_by_id(entry_id: String) -> Dictionary:
+    for entry: Dictionary in entries:
+        if String(entry.get("id", "")) == entry_id:
+            return entry
+    return {}
+
+
+func _action_sequence_for_entry(entry: Dictionary, seen: Array = []) -> Array[String]:
+    var result: Array[String] = []
+    var entry_id: String = String(entry.get("id", ""))
+    if entry_id in seen:
+        return result
+    var next_seen: Array = seen.duplicate()
+    next_seen.append(entry_id)
+    var setup: String = String(entry.get("setup", "idle"))
+    if setup.begins_with("source_"):
+        var prerequisite: Dictionary = _entry_by_id(setup.trim_prefix("source_"))
+        if not prerequisite.is_empty():
+            result.append_array(_action_sequence_for_entry(prerequisite, next_seen))
+    elif setup in ["stepback", "stepleft", "stepright"]:
+        result.append(setup)
+    var actions: Array = entry.get("actions", [])
+    if not actions.is_empty():
+        result.append(String(actions[0]))
+    return result
+
+
+func _apply_entry_setup(entry: Dictionary) -> void:
     var setup: String = String(entry.get("setup", "idle"))
     if setup == "target_down":
         computer.state = "facedownidle"
@@ -201,10 +224,29 @@ func _play_current() -> void:
         player.state_time = 0.0
         player._animate_candidate()
 
-    var actions: Array = entry.get("actions", [])
-    var action: String = String(actions[0]) if not actions.is_empty() else ""
+
+func _play_sequence_step(entry: Dictionary) -> void:
+    if sequence.is_empty():
+        play_error = "NO ACTION SEQUENCE"
+        timer = DISPLAY_HOLD_SECONDS
+        _refresh_labels(entry, "", false)
+        return
+    var action: String = sequence[sequence_index]
+    player.set_physics_process(true)
+    player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
+    player.health = 9999.0
+    player.rage = 100.0
+    computer.set_physics_process(false)
+    computer.reset_fighter(Vector3(0.25, 1.20, 0.0))
+    computer.health = 9999.0
+    computer.state = "idle"
+    computer.attack_kind = ""
+    computer._animate_candidate()
+    if sequence_index == sequence.size() - 1:
+        _apply_entry_setup(entry)
     var started: bool = _start_action(action)
     if not started:
+        var actions: Array = entry.get("actions", [])
         for alternate: Variant in actions:
             if String(alternate) != action and _start_action(String(alternate)):
                 action = String(alternate)
@@ -217,6 +259,16 @@ func _play_current() -> void:
 
 
 func _start_action(action: String) -> bool:
+    if action in ["stepback", "stepleft", "stepright"]:
+        player.state = "idle"
+        player.state_time = 0.0
+        player.move_axis = (
+            Vector2(0.0, 1.0) if action == "stepback"
+            else Vector2(-1.0, 0.0) if action == "stepleft"
+            else Vector2(1.0, 0.0)
+        )
+        player._animate_candidate()
+        return true
     if action.is_empty():
         return false
     if action == "attacktofloor":
@@ -239,6 +291,8 @@ func _start_action(action: String) -> bool:
 
 
 func _duration(action: String) -> float:
+    if action in ["stepback", "stepleft", "stepright"]:
+        return 0.8
     if player.ATTACKS.has(action):
         var details: Dictionary = player.ATTACKS[action]
         return (float(details.get("startup", 0.0))
@@ -256,7 +310,10 @@ func _refresh_labels(entry: Dictionary, action: String, started: bool) -> void:
     setup_label.text = "PREREQUISITE: " + _setup_text(setup)
     input_label.text = "INPUT (reference): " + String(entry.get("input", ""))
     if started:
-        status_label.text = "PLAYING: " + action
+        var step_text: String = ""
+        if not sequence.is_empty():
+            step_text = " (%d/%d)" % [sequence_index + 1, sequence.size()]
+        status_label.text = "PLAYING" + step_text + ": " + action
         status_label.add_theme_color_override("font_color", Color(0.62, 0.90, 1.0))
     else:
         status_label.text = play_error
@@ -293,6 +350,10 @@ func _process(delta: float) -> void:
         computer.state = "idle"
     timer -= delta
     if timer > 0.0:
+        return
+    if sequence_index + 1 < sequence.size():
+        sequence_index += 1
+        _play_sequence_step(entries[index])
         return
     index = wrapi(index + 1, 0, entries.size())
     _play_current()

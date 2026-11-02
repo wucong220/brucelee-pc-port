@@ -48,6 +48,26 @@ func _run() -> void:
         push_error("Move training did not hide the fight HUD")
         quit(1)
         return
+    var start_index: int = training.selected_index
+    var down_key: InputEventKey = InputEventKey.new()
+    down_key.keycode = KEY_DOWN
+    down_key.pressed = true
+    if not training.handle_input_event(down_key):
+        push_error("Training select did not consume the down arrow key")
+        quit(1)
+        return
+    if training.selected_index != wrapi(start_index + 1, 0, training.entries.size()):
+        push_error("Training select did not move down on the arrow key")
+        quit(1)
+        return
+    var up_key: InputEventKey = InputEventKey.new()
+    up_key.keycode = KEY_UP
+    up_key.pressed = true
+    scene._input(up_key)
+    if training.selected_index != start_index:
+        push_error("Training select did not move up through the early input path")
+        quit(1)
+        return
     for index: int in range(training.entries.size()):
         training._start_at(index)
         if training.state != "active" or training.current_index != index:

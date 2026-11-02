@@ -12,13 +12,14 @@ KEYS = {
 
 
 class TrainingCatalogInputTests(unittest.TestCase):
-    def test_catalog_inputs_match_native_keyboard_sequences(self):
+    def test_catalog_inputs_include_the_full_prerequisite_chain(self):
         data = ROOT / "godot" / "data"
         links = json.loads((data / "native_links.json").read_text(encoding="utf-8"))["links"]
         catalog = json.loads((data / "move_training_catalog.json").read_text(encoding="utf-8"))
         attacks = json.loads((data / "fighting_set_low_attacks.json").read_text(encoding="utf-8"))["attacks"]
         source_of = {kind: row["source_action"] for kind, row in attacks.items()}
         kind_of = {source: kind for kind, source in source_of.items()}
+        by_id = {str(entry["id"]): entry for entry in catalog["entries"]}
 
         def sequence_for(target):
             native_target = source_of.get(target, target)
@@ -32,8 +33,9 @@ class TrainingCatalogInputTests(unittest.TestCase):
                 return [KEYS.get(token, token) for token in variant], status, link.get("from")
             return [], [], None
 
-        for entry in catalog["entries"]:
-            sequence, status, source = sequence_for(entry["actions"][0])
+        def immediate_for(entry):
+            target = str(entry["actions"][0])
+            sequence, status, source = sequence_for(target)
             if not sequence:
                 fallback_kind = kind_of.get(source)
                 if fallback_kind:
@@ -43,12 +45,30 @@ class TrainingCatalogInputTests(unittest.TestCase):
                 for pair in status
                 if len(pair) >= 2 and str(pair[1]) == "pressed"
             ]
-            expected = ", ".join(sequence) if sequence else "(automatic / wait for window)"
+            body = ", ".join(sequence) if sequence else "(automatic / wait for window)"
             if held:
-                expected = "HOLD " + "+".join(dict.fromkeys(held)) + " + " + expected
+                body = "HOLD " + "+".join(dict.fromkeys(held)) + " + " + body
+            return body
+
+        def full_for(entry, seen):
+            parts = []
+            setup = str(entry.get("setup", "idle"))
+            if setup.startswith("source_"):
+                source_id = setup[len("source_"):]
+                prerequisite = by_id.get(source_id)
+                if prerequisite and source_id not in seen:
+                    parts.extend(full_for(prerequisite, seen | {source_id}))
+            elif setup in ("stepback", "stepleft", "stepright"):
+                parts.append({"stepback": "S (hold)", "stepleft": "A (hold)",
+                              "stepright": "D (hold)"}[setup])
+            parts.append(immediate_for(entry))
+            return parts
+
+        for entry in catalog["entries"]:
+            expected = ", ".join(full_for(entry, {str(entry["id"])}))
             self.assertEqual(
                 entry["input"], expected,
-                f"{entry['id']} instruction does not match the native keyboard sequence",
+                f"{entry['id']} instruction does not include the full prerequisite chain",
             )
 
 

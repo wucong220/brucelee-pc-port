@@ -326,7 +326,7 @@ func _check_candidate_visual_blending(player: PortFighter, brick: PortFighter) -
 
     player._begin_attack_to_floor()
     var attack_blend_seconds: float = (
-        float(PortFighter.CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES)
+        float(player._native_link_blending_to("attacktofloor", 0))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     if (not is_finite(player.candidate_visual_blend_pending_seconds)
@@ -349,7 +349,7 @@ func _check_candidate_visual_blending(player: PortFighter, brick: PortFighter) -
         push_error("candidate visual blending changed the attacktofloor logic exit")
         return false
     var return_blend_seconds: float = (
-        float(PortFighter.CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES)
+        float(player._native_link_blending_from("attacktofloor", "idle2", 0))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     if (not is_finite(player.candidate_visual_blend_pending_seconds)
@@ -398,7 +398,7 @@ func _check_attack_to_floor_repeated_rejection(
     if not _start_attack_to_floor(player, brick):
         return false
     player._advance_timed_states(
-        (17.999 - float(PortFighter.ATTACK_TO_FLOOR_ENTRY_FRAME))
+        (17.999 - float(player._native_entry_frame("attacktofloor", 0)))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     brick._enter_locomotion_state("faceupgetup")
@@ -434,7 +434,7 @@ func _check_attack_to_floor_rejected_then_accepted(
     if not _start_attack_to_floor(player, brick):
         return false
     player._advance_timed_states(
-        (17.999 - float(PortFighter.ATTACK_TO_FLOOR_ENTRY_FRAME))
+        (17.999 - float(player._native_entry_frame("attacktofloor", 0)))
                 / PortFighter.SOURCE_FRAME_RATE
     )
     brick._enter_locomotion_state("faceupgetup")

@@ -159,15 +159,34 @@ func is_lesson_active() -> bool:
     return state == "active"
 
 
+func _key_pressed(event: InputEvent, keys: Array) -> bool:
+    var key_event: InputEventKey = event as InputEventKey
+    if key_event == null or not key_event.pressed or key_event.echo:
+        return false
+    return key_event.keycode in keys
+
+
+func _is_select_up(event: InputEvent) -> bool:
+    return (event.is_action_pressed(PrototypeControls.MENU_UP)
+            or event.is_action_pressed(PrototypeControls.MOVE_UP)
+            or _key_pressed(event, [KEY_UP, KEY_W]))
+
+
+func _is_select_down(event: InputEvent) -> bool:
+    return (event.is_action_pressed(PrototypeControls.MENU_DOWN)
+            or event.is_action_pressed(PrototypeControls.MOVE_DOWN)
+            or _key_pressed(event, [KEY_DOWN, KEY_S]))
+
+
 func handle_input_event(event: InputEvent) -> bool:
     if not visible or not PrototypeControls.is_press_edge(event):
         return false
     if state == "select":
-        if event.is_action_pressed(PrototypeControls.MENU_UP):
+        if _is_select_up(event):
             selected_index = wrapi(selected_index - 1, 0, entries.size())
             _refresh_select_list()
             return true
-        if event.is_action_pressed(PrototypeControls.MENU_DOWN):
+        if _is_select_down(event):
             selected_index = wrapi(selected_index + 1, 0, entries.size())
             _refresh_select_list()
             return true

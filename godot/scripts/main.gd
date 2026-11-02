@@ -767,6 +767,15 @@ func _player_attack_poses_guard_threat() -> bool:
     return source_frame <= float(damage_end_frame) + 0.0001
 
 
+func _input(event: InputEvent) -> void:
+    # Training select is a plain list UI without focusable controls; handle its
+    # arrow/W/S navigation before GUI focus decides the key is unhandled.
+    if (move_training != null and move_training.visible
+            and String(move_training.state) == "select"):
+        if move_training.handle_input_event(event):
+            get_viewport().set_input_as_handled()
+
+
 func _unhandled_input(event: InputEvent) -> void:
     if prototype_menu != null:
         # J is both a menu confirm and the punch key. Capture the command
