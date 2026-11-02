@@ -242,6 +242,8 @@ const BRICK_NATIVE_LINKS_PATH: String = "res://data/native_links_brick.json"
 # CLinkDescr::GetKeySequence(index) uses to pick one of the stored variants.
 # The PC port runs the keyboard layout, so variant 1 is the native sequence.
 const LINK_SEQUENCE_INDEX: int = 1
+# CFighter::CheckConditions @0x1b3db0 compares fighter+0x14c (rage) with
+# <100 / <0x42(66) / <0x21(33) for MaxRage/Rage2Thirds/RageThird.
 const RAGE_MAX: float = 100.0
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
