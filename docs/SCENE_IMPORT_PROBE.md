@@ -32,4 +32,23 @@ external-reference tables (object tables have no prefix). The sample parses to:
 The node/visual graph is now recoverable. Mesh conversion and arena merge are
 still not implemented; no procedural scene has been replaced yet.
 
+## 2026-11-03 static mesh probe
+
+Extracted and converted one scene prop:
+
+`bl_scene02a_hw_prop_brick.Mesh`
+
+with `tools/character_to_gltf.py` (no Skl, static mesh):
+
+- 488 vertices
+- 507 triangles
+- 1 subset
+- output GLB `brick_prop.glb`
+- GLB size 14,340 bytes
+
+This proves scene `.mesh` resources can be fed through the existing static
+mesh converter. It does **not** yet prove scene transforms/material binding or
+arena composition; those are the next steps.
+
+
 This is deliberately **not** implemented as a fake procedural stand-in. Current arena remains procedural until the mesh/reference graph is converted and verified.
