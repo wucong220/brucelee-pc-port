@@ -13,6 +13,11 @@
 - Therefore this clip is **not** merged; Brick brutal/medium remains a known gap.
   Do not force the clip into the Brick candidate or substitute a different
   brutal animation; wait for a correct source skeleton/reference mapping.
+- Also tried `BL_SinFu_01_High.Skl` as retarget source
+  (`62C3EAA9…8301`): converter rejects with
+  `animation reference or skeleton SHA-256 does not match expectation`.
+  The correct source skeleton reference for `all_sp_pnch_low_forset04` is still
+  unidentified.
 
 ## `m02_movefwd`
 
