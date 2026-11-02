@@ -109,8 +109,7 @@ func _ready() -> void:
     hud = PortHUD.new()
     add_child(hud)
     _build_game_text_overlay()
-    if OS.get_environment("BRUCELEE_GAMETEXT_PROBE") == "1":
-        _show_game_text("FIGHT", 30.0)
+
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
         hud.footer.text = (
             "J J J | J K K | K L L | K U U | "
@@ -790,11 +789,9 @@ func _play_result_audio(key: String) -> void:
 
 func _start_round_intro() -> void:
     _play_result_audio("ready")
-    _show_game_text("READY", 0.75)
     await get_tree().create_timer(0.8).timeout
     if not done:
         _play_result_audio("fight")
-        _show_game_text("FIGHT", 1.0)
 
 
 func _load_bruce_voice_audio() -> void:
@@ -1495,7 +1492,6 @@ func _on_ko(fighter: PortFighter) -> void:
             "YOU WIN THE MATCH  ·  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
             else "YOU LOSE THE MATCH  ·  R TO RESTART"
         )
-        _show_game_text("YOU_WIN" if player_rounds >= ROUNDS_TO_WIN else "YOU_LOSE", 2.0)
         _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
         return
     round_reset_timer = ROUND_RESET_DELAY
