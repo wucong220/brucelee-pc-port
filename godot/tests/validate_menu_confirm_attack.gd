@@ -63,6 +63,9 @@ func _run() -> void:
         quit(1)
         return
     started.clear()
+    # Select the HIGH PUNCH lesson (input J) so this checks the J-confirm
+    # contract without expecting a K lesson to throw a J attack.
+    training.selected_index = 2
     scene._unhandled_input(_key(KEY_J))
     if training.state != "active":
         push_error("J did not start the training lesson")

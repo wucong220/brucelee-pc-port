@@ -192,10 +192,15 @@ func handle_input_event(event: InputEvent) -> bool:
             return true
         if event.is_action_pressed(PrototypeControls.MENU_ACCEPT):
             _start_at(selected_index)
-            # J starts the selected lesson and must also throw its first
-            # punch. Consuming it here alone would swallow one of three
-            # presses in a "J J J" input.
-            if event.is_action_pressed(PrototypeControls.ATTACK_A):
+            # J is also the first attack key only for lessons whose first
+            # expected input is J. Starting a K/L/D lesson with J must not
+            # throw a wrong attack and lock movement during recovery.
+            var expected_input: String = String(
+                entries[selected_index].get("input", "")
+            ).strip_edges()
+            var first_input: String = expected_input.split(",")[0].strip_edges()
+            if (event.is_action_pressed(PrototypeControls.ATTACK_A)
+                    and first_input == "J"):
                 main._handle_fighter_attack_input(
                     player, event,
                     PrototypeControls.ATTACK_A, PrototypeControls.ATTACK_B,
