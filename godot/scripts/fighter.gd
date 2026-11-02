@@ -3278,10 +3278,43 @@ func _native_condition_ok(condition: String, link: Dictionary) -> bool:
                 return false
             return (counter_frame + 0.0001 >= float(counter_window[0])
                     and counter_frame <= float(counter_window[1]) + 0.0001)
+        "oppattackheightlow":
+            return _opponent_impact_is("height", ["low"])
+        "oppattackheightmed":
+            return _opponent_impact_is("height", ["medium", "med"])
+        "oppattackheighthigh":
+            return _opponent_impact_is("height", ["high"])
+        "oppattackstrengthnormal":
+            return _opponent_impact_is("strength", ["normal"])
+        "oppattackstrengthmedium":
+            return _opponent_impact_is("strength", ["medium"])
+        "oppattackstrengthhard":
+            return _opponent_impact_is("strength", ["hard"])
+        "oppattackstrengthbrutal":
+            return _opponent_impact_is("strength", ["brutal"])
+        "oppattackdirfrontal":
+            return _opponent_impact_is("direction", ["frontal"])
+        "oppattackdirfromleft":
+            return _opponent_impact_is("direction", ["fromleft"])
+        "oppattackdirfromright":
+            return _opponent_impact_is("direction", ["fromright"])
+        "oppattackdirfromabove":
+            return _opponent_impact_is("direction", ["fromabove"])
         _:
-            # countertime and oppattack* belong to the counter/reaction links,
-            # which this port does not drive yet; fail closed.
+            # Unknown condition: fail closed.
             return false
+
+
+func _opponent_impact_is(field: String, accepted: Array) -> bool:
+    # oppattack* conditions compare the incoming attack's first impact, which
+    # brucelee.set stores as attack.impacts[0].{height,strength,direction}.
+    if opponent == null or not is_instance_valid(opponent):
+        return false
+    var impact: Variant = _native_actions.get(
+        opponent._current_action_name(), {}).get("impact")
+    if not impact is Dictionary:
+        return false
+    return String(Dictionary(impact).get(field, "")) in accepted
 
 
 func _native_link_conditions_ok(link: Dictionary) -> bool:

@@ -102,6 +102,13 @@ miss→hit（special/grab）与 parry→parryattack 都由原生空序列 link �
 link 路径也不再按 `SPECIAL_RAGE_COSTS` 扣怒气（原生只有 `ragethird`/`rage2thirds`
 门槛，没有按 link 收费的字段）。训练 25 课与招架测试仍全过。
 
+**第 22 轮补充**：`tools/export_native_links.py` 导出每个动作首个 impact 的
+`height/strength/direction`；`oppattackheight*/oppattackstrength*/oppattackdir*`
+条件现在按对手当前动作的 impact 判定（例：lowpunch1 = medium/normal/frontal，
+highkick3 = high/hard/fromright）。这些条件主要服务于 `impact*/block*/stun*`
+反应链接，而反应动画目标仍需要 `CStateManager` 才能驱动，目前仍由
+`reaction_for_incoming` 处理。
+
 **三段相位的帧边界已核对（第 18 轮）**
 `startup/active/recovery` 不是凭空编的时长：每一招来自 `brucelee.set` 的
 `attack.impacts[].damage_time` 和动画总帧数。以 `lowpunch1` 为例，

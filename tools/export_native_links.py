@@ -34,6 +34,17 @@ def build(archive: Path) -> dict:
         grab_distance = attack.get("grab_distance")
         if not isinstance(grab_distance, (int, float)):
             grab_distance = None
+        impacts = attack.get("impacts") or []
+        first_impact = impacts[0] if isinstance(impacts, list) and impacts else {}
+        if not isinstance(first_impact, dict):
+            first_impact = {}
+        impact_summary = {
+            "height": first_impact.get("height"),
+            "strength": first_impact.get("strength"),
+            "direction": first_impact.get("direction"),
+        }
+        if not any(impact_summary.values()):
+            impact_summary = None
         facing_window = action.get("facing")
         if (not isinstance(facing_window, list) or len(facing_window) != 2
                 or any(type(item) is not int for item in facing_window)):
@@ -46,6 +57,7 @@ def build(archive: Path) -> dict:
             "counter_time": counter_time,
             "grab_distance": grab_distance,
             "facing": facing_window,
+            "impact": impact_summary,
             "groups": groups,
         })
     link_rows = []
