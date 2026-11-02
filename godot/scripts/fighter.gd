@@ -2553,14 +2553,26 @@ func _advance_stun_state(delta: float) -> void:
     state_time -= delta
     if state_time > 0.000001:
         return
-    if state == "stun":
-        state = "stun2"
-        state_time = _stun_step_seconds("stun", "stun2", STUN_DURATION_FRAMES)
-    elif state == "stun2":
-        state = "stunfall"
-        state_time = _stun_step_seconds("stun2", "stunfall", STUN_DURATION_FRAMES)
-    else:
-        _begin_faceup_ko(0.0)
+    # The next stun state comes from the current action's outgoing links:
+    # stun -> stun2 [55,61], stun2 -> stunfall [55,61], stunfall -> faceupko [71,79].
+    var from_state: String = state
+    for target: String in ["stun2", "stunfall", "faceupko"]:
+        if not _has_native_link(from_state, target):
+            continue
+        if target == "faceupko":
+            _begin_faceup_ko(0.0)
+            return
+        state = target
+        state_time = _stun_step_seconds(from_state, target, STUN_DURATION_FRAMES)
+        return
+    _begin_faceup_ko(0.0)
+
+
+func _has_native_link(source: String, target: String) -> bool:
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") == source and _link_text(link, "to") == target:
+            return true
+    return false
 
 
 func _advance_stun_impact_state(delta: float) -> void:

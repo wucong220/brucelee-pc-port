@@ -146,6 +146,11 @@ reaction clip；没有原生条目/片段时仍回退到 `REACTION_PROFILES`。�
 顺带修正旧代码把 `stun2` 时长写成 71（应为 55）的偏差。
 `tests/test_stun_chain_frames.py` 锁定常量与 link 窗口一致。
 
+**第 29 轮补充**：stun 链的**状态顺序**也改成查 link：`_advance_stun_state`
+按 `stun→stun2`、`stun2→stunfall`、`stunfall→faceupko` 的出边决定下一状态与时长，
+不再写死分支。`_advance_stun_impact_state` 的 `impactstun→stun` 仍由反应强度
+映射选择。
+
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的
 方向/特殊招测试已删除——它们验证的是被删掉的队列/时间窗语义，不再适用。
