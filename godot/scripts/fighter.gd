@@ -253,6 +253,11 @@ const GRAB_ATTACKS: Dictionary = {
 }
 # Victim state after a Brick grab hit; source grabcompl1/2 -> facedown/faceup.
 const GRAB_VICTIM_DATA: Dictionary = {
+    # Bruce grab attacks and Brick grab attacks share the universal victim
+    # clips; the victim candidate must contain them (63-victim for Bruce,
+    # and a Brick candidate with all_grabbed_* for Brick).
+    "grab1": ["grabbed1", 90, "facedownidle"],
+    "grab2": ["grabbed2", 78, "faceupidle"],
     "grab1_brick": ["grabbed1", 90, "facedownidle"],
     "grab2_brick": ["grabbed2", 78, "faceupidle"],
 }
@@ -3664,7 +3669,8 @@ func _physics_process(delta: float) -> void:
         _clear_link_state()
     _apply_attack_root_motion()
     _advance_timed_states(delta)
-    if (attack_kind == "endattack_brick" and state == "active"
+    if ((attack_kind == "endattack_brick" or ENDATTACK_ATTACKS.has(attack_kind))
+            and state == "active"
             and not _endattack_victim_started
             and opponent != null and is_instance_valid(opponent)
             and opponent.state in ["grabbed1", "grabbed2"]):

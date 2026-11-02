@@ -212,7 +212,14 @@ func _apply_entry_setup(entry: Dictionary) -> void:
         computer.state = "facedownidle"
         computer._animate_candidate()
     elif setup == "endattack1" or setup == "endattack2":
-        computer.state = "hitstun"
+        # End attacks consume a held victim, not a standing hitstun dummy.
+        computer.state = "grabbed1" if setup == "endattack1" else "grabbed2"
+        computer.state_time = 1.0
+        computer._animate_candidate()
+    elif String(entry.get("id", "")) in ["grab1", "grab2"]:
+        # Show the victim half of the grab pairing when the opponent candidate
+        # contains the universal grabbed clip.
+        computer.state = "grabbed1" if String(entry.get("id", "")) == "grab1" else "grabbed2"
         computer.state_time = 1.0
         computer._animate_candidate()
     elif setup == "player_down":
