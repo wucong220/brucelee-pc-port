@@ -1157,6 +1157,7 @@ var character_name: String = "Fighter"
 var is_player: bool = true
 var health: float = MAX_HEALTH
 var move_axis: Vector2 = Vector2.ZERO
+var held_directions: Dictionary = {}
 var guard_held: bool = false
 var opponent: PortFighter
 var state: String = "idle"
@@ -4182,22 +4183,36 @@ func current_source_pose() -> String:
     return String(SOURCE_ACTION_POSES[state])
 
 
+func set_held_directions(directions: Dictionary) -> void:
+    held_directions = directions.duplicate()
+
+
 func _native_movement_action() -> String:
-    # Native link sources use stepleft/stepright for the horizontal step even
-    # though the visual clip is the moveleft/moveright animation.
+    # Native step links: left -> stepback, right -> stepfwd, in/up ->
+    # stepright, out/down -> stepleft. Held-key flags are used instead of the
+    # net movement vector so holding A (stepback) survives pressing D + L.
+    if not held_directions.is_empty():
+        if bool(held_directions.get("left", false)):
+            return "stepback"
+        if bool(held_directions.get("right", false)):
+            return "stepfwd"
+        if bool(held_directions.get("up", false)):
+            return "stepright"
+        if bool(held_directions.get("down", false)):
+            return "stepleft"
     var x: float = move_axis.x
     var y: float = move_axis.y
     if absf(x) <= 0.001 and absf(y) <= 0.001:
         return ""
-    # Holding S (down/back) defines the stepback link even while D is pressed
-    # to enter SPECIAL HIGH KICK. Do not let the diagonal x component replace
-    # stepback with stepright.
+    # Fallback when a caller has not supplied held-key flags yet (tests and
+    # training setup): native axes are left=stepback, right=stepfwd,
+    # out/down=stepleft, in/up=stepright.
     if absf(y) > 0.001:
-        var vertical: String = "stepback" if y > 0.0 else "stepfwd"
+        var vertical: String = "stepleft" if y > 0.0 else "stepright"
         if _native_actions.has(vertical):
             return vertical
         return _movement_action()
-    var horizontal: String = "stepleft" if x < 0.0 else "stepright"
+    var horizontal: String = "stepback" if x < 0.0 else "stepfwd"
     if _native_actions.has(horizontal):
         return horizontal
     return _movement_action()

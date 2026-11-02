@@ -603,6 +603,15 @@ func _player_attack_is_low() -> bool:
     return str(details.get("source_impact", {}).get("height", "")) == "low"
 
 
+func _held_direction_flags() -> Dictionary:
+    return {
+        "left": Input.is_action_pressed(PrototypeControls.MOVE_LEFT),
+        "right": Input.is_action_pressed(PrototypeControls.MOVE_RIGHT),
+        "up": Input.is_action_pressed(PrototypeControls.MOVE_UP),
+        "down": Input.is_action_pressed(PrototypeControls.MOVE_DOWN),
+    }
+
+
 func _physics_process(delta: float) -> void:
     if hud == null:
         return
@@ -623,6 +632,7 @@ func _physics_process(delta: float) -> void:
             PrototypeControls.MOVE_DOWN,
             0.2
         )
+        player.set_held_directions(_held_direction_flags())
         computer.move_axis = Vector2.ZERO
         _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
         return
@@ -655,6 +665,7 @@ func _physics_process(delta: float) -> void:
         PrototypeControls.MOVE_DOWN,
         0.2
     )
+    player.set_held_directions(_held_direction_flags())
     _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
     if training_mode:
         computer.move_axis = Vector2.ZERO
