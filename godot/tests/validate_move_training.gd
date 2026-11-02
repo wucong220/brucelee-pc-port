@@ -131,11 +131,8 @@ func _run() -> void:
         push_error("Endattack training did not observe attack_started")
         quit(1)
         return
-    training._process(1.0)
-    if training.current_index != 22:
-        push_error("Endattack training did not advance")
-        quit(1)
-        return
+    # Exit during the 0.9s success prompt, before _advance()/_prepare_current()
+    # can restore player physics for the next lesson.
     training.close()
     scene._on_menu_command("fight")
     if not player.is_physics_processing():
