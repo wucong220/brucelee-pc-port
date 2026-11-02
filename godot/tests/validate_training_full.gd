@@ -96,18 +96,8 @@ func _play(player: PortFighter, computer: PortFighter, entry: Dictionary) -> voi
     for key: String in sequence:
         if key in ["up", "down", "left", "right", "in", "out"]:
             player.record_standing_combo_press(key)
-        elif key == "b":
-            if not player.record_standing_combo_press("b"):
-                player.request_attack("kick")
-        elif key == "c":
-            if not player.record_standing_combo_press("c"):
-                player.request_attack("heavy")
-        elif key == "d":
-            if not player.record_standing_combo_press("d"):
-                player.request_attack("kick")
-        elif key == "a":
-            if not player.record_standing_combo_press("a"):
-                player.request_attack("punch")
+        else:
+            player.record_standing_combo_press(key)
     for _frame: int in range(frames):
         player.position = Vector3(0.0, 1.2, 0.0)
         computer.position = Vector3(0.3, 1.2, 0.0)

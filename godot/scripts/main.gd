@@ -851,30 +851,16 @@ func _handle_fighter_attack_input(
     # in/out are toward/away from the opponent after applying the fighter's
     # facing. They are PC-only and not recovered Android physical keys.
     var modifiers: Array = _standing_combo_modifiers(fighter)
+    # Every attack key now goes through the native link table; there is no
+    # default-attack fallback. A press that matches no link does nothing.
     if event.is_action_pressed(action_a):
-        if not fighter.record_standing_combo_press("a", modifiers):
-            if fighter.state in ["facedownidle", "faceupidle"]:
-                pass
-            else:
-                fighter.request_attack("punch")
+        fighter.record_standing_combo_press("a", modifiers)
     elif event.is_action_pressed(action_b):
-        if not fighter.record_standing_combo_press("b", modifiers):
-            if fighter.state in ["facedownidle", "faceupidle"]:
-                pass
-            else:
-                fighter.request_attack("kick")
+        fighter.record_standing_combo_press("b", modifiers)
     elif event.is_action_pressed(action_c):
-        if not fighter.record_standing_combo_press("c", modifiers):
-            if fighter.state in ["facedownidle", "faceupidle"]:
-                pass
-            else:
-                fighter.request_attack("heavy")
+        fighter.record_standing_combo_press("c", modifiers)
     elif event.is_action_pressed(action_d):
-        if not fighter.record_standing_combo_press("d", modifiers):
-            if fighter.state in ["facedownidle", "faceupidle"]:
-                pass
-            else:
-                fighter.request_attack("kick")
+        fighter.record_standing_combo_press("d", modifiers)
     elif event.is_action_pressed(PrototypeControls.RESTART):
         return false
     else:

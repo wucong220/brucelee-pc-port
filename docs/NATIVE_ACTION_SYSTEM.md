@@ -108,18 +108,24 @@
 来源 `stepleft/stepright`；否则水平移动会改播 step 动画，`validate_brick_ground_entry`
 的移动循环断言就会失败。
 
-### 基础攻击没有单键 link
+### 基础攻击就是单键 link（第 16 轮修正）
 
-导出的 396 条 link 中，指向 `lowpunch1` / `lowkick1` 的只有三条键的连段
-（`a,b,b` / `b,d,d`），**没有单键 link**。因此 `main.gd` 里“按键直接
-`request_attack` 基础招”的回退仍然是原型机制，不是从 link 表读出来的；
-在拿到原生默认攻击入口之前，这部分继续标为 prototype。
+先前按索引 0 读 `keysequence` 时，指向 `lowpunch1`/`lowkick1` 的只有
+`a,b,b`/`b,d,d`，于是误判“没有单键 link、需要默认攻击入口”。切到键盘布局
+（索引 1）后，四条基础攻击各有单键 link：
 
-`CFighter::BasicUpdate`（`0x1b8330`）的完整反编译也确认了这一点：它只推进
-动画时钟、按帧区间记录当前帧、处理 `+0xf0/+0xf4` 的待执行 link、更新朝向/
-位移，**没有任何攻击按键分支**。`+0xf0/+0xf4` 只在 `BasicUpdate` 里执行
-`SetAnimation`，而这些带 `linking_frame` 的 link 目标几乎都是 `idle` 系列
-（回站立），不是攻击起手。
+- `pressa` → `highpunch1`（高拳）
+- `pressb` → `lowpunch1`（低拳）
+- `pressc` → `highkick1`（高腿）
+- `pressd` → `lowkick1`（低腿）
+
+所以 `main.gd` 里“按键直接 `request_attack` 基础招”的回退是多余的，
+第 16 轮已删除；现在所有攻击键只走原生 link 表，匹配不到就什么都不做。
+
+`CFighter::BasicUpdate`（`0x1b8330`）的完整反编译也确认它**没有任何攻击按键
+分支**：它只推进动画时钟、按帧区间记录当前帧、处理 `+0xf0/+0xf4` 的待执行
+link、更新朝向/位移。`+0xf0/+0xf4` 只在 `BasicUpdate` 里执行 `SetAnimation`，
+而这些带 `linking_frame` 的 link 目标几乎都是 `idle` 系列（回站立），不是攻击起手。
 
 `CFighter::UserControlUpdate`（`0x1b89c0`）每次更新依次遍历**当前招式的
 link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link 做四个检查：

@@ -10,7 +10,7 @@
 | # | 规则 | 位置 | 状态 | 说明 |
 |---|---|---|---|---|
 | 1 | `J/K/L/U → a/b/c/d` | `prototype_controls.gd` | 自创 | 原版 `input.config` 的虚拟键到设备码映射未闭合；PC 键位是原型选择 |
-| 2 | `D` 无匹配时回退成 `kick` | `main.gd::_handle_fighter_attack_input` | 自创 | 只为避免单按 D 无反应 |
+| 2 | `D` 无匹配时回退成 `kick` | `main.gd::_handle_fighter_attack_input` | 自创 | 已删除（第 16 轮）：基础攻击改为单键 link，匹配不到就什么都不做 |
 | 3 | 连段窗口 0.52s/1.35s | `fighter.gd` `COMBO_MAX_GAP_SECONDS` / `COMBO_MAX_TOTAL_SECONDS` | 自创 | 原版 `CBeatEmUpGame::Update` 按“最后事件 +500”批量过期，单位未闭合；0.52/1.35 是替代值 |
 | 4 | 连段优先级“后完成者替换” | `fighter.gd::record_standing_combo_press` | 自创 | 原版 link 顺序与 source_index 优先级未验证 |
 | 5 | 每次按键入队、目标排最后 | `fighter.gd::request_attack_or_queue` / `_try_begin_pending_standing_combo` | 自创 | 原版是 `InputSequenceCheck → FollowLink → ConsumeEvents` 的事件消费模型，不是 FIFO 攻击队列 |
