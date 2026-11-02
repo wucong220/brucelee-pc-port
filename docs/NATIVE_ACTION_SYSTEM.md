@@ -285,5 +285,6 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
 - 反应链的 13/15/20/40、23/21/14 帧回退已改读对应的出边 link 起始帧。
 
 仍未完全处理：`unique` 的角色专属 clip 映射；`RAGE_MAX` 与 AI 怒气
-扣费；GitHub 工作流只跑 Python 与 build-path 检查，没有 Godot 回归或
-真实 EXE 构建（候选资源和原始 APK 不在仓库内）。
+扣费。CI 新增 `godot-parse` 作业，会下载 Godot 4.7.2 对全部 GDScript
+做 `--check-only` 解析；运行时 Godot 回归和真实 EXE 构建仍只能在本机
+执行（候选资源和原始 APK 不在仓库内）。
