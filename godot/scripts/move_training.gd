@@ -277,6 +277,16 @@ func _prepare_current() -> void:
     var setup: String = String(entry.get("setup", "idle"))
     if setup.begins_with("source_"):
         _prime_source_attack(setup.trim_prefix("source_"), String(entry.get("actions", [""])[0]))
+    elif setup == "stepback":
+        # specialkickhigh is a direct link from the stepback movement action.
+        player.state = "idle"
+        player.move_axis = Vector2(0.0, 1.0)
+        player._animate_candidate()
+    elif setup == "stepleft":
+        # specialkicklowmiss is a direct link from the stepleft movement action.
+        player.state = "idle"
+        player.move_axis = Vector2(-1.0, 0.0)
+        player._animate_candidate()
     elif setup == "parry_high":
         _begin_dummy_attack("high_punch")
     elif setup == "parry_low":
@@ -310,6 +320,10 @@ func _setup_explanation(setup: String) -> String:
         return "START NEUTRAL"
     if setup.begins_with("source_"):
         return "START AFTER " + setup.trim_prefix("source_").replace("_", " ").to_upper()
+    if setup == "stepback":
+        return "HOLD S TO STEP BACK"
+    if setup == "stepleft":
+        return "HOLD A TO STEP LEFT"
     if setup == "target_down":
         return "TARGET ALREADY DOWN"
     if setup == "player_down":

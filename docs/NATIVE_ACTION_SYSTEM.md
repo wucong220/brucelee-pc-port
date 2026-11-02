@@ -34,9 +34,14 @@
 `high_punch`、事件不重复触发）、`validate_move_gallery.gd`（27 招）、
 `validate_menu_confirm_attack.gd`、`smoke_test.gd`。
 
-**未完成**：训练目录还按旧的“J=punch”按键假设写的；切到原生键盘布局后
-J=highpunch1、K=lowpunch1，所以 `validate_training_full` 现在从第 1 课就失败。
-下一轮要把 27 课的前置和按键提示改成从 `native_links.json` 的索引 1 序列生成。
+**训练（2026-11-02 第 8 轮）**：27 课的前置和按键改成从 `native_links.json`
+索引 1 的序列自动生成；`special_kick_high` 用 `stepback` 前置、
+`special_kick_low` 用 `stepleft` + miss→hit 自动 link。`validate_training_full`
+目前通过 1–14，15 起失败：`specialpunchlowmiss` 的 link 需要三键
+`out,right,a` 才能匹配，但同一帧里 `highpunch1` 的单键 `a` link 在全局顺序里
+更靠前，会先把 `a` 消费掉。原版是按**当前动画自己的 link 表**扫描，该表可能
+不包含低阶 link；这份表的构建/排序规则还没恢复，所以 15 起先停住，不靠自定优先级硬修。
+
 三段 `startup/active/recovery` 状态机、地面攻击和 parry 输入仍是原型实现，
 尚未换成 link 数据驱动的状态进入。
 

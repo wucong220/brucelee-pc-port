@@ -84,45 +84,36 @@ func _play(player: PortFighter, computer: PortFighter, entry: Dictionary) -> voi
         for _press: int in range(3):
             player.record_parry_press(kind)
         return
-    if not SEQUENCES.has(id):
-        return
-    # Native events expire 500 ms after the last press, so the whole sequence
-    # has to be pressed inside the current animation's link window.
-    var gap: int = 1
     var actions: Array = entry.get("actions", [])
+    var sequence: Array[String] = []
     if not actions.is_empty():
-        player.set_key_status(
-            player.link_requirements_for_target(String(actions[0]))
-        )
-    for step_value: Variant in SEQUENCES[id]:
-        var step: Array = step_value
-        var key: String = String(step[-1])
-        var mods: Array[String] = []
-        for token: Variant in step:
-            var text: String = String(token)
-            if text != key:
-                mods.append(text)
-        if player.state in ["facedownidle", "faceupidle"]:
-            player.record_virtual_press(key)
+        var target: String = String(actions[0])
+        sequence = player.link_sequence_for_target(target)
+        player.set_key_status(player.link_requirements_for_target(target))
+        if sequence.is_empty():
+            var source_action: String = player.link_source_action_for_target(target)
+            var source_kind: String = player.kind_for_action(source_action)
+            if not source_kind.is_empty():
+                sequence = player.link_sequence_for_target(source_kind)
+    # Miss-to-hit links are automatic: wait inside the frame window instead of
+    # pressing a sequence that the native link does not declare.
+    var frames: int = 60 if sequence.is_empty() else 1
+    for key: String in sequence:
+        if key in ["up", "down", "left", "right", "in", "out"]:
+            player.record_standing_combo_press(key)
         elif key == "b":
-            var result: int = player.try_attack_to_floor_press("b")
-            if result == PortFighter.AttackToFloorInputResult.IGNORED:
-                if not player.record_standing_combo_press("b", mods):
-                    player.request_attack("kick")
+            if not player.record_standing_combo_press("b"):
+                player.request_attack("kick")
         elif key == "c":
-            var result: int = player.try_attack_to_floor_press("c")
-            if result == PortFighter.AttackToFloorInputResult.IGNORED:
-                if not player.record_standing_combo_press("c", mods):
-                    player.request_attack("heavy")
+            if not player.record_standing_combo_press("c"):
+                player.request_attack("heavy")
         elif key == "d":
-            var result: int = player.try_attack_to_floor_press("d")
-            if result == PortFighter.AttackToFloorInputResult.IGNORED:
-                if not player.record_standing_combo_press("d", mods):
-                    player.request_attack("kick")
-        else:
-            if not player.record_standing_combo_press("a", mods):
+            if not player.record_standing_combo_press("d"):
+                player.request_attack("kick")
+        elif key == "a":
+            if not player.record_standing_combo_press("a"):
                 player.request_attack("punch")
-        for _frame: int in range(gap):
-            player.position = Vector3(0.0, 1.2, 0.0)
-            computer.position = Vector3(0.3, 1.2, 0.0)
-            player._physics_process(1.0 / 60.0)
+    for _frame: int in range(frames):
+        player.position = Vector3(0.0, 1.2, 0.0)
+        computer.position = Vector3(0.3, 1.2, 0.0)
+        player._physics_process(1.0 / 60.0)

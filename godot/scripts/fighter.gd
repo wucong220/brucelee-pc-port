@@ -3275,6 +3275,43 @@ func _native_link_window_ok(link: Dictionary) -> bool:
     return frame + 0.0001 >= start and frame <= end + 0.0001
 
 
+func link_source_action_for_target(target_kind: String) -> String:
+    var native_target: String = target_kind
+    if ATTACKS.has(target_kind):
+        var target_source: String = str(ATTACKS[target_kind].get("source_action", ""))
+        if not target_source.is_empty():
+            native_target = target_source
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != native_target:
+            continue
+        return _link_text(link, "from")
+    return ""
+
+
+func kind_for_action(action: String) -> String:
+    return String(_action_to_attack.get(action, ""))
+
+
+func link_sequence_for_target(target_kind: String) -> Array[String]:
+    # Keys of the native link that lands on this move, in the variant selected
+    # by the active input layout.
+    var native_target: String = target_kind
+    if ATTACKS.has(target_kind):
+        var target_source: String = str(ATTACKS[target_kind].get("source_action", ""))
+        if not target_source.is_empty():
+            native_target = target_source
+    var result: Array[String] = []
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != native_target:
+            continue
+        for step: Variant in Array(link.get("steps", [])):
+            var tokens: Array = Array(step)
+            if not tokens.is_empty():
+                result.append(str(tokens[0]))
+        return result
+    return result
+
+
 func _native_link_status_ok(link: Dictionary) -> bool:
     # status is the flat pair list of the selected key-status variant.
     var status: Array = link.get("status", [])
@@ -4131,7 +4168,9 @@ func _movement_action() -> String:
         return ""
     var action: String
     if absf(x) >= absf(y):
-        action = "moveleft" if x < 0.0 else "moveright"
+        action = "stepleft" if x < 0.0 else "stepright"
+        if not _candidate_clip_paths.has(action):
+            action = "moveleft" if x < 0.0 else "moveright"
     else:
         action = "stepfwd" if y < 0.0 else "stepback"
     if _candidate_clip_paths.has(action):

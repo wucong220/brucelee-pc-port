@@ -137,8 +137,8 @@
    "id": "special_kick_high",
    "label": "SPECIAL HIGH KICK",
    "group": "SPECIAL",
-   "input": "OUT+K, IN+L, IN+L",
-   "setup": "source_punch",
+   "input": "S (step back) + D + L",
+   "setup": "stepback",
    "actions": [
     "special_kick_high"
    ],
@@ -148,8 +148,8 @@
    "id": "special_kick_low",
    "label": "SPECIAL LOW KICK",
    "group": "SPECIAL",
-   "input": "LEFT+K, IN+L, IN+L",
-   "setup": "source_punch",
+   "input": "A (step left) + D + U",
+   "setup": "stepleft",
    "actions": [
     "special_kick_low_hit"
    ],
