@@ -2990,6 +2990,25 @@ func _link_sequence_matches(entry: Dictionary) -> bool:
     return false
 
 
+func _facing_window_ok() -> bool:
+    # CFighter::FacingUpdate only turns to the opponent while the current
+    # action's recovered facing window allows it (for example grab1 = [0,1]).
+    var action: String = _current_action_name()
+    if action.is_empty():
+        return true
+    var window: Variant = _native_actions.get(action, {}).get("facing")
+    if not window is Array or Array(window).size() < 2:
+        return true
+    var start: int = int(window[0])
+    var end: int = int(window[1])
+    if start > end:
+        return false
+    var frame: float = _current_attack_source_frame()
+    if frame < 0.0:
+        frame = 0.0
+    return frame + 0.0001 >= float(start) and frame <= float(end) + 0.0001
+
+
 func _current_action_name() -> String:
     if ATTACKS.has(attack_kind):
         var source_action: String = str(ATTACKS[attack_kind].get("source_action", ""))
@@ -3539,7 +3558,7 @@ func request_attack(kind: String) -> bool:
 
 func _physics_process(delta: float) -> void:
     _time += delta
-    if opponent != null and is_instance_valid(opponent):
+    if opponent != null and is_instance_valid(opponent) and _facing_window_ok():
         facing = 1.0 if opponent.global_position.x >= global_position.x else -1.0
     # Turn the torso toward the opponent (local 'front' is +X).
     rotation.y = 0.0 if facing > 0.0 else PI

@@ -34,6 +34,10 @@ def build(archive: Path) -> dict:
         grab_distance = attack.get("grab_distance")
         if not isinstance(grab_distance, (int, float)):
             grab_distance = None
+        facing_window = action.get("facing")
+        if (not isinstance(facing_window, list) or len(facing_window) != 2
+                or any(type(item) is not int for item in facing_window)):
+            facing_window = None
         action_rows.append({
             "name": str(action.get("name", "")),
             "pose": action.get("pose"),
@@ -41,6 +45,7 @@ def build(archive: Path) -> dict:
             "ordinal": binary.get("ordinal"),
             "counter_time": counter_time,
             "grab_distance": grab_distance,
+            "facing": facing_window,
             "groups": groups,
         })
     link_rows = []

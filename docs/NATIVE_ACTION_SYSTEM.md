@@ -92,6 +92,10 @@
 endattack1=150、grab2=90、specialpunchlowhit=120），条件按
 `grab_distance * source_units_to_world` 与世界距离比较；常量 0.7 只在缺数据时回退。
 
+**第 20 轮补充**：转向也改成数据驱动。`tools/export_native_links.py` 导出动作的
+`facing` 窗口到 `native_links.json`；`_facing_window_ok()` 只在当前动作的
+`facing` 帧区间内允许转身（grab1 `[0,1]`，endattack1 的 `[1,0]` 视为锁定）。
+
 **三段相位的帧边界已核对（第 18 轮）**
 `startup/active/recovery` 不是凭空编的时长：每一招来自 `brucelee.set` 的
 `attack.impacts[].damage_time` 和动画总帧数。以 `lowpunch1` 为例，
