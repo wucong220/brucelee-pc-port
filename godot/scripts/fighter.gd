@@ -3083,11 +3083,28 @@ func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
     if required_tokens.has("left") or required_tokens.has("right"):
         effective.erase("in")
         effective.erase("out")
-    if effective.size() != required_tokens.size():
+    if effective.size() > required_tokens.size():
         return false
     for token: Variant in required_tokens:
-        if not effective.has(String(token)):
-            return false
+        var token_text: String = String(token)
+        if not effective.has(token_text):
+            # Native InputStatusCheck also accepts a held direction; a press
+            # edge alone is not required for a directional step.
+            var held_token: String = token_text
+            if held_token.begins_with("press"):
+                held_token = held_token.substr(5)
+            var held_ok: bool = false
+            match held_token:
+                "down", "out":
+                    held_ok = bool(held_directions.get("down", false))
+                "up", "in":
+                    held_ok = bool(held_directions.get("up", false))
+                "left":
+                    held_ok = bool(held_directions.get("left", false))
+                "right":
+                    held_ok = bool(held_directions.get("right", false))
+            if not held_ok:
+                return false
     return true
 
 
@@ -3193,6 +3210,7 @@ func source_state_time_for_target(source_kind: String, target_action: String) ->
             target_native = entry_source
         break
     var frame_count: float = float(ATTACKS[source_kind]["animation_frame_count"])
+    var best_entry_frame: float = -1.0
     for link: Dictionary in _native_links:
         if _link_text(link, "to") != target_native:
             continue
@@ -3211,7 +3229,16 @@ func source_state_time_for_target(source_kind: String, target_action: String) ->
         var frame: float = float(window[0]) + 1.0
         if window.size() >= 3:
             frame = maxf(frame, float(window[2]) + 1.0)
-        return maxf((frame_count - frame) / SOURCE_FRAME_RATE, 1.0 / SOURCE_FRAME_RATE)
+        # A target can have several native entry links (for example lowkick3
+        # has a [17,27] basic-attack link and a [11,16] combo link). Prime at
+        # the earliest applicable entry, not merely the first link in order.
+        if best_entry_frame < 0.0 or frame < best_entry_frame:
+            best_entry_frame = frame
+    if best_entry_frame >= 0.0:
+        return maxf(
+            (frame_count - best_entry_frame) / SOURCE_FRAME_RATE,
+            1.0 / SOURCE_FRAME_RATE
+        )
     return 0.0
 
 
