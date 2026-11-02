@@ -35,6 +35,9 @@ var _cam_smooth_b: Vector3 = Vector3.ZERO
 var _cam_zoom: float = 0.0
 var _cam_side: int = CAM_SIDE
 var _cam_initialized: bool = false
+var _procedural_floor: Node3D = null
+var _procedural_arena_lines: Array[MeshInstance3D] = []
+var _procedural_arena_hidden: bool = false
 var combat_audio: Node
 var _candidate_audio: Dictionary = {}
 var _candidate_audio_error: Dictionary = {}
@@ -253,6 +256,7 @@ func _run_export_self_test() -> void:
             get_node_or_null("OriginalFarScene").get_child_count()
             if get_node_or_null("OriginalFarScene") != null else 0
         ),
+        "procedural_arena_hidden": _procedural_arena_hidden,
         "opponent_candidate_loaded": computer.candidate_loaded,
         "opponent_idle_clip": opponent_idle_clip,
         "opponent_textures_loaded": computer.candidate_textures_loaded,
@@ -349,6 +353,7 @@ func _make_floor() -> void:
     material.albedo_color = Color(0.28, 0.28, 0.33)
     visual.material_override = material
     floor.add_child(visual)
+    _procedural_floor = floor
     add_child(floor)
 
 func _make_arena_line(x: float) -> void:
@@ -360,6 +365,7 @@ func _make_arena_line(x: float) -> void:
     var material: StandardMaterial3D = StandardMaterial3D.new()
     material.albedo_color = Color(0.9, 0.72, 0.42)
     visual.material_override = material
+    _procedural_arena_lines.append(visual)
     add_child(visual)
 
 func _build_original_far_scene() -> void:
@@ -412,6 +418,11 @@ func _build_original_far_scene() -> void:
         root.add_child(instance)
     if root.get_child_count() > 0:
         add_child(root)
+        _procedural_arena_hidden = true
+        if _procedural_floor != null:
+            _procedural_floor.visible = false
+        for line: MeshInstance3D in _procedural_arena_lines:
+            line.visible = false
 
 
 func _build_fighters() -> void:
