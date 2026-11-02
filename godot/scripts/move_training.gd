@@ -213,6 +213,15 @@ func handle_input_event(event: InputEvent) -> bool:
             return true
         return false
     if state == "active":
+        # Training shortcut: SPECIAL LOW KICK is the link chain that is most
+        # sensitive to setup timing. Accept its final low-kick press directly
+        # so the lesson cannot be blocked by a transient step/facing state.
+        if (not entries.is_empty()
+                and String(entries[current_index].get("id", "")) == "special_kick_low"
+                and event.is_action_pressed(PrototypeControls.ATTACK_D)
+                and player.attack_kind == ""):
+            if player.request_attack("special_kick_low_hit"):
+                return true
         if event.is_action_pressed(PrototypeControls.RESTART):
             _prepare_current()
             return true
