@@ -537,6 +537,11 @@ func _incoming_attack_is_low() -> bool:
     return str(details.get("source_impact", {}).get("height", "")) == "low"
 
 
+func _player_attack_is_low() -> bool:
+    var details: Dictionary = player.ATTACKS.get(player.attack_kind, {})
+    return str(details.get("source_impact", {}).get("height", "")) == "low"
+
+
 func _physics_process(delta: float) -> void:
     if hud == null:
         return
@@ -627,8 +632,21 @@ func _think_ai(delta: float) -> void:
             and distance <= player.attack_reach_world(player.attack_kind, computer)):
         ai_guard_sequence = player.attack_sequence
         ai_guard_decision = rng.randf() < 0.25
-    computer.guard_held = (player_threat and player.attack_sequence == ai_guard_sequence
-            and ai_guard_decision)
+    var parry_started: bool = false
+    if (player_threat and player.attack_sequence == ai_guard_sequence
+            and ai_guard_decision and computer.state in ["idle", "idle2", "idle3"]
+            and distance <= player.attack_reach_world(player.attack_kind, computer)):
+        var parry_kind: String = ("parry_low_brick"
+                if _player_attack_is_low() else "parry_high_brick")
+        var parry_cost: float = float(PortFighter.SPECIAL_RAGE_COSTS.get(parry_kind, 0.0))
+        if (computer.rage >= parry_cost and computer.supports_attack(parry_kind)
+                and rng.randf() < 0.5):
+            computer.guard_held = false
+            if computer.request_attack(parry_kind):
+                computer.rage = maxf(0.0, computer.rage - parry_cost)
+                parry_started = true
+    computer.guard_held = (not parry_started and player_threat
+            and player.attack_sequence == ai_guard_sequence and ai_guard_decision)
     ai_timer -= delta
     if ai_timer <= 0.0:
         ai_timer = rng.randf_range(0.45, 0.95)
