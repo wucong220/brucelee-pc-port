@@ -129,6 +129,11 @@ const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
 const BRICK_ATTACK_CONFIG_PATH: String = "res://data/fighting_set_m03_mapped_attacks.json"
 const ATTACK_ROOT_MOTION_PATH: String = "res://data/attack_root_motion.json"
+const LOCOMOTION_STEP_TO_MOVE: Dictionary = {
+    "stepfwd": "movefwd", "stepback": "moveback",
+    "stepright": "moveright", "stepleft": "moveleft",
+}
+const LOCOMOTION_CHAIN_FRAME: float = 4.0
 const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_idle_01": 25.0,
     "m01_pnch_low_01": 40.0,
@@ -1167,6 +1172,8 @@ var character_name: String = "Fighter"
 var is_player: bool = true
 var health: float = MAX_HEALTH
 var move_axis: Vector2 = Vector2.ZERO
+var _locomotion_action: String = ""
+var _locomotion_time: float = 0.0
 var polar_movement_enabled: bool = false
 var training_step_lock: bool = false
 var held_directions: Dictionary = {}
@@ -3852,7 +3859,33 @@ func _physics_process(delta: float) -> void:
     position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
     position.z = clampf(position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
     _animate_visuals()
+    _advance_locomotion_visual(delta)
     _animate_candidate()
+
+func _advance_locomotion_visual(delta: float) -> void:
+    if not _uses_standing_idle_rules():
+        _locomotion_action = ""
+        _locomotion_time = 0.0
+        return
+    var base: String = _native_movement_action()
+    if base.is_empty():
+        _locomotion_action = ""
+        _locomotion_time = 0.0
+        return
+    var family_move: String = String(LOCOMOTION_STEP_TO_MOVE.get(base, ""))
+    if _locomotion_action.is_empty() or (
+            _locomotion_action != base
+            and _locomotion_action != family_move
+    ):
+        _locomotion_action = base
+        _locomotion_time = 0.0
+    _locomotion_time += delta
+    if (_locomotion_action.begins_with("step")
+            and not family_move.is_empty()
+            and _candidate_clip_paths.has(family_move)
+            and _locomotion_time >= LOCOMOTION_CHAIN_FRAME / SOURCE_FRAME_RATE):
+        _locomotion_action = family_move
+        _locomotion_time = 0.0
 
 func _advance_timed_states(delta: float) -> void:
     if state in ["grabbed1", "grabbed2"]:
@@ -5049,6 +5082,8 @@ func reset_fighter(start_position: Vector3) -> void:
     global_position = start_position
     velocity = Vector3.ZERO
     move_axis = Vector2.ZERO
+    _locomotion_action = ""
+    _locomotion_time = 0.0
     health = MAX_HEALTH
     state = "idle"
     state_time = 0.0
@@ -5151,7 +5186,7 @@ func _animate_candidate() -> void:
     elif state == "ko" and _candidate_clip_paths.has("ko"):
         requested = "ko"
     elif state in ["idle", "idle2", "idle3"] and not _native_movement_action().is_empty():
-        requested = _native_movement_action()
+        requested = _locomotion_action if not _locomotion_action.is_empty() else _native_movement_action()
     elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
         requested = IDLE2_CLIP
     elif state == "idle3" and _candidate_clip_paths.has(IDLE3_CLIP):
