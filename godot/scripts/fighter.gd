@@ -105,6 +105,15 @@ const BRICK_CLIPS: Dictionary = {
     "stepright": "m03_steprht",
 }
 const SOURCE_FRAME_RATE: float = 30.0
+# Root-motion axis mapping is an isolated port adapter. EMPIRICAL means the
+# current mapping has passed the behavior tests; UNVERIFIED means the native
+# axis/sign semantics are not established. The raw ANM positions are never
+# modified by this classification.
+const ROOT_MOTION_MAPPING_STATUS: Dictionary = {
+    "m01_pnch_low_01": "EMPIRICAL",
+    "m03_pnch_low_01": "EMPIRICAL",
+    "m03_kck_low_01": "EMPIRICAL",
+}
 const SOURCE_CHARACTER_HEIGHT: float = CANDIDATE_SOURCE_HEIGHT
 const WORLD_CHARACTER_HEIGHT: float = CANDIDATE_HEIGHT
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
@@ -1320,22 +1329,27 @@ func _apply_attack_root_motion() -> void:
     var current: Vector3 = _sample_attack_root(track, frame)
     var delta: Vector3 = current - _attack_root_previous_value
     if delta.length_squared() > 0.0:
-        # Prototype only: per-clip first-Y sign maps signed raw Y to forward
-        # and raw X to lateral. Native axis/sign and final world mapping
-        # remain unverified.
-        var forward_sign: float = float(
-            _attack_root_forward_signs.get(animation_name, 1.0)
-        )
-        position.x = clampf(
-            position.x + facing * delta.y * forward_sign * source_units_to_world,
-            -6.8, 6.8
-        )
-        position.z = clampf(
-            position.z + facing * delta.x * source_units_to_world,
-            -3.0, 3.0
-        )
+        var motion: Vector3 = _root_motion_delta_to_pc_world(delta, animation_name)
+        position.x = clampf(position.x + motion.x, -6.8, 6.8)
+        position.z = clampf(position.z + motion.z, -3.0, 3.0)
     _attack_root_previous_frame = frame
     _attack_root_previous_value = current
+
+
+func root_motion_mapping_status(animation_name: String) -> String:
+    return String(ROOT_MOTION_MAPPING_STATUS.get(animation_name, "UNVERIFIED"))
+
+
+func _root_motion_delta_to_pc_world(delta: Vector3, animation_name: String) -> Vector3:
+    # The only place raw ANM positions are converted into PC world motion.
+    # status: EMPIRICAL (behavior-tested) or UNVERIFIED; never claim native
+    # axis/sign equivalence from this adapter.
+    var forward_sign: float = float(_attack_root_forward_signs.get(animation_name, 1.0))
+    return Vector3(
+        facing * delta.y * forward_sign * source_units_to_world,
+        0.0,
+        facing * delta.x * source_units_to_world
+    )
 
 
 func _ready() -> void:
