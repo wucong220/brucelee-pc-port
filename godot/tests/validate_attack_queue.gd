@@ -60,6 +60,23 @@ func _run() -> void:
             quit(1)
             return
         print(case_name + " -> " + str(started))
+    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    player.rage = 100.0
+    player.state = "recovery"
+    player.state_time = 0.0
+    player.attack_kind = "high_punch3"
+    player._attack_hit_landed = true
+    player._standing_combo_pending_attack = "special_punch_high"
+    player._standing_combo_pending_source_kind = "high_punch3"
+    player._standing_combo_pending_source_sequence = player.attack_sequence
+    if player._try_begin_pending_standing_combo():
+        push_error("Rejected special combo unexpectedly started")
+        quit(1)
+        return
+    if not is_equal_approx(player.rage, 100.0):
+        push_error("Rejected special combo spent rage: " + str(player.rage))
+        quit(1)
+        return
     print("ATTACK_QUEUE_VALIDATION=" + JSON.stringify({"cases": SequenceCases.keys()}))
     quit(0)
 
