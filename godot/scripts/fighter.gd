@@ -4291,7 +4291,6 @@ func receive_hit(
         reaction: Dictionary = {}
 ) -> bool:
     _parry_press_times.clear()
-    _queued_attacks.clear()
     if (state in ["startup", "active", "recovery"]
             and attack_kind in ["parry_high", "parry_low"]):
         # Player parry mirrors the Brick parry windows; absorbing an incoming
@@ -4309,6 +4308,9 @@ func receive_hit(
             and attack_kind in ["parry_attack", "parry_attack_brick"]):
         # The prototype counter owns the exchange once the parry chains.
         return false
+    # A real hit/block cancels queued attacks. Parry/counter returns above do
+    # not clear the queue, so their own follow-up inputs survive.
+    _queued_attacks.clear()
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.

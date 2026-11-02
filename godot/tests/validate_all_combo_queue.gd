@@ -40,7 +40,12 @@ func _run() -> void:
         for step_value: Variant in steps:
             var step: Array = step_value
             var key: String = String(step[-1])
-            _press(player, key)
+            var modifiers: Array[String] = []
+            for token: Variant in step:
+                var value: String = String(token)
+                if value != key:
+                    modifiers.append(value)
+            _press(player, key, modifiers)
             for _frame: int in range(10):
                 player.position = Vector3(0.0, 1.2, 0.0)
                 computer.position = Vector3(0.3, 1.2, 0.0)
@@ -58,9 +63,9 @@ func _run() -> void:
     quit(0)
 
 
-func _press(player: PortFighter, key: String) -> void:
+func _press(player: PortFighter, key: String, modifiers: Array[String] = []) -> void:
     var base: String = "punch" if key == "a" else (
         "kick" if key == "b" else ("heavy" if key == "c" else "kick")
     )
-    if not player.record_standing_combo_press(key):
+    if not player.record_standing_combo_press(key, modifiers):
         player.request_attack_or_queue(base)
