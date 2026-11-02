@@ -233,12 +233,11 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
     "body_part": "lleg", "attack_radius": ATTACK_TO_FLOOR_RADIUS,
 }
 const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
-const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.8
-# Human hands rarely hit three keys inside one 0.8s total window. The combo
-# history now expires on a per-gap basis with an overall cap: each next press
-# may take up to COMBO_MAX_GAP, and the whole sequence must fit COMBO_MAX_TOTAL.
-const COMBO_MAX_GAP_SECONDS: float = 0.52
-const COMBO_MAX_TOTAL_SECONDS: float = 1.35
+# Link input follows the decompiled CFighter::UserControlUpdate model: events
+# stay in a queue with a consumed bit, and every physics update re-evaluates
+# each link against the current animation's frame window. There is no
+# wall-clock combo window and no FIFO of attacks.
+const LINK_EVENT_LIMIT: int = 8
 const RAGE_MAX: float = 100.0
 const RAGE_GAIN_PER_HIT: float = 10.0
 # Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
@@ -1239,14 +1238,7 @@ var _attack_root_previous_value: Vector3 = Vector3.ZERO
 var _attack_connected: bool = false
 var _ground_attack_input_history: Array[Dictionary] = []
 var _ground_attack_input_owner: String = ""
-var _standing_combo_input_history: Array[Dictionary] = []
-var _standing_combo_pending_attack: String = ""
-# A matched sequence belongs to the attack that was running when it completed.
-# The pending entry is only valid while that exact attack instance is still the
-# current one; native link priority and the member record's third field remain
-# unverified, so this binding is a prototype safety rule.
-var _standing_combo_pending_source_sequence: int = -1
-var _standing_combo_pending_source_kind: String = ""
+var _link_events: Array[Dictionary] = []
 var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
 var last_reaction_animation: String = ""
@@ -1261,7 +1253,6 @@ var _multi_impact_applied: Array = []
 var _attack_hit_landed: bool = false
 var _grab_connected: bool = false
 var _endattack_victim_started: bool = false
-var _queued_attacks: Array[String] = []
 var _stun_impact_next_state: String = "stunfall"
 var _parry_press_times: Array = []
 var candidate_loaded: bool = false
@@ -2558,7 +2549,7 @@ func _enter_locomotion_state(next_state: String) -> void:
     state_time = 0.0
     attack_kind = ""
     _clear_ground_attack_input_history()
-    _clear_standing_combo_state()
+    _clear_link_state()
     _clear_reaction_tracking()
     if (candidate_visual_blending_enabled
             and previous_state == "attacktofloor"
@@ -2997,14 +2988,12 @@ func record_standing_combo_press(
         virtual_key: String,
         modifiers: Array = []
 ) -> bool:
-    # Prototype-only sequence path for the recovered candobasicattacks links.
-    # Physical key status, exact key-event lifetime and link scheduling remain
-    # unverified. Only an attack with a recovered source window may buffer
-    # sequence input, so Heavy (no source window) never accumulates a match.
-    if not _accepts_standing_combo_input(virtual_key):
-        _clear_standing_combo_state()
+    # Decompiled model: a press becomes an event with a consumed bit. Links are
+    # re-evaluated against that event queue every physics update; no wall-clock
+    # combo window and no FIFO of attacks.
+    if not _accepts_link_input(virtual_key):
+        _clear_link_state()
         return false
-    _prune_standing_combo_input_history()
     var tokens: Array = [virtual_key]
     for modifier: Variant in modifiers:
         var token: String = String(modifier)
@@ -3012,20 +3001,10 @@ func record_standing_combo_press(
             tokens.append(token)
     if tokens.has("b") and (tokens.has("out") or tokens.has("left")):
         _special_stepback_origin = true
-    _standing_combo_input_history.append({"tokens": tokens, "time": _time})
-    var matched_attack: String = _matching_standing_combo_attack()
-    if matched_attack.is_empty():
-        return false
-    # Prototype priority: the most recently completed sequence replaces an
-    # earlier pending one. Native link priority is not recovered yet.
-    _standing_combo_pending_attack = matched_attack
-    _standing_combo_pending_source_sequence = attack_sequence
-    _standing_combo_pending_source_kind = attack_kind
-    _clear_standing_combo_input_history()
-    # Return true only when the combo target was actually queued or started.
-    # If rage/stepback/window validation rejected it, the caller must still
-    # receive a real fallback attack instead of swallowing the final press.
-    return _try_begin_pending_standing_combo()
+    _link_events.append({"tokens": tokens, "consumed": false})
+    while _link_events.size() > LINK_EVENT_LIMIT:
+        _link_events.pop_front()
+    return _try_follow_links()
 
 
 func record_parry_press(kind: String = "parry_high") -> bool:
@@ -3058,11 +3037,9 @@ func record_parry_press(kind: String = "parry_high") -> bool:
 
 
 func begin_guard() -> void:
-    # Guard press must cancel a matched combo immediately. Waiting for the next
-    # physics frame loses a rapid press-and-release tap entirely.
+    # Decompiled guard path rejects link input, so the event queue is dropped.
     guard_held = true
-    _clear_standing_combo_state()
-    _queued_attacks.clear()
+    _clear_link_state()
 
 
 func end_guard() -> void:
@@ -3070,7 +3047,7 @@ func end_guard() -> void:
     _parry_press_times.clear()
 
 
-func _accepts_standing_combo_input(virtual_key: String) -> bool:
+func _accepts_link_input(virtual_key: String) -> bool:
     # Guard rejects attack requests, so it must also reject combo history.
     # Otherwise a press made while guarding becomes the first key of a later
     # sequence.
@@ -3084,78 +3061,40 @@ func _accepts_standing_combo_input(virtual_key: String) -> bool:
     return true
 
 
-func _clear_standing_combo_input_history() -> void:
-    _standing_combo_input_history.clear()
+func _clear_link_events() -> void:
+    _link_events.clear()
 
 
-func _clear_standing_combo_state() -> void:
+func _clear_link_state() -> void:
     _special_stepback_origin = false
-    _clear_standing_combo_input_history()
-    _standing_combo_pending_attack = ""
-    _standing_combo_pending_source_sequence = -1
-    _standing_combo_pending_source_kind = ""
+    _clear_link_events()
 
 
-func _prune_standing_combo_input_history() -> void:
-    if _standing_combo_input_history.is_empty():
-        return
-    # Drop the oldest presses until every adjacent pair is inside the per-gap
-    # budget and the whole remaining sequence fits the total budget.
-    while _standing_combo_input_history.size() >= 2:
-        var first_time: float = float(_standing_combo_input_history[0]["time"])
-        var second_time: float = float(_standing_combo_input_history[1]["time"])
-        if second_time - first_time > COMBO_MAX_GAP_SECONDS:
-            _standing_combo_input_history.pop_front()
+func _link_sequence_matches(entry: Dictionary) -> bool:
+    # krm::CFighter::InputSequenceCheck: scan events backwards, skip unconsumed
+    # matches only when the step matches, and skip every consumed event.
+    var steps: Array = entry["steps"]
+    var required: int = steps.size() - 1
+    for event_index: int in range(_link_events.size() - 1, -1, -1):
+        var event: Dictionary = _link_events[event_index]
+        if bool(event["consumed"]):
             continue
-        break
-    while _standing_combo_input_history.size() >= 2:
-        var head_time: float = float(_standing_combo_input_history.front()["time"])
-        var tail_time: float = float(_standing_combo_input_history.back()["time"])
-        if tail_time - head_time > COMBO_MAX_TOTAL_SECONDS:
-            _standing_combo_input_history.pop_front()
+        if not _event_satisfies_step(event, steps[required]):
             continue
-        break
+        required -= 1
+        if required < 0:
+            return true
+    return false
 
 
-func _matching_standing_combo_attack() -> String:
-    # Links in candobasicattacks are ordered; lower source_index wins when
-    # several sequences match. The few sequences without a recovered link
-    # carry a high fallback index and retain their declaration order.
-    var best_attack: String = ""
-    var best_index: int = 999999
-    for require_source: bool in [true, false]:
-        for entry: Dictionary in STANDING_COMBO_SEQUENCES:
-            var from_attack: String = String(entry.get("from_attack", ""))
-            var from_attack_in: Array = entry.get("from_attack_in", [])
-            if require_source:
-                if not from_attack.is_empty() and from_attack != attack_kind:
-                    continue
-                if not from_attack_in.is_empty() and not from_attack_in.has(attack_kind):
-                    continue
-                if from_attack.is_empty() and from_attack_in.is_empty():
-                    continue
-            if not require_source and (not from_attack.is_empty() or not from_attack_in.is_empty()):
-                continue
-            if require_source and not supports_attack(String(entry["attack"])):
-                continue
-            if not require_source and not from_attack.is_empty():
-                continue
-            var steps: Array = entry["steps"]
-            var required: int = steps.size() - 1
-            for event_index: int in range(_standing_combo_input_history.size() - 1, -1, -1):
-                var event: Dictionary = _standing_combo_input_history[event_index]
-                if not _event_satisfies_step(event, steps[required]):
-                    continue
-                required -= 1
-                if required < 0:
-                    var index: int = int(entry.get("source_index", 999999))
-                    if best_attack.is_empty() or index < best_index:
-                        best_attack = String(entry["attack"])
-                        best_index = index
-                    break
-        if not best_attack.is_empty():
-            return best_attack
-    return ""
+func _link_applies(entry: Dictionary) -> bool:
+    var from_attack: String = String(entry.get("from_attack", ""))
+    var from_attack_in: Array = entry.get("from_attack_in", [])
+    if not from_attack.is_empty():
+        return attack_kind == from_attack
+    if not from_attack_in.is_empty():
+        return from_attack_in.has(attack_kind)
+    return true
 
 
 func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
@@ -3208,112 +3147,121 @@ func _candobasicattack_window_contains_current_frame() -> bool:
             and frame <= float(window[1]) + 0.0001)
 
 
-func _try_begin_pending_standing_combo() -> bool:
-    if _standing_combo_pending_attack.is_empty():
-        return false
-    # The pending entry is bound to the attack that was current when the
-    # sequence completed. Ending that attack, switching to another one, being
-    # interrupted, or holding it in a Heavy attack cancels the entry instead of
-    # reusing the old input in a later attack.
-    if (state not in ["startup", "active", "recovery"]
-            or attack_kind == "heavy"
-            or attack_kind != _standing_combo_pending_source_kind
-            or attack_sequence != _standing_combo_pending_source_sequence):
-        _clear_standing_combo_state()
-        return false
-    var window_ready: bool = _candobasicattack_window_contains_current_frame()
-    # endmove is a prototype extension: its source link is from_group
-    # candobasicattacks and requires oppposestun; allow the endmove input
-    # while the actual unblocked hitstun overlap exists, even if the base
-    # action's recorded combo window starts later.
-    var endattack_window_override: bool = (
-        ENDATTACK_ATTACKS.has(_standing_combo_pending_attack)
+func _link_window_ready(entry: Dictionary) -> bool:
+    # krm::CFighter::TimeWindowCheck: the link window is a frame range on the
+    # current animation, not a wall-clock window measured from the first press.
+    var target: String = String(entry["attack"])
+    var endattack_override: bool = (
+        ENDATTACK_ATTACKS.has(target)
         and _attack_hit_landed
         and opponent != null and is_instance_valid(opponent)
         and opponent.state in ["hitstun", "stun", "stun2"]
     )
-    var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
-            _standing_combo_pending_attack, 0.0))
-    if special_cost > 0.0 and rage < special_cost:
-        _clear_standing_combo_state()
+    if state in ["idle", "idle2", "idle3"]:
+        return true
+    if endattack_override:
+        return true
+    return _candobasicattack_window_contains_current_frame()
+
+
+func _opponent_distance() -> float:
+    if opponent == null or not is_instance_valid(opponent):
+        return 9999.0
+    return Vector2(
+        opponent.global_position.x - global_position.x,
+        opponent.global_position.z - global_position.z).length()
+
+
+func _link_conditions_ok(entry: Dictionary) -> bool:
+    var target: String = String(entry["attack"])
+    if not supports_attack(target):
         return false
-    if (special_cost > 0.0
-            and SPECIAL_REQUIRES_STEPBACK.has(_standing_combo_pending_attack)
+    var cost: float = float(SPECIAL_RAGE_COSTS.get(target, 0.0))
+    if cost > 0.0 and rage < cost:
+        return false
+    if (cost > 0.0 and SPECIAL_REQUIRES_STEPBACK.has(target)
             and not _special_stepback_origin):
-        _clear_standing_combo_state()
         return false
-    if GRAB_ATTACKS.has(_standing_combo_pending_attack):
+    if GRAB_ATTACKS.has(target):
         if not _attack_hit_landed:
-            _clear_standing_combo_state()
             return false
         if (opponent == null or not is_instance_valid(opponent)
                 or opponent.guard_held
                 or opponent.state not in ["idle", "idle2", "idle3", "hitstun"]):
-            _clear_standing_combo_state()
             return false
-        var grab_distance: float = Vector2(
-            opponent.global_position.x - global_position.x,
-            opponent.global_position.z - global_position.z).length()
-        if grab_distance > PROTOTYPE_GRAB_DISTANCE:
-            _clear_standing_combo_state()
+        if _opponent_distance() > PROTOTYPE_GRAB_DISTANCE:
             return false
-    if ENDATTACK_ATTACKS.has(_standing_combo_pending_attack):
+    if ENDATTACK_ATTACKS.has(target):
         if not (_grab_connected or _attack_hit_landed):
-            _clear_standing_combo_state()
             return false
         if (opponent == null or not is_instance_valid(opponent)
                 or opponent.guard_held
                 or opponent.state not in ["hitstun", "stun", "stun2"]):
-            _clear_standing_combo_state()
             return false
-        var end_distance: float = Vector2(
-            opponent.global_position.x - global_position.x,
-            opponent.global_position.z - global_position.z).length()
-        if end_distance > PROTOTYPE_GRAB_DISTANCE:
-            _clear_standing_combo_state()
+        if _opponent_distance() > PROTOTYPE_GRAB_DISTANCE:
             return false
-    if not supports_attack(_standing_combo_pending_attack):
-        _clear_standing_combo_state()
+    return true
+
+
+func _consume_link_events(entry: Dictionary) -> void:
+    # krm::CFighter::ConsumeEvents: mark the matched events consumed.
+    var steps: Array = entry["steps"]
+    var required: int = steps.size() - 1
+    for event_index: int in range(_link_events.size() - 1, -1, -1):
+        var event: Dictionary = _link_events[event_index]
+        if bool(event["consumed"]):
+            continue
+        if not _event_satisfies_step(event, steps[required]):
+            continue
+        event["consumed"] = true
+        required -= 1
+        if required < 0:
+            return
+
+
+func _try_follow_links() -> bool:
+    # krm::CFighter::UserControlUpdate: every update walks the current
+    # animation's links; TimeWindowCheck + InputSequenceCheck +
+    # InputStatusCheck + CheckConditions, then FollowLink + ConsumeEvents.
+    if state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]:
         return false
-    if not window_ready and not endattack_window_override:
-        if _queued_attacks.is_empty():
-            _clear_standing_combo_state()
-            return false
-        # The input already matched, but the source window is not active yet.
-        # Queue the target behind the real intermediate attacks rather than
-        # dropping it or adding a fallback on top of it.
-        if special_cost > 0.0:
-            rage = maxf(0.0, rage - special_cost)
-        _queued_attacks.append(_standing_combo_pending_attack)
-        _clear_standing_combo_state()
-        return true
-    var next_attack: String = _standing_combo_pending_attack
-    if special_cost > 0.0:
-        rage = maxf(0.0, rage - special_cost)
-    if not _queued_attacks.is_empty():
-        # The intermediate attack keys were queued as real attacks. Put the
-        # combo target after them so every press produces a visible attack and
-        # the target remains the final hit.
-        _queued_attacks.append(next_attack)
-        _clear_standing_combo_state()
-        return true
-    var target_action: String = _candidate_action_for_attack(next_attack)
-    _clear_standing_combo_state()
-    state = "startup"
-    state_time = float(ATTACKS[next_attack]["startup"])
-    attack_kind = next_attack
-    attack_sequence += 1
-    _attack_connected = false
-    # Re-blending a clip into itself would keep the previous playback position:
-    # _play_candidate_action() returns early when the same action is still
-    # playing. Same-action transitions therefore restart from frame 0.
-    if (candidate_visual_blending_enabled
-            and target_action != _candidate_action
-            and _candidate_animation != null
-            and _candidate_animation.is_playing()):
-        _queue_candidate_visual_blend(2.0 / SOURCE_FRAME_RATE)
-    else:
-        _restart_candidate_action()
+    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
+        return false
+    var best: Dictionary = {}
+    var best_index: int = 999999
+    var best_source_specific: bool = false
+    for entry: Dictionary in STANDING_COMBO_SEQUENCES:
+        if not _link_applies(entry):
+            continue
+        if not _link_window_ready(entry):
+            continue
+        if not _link_sequence_matches(entry):
+            continue
+        if not _link_conditions_ok(entry):
+            continue
+        # The current animation's own links win over generic candobasicattacks
+        # links (e.g. high_punch -> high_punch2 must beat the plain a/a/a link).
+        var source_specific: bool = (
+            not String(entry.get("from_attack", "")).is_empty()
+            or not Array(entry.get("from_attack_in", [])).is_empty()
+        )
+        var index: int = int(entry.get("source_index", 999999))
+        if (best.is_empty()
+                or (source_specific and not best_source_specific)
+                or (source_specific == best_source_specific and index < best_index)):
+            best = entry
+            best_index = index
+            best_source_specific = source_specific
+    if best.is_empty():
+        return false
+    var target: String = String(best["attack"])
+    var cost: float = float(SPECIAL_RAGE_COSTS.get(target, 0.0))
+    if cost > 0.0:
+        rage = maxf(0.0, rage - cost)
+    _consume_link_events(best)
+    # The native +0xe0 flag consumes the whole event vector after a link.
+    _clear_link_events()
+    _begin_chained_attack(target)
     return true
 
 
@@ -3434,7 +3382,6 @@ func _begin_attack_to_floor() -> void:
     attack_kind = "attacktofloor"
     attack_sequence += 1
     _attack_connected = false
-    _queued_attacks.clear()
     attack_started.emit("attacktofloor")
     _clear_ground_attack_input_history()
     if (candidate_visual_blending_enabled
@@ -3508,27 +3455,6 @@ func request_attack(kind: String) -> bool:
     attack_started.emit(kind)
     return true
 
-func request_attack_or_queue(kind: String) -> bool:
-    if request_attack(kind):
-        return true
-    if (guard_held or state not in ["startup", "active", "recovery"]
-            or not ATTACKS.has(kind)):
-        return false
-    # A partial combo / attack during another attack must not be swallowed.
-    # Keep the base attack and let the state machine start it after the current
-    # recovery. A completed standing combo is queued by
-    # _try_begin_pending_standing_combo().
-    _queued_attacks.append(kind)
-    return true
-
-
-func _start_next_queued_attack() -> bool:
-    while not _queued_attacks.is_empty():
-        var kind: String = _queued_attacks.pop_front()
-        if request_attack(kind):
-            return true
-    return false
-
 
 func _physics_process(delta: float) -> void:
     _time += delta
@@ -3539,7 +3465,7 @@ func _physics_process(delta: float) -> void:
     if guard_held:
         # Raising guard between two presses must not keep a partial sequence or
         # a matched-but-unexecuted combo alive.
-        _clear_standing_combo_state()
+        _clear_link_state()
     _apply_attack_root_motion()
     _advance_timed_states(delta)
     if (attack_kind == "endattack_brick" and state == "active"
@@ -3548,7 +3474,7 @@ func _physics_process(delta: float) -> void:
             and opponent.state in ["grabbed1", "grabbed2"]):
         if opponent.begin_endattack_victim():
             _endattack_victim_started = true
-    _try_begin_pending_standing_combo()
+    _try_follow_links()
     if (state == "active" and ATTACKS.has(attack_kind)
             and not NON_CONTACT_ATTACKS.has(attack_kind)
             and Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty()
@@ -3762,8 +3688,6 @@ func _advance_state() -> void:
             elif state != "recovery":
                 next_state = _verified_post_hit_return_state()
             _enter_locomotion_state(next_state)
-            if _start_next_queued_attack():
-                _restart_candidate_action()
 
 
 func _try_facedown_attack_contact() -> void:
@@ -4328,9 +4252,9 @@ func receive_hit(
             and attack_kind in ["parry_attack", "parry_attack_brick"]):
         # The prototype counter owns the exchange once the parry chains.
         return false
-    # A real hit/block cancels queued attacks. Parry/counter returns above do
-    # not clear the queue, so their own follow-up inputs survive.
-    _queued_attacks.clear()
+    # A real hit/block cancels unconsumed link events. Parry/counter returns
+    # above do not clear them, so their own follow-up inputs survive.
+    _clear_link_state()
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
@@ -4428,7 +4352,7 @@ func receive_hit(
         return true
     _attack_connected = false
     # Being hit cancels a sequence that matched during the interrupted attack.
-    _clear_standing_combo_state()
+    _clear_link_state()
     if blocked:
         health = maxf(0.0, health - amount * 0.12)
         state = "blockstun"
@@ -4568,9 +4492,8 @@ func reset_fighter(start_position: Vector3) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
-    _queued_attacks.clear()
     _clear_ground_attack_input_history()
-    _clear_standing_combo_state()
+    _clear_link_state()
     last_reaction_group = ""
     last_reaction_source_action = ""
     last_reaction_animation = ""

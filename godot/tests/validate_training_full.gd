@@ -100,20 +100,20 @@ func _play(player: PortFighter, computer: PortFighter, entry: Dictionary) -> voi
             var result: int = player.try_attack_to_floor_press("b")
             if result == PortFighter.AttackToFloorInputResult.IGNORED:
                 if not player.record_standing_combo_press("b", mods):
-                    player.request_attack_or_queue("kick")
+                    player.request_attack("kick")
         elif key == "c":
             var result: int = player.try_attack_to_floor_press("c")
             if result == PortFighter.AttackToFloorInputResult.IGNORED:
                 if not player.record_standing_combo_press("c", mods):
-                    player.request_attack_or_queue("heavy")
+                    player.request_attack("heavy")
         elif key == "d":
             var result: int = player.try_attack_to_floor_press("d")
             if result == PortFighter.AttackToFloorInputResult.IGNORED:
                 if not player.record_standing_combo_press("d", mods):
-                    player.request_attack_or_queue("kick")
+                    player.request_attack("kick")
         else:
             if not player.record_standing_combo_press("a", mods):
-                player.request_attack_or_queue("punch")
+                player.request_attack("punch")
         for _frame: int in range(10):
             player.position = Vector3(0.0, 1.2, 0.0)
             computer.position = Vector3(0.3, 1.2, 0.0)

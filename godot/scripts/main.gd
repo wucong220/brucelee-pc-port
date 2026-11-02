@@ -834,7 +834,7 @@ func _handle_fighter_attack_input(
         if fighter.state in ["facedownidle", "faceupidle"]:
             fighter.record_virtual_press("a")
         elif not fighter.record_standing_combo_press("a", modifiers):
-            fighter.request_attack_or_queue("punch")
+            fighter.request_attack("punch")
     elif event.is_action_pressed(action_b):
         var attack_to_floor: PortFighter.AttackToFloorInputResult = (
             fighter.try_attack_to_floor_press("b")
@@ -844,7 +844,7 @@ func _handle_fighter_attack_input(
                 fighter.record_virtual_press("b")
             elif fighter.record_standing_combo_press("b", modifiers):
                 return true
-            fighter.request_attack_or_queue("kick")
+            fighter.request_attack("kick")
     elif event.is_action_pressed(action_c):
         var attack_to_floor: PortFighter.AttackToFloorInputResult = (
             fighter.try_attack_to_floor_press("c")
@@ -854,7 +854,7 @@ func _handle_fighter_attack_input(
                 fighter.record_virtual_press("c")
             elif fighter.record_standing_combo_press("c", modifiers):
                 return true
-            fighter.request_attack_or_queue("heavy")
+            fighter.request_attack("heavy")
     elif event.is_action_pressed(action_d):
         var attack_to_floor: PortFighter.AttackToFloorInputResult = (
             fighter.try_attack_to_floor_press("d")
@@ -863,7 +863,7 @@ func _handle_fighter_attack_input(
             if fighter.state in ["facedownidle", "faceupidle"]:
                 fighter.record_virtual_press("d")
             elif not fighter.record_standing_combo_press("d", modifiers):
-                fighter.request_attack_or_queue("kick")
+                fighter.request_attack("kick")
     elif event.is_action_pressed(PrototypeControls.RESTART):
         return false
     else:

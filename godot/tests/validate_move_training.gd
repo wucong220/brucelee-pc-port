@@ -104,7 +104,7 @@ func _run() -> void:
     training._start_at(2)
     for _press: int in range(3):
         player.record_standing_combo_press("a")
-        player.request_attack_or_queue("punch")
+        player.request_attack("punch")
         for _frame: int in range(12):
             player.position = Vector3(0.0, 1.2, 0.0)
             computer.position = Vector3(0.3, 1.2, 0.0)
