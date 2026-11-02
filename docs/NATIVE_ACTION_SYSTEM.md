@@ -273,7 +273,17 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
   `source_state_time_for_target` 无窗口时回退动画起点 0，不再用 1.5 秒。
 - 新增 `validate_p2_recovered_links.gd` 覆盖 entry_frame、收招 link 和 pose。
 
-仍未完全处理：`unique`/`blending` 只导出未参与行为；`ConsumeEvents` 的
-重复 token 语义还需专门验证；怒气 100/+10、AI 怒气扣费 33/66、
-反应链部分 13/15/20/40 帧回退仍是原型假设。工作流只跑 Python 与
-build-path 检查，没有 Godot 回归或真实 EXE 构建。
+第二轮补充（2026-11-02）：
+- `ConsumeEvents` 已按反编译语义改成“从末尾按字符串匹配并写 `+0x10=1`，
+  不检查原值”。
+- `blending` 帧已传入衔接函数并触发候选视觉混合；`unique` 仍是角色专属
+  语义 ID（如 `grababrucelee`），候选模型没有对应 clip，暂未参与行为。
+- 怒气改为数据驱动：动作 `action.rage` 正值是命中怒气增益
+  （lowpunch1=5、highkick3=10），负值是特殊技消耗
+  （specialpunchlowmiss/specialkicklowmiss=-66，命中动作=0），
+  link 路径按该值扣费；`RAGE_MAX=100` 和 AI 的 33/66 门槛仍为原型假设。
+- 反应链的 13/15/20/40、23/21/14 帧回退已改读对应的出边 link 起始帧。
+
+仍未完全处理：`unique` 的角色专属 clip 映射；`RAGE_MAX` 与 AI 怒气
+扣费；GitHub 工作流只跑 Python 与 build-path 检查，没有 Godot 回归或
+真实 EXE 构建（候选资源和原始 APK 不在仓库内）。

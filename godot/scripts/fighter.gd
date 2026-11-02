@@ -3426,8 +3426,8 @@ func _consume_link_events(link: Dictionary) -> void:
     var required: int = steps.size() - 1
     for event_index: int in range(_link_events.size() - 1, -1, -1):
         var event: Dictionary = _link_events[event_index]
-        if bool(event["consumed"]):
-            continue
+        # Decompiled ConsumeEvents scans from the end and writes +0x10 = 1 on
+        # string matches without checking its previous value.
         if not _event_satisfies_step(event, steps[required]):
             continue
         event["consumed"] = true
@@ -3489,7 +3489,9 @@ func _try_follow_links() -> bool:
         if consume_all:
             _clear_link_events()
         _begin_chained_attack(
-            target, int(link.get("entry_frame", 0))
+            target,
+            int(link.get("entry_frame", 0)),
+            int(link.get("blending", 0))
         )
         return true
     return false
@@ -3818,8 +3820,14 @@ func _apply_attack_start_frame(kind: String, start_frame: int) -> void:
         state_time = maxf((total_frames - frame) / fps, 0.0)
 
 
-func _begin_chained_attack(kind: String, start_frame: int = 0) -> void:
+func _begin_chained_attack(
+        kind: String, start_frame: int = 0, blend_frames: int = 0
+) -> void:
     attack_kind = kind
+    var rage_cost: float = _action_rage_value(kind)
+    if rage_cost < 0.0:
+        # Recovered special-move cost (for example -66 on the miss actions).
+        rage = maxf(0.0, rage + rage_cost)
     attack_sequence += 1
     _attack_connected = false
     _attack_hit_landed = false
@@ -3829,6 +3837,8 @@ func _begin_chained_attack(kind: String, start_frame: int = 0) -> void:
     _apply_attack_start_frame(kind, start_frame)
     _seed_attack_root_motion()
     _restart_candidate_action()
+    if blend_frames > 0:
+        _queue_candidate_visual_blend(float(blend_frames) / SOURCE_FRAME_RATE)
     attack_started.emit(kind)
 
 
@@ -3963,13 +3973,25 @@ func _try_faceup_attack_contact() -> void:
     )
 
 
+func _action_rage_value(action: String) -> float:
+    # Positive action.rage values are recovered rage gain; negative values are
+    # special-move costs (for example -33 / -66).
+    var row: Dictionary = _native_actions.get(action, {})
+    var value: Variant = row.get("rage")
+    if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+        return float(value)
+    return 0.0
+
+
 func _register_landed_hit(damage: float, blocked: bool) -> void:
     combo_hits += 1
     if damage > 0.0 and not blocked:
         _attack_hit_landed = true
         if GRAB_ATTACKS.has(attack_kind):
             _grab_connected = true
-        rage = minf(RAGE_MAX, rage + RAGE_GAIN_PER_HIT)
+        var rage_gain: float = _action_rage_value(_current_action_name())
+        if rage_gain > 0.0:
+            rage = minf(RAGE_MAX, rage + rage_gain)
 
 
 func begin_grabbed(kind: String) -> bool:
@@ -4585,21 +4607,21 @@ func receive_hit(
             stun_next_state = String(native_stun["next_state"])
         elif stun_source == "impactlightfronthigh":
             stun_animation = "all_impct_light_frnt_high"
-            stun_exit_frame = 13
+            _native_link_start_frame("impactlightfronthigh", 13)
         elif stun_source == "impactlightfrontlow":
             stun_animation = "all_impct_light_frnt_low"
-            stun_exit_frame = 13
+            _native_link_start_frame("impactlightfrontlow", 13)
         elif stun_source == "impactlightfrontmid":
             stun_animation = "all_impct_crotch"
             # Source link 131 allows [15,20]; choose 15 for this PC candidate.
             stun_exit_frame = 15
         elif stun_source.begins_with("impacthard"):
             stun_animation = "stun_hard"
-            stun_exit_frame = 20
+            _native_link_start_frame("impacthardfronthigh", 20)
             stun_next_state = "faceupko"
         elif stun_source == "stunbrutalimpact":
             stun_animation = "stun_brutal"
-            stun_exit_frame = 40
+            _native_link_start_frame("stunbrutalimpact", 40)
             stun_next_state = "facedownko"
         else:
             return false
@@ -4707,11 +4729,11 @@ func receive_hit(
             and last_reaction_source_action == "impacthardfronthigh"):
         # Source link 113: healthzero -> faceupko at [23,29].
         state = "stunimpact"
-        state_time = 23.0 / SOURCE_FRAME_RATE
+        state_time = float(_native_link_start_frame("impacthardfronthigh", 23)) / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_source_action = "impacthardfronthigh"
         last_reaction_animation = "all_impct_hard_frnt_high"
-        last_reaction_exit_frame = 23
+        last_reaction_exit_frame = _native_link_start_frame("impacthardfronthigh", 23)
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true
         _stun_impact_next_state = "faceupko"
@@ -4728,11 +4750,11 @@ func receive_hit(
         # Source links 213/214/228: hard medium/low frontal lethal hits use
         # impacthardfrontlow; link 289 then enters facedownko at [21,23].
         state = "stunimpact"
-        state_time = 21.0 / SOURCE_FRAME_RATE
+        state_time = float(_native_link_start_frame("impacthardfrontlow", 21)) / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_source_action = "impacthardfrontlow"
         last_reaction_animation = "all_impct_hard_frnt_low"
-        last_reaction_exit_frame = 21
+        last_reaction_exit_frame = _native_link_start_frame("impacthardfrontlow", 21)
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true
         _stun_impact_next_state = "facedownko"

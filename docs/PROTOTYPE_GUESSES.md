@@ -18,7 +18,7 @@
 | 7 | 地面攻击输入 `aaa/abb/bcc/bdd`、`K,L,L`/`K,U,U` | `fighter.gd` 地面序列 / `main.gd` | 已删除（第 11 轮） | 改为 `facedownidle/faceupidle` 的直接 link（单键） |
 | 8 | Heavy 作为无来源独立招式 | `fighter.gd` `heavy` 元数据 | 已删除（第 17 轮） | 原注释即写 "No recovered fighting-set mapping for this prototype attack yet"；数据里没有 heavy，已从代码、AI、训练、测试中移除 |
 | 9 | 抓取距离 0.7 | `PROTOTYPE_GRAB_DISTANCE` | 已删除（第 35 轮） | link 条件只用动作 `attack.grab_distance`（source→world）；缺数据时 fail closed，不再回退 0.7，常量已删 |
-| 10 | 怒气消耗 33/66 | `SPECIAL_RAGE_COSTS` / `PARRY_RAGE_COSTS` | 部分修复（第 21 轮） | 原生 link 路径不再扣怒气（`ragethird`/`rage2thirds` 只做门槛）；AI 分支仍按原型扣费 |
+| 10 | 怒气消耗 33/66 | `SPECIAL_RAGE_COSTS` / `PARRY_RAGE_COSTS` | 部分修复（第 35/36 轮） | 玩家 link 路径按动作 `action.rage` 扣费（miss 动作 -66）、命中按正值加怒；`RAGE_MAX=100` 与 AI 分支 33/66 仍是原型 |
 
 ## 战斗数值与判定
 

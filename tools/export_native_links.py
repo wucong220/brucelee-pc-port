@@ -51,9 +51,13 @@ def build(archive: Path) -> dict:
         if (not isinstance(facing_window, list) or len(facing_window) != 2
                 or any(type(item) is not int for item in facing_window)):
             facing_window = None
+        rage_value = action.get("rage")
+        if not isinstance(rage_value, (int, float)):
+            rage_value = None
         action_rows.append({
             "name": str(action.get("name", "")),
             "pose": action.get("pose"),
+            "rage": rage_value,
             "animation": binary.get("basename"),
             "ordinal": binary.get("ordinal"),
             "counter_time": counter_time,
