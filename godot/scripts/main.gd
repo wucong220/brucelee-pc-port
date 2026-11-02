@@ -465,14 +465,19 @@ func _build_combat_audio() -> void:
 
 
 func _load_bruce_voice_audio() -> void:
-    var voice_root: String = OS.get_environment("BRUCELEE_VOICE_ROOT")
-    if voice_root.is_empty():
-        var local_app_data: String = OS.get_environment("LOCALAPPDATA")
-        if local_app_data.is_empty():
-            return
-        voice_root = local_app_data.path_join(
+    var roots: Array[String] = []
+    var env_root: String = OS.get_environment("BRUCELEE_VOICE_ROOT")
+    if not env_root.is_empty():
+        roots.append(env_root)
+    var executable_root: String = OS.get_executable_path().get_base_dir().path_join(
+        "audio/bruce_lee"
+    )
+    roots.append(executable_root)
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
             "BruceLee-PC-Port/bruce-voice-20261103/adreno_200/sounds/voices/bruce_lee"
-        )
+        ))
     var voices: Dictionary = {
         "punch": "attack_light/Hit_Light_1_BL.wav",
         "kick": "attack_light/Hit_Light_2_BL.wav",
@@ -507,18 +512,26 @@ func _load_bruce_voice_audio() -> void:
     }
     for action: String in voices:
         var filename: String = String(voices[action])
-        var path: String = voice_root.path_join(filename)
-        var error: String = CandidatePathGuard.external_path_error(
-            path, "Bruce voice audio"
-        )
-        if not error.is_empty():
-            _voice_audio_error[action] = error
+        var loaded: AudioStream = null
+        var last_error: String = ""
+        for root: String in roots:
+            var path: String = root.path_join(filename)
+            var error: String = CandidatePathGuard.external_path_error(
+                path, "Bruce voice audio"
+            )
+            if not error.is_empty():
+                last_error = error
+                continue
+            var stream: AudioStream = AudioStreamWAV.load_from_file(path)
+            if stream == null:
+                last_error = "Bruce voice failed to load: " + path
+                continue
+            loaded = stream
+            break
+        if loaded == null:
+            _voice_audio_error[action] = last_error
             continue
-        var stream: AudioStream = AudioStreamWAV.load_from_file(path)
-        if stream == null:
-            _voice_audio_error[action] = "Bruce voice failed to load: " + path
-            continue
-        _voice_audio[action] = stream
+        _voice_audio[action] = loaded
 
 
 func _on_player_attack_started(action: String) -> void:
@@ -534,6 +547,7 @@ func _on_player_attack_started(action: String) -> void:
         _active_voice.queue_free()
     var voice: AudioStreamPlayer = AudioStreamPlayer.new()
     voice.stream = stream
+    voice.volume_db = 4.0
     voice.finished.connect(voice.queue_free)
     combat_audio.add_child(voice)
     _active_voice = voice
