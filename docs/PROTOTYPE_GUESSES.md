@@ -28,7 +28,7 @@
 | 12 | 命中距离公式与候选缩放 | `fighter.gd::attack_reach_world` | 证据 + 候选 | 公式来自原生；`173.416 → 1.8` 的候选缩放是 CANDIDATE |
 | 13 | hitstun/blockstun 时长 | `fighter.gd` reaction 映射 | 证据 | 来自 `brucelee.set` reaction return frame |
 | 14 | AI 出招/格挡决策 | `main.gd` AI 分支 | 自创 | 原型行为，不是原版 AI |
-| 15 | 摄像机取景 | `main.gd::_update_fight_camera` | 自创 | 注释已写 "prototype framing choices" |
+| 15 | 摄像机取景 | `main.gd::_update_fight_camera` | 部分证据 + 原型参数 | 反编译确认相机接收双方位置并围绕中点摆位；具体距离/FOV/阻尼仍是 PC 原型参数，不是原版数值 |
 
 ## 训练与欣赏
 
