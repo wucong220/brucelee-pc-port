@@ -7,8 +7,10 @@ signal command_requested(command: String)
 
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
-const MAIN_COMMANDS: Array[String] = ["fight", "training", "quit"]
-const MAIN_LABELS: Array[String] = ["VS FIGHT", "GROUND TRAINING", "QUIT GAME"]
+const MAIN_COMMANDS: Array[String] = ["fight", "training", "move_training", "quit"]
+const MAIN_LABELS: Array[String] = [
+    "VS FIGHT", "GROUND TRAINING", "MOVE TRAINING", "QUIT GAME"
+]
 const PAUSE_COMMANDS: Array[String] = ["resume", "restart", "main_menu", "quit"]
 const PAUSE_LABELS: Array[String] = [
     "RESUME",
