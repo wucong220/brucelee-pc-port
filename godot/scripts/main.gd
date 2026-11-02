@@ -688,6 +688,11 @@ func _leave_menu() -> void:
     get_tree().paused = false
 
 func _on_menu_command(command: String) -> void:
+    var confirm_attack: bool = (
+        prototype_menu != null and prototype_menu.last_accept_was_attack
+    )
+    if prototype_menu != null:
+        prototype_menu.last_accept_was_attack = false
     if command in ["fight", "training", "move_training", "gallery"]:
         _play_music("fight")
     match command:
@@ -731,6 +736,23 @@ func _on_menu_command(command: String) -> void:
             get_tree().reload_current_scene()
         "quit":
             get_tree().quit()
+
+    if confirm_attack and command in ["fight", "training"]:
+        call_deferred("_apply_menu_confirm_attack")
+
+
+func _apply_menu_confirm_attack() -> void:
+    if player == null or not player.is_player:
+        return
+    var event: InputEventAction = InputEventAction.new()
+    event.action = PrototypeControls.ATTACK_A
+    event.pressed = true
+    _handle_fighter_attack_input(
+        player, event,
+        PrototypeControls.ATTACK_A, PrototypeControls.ATTACK_B,
+        PrototypeControls.ATTACK_C, PrototypeControls.ATTACK_D
+    )
+
 
 func _on_move_training_exit() -> void:
     hud.visible = true

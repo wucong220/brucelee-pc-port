@@ -38,6 +38,7 @@ var back_sfx: AudioStreamPlayer
 var accept_sfx_error: String = ""
 var menu_sfx_errors: Dictionary = {}
 var last_sfx_played: String = ""
+var last_accept_was_attack: bool = false
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -269,6 +270,7 @@ func handle_input_event(event: InputEvent) -> bool:
             if accept_sfx != null:
                 last_sfx_played = "accept"
                 accept_sfx.play()
+            last_accept_was_attack = event.is_action_pressed(PrototypeControls.ATTACK_A)
             command_requested.emit(command)
     elif event.is_action_pressed(PrototypeControls.MENU_CANCEL):
         if menu_state == "pause":
