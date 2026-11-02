@@ -1,6 +1,6 @@
 extends SceneTree
-## The player's WASD is opponent-relative: W/S change radius around the
-## midpoint, A/D move tangentially around it.
+## The player's WASD is opponent-relative: A/D change radius along the
+## fighter line, W/S orbit around the midpoint.
 
 func _initialize() -> void:
     call_deferred("_run")
@@ -22,19 +22,20 @@ func _run() -> void:
     var radial: Vector3 = p.global_position - center
     radial.y = 0.0
     radial = radial.normalized()
-    p.move_axis = Vector2(0.0, 1.0)
-    var away: Vector3 = p._polar_movement(1.0)
-    if away.dot(radial) < 0.99:
-        push_error("S is not radial movement away from the midpoint: " + str(away))
+    p.move_axis = Vector2(1.0, 0.0)
+    var radial_d: Vector3 = p._polar_movement(1.0)
+    if radial_d.dot(radial) > -0.99:
+        push_error("D is not radial movement toward the opponent: " + str(radial_d))
         quit(1)
         return
-    p.move_axis = Vector2(1.0, 0.0)
-    var tangent: Vector3 = p._polar_movement(1.0)
-    if absf(tangent.dot(radial)) > 0.01 or tangent.length() < 0.99:
-        push_error("D is not tangential movement around the midpoint: " + str(tangent))
+    p.move_axis = Vector2(0.0, 1.0)
+    var angular_s: Vector3 = p._polar_movement(1.0)
+    if absf(angular_s.dot(radial)) > 0.01 or angular_s.length() < 0.99:
+        push_error("S is not angular movement around the midpoint: " + str(angular_s))
         quit(1)
         return
     print("POLAR_MOVEMENT_VALIDATION=" + JSON.stringify({
-        "away": [away.x, away.z], "tangent": [tangent.x, tangent.z],
+        "radial_d": [radial_d.x, radial_d.z],
+        "angular_s": [angular_s.x, angular_s.z],
     }))
     quit(0)

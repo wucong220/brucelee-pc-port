@@ -3687,7 +3687,10 @@ func _polar_movement(speed: float) -> Vector3:
     var radius: float = radial.length()
     var away: Vector3 = radial / radius
     var tangent: Vector3 = Vector3(-away.z, 0.0, away.x)
-    return (away * move_axis.y + tangent * move_axis.x).normalized() * speed
+    # A/D move along the fighter line (radial), W/S orbit around the midpoint
+    # (angular). D goes toward the opponent, A away; S goes down-screen and W
+    # up-screen with the camera on the +Z side.
+    return (away * (-move_axis.x) + tangent * (-move_axis.y)).normalized() * speed
 
 
 func _physics_process(delta: float) -> void:
