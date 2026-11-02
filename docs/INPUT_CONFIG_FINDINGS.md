@@ -87,16 +87,22 @@ return this + param_1 * 0x14 + 0x30;
 不是“三步连招”。
 
 - 在 `CFighter` 命名空间的 139 个反编译函数里，没有任何一处写
-  `this + 0x1c`；构造函数与 `Init` 也没有写它。
-- 它在单机流程里可能是 0，但按索引 0 取序列时 `lowpunch1` 与
-  `highpunch1` 都是 `[pressa]`、`lowkick1` 与 `highkick1` 都是
-  `[pressb]`，四个按键无法一一对应；按索引 1 取则是
-  a→`highpunch1`、b→`lowpunch1`、c→`highkick1`、d→`lowkick1`，四键完整对应。
-- 因此**索引的真实来源仍未闭合**（可能在游戏/配置层写入，未在已导出函数中
-  出现）。当前移植把 3 个备选当成 3 步匹配，是已知的近似，不能称为原生语义；
-  在拿到 `+0x1c` 的写入点之前不改动这一层。
+  `this + 0x1c`；写入点在游戏层：`CBeatEmUpMatch::LoadFighter` 把当前
+  **输入布局**作为参数传给 `CBeatEmUpGame::LoadFighter`，后者在
+  `game + 0x40`（即 fighter0 的 `+0x1c`）写入该布局。
+- `adreno_200/input.config` 的 `control_profile` 证实了布局取值：
+  `default`（触屏）是 **0**，只有 a/b 两个攻击键；`zdk`（键盘）是 **1**，
+  有 a/b/c/d 四个攻击键（keyboard 70/69/18/17）。PC 端跑的是键盘布局，
+  因此选择索引 **1**。
+- 按索引 1 取序列：a→`highpunch1`、b→`lowpunch1`、c→`highkick1`、
+  d→`lowkick1`，四键完整对应；索引 0 会出现 a 同时命中 lowpunch1/
+  highpunch1、b 同时命中 lowkick1/highkick1 的冲突。
+- 当前移植已按索引 1 实现：每条 link 只取 `keysequence[1]` /
+  `keystatus[1]`，把该备选序列里的每个键当作一次事件（`[in, a]` 是
+  先“in”后“a”的两键序列）。
 
-`tools/native_reaction_links.py` 校验这段序列检查的指令字和 ELF SHA-256。
+`tools/export_input_profiles.py` 导出 `reports/input_profiles.json`，
+`tools/native_reaction_links.py` 校验序列检查的指令字和 ELF SHA-256。
 
 ## 事件标记与批量过期
 

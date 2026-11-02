@@ -242,6 +242,12 @@ const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"
 # lifetime is 500 milliseconds. Expiry marks the whole vector consumed.
 const LINK_EVENT_LIFETIME_MS: int = 500
 const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
+# adreno_200/input.config: control_profile 0 is the touch layout (a/b only),
+# 1 is the ZDK keyboard layout (a/b/c/d). CBeatEmUpMatch::LoadFighter receives
+# the current input layout and writes it to fighter+0x1c, which
+# CLinkDescr::GetKeySequence(index) uses to pick one of the stored variants.
+# The PC port runs the keyboard layout, so variant 1 is the native sequence.
+const LINK_SEQUENCE_INDEX: int = 1
 const RAGE_MAX: float = 100.0
 const RAGE_GAIN_PER_HIT: float = 10.0
 # Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
@@ -3033,7 +3039,10 @@ func _accepts_link_input(virtual_key: String) -> bool:
     # sequence.
     if (guard_held
             or attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            or virtual_key not in ["a", "b", "c", "d"]
+            or virtual_key not in [
+                "a", "b", "c", "d",
+                "up", "down", "left", "right", "in", "out",
+            ]
             or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]):
         return false
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
@@ -3267,18 +3276,18 @@ func _native_link_window_ok(link: Dictionary) -> bool:
 
 
 func _native_link_status_ok(link: Dictionary) -> bool:
+    # status is the flat pair list of the selected key-status variant.
     var status: Array = link.get("status", [])
-    for step: Variant in status:
-        for pair_value: Variant in Array(step):
-            var pair: Array = pair_value
-            if pair.size() < 2:
-                continue
-            var token: String = str(pair[0])
-            if token == "impossible":
-                return false
-            var want_pressed: bool = str(pair[1]) == "pressed"
-            if bool(_key_status.get(token, false)) != want_pressed:
-                return false
+    for pair_value: Variant in status:
+        var pair: Array = pair_value
+        if pair.size() < 2:
+            continue
+        var token: String = str(pair[0])
+        if token == "impossible":
+            return false
+        var want_pressed: bool = str(pair[1]) == "pressed"
+        if bool(_key_status.get(token, false)) != want_pressed:
+            return false
     return true
 
 
@@ -3435,20 +3444,22 @@ func _load_native_links() -> void:
         if not link_value is Dictionary:
             continue
         var link: Dictionary = link_value
+        var sequences: Array = Array(link.get("keysequence", []))
+        var variant: Array = []
+        if LINK_SEQUENCE_INDEX < sequences.size():
+            variant = Array(sequences[LINK_SEQUENCE_INDEX])
         var steps: Array = []
-        for step_value: Variant in Array(link.get("keysequence", [])):
-            var tokens: Array = []
-            for token: Variant in Array(step_value):
-                tokens.append(_normalize_press_token(String(token)))
-            steps.append(tokens)
+        for token: Variant in variant:
+            # Each key of the selected variant is one event; a two-key variant
+            # such as [in, a] is an ordered two-press sequence.
+            steps.append([_normalize_press_token(str(token))])
+        var status_variants: Array = Array(link.get("keystatus", []))
         var status: Array = []
-        for step_value: Variant in Array(link.get("keystatus", [])):
-            var pairs: Array = []
-            for pair_value: Variant in Array(step_value):
+        if LINK_SEQUENCE_INDEX < status_variants.size():
+            for pair_value: Variant in Array(status_variants[LINK_SEQUENCE_INDEX]):
                 var pair: Array = pair_value
                 if pair.size() >= 2:
-                    pairs.append([str(pair[0]), str(pair[1])])
-            status.append(pairs)
+                    status.append([str(pair[0]), str(pair[1])])
         link["steps"] = steps
         link["status"] = status
         _native_links.append(link)

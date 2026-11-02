@@ -13,6 +13,13 @@
   `brucelee.set` 只读导出，含 200 个动作的组窗口、396 条 link 的原始顺序、
   `keysequence`、`keystatus`、`time`、`entry_frame`、`linking_frame`、
   `conditions` 和 `input_reset`。
+- `keysequence`/`keystatus` 是**按输入布局选择的备选**，不是三步：
+  `CLinkDescr::GetKeySequence(index)` 返回 `link + index*0x14 + 0x30`，
+  `index = fighter+0x1c`，由 `CBeatEmUpMatch::LoadFighter` 写入。
+  `adreno_200/input.config` 显示触屏布局 `control_profile=0`（a/b），
+  键盘布局 `control_profile=1`（a/b/c/d）；PC 端取索引 **1**
+  （`LINK_SEQUENCE_INDEX`）。四键因此对应
+  a=highpunch1、b=lowpunch1、c=highkick1、d=lowkick1。
 - `_try_follow_links()`：每次物理更新按**原始 link 顺序**遍历当前动作的 link，
   依次做窗口、序列、按键状态、条件检查；不再人为规定“源 link 优先”。
 - 窗口：直接 link 用 `link.time`；组 link 用当前动作对应组的窗口
@@ -27,10 +34,11 @@
 `high_punch`、事件不重复触发）、`validate_move_gallery.gd`（27 招）、
 `validate_menu_confirm_attack.gd`、`smoke_test.gd`。
 
-**未完成**：训练目录的 27 项前置仍按旧假设写的（例如 special 的 link 实际来自
-`stepback`、部分地面/抓取 link 需要真实前置），所以 `validate_training_full`
-目前通过 1–12，13 起失败；三段 `startup/active/recovery` 状态机、地面攻击和
-parry 输入仍是原型实现，尚未换成 link 数据驱动的状态进入。
+**未完成**：训练目录还按旧的“J=punch”按键假设写的；切到原生键盘布局后
+J=highpunch1、K=lowpunch1，所以 `validate_training_full` 现在从第 1 课就失败。
+下一轮要把 27 课的前置和按键提示改成从 `native_links.json` 的索引 1 序列生成。
+三段 `startup/active/recovery` 状态机、地面攻击和 parry 输入仍是原型实现，
+尚未换成 link 数据驱动的状态进入。
 
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的

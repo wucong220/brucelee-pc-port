@@ -818,6 +818,7 @@ func _unhandled_input(event: InputEvent) -> void:
     # is released before the next physics tick would otherwise keep it alive.
     if event.is_action_pressed(PrototypeControls.GUARD):
         player.begin_guard()
+    _record_direction_press(event)
     if _handle_fighter_attack_input(
         player,
         event,
@@ -843,6 +844,23 @@ func _unhandled_input(event: InputEvent) -> void:
     else:
         return
     get_viewport().set_input_as_handled()
+
+func _record_direction_press(event: InputEvent) -> void:
+    # adreno_200/input.config fixedpad: an up press emits the "up" and "in"
+    # virtual keys, a down press emits "down" and "out"; left/right emit one key.
+    if player == null or done or training_completed:
+        return
+    if event.is_action_pressed(PrototypeControls.MOVE_UP):
+        player.record_standing_combo_press("up")
+        player.record_standing_combo_press("in")
+    elif event.is_action_pressed(PrototypeControls.MOVE_DOWN):
+        player.record_standing_combo_press("down")
+        player.record_standing_combo_press("out")
+    elif event.is_action_pressed(PrototypeControls.MOVE_LEFT):
+        player.record_standing_combo_press("left")
+    elif event.is_action_pressed(PrototypeControls.MOVE_RIGHT):
+        player.record_standing_combo_press("right")
+
 
 func _handle_fighter_attack_input(
         fighter: PortFighter,

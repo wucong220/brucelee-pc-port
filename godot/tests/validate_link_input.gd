@@ -35,9 +35,9 @@ func _run() -> void:
     var started: Array[String] = []
     player.attack_started.connect(func(kind: String) -> void: started.append(kind))
 
-    # 1. J J J from neutral: the first press is a real punch and the level-1
-    #    window then turns the sequence into the native follow-up. No wall-clock
-    #    timer is involved; the link is re-checked every physics update.
+    # 1. A single J is the native keyboard-layout variant of the high punch
+    #    link (a -> highpunch1). No wall-clock timer is involved; the link is
+    #    re-checked every physics update.
     for press: int in range(3):
         if not player.record_standing_combo_press("a"):
             player.request_attack("punch")
@@ -45,12 +45,12 @@ func _run() -> void:
             player._physics_process(1.0 / 60.0)
     for _frame: int in range(120):
         player._physics_process(1.0 / 60.0)
-    if started != ["punch", "high_punch2"]:
-        push_error("link did not fire the native follow-up: " + str(started))
+    if started != ["high_punch", "high_punch2"]:
+        push_error("native single-key link did not chain: " + str(started))
         quit(1)
         return
 
-    # 2. The current animation's own link wins over the generic a/a/a link.
+    # 2. Toward + J selects the level-3 link while the recovery window is open.
     player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
     player.health = 9999.0
     player.attack_kind = "high_punch"
@@ -60,12 +60,10 @@ func _run() -> void:
     player._attack_connected = true
     player._animate_candidate()
     started.clear()
-    for press: int in range(3):
-        player.record_standing_combo_press("a")
-        for _frame: int in range(8):
-            player._physics_process(1.0 / 60.0)
-    if player.attack_kind != "high_punch":
-        push_error("native link window did not select high_punch: " + player.attack_kind)
+    player.record_standing_combo_press("in")
+    player.record_standing_combo_press("a")
+    if player.attack_kind != "high_punch3":
+        push_error("native two-key link did not select high_punch3: " + player.attack_kind)
         quit(1)
         return
 
@@ -81,29 +79,39 @@ func _run() -> void:
     # 4. Events expire 500 ms after the last press (CBeatEmUpGame::Update).
     player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
     player.health = 9999.0
+    player.record_standing_combo_press("in")
+    for _frame: int in range(40):
+        player._physics_process(1.0 / 60.0)
+    player.record_standing_combo_press("a")
+    if player.attack_kind == "high_punch3":
+        push_error("expired direction event still completed the two-key link")
+        quit(1)
+        return
+    player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
+    player.health = 9999.0
+    player.record_standing_combo_press("in")
+    player.record_standing_combo_press("a")
+    if player.attack_kind != "high_punch3":
+        push_error("fresh direction event did not complete the two-key link: " + player.attack_kind)
+        quit(1)
+        return
+
+    # 5. The keyboard layout variant of attacktofloor is a single C press.
+    player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
+    player.health = 9999.0
     computer.reset_fighter(Vector3(0.25, 1.20, 0.0))
     computer.state = "facedownidle"
     computer.health = 9999.0
-    player.record_standing_combo_press("b")
-    for _frame: int in range(40):
-        player._physics_process(1.0 / 60.0)
-    player.record_standing_combo_press("c")
-    player.record_standing_combo_press("c")
-    if player.state == "attacktofloor":
-        push_error("expired events still completed the attacktofloor link")
-        quit(1)
-        return
-    player.record_standing_combo_press("b")
-    player.record_standing_combo_press("c")
     player.record_standing_combo_press("c")
     if player.state != "attacktofloor":
-        push_error("fresh events did not complete the attacktofloor link: " + player.state)
+        push_error("native attacktofloor link did not start on C")
         quit(1)
         return
 
     print("LINK_INPUT_VALIDATION=" + JSON.stringify({
-        "neutral_jjj": ["punch", "high_punch2"],
-        "late_window": "high_punch",
+        "single_key": ["high_punch", "high_punch2"],
+        "two_key": "high_punch3",
+        "attacktofloor_key": "c",
         "no_wall_clock_window": true,
         "consumed_events": true,
         "event_lifetime_ms": 500,

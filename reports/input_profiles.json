@@ -1,0 +1,490 @@
+{
+ "schema_version": 1,
+ "source": {
+  "resource": "adreno_200/input.config",
+  "sha256": "302ae117d6f41bba38ce7d9e75b052147453a6fa1734acae364567a60c5ec2ef"
+ },
+ "layouts": [
+  {
+   "name": "default",
+   "width": 480,
+   "height": 320,
+   "profiles": [
+    {
+     "control_profile": 0,
+     "bindings": [
+      {
+       "vkey": "a",
+       "mouse": {
+        "x": 360,
+        "y": 0,
+        "width": 120,
+        "height": 160
+       }
+      },
+      {
+       "vkey": "b",
+       "mouse": {
+        "x": 360,
+        "y": 160,
+        "width": 120,
+        "height": 160
+       }
+      },
+      {
+       "vkey": "menu",
+       "mouse": {
+        "x": 0,
+        "y": 56,
+        "width": 60,
+        "height": 60
+       }
+      },
+      {
+       "vkey": "debug",
+       "mouse": {
+        "x": 190,
+        "y": 0,
+        "width": 100,
+        "height": 64
+       }
+      }
+     ]
+    },
+    {
+     "control_profile": 0,
+     "bindings": [
+      {
+       "vkey": "a",
+       "mouse": {
+        "x": 360,
+        "y": 0,
+        "width": 120,
+        "height": 160
+       }
+      },
+      {
+       "vkey": "b",
+       "mouse": {
+        "x": 360,
+        "y": 160,
+        "width": 120,
+        "height": 160
+       }
+      },
+      {
+       "vkey": "menu",
+       "mouse": {
+        "x": 0,
+        "y": 56,
+        "width": 60,
+        "height": 60
+       }
+      },
+      {
+       "vkey": "debug",
+       "mouse": {
+        "x": 190,
+        "y": 0,
+        "width": 100,
+        "height": 64
+       }
+      },
+      {
+       "vkey": "f"
+      }
+     ]
+    },
+    {
+     "control_profile": 0,
+     "bindings": [
+      {
+       "vkey": "up",
+       "keyboard": 12
+      },
+      {
+       "vkey": "in",
+       "keyboard": 12,
+       "mirrorkey": "out"
+      },
+      {
+       "vkey": "down",
+       "keyboard": 13
+      },
+      {
+       "vkey": "out",
+       "keyboard": 13,
+       "mirrorkey": "in"
+      },
+      {
+       "vkey": "left",
+       "keyboard": 14,
+       "mirrorkey": "right"
+      },
+      {
+       "vkey": "right",
+       "keyboard": 15,
+       "mirrorkey": "left"
+      },
+      {
+       "vkey": "a",
+       "keyboard": 5
+      },
+      {
+       "vkey": "b",
+       "keyboard": 8
+      },
+      {
+       "vkey": "f",
+       "keyboard": 0
+      },
+      {
+       "vkey": "up",
+       "keyboard": 41,
+       "fighter": 1
+      },
+      {
+       "vkey": "in",
+       "keyboard": 41,
+       "fighter": 1,
+       "mirrorkey": "out"
+      },
+      {
+       "vkey": "down",
+       "keyboard": 51,
+       "fighter": 1
+      },
+      {
+       "vkey": "out",
+       "keyboard": 51,
+       "fighter": 1,
+       "mirrorkey": "in"
+      },
+      {
+       "vkey": "left",
+       "keyboard": 50,
+       "fighter": 1,
+       "mirrorkey": "right"
+      },
+      {
+       "vkey": "right",
+       "keyboard": 52,
+       "fighter": 1,
+       "mirrorkey": "left"
+      },
+      {
+       "vkey": "a",
+       "keyboard": 44,
+       "fighter": 1
+      },
+      {
+       "vkey": "b",
+       "keyboard": 45,
+       "fighter": 1
+      },
+      {
+       "vkey": "f",
+       "keyboard": 48,
+       "fighter": 1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "zdk",
+   "width": 854,
+   "height": 480,
+   "profiles": [
+    {
+     "control_profile": 1,
+     "bindings": [
+      {
+       "vkey": "up",
+       "keyboard": 12
+      },
+      {
+       "vkey": "in",
+       "keyboard": 12,
+       "mirrorkey": "out"
+      },
+      {
+       "vkey": "down",
+       "keyboard": 13
+      },
+      {
+       "vkey": "out",
+       "keyboard": 13,
+       "mirrorkey": "in"
+      },
+      {
+       "vkey": "left",
+       "keyboard": 14,
+       "mirrorkey": "right"
+      },
+      {
+       "vkey": "right",
+       "keyboard": 15,
+       "mirrorkey": "left"
+      },
+      {
+       "vkey": "d",
+       "keyboard": 17
+      },
+      {
+       "vkey": "c",
+       "keyboard": 18
+      },
+      {
+       "vkey": "b",
+       "keyboard": 69
+      },
+      {
+       "vkey": "a",
+       "keyboard": 70
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "toy",
+   "width": 1024,
+   "height": 768,
+   "profiles": [
+    {
+     "control_profile": 0,
+     "bindings": [
+      {
+       "vkey": "a",
+       "mouse": {
+        "x": 360,
+        "y": 200,
+        "width": 120,
+        "height": 60
+       }
+      },
+      {
+       "vkey": "b",
+       "mouse": {
+        "x": 335,
+        "y": 260,
+        "width": 120,
+        "height": 60
+       }
+      },
+      {
+       "vkey": "menu",
+       "mouse": {
+        "x": 0,
+        "y": 56,
+        "width": 60,
+        "height": 60
+       }
+      }
+     ]
+    },
+    {
+     "control_profile": 0,
+     "bindings": [
+      {
+       "vkey": "a",
+       "mouse": {
+        "x": 360,
+        "y": 200,
+        "width": 120,
+        "height": 60
+       }
+      },
+      {
+       "vkey": "b",
+       "mouse": {
+        "x": 335,
+        "y": 260,
+        "width": 120,
+        "height": 60
+       }
+      },
+      {
+       "vkey": "menu",
+       "mouse": {
+        "x": 0,
+        "y": 56,
+        "width": 60,
+        "height": 60
+       }
+      },
+      {
+       "vkey": "f"
+      }
+     ]
+    },
+    {
+     "control_profile": 0,
+     "bindings": [
+      {
+       "vkey": "up",
+       "keyboard": 12
+      },
+      {
+       "vkey": "in",
+       "keyboard": 12,
+       "mirrorkey": "out"
+      },
+      {
+       "vkey": "down",
+       "keyboard": 13
+      },
+      {
+       "vkey": "out",
+       "keyboard": 13,
+       "mirrorkey": "in"
+      },
+      {
+       "vkey": "left",
+       "keyboard": 14,
+       "mirrorkey": "right"
+      },
+      {
+       "vkey": "right",
+       "keyboard": 15,
+       "mirrorkey": "left"
+      },
+      {
+       "vkey": "a",
+       "keyboard": 5
+      },
+      {
+       "vkey": "b",
+       "keyboard": 8
+      },
+      {
+       "vkey": "f",
+       "keyboard": 0
+      },
+      {
+       "vkey": "up",
+       "keyboard": 41,
+       "fighter": 1
+      },
+      {
+       "vkey": "in",
+       "keyboard": 41,
+       "fighter": 1,
+       "mirrorkey": "out"
+      },
+      {
+       "vkey": "down",
+       "keyboard": 51,
+       "fighter": 1
+      },
+      {
+       "vkey": "out",
+       "keyboard": 51,
+       "fighter": 1,
+       "mirrorkey": "in"
+      },
+      {
+       "vkey": "left",
+       "keyboard": 50,
+       "fighter": 1,
+       "mirrorkey": "right"
+      },
+      {
+       "vkey": "right",
+       "keyboard": 52,
+       "fighter": 1,
+       "mirrorkey": "left"
+      },
+      {
+       "vkey": "a",
+       "keyboard": 44,
+       "fighter": 1
+      },
+      {
+       "vkey": "b",
+       "keyboard": 45,
+       "fighter": 1
+      },
+      {
+       "vkey": "f",
+       "keyboard": 48,
+       "fighter": 1
+      }
+     ]
+    },
+    {
+     "control_profile": 1,
+     "bindings": [
+      {
+       "vkey": "a",
+       "mouse": {
+        "x": 240,
+        "y": 0,
+        "width": 240,
+        "height": 106
+       }
+      },
+      {
+       "vkey": "b",
+       "mouse": {
+        "x": 240,
+        "y": 106,
+        "width": 240,
+        "height": 107
+       }
+      },
+      {
+       "vkey": "right",
+       "mirrorkey": "left",
+       "mouse": {
+        "x": 320,
+        "y": 213,
+        "width": 160,
+        "height": 107
+       }
+      },
+      {
+       "vkey": "c",
+       "mouse": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 106
+       }
+      },
+      {
+       "vkey": "d",
+       "mouse": {
+        "x": 0,
+        "y": 106,
+        "width": 240,
+        "height": 107
+       }
+      },
+      {
+       "vkey": "left",
+       "mirrorkey": "right",
+       "mouse": {
+        "x": 0,
+        "y": 213,
+        "width": 160,
+        "height": 107
+       }
+      },
+      {
+       "vkey": "f",
+       "mouse": {
+        "x": 160,
+        "y": 213,
+        "width": 160,
+        "height": 107
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "note": "Derived metadata only. control_profile is the index passed to CLinkDescr::GetKeySequence; the default layout has a/b only, the zdk keyboard layout adds c/d."
+}
