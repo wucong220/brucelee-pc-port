@@ -89,6 +89,10 @@ const BRICK_CLIPS: Dictionary = {
     "endattack_brick": "m03_end_attack_01",
     "grab1_miss_brick": "m02_grab_01",
     "grab2_miss_brick": "m02_grab_01",
+    "grabbed1": "all_grabbed_01_forset03",
+    "grabbed2": "all_grabbed_02_forset03",
+    "endattackcomp1": "all_end_attack_01_forset03",
+    "endattackcomp2": "all_end_attack_02_forset03",
     "m03_blck_high": "m03_blck_high",
     "all_block_low": "all_block_low",
     "all_block_mid": "all_block_mid",
@@ -3795,6 +3799,9 @@ func _try_multi_impact_contacts() -> void:
         if not opponent.receive_hit(damage, blocked, 0.0, facing, reaction):
             continue
         _attack_connected = true
+        if (not blocked and opponent.health > 0.0
+                and GRAB_VICTIM_DATA.has(attack_kind)):
+            opponent.begin_grabbed(attack_kind)
         _register_landed_hit(damage, blocked)
         combat_hit.emit(self, opponent, attack_kind, damage, blocked)
 
