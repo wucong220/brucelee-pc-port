@@ -405,7 +405,6 @@ func _build_original_far_scene() -> void:
         var entry_name: String = String(entry.get("name", ""))
         if entry_name in [
             "bl_scene02a_hw_skydome",
-            "bl_scene02a_hw_prop_redgate",
         ]:
             continue
         var glb_path: String = base.path_join(String(entry.get("file", "")))
