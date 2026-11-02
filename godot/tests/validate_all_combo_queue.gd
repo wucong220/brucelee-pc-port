@@ -40,6 +40,10 @@ func _run() -> void:
             var source_list: Array = entry.get("from_attack_in", [])
             if not source_list.is_empty():
                 source = String(source_list[0])
+        if source.is_empty() and String(entry["attack"]) in ["punch", "kick"]:
+            # These base targets are only reachable when the previous action is
+            # not the same punch/kick source that selects the level-2 variant.
+            source = "high_kick" if String(entry["attack"]) == "punch" else "high_punch"
         if not source.is_empty():
             player.state = "recovery"
             player.attack_kind = source
@@ -72,12 +76,7 @@ func _run() -> void:
             quit(1)
             return
         print(str(entry["attack"]) + " => " + str(started))
-        var has_source: bool = (
-            not String(entry.get("from_attack", "")).is_empty()
-            or not Array(entry.get("from_attack_in", [])).is_empty()
-            or String(entry["attack"]).begins_with("endattack")
-        )
-        if has_source and started.back() != String(entry["attack"]):
+        if started.back() != String(entry["attack"]):
             push_error("Sourced combo target was not final: " + str(entry["attack"]) + " -> " + str(started))
             quit(1)
             return
