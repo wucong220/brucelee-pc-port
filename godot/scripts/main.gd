@@ -424,6 +424,7 @@ func _on_menu_command(command: String) -> void:
             training_mode = false
             _leave_menu()
             _reset_match()
+            _play_result_audio("fight")
         "move_training":
             training_mode = false
             _leave_menu()
@@ -439,6 +440,7 @@ func _on_menu_command(command: String) -> void:
                 training_mode = true
                 _leave_menu()
                 _reset_match()
+                _play_result_audio("fight")
             else:
                 prototype_menu.show_error("TRAINING NEEDS CANDIDATE ANIMATIONS")
         "resume":
@@ -550,8 +552,11 @@ func _load_result_audio() -> void:
         roots.append(env_root)
     roots.append(OS.get_executable_path().get_base_dir().path_join("audio/commentator"))
     for root: String in roots:
-        for key: String in ["win", "lose", "draw"]:
-            var filename: String = {"win": "You_Win.wav", "lose": "You_Lose.wav", "draw": "Draw.wav"}[key]
+        for key: String in ["win", "lose", "draw", "fight", "ready"]:
+            var filename: String = {
+                "win": "You_Win.wav", "lose": "You_Lose.wav", "draw": "Draw.wav",
+                "fight": "Fight.wav", "ready": "Ready_Alt_1.wav",
+            }[key]
             var path: String = root.path_join(filename)
             if not FileAccess.file_exists(path):
                 continue
