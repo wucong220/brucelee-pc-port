@@ -56,8 +56,9 @@ func _run() -> void:
                                 push_error("Fighter left camera margin during physics movement")
                                 quit(1)
                                 return
-            if player.global_position.x > -3.0 or opponent.global_position.x < 3.0:
-                push_error("Physics movement did not actually separate both fighters")
+            if (player.global_position.distance_to(Vector3(-1.0, 1.2, 0.0)) < 0.10
+                    or opponent.global_position.distance_to(Vector3(1.0, 1.2, 0.0)) < 0.10):
+                push_error("Physics movement did not advance root-motion locomotion")
                 quit(1)
                 return
             reports.append({"ticks": ticks, "viewport": str(viewport),

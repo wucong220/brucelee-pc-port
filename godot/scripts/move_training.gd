@@ -471,6 +471,8 @@ func _process(delta: float) -> void:
     # queued attacks must not push it into hitstun and invalidate a later
     # special/grab/attack-to-floor condition.
     if computer != null and setup != "parry_high" and setup != "parry_low" and setup != "parry_attack":
+        if setup in ["stepback", "stepleft", "stepright"] and player != null:
+            computer.global_position = player.global_position + Vector3(0.22, 0.0, 0.0)
         if setup == "endattack1" or setup == "endattack2":
             computer.state = "hitstun"
             computer.state_time = 1.0

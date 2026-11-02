@@ -129,6 +129,7 @@ const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
 const BRICK_ATTACK_CONFIG_PATH: String = "res://data/fighting_set_m03_mapped_attacks.json"
 const ATTACK_ROOT_MOTION_PATH: String = "res://data/attack_root_motion.json"
+const MOVEMENT_ROOT_MOTION_PATH: String = "res://data/movement_root_motion.json"
 const LOCOMOTION_STEP_TO_MOVE: Dictionary = {
     "stepfwd": "movefwd", "stepback": "moveback",
     "stepright": "moveright", "stepleft": "moveleft",
@@ -1174,6 +1175,9 @@ var health: float = MAX_HEALTH
 var move_axis: Vector2 = Vector2.ZERO
 var _locomotion_action: String = ""
 var _locomotion_time: float = 0.0
+var _movement_root_tracks: Dictionary = {}
+var _locomotion_root_prev: Vector3 = Vector3.ZERO
+var _locomotion_root_ready: bool = false
 var polar_movement_enabled: bool = false
 var training_step_lock: bool = false
 var held_directions: Dictionary = {}
@@ -1302,6 +1306,71 @@ func _load_attack_root_motion() -> void:
             _attack_root_tracks[key] = points
 
 
+func _load_movement_root_motion() -> void:
+    _movement_root_tracks.clear()
+    var file: FileAccess = FileAccess.open(MOVEMENT_ROOT_MOTION_PATH, FileAccess.READ)
+    if file == null:
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        push_warning("Movement root-motion data is not an object; disabled")
+        return
+    for animation_name: Variant in parsed:
+        var entry: Variant = parsed[animation_name]
+        if not entry is Dictionary:
+            continue
+        var raw_values: Variant = entry.get("values")
+        if not raw_values is Array or Array(raw_values).size() < 2:
+            continue
+        var points: Array[Vector3] = []
+        for sample: Variant in raw_values:
+            if not sample is Array or sample.size() < 3:
+                continue
+            points.append(Vector3(
+                float(sample[0]), float(sample[1]), float(sample[2])
+            ))
+        if points.size() >= 2:
+            _movement_root_tracks[String(animation_name)] = points
+
+
+func _movement_root_clip_for_action(action: String) -> String:
+    if action.is_empty():
+        return ""
+    if candidate_clips.has(action):
+        return String(candidate_clips[action])
+    if _candidate_clip_paths.has(action):
+        return String(_candidate_clip_paths[action])
+    return action
+
+
+func _sample_movement_root(track: Array, frame: float) -> Vector3:
+    var bounded: float = clampf(frame, 0.0, float(track.size() - 1))
+    var left: int = int(floor(bounded))
+    var right: int = mini(left + 1, track.size() - 1)
+    var weight: float = bounded - float(left)
+    return track[left].lerp(track[right], weight)
+
+
+func _locomotion_root_delta() -> Vector3:
+    if _locomotion_action.is_empty():
+        _locomotion_root_ready = false
+        return Vector3.ZERO
+    var clip: String = _movement_root_clip_for_action(_locomotion_action)
+    if not _movement_root_tracks.has(clip):
+        _locomotion_root_ready = false
+        return Vector3.ZERO
+    var track: Array = _movement_root_tracks[clip]
+    var frame: float = _locomotion_time * SOURCE_FRAME_RATE
+    var point: Vector3 = _sample_movement_root(track, frame)
+    if not _locomotion_root_ready:
+        _locomotion_root_prev = point
+        _locomotion_root_ready = true
+        return Vector3.ZERO
+    var delta: Vector3 = point - _locomotion_root_prev
+    _locomotion_root_prev = point
+    return _root_motion_delta_to_pc_world(delta, clip)
+
+
 func _sample_attack_root(track: Array, frame: float) -> Vector3:
     var bounded: float = clampf(frame, 0.0, float(track.size() - 1))
     var left: int = int(floor(bounded))
@@ -1376,6 +1445,7 @@ func _ready() -> void:
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
     _load_native_links()
     _load_attack_root_motion()
+    _load_movement_root_motion()
     collision_layer = 2
     collision_mask = 1 | 2
     var capsule: CapsuleShape3D = CapsuleShape3D.new()
@@ -3843,23 +3913,36 @@ func _physics_process(delta: float) -> void:
             and not _attack_connected):
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
-    if _uses_standing_idle_rules() and not guard_held:
-        motion = (_polar_movement(BASE_SPEED) if polar_movement_enabled
-                else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED)
-    elif _uses_standing_idle_rules() and guard_held:
-        motion = (_polar_movement(BASE_SPEED * 0.25) if polar_movement_enabled
-                else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED * 0.25)
-    velocity.x = motion.x
-    velocity.z = motion.z
-    if is_on_floor():
-        velocity.y = 0.0
-    else:
-        velocity.y -= 12.0 * delta
-    move_and_slide()
-    position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
-    position.z = clampf(position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
-    _animate_visuals()
     _advance_locomotion_visual(delta)
+    var root_driven: bool = (
+        _uses_standing_idle_rules()
+        and not guard_held
+        and not _locomotion_action.is_empty()
+        and _movement_root_tracks.has(_movement_root_clip_for_action(_locomotion_action))
+    )
+    if root_driven:
+        var root_delta: Vector3 = _locomotion_root_delta()
+        global_position += root_delta
+        global_position.x = clampf(global_position.x, -ARENA_HALF_X, ARENA_HALF_X)
+        global_position.z = clampf(global_position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
+        velocity = root_delta / maxf(delta, 0.0001)
+    else:
+        if _uses_standing_idle_rules() and not guard_held:
+            motion = (_polar_movement(BASE_SPEED) if polar_movement_enabled
+                    else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED)
+        elif _uses_standing_idle_rules() and guard_held:
+            motion = (_polar_movement(BASE_SPEED * 0.25) if polar_movement_enabled
+                    else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED * 0.25)
+        velocity.x = motion.x
+        velocity.z = motion.z
+        if is_on_floor():
+            velocity.y = 0.0
+        else:
+            velocity.y -= 12.0 * delta
+        move_and_slide()
+        position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
+        position.z = clampf(position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
+    _animate_visuals()
     _animate_candidate()
 
 func _advance_locomotion_visual(delta: float) -> void:
@@ -3879,6 +3962,7 @@ func _advance_locomotion_visual(delta: float) -> void:
     ):
         _locomotion_action = base
         _locomotion_time = 0.0
+        _locomotion_root_ready = false
     _locomotion_time += delta
     if (_locomotion_action.begins_with("step")
             and not family_move.is_empty()
@@ -3886,6 +3970,14 @@ func _advance_locomotion_visual(delta: float) -> void:
             and _locomotion_time >= LOCOMOTION_CHAIN_FRAME / SOURCE_FRAME_RATE):
         _locomotion_action = family_move
         _locomotion_time = 0.0
+        _locomotion_root_ready = false
+    var active_clip: String = _movement_root_clip_for_action(_locomotion_action)
+    if _movement_root_tracks.has(active_clip):
+        var track: Array = _movement_root_tracks[active_clip]
+        var max_time: float = float(maxi(track.size() - 1, 1)) / SOURCE_FRAME_RATE
+        if _locomotion_time > max_time:
+            _locomotion_time = fmod(_locomotion_time, max_time)
+            _locomotion_root_ready = false
 
 func _advance_timed_states(delta: float) -> void:
     if state in ["grabbed1", "grabbed2"]:
@@ -5084,6 +5176,7 @@ func reset_fighter(start_position: Vector3) -> void:
     move_axis = Vector2.ZERO
     _locomotion_action = ""
     _locomotion_time = 0.0
+    _locomotion_root_ready = false
     health = MAX_HEALTH
     state = "idle"
     state_time = 0.0
