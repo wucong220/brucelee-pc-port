@@ -2,10 +2,10 @@
 
 ## Working
 
-- Temple Yard A: 19 far props / 19 textures, 3 near props, verified screenshot.
+- Temple Yard A: 18 far props / 18 textures, 3 near props, verified screenshot.
 - Temple Yard B: 17 far props / 17 textures, 3 near props, verified screenshot.
-  `bigtemple` is intentionally not rendered because its current UV/material
-  binding produces a large beige plane.
+  `bigtemple` is intentionally not rendered because its texture is an
+  `atc_rgba_explicit` resource whose current decode is a black/white mask.
 
 ## Not working
 
@@ -19,6 +19,7 @@
 
 ## Runtime entry points
 
-- `DragonWarrior.cmd`: Temple Yard A
-- `DragonWarrior_TempleYardB.cmd`: Temple Yard B
-- Main menu: `TEMPLE YARD B` reloads with `BRUCELEE_SCENE=templeyardb`
+- `DragonWarrior.cmd`: opens the main menu with Temple Yard A loaded
+- `DragonWarrior_TempleYardB.cmd`: opens the main menu with Temple Yard B loaded
+- Main menu `TEMPLE YARD A/B`: reloads and now starts the selected arena
+  directly (`BRUCELEE_MAIN_MENU=0`)

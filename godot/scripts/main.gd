@@ -406,7 +406,7 @@ func _build_original_scene_props() -> void:
         var instance: Node3D = document.generate_scene(state)
         if instance == null:
             continue
-        instance.position = Vector3(3.563, 0.0, -2.679)
+        instance.position = Vector3(3.563, 0.7856, -2.679)
         instance.scale = Vector3.ONE * scale_value
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             (mesh_node as MeshInstance3D).material_override = material
@@ -723,9 +723,11 @@ func _on_menu_command(command: String) -> void:
             _open_main_menu()
         "temple_a":
             OS.set_environment("BRUCELEE_SCENE", "")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
             get_tree().reload_current_scene()
         "temple_b":
             OS.set_environment("BRUCELEE_SCENE", "templeyardb")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
             get_tree().reload_current_scene()
         "quit":
             get_tree().quit()

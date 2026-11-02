@@ -55,12 +55,12 @@ arena composition; those are the next steps.
 The current package loads the original `BL_TempleYardA` near/far scene:
 
 - 3 near props
-- 19 far props
-- 19 far textures
+- 18 far props
+- 18 far textures
 - procedural floor/lines hidden
-- `skydome` rendered with `CULL_FRONT` / unshaded so it no longer covers the arena
-- startup profile: environment 147 ms, fighters 4,425 ms, audio 2,958 ms,
-  total 11,451 ms
+- `skydome` is skipped in the current build; the background is `BG_COLOR`
+- startup profile: environment ~150 ms, fighters ~4,500 ms, audio ~2,900 ms,
+  total ~11,400 ms
 
 Verified by a live window screenshot, not only by counts.
 
