@@ -27,7 +27,7 @@
    "id": "high_punch",
    "label": "HIGH PUNCH (FINISHER)",
    "group": "BASIC",
-   "input": "K, J",
+   "input": "J",
    "setup": "source_punch",
    "actions": [
     "high_punch"
@@ -38,7 +38,7 @@
    "id": "high_kick",
    "label": "HIGH KICK",
    "group": "BASIC",
-   "input": "U, L",
+   "input": "L",
    "setup": "source_kick",
    "actions": [
     "high_kick"
@@ -49,7 +49,7 @@
    "id": "high_punch2",
    "label": "HIGH PUNCH 2 (FOLLOW-UP)",
    "group": "COMBO",
-   "input": "K, J, J",
+   "input": "J",
    "setup": "source_high_punch",
    "actions": [
     "high_punch2"
@@ -60,7 +60,7 @@
    "id": "low_punch2",
    "label": "LOW PUNCH 2",
    "group": "COMBO",
-   "input": "K, K",
+   "input": "K",
    "setup": "source_punch",
    "actions": [
     "low_punch2"
@@ -71,7 +71,7 @@
    "id": "high_kick2",
    "label": "HIGH KICK 2",
    "group": "COMBO",
-   "input": "U, L, L",
+   "input": "L",
    "setup": "source_high_kick",
    "actions": [
     "high_kick2"
@@ -82,7 +82,7 @@
    "id": "low_kick2",
    "label": "LOW KICK 2",
    "group": "COMBO",
-   "input": "U, U",
+   "input": "U",
    "setup": "source_kick",
    "actions": [
     "low_kick2"
@@ -93,7 +93,7 @@
    "id": "high_punch3",
    "label": "HIGH PUNCH 3",
    "group": "COMBO",
-   "input": "K, J, J, W, J",
+   "input": "W, J",
    "setup": "source_high_punch2",
    "actions": [
     "high_punch3"
@@ -104,7 +104,7 @@
    "id": "low_punch3",
    "label": "LOW PUNCH 3",
    "group": "COMBO",
-   "input": "K, K, S, K",
+   "input": "S, K",
    "setup": "source_low_punch2",
    "actions": [
     "low_punch3"
@@ -115,7 +115,7 @@
    "id": "low_kick3",
    "label": "LOW KICK 3",
    "group": "COMBO",
-   "input": "U, U, S, U",
+   "input": "S, U",
    "setup": "source_low_kick2",
    "actions": [
     "low_kick3"
@@ -126,7 +126,7 @@
    "id": "high_kick3",
    "label": "HIGH KICK 3",
    "group": "COMBO",
-   "input": "U, L, L, W, L",
+   "input": "W, L",
    "setup": "source_high_kick2",
    "actions": [
     "high_kick3"
@@ -137,7 +137,7 @@
    "id": "special_kick_high",
    "label": "SPECIAL HIGH KICK",
    "group": "SPECIAL",
-   "input": "S (hold), D, L",
+   "input": "D, L",
    "setup": "stepback",
    "actions": [
     "special_kick_high"
@@ -148,7 +148,7 @@
    "id": "special_kick_low",
    "label": "SPECIAL LOW KICK",
    "group": "SPECIAL",
-   "input": "A (hold), D, U",
+   "input": "D, U",
    "setup": "stepleft",
    "actions": [
     "special_kick_low_hit"
@@ -159,7 +159,7 @@
    "id": "special_punch_low",
    "label": "SPECIAL LOW PUNCH",
    "group": "SPECIAL",
-   "input": "K, J, J, S, D, J",
+   "input": "S, D, J",
    "setup": "source_high_punch2",
    "actions": [
     "special_punch_low_hit"
@@ -170,7 +170,7 @@
    "id": "special_punch_high",
    "label": "SPECIAL HIGH PUNCH",
    "group": "SPECIAL",
-   "input": "K, J, J, A, D, J",
+   "input": "A, D, J",
    "setup": "source_high_punch2",
    "actions": [
     "special_punch_high_hit"
@@ -203,7 +203,7 @@
    "id": "grab1",
    "label": "GRAB 1",
    "group": "GRAB",
-   "input": "D (hold), J",
+   "input": "J",
    "setup": "stepright",
    "actions": [
     "grab1"
@@ -214,7 +214,7 @@
    "id": "grab2",
    "label": "GRAB 2",
    "group": "GRAB",
-   "input": "A (hold), L",
+   "input": "L",
    "setup": "stepleft",
    "actions": [
     "grab2"

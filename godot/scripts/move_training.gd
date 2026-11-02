@@ -388,13 +388,46 @@ func _begin_dummy_attack(kind: String) -> void:
         dummy_restart_timer = 2.0
 
 
+func _entry_by_id(entry_id: String) -> Dictionary:
+    for candidate: Dictionary in entries:
+        if String(candidate.get("id", "")) == entry_id:
+            return candidate
+    return {}
+
+
+func _prerequisite_chain(entry: Dictionary, seen: Array = []) -> Array[String]:
+    var result: Array[String] = []
+    var entry_id: String = String(entry.get("id", ""))
+    if entry_id in seen:
+        return result
+    var next_seen: Array = seen.duplicate()
+    next_seen.append(entry_id)
+    var setup: String = String(entry.get("setup", "idle"))
+    if setup.begins_with("source_"):
+        var prerequisite: Dictionary = _entry_by_id(setup.trim_prefix("source_"))
+        if not prerequisite.is_empty():
+            result.append_array(_prerequisite_chain(prerequisite, next_seen))
+            result.append(
+                String(prerequisite.get("label", "")) + ": "
+                + String(prerequisite.get("input", ""))
+            )
+    elif setup in ["stepback", "stepleft", "stepright"]:
+        result.append({"stepback": "HOLD S", "stepleft": "HOLD A",
+                       "stepright": "HOLD D"}[setup])
+    return result
+
+
 func _refresh_lesson(entry: Dictionary) -> void:
     lesson_label.text = String(entry.get("label", ""))
     progress_label.text = "%02d / %02d" % [current_index + 1, entries.size()]
     group_label.text = String(entry.get("group", "")) + " · " + _setup_explanation(
         String(entry.get("setup", "idle"))
     )
-    input_label.text = "INPUT\n" + String(entry.get("input", ""))
+    var text: String = "INPUT\n" + String(entry.get("input", ""))
+    var chain: Array[String] = _prerequisite_chain(entry)
+    if not chain.is_empty():
+        text += "\nSETUP: " + " | ".join(chain)
+    input_label.text = text
 
 
 func _process(delta: float) -> void:
