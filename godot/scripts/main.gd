@@ -218,6 +218,8 @@ func _run_export_self_test() -> void:
         "punch_target_health": computer.health,
         "punch_hitstun_frames": computer.last_reaction_exit_frame,
         "reaction_clip": player.candidate_animation_clip,
+        "voice_loaded": _voice_audio.size(),
+        "voice_errors": _voice_audio_error.size(),
         "opponent_candidate_loaded": computer.candidate_loaded,
         "opponent_idle_clip": opponent_idle_clip,
         "opponent_textures_loaded": computer.candidate_textures_loaded,
