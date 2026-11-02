@@ -1256,6 +1256,7 @@ var _multi_impact_applied: Array = []
 var _attack_hit_landed: bool = false
 var _grab_connected: bool = false
 var _endattack_victim_started: bool = false
+var _queued_attacks: Array[String] = []
 var _stun_impact_next_state: String = "stunfall"
 var _parry_press_times: Array = []
 var candidate_loaded: bool = false
@@ -3016,6 +3017,9 @@ func record_standing_combo_press(
     _standing_combo_pending_source_sequence = attack_sequence
     _standing_combo_pending_source_kind = attack_kind
     _clear_standing_combo_input_history()
+    # Return true only when the combo target was actually queued or started.
+    # If rage/stepback/window validation rejected it, the caller must still
+    # receive a real fallback attack instead of swallowing the final press.
     return _try_begin_pending_standing_combo()
 
 
@@ -3053,6 +3057,7 @@ func begin_guard() -> void:
     # physics frame loses a rapid press-and-release tap entirely.
     guard_held = true
     _clear_standing_combo_state()
+    _queued_attacks.clear()
 
 
 func end_guard() -> void:
@@ -3198,16 +3203,17 @@ func _try_begin_pending_standing_combo() -> bool:
             or attack_sequence != _standing_combo_pending_source_sequence):
         _clear_standing_combo_state()
         return false
-    if not _candobasicattack_window_contains_current_frame():
-        # endmove is a prototype extension: its source link is from_group
-        # candobasicattacks and requires oppposestun; allow the endmove input
-        # while the actual unblocked hitstun overlap exists, even if the base
-        # action's recorded combo window starts later.
-        if not (ENDATTACK_ATTACKS.has(_standing_combo_pending_attack)
-                and _attack_hit_landed
-                and opponent != null and is_instance_valid(opponent)
-                and opponent.state in ["hitstun", "stun", "stun2"]):
-            return false
+    var window_ready: bool = _candobasicattack_window_contains_current_frame()
+    # endmove is a prototype extension: its source link is from_group
+    # candobasicattacks and requires oppposestun; allow the endmove input
+    # while the actual unblocked hitstun overlap exists, even if the base
+    # action's recorded combo window starts later.
+    var endattack_window_override: bool = (
+        ENDATTACK_ATTACKS.has(_standing_combo_pending_attack)
+        and _attack_hit_landed
+        and opponent != null and is_instance_valid(opponent)
+        and opponent.state in ["hitstun", "stun", "stun2"]
+    )
     var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
             _standing_combo_pending_attack, 0.0))
     if special_cost > 0.0 and rage < special_cost:
@@ -3251,9 +3257,28 @@ func _try_begin_pending_standing_combo() -> bool:
     if not supports_attack(_standing_combo_pending_attack):
         _clear_standing_combo_state()
         return false
+    if not window_ready and not endattack_window_override:
+        if _queued_attacks.is_empty():
+            _clear_standing_combo_state()
+            return false
+        # The input already matched, but the source window is not active yet.
+        # Queue the target behind the real intermediate attacks rather than
+        # dropping it or adding a fallback on top of it.
+        if special_cost > 0.0:
+            rage = maxf(0.0, rage - special_cost)
+        _queued_attacks.append(_standing_combo_pending_attack)
+        _clear_standing_combo_state()
+        return true
     var next_attack: String = _standing_combo_pending_attack
     if special_cost > 0.0:
         rage = maxf(0.0, rage - special_cost)
+    if not _queued_attacks.is_empty():
+        # The intermediate attack keys were queued as real attacks. Put the
+        # combo target after them so every press produces a visible attack and
+        # the target remains the final hit.
+        _queued_attacks.append(next_attack)
+        _clear_standing_combo_state()
+        return true
     var target_action: String = _candidate_action_for_attack(next_attack)
     _clear_standing_combo_state()
     state = "startup"
@@ -3391,6 +3416,7 @@ func _begin_attack_to_floor() -> void:
     attack_kind = "attacktofloor"
     attack_sequence += 1
     _attack_connected = false
+    _queued_attacks.clear()
     attack_started.emit("attacktofloor")
     _clear_ground_attack_input_history()
     if (candidate_visual_blending_enabled
@@ -3463,6 +3489,28 @@ func request_attack(kind: String) -> bool:
     _seed_attack_root_motion()
     attack_started.emit(kind)
     return true
+
+func request_attack_or_queue(kind: String) -> bool:
+    if request_attack(kind):
+        return true
+    if (guard_held or state not in ["startup", "active", "recovery"]
+            or not ATTACKS.has(kind)):
+        return false
+    # A partial combo / attack during another attack must not be swallowed.
+    # Keep the base attack and let the state machine start it after the current
+    # recovery. A completed standing combo is queued by
+    # _try_begin_pending_standing_combo().
+    _queued_attacks.append(kind)
+    return true
+
+
+func _start_next_queued_attack() -> bool:
+    while not _queued_attacks.is_empty():
+        var kind: String = _queued_attacks.pop_front()
+        if request_attack(kind):
+            return true
+    return false
+
 
 func _physics_process(delta: float) -> void:
     _time += delta
@@ -3696,6 +3744,8 @@ func _advance_state() -> void:
             elif state != "recovery":
                 next_state = _verified_post_hit_return_state()
             _enter_locomotion_state(next_state)
+            if _start_next_queued_attack():
+                _restart_candidate_action()
 
 
 func _try_facedown_attack_contact() -> void:
@@ -4260,6 +4310,9 @@ func receive_hit(
             and attack_kind in ["parry_attack", "parry_attack_brick"]):
         # The prototype counter owns the exchange once the parry chains.
         return false
+    # A real hit/block cancels queued attacks. Parry/counter returns above do
+    # not clear the queue, so their own follow-up inputs survive.
+    _queued_attacks.clear()
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
@@ -4497,6 +4550,7 @@ func reset_fighter(start_position: Vector3) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
+    _queued_attacks.clear()
     _clear_ground_attack_input_history()
     _clear_standing_combo_state()
     last_reaction_group = ""

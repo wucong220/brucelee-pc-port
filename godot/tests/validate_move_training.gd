@@ -101,10 +101,35 @@ func _run() -> void:
         push_error("Successful hit did not advance to the next lesson")
         quit(1)
         return
+    training._start_at(2)
+    for _press: int in range(3):
+        player.record_standing_combo_press("a")
+        player.request_attack_or_queue("punch")
+        for _frame: int in range(12):
+            player.position = Vector3(0.0, 1.2, 0.0)
+            computer.position = Vector3(0.3, 1.2, 0.0)
+            player._physics_process(1.0 / 60.0)
+    for _frame: int in range(700):
+        player.position = Vector3(0.0, 1.2, 0.0)
+        computer.position = Vector3(0.3, 1.2, 0.0)
+        player._physics_process(1.0 / 60.0)
+        training._process(1.0 / 60.0)
+    if training.current_index != 3:
+        push_error("Queued HIGH PUNCH lesson did not advance")
+        quit(1)
+        return
     training.selected_index = 5
     training._start_at(training.selected_index)
     if training.current_index != 5:
         push_error("Start selector did not jump to the chosen lesson")
+        quit(1)
+        return
+    training._start_at(4)
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    player.record_standing_combo_press("a")
+    if player.attack_kind != "high_punch2" or player.state not in ["startup", "active", "recovery"]:
+        push_error("Combo lesson source window did not accept high_punch2")
         quit(1)
         return
     training._start_at(16)

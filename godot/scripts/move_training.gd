@@ -289,8 +289,33 @@ func _prepare_current() -> void:
         player._animate_candidate()
     _refresh_lesson(entry)
     status_label.add_theme_color_override("font_color", Color(0.82, 0.86, 0.92))
-    status_label.text = "WAITING FOR " + String(entry.get("label", "")) + " ..."
+    status_label.text = (
+        "WAITING FOR TARGET HIT: " + String(entry.get("label", ""))
+        + "  ·  earlier combo hits do not advance"
+    )
     last_status = ""
+
+
+func _setup_explanation(setup: String) -> String:
+    if setup == "idle":
+        return "START NEUTRAL"
+    if setup.begins_with("source_"):
+        return "START AFTER " + setup.trim_prefix("source_").replace("_", " ").to_upper()
+    if setup == "target_down":
+        return "TARGET ALREADY DOWN"
+    if setup == "player_down":
+        return "PLAYER FACE-DOWN"
+    if setup == "player_faceup":
+        return "PLAYER FACE-UP"
+    if setup == "parry_high":
+        return "DUMMY HIGH ATTACK"
+    if setup == "parry_low":
+        return "DUMMY LOW ATTACK"
+    if setup == "parry_attack":
+        return "DUMMY HIGH ATTACK"
+    if setup.begins_with("endattack"):
+        return "TARGET IN HITSTUN"
+    return setup.to_upper()
 
 
 func _prime_source_attack(kind: String) -> void:
@@ -298,7 +323,9 @@ func _prime_source_attack(kind: String) -> void:
         return
     player.attack_kind = kind
     player.state = "recovery"
-    player.state_time = 0.01
+    # Keep a real recovery window open for the combo/chain lesson. A 0.01s
+    # source state ends before record_standing_combo_press() can match.
+    player.state_time = 1.5
     player._attack_hit_landed = true
     player._attack_connected = true
     player._animate_candidate()
@@ -312,7 +339,9 @@ func _begin_dummy_attack(kind: String) -> void:
 func _refresh_lesson(entry: Dictionary) -> void:
     lesson_label.text = String(entry.get("label", ""))
     progress_label.text = "%02d / %02d" % [current_index + 1, entries.size()]
-    group_label.text = String(entry.get("group", ""))
+    group_label.text = String(entry.get("group", "")) + " · " + _setup_explanation(
+        String(entry.get("setup", "idle"))
+    )
     input_label.text = "INPUT\n" + String(entry.get("input", ""))
 
 
