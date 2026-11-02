@@ -104,7 +104,7 @@ link 路径也不再按 `SPECIAL_RAGE_COSTS` 扣怒气（原生只有 `ragethird
 
 **第 22 轮补充**：`tools/export_native_links.py` 导出每个动作首个 impact 的
 `height/strength/direction`；`oppattackheight*/oppattackstrength*/oppattackdir*`
-条件现在按对手当前动作的 impact 判定（例：lowpunch1 = medium/normal/frontal，
+条件现在按**对手自己的攻击配置**里的 `source_impact` 判定（Brick 的 m03 攻击同样能解析），缺数据时再回退到 `native_links.json` 的 impact（例：lowpunch1 = medium/normal/frontal，
 highkick3 = high/hard/fromright）。这些条件主要服务于 `impact*/block*/stun*`
 反应链接，而反应动画目标仍需要 `CStateManager` 才能驱动，目前仍由
 `reaction_for_incoming` 处理。

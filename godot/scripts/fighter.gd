@@ -3308,10 +3308,14 @@ func _native_condition_ok(condition: String, link: Dictionary) -> bool:
 func _opponent_impact_is(field: String, accepted: Array) -> bool:
     # oppattack* conditions compare the incoming attack's first impact, which
     # brucelee.set stores as attack.impacts[0].{height,strength,direction}.
+    # Each fighter's own config carries this, so Brick attacks resolve too.
     if opponent == null or not is_instance_valid(opponent):
         return false
-    var impact: Variant = _native_actions.get(
-        opponent._current_action_name(), {}).get("impact")
+    var details: Dictionary = opponent.ATTACKS.get(opponent.attack_kind, {})
+    var impact: Variant = details.get("source_impact")
+    if not impact is Dictionary or Dictionary(impact).is_empty():
+        impact = _native_actions.get(
+            opponent._current_action_name(), {}).get("impact")
     if not impact is Dictionary:
         return false
     return String(Dictionary(impact).get(field, "")) in accepted
