@@ -50,6 +50,21 @@ This proves scene `.mesh` resources can be fed through the existing static
 mesh converter. It does **not** yet prove scene transforms/material binding or
 arena composition; those are the next steps.
 
+## 2026-11-03 runtime scene result
+
+The current package loads the original `BL_TempleYardA` near/far scene:
+
+- 3 near props
+- 19 far props
+- 19 far textures
+- procedural floor/lines hidden
+- `skydome` rendered with `CULL_FRONT` / unshaded so it no longer covers the arena
+- startup profile: environment 147 ms, fighters 4,425 ms, audio 2,958 ms,
+  total 11,451 ms
+
+Verified by a live window screenshot, not only by counts.
+
+
 ## 2026-11-03 far-scene graph
 
 `BL_TempleYardA_FarObjects.scene` now parses to:
