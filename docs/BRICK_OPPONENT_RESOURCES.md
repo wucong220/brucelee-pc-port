@@ -153,6 +153,25 @@ AI 现在会在 rage 足够且玩家攻击进入威胁窗口时，以原型概�
 “parry 成功后占据这次交换”的 PC 原型选择。原版 AI 何时进入 `candocounter`
 仍未恢复；35 段候选没有 parry clip 时会安全退回普通格挡。
 
+## 39 段候选（grab1/grab2）
+
+`thai.set` 的 `grab1 brick`/`grab2 brick` 使用原生 Brick 动画：
+
+- `grab1 brick` → `m03_grab_01`，90 帧，19–20 帧造成 6 伤害，半径 45
+- `grab2 brick` → `m03_grab_02`，78 帧，46–48 帧造成 20 伤害（hard），半径 45
+
+39 段候选：
+
+- `D:\BruceLeeWork\brick_candidate_combat_39_20261102.glb`
+- 1,811,580 字节
+- SHA-256 `f51197afdec3bbedef1ac75da65a7670aad87ede1165e18501f0f499069bcd00`
+- Godot 验证：69 骨、3 个蒙皮面、39 条动画，退出码 0
+
+AI 在 rage 66 时会把 `grab1_brick`/`grab2_brick` 加入候选池，实际伤害 6/20。
+`grabcompl1/2`、`endattack brick`、`endattackcomp 1/2` 以及 `all_grabbed_*`/
+`all_end_attack_*` 受害方动画仍未接入，因为还缺完整 grab/stun 状态机和对应 clip；
+不会把它们伪装成已完成。
+
 ## 复现与检查
 
 ```powershell
