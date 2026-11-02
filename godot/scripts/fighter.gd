@@ -4192,16 +4192,14 @@ func _native_movement_action() -> String:
     # stepright, out/down -> stepleft. Held-key flags are used instead of the
     # net movement vector so holding A (stepback) survives pressing D + L.
     if not held_directions.is_empty():
-        var back_key: String = "left" if facing > 0.0 else "right"
-        var forward_key: String = "right" if facing > 0.0 else "left"
-        if bool(held_directions.get(back_key, false)):
-            return "stepback"
-        if bool(held_directions.get(forward_key, false)):
-            return "stepfwd"
-        if bool(held_directions.get("up", false)):
-            return "stepright"
         if bool(held_directions.get("down", false)):
+            return "stepback"
+        if bool(held_directions.get("up", false)):
+            return "stepfwd"
+        if bool(held_directions.get("left", false)):
             return "stepleft"
+        if bool(held_directions.get("right", false)):
+            return "stepright"
     var x: float = move_axis.x
     var y: float = move_axis.y
     if absf(x) <= 0.001 and absf(y) <= 0.001:
@@ -4210,12 +4208,11 @@ func _native_movement_action() -> String:
     # training setup): native axes are left=stepback, right=stepfwd,
     # out/down=stepleft, in/up=stepright.
     if absf(y) > 0.001:
-        var vertical: String = "stepleft" if y > 0.0 else "stepright"
+        var vertical: String = "stepback" if y > 0.0 else "stepfwd"
         if _native_actions.has(vertical):
             return vertical
         return _movement_action()
-    var is_back: bool = (x < 0.0) if facing > 0.0 else (x > 0.0)
-    var horizontal: String = "stepback" if is_back else "stepfwd"
+    var horizontal: String = "stepleft" if x < 0.0 else "stepright"
     if _native_actions.has(horizontal):
         return horizontal
     return _movement_action()

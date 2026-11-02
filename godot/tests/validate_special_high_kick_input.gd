@@ -34,7 +34,7 @@ func _run() -> void:
         quit(1)
         return
     training._start_at(index)
-    Input.action_press(Controls.MOVE_LEFT)
+    Input.action_press(Controls.MOVE_DOWN)
     Input.action_press(Controls.MOVE_RIGHT)
     player.record_standing_combo_press("right")
     player.record_standing_combo_press("c")
@@ -46,13 +46,13 @@ func _run() -> void:
         if player.attack_kind != "":
             result = player.attack_kind
             break
-    Input.action_release(Controls.MOVE_LEFT)
+    Input.action_release(Controls.MOVE_DOWN)
     Input.action_release(Controls.MOVE_RIGHT)
     if result != "special_kick_high":
         push_error("SPECIAL HIGH KICK input produced: " + result)
         quit(1)
         return
     print("SPECIAL_HIGH_KICK_VALIDATION=" + JSON.stringify({
-        "hold": "A", "sequence": "D, L", "result": result,
+        "hold": "S", "sequence": "D, L", "result": result,
     }))
     quit(0)

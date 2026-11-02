@@ -297,22 +297,20 @@ func _prepare_current() -> void:
     if setup.begins_with("source_"):
         _prime_source_attack(setup.trim_prefix("source_"), String(entry.get("actions", [""])[0]))
     elif setup == "stepback":
-        # specialkickhigh is a direct link from the stepback movement action.
-        # Native stepback is left; hold A, then press D + L.
-        player.state = "idle"
-        player.move_axis = Vector2(-1.0, 0.0)
-        player._animate_candidate()
-    elif setup == "stepleft":
-        # specialkicklowmiss / grab2miss are direct links from stepleft.
-        # Native stepleft is out/down (S).
+        # specialkickhigh is a direct link from stepback; with the relative
+        # camera S is the back/down direction.
         player.state = "idle"
         player.move_axis = Vector2(0.0, 1.0)
         player._animate_candidate()
-    elif setup == "stepright":
-        # grab1miss is a direct link from stepright; native stepright is in/up
-        # (W).
+    elif setup == "stepleft":
+        # specialkicklowmiss / grab2miss are direct links from stepleft.
         player.state = "idle"
-        player.move_axis = Vector2(0.0, -1.0)
+        player.move_axis = Vector2(-1.0, 0.0)
+        player._animate_candidate()
+    elif setup == "stepright":
+        # grab1miss is a direct link from stepright.
+        player.state = "idle"
+        player.move_axis = Vector2(1.0, 0.0)
         player._animate_candidate()
     elif setup == "parry_high":
         _begin_dummy_attack("high_punch")
@@ -348,11 +346,11 @@ func _setup_explanation(setup: String) -> String:
     if setup.begins_with("source_"):
         return "START AFTER " + setup.trim_prefix("source_").replace("_", " ").to_upper()
     if setup == "stepback":
-        return "HOLD A TO STEP BACK"
+        return "HOLD S TO STEP BACK"
     if setup == "stepleft":
-        return "HOLD S TO STEP LEFT"
+        return "HOLD A TO STEP LEFT"
     if setup == "stepright":
-        return "HOLD W TO STEP RIGHT"
+        return "HOLD D TO STEP RIGHT"
     if setup == "target_down":
         return "TARGET ALREADY DOWN"
     if setup == "player_down":
@@ -415,8 +413,8 @@ func _prerequisite_chain(entry: Dictionary, seen: Array = []) -> Array[String]:
                 + String(prerequisite.get("input", ""))
             )
     elif setup in ["stepback", "stepleft", "stepright"]:
-        result.append({"stepback": "HOLD A", "stepleft": "HOLD S",
-                       "stepright": "HOLD W"}[setup])
+        result.append({"stepback": "HOLD S", "stepleft": "HOLD A",
+                       "stepright": "HOLD D"}[setup])
     return result
 
 

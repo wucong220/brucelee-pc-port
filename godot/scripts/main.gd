@@ -900,18 +900,6 @@ func _unhandled_input(event: InputEvent) -> void:
         return
     get_viewport().set_input_as_handled()
 
-func _facing_relative_token(token: String) -> String:
-    # Native horizontal link tokens are relative to facing: pressright is
-    # forward and pressleft is backward. Physical left/right swap when the
-    # fighter is facing left.
-    if player != null and player.facing < 0.0:
-        if token == "left":
-            return "right"
-        if token == "right":
-            return "left"
-    return token
-
-
 func _record_direction_press(event: InputEvent) -> void:
     # adreno_200/input.config fixedpad: an up press emits the "up" and "in"
     # virtual keys, a down press emits "down" and "out"; left/right emit one key.
@@ -924,9 +912,9 @@ func _record_direction_press(event: InputEvent) -> void:
         player.record_standing_combo_press("down")
         player.record_standing_combo_press("out")
     elif event.is_action_pressed(PrototypeControls.MOVE_LEFT):
-        player.record_standing_combo_press(_facing_relative_token("left"))
+        player.record_standing_combo_press("left")
     elif event.is_action_pressed(PrototypeControls.MOVE_RIGHT):
-        player.record_standing_combo_press(_facing_relative_token("right"))
+        player.record_standing_combo_press("right")
 
 
 func _handle_fighter_attack_input(

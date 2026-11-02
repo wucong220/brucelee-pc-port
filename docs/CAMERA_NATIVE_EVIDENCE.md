@@ -9,10 +9,10 @@
 ## 行为
 - 相机围绕双方中点，位于两人水平连线的垂直平分线上。
 - 因此两人的连线在屏幕上保持水平，双方始终面向对方。
-- W/S 是 `stepright` / `stepleft`（屏幕上下/侧移），不是前后；前后由 A/D 随 facing 决定。
-- 玩家在左或在右都成立，输入随 facing 镜像；训练页固定 Bruce 在左只显示 A 版本。
+- W/S 是前后（S=stepback、W=stepfwd），A/D 是左右侧移（A=stepleft、D=stepright）。
+- 镜头保持两人连线水平，因此 S 不会把人物和敌人错位；输入是屏幕绝对方向，玩家在左或在右都用 S + D + L。
 
 ## 验证
 - `validate_fight_camera.gd`：检查双方投影 y 差 ≤ 2px，并覆盖左右交换和深度移动轨迹。
-- `validate_special_high_kick_input.gd`：左位 A + D + L。
-- `validate_special_high_kick_mirror.gd`：右位 D + A + L。
+- `validate_special_high_kick_input.gd`：S + D + L。
+- `validate_special_high_kick_mirror.gd`：右侧同样 S + D + L，由镜头旋转保持相对位置。

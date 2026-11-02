@@ -1,6 +1,6 @@
 extends SceneTree
-## Mirror check: when the player is on the opponent's right (facing left),
-## hold D (back) then press A + L. The native link tokens are facing-relative.
+## Relative-camera check: the screen-relative input is S + D + L on both
+## sides; the camera rotates instead of mirroring the controls.
 
 const Controls = preload("res://scripts/prototype_controls.gd")
 
@@ -32,6 +32,7 @@ func _run() -> void:
     training._start_at(index)
     player.position = Vector3(0.25, 1.2, 0.0)
     opponent.position = Vector3(-0.25, 1.2, 0.0)
+    Input.action_press(Controls.MOVE_DOWN)
     Input.action_press(Controls.MOVE_RIGHT)
     scene._physics_process(1.0 / 60.0)
     player._physics_process(1.0 / 60.0)
@@ -39,10 +40,7 @@ func _run() -> void:
         push_error("right-side setup did not enter facing-left stepback")
         quit(1)
         return
-    var back_event: InputEventAction = InputEventAction.new()
-    back_event.action = Controls.MOVE_LEFT
-    back_event.pressed = true
-    scene._record_direction_press(back_event)
+    player.record_standing_combo_press("right")
     player.record_standing_combo_press("c")
     var result: String = ""
     for _frame: int in range(120):
@@ -54,12 +52,13 @@ func _run() -> void:
         if player.attack_kind != "":
             result = player.attack_kind
             break
+    Input.action_release(Controls.MOVE_DOWN)
     Input.action_release(Controls.MOVE_RIGHT)
     if result != "special_kick_high":
         push_error("mirrored SPECIAL HIGH KICK input produced: " + result)
         quit(1)
         return
     print("SPECIAL_HIGH_KICK_MIRROR_VALIDATION=" + JSON.stringify({
-        "facing": -1.0, "hold": "D", "sequence": "A, L", "result": result,
+        "facing": -1.0, "hold": "S", "sequence": "D, L", "result": result,
     }))
     quit(0)
