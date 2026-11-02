@@ -4285,7 +4285,7 @@ func current_source_animation() -> String:
     if state in ["stunimpact", "impactstun"] and not last_reaction_animation.is_empty():
         return last_reaction_animation
     if state in ["idle", "idle2", "idle3"]:
-        var movement_action: String = _movement_action()
+        var movement_action: String = _native_movement_action()
         if not movement_action.is_empty():
             return String(candidate_clips.get(movement_action, candidate_clips["idle"]))
     if state == "idle2":
@@ -5144,8 +5144,8 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "ko" and _candidate_clip_paths.has("ko"):
         requested = "ko"
-    elif state in ["idle", "idle2", "idle3"] and not _movement_action().is_empty():
-        requested = _movement_action()
+    elif state in ["idle", "idle2", "idle3"] and not _native_movement_action().is_empty():
+        requested = _native_movement_action()
     elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
         requested = IDLE2_CLIP
     elif state == "idle3" and _candidate_clip_paths.has(IDLE3_CLIP):
