@@ -1178,6 +1178,7 @@ var _link_events: Array[Dictionary] = []
 # Link metadata exported from brucelee.set (link order, group windows,
 # keysequence, keystatus, conditions, time, entry/linking frames).
 var _native_actions: Dictionary = {}
+var _native_reactions: Dictionary = {"hit": [], "block": []}
 var _native_links: Array = []
 var _action_to_attack: Dictionary = {}
 var _key_status: Dictionary = {}
@@ -3477,6 +3478,7 @@ func _load_native_links() -> void:
     for alias: String in ["facedownattack", "faceupattack", "attacktofloor"]:
         if ATTACKS.has(alias) and not _action_to_attack.has(alias):
             _action_to_attack[alias] = alias
+    _build_native_reactions()
 
 
 func set_key_status(tokens: Dictionary) -> void:
@@ -4204,9 +4206,85 @@ func _accepts_brick_faceup_candidate(damage: float, blocked: bool) -> bool:
     )
 
 
+func _build_native_reactions() -> void:
+    # Reaction links target impact*/block* actions whose conditions encode the
+    # incoming impact. Only animations present in the candidate are used.
+    _native_reactions = {"hit": [], "block": []}
+    for link: Dictionary in _native_links:
+        var target: String = _link_text(link, "to")
+        if target.is_empty():
+            continue
+        var is_block: bool = target.contains("block")
+        var is_hit: bool = target.begins_with("impact")
+        if not is_block and not is_hit:
+            continue
+        var row: Dictionary = _native_actions.get(target, {})
+        var animation: String = String(row.get("animation", ""))
+        if animation.is_empty():
+            continue
+        var conditions: Array = Array(link.get("conditions", []))
+        if not conditions.has("impact"):
+            continue
+        var strength: String = _condition_attribute(conditions, "oppattackstrength")
+        var height: String = _condition_attribute(conditions, "oppattackheight")
+        var direction: String = _condition_attribute(conditions, "oppattackdir")
+        if strength.is_empty():
+            continue
+        var exit_start: int = -1
+        var duration: int = -1
+        var return_action: String = "idle"
+        for out: Dictionary in _native_links:
+            if _link_text(out, "from") != target:
+                continue
+            var out_target: String = _link_text(out, "to")
+            if out_target in ["idle", "idle2", "faceupidle", "facedownidle"]:
+                var window: Array = Array(out.get("time", []))
+                if window.size() >= 2:
+                    exit_start = int(window[0])
+                    duration = int(window[1])
+                    return_action = out_target
+                break
+        if exit_start < 0:
+            continue
+        var entry: Dictionary = {
+            "strength": strength,
+            "height": height,
+            "direction": direction,
+            "source_action": target,
+            "animation": animation,
+            "exit_start_frame": exit_start,
+            "animation_duration_frames": duration,
+            "linking_frame": 0,
+            "return_action": return_action,
+        }
+        var group: String = "block" if is_block else "hit"
+        var group_entries: Array = _native_reactions[group]
+        group_entries.append(entry)
+
+
+func _condition_attribute(conditions: Array, prefix: String) -> String:
+    for condition: Variant in conditions:
+        var text: String = String(condition)
+        if text.begins_with(prefix):
+            var suffix: String = text.substr(prefix.length())
+            if suffix == "med":
+                return "medium"
+            return suffix
+    return ""
+
+
 func _matching_exact_reaction(impact: Dictionary, blocked: bool) -> Dictionary:
     var group: String = "block" if blocked else "hit"
     var entries_value: Variant = EXACT_REACTIONS.get(group, [])
+    if _native_reactions.get(group, []).size() > 0:
+        var merged: Array = []
+        if entries_value is Array:
+            merged.append_array(entries_value)
+        for native_entry: Variant in _native_reactions[group]:
+            if native_entry is Dictionary and _candidate_clip_paths.has(
+                    String(Dictionary(native_entry).get("animation", ""))):
+                merged.append(native_entry)
+        entries_value = merged
     if not entries_value is Array:
         return {}
     var strength: String = String(impact.get("strength", ""))

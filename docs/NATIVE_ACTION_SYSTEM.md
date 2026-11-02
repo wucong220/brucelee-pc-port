@@ -132,6 +132,14 @@ link 窗口：specialkicklowmiss `[14,16]` → 14/3/33、specialpunchlowmiss `[8
 `impactable` 组窗口（`parryhigh = [30,62]`，所以第 30 帧前吸收、之后可被命中）。
 Brick 的 `parry_*_brick` 仍暂用 25 作为回退。
 
+**第 27 轮补充**：反应（受击/格挡）选择接入原生反应 link。`_build_native_reactions()`
+从 `native_links.json` 生成 26 条受击 + 10 条格挡反应条目（`impact*`/`block*`
+目标，条件 `impact` + `oppattackheight/strength/dir`，收招帧取目标动作到
+`idle/faceupidle/facedownidle` 的出边 `time`）。选择时只使用候选模型实际拥有的
+reaction clip；没有原生条目/片段时仍回退到 `REACTION_PROFILES`。新增
+`validate_native_reactions.gd` 验证 hard/high/frontal 命中会选中
+`impacthardfronthigh`（`all_impct_hard_frnt_high`）。
+
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的
 方向/特殊招测试已删除——它们验证的是被删掉的队列/时间窗语义，不再适用。
