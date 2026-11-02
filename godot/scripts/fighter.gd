@@ -2039,6 +2039,12 @@ func _try_load_candidate_visual() -> void:
         )
         if not matched_optional.is_empty():
             _candidate_clip_paths[action] = matched_optional
+    # The candidate GLB may contain extra shared reaction clips that are not
+    # keys in the per-character action map. Keep them addressable by native
+    # animation name so reaction links can select them.
+    for anim_name: String in _candidate_animation.get_animation_list():
+        if not _candidate_clip_paths.values().has(anim_name):
+            _candidate_clip_paths[anim_name] = anim_name
     # Reaction clips are optional so earlier three-clip local assets still work.
     for group: String in REACTION_PROFILE_DATA:
         for height: String in REACTION_PROFILE_DATA[group]:
