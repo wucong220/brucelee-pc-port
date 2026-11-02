@@ -93,11 +93,15 @@ const AI_SPECIAL_RAGE_COSTS: Dictionary = {
 }
 
 func _ready() -> void:
+    var startup_begin: int = Time.get_ticks_msec()
     PrototypeControls.ensure_default_actions()
     rng.seed = 0xB17E
     _build_environment()
+    var startup_environment: int = Time.get_ticks_msec()
     _build_fighters()
+    var startup_fighters: int = Time.get_ticks_msec()
     _build_combat_audio()
+    var startup_audio: int = Time.get_ticks_msec()
     hud = PortHUD.new()
     add_child(hud)
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
@@ -119,6 +123,12 @@ func _ready() -> void:
     var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
     main_menu_enabled = false if export_self_test else _should_show_main_menu()
     _reset_match()
+    print("STARTUP_PROFILE environment=%d fighters=%d audio=%d total=%d" % [
+        startup_environment - startup_begin,
+        startup_fighters - startup_environment,
+        startup_audio - startup_fighters,
+        Time.get_ticks_msec() - startup_begin,
+    ])
     if main_menu_enabled:
         _open_main_menu()
     if export_self_test:
