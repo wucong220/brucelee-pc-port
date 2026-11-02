@@ -39,6 +39,20 @@ parry 输入仍是原型实现，尚未换成 link 数据驱动的状态进入�
 
 ## 输入到招式的真实链路
 
+### 第三轮补充：移动动作也是 link 来源
+
+`_current_action_name()` 现在在站立状态返回当前移动动作名（`stepback` /
+`stepfwd` / `moveleft` / `moveright`）。原生数据里 `specialkickhigh` 的 link
+来源就是 `stepback`（`from: stepback`，`ragethird`），所以不返回移动动作名时
+这招永远无法按原生输入触发。
+
+### 基础攻击没有单键 link
+
+导出的 396 条 link 中，指向 `lowpunch1` / `lowkick1` 的只有三条键的连段
+（`a,b,b` / `b,d,d`），**没有单键 link**。因此 `main.gd` 里“按键直接
+`request_attack` 基础招”的回退仍然是原型机制，不是从 link 表读出来的；
+在拿到原生默认攻击入口之前，这部分继续标为 prototype。
+
 `CFighter::UserControlUpdate`（`0x1b89c0`）每次更新依次遍历**当前招式的
 link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link 做四个检查：
 

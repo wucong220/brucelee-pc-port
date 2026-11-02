@@ -3076,6 +3076,11 @@ func _current_action_name() -> String:
         if not source_action.is_empty():
             return source_action
     if state in ["idle", "idle2", "idle3"]:
+        # Movement animations are native actions too: special_kick_high is a
+        # direct link from stepback, so the current action must report it.
+        var movement: String = _movement_action()
+        if not movement.is_empty():
+            return movement
         return state
     return ""
 
