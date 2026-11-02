@@ -109,6 +109,8 @@ func _ready() -> void:
     hud = PortHUD.new()
     add_child(hud)
     _build_game_text_overlay()
+    if OS.get_environment("BRUCELEE_GAMETEXT_PROBE") == "1":
+        _show_game_text("FIGHT", 30.0)
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
         hud.footer.text = (
             "J J J | J K K | K L L | K U U | "
