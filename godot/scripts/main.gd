@@ -43,6 +43,8 @@ var _voice_audio_error: Dictionary = {}
 var _active_voice: AudioStreamPlayer = null
 var _music_player: AudioStreamPlayer = null
 var _music_stream: AudioStream = null
+var _result_audio: Dictionary = {}
+var _result_player: AudioStreamPlayer = null
 var ai_timer: float = 0.0
 var ai_guard_sequence: int = -1
 var ai_guard_decision: bool = false
@@ -484,6 +486,7 @@ func _build_combat_audio() -> void:
         _candidate_audio[event] = stream
     _load_bruce_voice_audio()
     _load_menu_music()
+    _load_result_audio()
 
 
 func _load_menu_music() -> void:
@@ -514,6 +517,38 @@ func _load_menu_music() -> void:
         combat_audio.add_child(_music_player)
         _music_player.play()
         return
+
+
+func _load_result_audio() -> void:
+    var roots: Array[String] = []
+    var env_root: String = OS.get_environment("BRUCELEE_COMMENTATOR_ROOT")
+    if not env_root.is_empty():
+        roots.append(env_root)
+    roots.append(OS.get_executable_path().get_base_dir().path_join("audio/commentator"))
+    for root: String in roots:
+        for key: String in ["win", "lose", "draw"]:
+            var filename: String = {"win": "You_Win.wav", "lose": "You_Lose.wav", "draw": "Draw.wav"}[key]
+            var path: String = root.path_join(filename)
+            if not FileAccess.file_exists(path):
+                continue
+            var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
+            if stream != null:
+                _result_audio[key] = stream
+    if _result_audio.is_empty():
+        return
+    _result_player = AudioStreamPlayer.new()
+    _result_player.volume_db = 2.0
+    combat_audio.add_child(_result_player)
+
+
+func _play_result_audio(key: String) -> void:
+    if _result_player == null:
+        return
+    var stream: AudioStream = _result_audio.get(key)
+    if stream == null:
+        return
+    _result_player.stream = stream
+    _result_player.play()
 
 
 func _load_bruce_voice_audio() -> void:
@@ -1149,6 +1184,7 @@ func _on_ko(fighter: PortFighter) -> void:
             "YOU WIN THE MATCH  ·  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
             else "YOU LOSE THE MATCH  ·  R TO RESTART"
         )
+        _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
         return
     round_reset_timer = ROUND_RESET_DELAY
     hud.show_message(
