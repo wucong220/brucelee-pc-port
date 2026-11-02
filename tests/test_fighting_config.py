@@ -346,8 +346,12 @@ class TestFightingConfig(unittest.TestCase):
             "m03_kck_high_03": 45.0,
             "m03_kck_low_02": 50.0,
             "m03_kck_low_03": 50.0,
+            "m03_sp_kck_high": 45.0,
+            "m03_sp_kck_low": 45.0,
+            "m03_sp_pnch_high": 45.0,
+            "m03_sp_pnch_low": 45.0,
         })
-        self.assertEqual(len(data["attacks"]), 14)
+        self.assertEqual(len(data["attacks"]), 18)
         high_punch = data["attacks"]["high_punch"]
         self.assertEqual(high_punch["source_action"], "highpunch1")
         self.assertEqual(high_punch["animation"], "m03_pnch_high_01")
@@ -377,6 +381,19 @@ class TestFightingConfig(unittest.TestCase):
         )
         self.assertEqual(kick["damage"], 7.0)
         self.assertEqual(kick["source_impact"]["direction"], "fromright")
+        special = data["attacks"]["special_kick_high_brick"]
+        self.assertEqual(special["source_action"], "specialkickhigh brick")
+        self.assertEqual(special["animation"], "m03_sp_kck_high")
+        self.assertEqual(
+            [special[key] for key in (
+                "animation_frame_count", "startup_frames", "active_frames", "recovery_frames"
+            )],
+            [73, 23, 6, 44],
+        )
+        self.assertEqual(special["damage"], 10.0)
+        self.assertEqual(special["source_impact"]["attack_radius"], 55.0)
+        self.assertEqual(special["source_impact"]["body_part"], "lleg")
+        self.assertEqual(special["source_impact"]["strength"], "hard")
         for group in data["reaction_profiles"].values():
             for profile in group.values():
                 self.assertFalse(profile["clip_implemented"])
