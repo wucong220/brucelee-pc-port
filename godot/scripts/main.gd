@@ -660,6 +660,8 @@ func _think_ai(delta: float) -> void:
             ]
             if player.state in ["facedownidle", "faceupidle"]:
                 moves.append("attack_to_floor_brick")
+            if player.state in ["grabbed1", "grabbed2"]:
+                moves.append("endattack_brick")
             # Prototype AI choice: thai.set gates these on ragethird/rage2thirds;
             # the native AI decision is not recovered, so this only spends rage.
             if computer.rage >= 33.0:

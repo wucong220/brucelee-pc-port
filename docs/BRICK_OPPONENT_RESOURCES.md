@@ -185,6 +185,26 @@ AI 在 rage 66 时会把 `grab1_brick`/`grab2_brick` 加入候选池，实际伤
 AI 在玩家处于 `facedownidle`/`faceupidle` 时会选择 `attack_to_floor_brick`；
 测试验证真实选择、clip、6 伤害。目标不是倒地状态时不会选这招。
 
+## 41 段候选（endattack）
+
+`endattack brick` 使用 `m03_end_attack_01`：93 帧，17–19 帧窗口，伤害 0，
+半径 75，`rleg/high/brutal/fromleft`。0 伤害是收招/终结动作，不是数据缺失。
+命中后受害方播放 `endattackcomp1/2`：
+
+- `all_end_attack_01_forset03` 93 帧
+- `all_end_attack_02_forset03` 130 帧
+- 两者结束进入 `faceupko`
+
+41 段候选：
+
+- `D:\BruceLeeWork\brick_candidate_combat_41_20261102.glb`
+- 1,957,532 字节
+- SHA-256 `51ec663be9b726c9cf4c7baee04045607a2b66d976989c2f6673c9eb0228e4a8`
+- Godot 验证：69 骨、3 个蒙皮面、41 条动画，退出码 0
+
+`validate_brick_endattack.gd` 验证 grab1/grab2 → endattack → endattackcomp1/2 →
+faceupko，且 endattack 本身保持 0 伤害。
+
 ## 复现与检查
 
 ```powershell

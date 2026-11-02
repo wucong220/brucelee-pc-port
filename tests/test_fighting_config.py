@@ -355,8 +355,9 @@ class TestFightingConfig(unittest.TestCase):
             "m03_grab_01": 45.0,
             "m03_grab_02": 45.0,
             "m03_attack_to_floor": 35.0,
+            "m03_end_attack_01": 75.0,
         })
-        self.assertEqual(len(data["attacks"]), 24)
+        self.assertEqual(len(data["attacks"]), 25)
         high_punch = data["attacks"]["high_punch"]
         self.assertEqual(high_punch["source_action"], "highpunch1")
         self.assertEqual(high_punch["animation"], "m03_pnch_high_01")
