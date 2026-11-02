@@ -276,8 +276,9 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
 第二轮补充（2026-11-02）：
 - `ConsumeEvents` 已按反编译语义改成“从末尾按字符串匹配并写 `+0x10=1`，
   不检查原值”。
-- `blending` 帧已传入衔接函数并触发候选视觉混合；`unique` 仍是角色专属
-  语义 ID（如 `grababrucelee`），候选模型没有对应 clip，暂未参与行为。
+- `blending` 帧已传入衔接函数并触发候选视觉混合；`unique` 已用于筛选
+  角色专属 link（如 `grababrucelee` 只对 Bruce 生效、`grababrick` 只对 Brick），
+  `unique` 到候选 clip 的映射仍未建立。
 - 怒气改为数据驱动：动作 `action.rage` 正值是命中怒气增益
   （lowpunch1=5、highkick3=10），负值是特殊技消耗
   （specialpunchlowmiss/specialkicklowmiss=-66，命中动作=0），

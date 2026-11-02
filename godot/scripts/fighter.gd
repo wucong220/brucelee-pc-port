@@ -3114,6 +3114,19 @@ func _link_text(link: Dictionary, key: String) -> String:
     return str(value)
 
 
+func _native_link_unique_ok(link: Dictionary) -> bool:
+    # Recovered unique links name the character-specific action variant, for
+    # example grababrucelee / grababrick. Skip other characters' variants.
+    var unique: Array = Array(link.get("unique", []))
+    if unique.is_empty():
+        return true
+    var tag: String = "brick" if attack_config_path == BRICK_ATTACK_CONFIG_PATH else "brucelee"
+    for value: Variant in unique:
+        if String(value).to_lower().contains(tag):
+            return true
+    return false
+
+
 func _native_link_applies(link: Dictionary) -> bool:
     var action: String = _current_action_name()
     if action.is_empty():
@@ -3446,6 +3459,8 @@ func _try_follow_links() -> bool:
     _expire_link_events()
     for link: Dictionary in _native_links:
         if not _native_link_applies(link):
+            continue
+        if not _native_link_unique_ok(link):
             continue
         if not _native_link_window_ok(link):
             continue

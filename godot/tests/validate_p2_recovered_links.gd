@@ -64,5 +64,12 @@ func _run() -> void:
         quit(1)
         return
 
+    checks["unique_brucelee"] = player._native_link_unique_ok({"unique": ["grababrucelee"]})
+    checks["unique_brick_skipped"] = not player._native_link_unique_ok({"unique": ["grababrick"]})
+    if not checks["unique_brucelee"] or not checks["unique_brick_skipped"]:
+        push_error("unique character tag gate is wrong: " + str(checks))
+        quit(1)
+        return
+
     print("P2_RECOVERED_LINK_VALIDATION=" + JSON.stringify(checks))
     quit(0)
