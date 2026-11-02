@@ -60,9 +60,13 @@ arena composition; those are the next steps.
 - nodes include `bl_scene02a_hw_grounda/b`, `fartemple`, `bigtemple`,
   `redgate`, trees/rocks, `combatarea`, `skydome`, `bl_scene_sun`
 
-Its pose-transform table is a different layout and currently returns
-`pose_transform_error`; the node/visual graph is available, transforms are not
-yet trusted. Far-scene mesh conversion and merge are still pending.
+Its pose-transform table is a different layout. After allowing unused DATA
+sections and subset pose coverage, the sample now exposes **22 transforms**
+with source positions such as `[-1436.333, -233.141, 220.626]` and identity
+scales. The parser is permissive about non-pose sections; transform semantics
+still need per-node verification. Far-scene mesh conversion and merge are still
+pending.
+
 
 
 

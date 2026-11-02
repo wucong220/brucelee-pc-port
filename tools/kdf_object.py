@@ -189,8 +189,8 @@ def _inspect_pose_transforms(raw: bytes, container: dict) -> list[dict]:
         record_ordinal += 6
     if not transforms:
         raise KdfError('no object pose transforms found')
-    if used_sections != set(range(container['offset_count'])):
-        raise KdfError('object pose sections do not consume every DATA section')
+    if not used_sections.issubset(set(range(container['offset_count']))):
+        raise KdfError('object pose sections reference an invalid DATA section')
     return transforms
 
 
@@ -316,7 +316,7 @@ def _parse_scene_tree(records: list[dict], strings: list[dict], transforms: list
         (item["position_section"], item["rotation_section"], item["scale_section"])
         for item in transforms
     }
-    if transforms and set(linked) != pose:
+    if transforms and not pose.issubset(set(linked)):
         raise KdfError("object scene nodes do not match pose transform sections")
     return {
         "scene_tree_status": "relative-dictionary",
