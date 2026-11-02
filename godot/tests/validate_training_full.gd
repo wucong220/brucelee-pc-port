@@ -86,9 +86,9 @@ func _play(player: PortFighter, computer: PortFighter, entry: Dictionary) -> voi
         return
     if not SEQUENCES.has(id):
         return
+    # Native events expire 500 ms after the last press, so the whole sequence
+    # has to be pressed inside the current animation's link window.
     var gap: int = 1
-    if not id in ["high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_high", "special_kick_low", "special_punch_low", "special_punch_high", "grab1", "grab2", "high_punch3", "low_punch3", "low_kick3", "high_kick3"]:
-        gap = 44
     var actions: Array = entry.get("actions", [])
     if not actions.is_empty():
         player.set_key_status(

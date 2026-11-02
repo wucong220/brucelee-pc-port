@@ -89,7 +89,9 @@ link 表**（`GetActiveSetAnimation +0x100/+0x104/+0x108`），对每条 link �
 
 ## 还没闭合的点
 
-- `CBeatEmUpGame::Update` 里输入事件队列的 `+500` 过期单位（时钟/帧）尚未确认。
+- `CBeatEmUpGame::Update` 里输入事件队列的 `+500` 过期已确认是 **500 毫秒**
+  （事件时间戳来自 `krt::time::GetCurrentMili()`），已按“最后事件 +500ms
+  整批标记已消费”实现。
 - link `+0xb8` 条件表的具体字段语义（`oppposestun`、`ragethird` 等）只恢复了一部分。
 - `+0x2c`/`+0x34` 的“当前动画 / 当前帧”换算与 `SetAnimation` 的第 4、5 参数仍需核对。
 

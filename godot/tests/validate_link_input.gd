@@ -78,10 +78,34 @@ func _run() -> void:
         quit(1)
         return
 
+    # 4. Events expire 500 ms after the last press (CBeatEmUpGame::Update).
+    player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
+    player.health = 9999.0
+    computer.reset_fighter(Vector3(0.25, 1.20, 0.0))
+    computer.state = "facedownidle"
+    computer.health = 9999.0
+    player.record_standing_combo_press("b")
+    for _frame: int in range(40):
+        player._physics_process(1.0 / 60.0)
+    player.record_standing_combo_press("c")
+    player.record_standing_combo_press("c")
+    if player.state == "attacktofloor":
+        push_error("expired events still completed the attacktofloor link")
+        quit(1)
+        return
+    player.record_standing_combo_press("b")
+    player.record_standing_combo_press("c")
+    player.record_standing_combo_press("c")
+    if player.state != "attacktofloor":
+        push_error("fresh events did not complete the attacktofloor link: " + player.state)
+        quit(1)
+        return
+
     print("LINK_INPUT_VALIDATION=" + JSON.stringify({
         "neutral_jjj": ["punch", "high_punch2"],
         "late_window": "high_punch",
         "no_wall_clock_window": true,
         "consumed_events": true,
+        "event_lifetime_ms": 500,
     }))
     quit(0)

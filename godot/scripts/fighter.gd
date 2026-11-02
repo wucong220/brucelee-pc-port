@@ -237,7 +237,10 @@ const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"
 # stay in a queue with a consumed bit, and every physics update re-evaluates
 # each link against the current animation's frame window. There is no
 # wall-clock combo window and no FIFO of attacks.
-const LINK_EVENT_LIMIT: int = 8
+# CBeatEmUpGame::Update compares the last event's timestamp (+0x0c) + 500 with
+# the update time; the timestamp comes from krt::time::GetCurrentMili(), so the
+# lifetime is 500 milliseconds. Expiry marks the whole vector consumed.
+const LINK_EVENT_LIFETIME_MS: int = 500
 const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
 const RAGE_MAX: float = 100.0
 const RAGE_GAIN_PER_HIT: float = 10.0
@@ -2976,9 +2979,11 @@ func record_standing_combo_press(
         var token: String = String(modifier)
         if not tokens.has(token):
             tokens.append(token)
-    _link_events.append({"tokens": tokens, "consumed": false})
-    while _link_events.size() > LINK_EVENT_LIMIT:
-        _link_events.pop_front()
+    _link_events.append({
+        "tokens": tokens,
+        "consumed": false,
+        "time_ms": int(_time * 1000.0),
+    })
     return _try_follow_links()
 
 
@@ -3034,6 +3039,20 @@ func _accepts_link_input(virtual_key: String) -> bool:
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return false
     return true
+
+
+func _expire_link_events() -> void:
+    # CBeatEmUpGame::Update: last event timestamp + 500 < now -> mark the whole
+    # vector consumed (not deleted); pruning the consumed batch keeps the port's
+    # queue bounded and cannot change matching, because consumed events never
+    # match again.
+    if _link_events.is_empty():
+        return
+    var now_ms: int = int(_time * 1000.0)
+    var last_ms: int = int(_link_events.back().get("time_ms", now_ms))
+    if last_ms + LINK_EVENT_LIFETIME_MS >= now_ms:
+        return
+    _link_events.clear()
 
 
 func _clear_link_events() -> void:
@@ -3338,6 +3357,7 @@ func _try_follow_links() -> bool:
         return false
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return false
+    _expire_link_events()
     for link: Dictionary in _native_links:
         if not _native_link_applies(link):
             continue
