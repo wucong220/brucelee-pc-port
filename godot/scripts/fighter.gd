@@ -3742,6 +3742,15 @@ func _physics_process(delta: float) -> void:
     move_and_slide()
     position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
     position.z = clampf(position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
+    if opponent != null and is_instance_valid(opponent):
+        # Keep the screen-side contract stable: the player is always left of
+        # the opponent. Root motion (for example SPECIAL LOW KICK) must not
+        # carry either fighter across the other and flip the camera.
+        if is_player:
+            position.x = minf(position.x, opponent.position.x - 0.08)
+        else:
+            position.x = maxf(position.x, opponent.position.x + 0.08)
+        position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
     _animate_visuals()
     _animate_candidate()
 

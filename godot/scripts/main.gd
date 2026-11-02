@@ -563,16 +563,12 @@ func _update_fight_camera() -> void:
     var side: Vector3
     if separation.length_squared() > 0.000001:
         var axis: Vector3 = separation.normalized()
+        # Place the camera so its screen-right is player -> opponent. The
+        # player therefore stays on screen-left; the side lock below prevents
+        # either fighter from crossing and making the view flip.
         side = Vector3(-axis.z, 0.0, axis.x)
     else:
         side = Vector3(0.0, 0.0, 1.0)
-    var current_side: Vector3 = fight_camera.global_position - target
-    current_side.y = 0.0
-    if current_side.length_squared() > 0.000001 and side.dot(current_side) < 0.0:
-        # Both perpendicular directions keep the fighter line horizontal.
-        # Stay on the side the camera already occupies so crossing sides does
-        # not snap the view by 180 degrees.
-        side = -side
     fight_camera.global_position = (
         target + side * distance + Vector3(0.0, distance * 0.42, 0.0)
     )
