@@ -311,6 +311,7 @@ func _make_arena_line(x: float) -> void:
 func _build_fighters() -> void:
     player = PortFighter.new()
     player.configure("Bruce (placeholder)", true, Color(0.85, 0.56, 0.18))
+    player.polar_movement_enabled = true
     player.configure_candidate_asset(
         OS.get_environment("BRUCELEE_PLAYER_GLB"),
         OS.get_environment("BRUCELEE_PLAYER_TEXTURE_ROOT"),

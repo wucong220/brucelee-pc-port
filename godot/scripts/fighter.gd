@@ -1157,6 +1157,7 @@ var character_name: String = "Fighter"
 var is_player: bool = true
 var health: float = MAX_HEALTH
 var move_axis: Vector2 = Vector2.ZERO
+var polar_movement_enabled: bool = false
 var held_directions: Dictionary = {}
 var guard_held: bool = false
 var opponent: PortFighter
@@ -3670,12 +3671,35 @@ func request_attack(kind: String) -> bool:
     return true
 
 
+func _polar_movement(speed: float) -> Vector3:
+    # WASD is expressed in the opponent-relative frame: the pole is the
+    # midpoint between both fighters, W/S change the radius and A/D change the
+    # angle around that pole. The camera sits on the perpendicular bisector.
+    if opponent == null or not is_instance_valid(opponent):
+        return Vector3(move_axis.x, 0.0, move_axis.y).normalized() * speed
+    if move_axis.length_squared() <= 0.000001:
+        return Vector3.ZERO
+    var center: Vector3 = (global_position + opponent.global_position) * 0.5
+    var radial: Vector3 = global_position - center
+    radial.y = 0.0
+    if radial.length_squared() <= 0.000001:
+        return Vector3(move_axis.x, 0.0, move_axis.y).normalized() * speed
+    var radius: float = radial.length()
+    var away: Vector3 = radial / radius
+    var tangent: Vector3 = Vector3(-away.z, 0.0, away.x)
+    return (away * move_axis.y + tangent * move_axis.x).normalized() * speed
+
+
 func _physics_process(delta: float) -> void:
     _time += delta
     if opponent != null and is_instance_valid(opponent) and _facing_window_ok():
-        facing = 1.0 if opponent.global_position.x >= global_position.x else -1.0
-    # Turn the torso toward the opponent (local 'front' is +X).
-    rotation.y = 0.0 if facing > 0.0 else PI
+        var to_opponent: Vector3 = opponent.global_position - global_position
+        to_opponent.y = 0.0
+        if to_opponent.length_squared() > 0.000001:
+            facing = 1.0 if to_opponent.x >= 0.0 else -1.0
+            # Turn the torso toward the opponent in the whole ground plane,
+            # not just between +X and -X.
+            rotation.y = atan2(-to_opponent.z, to_opponent.x)
     if guard_held:
         # Raising guard between two presses must not keep a partial sequence or
         # a matched-but-unexecuted combo alive.
@@ -3697,9 +3721,11 @@ func _physics_process(delta: float) -> void:
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
     if _uses_standing_idle_rules() and not guard_held:
-        motion = Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED
+        motion = (_polar_movement(BASE_SPEED) if polar_movement_enabled
+                else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED)
     elif _uses_standing_idle_rules() and guard_held:
-        motion = Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED * 0.25
+        motion = (_polar_movement(BASE_SPEED * 0.25) if polar_movement_enabled
+                else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED * 0.25)
     velocity.x = motion.x
     velocity.z = motion.z
     if is_on_floor():
