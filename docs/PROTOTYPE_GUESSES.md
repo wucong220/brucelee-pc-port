@@ -14,7 +14,7 @@
 | 3 | 连段窗口 0.52s/1.35s | `fighter.gd` `COMBO_MAX_GAP_SECONDS` / `COMBO_MAX_TOTAL_SECONDS` | 已删除（第 1/5 轮） | 已换成原生 link 帧窗口 + 500ms 事件过期 |
 | 4 | 连段优先级“后完成者替换” | `fighter.gd::record_standing_combo_press` | 已删除（第 1 轮） | 改为按原生 link 原始顺序遍历 |
 | 5 | 每次按键入队、目标排最后 | `fighter.gd::request_attack_or_queue` / `_try_begin_pending_standing_combo` | 已删除（第 1 轮） | 已换成 `InputSequenceCheck → FollowLink → ConsumeEvents` 事件消费模型 |
-| 6 | 招架 = 0.5s 内按三次 Shift | `fighter.gd::record_parry_press` | 已删除（第 14 轮） | 改为原生 `candocounter` link：下+右，`countertime`+`ragethird` |
+| 6 | 招架 = 0.5s 内按三次 Shift | `fighter.gd::record_parry_press` | 已删除（第 14 轮） | 改为原生 `candocounter` link：下+右，`countertime`+`ragethird`；吸收窗口读 `impactable` 组（parryhigh 第 30 帧前） |
 | 7 | 地面攻击输入 `aaa/abb/bcc/bdd`、`K,L,L`/`K,U,U` | `fighter.gd` 地面序列 / `main.gd` | 已删除（第 11 轮） | 改为 `facedownidle/faceupidle` 的直接 link（单键） |
 | 8 | Heavy 作为无来源独立招式 | `fighter.gd` `heavy` 元数据 | 已删除（第 17 轮） | 原注释即写 "No recovered fighting-set mapping for this prototype attack yet"；数据里没有 heavy，已从代码、AI、训练、测试中移除 |
 | 9 | 抓取距离 0.7 | `PROTOTYPE_GRAB_DISTANCE` | 部分证据（第 19 轮） | link 条件 `grabdistance` 改用动作 `attack.grab_distance`（grab1=70、endattack1=150，按 source→world 换算）；常量只作缺数据回退 |

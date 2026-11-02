@@ -4301,6 +4301,20 @@ func _medium_lethal_impactable() -> bool:
     return false
 
 
+func _action_impactable_start(kind: String) -> int:
+    # Start of the action's recovered impactable group window, or -1.
+    if not ATTACKS.has(kind):
+        return -1
+    var action: String = String(ATTACKS[kind].get("source_action", ""))
+    var groups: Variant = _native_actions.get(action, {}).get("groups")
+    if not groups is Dictionary:
+        return -1
+    var window: Variant = Dictionary(groups).get("impactable")
+    if not window is Array or Array(window).size() < 2:
+        return -1
+    return int(window[0])
+
+
 func receive_hit(
         amount: float,
         blocked: bool,
@@ -4310,9 +4324,11 @@ func receive_hit(
 ) -> bool:
     if (state in ["startup", "active", "recovery"]
             and attack_kind in ["parry_high", "parry_low"]):
-        # Player parry mirrors the Brick parry windows; absorbing an incoming
-        # strike before frame 25 is the defensive success event.
-        if _current_attack_source_frame() < 25.0:
+        # parryhigh is impactable only from its recovered impactable start
+        # (brucelee.set: parryhigh [30,62]); before that the parry absorbs.
+        var impactable_start: int = _action_impactable_start(attack_kind)
+        var absorb_until: float = float(impactable_start) if impactable_start >= 0 else 25.0
+        if _current_attack_source_frame() < absorb_until:
             parry_succeeded.emit(attack_kind)
             return false
     if (state in ["startup", "active", "recovery"]
