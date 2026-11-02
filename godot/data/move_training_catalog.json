@@ -3,10 +3,10 @@
   "entries": [
     {"id": "punch", "label": "LOW PUNCH", "group": "BASIC", "input": "J", "setup": "idle", "actions": ["punch"], "success": "hit"},
     {"id": "kick", "label": "LOW KICK", "group": "BASIC", "input": "K", "setup": "idle", "actions": ["kick"], "success": "hit"},
-    {"id": "high_punch", "label": "HIGH PUNCH", "group": "BASIC", "input": "J J J", "setup": "idle", "actions": ["high_punch"], "success": "hit"},
+    {"id": "high_punch", "label": "HIGH PUNCH (FINISHER)", "group": "BASIC", "input": "J J J from neutral", "setup": "idle", "actions": ["high_punch"], "success": "hit"},
     {"id": "high_kick", "label": "HIGH KICK", "group": "BASIC", "input": "K L L", "setup": "idle", "actions": ["high_kick"], "success": "hit"},
 
-    {"id": "high_punch2", "label": "HIGH PUNCH 2", "group": "COMBO", "input": "J J J after high punch", "setup": "source_high_punch", "actions": ["high_punch2"], "success": "hit"},
+    {"id": "high_punch2", "label": "HIGH PUNCH 2 (FOLLOW-UP)", "group": "COMBO", "input": "J J J after HIGH PUNCH", "setup": "source_high_punch", "actions": ["high_punch2"], "success": "hit"},
     {"id": "low_punch2", "label": "LOW PUNCH 2", "group": "COMBO", "input": "J K K after low punch", "setup": "source_punch", "actions": ["low_punch2"], "success": "hit"},
     {"id": "high_kick2", "label": "HIGH KICK 2", "group": "COMBO", "input": "K L L after high kick", "setup": "source_high_kick", "actions": ["high_kick2"], "success": "hit"},
     {"id": "low_kick2", "label": "LOW KICK 2", "group": "COMBO", "input": "K U U after low kick", "setup": "source_kick", "actions": ["low_kick2"], "success": "hit"},

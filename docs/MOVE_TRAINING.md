@@ -39,6 +39,19 @@ QUIT GAME
 `special_kick_low`、`special_punch_low`、`special_punch_high` 只列出命中动作，
 不把 `*_miss` 当成独立招式。`grab1/grab2` 也不列 `grab*_miss` 分支。
 
+## 输入队列
+
+每个攻击键现在都会落地成一次实际攻击，不再有“第二下 J 被吞掉”的空输入：
+
+- 当前攻击进行中时，后续按键进入队列
+- 连段目标排在已经排队的普通攻击之后
+- 目标招仍然是连段的最后一击
+- 目标命中后才推进训练项
+- `D` 没有独立基础动作，PC 原型 fallback 为 `kick`，避免单独按 D 无反馈
+
+例如 `A/A/A` 现在会依次产生三段实际攻击，最后一段才是 `HIGH PUNCH`；不是
+“第一段 + 隐藏目标”两段。
+
 ## 判定事件
 
 - `combat_hit`：普通攻击、连段、special 命中、grab、地面攻击、parry counter
@@ -56,5 +69,8 @@ QUIT GAME
   - 错误招式不推进
   - 正确命中后锁定并推进
   - 跳到自选起点
+  - 队列版 HIGH PUNCH 实际命中后推进
+- `godot/tests/validate_attack_queue.gd`：`A/A/A` 与 `B/D/D` 每一下都产生攻击，目标最后。
+- `godot/tests/validate_all_combo_queue.gd`：24 条已恢复站姿连段逐条验证没有吞键。
 
 PC 输入提示、木桩摆放和训练页布局都是原型选择；原版训练 UI、键位和进度规则未恢复。
