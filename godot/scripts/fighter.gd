@@ -86,6 +86,8 @@ const BRICK_CLIPS: Dictionary = {
     "grab2_brick": "m03_grab_02",
     "attack_to_floor_brick": "m03_attack_to_floor",
     "endattack_brick": "m03_end_attack_01",
+    "grab1_miss_brick": "m02_grab_01",
+    "grab2_miss_brick": "m02_grab_01",
     "m03_blck_high": "m03_blck_high",
     "all_block_low": "all_block_low",
     "all_block_mid": "all_block_mid",
@@ -258,6 +260,8 @@ const SPECIAL_CHAIN_MISSES: Dictionary = {
     "parry_high": "parry_attack",
     "grab1_miss": "grab1",
     "grab2_miss": "grab2",
+    "grab1_miss_brick": "grab1_brick",
+    "grab2_miss_brick": "grab2_brick",
 }
 const SPECIAL_REQUIRES_STEPBACK: Dictionary = {
     "special_kick_high": true,
@@ -269,6 +273,8 @@ const SPECIAL_CHAIN_WINDOW: Dictionary = {
     "special_punch_high_miss": [6, 7],
     "grab1_miss": [8, 9],
     "grab2_miss": [8, 9],
+    "grab1_miss_brick": [10, 11],
+    "grab2_miss_brick": [10, 11],
 }
 # Recovered miss_return is [22,25]; choose its first frame as the PC
 # candidate exit while retaining the 33-frame source animation metadata.
@@ -300,6 +306,7 @@ const NON_CONTACT_ATTACKS: Dictionary = {
     "endattack1": true, "endattack2": true, "parry_low": true,
     "parry_high_brick": true, "parry_low_brick": true,
     "endattack_brick": true,
+    "grab1_miss_brick": true, "grab2_miss_brick": true,
 }
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
@@ -865,6 +872,8 @@ const THAI_ATTACK_DATA: Dictionary = {
     "grab2_brick": ["grab2 brick", "m03_grab_02", 78, 46, 3, 29, 20.0, 45.0, "larm", "high", "hard", "frontal"],
     "attack_to_floor_brick": ["attacktofloor", "m03_attack_to_floor", 61, 11, 5, 45, 6.0, 35.0, "lleg", "low", "normal", "frontal"],
     "endattack_brick": ["endattack brick", "m03_end_attack_01", 93, 17, 3, 73, 0.0, 75.0, "rleg", "high", "brutal", "fromleft"],
+    "grab1_miss_brick": ["grab1miss brick", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss_brick": ["grab2miss brick", "m02_grab_01", 47, 4, 4, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
 }
 const THAI_REACTION_PROFILE_DATA: Dictionary = {
     "hit": {
@@ -1828,6 +1837,7 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
         "special_punch_high_brick", "special_punch_low_brick",
         "parry_high_brick", "parry_low_brick", "parry_attack_brick",
         "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick",
+        "grab1_miss_brick", "grab2_miss_brick",
     ]
     for required_action: String in THAI_ATTACK_DATA:
         if not attacks.has(required_action):
@@ -2073,6 +2083,7 @@ func _try_load_candidate_visual() -> void:
             "special_punch_high_brick", "special_punch_low_brick",
             "parry_high_brick", "parry_low_brick", "parry_attack_brick",
             "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick",
+            "grab1_miss_brick", "grab2_miss_brick",
             "high_punch2", "low_punch2", "high_kick2", "low_kick2",
             "special_kick_low_miss", "special_kick_low_hit",
             "special_punch_low_miss", "special_punch_low_hit",
@@ -3265,7 +3276,7 @@ func _candidate_action_for_attack(kind: String) -> String:
             return "punch"
         "kick", "heavy":
             return "kick"
-        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattack1", "endattack2":
+        "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick", "grab1_miss_brick", "grab2_miss_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattack1", "endattack2":
             return kind
     return ""
 
@@ -4545,6 +4556,7 @@ func _animate_candidate() -> void:
                 "special_punch_high_brick", "special_punch_low_brick",
                 "parry_high_brick", "parry_low_brick", "parry_attack_brick",
                 "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick",
+                "grab1_miss_brick", "grab2_miss_brick",
                 "high_punch2", "low_punch2", "high_kick2", "low_kick2",
                 "special_kick_low_miss", "special_kick_low_hit",
                 "special_punch_low_miss", "special_punch_low_hit",

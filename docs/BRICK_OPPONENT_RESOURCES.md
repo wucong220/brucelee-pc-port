@@ -205,6 +205,25 @@ AI 在玩家处于 `facedownidle`/`faceupidle` 时会选择 `attack_to_floor_bri
 `validate_brick_endattack.gd` 验证 grab1/grab2 → endattack → endattackcomp1/2 →
 faceupko，且 endattack 本身保持 0 伤害。
 
+## 42 段候选（grab1miss/2miss）
+
+`grab1miss brick` / `grab2miss brick` 都使用 `m02_grab_01`，47 帧，伤害 0，
+半径 45；源链在 10–11 帧转 `grab1/grab2`。`m02_grab_01` 的 ANM 骨架引用是
+`bl_ken_goodall_01_high`，通过 retarget 到 Brick 骨架；转换器新增：
+- body 按共同 mesh 变体后缀唯一匹配；
+- 目标无 hair object 时仅丢弃 hair 轨道；
+- 保留 source index 以支持被丢弃轨道后的严格映射。
+
+42 段候选：
+
+- `D:\BruceLeeWork\brick_candidate_combat_42_20261102.glb`
+- 2,012,696 字节
+- SHA-256 `b3ba723a3de1b842ae8fd68ddcb4508924dddc833067d0e5043304aba523640e`
+- Godot 验证：69 骨、3 个蒙皮面、42 条动画，退出码 0
+
+`validate_brick_grab_miss.gd` 验证 `grab1_miss_brick -> grab1_brick -> grabbed1`
+（6 伤害）和 `grab2_miss_brick -> grab2_brick -> grabbed2`（20 伤害）。
+
 ## 复现与检查
 
 ```powershell

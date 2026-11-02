@@ -397,9 +397,13 @@ func _run() -> void:
             quit(1)
             return
     var full_candidate: bool = actual_names.size() in [53, 55]
-    var combat_candidate: bool = actual_names.size() in [26, 27, 28, 31, 35, 37, 39, 40, 41]
+    var combat_candidate: bool = actual_names.size() in [26, 27, 28, 31, 35, 37, 39, 40, 41, 42]
     var expected_combat: Array[String] = COMBAT_ANIMATIONS
-    if actual_names.size() == 41:
+    if actual_names.size() == 42:
+        expected_combat = COMBAT_ANIMATIONS_41.duplicate()
+        expected_combat.append("m02_grab_01")
+        expected_combat.sort()
+    elif actual_names.size() == 41:
         expected_combat = COMBAT_ANIMATIONS_41
     elif actual_names.size() == 40:
         expected_combat = COMBAT_ANIMATIONS_40

@@ -670,6 +670,7 @@ func _think_ai(delta: float) -> void:
                 moves.append_array([
                     "special_punch_high_brick", "special_punch_low_brick",
                     "grab1_brick", "grab2_brick",
+                    "grab1_miss_brick", "grab2_miss_brick",
                 ])
             var available: Array[String] = []
             for move: String in moves:
