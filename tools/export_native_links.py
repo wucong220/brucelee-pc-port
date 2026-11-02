@@ -31,12 +31,16 @@ def build(archive: Path) -> dict:
         if (not isinstance(counter_time, list) or len(counter_time) != 2
                 or any(type(item) is not int for item in counter_time)):
             counter_time = None
+        grab_distance = attack.get("grab_distance")
+        if not isinstance(grab_distance, (int, float)):
+            grab_distance = None
         action_rows.append({
             "name": str(action.get("name", "")),
             "pose": action.get("pose"),
             "animation": binary.get("basename"),
             "ordinal": binary.get("ordinal"),
             "counter_time": counter_time,
+            "grab_distance": grab_distance,
             "groups": groups,
         })
     link_rows = []

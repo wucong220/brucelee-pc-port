@@ -31,7 +31,7 @@
 - `_begin_chained_attack()`：命中后直接切目标动画，不再排队。
 
 验证：`validate_link_input.gd`（J J J → `punch` + `high_punch2`、后段窗口 →
-`high_punch`、事件不重复触发）、`validate_move_gallery.gd`（27 招）、
+`high_punch`、事件不重复触发）、`validate_move_gallery.gd`（25 招）、
 `validate_menu_confirm_attack.gd`、`smoke_test.gd`。
 
 **训练（2026-11-02 第 13 轮）：26 课全部通过**
@@ -86,6 +86,11 @@
 - `countertime` 条件现在按对手当前动作的 `counter_time` 帧窗口判定；
   `validate_parry` 同时验证帧 0（窗口内）能招架、帧 9（窗口外）不能
 - 原生没有 `parry_low`；训练和招式目录已移除该课，现有 25 项
+
+**第 19 轮补充**：`grabdistance` 条件也改成数据驱动。`tools/export_native_links.py`
+把动作 `attack.grab_distance` 导出到 `native_links.json`（例如 grab1=70、
+endattack1=150、grab2=90、specialpunchlowhit=120），条件按
+`grab_distance * source_units_to_world` 与世界距离比较；常量 0.7 只在缺数据时回退。
 
 **三段相位的帧边界已核对（第 18 轮）**
 `startup/active/recovery` 不是凭空编的时长：每一招来自 `brucelee.set` 的

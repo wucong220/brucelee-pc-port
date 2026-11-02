@@ -26,7 +26,7 @@ QUIT GAME
 
 ## 目录
 
-`godot/data/move_training_catalog.json` 共 27 项，按逻辑招式分组：
+`godot/data/move_training_catalog.json` 共 25 项（第 14/17 轮移除了无原生 link 的 parry_low 与 heavy），按逻辑招式分组：
 
 - BASIC 4
 - COMBO 8

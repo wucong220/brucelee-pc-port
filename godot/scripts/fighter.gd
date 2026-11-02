@@ -3236,7 +3236,7 @@ func _opponent_distance() -> float:
         opponent.global_position.z - global_position.z).length()
 
 
-func _native_condition_ok(condition: String) -> bool:
+func _native_condition_ok(condition: String, link: Dictionary) -> bool:
     match condition:
         "oppposestun":
             return opponent != null and is_instance_valid(opponent) \
@@ -3250,7 +3250,13 @@ func _native_condition_ok(condition: String) -> bool:
         "oppnotblocking":
             return opponent == null or not opponent.guard_held
         "grabdistance":
-            return _opponent_distance() <= PROTOTYPE_GRAB_DISTANCE
+            # The action's attack record stores grab_distance in source units.
+            var to_action: String = _link_text(link, "to")
+            var raw_grab: Variant = _native_actions.get(
+                to_action, {}).get("grab_distance")
+            if raw_grab == null:
+                return _opponent_distance() <= PROTOTYPE_GRAB_DISTANCE
+            return _opponent_distance() <= float(raw_grab) * source_units_to_world
         "ragethird":
             return rage >= 33.0
         "rage2thirds":
@@ -3283,7 +3289,7 @@ func _native_condition_ok(condition: String) -> bool:
 
 func _native_link_conditions_ok(link: Dictionary) -> bool:
     for condition: Variant in Array(link.get("conditions", [])):
-        if not _native_condition_ok(String(condition)):
+        if not _native_condition_ok(String(condition), link):
             return false
     return true
 

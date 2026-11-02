@@ -27,7 +27,7 @@
   `endattack_brick` 收招（0 伤害）→ `endattackcomp1/2` → `faceupko`、
   方向移动/step、高/低/中格挡、轻/硬受击、高 KO、faceupko、扩展 AI 招式池。
 - 对局已接入：三局两胜、2 秒回合重置、HUD 回合比分、R 重开整场、训练不计分。
-- 主菜单新增 `MOVE TRAINING`：Bruce 27 项顺序招式训练、必须真实命中/吸收/收招才
+- 主菜单新增 `MOVE TRAINING`：Bruce 25 项顺序招式训练、必须真实命中/吸收/收招才
   推进、无跳过键、进入前可自选起点；进度不保存。每个攻击键都会进入实际攻击队列，
   不再静默吞掉连段中间输入；目标连段排在队列末尾。目录和测试见
   `docs/MOVE_TRAINING.md`。

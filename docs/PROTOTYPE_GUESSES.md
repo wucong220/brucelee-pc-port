@@ -11,13 +11,13 @@
 |---|---|---|---|---|
 | 1 | `J/K/L/U → a/b/c/d` | `prototype_controls.gd` | 自创 | 原版 `input.config` 的虚拟键到设备码映射未闭合；PC 键位是原型选择 |
 | 2 | `D` 无匹配时回退成 `kick` | `main.gd::_handle_fighter_attack_input` | 自创 | 已删除（第 16 轮）：基础攻击改为单键 link，匹配不到就什么都不做 |
-| 3 | 连段窗口 0.52s/1.35s | `fighter.gd` `COMBO_MAX_GAP_SECONDS` / `COMBO_MAX_TOTAL_SECONDS` | 自创 | 原版 `CBeatEmUpGame::Update` 按“最后事件 +500”批量过期，单位未闭合；0.52/1.35 是替代值 |
-| 4 | 连段优先级“后完成者替换” | `fighter.gd::record_standing_combo_press` | 自创 | 原版 link 顺序与 source_index 优先级未验证 |
-| 5 | 每次按键入队、目标排最后 | `fighter.gd::request_attack_or_queue` / `_try_begin_pending_standing_combo` | 自创 | 原版是 `InputSequenceCheck → FollowLink → ConsumeEvents` 的事件消费模型，不是 FIFO 攻击队列 |
-| 6 | 招架 = 0.5s 内按三次 Shift | `fighter.gd::record_parry_press` | 候选 | 三连按与 0.5s 窗口没有原生证据 |
-| 7 | 地面攻击输入 `aaa/abb/bcc/bdd`、`K,L,L`/`K,U,U` | `fighter.gd` 地面序列 / `main.gd` | 候选 | 原版 keysequence 数据存在，PC 物理键映射是原型选择 |
+| 3 | 连段窗口 0.52s/1.35s | `fighter.gd` `COMBO_MAX_GAP_SECONDS` / `COMBO_MAX_TOTAL_SECONDS` | 已删除（第 1/5 轮） | 已换成原生 link 帧窗口 + 500ms 事件过期 |
+| 4 | 连段优先级“后完成者替换” | `fighter.gd::record_standing_combo_press` | 已删除（第 1 轮） | 改为按原生 link 原始顺序遍历 |
+| 5 | 每次按键入队、目标排最后 | `fighter.gd::request_attack_or_queue` / `_try_begin_pending_standing_combo` | 已删除（第 1 轮） | 已换成 `InputSequenceCheck → FollowLink → ConsumeEvents` 事件消费模型 |
+| 6 | 招架 = 0.5s 内按三次 Shift | `fighter.gd::record_parry_press` | 已删除（第 14 轮） | 改为原生 `candocounter` link：下+右，`countertime`+`ragethird` |
+| 7 | 地面攻击输入 `aaa/abb/bcc/bdd`、`K,L,L`/`K,U,U` | `fighter.gd` 地面序列 / `main.gd` | 已删除（第 11 轮） | 改为 `facedownidle/faceupidle` 的直接 link（单键） |
 | 8 | Heavy 作为无来源独立招式 | `fighter.gd` `heavy` 元数据 | 已删除（第 17 轮） | 原注释即写 "No recovered fighting-set mapping for this prototype attack yet"；数据里没有 heavy，已从代码、AI、训练、测试中移除 |
-| 9 | 抓取距离 0.7 | `PROTOTYPE_GRAB_DISTANCE` | 自创 | 原版 grabdistance 语义未闭合 |
+| 9 | 抓取距离 0.7 | `PROTOTYPE_GRAB_DISTANCE` | 部分证据（第 19 轮） | link 条件 `grabdistance` 改用动作 `attack.grab_distance`（grab1=70、endattack1=150，按 source→world 换算）；常量只作缺数据回退 |
 | 10 | 怒气消耗 33/66 | `SPECIAL_RAGE_COSTS` / `PARRY_RAGE_COSTS` | 自创 | 注释已写 "Prototype meter" |
 
 ## 战斗数值与判定
@@ -34,20 +34,20 @@
 
 | # | 规则 | 位置 | 状态 | 说明 |
 |---|---|---|---|---|
-| 16 | 27 课目录、起点选择、成功条件 | `move_training_catalog.json` / `move_training.gd` | 自创 | 训练页本身是 PC 原型功能 |
+| 16 | 25 课目录、起点选择、成功条件 | `move_training_catalog.json` / `move_training.gd` | 自创 | 训练页本身是 PC 原型功能 |
 | 17 | `_prime_source_attack` 固定 `state_time = 1.5` | `move_training.gd` | 已修复（第 8/13 轮） | 现在按目标/入口 link 的帧窗口计算 `state_time` |
 | 18 | 训练时每帧强制木桩状态 | `move_training.gd::_process` | 自创 | 为了让中间攻击不破坏 special/grab 条件 |
-| 19 | 欣赏模式直接写 `state`、强制 `request_attack`、连续 `record_virtual_press("a")` | `move_gallery.gd` | 自创且错误 | 多条启动路径，绕过真实状态进入；`actions[0]` 被当成启动动作，实际是训练成功事件（如 `special_kick_low_hit` 之前还有 `_miss`） |
+| 19 | 欣赏模式直接写 `state`、强制 `request_attack` | `move_gallery.gd` | 保留为预览功能 | 欣赏模式不是输入路径，只是逐招播放；真实对战/训练已走原生 link |
 | 20 | 主菜单/暂停/训练/欣赏界面 | `prototype_menu.gd` 等 | 自创 | PC 原型 UI，不是原版菜单 |
 
-## 已有原版证据、但原型没有照做的部分
+## 已有原版证据、原型后来照做的部分（第 1–18 轮已落地）
 
-| 原版机制 | 原生证据 | 原型现状 |
+| 原版机制 | 原生证据 | 现状态 |
 |---|---|---|
-| `CLinkDescr::GetKeySequence` + `InputSequenceCheck` 反向扫描、跳过不匹配事件 | `docs/INPUT_CONFIG_FINDINGS.md`，`0x1a0180–0x1a0208` | 已实现反向有序子序列匹配，但时间窗是自创 |
-| 通过后 `FollowLink`，再 `ConsumeEvents` 标记 `+0x10` | `0x1a8a40–0x1a8b14` | 未实现，改用 FIFO 队列 |
-| `CBeatEmUpGame::Update` 按最后事件 `+500` 批量过期 | `0x17c1d8–0x17c294` | 未实现，改用 0.52/1.35 秒 |
-| `CStateManager::PreUpdate/PostUpdate`、`SetState` | `docs/FIGHTING_SET_FINDINGS.md` | 未接入，原型自写状态机 |
+| `CLinkDescr::GetKeySequence` + `InputSequenceCheck` 反向扫描、跳过不匹配事件 | `docs/INPUT_CONFIG_FINDINGS.md`，`0x1a0180–0x1a0208` | 已实现；序列按输入布局索引 1 选择，窗口是当前动画帧区间 |
+| 通过后 `FollowLink`，再 `ConsumeEvents` 标记 `+0x10` | `0x1a8a40–0x1a8b14` | 已实现，FIFO 队列已删除 |
+| `CBeatEmUpGame::Update` 按最后事件 `+500` 批量过期 | `0x17c1d8–0x17c294` | 已实现 500 毫秒批量过期（`GetCurrentMili` 来源已闭合） |
+| `CStateManager::PreUpdate/PostUpdate`、`SetState` | `docs/FIGHTING_SET_FINDINGS.md` | 仍未接入；目前是自写相位状态机（帧边界来自 `damage_time`） |
 
 ## 第二轮审计（反编译之后新增）
 
@@ -65,8 +65,8 @@
 | 27 | 三局两胜、KO、回合重置 | `main.gd` | 自创 | 原型规则 |
 | 28 | 音效映射 | `main.gd::_play_hit_audio` | 自创 | 只把候选文件按动作名对上，不是原版事件映射 |
 | 29 | 双方初始站位、摄像机取景 | `main.gd` | 自创 | 注释已写 prototype framing |
-| 30 | `record_virtual_press` 的地面四条序列 | `fighter.gd` | 候选 | 原版 `keysequence` 数据存在，PC 映射是原型选择 |
-| 31 | 招架 = 0.5 秒内三次 Shift | `fighter.gd::record_parry_press` | 候选 | 反编译里 `parry` 走的是 link + `InputStatusCheck`，没有找到“三次按键”的对应实现 |
+| 30 | `record_virtual_press` 的地面四条序列 | `fighter.gd` | 已删除（第 11 轮） | 改为原生地面 link |
+| 31 | 招架 = 0.5 秒内三次 Shift | `fighter.gd::record_parry_press` | 已删除（第 14 轮） | parry 改走 link + `InputStatusCheck`/`countertime` |
 | 32 | Gallery 每招播放时长 = `startup+active+recovery+0.9s` | `move_gallery.gd::_duration` | 自创 | 原版按动画长度和 link 推进，没有这种定时切招 |
 
 ## 反编译后确认“该做但没做”的原版机制
