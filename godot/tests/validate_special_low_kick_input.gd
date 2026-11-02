@@ -34,20 +34,23 @@ func _run() -> void:
     player.record_standing_combo_press("right")
     player.record_standing_combo_press("d")
     var result: String = ""
-    for _frame: int in range(120):
+    var success: bool = false
+    for _frame: int in range(180):
         scene._physics_process(1.0 / 60.0)
         player._physics_process(1.0 / 60.0)
         training._process(1.0 / 60.0)
         if player.attack_kind != "":
             result = player.attack_kind
+        if training.success_timer >= 0.0:
+            success = true
             break
     Input.action_release(Controls.MOVE_DOWN)
     Input.action_release(Controls.MOVE_RIGHT)
-    if result != "special_kick_low_miss":
-        push_error("SPECIAL LOW KICK input produced: " + result)
+    if not success or result != "special_kick_low_hit":
+        push_error("SPECIAL LOW KICK did not reach hit: " + result)
         quit(1)
         return
     print("SPECIAL_LOW_KICK_VALIDATION=" + JSON.stringify({
-        "hold": "S", "sequence": "D, U", "result": result,
+        "hold": "S", "sequence": "D, U", "result": result, "success": success,
     }))
     quit(0)

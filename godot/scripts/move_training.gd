@@ -341,6 +341,11 @@ func _prepare_current() -> void:
     elif setup == "player_faceup":
         player.state = "faceupidle"
         player._animate_candidate()
+    if setup in ["stepback", "stepleft", "stepright"]:
+        # Keep the dummy close and unguarded while the step prerequisite is
+        # held; otherwise a small drift can make the follow-up hit link fail.
+        computer.global_position = player.global_position + Vector3(0.22, 0.0, 0.0)
+        computer.guard_held = false
     _refresh_lesson(entry)
     status_label.add_theme_color_override("font_color", Color(0.82, 0.86, 0.92))
     status_label.text = (
@@ -457,6 +462,7 @@ func _process(delta: float) -> void:
             computer.state = "facedownidle"
         else:
             computer.state = "idle"
+        computer.guard_held = false
     if success_timer >= 0.0:
         success_timer -= delta
         if success_timer <= 0.0:
