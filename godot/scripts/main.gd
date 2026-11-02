@@ -313,7 +313,13 @@ func _build_environment() -> void:
     _build_original_far_scene()
 
 
+func _scene_variant() -> String:
+    return OS.get_environment("BRUCELEE_SCENE").to_lower()
+
+
 func _build_original_scene_props() -> void:
+    if _scene_variant() == "halla":
+        return
     var base: String = OS.get_executable_path().get_base_dir().path_join("scene")
     if not DirAccess.dir_exists_absolute(base):
         return
@@ -389,7 +395,10 @@ func _make_arena_line(x: float) -> void:
     add_child(visual)
 
 func _build_original_far_scene() -> void:
-    var base: String = OS.get_executable_path().get_base_dir().path_join("scene/far")
+    var scene_root: String = "scene/far"
+    if _scene_variant() == "halla":
+        scene_root = "scene/halla/far"
+    var base: String = OS.get_executable_path().get_base_dir().path_join(scene_root)
     var manifest_path: String = base.path_join("far_manifest.json")
     if not FileAccess.file_exists(manifest_path):
         return
