@@ -276,7 +276,7 @@ func _prepare_current() -> void:
     var entry: Dictionary = entries[current_index]
     var setup: String = String(entry.get("setup", "idle"))
     if setup.begins_with("source_"):
-        _prime_source_attack(setup.trim_prefix("source_"))
+        _prime_source_attack(setup.trim_prefix("source_"), String(entry.get("actions", [""])[0]))
     elif setup == "parry_high":
         _begin_dummy_attack("high_punch")
     elif setup == "parry_low":
@@ -284,7 +284,7 @@ func _prepare_current() -> void:
     elif setup == "parry_attack":
         _begin_dummy_attack("high_punch")
     elif setup == "endattack1" or setup == "endattack2":
-        _prime_source_attack("high_punch")
+        _prime_source_attack("high_punch", String(entry.get("actions", [""])[0]))
         computer.state = "hitstun"
         computer.state_time = 1.0
     elif setup == "target_down":
@@ -327,14 +327,17 @@ func _setup_explanation(setup: String) -> String:
     return setup.to_upper()
 
 
-func _prime_source_attack(kind: String) -> void:
+func _prime_source_attack(kind: String, target_action: String = "") -> void:
     if not player.ATTACKS.has(kind):
         return
     player.attack_kind = kind
     player.state = "recovery"
-    # Keep a real recovery window open for the combo/chain lesson. A 0.01s
-    # source state ends before record_standing_combo_press() can match.
-    player.state_time = 1.5
+    # Put the source animation at the target link window instead of a fixed
+    # 1.5 s guess; a 0.01 s state ends before the link can match.
+    player.state_time = (
+        player.source_state_time_for_target(kind, target_action)
+        if not target_action.is_empty() else 1.5
+    )
     player._attack_hit_landed = true
     player._attack_connected = true
     player._animate_candidate()

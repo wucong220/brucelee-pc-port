@@ -238,6 +238,7 @@ const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"
 # each link against the current animation's frame window. There is no
 # wall-clock combo window and no FIFO of attacks.
 const LINK_EVENT_LIMIT: int = 8
+const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
 const RAGE_MAX: float = 100.0
 const RAGE_GAIN_PER_HIT: float = 10.0
 # Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
@@ -319,32 +320,6 @@ const NON_CONTACT_ATTACKS: Dictionary = {
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.
-const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
-    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch", "source_index": 90},
-    {"steps": [["a"], ["b"], ["b"]], "attack": "punch", "source_index": 88},
-    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick", "source_index": 89},
-    {"steps": [["b"], ["d"], ["d"]], "attack": "kick", "source_index": 87},
-    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3", "source_index": 84},
-    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3", "source_index": 85},
-    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "source_index": 86},
-    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3", "source_index": 83},
-    {"steps": [["out", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_high"},
-    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch2", "from_attack": "high_punch"},
-    {"steps": [["a"], ["b"], ["b"]], "attack": "low_punch2", "from_attack": "punch"},
-    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick2", "from_attack": "high_kick"},
-    {"steps": [["b"], ["d"], ["d"]], "attack": "low_kick2", "from_attack": "kick"},
-    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3", "from_attack": "high_punch2"},
-    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3", "from_attack": "low_punch2"},
-    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3", "from_attack": "high_kick2"},
-    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "from_attack": "low_kick2"},
-    {"steps": [["left", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_low_miss", "from_attack": "punch"},
-    {"steps": [["down", "a"], ["out", "a"], ["out", "a"]], "attack": "special_punch_low_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
-    {"steps": [["up", "a"], ["up", "a"], ["up", "a"]], "attack": "special_punch_high_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
-    {"steps": [["left", "a"], ["a"], ["a"]], "attack": "grab1_miss", "from_attack": "punch"},
-    {"steps": [["left", "b"], ["c"], ["c"]], "attack": "grab2_miss", "from_attack": "kick"},
-    {"steps": [["up", "in", "b"], ["a"], ["a"]], "attack": "endattack1", "source_record_index": 34, "from_attack_in": ["high_punch", "punch", "kick", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_high", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_low", "parry_attack", "grab1", "grab2"]},
-    {"steps": [["up", "in", "a"], ["c"], ["c"]], "attack": "endattack2", "source_record_index": 35, "from_attack_in": ["high_punch", "punch", "kick", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_high", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_low", "parry_attack", "grab1", "grab2"]},
-]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
     # evaluates windows while the current attack is in startup/active/recovery,
@@ -1239,6 +1214,12 @@ var _attack_connected: bool = false
 var _ground_attack_input_history: Array[Dictionary] = []
 var _ground_attack_input_owner: String = ""
 var _link_events: Array[Dictionary] = []
+# Link metadata exported from brucelee.set (link order, group windows,
+# keysequence, keystatus, conditions, time, entry/linking frames).
+var _native_actions: Dictionary = {}
+var _native_links: Array = []
+var _action_to_attack: Dictionary = {}
+var _key_status: Dictionary = {}
 var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
 var last_reaction_animation: String = ""
@@ -1417,6 +1398,7 @@ func _ready() -> void:
         candidate_visual_blending_enabled = true
     if not _load_attack_definitions():
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
+    _load_native_links()
     _load_attack_root_motion()
     collision_layer = 2
     collision_mask = 1 | 2
@@ -3087,14 +3069,14 @@ func _link_sequence_matches(entry: Dictionary) -> bool:
     return false
 
 
-func _link_applies(entry: Dictionary) -> bool:
-    var from_attack: String = String(entry.get("from_attack", ""))
-    var from_attack_in: Array = entry.get("from_attack_in", [])
-    if not from_attack.is_empty():
-        return attack_kind == from_attack
-    if not from_attack_in.is_empty():
-        return from_attack_in.has(attack_kind)
-    return true
+func _current_action_name() -> String:
+    if ATTACKS.has(attack_kind):
+        var source_action: String = str(ATTACKS[attack_kind].get("source_action", ""))
+        if not source_action.is_empty():
+            return source_action
+    if state in ["idle", "idle2", "idle3"]:
+        return state
+    return ""
 
 
 func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
@@ -3108,12 +3090,8 @@ func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
     if not required_tokens.has("right"):
         effective.erase("right")
     if required_tokens.has("left") or required_tokens.has("right"):
-        # Absolute side steps take precedence over the facing-relative in/out
-        # token, which the same keyboard input also produces.
         effective.erase("in")
         effective.erase("out")
-    # A step must match the pressed token set exactly. Otherwise the plain
-    # a/a/a sequence would also consume up+a presses and shadow highpunch3.
     if effective.size() != required_tokens.size():
         return false
     for token: Variant in required_tokens:
@@ -3147,21 +3125,136 @@ func _candobasicattack_window_contains_current_frame() -> bool:
             and frame <= float(window[1]) + 0.0001)
 
 
-func _link_window_ready(entry: Dictionary) -> bool:
-    # krm::CFighter::TimeWindowCheck: the link window is a frame range on the
-    # current animation, not a wall-clock window measured from the first press.
-    var target: String = String(entry["attack"])
-    var endattack_override: bool = (
-        ENDATTACK_ATTACKS.has(target)
-        and _attack_hit_landed
-        and opponent != null and is_instance_valid(opponent)
-        and opponent.state in ["hitstun", "stun", "stun2"]
-    )
+func _link_text(link: Dictionary, key: String) -> String:
+    var value: Variant = link.get(key)
+    if value == null:
+        return ""
+    return str(value)
+
+
+func _native_link_applies(link: Dictionary) -> bool:
+    var action: String = _current_action_name()
+    if action.is_empty():
+        return false
+    var source: String = _link_text(link, "from")
+    if not source.is_empty():
+        return source == action
+    var group: String = _link_text(link, "from_group")
+    if group.is_empty():
+        return false
+    var action_row: Dictionary = _native_actions.get(action, {})
+    var groups: Dictionary = action_row.get("groups", {})
+    return groups.has(group)
+
+
+func _native_link_window(link: Dictionary) -> Array:
+    return _native_link_window_for_action(link, _current_action_name())
+
+
+func _native_link_window_for_action(link: Dictionary, action: String) -> Array:
+    var source: String = _link_text(link, "from")
+    if not source.is_empty():
+        return Array(link.get("time", []))
+    var action_row: Dictionary = _native_actions.get(action, {})
+    var groups: Dictionary = action_row.get("groups", {})
+    var group: String = _link_text(link, "from_group")
+    if not groups.has(group):
+        return []
+    var entry: Variant = groups[group]
+    if not entry is Array or entry.size() < 2:
+        return []
+    var window: Array = [int(entry[0]), int(entry[1])]
+    if entry.size() >= 3:
+        window.append(int(entry[2]))
+    return window
+
+
+func source_state_time_for_target(source_kind: String, target_action: String) -> float:
+    # Place the primed source animation at the start of the target link window
+    # so training and preview scenarios exercise a real link instead of a fixed
+    # 1.5 s recovery guess.
+    if not ATTACKS.has(source_kind):
+        return 1.5
+    var action: String = str(ATTACKS[source_kind].get("source_action", ""))
+    var target_native: String = target_action
+    if ATTACKS.has(target_action):
+        var target_source: String = str(ATTACKS[target_action].get("source_action", ""))
+        if not target_source.is_empty():
+            target_native = target_source
+    var frame_count: float = float(ATTACKS[source_kind]["animation_frame_count"])
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != target_native:
+            continue
+        var applies: bool = false
+        var source: String = _link_text(link, "from")
+        if not source.is_empty():
+            applies = source == action
+        else:
+            var groups: Dictionary = _native_actions.get(action, {}).get("groups", {})
+            applies = groups.has(_link_text(link, "from_group"))
+        if not applies:
+            continue
+        var window: Array = _native_link_window_for_action(link, action)
+        if window.size() < 2:
+            continue
+        var frame: float = float(window[0]) + 1.0
+        if window.size() >= 3:
+            frame = maxf(frame, float(window[2]) + 1.0)
+        return maxf((frame_count - frame) / SOURCE_FRAME_RATE, 1.0 / SOURCE_FRAME_RATE)
+    return 1.5
+
+
+func link_requirements_for_target(target_kind: String) -> Dictionary:
+    # Held-key requirements declared by the native link that lands on this
+    # move (InputStatusCheck data). Used by training/preview scenarios.
+    var result: Dictionary = {}
+    var native_target: String = target_kind
+    if ATTACKS.has(target_kind):
+        var target_source: String = str(ATTACKS[target_kind].get("source_action", ""))
+        if not target_source.is_empty():
+            native_target = target_source
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != native_target:
+            continue
+        for step: Variant in Array(link.get("status", [])):
+            for pair_value: Variant in Array(step):
+                var pair: Array = pair_value
+                if pair.size() >= 2:
+                    result[str(pair[0])] = str(pair[1]) == "pressed"
+        return result
+    return result
+
+
+func _native_link_window_ok(link: Dictionary) -> bool:
     if state in ["idle", "idle2", "idle3"]:
         return true
-    if endattack_override:
-        return true
-    return _candobasicattack_window_contains_current_frame()
+    var window: Array = _native_link_window(link)
+    if window.size() < 2:
+        return false
+    var frame: float = _current_attack_source_frame()
+    if frame < 0.0:
+        return false
+    var start: float = float(window[0])
+    var end: float = float(window[1])
+    if window.size() >= 3:
+        start = maxf(start, float(window[2]))
+    return frame + 0.0001 >= start and frame <= end + 0.0001
+
+
+func _native_link_status_ok(link: Dictionary) -> bool:
+    var status: Array = link.get("status", [])
+    for step: Variant in status:
+        for pair_value: Variant in Array(step):
+            var pair: Array = pair_value
+            if pair.size() < 2:
+                continue
+            var token: String = str(pair[0])
+            if token == "impossible":
+                return false
+            var want_pressed: bool = str(pair[1]) == "pressed"
+            if bool(_key_status.get(token, false)) != want_pressed:
+                return false
+    return true
 
 
 func _opponent_distance() -> float:
@@ -3172,40 +3265,52 @@ func _opponent_distance() -> float:
         opponent.global_position.z - global_position.z).length()
 
 
-func _link_conditions_ok(entry: Dictionary) -> bool:
-    var target: String = String(entry["attack"])
-    if not supports_attack(target):
-        return false
-    var cost: float = float(SPECIAL_RAGE_COSTS.get(target, 0.0))
-    if cost > 0.0 and rage < cost:
-        return false
-    if (cost > 0.0 and SPECIAL_REQUIRES_STEPBACK.has(target)
-            and not _special_stepback_origin):
-        return false
-    if GRAB_ATTACKS.has(target):
-        if not _attack_hit_landed:
+func _native_condition_ok(condition: String) -> bool:
+    match condition:
+        "oppposestun":
+            return opponent != null and is_instance_valid(opponent) \
+                and opponent.state in ["hitstun", "stun", "stun2"]
+        "oppposelaying":
+            return opponent != null and is_instance_valid(opponent) \
+                and opponent.state in ["facedownidle", "facedownko", "faceupidle", "faceupko", "laying"]
+        "oppposestand":
+            return opponent != null and is_instance_valid(opponent) \
+                and opponent.state in ["idle", "idle2", "idle3"]
+        "oppnotblocking":
+            return opponent == null or not opponent.guard_held
+        "grabdistance":
+            return _opponent_distance() <= PROTOTYPE_GRAB_DISTANCE
+        "ragethird":
+            return rage >= 33.0
+        "rage2thirds":
+            return rage >= 66.0
+        "healthzero":
+            return opponent != null and is_instance_valid(opponent) and opponent.health <= 0.0
+        "impact":
+            return _attack_hit_landed
+        _:
+            # countertime and oppattack* belong to the counter/reaction links,
+            # which this port does not drive yet; fail closed.
             return false
-        if (opponent == null or not is_instance_valid(opponent)
-                or opponent.guard_held
-                or opponent.state not in ["idle", "idle2", "idle3", "hitstun"]):
-            return false
-        if _opponent_distance() > PROTOTYPE_GRAB_DISTANCE:
-            return false
-    if ENDATTACK_ATTACKS.has(target):
-        if not (_grab_connected or _attack_hit_landed):
-            return false
-        if (opponent == null or not is_instance_valid(opponent)
-                or opponent.guard_held
-                or opponent.state not in ["hitstun", "stun", "stun2"]):
-            return false
-        if _opponent_distance() > PROTOTYPE_GRAB_DISTANCE:
+
+
+func _native_link_conditions_ok(link: Dictionary) -> bool:
+    for condition: Variant in Array(link.get("conditions", [])):
+        if not _native_condition_ok(String(condition)):
             return false
     return true
 
 
-func _consume_link_events(entry: Dictionary) -> void:
+func _native_target_kind(link: Dictionary) -> String:
+    var target_action: String = _link_text(link, "to")
+    if target_action == "attacktofloor":
+        return "attacktofloor"
+    return String(_action_to_attack.get(target_action, ""))
+
+
+func _consume_link_events(link: Dictionary) -> void:
     # krm::CFighter::ConsumeEvents: mark the matched events consumed.
-    var steps: Array = entry["steps"]
+    var steps: Array = link["steps"]
     var required: int = steps.size() - 1
     for event_index: int in range(_link_events.size() - 1, -1, -1):
         var event: Dictionary = _link_events[event_index]
@@ -3220,49 +3325,115 @@ func _consume_link_events(entry: Dictionary) -> void:
 
 
 func _try_follow_links() -> bool:
-    # krm::CFighter::UserControlUpdate: every update walks the current
-    # animation's links; TimeWindowCheck + InputSequenceCheck +
-    # InputStatusCheck + CheckConditions, then FollowLink + ConsumeEvents.
+    # krm::CFighter::UserControlUpdate: walk the current animation's links in
+    # native order. TimeWindowCheck + InputSequenceCheck + InputStatusCheck +
+    # CheckConditions, then FollowLink + ConsumeEvents.
     if state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]:
         return false
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return false
-    var best: Dictionary = {}
-    var best_index: int = 999999
-    var best_source_specific: bool = false
-    for entry: Dictionary in STANDING_COMBO_SEQUENCES:
-        if not _link_applies(entry):
+    for link: Dictionary in _native_links:
+        if not _native_link_applies(link):
             continue
-        if not _link_window_ready(entry):
+        if not _native_link_window_ok(link):
             continue
-        if not _link_sequence_matches(entry):
+        if not _link_sequence_matches(link):
             continue
-        if not _link_conditions_ok(entry):
+        if not _native_link_status_ok(link):
             continue
-        # The current animation's own links win over generic candobasicattacks
-        # links (e.g. high_punch -> high_punch2 must beat the plain a/a/a link).
-        var source_specific: bool = (
-            not String(entry.get("from_attack", "")).is_empty()
-            or not Array(entry.get("from_attack_in", [])).is_empty()
-        )
-        var index: int = int(entry.get("source_index", 999999))
-        if (best.is_empty()
-                or (source_specific and not best_source_specific)
-                or (source_specific == best_source_specific and index < best_index)):
-            best = entry
-            best_index = index
-            best_source_specific = source_specific
-    if best.is_empty():
-        return false
-    var target: String = String(best["attack"])
-    var cost: float = float(SPECIAL_RAGE_COSTS.get(target, 0.0))
-    if cost > 0.0:
-        rage = maxf(0.0, rage - cost)
-    _consume_link_events(best)
-    # Native ConsumeEvents marks only the matched events. Link +0xe0 (whole
-    # vector) is not in the current link table yet, so unmatched events stay.
-    _begin_chained_attack(target)
-    return true
+        if not _native_link_conditions_ok(link):
+            continue
+        var target: String = _native_target_kind(link)
+        if target.is_empty():
+            continue
+        var consume_all: bool = _link_text(link, "input_reset") == "true"
+        if target == "attacktofloor":
+            _consume_link_events(link)
+            if consume_all:
+                _clear_link_events()
+            _begin_attack_to_floor()
+            return true
+        if not ATTACKS.has(target):
+            continue
+        var cost: float = float(SPECIAL_RAGE_COSTS.get(target, 0.0))
+        if cost > 0.0 and rage < cost:
+            continue
+        if cost > 0.0:
+            rage = maxf(0.0, rage - cost)
+        _consume_link_events(link)
+        if consume_all:
+            _clear_link_events()
+        _begin_chained_attack(target)
+        return true
+    return false
+
+
+func _normalize_press_token(token: String) -> String:
+    match token:
+        "pressa":
+            return "a"
+        "pressb":
+            return "b"
+        "pressc":
+            return "c"
+        "pressd":
+            return "d"
+        "pressup":
+            return "up"
+        "pressdown":
+            return "down"
+        "pressleft":
+            return "left"
+        "pressright":
+            return "right"
+        "pressin":
+            return "in"
+        "pressout":
+            return "out"
+    return token
+
+
+func _load_native_links() -> void:
+    var file: FileAccess = FileAccess.open(NATIVE_LINKS_PATH, FileAccess.READ)
+    if file == null:
+        push_error("Native link metadata is missing: " + NATIVE_LINKS_PATH)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        push_error("Native link metadata is invalid")
+        return
+    for action: Variant in parsed.get("actions", []):
+        if action is Dictionary:
+            _native_actions[str(action.get("name", ""))] = action
+    for link_value: Variant in parsed.get("links", []):
+        if not link_value is Dictionary:
+            continue
+        var link: Dictionary = link_value
+        var steps: Array = []
+        for step_value: Variant in Array(link.get("keysequence", [])):
+            var tokens: Array = []
+            for token: Variant in Array(step_value):
+                tokens.append(_normalize_press_token(String(token)))
+            steps.append(tokens)
+        var status: Array = []
+        for step_value: Variant in Array(link.get("keystatus", [])):
+            var pairs: Array = []
+            for pair_value: Variant in Array(step_value):
+                var pair: Array = pair_value
+                if pair.size() >= 2:
+                    pairs.append([str(pair[0]), str(pair[1])])
+            status.append(pairs)
+        link["steps"] = steps
+        link["status"] = status
+        _native_links.append(link)
+    for kind: String in ATTACKS:
+        var source_action: String = str(ATTACKS[kind].get("source_action", ""))
+        if not source_action.is_empty() and not _action_to_attack.has(source_action):
+            _action_to_attack[source_action] = kind
+
+
+func set_key_status(tokens: Dictionary) -> void:
+    _key_status = tokens
 
 
 func _candidate_action_for_attack(kind: String) -> String:

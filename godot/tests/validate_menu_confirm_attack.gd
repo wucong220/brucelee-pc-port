@@ -44,7 +44,7 @@ func _run() -> void:
         player._physics_process(1.0 / 60.0)
     # Decompiled link model: the first J is the punch, the remaining two are
     # link events, and high_punch replaces the punch when its window opens.
-    if started != ["punch", "high_punch"]:
+    if started != ["punch", "high_punch2"]:
         push_error("Menu-confirm J presses produced: " + str(started))
         quit(1)
         return

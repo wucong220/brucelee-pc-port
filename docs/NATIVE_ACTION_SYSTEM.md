@@ -4,22 +4,33 @@
 本机路径 `D:\BruceLeeWork\ghidra-out`、`ghidra-out2`。本文只记录结论与地址，
 不复制反编译源码，也不含原版载荷。
 
-## 实现状态（2026-11-02）
+## 实现状态（2026-11-02，数据驱动版）
 
 `godot/scripts/fighter.gd` 已按这套链路重写，原型的 FIFO 攻击队列、0.52/1.35 秒
-时间窗和 `_standing_combo_pending_*` 已删除：
+时间窗、`_standing_combo_pending_*` 和手写的 `STANDING_COMBO_SEQUENCES` 都已删除：
 
-- `_link_events`：带 `consumed` 位的输入事件队列。
-- `_try_follow_links()`：每次物理更新遍历 link，做窗口/序列/条件检查；
-  序列匹配从事件末尾向前扫描并跳过已消费事件。
-- `_link_window_ready()`：窗口是当前动画帧区间（`CANDOBASICATTACK_WINDOWS`）。
-- `_consume_link_events()`：命中 link 后标记匹配事件。
+- `godot/data/native_links.json`：由 `tools/export_native_links.py` 从
+  `brucelee.set` 只读导出，含 200 个动作的组窗口、396 条 link 的原始顺序、
+  `keysequence`、`keystatus`、`time`、`entry_frame`、`linking_frame`、
+  `conditions` 和 `input_reset`。
+- `_try_follow_links()`：每次物理更新按**原始 link 顺序**遍历当前动作的 link，
+  依次做窗口、序列、按键状态、条件检查；不再人为规定“源 link 优先”。
+- 窗口：直接 link 用 `link.time`；组 link 用当前动作对应组的窗口
+  （`TimeWindowCheck` 的 group 分支）。
+- `_native_link_status_ok()`：把 `main.gd` 每帧送入的按键状态向量与
+  link 的 `keystatus`（`pressed`/`released`）比较，对应 `InputStatusCheck`。
+- `_consume_link_events()`：只标记匹配事件；`input_reset == "true"` 时才清空整个
+  事件向量（对应 link `+0xe0` 分支的近似）。
 - `_begin_chained_attack()`：命中后直接切目标动画，不再排队。
-- 当前动画自己的 link 优先于通用 `candobasicattacks` link
-  （例如 `high_punch → high_punch2` 优先于通用 `a/a/a → high_punch`）。
 
-验证：`validate_link_input.gd`（通用 J J J、源 link 优先、事件不重复触发）、
-`validate_training_full.gd`（27 课全部通过）、`validate_move_gallery.gd`（27 招）。
+验证：`validate_link_input.gd`（J J J → `punch` + `high_punch2`、后段窗口 →
+`high_punch`、事件不重复触发）、`validate_move_gallery.gd`（27 招）、
+`validate_menu_confirm_attack.gd`、`smoke_test.gd`。
+
+**未完成**：训练目录的 27 项前置仍按旧假设写的（例如 special 的 link 实际来自
+`stepback`、部分地面/抓取 link 需要真实前置），所以 `validate_training_full`
+目前通过 1–12，13 起失败；三段 `startup/active/recovery` 状态机、地面攻击和
+parry 输入仍是原型实现，尚未换成 link 数据驱动的状态进入。
 
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的

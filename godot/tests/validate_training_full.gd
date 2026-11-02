@@ -86,6 +86,14 @@ func _play(player: PortFighter, computer: PortFighter, entry: Dictionary) -> voi
         return
     if not SEQUENCES.has(id):
         return
+    var gap: int = 1
+    if not id in ["high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_high", "special_kick_low", "special_punch_low", "special_punch_high", "grab1", "grab2", "high_punch3", "low_punch3", "low_kick3", "high_kick3"]:
+        gap = 44
+    var actions: Array = entry.get("actions", [])
+    if not actions.is_empty():
+        player.set_key_status(
+            player.link_requirements_for_target(String(actions[0]))
+        )
     for step_value: Variant in SEQUENCES[id]:
         var step: Array = step_value
         var key: String = String(step[-1])
@@ -114,7 +122,7 @@ func _play(player: PortFighter, computer: PortFighter, entry: Dictionary) -> voi
         else:
             if not player.record_standing_combo_press("a", mods):
                 player.request_attack("punch")
-        for _frame: int in range(10):
+        for _frame: int in range(gap):
             player.position = Vector3(0.0, 1.2, 0.0)
             computer.position = Vector3(0.3, 1.2, 0.0)
             player._physics_process(1.0 / 60.0)

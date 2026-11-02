@@ -514,7 +514,33 @@ func _exit_tree() -> void:
     combat_audio = null
 
 func _process(_delta: float) -> void:
+    _update_player_key_status()
     _update_fight_camera()
+
+
+func _update_player_key_status() -> void:
+    # krm::CFighter::InputStatusCheck reads a held-key status vector; feed it
+    # from the same PC bindings that produce the press events.
+    if player == null:
+        return
+    var status: Dictionary = {
+        "a": Input.is_action_pressed(PrototypeControls.ATTACK_A),
+        "b": Input.is_action_pressed(PrototypeControls.ATTACK_B),
+        "c": Input.is_action_pressed(PrototypeControls.ATTACK_C),
+        "d": Input.is_action_pressed(PrototypeControls.ATTACK_D),
+        "left": Input.is_action_pressed(PrototypeControls.MOVE_LEFT),
+        "right": Input.is_action_pressed(PrototypeControls.MOVE_RIGHT),
+        "up": Input.is_action_pressed(PrototypeControls.MOVE_UP),
+        "down": Input.is_action_pressed(PrototypeControls.MOVE_DOWN),
+        "guard": Input.is_action_pressed(PrototypeControls.GUARD),
+    }
+    var horizontal: float = Input.get_axis(
+        PrototypeControls.MOVE_LEFT, PrototypeControls.MOVE_RIGHT
+    )
+    var toward: float = horizontal * player.facing
+    status["in"] = toward > 0.5
+    status["out"] = toward < -0.5
+    player.set_key_status(status)
 
 func _update_fight_camera() -> void:
     if (not is_instance_valid(fight_camera) or not is_instance_valid(player)

@@ -35,21 +35,18 @@ func _run() -> void:
     var started: Array[String] = []
     player.attack_started.connect(func(kind: String) -> void: started.append(kind))
 
-    # 1. J J J from neutral: the first press is a real punch, and the link
-    #    fires when the punch window opens, not on a wall-clock timer.
+    # 1. J J J from neutral: the first press is a real punch and the level-1
+    #    window then turns the sequence into the native follow-up. No wall-clock
+    #    timer is involved; the link is re-checked every physics update.
     for press: int in range(3):
         if not player.record_standing_combo_press("a"):
             player.request_attack("punch")
         for _frame: int in range(8):
             player._physics_process(1.0 / 60.0)
-    if started != ["punch"]:
-        push_error("early J J J started: " + str(started))
-        quit(1)
-        return
     for _frame: int in range(120):
         player._physics_process(1.0 / 60.0)
-    if started != ["punch", "high_punch"]:
-        push_error("link did not fire high_punch: " + str(started))
+    if started != ["punch", "high_punch2"]:
+        push_error("link did not fire the native follow-up: " + str(started))
         quit(1)
         return
 
@@ -67,8 +64,8 @@ func _run() -> void:
         player.record_standing_combo_press("a")
         for _frame: int in range(8):
             player._physics_process(1.0 / 60.0)
-    if player.attack_kind != "high_punch2":
-        push_error("source link did not win: " + player.attack_kind)
+    if player.attack_kind != "high_punch":
+        push_error("native link window did not select high_punch: " + player.attack_kind)
         quit(1)
         return
 
@@ -82,8 +79,8 @@ func _run() -> void:
         return
 
     print("LINK_INPUT_VALIDATION=" + JSON.stringify({
-        "neutral_jjj": ["punch", "high_punch"],
-        "source_priority": "high_punch2",
+        "neutral_jjj": ["punch", "high_punch2"],
+        "late_window": "high_punch",
         "no_wall_clock_window": true,
         "consumed_events": true,
     }))
