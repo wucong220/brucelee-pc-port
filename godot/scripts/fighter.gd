@@ -54,6 +54,8 @@ const CANDIDATE_CLIPS: Dictionary = {
     "stun_hard": "all_impct_hard_frnt_high",
     "stun_brutal": "all_impct_spectacular_lft",
     "move": "m01_movelft",
+    "movefwd": "m02_movefwd",
+    "moveback": "m01_movebck",
     "moveleft": "m01_moverht",
     "moveright": "m01_movelft",
     "stepfwd": "m01_stepfwd",
