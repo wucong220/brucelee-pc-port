@@ -138,6 +138,7 @@ func _ready() -> void:
 func _run_export_self_test() -> void:
     # Freeze gameplay before the readiness wait so autonomous AI input cannot
     # change the candidate animation that this deterministic self-test checks.
+    _load_bruce_voice_audio()
     set_physics_process(false)
     player.set_physics_process(false)
     computer.set_physics_process(false)
@@ -629,9 +630,7 @@ func _build_combat_audio() -> void:
             _candidate_audio_error[event] = "candidate audio failed to load: " + path
             continue
         _candidate_audio[event] = stream
-    _load_bruce_voice_audio()
     _load_menu_music()
-    _load_result_audio()
 
 
 func _load_menu_music() -> void:
@@ -706,6 +705,8 @@ func _load_result_audio() -> void:
 
 
 func _play_result_audio(key: String) -> void:
+    if _result_audio.is_empty():
+        _load_result_audio()
     if _result_player == null:
         return
     var stream: AudioStream = _result_audio.get(key)
@@ -792,10 +793,71 @@ func _load_bruce_voice_audio() -> void:
         _voice_audio[action] = loaded
 
 
+func _load_voice_for_action(action: String) -> AudioStream:
+    if _voice_audio.has(action):
+        return _voice_audio[action] as AudioStream
+    var voices: Dictionary = {
+        "punch": "attack_light/Hit_Light_1_BL.wav",
+        "kick": "attack_light/Hit_Light_2_BL.wav",
+        "high_punch": "attack_light/Hit_Light_3_BL.wav",
+        "high_kick": "attack_light/Hit_Light_4_BL.wav",
+        "high_punch2": "attack_light/Hit_Light_5_BL.wav",
+        "low_punch2": "attack_light/Hit_Light_6_BL.wav",
+        "high_kick2": "attack_light/Hit_Light_8_BL.wav",
+        "low_kick2": "attack_light/Hit_Light_9_BL.wav",
+        "high_punch3": "attack_light/Hit_Light_3_BL.wav",
+        "low_punch3": "attack_light/Hit_Light_6_BL.wav",
+        "low_kick3": "attack_light/Hit_Light_9_BL.wav",
+        "high_kick3": "attack_light/Hit_Light_4_BL.wav",
+        "parry_high": "attack_light/Hit_Light_5_BL.wav",
+        "parry_attack": "attack_light/Hit_Light_1_BL.wav",
+        "facedownattack": "attack_light/Hit_Light_8_BL.wav",
+        "faceupattack": "attack_light/Hit_Light_9_BL.wav",
+        "attacktofloor": "attack_light/Hit_Light_9_BL.wav",
+        "special_kick_high": "special/m01_sp_kick_high.wav",
+        "special_kick_low_miss": "attack_light/Hit_Light_9_BL.wav",
+        "special_kick_low_hit": "attack_light/Hit_Light_9_BL.wav",
+        "special_punch_low_miss": "special/m01_sp_pnch_low.wav",
+        "special_punch_low_hit": "special/m01_sp_pnch_low.wav",
+        "special_punch_high_miss": "special/M01_SP_Pnch_High.avi_OPTION_2.wav",
+        "special_punch_high_hit": "special/M01_SP_Pnch_High.avi_OPTION_2.wav",
+        "grab1": "special/m01_grab_01.wav",
+        "grab1_miss": "special/m01_grab_01.wav",
+        "grab2": "special/M01_Grab_02_Back_Breaker.wav",
+        "grab2_miss": "special/M01_Grab_02_Back_Breaker.wav",
+        "endattack1": "special/M01_End_Attack_01.avi _BL_Slow_Scream_A.wav",
+        "endattack2": "special/M01_End_Attack_02.avi _BL_Slow_Scream_B.wav",
+    }
+    if not voices.has(action):
+        return null
+    var roots: Array[String] = []
+    var env_root: String = OS.get_environment("BRUCELEE_VOICE_ROOT")
+    if not env_root.is_empty():
+        roots.append(env_root)
+    roots.append(OS.get_executable_path().get_base_dir().path_join("audio/bruce_lee"))
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
+            "BruceLee-PC-Port/bruce-voice-20261103/adreno_200/sounds/voices/bruce_lee"
+        ))
+    var filename: String = String(voices[action])
+    for root: String in roots:
+        var path: String = root.path_join(filename)
+        var error: String = CandidatePathGuard.external_path_error(path, "Bruce voice audio")
+        if not error.is_empty():
+            _voice_audio_error[action] = error
+            continue
+        var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
+        if stream != null:
+            _voice_audio[action] = stream
+            return stream
+    return null
+
+
 func _on_player_attack_started(action: String) -> void:
-    if _voice_audio.is_empty():
-        return
     var stream: AudioStream = _voice_audio.get(action)
+    if stream == null:
+        stream = _load_voice_for_action(action)
     if stream == null:
         stream = _voice_audio.get("punch")
     if stream == null:
