@@ -3,9 +3,9 @@
 ## Working
 
 - Temple Yard A: 18 far props / 18 textures, 3 near props, verified screenshot.
-- Temple Yard B: 17 far props / 17 textures, 3 near props, verified screenshot.
-  `bigtemple` is intentionally not rendered because its texture is an
-  `atc_rgba_explicit` resource whose current decode is a black/white mask.
+- Temple Yard B: 18 far props / 18 textures, 3 near props, verified screenshot.
+  `bigtemple` now renders with the corrected ATC RGBA block order and top-down
+  row orientation.
 
 ## Not working
 
