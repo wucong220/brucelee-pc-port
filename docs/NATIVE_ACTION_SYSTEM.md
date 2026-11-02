@@ -80,13 +80,24 @@
 - 原生 `parryhigh`：`candocounter` 组、variant 1 序列 `down,right`，
   条件 `countertime` + `ragethird`；`parryattack` 是从 `parryhigh` 的空序列
   自动衔接
-- `counter_time` 字段确实存在于 `CAnimationDescr`（`+0xd8/+0xdc`，KDF 键名
-  `counter_time`），但 `brucelee.set` 和 `thai.set` 的动作记录里都没有该字段，
-  解析结果为 `[0,0]`；因此 `countertime` 的恢复实现是“对手动画帧 0”
-  （攻击起手那一帧），不再用 startup/active 的宽泛近似
+- `counter_time` 在动作记录的 **`attack.counter_time`** 里（不是动作顶层），
+  例如 `lowpunch1` / `highpunch1` 都是 `[0,8]`；`tools/export_native_links.py`
+  已把它导出到 `native_links.json` 的 `counter_time` 字段
+- `countertime` 条件现在按对手当前动作的 `counter_time` 帧窗口判定；
+  `validate_parry` 同时验证帧 0（窗口内）能招架、帧 9（窗口外）不能
 - 原生没有 `parry_low`；训练和招式目录已移除该课，现有 25 项
 
-三段 `startup/active/recovery` 状态机仍是原型实现。
+**三段相位的帧边界已核对（第 18 轮）**
+`startup/active/recovery` 不是凭空编的时长：每一招来自 `brucelee.set` 的
+`attack.impacts[].damage_time` 和动画总帧数。以 `lowpunch1` 为例，
+`damage_time=[5,8]`、`animation_frame_count=69`，得到
+- `startup_frames = 5`（伤害起点）
+- `active_frames = 8 - 5 + 1 = 4`（伤害区间长度）
+- `recovery_frames = 69 - 9 = 60`（剩余帧）
+
+三者和等于 69，`_parse_attack_config` 还会校验这个等式。所以“相位命名”是移植的
+结构，但相位**边界是数据算出来的**，不是自创数值。真正还未替换的是用相位枚举
+代替原版的纯动画帧推进（`BasicUpdate` + `CurrentAnimFinished`）。
 
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的

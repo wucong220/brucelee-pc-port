@@ -26,11 +26,17 @@ def build(archive: Path) -> dict:
                 continue
             groups[str(entry[0])] = [int(entry[1][0]), int(entry[1][1]), int(entry[2])]
         binary = action.get("binary") or {}
+        attack = action.get("attack") or {}
+        counter_time = attack.get("counter_time")
+        if (not isinstance(counter_time, list) or len(counter_time) != 2
+                or any(type(item) is not int for item in counter_time)):
+            counter_time = None
         action_rows.append({
             "name": str(action.get("name", "")),
             "pose": action.get("pose"),
             "animation": binary.get("basename"),
             "ordinal": binary.get("ordinal"),
+            "counter_time": counter_time,
             "groups": groups,
         })
     link_rows = []

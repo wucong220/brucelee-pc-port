@@ -73,5 +73,20 @@ func _run() -> void:
         quit(1)
         return
 
+    # Outside the recovered counter_time window [0,8]: the opponent's recovery
+    # starts at frame 9, so the same input must not parry.
+    player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
+    player.rage = 100.0
+    computer.attack_kind = "high_punch"
+    computer.state = "recovery"
+    computer.state_time = float(computer.ATTACKS["high_punch"]["recovery"])
+    player.record_standing_combo_press("down")
+    player.record_standing_combo_press("right")
+    checks["late_frame"] = player.attack_kind
+    if player.attack_kind == "parry_high":
+        push_error("parry started outside the counter_time window")
+        quit(1)
+        return
+
     print("PARRY_VALIDATION=" + JSON.stringify(checks))
     quit(0)

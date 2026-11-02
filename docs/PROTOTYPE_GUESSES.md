@@ -35,7 +35,7 @@
 | # | 规则 | 位置 | 状态 | 说明 |
 |---|---|---|---|---|
 | 16 | 27 课目录、起点选择、成功条件 | `move_training_catalog.json` / `move_training.gd` | 自创 | 训练页本身是 PC 原型功能 |
-| 17 | `_prime_source_attack` 固定 `state_time = 1.5` | `move_training.gd` | 自创 | 不是按源帧/窗口计算出来的真实恢复状态 |
+| 17 | `_prime_source_attack` 固定 `state_time = 1.5` | `move_training.gd` | 已修复（第 8/13 轮） | 现在按目标/入口 link 的帧窗口计算 `state_time` |
 | 18 | 训练时每帧强制木桩状态 | `move_training.gd::_process` | 自创 | 为了让中间攻击不破坏 special/grab 条件 |
 | 19 | 欣赏模式直接写 `state`、强制 `request_attack`、连续 `record_virtual_press("a")` | `move_gallery.gd` | 自创且错误 | 多条启动路径，绕过真实状态进入；`actions[0]` 被当成启动动作，实际是训练成功事件（如 `special_kick_low_hit` 之前还有 `_miss`） |
 | 20 | 主菜单/暂停/训练/欣赏界面 | `prototype_menu.gd` 等 | 自创 | PC 原型 UI，不是原版菜单 |
@@ -56,7 +56,7 @@
 
 | # | 规则 | 位置 | 状态 | 说明 |
 |---|---|---|---|---|
-| 21 | `startup/active/recovery` 三段相位 + `state_time` 计时 | `fighter.gd` 全状态机 | 自创抽象 | 原版按**动画帧**推进，link 窗口用 `[+0xcc,+0xd0]` 帧区间；三段相位是原型为了命中判定自己加的。帧数边界来自 impact/frame_count，但相位命名与切换不是原版结构 |
+| 21 | `startup/active/recovery` 三段相位 + `state_time` 计时 | `fighter.gd` 全状态机 | 部分证据（第 18 轮核对） | 帧边界由 `damage_time` 与 `animation_frame_count` 算出并校验（lowpunch1 `[5,8]`/69 → 5/4/60）；相位命名和切换仍是移植结构，原版是纯动画帧推进 |
 | 22 | 每帧按对手位置重算 `facing`、直接写 `rotation.y` | `fighter.gd::_physics_process` | 自创 | 原版由条件表 `+0xb8`（`oppposestun` 等）和动画决定朝向，没有这种每帧吸附 |
 | 23 | 世界缩放 `1.8 / 173.4159` | `CANDIDATE_SOURCE_HEIGHT` / `CANDIDATE_HEIGHT` | 候选 | 数值来自候选模型高度，不是原版场景缩放 |
 | 24 | 根位移 raw Y 逐 clip 符号映射 | `fighter.gd` 注释 "Prototype only: per-clip first-Y sign" | 自创 | 原版 root motion 语义未闭合 |
