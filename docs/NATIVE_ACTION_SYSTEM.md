@@ -61,8 +61,18 @@
 - `validate_ground_pose`、`validate_attacktofloor_from_parry`、
   `validate_brick_facedown_impact` 已改成单键 C 驱动
 
-三段 `startup/active/recovery` 状态机、facedown/faceup 的
-`record_virtual_press` 输入和 parry 输入仍是原型实现，尚未换成 link 数据驱动。
+**地面攻击输入已改成原生 link（第 11 轮）**
+- 删除了 `record_virtual_press`、`GROUND_ATTACK_SEQUENCES`、
+  `_matches_ground_attack_sequence`、`_ground_attack_input_history` 和
+  `GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS`
+- `facedownidle -> facedownattack`、`faceupidle -> faceupattack` 是原生直接
+  link；索引 1 下 a/b/c/d 都是单键，状态由 `_begin_ground_attack()` 进入
+- 目标 clip 缺失时 fail closed（Brick 的候选没有地面攻击 clip，不会误播）
+- `main.gd`、`move_gallery.gd`、`validate_facedown_attack` 全部改走
+  `record_standing_combo_press`
+
+三段 `startup/active/recovery` 状态机和 parry 输入仍是原型实现，尚未换成
+link 数据驱动。
 
 旧模型的测试 `validate_attack_queue`、`validate_all_combo_queue`、
 `validate_combo_timing`、`validate_standing_combos` 及依赖 pending 的

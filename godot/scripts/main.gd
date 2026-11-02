@@ -875,25 +875,29 @@ func _handle_fighter_attack_input(
     # facing. They are PC-only and not recovered Android physical keys.
     var modifiers: Array = _standing_combo_modifiers(fighter)
     if event.is_action_pressed(action_a):
-        if fighter.state in ["facedownidle", "faceupidle"]:
-            fighter.record_virtual_press("a")
-        elif not fighter.record_standing_combo_press("a", modifiers):
-            fighter.request_attack("punch")
+        if not fighter.record_standing_combo_press("a", modifiers):
+            if fighter.state in ["facedownidle", "faceupidle"]:
+                pass
+            else:
+                fighter.request_attack("punch")
     elif event.is_action_pressed(action_b):
-        if fighter.state in ["facedownidle", "faceupidle"]:
-            fighter.record_virtual_press("b")
-        elif not fighter.record_standing_combo_press("b", modifiers):
-            fighter.request_attack("kick")
+        if not fighter.record_standing_combo_press("b", modifiers):
+            if fighter.state in ["facedownidle", "faceupidle"]:
+                pass
+            else:
+                fighter.request_attack("kick")
     elif event.is_action_pressed(action_c):
-        if fighter.state in ["facedownidle", "faceupidle"]:
-            fighter.record_virtual_press("c")
-        elif not fighter.record_standing_combo_press("c", modifiers):
-            fighter.request_attack("heavy")
+        if not fighter.record_standing_combo_press("c", modifiers):
+            if fighter.state in ["facedownidle", "faceupidle"]:
+                pass
+            else:
+                fighter.request_attack("heavy")
     elif event.is_action_pressed(action_d):
-        if fighter.state in ["facedownidle", "faceupidle"]:
-            fighter.record_virtual_press("d")
-        elif not fighter.record_standing_combo_press("d", modifiers):
-            fighter.request_attack("kick")
+        if not fighter.record_standing_combo_press("d", modifiers):
+            if fighter.state in ["facedownidle", "faceupidle"]:
+                pass
+            else:
+                fighter.request_attack("kick")
     elif event.is_action_pressed(PrototypeControls.RESTART):
         return false
     else:

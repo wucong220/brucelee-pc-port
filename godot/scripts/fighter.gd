@@ -689,13 +689,6 @@ const SOURCE_ACTION_POSES: Dictionary = {
 # UserControlUpdate expires a whole input vector based on the last event's
 # +500 clock value. The clock unit is not proven, so this is an explicit PC
 # prototype lifetime and must not be presented as the original timing.
-const GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.5
-const GROUND_ATTACK_SEQUENCES: Array = [
-    ["a", "a", "a"],
-    ["a", "b", "b"],
-    ["b", "c", "c"],
-    ["b", "d", "d"],
-]
 const FACEDOWN_ATTACK_IMPACT: Dictionary = {
     "attack_radius": FACEDOWN_ATTACK_RADIUS,
     "body_part": "rarm",
@@ -1210,8 +1203,6 @@ var _attack_root_sequence: int = -1
 var _attack_root_previous_frame: float = -1.0
 var _attack_root_previous_value: Vector3 = Vector3.ZERO
 var _attack_connected: bool = false
-var _ground_attack_input_history: Array[Dictionary] = []
-var _ground_attack_input_owner: String = ""
 var _link_events: Array[Dictionary] = []
 # Link metadata exported from brucelee.set (link order, group windows,
 # keysequence, keystatus, conditions, time, entry/linking frames).
@@ -2528,7 +2519,6 @@ func _enter_locomotion_state(next_state: String) -> void:
     state = next_state
     state_time = 0.0
     attack_kind = ""
-    _clear_ground_attack_input_history()
     _clear_link_state()
     _clear_reaction_tracking()
     if (candidate_visual_blending_enabled
@@ -2774,7 +2764,6 @@ func _begin_facedown_getup() -> void:
     state = "facedowngetup"
     state_time = 0.0
     attack_kind = ""
-    _clear_ground_attack_input_history()
     _restart_candidate_action()
 
 
@@ -2782,7 +2771,6 @@ func _begin_faceup_getup() -> void:
     state = "faceupgetup"
     state_time = 0.0
     attack_kind = ""
-    _clear_ground_attack_input_history()
     _clear_reaction_tracking()
     _restart_candidate_action()
 
@@ -2867,7 +2855,6 @@ func _begin_faceup_ko(amount: float) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     combo_hits = 0
     _clear_reaction_tracking()
     _restart_candidate_action()
@@ -2882,7 +2869,6 @@ func begin_impact_to_floor(amount: float) -> void:
     )
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     combo_hits = 0
     _clear_reaction_tracking()
     _restart_candidate_action()
@@ -2894,7 +2880,6 @@ func begin_facedown_impact(amount: float) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     combo_hits = 0
     last_reaction_group = "hit"
     last_reaction_source_action = "impactfacedown"
@@ -2913,7 +2898,6 @@ func begin_faceup_impact(amount: float) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     combo_hits = 0
     last_reaction_group = "hit"
     last_reaction_source_action = "impactfaceup"
@@ -2921,47 +2905,6 @@ func begin_faceup_impact(amount: float) -> void:
     last_reaction_exit_frame = FACEUP_IMPACT_EXIT_FRAME
     last_reaction_clip_implemented = _candidate_clip_paths.has(FACEUP_IMPACT_CLIP)
     _restart_candidate_action()
-
-
-func record_virtual_press(virtual_key: String) -> bool:
-    # This is the PC prototype's abstract press path. The original Android
-    # physical-key mapping is not yet proven, so main.gd supplies a/b/c/d from
-    # explicit keyboard bindings and this method only reproduces the recovered
-    # three-item sequences as prototype input events.
-    if (state not in ["facedownidle", "faceupidle"]
-            or attack_config_path == BRICK_ATTACK_CONFIG_PATH):
-        _clear_ground_attack_input_history()
-        return false
-    if virtual_key not in ["a", "b", "c", "d"]:
-        return false
-    if state == "faceupidle":
-        var source_frame: float = state_time * SOURCE_FRAME_RATE
-        if source_frame < -0.0001 or source_frame > 45.0001:
-            _clear_ground_attack_input_history()
-            return false
-    _prune_ground_attack_input_history()
-    if _ground_attack_input_owner != state:
-        _clear_ground_attack_input_history()
-        _ground_attack_input_owner = state
-    _ground_attack_input_history.append({"key": virtual_key, "time": _time})
-    if not _matches_ground_attack_sequence():
-        return false
-    var attack_state: String = (
-        "facedownattack" if state == "facedownidle" else "faceupattack"
-    )
-    var attack_clip: String = (
-        FACEDOWN_ATTACK_CLIP if state == "facedownidle" else FACEUP_ATTACK_CLIP
-    )
-    if not _candidate_clip_paths.has(attack_clip):
-        return false
-    state = attack_state
-    state_time = 0.0
-    attack_kind = attack_state
-    attack_sequence += 1
-    _attack_connected = false
-    _clear_ground_attack_input_history()
-    _restart_candidate_action()
-    return true
 
 
 func record_standing_combo_press(
@@ -3037,7 +2980,8 @@ func _accepts_link_input(virtual_key: String) -> bool:
                 "a", "b", "c", "d",
                 "up", "down", "left", "right", "in", "out",
             ]
-            or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]):
+            or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery",
+                "facedownidle", "faceupidle"]):
         return false
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return false
@@ -3097,6 +3041,8 @@ func _current_action_name() -> String:
         var source_action: String = str(ATTACKS[attack_kind].get("source_action", ""))
         if not source_action.is_empty():
             return source_action
+    if state in ["facedownidle", "faceupidle"]:
+        return state
     if state in ["idle", "idle2", "idle3"]:
         # Movement animations are native actions too: special_kick_high is a
         # direct link from stepback, so the current action must report it.
@@ -3254,7 +3200,7 @@ func link_requirements_for_target(target_kind: String) -> Dictionary:
 
 
 func _native_link_window_ok(link: Dictionary) -> bool:
-    if state in ["idle", "idle2", "idle3"]:
+    if state in ["idle", "idle2", "idle3", "facedownidle", "faceupidle"]:
         return true
     var window: Array = _native_link_window(link)
     if window.size() < 2:
@@ -3393,7 +3339,8 @@ func _try_follow_links() -> bool:
     # krm::CFighter::UserControlUpdate: walk the current animation's links in
     # native order. TimeWindowCheck + InputSequenceCheck + InputStatusCheck +
     # CheckConditions, then FollowLink + ConsumeEvents.
-    if state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]:
+    if state not in ["idle", "idle2", "idle3", "startup", "active", "recovery",
+            "facedownidle", "faceupidle"]:
         return false
     if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
         return false
@@ -3409,6 +3356,19 @@ func _try_follow_links() -> bool:
             continue
         if not _native_link_conditions_ok(link):
             continue
+        var ground_target: String = _link_text(link, "to")
+        if ground_target == "facedownattack" or ground_target == "faceupattack":
+            var ground_clip: String = (
+                FACEDOWN_ATTACK_CLIP if ground_target == "facedownattack"
+                else FACEUP_ATTACK_CLIP
+            )
+            if not _candidate_clip_paths.has(ground_clip):
+                continue
+            _consume_link_events(link)
+            if _link_text(link, "input_reset") == "true":
+                _clear_link_events()
+            _begin_ground_attack(ground_target)
+            return true
         var target: String = _native_target_kind(link)
         if target.is_empty():
             continue
@@ -3501,6 +3461,11 @@ func _load_native_links() -> void:
         var source_action: String = str(ATTACKS[kind].get("source_action", ""))
         if not source_action.is_empty() and not _action_to_attack.has(source_action):
             _action_to_attack[source_action] = kind
+    # These actions are code-defined in the port and have no low-attacks JSON
+    # source_action; their native action name is the attack kind itself.
+    for alias: String in ["facedownattack", "faceupattack", "attacktofloor", "heavy"]:
+        if ATTACKS.has(alias) and not _action_to_attack.has(alias):
+            _action_to_attack[alias] = alias
 
 
 func set_key_status(tokens: Dictionary) -> void:
@@ -3518,17 +3483,15 @@ func _candidate_action_for_attack(kind: String) -> String:
     return ""
 
 
-func _clear_ground_attack_input_history() -> void:
-    _ground_attack_input_history.clear()
-    _ground_attack_input_owner = ""
-
-
-func _prune_ground_attack_input_history() -> void:
-    if _ground_attack_input_history.is_empty():
-        return
-    var last_time: float = float(_ground_attack_input_history.back()["time"])
-    if _time > last_time + GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS:
-        _clear_ground_attack_input_history()
+func _begin_ground_attack(attack_state: String) -> void:
+    # facedownidle/faceupidle -> facedownattack/faceupattack is a native direct
+    # link; the target is a ground state, not an ATTACKS entry.
+    state = attack_state
+    state_time = 0.0
+    attack_kind = attack_state
+    attack_sequence += 1
+    _attack_connected = false
+    _restart_candidate_action()
 
 
 func _begin_attack_to_floor() -> void:
@@ -3539,7 +3502,6 @@ func _begin_attack_to_floor() -> void:
     attack_sequence += 1
     _attack_connected = false
     attack_started.emit("attacktofloor")
-    _clear_ground_attack_input_history()
     if (candidate_visual_blending_enabled
             and previous_state in ["idle", "idle2", "idle3"]
             and _candidate_animation != null
@@ -3568,23 +3530,6 @@ func _try_attack_to_floor_contact() -> void:
     _attack_connected = true
     _register_landed_hit(ATTACK_TO_FLOOR_DAMAGE, blocked)
     combat_hit.emit(self, opponent, "attacktofloor", ATTACK_TO_FLOOR_DAMAGE, blocked)
-
-
-func _matches_ground_attack_sequence() -> bool:
-    # InputSequenceCheck scans the event vector backwards and skips entries
-    # that do not match the current required key. This is an ordered
-    # subsequence check, not an equality check against the last three presses.
-    for sequence_value: Variant in GROUND_ATTACK_SEQUENCES:
-        var sequence: Array = sequence_value
-        var required: int = sequence.size() - 1
-        for event_index: int in range(_ground_attack_input_history.size() - 1, -1, -1):
-            var event: Dictionary = _ground_attack_input_history[event_index]
-            if String(event["key"]) != String(sequence[required]):
-                continue
-            required -= 1
-            if required < 0:
-                return true
-    return false
 
 
 func request_attack(kind: String) -> bool:
@@ -4651,7 +4596,6 @@ func reset_fighter(start_position: Vector3) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     _clear_link_state()
     last_reaction_group = ""
     last_reaction_source_action = ""

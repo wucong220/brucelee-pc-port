@@ -45,9 +45,8 @@ func _reset(player: PortFighter, brick: PortFighter) -> bool:
     player.state = "faceupidle"
     player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
     player.facing = 1.0
-    player.record_virtual_press("a")
-    player.record_virtual_press("a")
-    return player.record_virtual_press("a")
+    # Native ground-attack links are single-key.
+    return player.record_standing_combo_press("a")
 
 
 func _exercise(player: PortFighter, brick: PortFighter) -> bool:
@@ -108,7 +107,7 @@ func _exercise(player: PortFighter, brick: PortFighter) -> bool:
             return false
         brick.move_axis = Vector2(1.0, 0.0)
         brick._advance_timed_states(2.0)
-        if brick.state != "facedownidle" or brick.record_virtual_press("a"):
+        if brick.state != "facedownidle" or brick.record_standing_combo_press("a"):
             push_error("Brick used Bruce ground followups")
             return false
     for kind: String in ["punch", "kick"]:

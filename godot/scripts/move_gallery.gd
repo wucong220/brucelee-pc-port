@@ -231,7 +231,7 @@ func _start_action(action: String) -> bool:
         player.attack_kind = ""
         player._animate_candidate()
         for _press: int in range(3):
-            player.record_virtual_press("a")
+            player.record_standing_combo_press("a")
         return player.state == action
     if not player.ATTACKS.has(action):
         return false
