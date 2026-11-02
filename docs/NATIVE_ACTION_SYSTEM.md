@@ -84,9 +84,14 @@ link 数据驱动。
 ### 第三轮补充：移动动作也是 link 来源
 
 `_current_action_name()` 现在在站立状态返回当前移动动作名（`stepback` /
-`stepfwd` / `moveleft` / `moveright`）。原生数据里 `specialkickhigh` 的 link
+`stepfwd` / `stepleft` / `stepright`）。原生数据里 `specialkickhigh` 的 link
 来源就是 `stepback`（`from: stepback`，`ragethird`），所以不返回移动动作名时
 这招永远无法按原生输入触发。
+
+第 12 轮把“播放用动作名”和“link 用动作名”分开了：`_movement_action()` 仍返回
+`moveleft/moveright`（视觉 clip），而 `_native_movement_action()` 返回原生 link
+来源 `stepleft/stepright`；否则水平移动会改播 step 动画，`validate_brick_ground_entry`
+的移动循环断言就会失败。
 
 ### 基础攻击没有单键 link
 

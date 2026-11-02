@@ -174,6 +174,9 @@ func _check_candidate_timing(player: PortFighter, brick: PortFighter) -> bool:
         brick._animate_candidate()
         var animation: AnimationPlayer = brick.get("_candidate_animation")
         var clip_path: String = brick._candidate_clip_paths[action]
+        if action == "move" and brick._candidate_clip_paths.has("moveright"):
+            # Horizontal movement plays the moveright native action clip.
+            clip_path = brick._candidate_clip_paths["moveright"]
         var clip: Animation = animation.get_animation(clip_path)
         if String(animation.current_animation) != clip_path or clip.loop_mode != Animation.LOOP_LINEAR:
             push_error("Wrong candidate loop: " + action)

@@ -3046,7 +3046,7 @@ func _current_action_name() -> String:
     if state in ["idle", "idle2", "idle3"]:
         # Movement animations are native actions too: special_kick_high is a
         # direct link from stepback, so the current action must report it.
-        var movement: String = _movement_action()
+        var movement: String = _native_movement_action()
         if not movement.is_empty():
             return movement
         return state
@@ -4017,6 +4017,21 @@ func current_source_pose() -> String:
     return String(SOURCE_ACTION_POSES[state])
 
 
+func _native_movement_action() -> String:
+    # Native link sources use stepleft/stepright for the horizontal step even
+    # though the visual clip is the moveleft/moveright animation.
+    var x: float = move_axis.x
+    var y: float = move_axis.y
+    if absf(x) <= 0.001 and absf(y) <= 0.001:
+        return ""
+    if absf(x) >= absf(y):
+        var horizontal: String = "stepleft" if x < 0.0 else "stepright"
+        if _native_actions.has(horizontal):
+            return horizontal
+        return _movement_action()
+    return _movement_action()
+
+
 func _movement_action() -> String:
     var x: float = move_axis.x
     var y: float = move_axis.y
@@ -4024,9 +4039,7 @@ func _movement_action() -> String:
         return ""
     var action: String
     if absf(x) >= absf(y):
-        action = "stepleft" if x < 0.0 else "stepright"
-        if not _candidate_clip_paths.has(action):
-            action = "moveleft" if x < 0.0 else "moveright"
+        action = "moveleft" if x < 0.0 else "moveright"
     else:
         action = "stepfwd" if y < 0.0 else "stepback"
     if _candidate_clip_paths.has(action):
