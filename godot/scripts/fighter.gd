@@ -3677,7 +3677,7 @@ func request_attack(kind: String) -> bool:
 
 func _polar_movement(speed: float) -> Vector3:
     # WASD is expressed in the opponent-relative frame: the pole is the
-    # midpoint between both fighters, W/S change the radius and A/D change the
+    # midpoint between both fighters, A/D change the radius and W/S change the
     # angle around that pole. The camera sits on the perpendicular bisector.
     if opponent == null or not is_instance_valid(opponent):
         return Vector3(move_axis.x, 0.0, move_axis.y).normalized() * speed
@@ -3693,8 +3693,12 @@ func _polar_movement(speed: float) -> Vector3:
     var tangent: Vector3 = Vector3(-away.z, 0.0, away.x)
     # A/D move along the fighter line (radial), W/S orbit around the midpoint
     # (angular). D goes toward the opponent, A away; S goes down-screen and W
-    # up-screen with the camera on the +Z side.
-    return (away * (-move_axis.x) + tangent * (-move_axis.y)).normalized() * speed
+    # up-screen. Scale tangential speed by radius so angular speed does not
+    # explode when the fighters are very close.
+    var radial_motion: Vector3 = away * (-move_axis.x) * speed
+    var angular_speed: float = speed * clampf(radius / 2.0, 0.0, 1.0)
+    var tangent_motion: Vector3 = tangent * (-move_axis.y) * angular_speed
+    return radial_motion + tangent_motion
 
 
 func _physics_process(delta: float) -> void:
@@ -3742,15 +3746,6 @@ func _physics_process(delta: float) -> void:
     move_and_slide()
     position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
     position.z = clampf(position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
-    if opponent != null and is_instance_valid(opponent):
-        # Keep the screen-side contract stable: the player is always left of
-        # the opponent. Root motion (for example SPECIAL LOW KICK) must not
-        # carry either fighter across the other and flip the camera.
-        if is_player:
-            position.x = minf(position.x, opponent.position.x - 0.08)
-        else:
-            position.x = maxf(position.x, opponent.position.x + 0.08)
-        position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
     _animate_visuals()
     _animate_candidate()
 

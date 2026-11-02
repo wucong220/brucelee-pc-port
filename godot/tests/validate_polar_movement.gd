@@ -30,7 +30,7 @@ func _run() -> void:
         return
     p.move_axis = Vector2(0.0, 1.0)
     var angular_s: Vector3 = p._polar_movement(1.0)
-    if absf(angular_s.dot(radial)) > 0.01 or angular_s.length() < 0.99:
+    if absf(angular_s.dot(radial)) > 0.01 or angular_s.length() <= 0.01:
         push_error("S is not angular movement around the midpoint: " + str(angular_s))
         quit(1)
         return
