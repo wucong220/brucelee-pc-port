@@ -50,5 +50,20 @@ This proves scene `.mesh` resources can be fed through the existing static
 mesh converter. It does **not** yet prove scene transforms/material binding or
 arena composition; those are the next steps.
 
+## 2026-11-03 far-scene graph
+
+`BL_TempleYardA_FarObjects.scene` now parses to:
+
+- 22 nodes
+- 39 external references
+- 19 visuals
+- nodes include `bl_scene02a_hw_grounda/b`, `fartemple`, `bigtemple`,
+  `redgate`, trees/rocks, `combatarea`, `skydome`, `bl_scene_sun`
+
+Its pose-transform table is a different layout and currently returns
+`pose_transform_error`; the node/visual graph is available, transforms are not
+yet trusted. Far-scene mesh conversion and merge are still pending.
+
+
 
 This is deliberately **not** implemented as a fake procedural stand-in. Current arena remains procedural until the mesh/reference graph is converted and verified.
