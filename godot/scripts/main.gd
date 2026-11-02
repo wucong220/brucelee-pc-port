@@ -424,7 +424,7 @@ func _on_menu_command(command: String) -> void:
             training_mode = false
             _leave_menu()
             _reset_match()
-            _play_result_audio("fight")
+            _start_round_intro()
         "move_training":
             training_mode = false
             _leave_menu()
@@ -440,7 +440,7 @@ func _on_menu_command(command: String) -> void:
                 training_mode = true
                 _leave_menu()
                 _reset_match()
-                _play_result_audio("fight")
+                _start_round_intro()
             else:
                 prototype_menu.show_error("TRAINING NEEDS CANDIDATE ANIMATIONS")
         "resume":
@@ -578,6 +578,13 @@ func _play_result_audio(key: String) -> void:
         return
     _result_player.stream = stream
     _result_player.play()
+
+
+func _start_round_intro() -> void:
+    _play_result_audio("ready")
+    await get_tree().create_timer(0.8).timeout
+    if not done:
+        _play_result_audio("fight")
 
 
 func _load_bruce_voice_audio() -> void:
