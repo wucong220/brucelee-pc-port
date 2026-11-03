@@ -181,7 +181,7 @@
    "id": "parry_high",
    "label": "PARRY HIGH",
    "group": "DEFENSE",
-   "input": "S, D",
+   "input": "HOLD SHIFT",
    "setup": "parry_high",
    "actions": [
     "parry_high"
@@ -192,7 +192,7 @@
    "id": "parry_attack",
    "label": "PARRY COUNTER",
    "group": "DEFENSE",
-   "input": "S, D",
+   "input": "HOLD SHIFT",
    "setup": "parry_attack",
    "actions": [
     "parry_attack"

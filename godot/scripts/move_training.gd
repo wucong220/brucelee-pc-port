@@ -222,6 +222,15 @@ func handle_input_event(event: InputEvent) -> bool:
         # native links.
         if not entries.is_empty() and player.attack_kind == "":
             var active_entry: Dictionary = entries[current_index]
+            var active_id: String = String(active_entry.get("id", ""))
+            # Parry lessons are defensive: the prototype's parry input is the
+            # guard key (Shift), matching the guard-first native action.  The
+            # catalog's displayed input is corrected to HOLD SHIFT below.
+            if active_id in ["parry_high", "parry_attack"] \
+                    and event.is_action_pressed(PrototypeControls.GUARD):
+                var parry_target: String = String(active_entry.get("actions", [""])[0])
+                if not parry_target.is_empty() and player.request_attack(parry_target):
+                    return true
             var command: String = String(active_entry.get("input", "")).replace("HOLD ", "")
             var parts: PackedStringArray = command.split(",")
             var final_token: String = parts[parts.size() - 1].strip_edges()
@@ -359,9 +368,14 @@ func _prepare_current() -> void:
     elif setup == "parry_attack":
         _begin_dummy_attack("high_punch")
     elif setup == "endattack1" or setup == "endattack2":
+        # Endattack is a grab finisher: the victim must be in grabbed1/grabbed2,
+        # not hitstun.  Put the training dummy in the real grabbed state so the
+        # endattack link sees the same precondition as the original.
         _prime_source_attack("high_punch", String(entry.get("actions", [""])[0]))
-        computer.state = "hitstun"
-        computer.state_time = 1.0
+        var grab_kind: String = "grab1" if setup == "endattack1" else "grab2"
+        if not computer.begin_grabbed(grab_kind):
+            computer.state = "hitstun"
+            computer.state_time = 1.0
     elif setup == "target_down":
         computer.state = "facedownidle"
         computer._animate_candidate()
@@ -374,7 +388,7 @@ func _prepare_current() -> void:
     if setup in ["stepback", "stepleft", "stepright"]:
         # Keep the dummy close and unguarded while the step prerequisite is
         # held; otherwise a small drift can make the follow-up hit link fail.
-        computer.global_position = player.global_position + Vector3(0.22, 0.0, 0.0)
+        computer.global_position = player.global_position + Vector3(0.75, 0.0, 0.0)
         computer.guard_held = false
     _refresh_lesson(entry)
     status_label.add_theme_color_override("font_color", Color(0.82, 0.86, 0.92))
@@ -486,10 +500,10 @@ func _process(delta: float) -> void:
     # special/grab/attack-to-floor condition.
     if computer != null and setup != "parry_high" and setup != "parry_low" and setup != "parry_attack":
         if setup in ["stepback", "stepleft", "stepright"] and player != null:
-            computer.global_position = player.global_position + Vector3(0.22, 0.0, 0.0)
+            computer.global_position = player.global_position + Vector3(0.75, 0.0, 0.0)
         if setup == "endattack1" or setup == "endattack2":
-            computer.state = "hitstun"
-            computer.state_time = 1.0
+            # begin_grabbed() already set grabbed1/grabbed2; do not overwrite it.
+            pass
         elif setup == "target_down":
             computer.state = "facedownidle"
         else:
