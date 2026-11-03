@@ -2,7 +2,7 @@
 
 ## Package
 
-`D:\BruceLeeWork\DragonWarrior-Current70-20261103`
+`D:\BruceLeeWork\DragonWarrior-Current79-20261103`
 
 - Built through `build_windows.ps1 -RuntimeAssetRoot`.
 - Includes exe/pck, audio, menu, scene, ui, launch.ps1, A/B/HallA direct launchers.
