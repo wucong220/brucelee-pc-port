@@ -52,7 +52,7 @@ var _music_streams: Dictionary = {}
 var _result_audio: Dictionary = {}
 var _result_player: AudioStreamPlayer = null
 var _game_text_textures: Dictionary = {}
-var _game_text_rect: TextureRect = null
+var _game_text_rect: Sprite2D = null
 var _game_text_timer: float = 0.0
 var ai_timer: float = 0.0
 var ai_guard_sequence: int = -1
@@ -109,6 +109,8 @@ func _ready() -> void:
     hud = PortHUD.new()
     add_child(hud)
     _build_game_text_overlay()
+    if not OS.get_environment("BRUCELEE_HOLD_GAME_TEXT").is_empty():
+        _show_game_text(OS.get_environment("BRUCELEE_HOLD_GAME_TEXT"), 30.0)
 
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
         hud.footer.text = (
@@ -550,25 +552,10 @@ func _build_game_text_overlay() -> void:
     var layer: CanvasLayer = CanvasLayer.new()
     layer.layer = 15
     add_child(layer)
-    var shader: Shader = Shader.new()
-    shader.code = """
-shader_type canvas_item;
-void fragment() {
-    vec4 tex = texture(TEXTURE, UV);
-    COLOR = vec4(1.0, 1.0, 1.0, tex.a);
-}
-"""
-    var material: ShaderMaterial = ShaderMaterial.new()
-    material.shader = shader
-    _game_text_rect = TextureRect.new()
-    _game_text_rect.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-    _game_text_rect.size = Vector2(256.0, 128.0)
-    _game_text_rect.position = Vector2(-128.0, -300.0)
-    _game_text_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-    _game_text_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-    _game_text_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-    _game_text_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    _game_text_rect.material = material
+    _game_text_rect = Sprite2D.new()
+    _game_text_rect.position = Vector2(640.0, 220.0)
+    _game_text_rect.scale = Vector2(1.6, 1.6)
+    _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
     _game_text_rect.visible = false
     layer.add_child(_game_text_rect)
     var base: String = OS.get_executable_path().get_base_dir().path_join("ui/gametext")
@@ -893,9 +880,11 @@ func _play_result_audio(key: String) -> void:
 
 
 func _start_round_intro() -> void:
+    _show_game_text("READY", 0.9)
     _play_result_audio("ready")
     await get_tree().create_timer(0.8).timeout
     if not done:
+        _show_game_text("FIGHT", 1.2)
         _play_result_audio("fight")
 
 
