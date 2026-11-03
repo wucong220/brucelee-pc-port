@@ -207,6 +207,13 @@ var _music_streams: Dictionary = {}
 var _result_audio: Dictionary = {}
 var _result_player: AudioStreamPlayer = null
 var _game_text_textures: Dictionary = {}
+var _game_text_sequences: Dictionary = {}
+var _game_text_steps: Array = []
+var _game_text_step_index: int = 0
+var _game_text_step_time: float = 0.0
+var _game_text_from: Dictionary = {}
+var _game_text_to: Dictionary = {}
+var _game_text_sequence_active: bool = false
 var _game_text_rect: Sprite2D = null
 var _game_text_timer: float = 0.0
 var ai_timer: float = 0.0
@@ -1086,6 +1093,32 @@ func _build_game_text_overlay() -> void:
             if image.load(path) == OK:
                 _game_text_textures[key] = ImageTexture.create_from_image(image)
                 break
+    # Original ingamesprites.list: 11 animation records, 9 textures.  The
+    # record carries per-step x/y, size and alpha; the renderer below uses the
+    # same sequence instead of a single fixed position.
+    for root: String in roots:
+        var animations_path: String = root.path_join("ingamesprites_animations.json")
+        if not FileAccess.file_exists(animations_path):
+            continue
+        var parsed_animations: Variant = JSON.parse_string(
+            FileAccess.get_file_as_string(animations_path)
+        )
+        if not parsed_animations is Dictionary:
+            continue
+        var records: Variant = Dictionary(parsed_animations).get("animations", [])
+        if not records is Array:
+            continue
+        for record_value: Variant in records:
+            if not record_value is Dictionary:
+                continue
+            var record: Dictionary = record_value
+            var sprite_path: String = String(record.get("sprite_path", ""))
+            var sprite_key: String = sprite_path.get_file().get_basename()
+            sprite_key = sprite_key.trim_prefix("bl_gametext-").to_upper()
+            var steps: Variant = record.get("steps", [])
+            if not sprite_key.is_empty() and steps is Array:
+                _game_text_sequences[sprite_key] = steps
+        break
 
 
 func _show_game_text(key: String, duration: float) -> void:
@@ -1097,6 +1130,60 @@ func _show_game_text(key: String, duration: float) -> void:
     _game_text_rect.texture = _game_text_textures[key]
     _game_text_rect.visible = true
     _game_text_timer = duration
+    _game_text_sequence_active = false
+    if not _game_text_sequences.has(key):
+        return
+    var steps: Array = _game_text_sequences[key]
+    if steps.is_empty():
+        return
+    _game_text_steps = steps
+    _game_text_step_index = 0
+    _game_text_step_time = 0.0
+    _game_text_from = steps[0]
+    _game_text_to = steps[1] if steps.size() > 1 else steps[0]
+    _game_text_sequence_active = true
+    _apply_game_text_step(0.0)
+    var total: float = 0.0
+    for step_value: Variant in steps:
+        if step_value is Dictionary:
+            total += float(Dictionary(step_value).get("duration", 0.0))
+    _game_text_timer = maxf(duration, total + 0.1)
+
+
+func _apply_game_text_step(t: float) -> void:
+    if _game_text_rect == null:
+        return
+    var from: Dictionary = _game_text_from
+    var to: Dictionary = _game_text_to
+    var x: float = lerpf(float(from.get("x", 0.5)), float(to.get("x", 0.5)), t)
+    var y: float = lerpf(float(from.get("y", 0.5)), float(to.get("y", 0.5)), t)
+    var size: float = lerpf(float(from.get("size", 1.0)), float(to.get("size", 1.0)), t)
+    var alpha: float = lerpf(float(from.get("alpha", 1.0)), float(to.get("alpha", 1.0)), t)
+    _game_text_rect.position = get_viewport().get_visible_rect().size * Vector2(x, y)
+    _game_text_rect.scale = Vector2(1.6, 1.6) * size
+    _game_text_rect.modulate.a = clampf(alpha, 0.0, 1.0)
+
+
+func _update_game_text_sequence(delta: float) -> void:
+    if not _game_text_sequence_active or _game_text_steps.is_empty():
+        return
+    var current: Dictionary = _game_text_steps[_game_text_step_index]
+    var step_duration: float = float(current.get("duration", 0.0))
+    _game_text_step_time += delta
+    var t: float = 1.0 if step_duration <= 0.0 else minf(
+        1.0, _game_text_step_time / step_duration
+    )
+    _apply_game_text_step(t)
+    if t < 1.0:
+        return
+    _game_text_step_index += 1
+    if _game_text_step_index >= _game_text_steps.size():
+        _game_text_sequence_active = false
+        _game_text_rect.visible = false
+        return
+    _game_text_from = current
+    _game_text_to = _game_text_steps[_game_text_step_index]
+    _game_text_step_time = 0.0
 
 
 func _build_fighters() -> void:
@@ -1806,6 +1893,7 @@ func _exit_tree() -> void:
     combat_audio = null
 
 func _process(_delta: float) -> void:
+    _update_game_text_sequence(_delta)
     if _game_text_timer > 0.0:
         _game_text_timer -= _delta
         if _game_text_timer <= 0.0 and _game_text_rect != null:
