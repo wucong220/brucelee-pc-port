@@ -464,6 +464,8 @@ func _build_original_far_scene() -> void:
         scene_root = "scene/halla/far"
     elif _scene_variant() == "templeyardb":
         scene_root = "scene/templeyardb/far"
+    elif _scene_variant() == "squareb":
+        scene_root = "scene/squareb/far"
     var base: String = OS.get_executable_path().get_base_dir().path_join(scene_root)
     var manifest_path: String = base.path_join("far_manifest.json")
     if not FileAccess.file_exists(manifest_path):
