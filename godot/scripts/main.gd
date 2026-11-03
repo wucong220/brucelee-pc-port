@@ -46,8 +46,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "master": {
         "glb": (
-            "D:\\BruceLeeWork\\character-extras-20261103\\candidates\\"
-            + "master_full_hair_76_all_20261103.glb"
+            "D:\\BruceLeeWork\\result-ground-clips-20261103\\candidates\\"
+            + "master_full_hair_79_result_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\master-candidate-20261103\\textures",
         "clip_prefix": "",
@@ -102,7 +102,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "large",
     },
     "chief": {
-        "glb": "D:\\BruceLeeWork\\chief-loming-fix-20261103\\candidates\\chief01_full_body_hair_84_bindfix_20261103.glb",
+        "glb": "D:\\BruceLeeWork\\result-ground-clips-20261103\\candidates\\chief01_full_body_hair_86_groundidle_20261103.glb",
         "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\chief01",
         "clip_prefix": "",
         "master": "",
@@ -111,7 +111,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "large",
     },
     "loming": {
-        "glb": "D:\\BruceLeeWork\\chief-loming-fix-20261103\\candidates\\loming01_full_body_hair_82_bindfix_20261103.glb",
+        "glb": "D:\\BruceLeeWork\\result-ground-clips-20261103\\candidates\\loming01_full_body_hair_84_groundidle_20261103.glb",
         "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\loming01",
         "clip_prefix": "",
         "master": "",
