@@ -378,11 +378,12 @@ func _build_near_manifest(scene_root: String) -> void:
 
 
 func _build_original_scene_props() -> void:
-    if _scene_variant() == "halla":
-        _build_near_manifest("scene/halla/near")
-        return
-    if _scene_variant() == "templeyardb":
-        _build_near_manifest("scene/templeyardb/near")
+    var variant: String = _scene_variant()
+    if not variant.is_empty():
+        var near_root: String = "scene/%s/near" % variant
+        var near_base: String = OS.get_executable_path().get_base_dir().path_join(near_root)
+        if DirAccess.dir_exists_absolute(near_base):
+            _build_near_manifest(near_root)
         return
     var base: String = OS.get_executable_path().get_base_dir().path_join("scene")
     if not DirAccess.dir_exists_absolute(base):
@@ -460,10 +461,12 @@ func _make_arena_line(x: float) -> void:
 
 func _build_original_far_scene() -> void:
     var scene_root: String = "scene/far"
-    if _scene_variant() == "halla":
-        scene_root = "scene/halla/far"
-    elif _scene_variant() == "templeyardb":
-        scene_root = "scene/templeyardb/far"
+    var variant: String = _scene_variant()
+    if not variant.is_empty():
+        var candidate: String = "scene/%s/far" % variant
+        var candidate_base: String = OS.get_executable_path().get_base_dir().path_join(candidate)
+        if DirAccess.dir_exists_absolute(candidate_base):
+            scene_root = candidate
     var base: String = OS.get_executable_path().get_base_dir().path_join(scene_root)
     var manifest_path: String = base.path_join("far_manifest.json")
     if not FileAccess.file_exists(manifest_path):
