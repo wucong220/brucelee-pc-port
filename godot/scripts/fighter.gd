@@ -5289,6 +5289,27 @@ func _native_link_unique_ok(link: Dictionary) -> bool:
     return false
 
 
+func _grab_finisher_link(link: Dictionary) -> bool:
+    ## Port bridge for the recovered candobasicattacks -> endattack1/2 links.
+    ## brucelee.set gives grab1/grab2 no group entry, so the native link table
+    ## cannot expose those links while a grab animation plays.  The only
+    ## recovered "held victim" window is the victim's grabbed1/2 state; use it
+    ## as the link window instead of inventing a frame range.  Everything else
+    ## stays native: the link's keyboard sequence, keystatus, oppposestun and
+    ## grabdistance checks are still evaluated by _try_follow_links.
+    if String(_link_text(link, "from_group")) != "candobasicattacks":
+        return false
+    if state not in ["startup", "active", "recovery"]:
+        return false
+    if not GRAB_ATTACKS.has(attack_kind):
+        return false
+    if opponent == null or not is_instance_valid(opponent):
+        return false
+    if opponent.state not in ["grabbed1", "grabbed2"]:
+        return false
+    return String(_link_text(link, "to")) in ["endattack1", "endattack2"]
+
+
 func _native_link_applies(link: Dictionary) -> bool:
     var action: String = _current_action_name()
     if action.is_empty():
@@ -5299,6 +5320,8 @@ func _native_link_applies(link: Dictionary) -> bool:
     var group: String = _link_text(link, "from_group")
     if group.is_empty():
         return false
+    if _grab_finisher_link(link):
+        return true
     var action_row: Dictionary = _native_actions.get(action, {})
     var groups: Dictionary = action_row.get("groups", {})
     return groups.has(group)
@@ -5312,6 +5335,8 @@ func _native_link_window_for_action(link: Dictionary, action: String) -> Array:
     var source: String = _link_text(link, "from")
     if not source.is_empty():
         return Array(link.get("time", []))
+    if action == _current_action_name() and _grab_finisher_link(link):
+        return [0, int(ATTACKS[attack_kind].get("animation_frame_count", 0))]
     var action_row: Dictionary = _native_actions.get(action, {})
     var groups: Dictionary = action_row.get("groups", {})
     var group: String = _link_text(link, "from_group")
@@ -5488,6 +5513,8 @@ func _opponent_distance() -> float:
 
 func _fighter_pose() -> String:
     # Recovered action pose: stand / laying / crouch / stun / jump.
+    # grabbed1/2 is the held victim: its grabcompl record says pose "stand",
+    # but it is the controlled "cannot act" party for oppposestun.
     if state in ["hitstun", "blockstun", "stun", "stun2", "stunfall",
             "stunimpact", "impactstun", "grabbed1", "grabbed2"]:
         return "stun"
