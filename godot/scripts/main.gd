@@ -97,6 +97,7 @@ var _cam_zoom: float = 0.0
 var _cam_side: int = CAM_SIDE
 var _cam_initialized: bool = false
 var _scene_origin: Vector3 = Vector3.ZERO
+var _far_entry_instances: Dictionary = {}
 var _procedural_floor: Node3D = null
 var _procedural_arena_lines: Array[MeshInstance3D] = []
 var _procedural_arena_hidden: bool = false
@@ -409,6 +410,7 @@ func _build_environment() -> void:
     _make_arena_line(PortFighter.ARENA_HALF_X)
     _build_original_scene_props()
     _build_original_far_scene()
+    _build_fx_anim_scene()
 
 
 func _scene_variant() -> String:
@@ -558,6 +560,7 @@ func _make_arena_line(x: float) -> void:
     add_child(visual)
 
 func _build_original_far_scene() -> void:
+    _far_entry_instances.clear()
     var scene_root: String = "scene/far"
     var variant: String = _scene_variant()
     if not variant.is_empty():
@@ -654,6 +657,7 @@ func _build_original_far_scene() -> void:
                 # A sky dome encloses the arena, so a cast shadow would darken
                 # the whole far scene.
                 mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+        _far_entry_instances[entry_name] = instance
         root.add_child(instance)
     if root.get_child_count() > 0:
         root.position = -_scene_origin
@@ -663,6 +667,168 @@ func _build_original_far_scene() -> void:
             _procedural_floor.visible = false
         for line: MeshInstance3D in _procedural_arena_lines:
             line.visible = false
+
+
+# Far-scene FX animation playback.
+#
+# scene/<variant>/fx_anim/fx_anim_manifest.json is an array of entries shaped
+# like far-manifest entries plus:
+#   replaces               static far-entry names freed while this group plays
+#   static_fallback_file   hierarchy without animation, used if `file` is absent
+#   animation              {name, loop, autoplay, fps, frames, ...}
+# A group GLB carries the authored scene hierarchy, its meshes and one glTF
+# animation; Godot's importer turns that into an AnimationPlayer with Animation
+# tracks targeting the named nodes.
+#
+# Fallback order for one entry:
+#   1. `file` with an AnimationPlayer and the named clip  -> play it
+#   2. `file` without animation                          -> show its frame-0 pose
+#   3. `static_fallback_file`                            -> show its static pose
+#   4. neither file exists or loads                      -> leave the original
+#      static far entries untouched (Rooftops manifests rely on this: their
+#      static-pose bake is the shipped far entry, not a second copy)
+# Only a group that was actually added frees the far entries it replaces.
+
+
+func _build_fx_anim_scene() -> void:
+    var variant: String = _scene_variant()
+    if variant.is_empty():
+        return
+    var base: String = OS.get_executable_path().get_base_dir().path_join(
+        "scene/%s/fx_anim" % variant
+    )
+    var manifest_path: String = base.path_join("fx_anim_manifest.json")
+    if not FileAccess.file_exists(manifest_path):
+        return
+    var file: FileAccess = FileAccess.open(manifest_path, FileAccess.READ)
+    if file == null:
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Array:
+        return
+    var scale_value: float = PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
+    var fallback_material: StandardMaterial3D = StandardMaterial3D.new()
+    fallback_material.albedo_color = Color(1.0, 1.0, 1.0, 1.0)
+    fallback_material.roughness = 0.95
+    var root: Node3D = Node3D.new()
+    root.name = "FxAnimScene"
+    for entry_value: Variant in parsed:
+        if not entry_value is Dictionary:
+            continue
+        var entry: Dictionary = entry_value
+        var glb_path: String = base.path_join(String(entry.get("file", "")))
+        var used_static_group := false
+        if not FileAccess.file_exists(glb_path):
+            glb_path = base.path_join(String(entry.get("static_fallback_file", "")))
+            used_static_group = true
+        if not FileAccess.file_exists(glb_path):
+            continue
+        var document: GLTFDocument = GLTFDocument.new()
+        var state: GLTFState = GLTFState.new()
+        if document.append_from_file(glb_path, state) != OK:
+            continue
+        var instance: Node3D = document.generate_scene(state)
+        if instance == null:
+            continue
+        var animation_info: Dictionary = entry.get("animation", {})
+        var player: AnimationPlayer = _find_fx_animation_player(instance)
+        var clip_name: String = String(animation_info.get("name", ""))
+        var playing: bool = false
+        if player != null and not used_static_group and not animation_info.is_empty():
+            if not clip_name.is_empty() and player.has_animation(clip_name):
+                var animation: Animation = player.get_animation(clip_name)
+                animation.loop_mode = (
+                    Animation.LOOP_LINEAR
+                    if bool(animation_info.get("loop", false))
+                    else Animation.LOOP_NONE
+                )
+                player.play(clip_name)
+                if not bool(animation_info.get("autoplay", true)):
+                    player.pause()
+                playing = true
+        # A malformed or missing clip must never overlay the shipped fallback.
+        if not playing and not used_static_group:
+            instance.free()
+            continue
+        var pos: Array = entry.get("position", [0.0, 0.0, 0.0])
+        instance.position = Vector3(
+            float(pos[0]), float(pos[2]), -float(pos[1])
+        ) * scale_value
+        instance.scale = Vector3.ONE * scale_value
+        if bool(entry.get("apply_rotation", false)):
+            var rot: Array = entry.get("rotation", [0.0, 0.0, 0.0, 1.0])
+            if rot.size() >= 4:
+                instance.quaternion = Quaternion(
+                    float(rot[0]), float(rot[1]), float(rot[2]), float(rot[3])
+                )
+        var material: StandardMaterial3D = _fx_anim_material(
+            entry, base, fallback_material
+        )
+        for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
+            var mesh_instance: MeshInstance3D = mesh_node
+            mesh_instance.material_override = material
+        root.add_child(instance)
+        if playing or used_static_group:
+            for replaced_name: Variant in entry.get("replaces", []):
+                _hide_far_fx_entry(String(replaced_name))
+        if not playing:
+            print("FX anim: static fallback for ", entry.get("name", glb_path))
+    if root.get_child_count() > 0:
+        root.position = -_scene_origin
+        add_child(root)
+
+
+func _fx_anim_material(
+        entry: Dictionary, base: String, fallback: StandardMaterial3D
+        ) -> StandardMaterial3D:
+    var material: StandardMaterial3D = fallback
+    var texture_name: String = String(entry.get("texture", ""))
+    if not texture_name.is_empty():
+        var texture_path: String = base.path_join(texture_name)
+        if FileAccess.file_exists(texture_path):
+            var image: Image = Image.new()
+            if image.load(texture_path) == OK:
+                material = StandardMaterial3D.new()
+                material.albedo_texture = ImageTexture.create_from_image(image)
+                material.albedo_color = Color.WHITE
+                material.roughness = 0.95
+    var declared: String = String(
+        (entry.get("material", {}) as Dictionary).get("blend_mode", "")
+    )
+    match declared:
+        "alpha test":
+            material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+            material.alpha_scissor_threshold = 0.5
+        "alpha blend":
+            material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+        "add":
+            material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+            material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+            material.cull_mode = BaseMaterial3D.CULL_DISABLED
+    return material
+
+
+func _find_fx_animation_player(node: Node) -> AnimationPlayer:
+    if node is AnimationPlayer:
+        return node
+    for child: Node in node.get_children():
+        var found: AnimationPlayer = _find_fx_animation_player(child)
+        if found != null:
+            return found
+    return null
+
+
+func _hide_far_fx_entry(entry_name: String) -> void:
+    # _build_original_far_scene() registers the instance it created for every
+    # manifest entry.  Freeing that instance is exact: some static bakes name
+    # their only mesh "fx_static" (every Rooftops FX entry does), so matching by
+    # node name would be ambiguous, and a missing entry is a harmless no-op.
+    var instance: Node = _far_entry_instances.get(entry_name)
+    if instance == null or not is_instance_valid(instance):
+        return
+    _far_entry_instances.erase(entry_name)
+    instance.queue_free()
 
 
 func _is_skydome_entry(entry: Dictionary) -> bool:
