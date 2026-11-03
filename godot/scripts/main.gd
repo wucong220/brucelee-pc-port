@@ -31,7 +31,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "sinfu": {
         "glb": (
-            "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
+            "D:\\BruceLeeWork\\sinfu-reactions-20261103\\candidate\\"
             + "sinfu_hair_two-skin_reactions_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\sinfu-tex",
@@ -42,7 +42,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "master": {
         "glb": (
-            "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
+            "D:\\BruceLeeWork\\master-full-20261103\\out\\"
             + "master_full_hair_54_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\master-candidate-20261103\\textures",
@@ -53,8 +53,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "ken": {
         "glb": (
-            "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
-            + "ken_hair_two-skin_native45_reactions22_20261103.glb"
+            "D:\\BruceLeeWork\\ken-all26-20261103\\candidate\\"
+            + "ken_all26_4306ch.glb"
         ),
         "texture_root": (
             "D:\\BruceLeeWork\\character-integration-fixed-20261103\\"
