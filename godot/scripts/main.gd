@@ -31,8 +31,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "sinfu": {
         "glb": (
-            "D:\\BruceLeeWork\\sinfu-reactions-20261103\\candidate\\"
-            + "sinfu_hair_two-skin_reactions_20261103.glb"
+            "D:\\BruceLeeWork\\character-extras-20261103\\candidates\\"
+            + "sinfu_hair_two-skin_79_all_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\sinfu-tex",
         "clip_prefix": "m04",
@@ -42,8 +42,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "master": {
         "glb": (
-            "D:\\BruceLeeWork\\master-full-20261103\\out\\"
-            + "master_full_hair_54_20261103.glb"
+            "D:\\BruceLeeWork\\character-extras-20261103\\candidates\\"
+            + "master_full_hair_76_all_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\master-candidate-20261103\\textures",
         "clip_prefix": "",
