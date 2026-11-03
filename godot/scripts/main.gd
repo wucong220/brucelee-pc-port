@@ -166,6 +166,37 @@ const MATCH_STATE_MATCH_WIN: int = 12   # SetState(12): winner-only victory pose
 const MATCH_STATE_MATCH_LOSE: int = 13  # SetState(13): winner-only victory pose
 const MATCH_STATE_ROUND_END: int = 15   # SetState(15): RoundEnded() -> NextRound
 
+# Recovered ingamesprites.list game text animation indices
+# (gametext-assets-20261103/report/ingamesprites_animations.json, indices are
+# the LaunchGameTextAnimation() arguments recovered in CBeatEmUpGame::SetState
+# and ::Render):
+#   0 READY  1 FIGHT  2 YOU_WIN  3 YOU_LOSE  4 TIME_IS_UP  5 DRAW
+#   6 PERFECT  7 COUNTER (left/player)  8 COUNTER (right/opponent)
+#   9 GREAT (centre)  10 GREAT (low, SetState(9))
+const GAME_TEXT_SEQ_READY := 0
+const GAME_TEXT_SEQ_FIGHT := 1
+const GAME_TEXT_SEQ_YOU_WIN := 2
+const GAME_TEXT_SEQ_YOU_LOSE := 3
+const GAME_TEXT_SEQ_TIME_IS_UP := 4
+const GAME_TEXT_SEQ_DRAW := 5
+const GAME_TEXT_SEQ_PERFECT := 6
+const GAME_TEXT_SEQ_COUNTER_PLAYER := 7
+const GAME_TEXT_SEQ_COUNTER_OPPONENT := 8
+const GAME_TEXT_SEQ_GREAT := 9
+const GAME_TEXT_SEQ_GREAT_LOW := 10
+const GAME_TEXT_MAX_OVERLAYS := 4
+# Native player-round-win text thresholds (CBeatEmUpGame::SetState 7, local
+# flag 0): winner health < 0x14 -> GREAT, winner health == 100 -> PERFECT.
+const ROUND_GREAT_HEALTH := 20.0
+# krm::CSpriteAnimator::Update draws every step at
+# width = step.size * texture_width in *display* pixels (DrawSprite(canvas,
+# display_width * x, display_height * y, texture, size * tex_w, size * tex_h));
+# no global colour tint is applied.  The native display width is not statically
+# recovered; the previously validated overlay used 1.6 on the 1280x720 canvas,
+# which is exactly 1280 / 800 (WVGA).  Keep that validated proportion but
+# derive it from the live viewport instead of hard-coding 1.6.
+const GAME_TEXT_NATIVE_DISPLAY_WIDTH := 800.0
+
 # CBeatEmUpCamera::Update, native Z-up formula ported to Godot axes.
 const CAM_SOURCE_UNITS_TO_WORLD: float = (
     PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
@@ -208,15 +239,25 @@ var _music_streams: Dictionary = {}
 var _result_audio: Dictionary = {}
 var _result_player: AudioStreamPlayer = null
 var _game_text_textures: Dictionary = {}
+# Recovered ingamesprites.list animation records, keyed by the record index
+# (0..10).  COUNTER (7/8) and GREAT (9/10) share one texture each but carry
+# different step scripts, so the key must be the index, not the texture name.
 var _game_text_sequences: Dictionary = {}
-var _game_text_steps: Array = []
-var _game_text_step_index: int = 0
-var _game_text_step_time: float = 0.0
-var _game_text_from: Dictionary = {}
-var _game_text_to: Dictionary = {}
-var _game_text_sequence_active: bool = false
+# Live game text overlays.  Native LaunchGameTextAnimation() starts one
+# CSpriteAnimator per call and several can run at once (YOU_WIN + PERFECT,
+# COUNTER on both sides), so the port keeps a small pool of Sprite2Ds.
+var _game_text_overlays: Array[Dictionary] = []
+var _game_text_layer: CanvasLayer = null
+# First overlay; kept for the existing tests/debug helpers.
 var _game_text_rect: Sprite2D = null
-var _game_text_timer: float = 0.0
+# Launch history for validators/debugging: {key, sequence}.
+var game_text_launch_log: Array = []
+# CFighter+0x176 "counter" flags: set natively by SetAnimation when the new
+# animation carries the recovered "counter" category, consumed by Render.
+# The port records the last parry animation per side so a new parry animation
+# (including parrylow -> parryhigh) relaunches the text, while one continuous
+# parry shows it once.
+var _counter_text_last_state: Array = ["", ""]
 var ai_timer: float = 0.0
 var ai_guard_sequence: int = -1
 var ai_guard_decision: bool = false
@@ -304,10 +345,6 @@ func _ready() -> void:
     add_child(hud)
     hud.set_fighter_names("BRUCE LEE", _opponent_display_name())
     _build_game_text_overlay()
-    if not OS.get_environment("BRUCELEE_HOLD_GAME_TEXT").is_empty():
-        _show_game_text(OS.get_environment("BRUCELEE_HOLD_GAME_TEXT"), 30.0)
-    if not OS.get_environment("BRUCELEE_HOLD_GAME_TEXT").is_empty():
-        _show_game_text(OS.get_environment("BRUCELEE_HOLD_GAME_TEXT"), 30.0)
 
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
         hud.footer.text = (
@@ -1062,26 +1099,15 @@ func _apply_original_sky() -> void:
 
 
 func _build_game_text_overlay() -> void:
-    var layer: CanvasLayer = CanvasLayer.new()
-    layer.layer = 15
-    add_child(layer)
-    _game_text_rect = Sprite2D.new()
-    _game_text_rect.position = (
-        get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
-    )
-    _game_text_rect.scale = Vector2(1.6, 1.6)
-    _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
+    _game_text_layer = CanvasLayer.new()
+    _game_text_layer.layer = 15
+    add_child(_game_text_layer)
     # The archive gametext texels are stored so that the shipped ui/gametext PNG
     # reads mirrored (e.g. "TIME IS UP" appears horizontally reversed and the
     # glyph rows are flipped). A vertical flip makes them read correctly and
     # upright; the four-flip probe confirms flip_v alone is the fix. This is
     # applied by default and can be disabled with BRUCELEE_GAME_TEXT_FLIP=0 for
-    # an already-corrected source.
-    var game_text_flip: bool = OS.get_environment("BRUCELEE_GAME_TEXT_FLIP") != "0"
-    _game_text_rect.flip_h = false
-    _game_text_rect.flip_v = game_text_flip
-    _game_text_rect.visible = false
-    layer.add_child(_game_text_rect)
+    # an already-corrected source.  See _game_text_flip_enabled().
     var roots: Array[String] = []
     var env_root: String = OS.get_environment("BRUCELEE_GAME_TEXT_ROOT")
     if not env_root.is_empty():
@@ -1104,7 +1130,9 @@ func _build_game_text_overlay() -> void:
                 break
     # Original ingamesprites.list: 11 animation records, 9 textures.  The
     # record carries per-step x/y, size and alpha; the renderer below uses the
-    # same sequence instead of a single fixed position.
+    # same sequence instead of a single fixed position.  Records are keyed by
+    # the recovered index: COUNTER 7/8 and GREAT 9/10 share textures, so a
+    # texture-name key silently dropped records 8 and 10.
     for root: String in roots:
         var animations_path: String = root.path_join("ingamesprites_animations.json")
         if not FileAccess.file_exists(animations_path):
@@ -1121,78 +1149,183 @@ func _build_game_text_overlay() -> void:
             if not record_value is Dictionary:
                 continue
             var record: Dictionary = record_value
+            var index: int = int(record.get("index", -1))
             var sprite_path: String = String(record.get("sprite_path", ""))
             var sprite_key: String = sprite_path.get_file().get_basename()
             sprite_key = sprite_key.trim_prefix("bl_gametext-").to_upper()
             var steps: Variant = record.get("steps", [])
-            if not sprite_key.is_empty() and steps is Array:
-                _game_text_sequences[sprite_key] = steps
+            if index < 0 or sprite_key.is_empty() or not steps is Array:
+                continue
+            _game_text_sequences[index] = {
+                "sprite_key": sprite_key,
+                "steps": steps,
+            }
         break
+    # Keep the first overlay alive so tests/debug helpers can always read
+    # `_game_text_rect`.
+    if _game_text_overlays.is_empty():
+        _acquire_game_text_overlay()
+    var hold: String = OS.get_environment("BRUCELEE_HOLD_GAME_TEXT")
+    if not hold.is_empty():
+        _show_game_text(hold, 30.0)
 
 
-func _show_game_text(key: String, duration: float) -> void:
-    if _game_text_rect == null or not _game_text_textures.has(key):
+func _game_text_flip_enabled() -> bool:
+    return OS.get_environment("BRUCELEE_GAME_TEXT_FLIP") != "0"
+
+
+func _game_text_base_scale() -> float:
+    var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+    return viewport_size.x / GAME_TEXT_NATIVE_DISPLAY_WIDTH
+
+
+func _acquire_game_text_overlay() -> Dictionary:
+    for overlay in _game_text_overlays:
+        if not bool(overlay["active"]):
+            return overlay
+    if _game_text_overlays.size() < GAME_TEXT_MAX_OVERLAYS:
+        var rect: Sprite2D = Sprite2D.new()
+        rect.flip_h = false
+        rect.flip_v = _game_text_flip_enabled()
+        rect.visible = false
+        _game_text_layer.add_child(rect)
+        var overlay: Dictionary = {
+            "rect": rect,
+            "active": false,
+            "key": "",
+            "sequence": -1,
+            "steps": [] as Array,
+            "step_index": 0,
+            "step_time": 0.0,
+            "from": {} as Dictionary,
+            "to": {} as Dictionary,
+            "timer": 0.0,
+        }
+        _game_text_overlays.append(overlay)
+        if _game_text_rect == null:
+            _game_text_rect = rect
+        return overlay
+    # Every overlay is busy: reuse the one closest to finishing (the native
+    # animator pool has no such limit, but LaunchGameTextAnimation never runs
+    # more than three sequences at once in the recovered call sites).
+    var oldest: Dictionary = _game_text_overlays[0]
+    for overlay in _game_text_overlays:
+        if float(overlay["timer"]) < float(oldest["timer"]):
+            oldest = overlay
+    return oldest
+
+
+func _show_game_text(key: String, duration: float, sequence: int = -1) -> void:
+    if not _game_text_textures.has(key):
         return
-    _game_text_rect.position = (
-        get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
-    )
-    _game_text_rect.texture = _game_text_textures[key]
-    _game_text_rect.visible = true
-    _game_text_timer = duration
-    _game_text_sequence_active = false
-    if not _game_text_sequences.has(key):
-        return
-    var steps: Array = _game_text_sequences[key]
+    var steps: Array = []
+    if sequence >= 0:
+        if _game_text_sequences.has(sequence):
+            var record: Dictionary = _game_text_sequences[sequence]
+            var record_key: String = String(record.get("sprite_key", ""))
+            if record_key == key:
+                var recovered: Variant = record.get("steps", [])
+                if recovered is Array:
+                    steps = recovered
+            else:
+                push_warning(
+                    "game text sequence %d is bound to %s, not %s"
+                    % [sequence, record_key, key]
+                )
+        else:
+            push_warning("game text sequence %d was not loaded" % sequence)
+    else:
+        # Legacy callers pass only the texture key; fall back to the first
+        # record with that texture.  COUNTER/GREAT callers must pass the
+        # recovered index because 7/8 and 9/10 share textures.
+        for record_value: Variant in _game_text_sequences.values():
+            if record_value is Dictionary and String(record_value.get("sprite_key", "")) == key:
+                var fallback: Variant = Dictionary(record_value).get("steps", [])
+                if fallback is Array:
+                    steps = fallback
+                break
+    var overlay: Dictionary = _acquire_game_text_overlay()
+    var rect: Sprite2D = overlay["rect"]
+    rect.texture = _game_text_textures[key]
+    rect.visible = true
+    overlay["active"] = true
+    overlay["key"] = key
+    overlay["sequence"] = sequence
+    overlay["steps"] = steps
+    overlay["step_index"] = 0
+    overlay["step_time"] = 0.0
+    overlay["timer"] = duration
     if steps.is_empty():
-        return
-    _game_text_steps = steps
-    _game_text_step_index = 0
-    _game_text_step_time = 0.0
-    _game_text_from = steps[0]
-    _game_text_to = steps[1] if steps.size() > 1 else steps[0]
-    _game_text_sequence_active = true
-    _apply_game_text_step(0.0)
-    var total: float = 0.0
-    for step_value: Variant in steps:
-        if step_value is Dictionary:
-            total += float(Dictionary(step_value).get("duration", 0.0))
-    _game_text_timer = maxf(duration, total + 0.1)
+        overlay["from"] = {}
+        overlay["to"] = {}
+        rect.position = get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
+        rect.scale = Vector2.ONE * _game_text_base_scale()
+        rect.modulate = Color(1.0, 1.0, 1.0, 1.0)
+    else:
+        overlay["from"] = steps[0]
+        overlay["to"] = steps[1] if steps.size() > 1 else steps[0]
+        var total: float = 0.0
+        for step_value: Variant in steps:
+            if step_value is Dictionary:
+                total += float(Dictionary(step_value).get("duration", 0.0))
+        overlay["timer"] = maxf(duration, total + 0.1)
+        _apply_game_text_step(overlay, 0.0)
+    game_text_launch_log.append({"key": key, "sequence": sequence})
+    if game_text_launch_log.size() > 64:
+        game_text_launch_log.pop_front()
 
 
-func _apply_game_text_step(t: float) -> void:
-    if _game_text_rect == null:
-        return
-    var from: Dictionary = _game_text_from
-    var to: Dictionary = _game_text_to
+func _apply_game_text_step(overlay: Dictionary, t: float) -> void:
+    var from: Dictionary = overlay["from"]
+    var to: Dictionary = overlay["to"]
     var x: float = lerpf(float(from.get("x", 0.5)), float(to.get("x", 0.5)), t)
     var y: float = lerpf(float(from.get("y", 0.5)), float(to.get("y", 0.5)), t)
     var size: float = lerpf(float(from.get("size", 1.0)), float(to.get("size", 1.0)), t)
     var alpha: float = lerpf(float(from.get("alpha", 1.0)), float(to.get("alpha", 1.0)), t)
-    _game_text_rect.position = get_viewport().get_visible_rect().size * Vector2(x, y)
-    _game_text_rect.scale = Vector2(1.6, 1.6) * size
-    _game_text_rect.modulate.a = clampf(alpha, 0.0, 1.0)
+    var rect: Sprite2D = overlay["rect"]
+    rect.position = get_viewport().get_visible_rect().size * Vector2(x, y)
+    # CSpriteAnimator::Update: drawn width = step size * texture width in
+    # display pixels; the texture carries its own colours (no tint).
+    rect.scale = Vector2.ONE * (_game_text_base_scale() * size)
+    rect.modulate = Color(1.0, 1.0, 1.0, clampf(alpha, 0.0, 1.0))
 
 
 func _update_game_text_sequence(delta: float) -> void:
-    if not _game_text_sequence_active or _game_text_steps.is_empty():
-        return
-    var current: Dictionary = _game_text_steps[_game_text_step_index]
-    var step_duration: float = float(current.get("duration", 0.0))
-    _game_text_step_time += delta
-    var t: float = 1.0 if step_duration <= 0.0 else minf(
-        1.0, _game_text_step_time / step_duration
-    )
-    _apply_game_text_step(t)
-    if t < 1.0:
-        return
-    _game_text_step_index += 1
-    if _game_text_step_index >= _game_text_steps.size():
-        _game_text_sequence_active = false
-        _game_text_rect.visible = false
-        return
-    _game_text_from = current
-    _game_text_to = _game_text_steps[_game_text_step_index]
-    _game_text_step_time = 0.0
+    for overlay in _game_text_overlays:
+        if not bool(overlay["active"]):
+            continue
+        var rect: Sprite2D = overlay["rect"]
+        var steps: Array = overlay["steps"]
+        if not steps.is_empty():
+            var current: Dictionary = steps[int(overlay["step_index"])]
+            var step_duration: float = float(current.get("duration", 0.0))
+            overlay["step_time"] = float(overlay["step_time"]) + delta
+            var t: float = 1.0 if step_duration <= 0.0 else minf(
+                1.0, float(overlay["step_time"]) / step_duration
+            )
+            _apply_game_text_step(overlay, t)
+            if t >= 1.0:
+                var next_index: int = int(overlay["step_index"]) + 1
+                if next_index >= steps.size():
+                    overlay["active"] = false
+                    rect.visible = false
+                    continue
+                overlay["step_index"] = next_index
+                overlay["from"] = current
+                overlay["to"] = steps[next_index]
+                overlay["step_time"] = 0.0
+        overlay["timer"] = float(overlay["timer"]) - delta
+        if float(overlay["timer"]) <= 0.0:
+            overlay["active"] = false
+            rect.visible = false
+
+
+func _hide_game_text_overlays() -> void:
+    for overlay in _game_text_overlays:
+        overlay["active"] = false
+        overlay["timer"] = 0.0
+        var rect: Sprite2D = overlay["rect"]
+        rect.visible = false
 
 
 func _build_fighters() -> void:
@@ -1444,6 +1577,10 @@ func _reset_round() -> void:
     computer.visible = true
     player.clear_result_pose()
     computer.clear_result_pose()
+    # Native RestartValues() does not stop running game text animators, so a
+    # round reset must not hide the result text either; only the per-side
+    # COUNTER animation memory is cleared.
+    _counter_text_last_state = ["", ""]
     var demo_rage: String = OS.get_environment("BRUCELEE_DEMO_RAGE")
     if not demo_rage.is_empty() and demo_rage.is_valid_float():
         player.rage = clampf(demo_rage.to_float(), 0.0, PortFighter.RAGE_MAX)
@@ -1807,7 +1944,7 @@ func _start_round_intro() -> void:
         return
     _enter_match_state(MATCH_STATE_INTRO)
     _intro_fight_shown = false
-    _show_game_text("READY", 0.8)
+    _show_game_text("READY", 0.8, GAME_TEXT_SEQ_READY)
     _play_result_audio("ready")
 
 
@@ -2033,10 +2170,6 @@ func _exit_tree() -> void:
 
 func _process(_delta: float) -> void:
     _update_game_text_sequence(_delta)
-    if _game_text_timer > 0.0:
-        _game_text_timer -= _delta
-        if _game_text_timer <= 0.0 and _game_text_rect != null:
-            _game_text_rect.visible = false
     _update_player_key_status()
     _update_fight_camera(_delta)
 
@@ -2196,6 +2329,7 @@ func _physics_process(delta: float) -> void:
     # Drive the ported EGameState machine before any input is read. States
     # 3/5/7/8/11/12/13/15 all freeze the fighters, matching the native
     # DummyUpdate path in CBeatEmUpGame::Update().
+    _update_counter_text_tracking()
     _update_match_state(delta)
     if match_state != MATCH_STATE_FIGHT:
         player.move_axis = Vector2.ZERO
@@ -2240,6 +2374,35 @@ func _update_round_timer() -> void:
         _on_time_up()
 
 
+# CBeatEmUpGame::Render consumes the per-fighter counter flag (CFighter+0x176,
+# seen in Render as this+0x19a for the player and this+0x352 for the opponent)
+# and launches game text animation 7 (left) for the player or 8 (right) for the
+# opponent.  CFighter::SetAnimation sets the flag when the new animation
+# carries the recovered "counter" category -- in every fighting set only
+# parryhigh/parrylow have it -- so the port triggers on entering those states,
+# once per parry animation, with no thresholds.
+func _update_counter_text_tracking() -> void:
+    if player == null or computer == null:
+        return
+    _track_fighter_counter_text(player, 0)
+    _track_fighter_counter_text(computer, 1)
+
+
+func _track_fighter_counter_text(fighter: PortFighter, side: int) -> void:
+    var parry_state: String = fighter.state
+    if not (parry_state in ["parryhigh", "parrylow"]):
+        _counter_text_last_state[side] = ""
+        return
+    if String(_counter_text_last_state[side]) == parry_state:
+        # Same parry animation continues; native consumed the flag on Render.
+        return
+    _counter_text_last_state[side] = parry_state
+    _show_game_text(
+        "COUNTER", 0.0,
+        GAME_TEXT_SEQ_COUNTER_PLAYER if side == 0 else GAME_TEXT_SEQ_COUNTER_OPPONENT,
+    )
+
+
 func _on_time_up() -> void:
     # Update() state 4 zeroes the clock and enters state 5; SetState(5)
     # launches game text animation 4 (BL_gameText-TIME_IS_UP).  The round is
@@ -2250,7 +2413,9 @@ func _on_time_up() -> void:
         return
     done = true
     hud.set_time(0, true)
-    _show_game_text("TIME_IS_UP", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+    _show_game_text(
+        "TIME_IS_UP", float(ROUND_PHASE_WAIT_MS) / 1000.0, GAME_TEXT_SEQ_TIME_IS_UP
+    )
     _play_result_audio("time_out")
     _enter_match_state(MATCH_STATE_TIME_UP)
 
@@ -2289,7 +2454,7 @@ func _advance_round_intro() -> void:
     # LaunchGameTextAnimation(0) is shown by _start_round_intro; (1) follows.
     if not _intro_fight_shown and match_state_time >= 0.8:
         _intro_fight_shown = true
-        _show_game_text("FIGHT", 1.2)
+        _show_game_text("FIGHT", 1.2, GAME_TEXT_SEQ_FIGHT)
         _play_result_audio("fight")
     if match_state_time > float(ROUND_PHASE_WAIT_MS) / 1000.0:
         _enter_match_state(MATCH_STATE_FIGHT)
@@ -2309,7 +2474,7 @@ func _resolve_time_up_winner() -> void:
     if is_equal_approx(player_health, computer_health):
         pending_round_winner = 0
         hud.show_message("TIME UP · DRAW · ROUND %d" % round_number)
-        _show_game_text("DRAW", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+        _show_game_text("DRAW", float(ROUND_PHASE_WAIT_MS) / 1000.0, GAME_TEXT_SEQ_DRAW)
         _play_result_audio("draw")
         _enter_match_state(MATCH_STATE_DRAW)
         return
@@ -2317,15 +2482,43 @@ func _resolve_time_up_winner() -> void:
         player_rounds += 1
         pending_round_winner = 1
         hud.show_message("TIME UP · YOU WIN · ROUND %d" % round_number)
-        _show_game_text("YOU_WIN", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+        _show_round_result_text(player, true)
         _enter_match_state(MATCH_STATE_KO_WIN)
     else:
         computer_rounds += 1
         pending_round_winner = 2
         hud.show_message("TIME UP · YOU LOSE · ROUND %d" % round_number)
-        _show_game_text("YOU_LOSE", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+        _show_round_result_text(computer, false)
         _enter_match_state(MATCH_STATE_KO_LOSE)
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
+
+
+# SetState(7)/(8): the game text follows the *local player's* result.
+# SetState(7) fires when fighter 0 (the port's player) scores the round and
+# takes its win path only when the local-player flag (this+0x7e0, 0 = fighter
+# 0) matches; the port's player is always the local fighter 0, so:
+#   player round win:  player health < 0x14 (20) -> GREAT (sequence 9);
+#                      otherwise YOU_WIN (2); player health == 100
+#                      additionally launches PERFECT (6) as a second,
+#                      concurrent animator (native starts one CSpriteAnimator
+#                      per LaunchGameTextAnimation call).
+#   player round loss: SetState(8) with local flag 0 falls through to
+#                      YOU_LOSE (3); the opponent's health is never checked on
+#                      the player's loss path.
+# Native compares integer health points; the port's health is the same 0..100
+# scale and only decreases, so equality with MAX_HEALTH is the same
+# "untouched" condition.
+func _show_round_result_text(winner: PortFighter, player_won: bool) -> void:
+    var wait: float = float(ROUND_PHASE_WAIT_MS) / 1000.0
+    if not player_won:
+        _show_game_text("YOU_LOSE", wait, GAME_TEXT_SEQ_YOU_LOSE)
+        return
+    if winner.health < ROUND_GREAT_HEALTH:
+        _show_game_text("GREAT", wait, GAME_TEXT_SEQ_GREAT)
+    else:
+        _show_game_text("YOU_WIN", wait, GAME_TEXT_SEQ_YOU_WIN)
+    if is_equal_approx(winner.health, PortFighter.MAX_HEALTH):
+        _show_game_text("PERFECT", wait, GAME_TEXT_SEQ_PERFECT)
 
 
 func _advance_result_text() -> void:
@@ -2355,9 +2548,7 @@ func _begin_winner_result_pose() -> void:
     _result_camera_override = true
     # The KO text from state 7/8 has finished by the time SetState(12/13)
     # begins; clear it so only the victory/defeat clip is presented.
-    if _game_text_rect != null:
-        _game_text_rect.visible = false
-        _game_text_timer = 0.0
+    _hide_game_text_overlays()
     var victory_ok: bool = winner.enter_result_pose("victory")
     loser.clear_result_pose()
     if not winner.result_clip_gap_last.is_empty():
@@ -2684,10 +2875,8 @@ func _on_ko(fighter: PortFighter) -> void:
         computer_rounds += 1
         pending_round_winner = 2
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
-    _show_game_text(
-        "YOU_WIN" if fighter == computer else "YOU_LOSE",
-        float(ROUND_PHASE_WAIT_MS) / 1000.0
-    )
+    var player_won: bool = fighter == computer
+    _show_round_result_text(player if player_won else computer, player_won)
     hud.show_message(
         "YOU WIN · ROUND %d" % round_number if fighter == computer
         else "YOU LOSE · ROUND %d" % round_number

@@ -2,54 +2,59 @@ extends CanvasLayer
 class_name PortHUD
 ## Original HUD reconstruction.
 ##
-## Replaces the placeholder progress bars with the original HUD sprites from
-## the package's `ui/hud` folder and the layout recovered from
-## krm::CBruceLeeHUD::Render (0x1959e0, decompiled at 0x1a59e0 in the Ghidra
-## listing, image base 0x10000) plus krm::CBruceLeeHUD::LoadSprites
-## (0x194538) and ::Update (0x193d98) in libdefault.so.
+## Layout recovered from krm::CBruceLeeHUD::Render (0x1959e0, decompiled at
+## 0x1a59e0 in the Ghidra listing, image base 0x10000), LoadSprites (0x194538),
+## Update (0x193d98) and the packaged art itself.
 ##
-## Recovered layout (480x320 reference frame, the frame Render centres with
+## Recovered 480x320 reference frame (Render centres it with
 ## (displayWidth - 480) * 0.5):
 ##   Inkbar            512x64 art drawn at (0, 0), clipped to the 480 wide frame
-##   life bar row      y = 22   (0x41b00000)
-##   chi bar row       y = 32   (0x42000000)
-##   left life bar     x = 15 + (1 - value) * 194, 256x8 art, 32px transparent
-##                     margin each side -> 192 solid px, inner end at 15+223=238
-##   right life bar    drawn at the fixed x = 269 (0x43868000) -> solid pixels
-##                     start at 269+32 = 301 and run off the right edge
-##   left chi bar      drawn at the fixed x = 13 (0x41500000), 128x8 art whose
-##                     solid span is columns 15..102 -> 28..115
-##   right chi bar     x = 467 - 102 * (chi / 100), i.e. the right end stays at
-##                     467 and the bar recedes to the right as chi drops
+##   life bar row      y = 22
+##   chi bar row       y = 32
+##   left life bar     right end fixed, source window x = 15 + (1 - f) * 194,
+##                     width 194 * f, y = 22
+##   right life bar    left end fixed, source window x = 269, width 194 * f,
+##                     y = 22
+##   left chi bar      x = 13, three baked segments in one 101 px window
+##   right chi bar     right end fixed at 465, x = 465 - 101 * g
 ##   round wins        y = 32, 16x8 yellow/red dots, left player at
 ##                     x = 185 - 20 * i, right player at x = 280 + 20 * i
-##   round clock       "%02d", centred on (242, 26)  (0x43720000, 0x41d00000)
-##   name plates       left player centred on (242, 26), right player flush to
-##                     470 (0x43eb0000), y = 0
+##   round clock       "%02d", centred on (242, 26)
+##   names             BLE_Name_*.png (candara16 glyphs baked at 4x) drawn at
+##                     (10, 0) for the left fighter and (470 - advance, 0) for
+##                     the right one, scaled back down 4x
+##
+## Exact source rectangles (measured from the packaged PNGs, verified against
+## the Inkbar troughs; see evidence/png_measure.json and geometry_check.json):
+##   life bars         Rect2(31, 0, 194, 8)   -> trough red rows 22..28
+##   chi bars          Rect2(14|13, 1, 101, 6) -> trough blue rows 33..36
 ##
 ## Bar values are eased exactly like CBruceLeeHUD::Update: the filled bar moves
-## at 50 units/s (DAT_001a4010 / 0x194010), the orange damage ghost holds for
-## 1000 ms (DAT_001a4008) then drains at 25 units/s (DAT_001a4018), chi moves
-## at 50 units/s. The reference frame is scaled to fit the viewport so the HUD
-## stays readable at 1280x720 and at 868x517.
+## at 50 units/s, the orange damage ghost holds for 1000 ms then drains at
+## 25 units/s, chi moves at 50 units/s. The reference frame is scaled to fit the
+## viewport so the HUD stays readable at 1280x720 and at 868x517.
+##
+## Text that the original HUD never draws (CHI, ROUND, centre message, footer,
+## context hint) is kept only as a hidden data API for the regression tests; it
+## is not rendered.
 
 const REFERENCE_WIDTH := 480.0
 const REFERENCE_HEIGHT := 320.0
 
-# Row / anchor constants from CBruceLeeHUD::Render.
+# Row / anchor constants from CBruceLeeHUD::Render plus the packaged art's
+# opaque spans.
 const LIFE_ROW_Y := 22.0
 const CHI_ROW_Y := 32.0
-const LIFE_ART_HEIGHT := 8.0
-const LIFE_ART_SOLID := 192.0          # solid columns 32..223 of the 256x8 art
-const LIFE_ART_SOLID_START := 32.0
-const LIFE_LEFT_INNER_END := 238.0     # x = 15 + 223, inner end of the left bar
-const LIFE_RIGHT_INNER_START := 301.0  # x = 269 + 32, first solid pixel
-const LIFE_RIGHT_SOLID := 179.0        # 269 + 32 .. 480 (clipped by the frame)
-const CHI_ART_SOLID_START := 15.0      # solid columns 15..102 of the 128x8 art
-const CHI_ART_SOLID := 88.0
-const CHI_LEFT_X := 28.0               # 13 + 15
-const CHI_RIGHT_END := 467.0           # x = 467 - 102 * frac
-const CHI_RIGHT_SOLID := 87.0
+const LIFE_SRC_RECT := Rect2(31.0, 0.0, 194.0, 8.0)
+const LIFE_TROUGH_WIDTH := 194.0
+const LIFE_LEFT_RIGHT_EDGE := 15.0 + LIFE_TROUGH_WIDTH   # trough x 15..208
+const LIFE_RIGHT_LEFT_EDGE := 269.0                      # trough x 269..462
+const LIFE_DST_HEIGHT := 8.0
+const CHI_LEFT_SRC_RECT := Rect2(14.0, 1.0, 101.0, 6.0)
+const CHI_RIGHT_SRC_RECT := Rect2(13.0, 1.0, 101.0, 6.0)
+const CHI_LEFT_X := 13.0            # Render 0x41500000
+const CHI_RIGHT_END := 465.0        # right end of the trough (464 inclusive)
+const CHI_DST_HEIGHT := 6.0
 const DOT_ROW_Y := 32.0
 const DOT_STEP := 20.0
 const DOT_LEFT_X := 185.0
@@ -59,6 +64,42 @@ const TIMER_CENTER := Vector2(242.0, 26.0)
 const INKBAR_HEIGHT := 64.0
 const INKBAR_ART_WIDTH := 512.0
 
+# Name layout: advance width of the upper-cased name in candara16 and the
+# bearing of the ink inside the generated texture (name_layout.json). The PNGs
+# are the generated textures at 4x, so the draw size is png_size / 4.
+const NAME_RIGHT_EDGE := 470.0
+const NAME_TOP := 0.0
+const NAME_TEXTURE_SCALE := 0.25
+
+const NAME_LAYOUT := {
+    "BRUCE LEE": {"file": "BLE_Name_brucelee.png", "advance": 74.0, "bearing": Vector2(1, 0)},
+    "BRICK DAVIS": {"file": "BLE_Name_brickdavis.png", "advance": 91.0, "bearing": Vector2(1, 0)},
+    "SMALL BOY": {"file": "BLE_Name_smallboy.png", "advance": 85.0, "bearing": Vector2(0, 0)},
+    "JOHNSON": {"file": "BLE_Name_johnson.png", "advance": 69.0, "bearing": Vector2(-1, 0)},
+    "KEN GODALL": {"file": "BLE_Name_kengodall.png", "advance": 92.0, "bearing": Vector2(1, 0)},
+    "CHIEF": {"file": "BLE_Name_chief.png", "advance": 39.0, "bearing": Vector2(1, 0)},
+    "THE MASTER": {"file": "BLE_Name_themaster.png", "advance": 93.0, "bearing": Vector2(1, 0)},
+    "LO MING": {"file": "BLE_Name_loming.png", "advance": 62.0, "bearing": Vector2(1, 0)},
+    "SHEN LO": {"file": "BLE_Name_shenlo.png", "advance": 60.0, "bearing": Vector2(0, 0)},
+    "SIN FU": {"file": "BLE_Name_sinfu.png", "advance": 45.0, "bearing": Vector2(0, 0)},
+}
+
+# Alternate spellings the menus/tests may pass.
+const NAME_ALIASES := {
+    "BRUCE": "BRUCE LEE",
+    "BRICK": "BRICK DAVIS",
+    "MASTER": "THE MASTER",
+    "THE CHIEF": "CHIEF",
+    "KEN": "KEN GODALL",
+    "SMALLBOY": "SMALL BOY",
+    "LOMING": "LO MING",
+    "SHENLO": "SHEN LO",
+    "SINFU": "SIN FU",
+    "BRUCELEE": "BRUCE LEE",
+    "BRICKDAVIS": "BRICK DAVIS",
+    "KENGODALL": "KEN GODALL",
+}
+
 # CBruceLeeHUD::Update easing values.
 const LIFE_RATE := 50.0
 const GHOST_HOLD := 1.0
@@ -66,6 +107,7 @@ const GHOST_RATE := 25.0
 const CHI_RATE := 50.0
 
 const HUD_TEXTURE_ROOT_ENV := "BRUCELEE_HUD_TEXTURE_ROOT"
+const HUD_NAME_ROOT_ENV := "BRUCELEE_HUD_NAME_ROOT"
 
 # The bar widgets are data holders for the existing test/API contract; the
 # visible bars are the original sprites below.
@@ -86,6 +128,7 @@ var timer_label: Label
 
 var _timer_text: int = -2
 var _textures: Dictionary = {}
+var _name_textures: Dictionary = {}
 var _assets_bottom_up: bool = false
 
 var _frame: Control
@@ -95,7 +138,7 @@ var _ghost_rects: Array[TextureRect] = []
 var _chi_rects: Array[TextureRect] = []
 var _dot_rects: Array[TextureRect] = []
 var _bar_atlases: Dictionary = {}
-var _name_labels: Array[Label] = []
+var _name_sprites: Array[TextureRect] = []
 
 var _life_target: Array[float] = [100.0, 100.0]
 var _life_display: Array[float] = [100.0, 100.0]
@@ -162,9 +205,9 @@ func _build() -> void:
         _dot_rects.append(dot)
         _frame.add_child(dot)
 
-    # Round clock: "%02d" centred on (242, 26). Render() creates this text in
-    # its own section before the bars; the label is kept above the art here so
-    # the digits stay legible when a bar reaches the centre gap.
+    # Round clock: "%02d" centred on (242, 26). This is the one text element
+    # the original HUD draws; it stays above the art so it is legible when a
+    # bar reaches the centre gap.
     timer_label = Label.new()
     timer_label.text = "--"
     timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -177,15 +220,16 @@ func _build() -> void:
     timer_label.add_theme_constant_override("outline_size", 6)
     _frame.add_child(timer_label)
 
-    if _assets_bottom_up:
-        # The local ui/hud copies are stored bottom-up; flip every sprite so the
-        # Inkbar's built-in red channel and blue notches land on the bar rows.
-        for node: Node in [_inkbar] + _ghost_rects + _life_rects + _chi_rects \
-                + _dot_rects:
-            (node as TextureRect).flip_v = true
-
+    # Fighter names: the original renders the player name at (10, 0) and the
+    # opponent at (470 - advance, 0) with the candara16 glyphs. The packaged
+    # BLE_Name_*.png are those glyphs at 4x.
+    _name_sprites.append(_make_name_sprite())
+    _name_sprites.append(_make_name_sprite())
+    for sprite: TextureRect in _name_sprites:
+        _frame.add_child(sprite)
 
     # Round counter must stay inside a box container (validate_round_flow).
+    # It is a data-only node: the original HUD has no round text label.
     var round_box: VBoxContainer = VBoxContainer.new()
     round_box.position = Vector2(0.0, 44.0)
     round_box.size = Vector2(REFERENCE_WIDTH, 18.0)
@@ -200,16 +244,10 @@ func _build() -> void:
     round_label.add_theme_color_override("font_color", Color(1.0, 0.84, 0.36))
     round_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
     round_label.add_theme_constant_override("outline_size", 4)
+    round_label.visible = false
     round_box.add_child(round_label)
 
-    _name_labels.append(_make_small_label("BRUCE", Vector2(47.0, 8.0),
-            HORIZONTAL_ALIGNMENT_LEFT))
-    _name_labels.append(_make_small_label("OPPONENT", Vector2(317.0, 8.0),
-            HORIZONTAL_ALIGNMENT_RIGHT))
-    var chi_label: Label = _make_small_label("CHI", Vector2(13.0, 40.0),
-            HORIZONTAL_ALIGNMENT_LEFT)
-    chi_label.add_theme_color_override("font_color", Color(0.45, 0.95, 1.0, 0.9))
-
+    # Non-original overlays: kept for the tests' text contract, never drawn.
     hint = Label.new()
     hint.anchor_left = 0.5
     hint.anchor_right = 0.5
@@ -221,6 +259,7 @@ func _build() -> void:
     hint.offset_bottom = 50
     hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     hint.add_theme_font_size_override("font_size", 29)
+    hint.visible = false
     screen.add_child(hint)
 
     footer = Label.new()
@@ -234,6 +273,7 @@ func _build() -> void:
     footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     footer.add_theme_font_size_override("font_size", 17)
     footer.text = "A/D move  W/S sidestep  J/K/L/U = a/b/c/d  SHIFT guard  R restart  F2 training"
+    footer.visible = false
     screen.add_child(footer)
 
     context_hint = Label.new()
@@ -247,25 +287,22 @@ func _build() -> void:
     context_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     context_hint.add_theme_font_size_override("font_size", 18)
     context_hint.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
+    context_hint.visible = false
     screen.add_child(context_hint)
     center_message = hint
 
     _refresh_bars()
 
 
-func _make_small_label(value: String, pos: Vector2, align: int) -> Label:
-    var label: Label = Label.new()
-    label.text = value
-    label.position = pos
-    label.size = Vector2(150.0, 12.0)
-    label.horizontal_alignment = align
-    label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    label.add_theme_font_size_override("font_size", 10)
-    label.add_theme_color_override("font_color", Color(0.98, 0.94, 0.82, 0.95))
-    label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
-    label.add_theme_constant_override("outline_size", 4)
-    _frame.add_child(label)
-    return label
+func _make_name_sprite() -> TextureRect:
+    var rect: TextureRect = TextureRect.new()
+    rect.size = Vector2.ZERO
+    rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    rect.stretch_mode = TextureRect.STRETCH_SCALE
+    rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    rect.visible = false
+    return rect
 
 
 func _make_sprite(filename: String, size_value: Vector2) -> TextureRect:
@@ -279,19 +316,13 @@ func _make_sprite(filename: String, size_value: Vector2) -> TextureRect:
     return rect
 
 
-## The Inkbar art carries a dark red "empty" channel over the life row
-## (rows 22..28) and blue notches over the chi row (rows 33..36). Some staged
-## local copies of ui/hud store the texture bottom-up, which moves both
-## features onto the wrong row; detect that and flip so the washes line up
-## with the bars drawn on top of them.
-func _inkbar_requires_flip(texture: Texture2D) -> bool:
-    if texture == null:
-        return false
-    var image: Image = texture.get_image()
+## The packaged ui/hud PNGs are stored bottom-up: file row 41 of the Inkbar
+## carries the red trough that Render expects at screen row 22. Detect that
+## orientation from the source pixels and flip the loaded images once, so every
+## AtlasTexture region below is addressed in top-down Render coordinates.
+func _inkbar_requires_flip(image: Image) -> bool:
     if image == null:
         return false
-    if image.is_compressed():
-        image.decompress()
     if image.get_width() < 64 or image.get_height() < 40:
         return false
     var life_red: int = 0
@@ -315,11 +346,11 @@ func _make_bar_sprite(filename: String) -> TextureRect:
     if source != null:
         var atlas: AtlasTexture = AtlasTexture.new()
         atlas.atlas = source
-        atlas.region = Rect2(0.0, 0.0, source.get_width(), LIFE_ART_HEIGHT)
+        atlas.region = Rect2(0.0, 0.0, source.get_width(), LIFE_DST_HEIGHT)
         atlas.filter_clip = true
         rect.texture = atlas
         _bar_atlases[rect] = atlas
-    rect.size = Vector2(1.0, LIFE_ART_HEIGHT)
+    rect.size = Vector2(1.0, LIFE_DST_HEIGHT)
     rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     rect.stretch_mode = TextureRect.STRETCH_SCALE
     rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -362,59 +393,57 @@ func _apply_life_bar(side: int, value: float, ghost: float) -> void:
     var fraction: float = clampf(value / 100.0, 0.0, 1.0)
     var ghost_fraction: float = clampf(ghost / 100.0, 0.0, 1.0)
     if side == 0:
-        # Left player: the inner (right) end stays at 238 and the stroke
-        # recedes towards the centre, matching x = 15 + (1 - value) * 194.
-        _place_bar(_life_rects[0], LIFE_ART_SOLID_START, LIFE_ART_SOLID,
-                LIFE_LEFT_INNER_END, fraction, true)
-        _place_bar(_ghost_rects[0], LIFE_ART_SOLID_START, LIFE_ART_SOLID,
-                LIFE_LEFT_INNER_END, ghost_fraction, true)
+        # Left fighter: the inner (right) end stays on the trough's inner end
+        # and the visible source window shrinks towards it as health drops.
+        _place_source(_life_rects[0], LIFE_SRC_RECT, LIFE_LEFT_RIGHT_EDGE,
+                LIFE_ROW_Y, fraction, true, LIFE_DST_HEIGHT)
+        _place_source(_ghost_rects[0], LIFE_SRC_RECT, LIFE_LEFT_RIGHT_EDGE,
+                LIFE_ROW_Y, ghost_fraction, true, LIFE_DST_HEIGHT)
     else:
-        # Right player: mirrored. The inner (left) end stays at 301 and the
-        # stroke recedes to the right, clipped by the frame at 480.
-        _place_bar(_life_rects[1], LIFE_ART_SOLID_START, LIFE_ART_SOLID,
-                LIFE_RIGHT_INNER_START, fraction, false, LIFE_RIGHT_SOLID)
-        _place_bar(_ghost_rects[1], LIFE_ART_SOLID_START, LIFE_ART_SOLID,
-                LIFE_RIGHT_INNER_START, ghost_fraction, false, LIFE_RIGHT_SOLID)
-    _life_rects[side].position.y = LIFE_ROW_Y
-    _ghost_rects[side].position.y = LIFE_ROW_Y
+        # Right fighter: the inner (left) end stays on the trough and the outer
+        # end recedes.
+        _place_source(_life_rects[1], LIFE_SRC_RECT, LIFE_RIGHT_LEFT_EDGE,
+                LIFE_ROW_Y, fraction, false, LIFE_DST_HEIGHT)
+        _place_source(_ghost_rects[1], LIFE_SRC_RECT, LIFE_RIGHT_LEFT_EDGE,
+                LIFE_ROW_Y, ghost_fraction, false, LIFE_DST_HEIGHT)
 
 
 func _apply_chi_bar(side: int, value: float) -> void:
     var fraction: float = clampf(value / 100.0, 0.0, 1.0)
     if side == 0:
-        # Left chi bar: drawn at the fixed x = 13 in the original, filled from
-        # its left edge (28) to the right.
-        _place_bar(_chi_rects[0], CHI_ART_SOLID_START, CHI_ART_SOLID, CHI_LEFT_X,
-                fraction, false)
+        # Left fighter: fixed x = 13; the 101 px window holds the three baked
+        # segments and grows from the left.
+        _place_source(_chi_rects[0], CHI_LEFT_SRC_RECT, CHI_LEFT_X,
+                CHI_ROW_Y, fraction, false, CHI_DST_HEIGHT)
     else:
-        # Right chi bar: x = 467 - 102 * frac, right end fixed at 467.
-        _place_bar(_chi_rects[1], CHI_ART_SOLID_START, CHI_ART_SOLID,
-                CHI_RIGHT_END, fraction, true, CHI_RIGHT_SOLID)
-    _chi_rects[side].position.y = CHI_ROW_Y
+        # Right fighter: right end fixed at 465, x = 465 - 101 * fraction.
+        _place_source(_chi_rects[1], CHI_RIGHT_SRC_RECT, CHI_RIGHT_END,
+                CHI_ROW_Y, fraction, true, CHI_DST_HEIGHT)
 
 
-## Crop `art_solid` columns of the bar texture and anchor the visible stroke at
-## `anchor`. `hug_right` keeps the right end fixed (bar recedes from the left),
-## otherwise the left end stays fixed.
-func _place_bar(rect: TextureRect, art_start: float, art_solid: float,
-        anchor: float, fraction: float, hug_right: bool, limit: float = -1.0) -> void:
-    var max_width: float = art_solid if limit <= 0.0 else minf(art_solid, limit)
-    var width: float = max_width * clampf(fraction, 0.0, 1.0)
-    if width <= 0.5:
+## Draw `src` (a rectangle in the flipped, top-down texture) at `anchor`.
+## `hug_right` keeps the destination's right edge on `anchor`; otherwise the
+## left edge stays on it. Only the fraction of the source window is shown, so
+## the baked 3-segment chi gaps and the slanted life ends survive.
+func _place_source(rect: TextureRect, src: Rect2, anchor: float, dst_y: float,
+        fraction: float, hug_right: bool, dst_height: float) -> void:
+    var visible_width: float = src.size.x * clampf(fraction, 0.0, 1.0)
+    if visible_width <= 0.5:
         rect.visible = false
         return
     rect.visible = true
-    rect.size = Vector2(width, LIFE_ART_HEIGHT)
+    rect.size = Vector2(visible_width, dst_height)
     var atlas: AtlasTexture = _bar_atlases.get(rect)
     if hug_right:
-        rect.position.x = anchor - width
-        var crop_start: float = art_start + (max_width - width)
+        rect.position = Vector2(anchor - visible_width, dst_y)
         if atlas != null:
-            atlas.region = Rect2(crop_start, 0.0, width, LIFE_ART_HEIGHT)
+            atlas.region = Rect2(src.position.x + src.size.x - visible_width,
+                    src.position.y, visible_width, src.size.y)
     else:
-        rect.position.x = anchor
+        rect.position = Vector2(anchor, dst_y)
         if atlas != null:
-            atlas.region = Rect2(art_start, 0.0, width, LIFE_ART_HEIGHT)
+            atlas.region = Rect2(src.position.x, src.position.y,
+                    visible_width, src.size.y)
 
 
 func _refresh_dots() -> void:
@@ -431,6 +460,47 @@ func _refresh_dots() -> void:
                 (DOT_LEFT_X - DOT_STEP * index) if side == 0
                 else (DOT_RIGHT_X + DOT_STEP * index),
                 DOT_ROW_Y)
+
+
+# ---------------------------------------------------------------- names
+
+func _resolve_name(value: String) -> String:
+    var key: String = value.strip_edges().to_upper()
+    if NAME_LAYOUT.has(key):
+        return key
+    if NAME_ALIASES.has(key):
+        return NAME_ALIASES[key]
+    # "BRUCE LEE A/B/C/D" and similar skin suffixes.
+    var shortened: String = key
+    var cut: int = shortened.rfind(" ")
+    while cut > 0:
+        shortened = shortened.substr(0, cut)
+        if NAME_LAYOUT.has(shortened):
+            return shortened
+        if NAME_ALIASES.has(shortened):
+            return NAME_ALIASES[shortened]
+        cut = shortened.rfind(" ")
+    return ""
+
+
+func set_fighter_name(side: int, value: String) -> void:
+    if side < 0 or side >= _name_sprites.size():
+        return
+    var sprite: TextureRect = _name_sprites[side]
+    var key: String = _resolve_name(value)
+    if not NAME_LAYOUT.has(key) or not _name_textures.has(key):
+        sprite.visible = false
+        return
+    var entry: Dictionary = NAME_LAYOUT[key]
+    var texture: Texture2D = _name_textures[key]
+    var draw_size: Vector2 = Vector2(texture.get_width(), texture.get_height()) \
+            * NAME_TEXTURE_SCALE
+    var pen_x: float = 10.0 if side == 0 else NAME_RIGHT_EDGE - float(entry["advance"])
+    var bearing: Vector2 = entry["bearing"]
+    sprite.texture = texture
+    sprite.size = draw_size
+    sprite.position = Vector2(pen_x + bearing.x, NAME_TOP + bearing.y)
+    sprite.visible = true
 
 
 # ---------------------------------------------------------------- layout scale
@@ -462,11 +532,27 @@ func _load_textures() -> void:
         "BL_HUD_Round_red_left.png",
         "BL_HUD_Round_yellow_left.png",
     ]
+    var images: Dictionary = {}
     for name: String in names:
-        var texture: Texture2D = _try_load_hud_texture(name)
-        if texture != null:
-            _textures[name] = texture
-    _assets_bottom_up = _inkbar_requires_flip(_textures.get("BL_HUD_Inkbar.png"))
+        var image: Image = _load_hud_image(name)
+        if image != null:
+            images[name] = image
+    var inkbar: Image = images.get("BL_HUD_Inkbar.png")
+    _assets_bottom_up = _inkbar_requires_flip(inkbar)
+    for name: String in images:
+        var image: Image = images[name]
+        if _assets_bottom_up:
+            image.flip_y()
+        _textures[name] = ImageTexture.create_from_image(image)
+    for key: String in NAME_LAYOUT:
+        var file: String = NAME_LAYOUT[key]["file"]
+        var image: Image = _load_name_image(file)
+        if image == null:
+            continue
+        if image.get_width() % 4 != 0 or image.get_height() % 4 != 0:
+            continue
+        image.convert(Image.FORMAT_RGBA8)
+        _name_textures[key] = ImageTexture.create_from_image(image)
 
 
 func _hud_texture_roots() -> Array[String]:
@@ -483,16 +569,41 @@ func _hud_texture_roots() -> Array[String]:
     return roots
 
 
-func _try_load_hud_texture(filename: String) -> Texture2D:
+func _name_texture_roots() -> Array[String]:
+    var roots: Array[String] = []
+    var override: String = OS.get_environment(HUD_NAME_ROOT_ENV)
+    if not override.is_empty():
+        roots.append(override)
+    var hud_override: String = OS.get_environment(HUD_TEXTURE_ROOT_ENV)
+    if not hud_override.is_empty():
+        roots.append(hud_override.path_join("..").path_join("hud_names"))
+    roots.append(OS.get_executable_path().get_base_dir().path_join("ui/hud_names"))
+    roots.append("res://ui/hud_names")
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
+            "BruceLee-PC-Port/local-assets/gui/images/hud_names"))
+    return roots
+
+
+func _load_hud_image(filename: String) -> Image:
+    return _load_image_from(filename, _hud_texture_roots())
+
+
+func _load_name_image(filename: String) -> Image:
+    return _load_image_from(filename, _name_texture_roots())
+
+
+func _load_image_from(filename: String, roots: Array[String]) -> Image:
     var candidates: Array[String] = [filename, filename.to_lower()]
-    for root: String in _hud_texture_roots():
+    for root: String in roots:
         for candidate: String in candidates:
             var path: String = root.path_join(candidate)
             if not FileAccess.file_exists(path):
                 continue
             var image: Image = Image.new()
             if image.load(path) == OK:
-                return ImageTexture.create_from_image(image)
+                return image
     return null
 
 
@@ -506,9 +617,8 @@ func set_health(player_health: float, enemy_health: float) -> void:
 
 
 func set_fighter_names(player_name: String, opponent_name: String) -> void:
-    if _name_labels.size() >= 2:
-        _name_labels[0].text = player_name
-        _name_labels[1].text = opponent_name
+    set_fighter_name(0, player_name)
+    set_fighter_name(1, opponent_name)
 
 
 func set_round(round_number: int, player_wins: int, computer_wins: int,
