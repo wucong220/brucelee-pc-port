@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$GodotExe = "godot",
     [switch]$Debug,
     [switch]$SelfTest,
@@ -338,7 +338,7 @@ if (-not [string]::IsNullOrWhiteSpace($RuntimeAssetRoot)) {
             Copy-Item -LiteralPath $source -Destination $dist -Recurse -Force
         }
     }
-    foreach ($name in @('launch.ps1', 'DragonWarrior.cmd', 'DragonWarrior_TempleYardB.cmd', 'DragonWarrior_A_Direct.cmd', 'DragonWarrior_B_Direct.cmd', 'README.txt')) {
+    foreach ($name in @('launch.ps1', 'DragonWarrior.cmd', 'DragonWarrior_TempleYardB.cmd', 'DragonWarrior_A_Direct.cmd', 'DragonWarrior_B_Direct.cmd', 'DragonWarrior_HallA_Direct.cmd', 'README.txt')) {
         $source = Join-Path $RuntimeAssetRoot $name
         if (Test-Path -LiteralPath $source -PathType Leaf) {
             Copy-Item -LiteralPath $source -Destination (Join-Path $dist $name) -Force
@@ -348,3 +348,4 @@ if (-not [string]::IsNullOrWhiteSpace($RuntimeAssetRoot)) {
 
 Write-Host "Built: $delivered"
 Write-Host 'Reminder: This is a combat prototype, not the complete original game.'
+
