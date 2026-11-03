@@ -644,11 +644,16 @@ func _build_fighters() -> void:
     computer = PortFighter.new()
     computer.configure("Opponent (placeholder)", false, Color(0.20, 0.65, 0.76))
     computer.configure_attack_config(PortFighter.BRICK_ATTACK_CONFIG_PATH)
+    var opponent_material_profile: String = OS.get_environment(
+        "BRUCELEE_OPPONENT_MATERIAL_PROFILE"
+    )
+    if opponent_material_profile.is_empty():
+        opponent_material_profile = "body"
     computer.configure_candidate_asset(
         OS.get_environment("BRUCELEE_OPPONENT_GLB"),
         OS.get_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT"),
         _opponent_clips(),
-        "body",
+        opponent_material_profile,
         false
     )
     add_child(computer)

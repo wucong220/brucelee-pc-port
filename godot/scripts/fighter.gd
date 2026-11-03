@@ -2035,7 +2035,10 @@ func _try_load_candidate_visual() -> void:
     var state: GLTFState = GLTFState.new()
     var result: Error = document.append_from_file(path, state)
     if result != OK:
-        candidate_load_error = "GLB read failed with error %d" % result
+        candidate_load_error = (
+            "GLB read failed with error %d: %s (validate skin inverseBindMatrices "
+            + "count == joints count before exporting)"
+        ) % [result, path]
         _reset_candidate_derived_state()
         push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
