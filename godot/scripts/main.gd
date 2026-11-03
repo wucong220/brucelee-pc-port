@@ -111,6 +111,8 @@ func _ready() -> void:
     _build_game_text_overlay()
     if not OS.get_environment("BRUCELEE_HOLD_GAME_TEXT").is_empty():
         _show_game_text(OS.get_environment("BRUCELEE_HOLD_GAME_TEXT"), 30.0)
+    if not OS.get_environment("BRUCELEE_HOLD_GAME_TEXT").is_empty():
+        _show_game_text(OS.get_environment("BRUCELEE_HOLD_GAME_TEXT"), 30.0)
 
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
         hud.footer.text = (
@@ -1584,6 +1586,9 @@ func _on_ko(fighter: PortFighter) -> void:
     if player_rounds >= ROUNDS_TO_WIN or computer_rounds >= ROUNDS_TO_WIN:
         match_over = true
         round_reset_timer = -1.0
+        _show_game_text(
+            "YOU_WIN" if player_rounds >= ROUNDS_TO_WIN else "YOU_LOSE", 2.5
+        )
         hud.show_message(
             "YOU WIN THE MATCH  ·  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
             else "YOU LOSE THE MATCH  ·  R TO RESTART"
@@ -1591,6 +1596,7 @@ func _on_ko(fighter: PortFighter) -> void:
         _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
         return
     round_reset_timer = ROUND_RESET_DELAY
+    _show_game_text("YOU_WIN" if fighter == computer else "YOU_LOSE", 2.0)
     hud.show_message(
         "YOU WIN · ROUND %d" % round_number if fighter == computer
         else "YOU LOSE · ROUND %d" % round_number
