@@ -1,0 +1,750 @@
+{
+ "schema": "dragonwarrior-unlocks/1",
+ "source": {
+  "resource": "adreno_200/unlocks.list",
+  "archive_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+  "decoded_sha256": "43da87ae1e017f3237a95a694a5ba6b8ce9c99e6c8c53a403acd6a635d47c667",
+  "records": 365,
+  "note": "365 8-byte CTX3 records encode one object: num_ids + a 40-element story_unlocks array."
+ },
+ "num_ids": 117,
+ "id_space": [
+  0,
+  116
+ ],
+ "story_unlocks": [
+  {
+   "id": 35,
+   "exp": 500,
+   "item_type": "style_anim",
+   "item_id": "lpunchshenlo"
+  },
+  {
+   "id": 100,
+   "exp": 500,
+   "item_type": "art_picture",
+   "item_id": 7
+  },
+  {
+   "id": 17,
+   "exp": 1100,
+   "item_type": "style_anim",
+   "item_id": "hpunchloming"
+  },
+  {
+   "id": 69,
+   "exp": 1100,
+   "item_type": "style_anim",
+   "item_id": "endloming"
+  },
+  {
+   "id": 60,
+   "exp": 1700,
+   "item_type": "style_anim",
+   "item_id": "grabbshenlo"
+  },
+  {
+   "id": 97,
+   "exp": 1700,
+   "item_type": "art_picture",
+   "item_id": 10
+  },
+  {
+   "id": 31,
+   "exp": 2300,
+   "item_type": "style_anim",
+   "item_id": "hkickken"
+  },
+  {
+   "id": 1,
+   "exp": 2900,
+   "item_type": "fighter",
+   "item_id": 1
+  },
+  {
+   "id": 98,
+   "exp": 2900,
+   "item_type": "art_picture",
+   "item_id": 9
+  },
+  {
+   "id": 32,
+   "exp": 3600,
+   "item_type": "style_anim",
+   "item_id": "lkickken"
+  },
+  {
+   "id": 65,
+   "exp": 4300,
+   "item_type": "style_anim",
+   "item_id": "grabbsmallboy"
+  },
+  {
+   "id": 99,
+   "exp": 4300,
+   "item_type": "art_picture",
+   "item_id": 8
+  },
+  {
+   "id": 44,
+   "exp": 5000,
+   "item_type": "style_anim",
+   "item_id": "lkickloming"
+  },
+  {
+   "id": 23,
+   "exp": 5700,
+   "item_type": "style_anim",
+   "item_id": "hpunchbrick"
+  },
+  {
+   "id": 101,
+   "exp": 5700,
+   "item_type": "art_picture",
+   "item_id": 6
+  },
+  {
+   "id": 14,
+   "exp": 6400,
+   "item_type": "fighter",
+   "item_id": 14
+  },
+  {
+   "id": 36,
+   "exp": 6400,
+   "item_type": "style_anim",
+   "item_id": "hkicksmallboy"
+  },
+  {
+   "id": 68,
+   "exp": 7200,
+   "item_type": "style_anim",
+   "item_id": "grabbken"
+  },
+  {
+   "id": 102,
+   "exp": 7200,
+   "item_type": "art_picture",
+   "item_id": 5
+  },
+  {
+   "id": 38,
+   "exp": 8000,
+   "item_type": "style_anim",
+   "item_id": "lkickmaster"
+  },
+  {
+   "id": 71,
+   "exp": 8000,
+   "item_type": "style_anim",
+   "item_id": "endsmallboy"
+  },
+  {
+   "id": 39,
+   "exp": 8800,
+   "item_type": "style_anim",
+   "item_id": "hkickmaster"
+  },
+  {
+   "id": 103,
+   "exp": 8800,
+   "item_type": "art_picture",
+   "item_id": 4
+  },
+  {
+   "id": 57,
+   "exp": 9600,
+   "item_type": "style_anim",
+   "item_id": "grababrick"
+  },
+  {
+   "id": 77,
+   "exp": 9600,
+   "item_type": "style_anim",
+   "item_id": "endjohnson"
+  },
+  {
+   "id": 9,
+   "exp": 10400,
+   "item_type": "fighter",
+   "item_id": 9
+  },
+  {
+   "id": 41,
+   "exp": 10400,
+   "item_type": "style_anim",
+   "item_id": "hkickshenlo"
+  },
+  {
+   "id": 89,
+   "exp": 10400,
+   "item_type": "art_picture",
+   "item_id": 16
+  },
+  {
+   "id": 43,
+   "exp": 11300,
+   "item_type": "style_anim",
+   "item_id": "hkicksinfu"
+  },
+  {
+   "id": 88,
+   "exp": 12200,
+   "item_type": "art_picture",
+   "item_id": 17
+  },
+  {
+   "id": 75,
+   "exp": 12200,
+   "item_type": "style_anim",
+   "item_id": "endkengodall"
+  },
+  {
+   "id": 50,
+   "exp": 14000,
+   "item_type": "style_anim",
+   "item_id": "lkickchief"
+  },
+  {
+   "id": 0,
+   "exp": 14900,
+   "item_type": "fighter",
+   "item_id": 0
+  },
+  {
+   "id": 49,
+   "exp": 14900,
+   "item_type": "style_anim",
+   "item_id": "hkickjohnson"
+  },
+  {
+   "id": 76,
+   "exp": 15900,
+   "item_type": "style_anim",
+   "item_id": "endchief"
+  },
+  {
+   "id": 105,
+   "exp": 16900,
+   "item_type": "art_picture",
+   "item_id": 2
+  },
+  {
+   "id": 51,
+   "exp": 17920,
+   "item_type": "style_anim",
+   "item_id": "hkickchief"
+  },
+  {
+   "id": 33,
+   "exp": 18960,
+   "item_type": "style_anim",
+   "item_id": "lpunchchief"
+  },
+  {
+   "id": 116,
+   "exp": 20000,
+   "item_type": "style_anim",
+   "item_id": "grabamaster"
+  },
+  {
+   "id": 104,
+   "exp": 20000,
+   "item_type": "art_picture",
+   "item_id": 3
+  }
+ ],
+ "story_event_unlocks": [
+  {
+   "chapter": "chapter1",
+   "id": 108,
+   "item_type": "fighter_profile",
+   "item_id": 1,
+   "event_index": null,
+   "event_maptitle": "s_master_1",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 40,
+   "item_type": "style_anim",
+   "item_id": "lkickshenlo",
+   "event_index": null,
+   "event_maptitle": "s_master_1",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 5,
+   "item_type": "fighter",
+   "item_id": 5,
+   "event_index": null,
+   "event_maptitle": "s_master_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 107,
+   "item_type": "fighter_profile",
+   "item_id": 2,
+   "event_index": null,
+   "event_maptitle": "s_master_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 81,
+   "item_type": "scenery",
+   "item_id": 9,
+   "event_index": null,
+   "event_maptitle": "s_master_5",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 109,
+   "item_type": "fighter_profile",
+   "item_id": 9,
+   "event_index": null,
+   "event_maptitle": "s_master_5",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 7,
+   "item_type": "fighter",
+   "item_id": 7,
+   "event_index": null,
+   "event_maptitle": "s_master_6",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 110,
+   "item_type": "fighter_profile",
+   "item_id": 4,
+   "event_index": null,
+   "event_maptitle": "s_master_6",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 84,
+   "item_type": "scenery",
+   "item_id": 3,
+   "event_index": null,
+   "event_maptitle": "s_master_6",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 24,
+   "item_type": "style_anim",
+   "item_id": "lpunchmaster",
+   "event_index": null,
+   "event_maptitle": "s_master_6",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter1",
+   "id": 90,
+   "item_type": "art_picture",
+   "item_id": 15,
+   "event_index": null,
+   "event_maptitle": "s_master_6",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 13,
+   "item_type": "fighter",
+   "item_id": 13,
+   "event_index": null,
+   "event_maptitle": "s_tiger_1",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 27,
+   "item_type": "style_anim",
+   "item_id": "lpunchloming",
+   "event_index": null,
+   "event_maptitle": "s_tiger_1",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 79,
+   "item_type": "scenery",
+   "item_id": 2,
+   "event_index": null,
+   "event_maptitle": "s_tiger_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 16,
+   "item_type": "style_anim",
+   "item_id": "hpunchmaster",
+   "event_index": null,
+   "event_maptitle": "s_tiger_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 73,
+   "item_type": "style_anim",
+   "item_id": "endthemaster",
+   "event_index": null,
+   "event_maptitle": "s_tiger_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 85,
+   "item_type": "scenery",
+   "item_id": 1,
+   "event_index": null,
+   "event_maptitle": "s_tiger_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 18,
+   "item_type": "style_anim",
+   "item_id": "hpunchsinfu",
+   "event_index": null,
+   "event_maptitle": "s_tiger_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 54,
+   "item_type": "style_anim",
+   "item_id": "grabaloming",
+   "event_index": null,
+   "event_maptitle": "s_tiger_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter2",
+   "id": 91,
+   "item_type": "art_picture",
+   "item_id": 14,
+   "event_index": null,
+   "event_maptitle": "s_tiger_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 6,
+   "item_type": "fighter",
+   "item_id": 6,
+   "event_index": null,
+   "event_maptitle": "s_brothers_1",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 113,
+   "item_type": "fighter_profile",
+   "item_id": 3,
+   "event_index": null,
+   "event_maptitle": "s_brothers_1",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 12,
+   "item_type": "fighter",
+   "item_id": 12,
+   "event_index": null,
+   "event_maptitle": "s_brothers_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 114,
+   "item_type": "fighter_profile",
+   "item_id": 8,
+   "event_index": null,
+   "event_maptitle": "s_brothers_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 46,
+   "item_type": "style_anim",
+   "item_id": "lkicksmallboy",
+   "event_index": null,
+   "event_maptitle": "s_brothers_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 86,
+   "item_type": "scenery",
+   "item_id": 8,
+   "event_index": null,
+   "event_maptitle": "s_brothers_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 8,
+   "item_type": "fighter",
+   "item_id": 8,
+   "event_index": null,
+   "event_maptitle": "s_brothers_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 82,
+   "item_type": "scenery",
+   "item_id": 4,
+   "event_index": null,
+   "event_maptitle": "s_brothers_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 21,
+   "item_type": "style_anim",
+   "item_id": "hpunchchief",
+   "event_index": null,
+   "event_maptitle": "s_brothers_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 19,
+   "item_type": "style_anim",
+   "item_id": "hpunchsmallboy",
+   "event_index": null,
+   "event_maptitle": "s_brothers_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter3",
+   "id": 92,
+   "item_type": "art_picture",
+   "item_id": 13,
+   "event_index": null,
+   "event_maptitle": "s_brothers_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 80,
+   "item_type": "scenery",
+   "item_id": 6,
+   "event_index": null,
+   "event_maptitle": "s_tournament_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 10,
+   "item_type": "fighter",
+   "item_id": 10,
+   "event_index": null,
+   "event_maptitle": "s_tournament_2",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 111,
+   "item_type": "fighter_profile",
+   "item_id": 6,
+   "event_index": null,
+   "event_maptitle": "s_tournament_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 22,
+   "item_type": "style_anim",
+   "item_id": "hpunchken",
+   "event_index": null,
+   "event_maptitle": "s_tournament_3",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 11,
+   "item_type": "fighter",
+   "item_id": 11,
+   "event_index": null,
+   "event_maptitle": "s_tournament_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 112,
+   "item_type": "fighter_profile",
+   "item_id": 7,
+   "event_index": null,
+   "event_maptitle": "s_tournament_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 83,
+   "item_type": "scenery",
+   "item_id": 7,
+   "event_index": null,
+   "event_maptitle": "s_tournament_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 28,
+   "item_type": "style_anim",
+   "item_id": "lpunchbrick",
+   "event_index": null,
+   "event_maptitle": "s_tournament_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 25,
+   "item_type": "style_anim",
+   "item_id": "lpunchken",
+   "event_index": null,
+   "event_maptitle": "s_tournament_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 34,
+   "item_type": "style_anim",
+   "item_id": "hkickbrick",
+   "event_index": null,
+   "event_maptitle": "s_tournament_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter4",
+   "id": 93,
+   "item_type": "art_picture",
+   "item_id": 12,
+   "event_index": null,
+   "event_maptitle": "s_tournament_4",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter5",
+   "id": 3,
+   "item_type": "fighter",
+   "item_id": 3,
+   "event_index": null,
+   "event_maptitle": "s_changes",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter5",
+   "id": 87,
+   "item_type": "scenery",
+   "item_id": 5,
+   "event_index": null,
+   "event_maptitle": "s_changes",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter5",
+   "id": 115,
+   "item_type": "fighter_profile",
+   "item_id": 5,
+   "event_index": null,
+   "event_maptitle": "s_changes",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter5",
+   "id": 55,
+   "item_type": "style_anim",
+   "item_id": "grabachief",
+   "event_index": null,
+   "event_maptitle": "s_changes",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter5",
+   "id": 62,
+   "item_type": "style_anim",
+   "item_id": "grabbsinfu",
+   "event_index": null,
+   "event_maptitle": "s_changes",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter5",
+   "id": 20,
+   "item_type": "style_anim",
+   "item_id": "hpunchjohnson",
+   "event_index": null,
+   "event_maptitle": "s_changes",
+   "event_type": "story_event",
+   "required_exp": 0
+  },
+  {
+   "chapter": "chapter5",
+   "id": 94,
+   "item_type": "art_picture",
+   "item_id": 11,
+   "event_index": null,
+   "event_maptitle": "s_changes",
+   "event_type": "story_event",
+   "required_exp": 0
+  }
+ ],
+ "note": "story_unlocks: cumulative story EXP thresholds. story_event_unlocks: deterministic grants authored in chapter*.story. The two id sets are disjoint (40 + 49 of 117); the remaining ids are not recovered as story grants and stay locked (fail closed)."
+}

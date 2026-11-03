@@ -33,6 +33,7 @@ const COLOR_OK := Color(0.45, 0.85, 0.55)
 const COLOR_BAD := Color(0.90, 0.42, 0.38)
 
 var main: Node = null
+var progress: Node = null
 var opponent_config: Dictionary = {}
 var data: Dictionary = {}
 var rules_error: String = ""
@@ -372,6 +373,11 @@ func match_finished(won: bool) -> void:
 	var advanced: Dictionary = Rules.apply_result(run, {"won": won, "health": health, "fight_seconds": elapsed})
 	run = advanced.get("run", run)
 	last_result = advanced
+	# Opt-in progress hooks (no-op when BRUCELEE_PROGRESS is off): record a
+	# completed arcade/time-attack run and the survival rounds survived. Only
+	# recovered outcomes are granted; nothing is invented.
+	if progress != null:
+		_record_progress(advanced, won)
 	print("GAME_MODES_RESULT mode=%s outcome=%s won=%s score=%d fights=%d" % [
 		current_mode, String(advanced.get("outcome", "")), str(won),
 		int(run.get("score", 0)), int(run.get("fights_done", 0))])
@@ -389,6 +395,37 @@ func match_finished(won: bool) -> void:
 		OS.set_environment(ENV_MODE_LAUNCH, "")
 		OS.set_environment(ENV_GAME_MODE, "")
 		show_results("failed")
+
+
+func _difficulty_name() -> String:
+	return ["easy", "medium", "hard"][clampi(int(run.get("difficulty_index", 1)), 0, 2)]
+
+
+## Map a finished run to the recovered progress triggers.
+##   arcade     : clear -> achv_arcade_{easy,medium,hard}
+##   time_attack: clear -> achv_time_attack_{easy,medium,hard} (pool cleared
+##                within the run time limit; time-attack is endless in the
+##                recovered rules, so "clear" = every recovered opponent beaten)
+##   survival   : survival_best_round = fights won (loss ends the run)
+func _record_progress(advanced: Dictionary, won: bool) -> void:
+	var outcome: String = String(advanced.get("outcome", "failed"))
+	var difficulty: String = _difficulty_name()
+	if current_mode == "survival":
+		var wins: int = 0
+		for row in run.get("fight_results", []):
+			if bool(Dictionary(row).get("won", false)):
+				wins += 1
+		progress.note_survival_round(wins)
+	elif current_mode == "arcade":
+		if outcome == "complete":
+			progress.note_mode_clear("arcade", difficulty)
+	elif current_mode == "timeattack":
+		if outcome == "complete":
+			progress.note_mode_clear("time_attack", difficulty)
+		elif outcome == "next" and won:
+			var count: int = int(run.get("opponent_count", 0))
+			if count > 0 and int(run.get("fights_done", 0)) >= count:
+				progress.note_mode_clear("time_attack", difficulty)
 
 
 func _resume_pending() -> bool:

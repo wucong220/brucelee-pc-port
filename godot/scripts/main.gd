@@ -19,6 +19,8 @@ const CameraAnm = preload("res://scripts/camera_anm_player.gd")
 const StoryFlow = preload("res://scripts/story_flow.gd")
 ## Opt-in Arcade / Survival / Time Attack modes (recovered game.states / gui).
 const GameModes = preload("res://scripts/game_modes.gd")
+## Opt-in progress/save subsystem bridge (inert unless BRUCELEE_PROGRESS=1).
+const ProgressHooks = preload("res://scripts/progress_hooks.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -335,6 +337,7 @@ var rounds_to_win: int = ROUNDS_TO_WIN
 var player_start_health_override: float = -1.0
 var story_flow: Node = null
 var game_modes: Node = null
+var progress: Node = null
 # Local port of the CBeatEmUpGame state machine. match_state is the native
 # EGameState value, match_state_time is GetStateTime() in seconds and
 # pending_round_winner is 0 (draw), 1 (player) or 2 (computer).
@@ -466,13 +469,21 @@ func _ready() -> void:
     var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
     var story_mode: bool = OS.get_environment("BRUCELEE_STORY_FLOW") == "1"
     var game_mode: bool = not OS.get_environment("BRUCELEE_GAME_MODE").is_empty()
+    # Opt-in progress/save subsystem: created only when BRUCELEE_PROGRESS=1, so
+    # every existing prototype path is untouched when the flag is absent.
+    if OS.get_environment("BRUCELEE_PROGRESS") == "1":
+        progress = ProgressHooks.new()
+        add_child(progress)
+        progress.configure()
     if story_mode:
         story_flow = StoryFlow.new()
         add_child(story_flow)
         story_flow.configure(self, MENU_OPPONENT_CONFIG)
+        story_flow.progress = progress
     game_modes = GameModes.new()
     add_child(game_modes)
     game_modes.configure(self, MENU_OPPONENT_CONFIG)
+    game_modes.progress = progress
     main_menu_enabled = (
         false if (export_self_test or story_mode or game_mode)
         else _should_show_main_menu()
@@ -3346,6 +3357,14 @@ func _show_round_result_text(winner: PortFighter, player_won: bool) -> void:
     if not player_won:
         _show_game_text("YOU_LOSE", wait, GAME_TEXT_SEQ_YOU_LOSE)
         return
+    # Opt-in progress: count GREAT / PERFECT round wins using the same recovered
+    # health rule that selects the game text below (SetState(7): health < 0x14 ->
+    # GREAT, health == 100 -> PERFECT).
+    if progress != null:
+        if winner.health < ROUND_GREAT_HEALTH:
+            progress.note_grade("great")
+        if is_equal_approx(winner.health, PortFighter.MAX_HEALTH):
+            progress.note_grade("perfect")
     if winner.health < ROUND_GREAT_HEALTH:
         _show_game_text("GREAT", wait, GAME_TEXT_SEQ_GREAT)
     else:
@@ -3422,6 +3441,12 @@ func _advance_round_end() -> void:
         match_over = true
         done = true
         var player_won: bool = player_rounds >= rounds_to_win
+        # Opt-in progress: a standalone 1v1 win (not story / arcade / training)
+        # is the port's versus match, so it feeds the versus-win counter.
+        if (progress != null and player_won and not training_mode
+                and OS.get_environment("BRUCELEE_STORY_FLOW") != "1"
+                and OS.get_environment("BRUCELEE_GAME_MODE").is_empty()):
+            progress.note_versus_win()
         hud.show_message(
             "YOU WIN THE MATCH · R TO RESTART" if player_won
             else "YOU LOSE THE MATCH · R TO RESTART"
@@ -3674,6 +3699,12 @@ func _training_available() -> bool:
 func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damage: float, blocked: bool) -> void:
     if done or training_completed:
         return
+    # Opt-in progress: count the player's grab / final-attack feats from landed
+    # hits only (combat_hit is emitted on contact). No-op when the flag is off.
+    if (progress != null and attacker == player and not training_mode
+            and not (move_training != null and move_training.is_active())
+            and not (move_gallery != null and move_gallery.is_active())):
+        progress.note_combat_hit(action, String(defender.state), true, attacker.attack_sequence)
     _play_hit_audio(action, blocked, defender)
     # brucelee.set reaction actions (impact*) carry a Bruce pain voice on the
     # victim; the port never played it. Block reactions have no voice cue, and

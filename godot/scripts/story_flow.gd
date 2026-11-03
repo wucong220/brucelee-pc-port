@@ -37,6 +37,7 @@ const COLOR_DONE := Color(0.45, 0.85, 0.55)
 const COLOR_LOCKED := Color(0.62, 0.36, 0.36)
 
 var main: Node = null
+var progress: Node = null
 var opponent_config: Dictionary = {}
 var data = null
 var state = null
@@ -951,6 +952,19 @@ func _finish_event() -> void:
 		chapter_completed_now = state.advance_chapter(data.chapter_count())
 		story_finished = not chapter_completed_now
 		auto_launch_armed = true
+	# Opt-in progress hooks (no-op when BRUCELEE_PROGRESS is off): grant the
+	# recovered event unlocks, count the chapter on its chapter_end event, and
+	# record full-story difficulty completion on the final chapter. EXP is synced
+	# from the story save, whose decoded subevents carry no EXP reward, so the
+	# recovered EXP-gated table never fires in normal play (fail closed, not
+	# invented). All calls are idempotent for replayed events.
+	if progress != null:
+		progress.sync_story_exp(int(state.exp))
+		progress.note_story_event(chapter_id, maptitle)
+		if chapter_completed_now or story_finished:
+			progress.note_story_chapter(chapter_id)
+		if story_finished:
+			progress.note_story_complete(String(state.difficulty_name))
 	state.save()
 	print("STORY_FLOW_EVENT_DONE %s/%s chapter_complete=%s story_complete=%s" % [
 		chapter_id, maptitle, str(chapter_completed_now), str(story_finished),
