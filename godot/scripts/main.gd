@@ -76,6 +76,38 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "material_profile": "body_hair",
         "attack_config": "res://data/attack_config_ken.json",
     },
+    "smallboy": {
+        "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\smallboy_full_body_hair_87_all_20261103.glb",
+        "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\smallboy",
+        "clip_prefix": "",
+        "master": "",
+        "material_profile": "body_hair",
+        "attack_config": "res://data/attack_config_smallboy.json",
+    },
+    "johnson": {
+        "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\johnson_full_body_88_all_20261103.glb",
+        "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\johnson",
+        "clip_prefix": "",
+        "master": "",
+        "material_profile": "body",
+        "attack_config": "res://data/attack_config_johnson.json",
+    },
+    "chief": {
+        "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\chief01_full_body_hair_84_all_20261103.glb",
+        "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\chief01",
+        "clip_prefix": "",
+        "master": "",
+        "material_profile": "body_hair",
+        "attack_config": "res://data/attack_config_chief.json",
+    },
+    "loming": {
+        "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\loming01_full_body_hair_82_all_20261103.glb",
+        "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\loming01",
+        "clip_prefix": "",
+        "master": "",
+        "material_profile": "body_hair",
+        "attack_config": "res://data/attack_config_loming.json",
+    },
 }
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 const ROUNDS_TO_WIN: int = 2
@@ -1021,6 +1053,14 @@ func _opponent_clips() -> Dictionary:
         return PortFighter.SHENLO_CLIPS
     if config_path == PortFighter.KEN_ATTACK_CONFIG_PATH:
         return PortFighter.KEN_CLIPS
+    if config_path == PortFighter.SMALLBOY_ATTACK_CONFIG_PATH:
+        return PortFighter.SMALLBOY_CLIPS
+    if config_path == PortFighter.JOHNSON_ATTACK_CONFIG_PATH:
+        return PortFighter.JOHNSON_CLIPS
+    if config_path == PortFighter.CHIEF_ATTACK_CONFIG_PATH:
+        return PortFighter.CHIEF_CLIPS
+    if config_path == PortFighter.LOMING_ATTACK_CONFIG_PATH:
+        return PortFighter.LOMING_CLIPS
     return PortFighter.BRICK_CLIPS
 
 
@@ -1195,7 +1235,7 @@ func _on_menu_command(command: String) -> void:
             OS.set_environment("BRUCELEE_SCENE", "tournamenthallb")
             OS.set_environment("BRUCELEE_MAIN_MENU", "0")
             get_tree().reload_current_scene()
-        "brick", "sinfu", "master", "ken", "shenlo":
+        "brick", "sinfu", "master", "ken", "shenlo", "smallboy", "johnson", "chief", "loming":
             _request_opponent_switch(command)
         "quit":
             get_tree().quit()
