@@ -15,6 +15,7 @@ const MoveGallery = preload("res://scripts/move_gallery.gd")
 ##   clip_prefix      candidate clip prefix, e.g. "m04" ("" means m03/Brick)
 ##   master           "1" selects the Master m04_e01_* clip table
 ##   material_profile CandidateMaterialLoader profile ("body" or "body_hair")
+##   attack_config    mapped fighting-set config ("" means the Brick default)
 ## Paths are the locally tested candidates; they are not shipped with the repo.
 const MENU_OPPONENT_CONFIG: Dictionary = {
     "brick": {
@@ -26,6 +27,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "clip_prefix": "",
         "master": "",
         "material_profile": "body",
+        "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
     },
     "sinfu": {
         "glb": (
@@ -36,6 +38,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "clip_prefix": "m04",
         "master": "",
         "material_profile": "body",
+        "attack_config": "res://data/attack_config_sinfu.json",
     },
     "master": {
         "glb": (
@@ -46,6 +49,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "clip_prefix": "",
         "master": "1",
         "material_profile": "body",
+        "attack_config": "res://data/attack_config_master.json",
     },
     "ken": {
         "glb": (
@@ -59,6 +63,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "clip_prefix": "m02",
         "master": "",
         "material_profile": "body_hair",
+        "attack_config": "res://data/attack_config_ken.json",
     },
 }
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
@@ -154,6 +159,14 @@ const AI_SPECIAL_RAGE_COSTS: Dictionary = {
     "parry_low_brick": 30.0,
     "grab1_brick": 66.0,
     "grab2_brick": 66.0,
+    # Mapped set configs (Master/SinFu/Ken) use unsuffixed slot names. The
+    # costs mirror the Brick rows because the prototype AI choice is unchanged;
+    # the native rage gates themselves are not recovered.
+    "special_kick_low": 33.0,
+    "special_punch_high": 66.0,
+    "special_punch_low": 66.0,
+    "parry_high": 33.0,
+    "parry_low": 30.0,
 }
 
 func _ready() -> void:
@@ -778,7 +791,7 @@ func _build_fighters() -> void:
     add_child(player)
     computer = PortFighter.new()
     computer.configure("Opponent (placeholder)", false, Color(0.20, 0.65, 0.76))
-    computer.configure_attack_config(PortFighter.BRICK_ATTACK_CONFIG_PATH)
+    computer.configure_attack_config(_opponent_attack_config())
     var opponent_material_profile: String = OS.get_environment(
         "BRUCELEE_OPPONENT_MATERIAL_PROFILE"
     )
@@ -800,24 +813,32 @@ func _build_fighters() -> void:
     computer.combat_hit.connect(_on_hit)
     player.attack_started.connect(_on_player_attack_started)
 
-func _opponent_clips() -> Dictionary:
+func _opponent_attack_config() -> String:
+    ## The opponent's fighting set decides the clip table and the move data.
+    ## BRUCELEE_OPPONENT_ATTACK_CONFIG is written by the opponent menu; the
+    ## clip-prefix / master fallbacks keep the older launchers working.
+    var configured: String = OS.get_environment("BRUCELEE_OPPONENT_ATTACK_CONFIG")
+    if not configured.is_empty():
+        return configured
     if OS.get_environment("BRUCELEE_OPPONENT_MASTER") == "1":
-        return {
-            "idle": "m04_e01_idle_01",
-            "punch": "m04_e01_pnch_low_03",
-            "kick": "m04_e01_kck_low_03",
-            "high_punch": "m04_e01_pnch_high_03",
-            "high_kick": "m04_e01_kck_high_03",
-            "special_punch_low": "m04_sp_pnch_low",
-            "special_kick_low": "m04_sp_kck_low",
-        }
+        return PortFighter.MASTER_ATTACK_CONFIG_PATH
     var prefix: String = OS.get_environment("BRUCELEE_OPPONENT_CLIP_PREFIX")
-    if prefix.is_empty():
-        return PortFighter.BRICK_CLIPS
-    var clips: Dictionary = {}
-    for key: String in PortFighter.BRICK_CLIPS:
-        clips[key] = String(PortFighter.BRICK_CLIPS[key]).replace("m03_", prefix + "_")
-    return clips
+    if prefix == "m04":
+        return PortFighter.SINFU_ATTACK_CONFIG_PATH
+    if prefix == "m02":
+        return PortFighter.KEN_ATTACK_CONFIG_PATH
+    return PortFighter.BRICK_ATTACK_CONFIG_PATH
+
+
+func _opponent_clips() -> Dictionary:
+    var config_path: String = _opponent_attack_config()
+    if config_path == PortFighter.MASTER_ATTACK_CONFIG_PATH:
+        return PortFighter.MASTER_CLIPS
+    if config_path == PortFighter.SINFU_ATTACK_CONFIG_PATH:
+        return PortFighter.SINFU_CLIPS
+    if config_path == PortFighter.KEN_ATTACK_CONFIG_PATH:
+        return PortFighter.KEN_CLIPS
+    return PortFighter.BRICK_CLIPS
 
 
 func _configure_round_time() -> void:
@@ -1030,6 +1051,9 @@ func _apply_opponent_switch(command: String) -> void:
     OS.set_environment(
         "BRUCELEE_OPPONENT_MATERIAL_PROFILE",
         String(config.get("material_profile", "body"))
+    )
+    OS.set_environment(
+        "BRUCELEE_OPPONENT_ATTACK_CONFIG", String(config.get("attack_config", ""))
     )
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
     get_tree().reload_current_scene()
@@ -1674,11 +1698,13 @@ func _think_ai(delta: float) -> void:
     if (player_threat and player.attack_sequence == ai_guard_sequence
             and ai_guard_decision and computer.state in ["idle", "idle2", "idle3"]
             and distance <= player.attack_reach_world(player.attack_kind, computer)):
-        var parry_kind: String = ("parry_low_brick"
-                if _player_attack_is_low() else "parry_high_brick")
+        var parry_names: Array[String] = _ai_move_names(
+            ["parry_low"] if _player_attack_is_low() else ["parry_high"]
+        )
+        var parry_kind: String = parry_names[0] if not parry_names.is_empty() else ""
         var parry_cost: float = float(AI_SPECIAL_RAGE_COSTS.get(parry_kind, 0.0))
-        if (computer.rage >= parry_cost and computer.supports_attack(parry_kind)
-                and rng.randf() < 0.5):
+        if (not parry_kind.is_empty() and computer.rage >= parry_cost
+                and computer.supports_attack(parry_kind) and rng.randf() < 0.5):
             computer.guard_held = false
             if computer.request_attack(parry_kind):
                 computer.rage = maxf(0.0, computer.rage - parry_cost)
@@ -1689,27 +1715,28 @@ func _think_ai(delta: float) -> void:
     if ai_timer <= 0.0:
         ai_timer = rng.randf_range(0.45, 0.95)
         if in_attack_reach:
-            var moves: Array[String] = [
+            var moves: Array[String] = _ai_move_names([
                 "punch", "kick",
                 "high_punch", "high_punch2", "high_punch3",
                 "low_punch", "low_punch2", "low_punch3",
                 "high_kick", "high_kick2", "high_kick3",
                 "low_kick", "low_kick2", "low_kick3",
-            ]
+            ])
             if player.state in ["facedownidle", "faceupidle"]:
-                moves.append("attack_to_floor_brick")
+                moves.append_array(_ai_move_names(["attack_to_floor"]))
             if player.state in ["grabbed1", "grabbed2"]:
-                moves.append("endattack_brick")
-            # Prototype AI choice: thai.set gates these on ragethird/rage2thirds;
+                moves.append_array(_ai_move_names(["endattack"]))
+            # Prototype AI choice: the sets gate these on ragethird/rage2thirds;
             # the native AI decision is not recovered, so this only spends rage.
             if computer.rage >= float(int(PortFighter.RAGE_MAX / 3.0)):
-                moves.append_array(["special_kick_high_brick", "special_kick_low_brick"])
+                moves.append_array(_ai_move_names([
+                    "special_kick_high", "special_kick_low",
+                ]))
             if computer.rage >= float(int(PortFighter.RAGE_MAX * 2.0 / 3.0)):
-                moves.append_array([
-                    "special_punch_high_brick", "special_punch_low_brick",
-                    "grab1_brick", "grab2_brick",
-                    "grab1_miss_brick", "grab2_miss_brick",
-                ])
+                moves.append_array(_ai_move_names([
+                    "special_punch_high", "special_punch_low",
+                    "grab1", "grab2", "grab1_miss", "grab2_miss",
+                ]))
             var available: Array[String] = []
             for move: String in moves:
                 if (computer.supports_attack(move)
@@ -1721,6 +1748,18 @@ func _think_ai(delta: float) -> void:
                     var cost: float = float(AI_SPECIAL_RAGE_COSTS.get(chosen, 0.0))
                     if cost > 0.0:
                         computer.rage = maxf(0.0, computer.rage - cost)
+
+
+func _ai_move_names(slots: Array[String]) -> Array[String]:
+    ## Mapped set configs name their character slots without a suffix
+    ## ("special_kick_high"); the shipped Brick file appends "_brick". Return
+    ## whichever names the loaded config actually defines.
+    var names: Array[String] = []
+    for slot: String in slots:
+        for candidate: String in [slot, slot + "_brick"]:
+            if computer.supports_attack(candidate):
+                names.append(candidate)
+    return names
 
 
 func _player_attack_poses_guard_threat() -> bool:

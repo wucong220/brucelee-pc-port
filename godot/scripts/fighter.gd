@@ -111,6 +111,150 @@ const BRICK_CLIPS: Dictionary = {
     "stepleft": "m03_steplft",
     "stepright": "m03_steprht",
 }
+# Candidate clip maps for the mapped set characters. Same shape as
+# BRICK_CLIPS: attack slots -> their set animation, plus the support keys the
+# state machine asks for. Generated from the fighting-set action tables.
+const MASTER_CLIPS: Dictionary = {
+    "idle": "m04_e01_idle_01",
+    "punch": "m04_pnch_low_03",
+    "kick": "m04_kck_low_02",
+    "high_punch": "m04_pnch_high_01",
+    "high_punch2": "m04_pnch_high_02",
+    "high_punch3": "m04_pnch_high_03",
+    "low_punch": "m04_pnch_low_01",
+    "low_punch2": "m04_pnch_low_02",
+    "low_punch3": "m04_pnch_low_03",
+    "high_kick": "m04_kck_high_01",
+    "high_kick2": "m04_kck_high_02",
+    "high_kick3": "m04_kck_high_03",
+    "low_kick": "m04_kck_low_03",
+    "low_kick2": "m04_kck_low_01",
+    "low_kick3": "m04_kck_low_02",
+    "special_kick_high": "m04_e01_kck_high_03",
+    "special_kick_low": "m04_e01_kck_low_03",
+    "special_punch_high": "m04_e01_pnch_high_03",
+    "special_punch_low": "m04_e01_pnch_low_03",
+    "parry_high": "m01_parry_high",
+    "parry_low": "m01_kick_low_02",
+    "parry_attack": "m04_pnch_high_02",
+    "grab1": "m04_sp_pnch_low",
+    "grab2": "m04_sp_kck_low",
+    "grab1_miss": "m04_sp_pnch_low",
+    "grab2_miss": "m04_sp_kck_low",
+    "attack_to_floor": "m01_attack_to_floor",
+    "endattack": "m04_end_attack_02",
+    "grabbed1": "all_sp_pnch_low_forset04",
+    "grabbed2": "all_sp_kck_low_forset04",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m04_movefwd",
+    "moveleft": "m04_movelft",
+    "moveright": "m04_moverht",
+    "stepfwd": "m04_stepfwd",
+    "stepback": "m04_stepbck",
+    "stepleft": "m04_steplft",
+    "stepright": "m04_steprht",
+}
+const SINFU_CLIPS: Dictionary = {
+    "idle": "m04_e02_idle_01",
+    "punch": "m04_pnch_low_03",
+    "kick": "m04_kck_low_02",
+    "high_punch": "m04_pnch_high_01",
+    "high_punch2": "m04_pnch_high_02",
+    "high_punch3": "m04_pnch_high_03",
+    "low_punch": "m04_pnch_low_01",
+    "low_punch2": "m04_pnch_low_02",
+    "low_punch3": "m04_pnch_low_03",
+    "high_kick": "m04_kck_high_01",
+    "high_kick2": "m04_kck_high_02",
+    "high_kick3": "m04_kck_high_03",
+    "low_kick": "m04_kck_low_03",
+    "low_kick2": "m04_kck_low_01",
+    "low_kick3": "m04_kck_low_02",
+    "special_kick_high": "m04_e02_kck_high_03",
+    "special_kick_low": "m04_e02_kck_low_03",
+    "special_punch_low": "m04_e02_pnch_low_03",
+    "parry_high": "m01_parry_high",
+    "parry_low": "m01_kick_low_02",
+    "parry_attack": "m04_pnch_high_02",
+    "grab1": "m04_grab_01",
+    "grab2": "m04_sp_kck_low",
+    "grab1_miss": "m02_grab_01",
+    "grab2_miss": "m04_sp_kck_low",
+    "attack_to_floor": "m01_attack_to_floor",
+    "endattack": "m04_end_attack_02",
+    "special_punch_high_miss": "m04_sp_pnch_high_fail",
+    "special_punch_high_hit": "m04_sp_pnch_high",
+    "grabbed1": "all_grabbed_01_forset04",
+    "grabbed2": "all_sp_kck_low_forset04",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m04_movefwd",
+    "moveleft": "m04_movelft",
+    "moveright": "m04_moverht",
+    "stepfwd": "m04_stepfwd",
+    "stepback": "m04_stepbck",
+    "stepleft": "m04_steplft",
+    "stepright": "m04_steprht",
+}
+const KEN_CLIPS: Dictionary = {
+    "idle": "m02_idle_01",
+    "punch": "m02_pnch_low_03",
+    "kick": "m02_kck_low_03",
+    "high_punch": "m02_pnch_high_01",
+    "high_punch2": "m02_pnch_high_03",
+    "high_punch3": "m02_pnch_high_02",
+    "low_punch": "m02_pnch_low_01",
+    "low_punch2": "m02_pnch_low_02",
+    "low_punch3": "m02_pnch_low_03",
+    "high_kick": "m02_kck_high_01",
+    "high_kick2": "m02_kck_high_03",
+    "high_kick3": "m02_kck_high_02",
+    "low_kick": "m02_kck_low_01",
+    "low_kick2": "m02_kck_low_02",
+    "low_kick3": "m02_kck_low_03",
+    "special_kick_high": "m02_sp_kck_high",
+    "special_kick_low": "m02_sp_kck_low",
+    "special_punch_high": "m02_sp_pnch_high",
+    "special_punch_low": "m02_sp_pnch_low",
+    "parry_high": "m02_parry_high",
+    "parry_attack": "m02_pnch_low_03",
+    "grab1": "m02_grab_01",
+    "grab2": "m02_grab_02",
+    "grab1_miss": "m02_grab_01",
+    "grab2_miss": "m02_grab_01",
+    "attack_to_floor": "m02_attack_to_floor",
+    "endattack": "m02_end_attack_01",
+    "grabbed1": "all_grabbed_01_forset02",
+    "grabbed2": "all_grabbed_02_forset02",
+    "endattackcomp1": "all_end_attack_01_forset02",
+    "endattackcomp2": "all_end_attack_02_forset02",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m02_movefwd",
+    "moveleft": "m02_movelft",
+    "moveright": "m02_moverht",
+    "stepfwd": "m02_stepfwd",
+    "stepback": "m02_stepbck",
+    "stepleft": "m02_steplft",
+    "stepright": "m02_steprht",
+}
+
 const SOURCE_FRAME_RATE: float = 30.0
 # Root-motion axis mapping is an isolated port adapter. EMPIRICAL means the
 # current mapping has passed the behavior tests; UNVERIFIED means the native
@@ -128,6 +272,15 @@ const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
 const BRICK_ATTACK_CONFIG_PATH: String = "res://data/fighting_set_m03_mapped_attacks.json"
+# Per-character mapped configs. adreno_200/characters.list assigns each
+# opponent a fighting set: "the master" and "sin fu" -> kungfu.set,
+# "ken godall" -> karate.set, "brick davis" -> thai.set. The two kungfu
+# characters share the set and differ only in the character-suffixed actions.
+const MASTER_ATTACK_CONFIG_PATH: String = "res://data/attack_config_master.json"
+const SINFU_ATTACK_CONFIG_PATH: String = "res://data/attack_config_sinfu.json"
+const KEN_ATTACK_CONFIG_PATH: String = "res://data/attack_config_ken.json"
+const KUNGFU_NATIVE_LINKS_PATH: String = "res://data/native_links_kungfu.json"
+const KARATE_NATIVE_LINKS_PATH: String = "res://data/native_links_karate.json"
 const ATTACK_ROOT_MOTION_PATH: String = "res://data/attack_root_motion.json"
 const MOVEMENT_ROOT_MOTION_PATH: String = "res://data/movement_root_motion.json"
 const LOCOMOTION_STEP_TO_MOVE: Dictionary = {
@@ -206,6 +359,109 @@ const BRICK_FACEDOWN_IMPACT_REACTION: Dictionary = {
     "clip_implemented": false,
 }
 const FACEDOWN_KO_RADIUS: float = 100.0
+# Per-config "fighting set profile". Bruce's own config (ATTACK_CONFIG_PATH) is
+# not listed: an empty profile means the brucelee.set rules. Every entry below
+# is recovered data from the set named in `source_archive`; the reaction exit
+# frames are the outgoing link windows of that set's impact/hard actions.
+const SET_ATTACK_PROFILES: Dictionary = {
+    "res://data/fighting_set_m03_mapped_attacks.json": {
+        "source_archive": "thai.set",
+        "link_tag": "brick",
+        "native_links": BRICK_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": BRICK_FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": BRICK_FACEDOWN_IMPACT_RADIUS,
+        "front_low_clip": BRICK_FRONT_LOW_CLIP,
+        "front_low_reaction": BRICK_FRONT_LOW_REACTION,
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 23,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": true,
+        "facedown_getup": false,
+    },
+    "res://data/attack_config_master.json": {
+        "source_archive": "kungfu.set",
+        "link_tag": "themaster",
+        "native_links": KUNGFU_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        # kungfu.set: impacthardfrontlow -> facedownidle [13,23]
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 75.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        # kungfu.set: impacthardfronthigh -> faceupidle [25,35]
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+    "res://data/attack_config_sinfu.json": {
+        "source_archive": "kungfu.set",
+        "link_tag": "sinfu",
+        "native_links": KUNGFU_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 75.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+    "res://data/attack_config_ken.json": {
+        "source_archive": "karate.set",
+        "link_tag": "ken",
+        "native_links": KARATE_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        # karate.set: impacthardfrontlow -> facedownidle [13,23]
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 80.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        # karate.set: impacthardfronthigh -> faceupidle [20,35]
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 80.0,
+            "exit_start_frame": 20,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+}
 const FACEDOWN_ATTACK_CLIP: String = "all_getup_facedwn_attack"
 const FACEDOWN_ATTACK_DURATION_FRAMES: int = 35
 const FACEDOWN_ATTACK_EXIT_FRAME: int = 32
@@ -904,6 +1160,410 @@ const THAI_REACTION_PROFILE_DATA: Dictionary = {
         },
     },
 }
+# Recovered per-character tables (see data/attack_config_*.json and
+# evidence/set_action_tables.md). The parser compares the JSON against
+# these rows so a config edit that drifts from the fighting set fails closed.
+const MASTER_ANIMATION_RADII_DATA: Dictionary = {
+    "all_block_high": 60.0,
+    "all_block_low": 60.0,
+    "all_block_mid": 60.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 50.0,
+    "all_impct_light_frnt_mid": 40.0,
+    "m01_attack_to_floor": 45.0,
+    "m01_kick_low_02": 40.0,
+    "m01_parry_high": 40.0,
+    "m04_e01_idle_01": 35.0,
+    "m04_e01_kck_high_03": 45.0,
+    "m04_e01_kck_low_03": 45.0,
+    "m04_e01_pnch_high_03": 65.0,
+    "m04_e01_pnch_low_03": 40.0,
+    "m04_end_attack_02": 25.0,
+    "m04_kck_high_01": 50.0,
+    "m04_kck_high_02": 50.0,
+    "m04_kck_high_03": 40.0,
+    "m04_kck_low_01": 50.0,
+    "m04_kck_low_02": 50.0,
+    "m04_kck_low_03": 50.0,
+    "m04_pnch_high_01": 40.0,
+    "m04_pnch_high_02": 25.0,
+    "m04_pnch_high_03": 60.0,
+    "m04_pnch_low_01": 40.0,
+    "m04_pnch_low_02": 40.0,
+    "m04_pnch_low_03": 40.0,
+    "m04_sp_kck_low": 25.0,
+    "m04_sp_pnch_low": 25.0,
+}
+const MASTER_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m04_pnch_high_01", 68, 6, 5, 57, 5.0, 75.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m04_pnch_high_02", 50, 6, 5, 39, 6.0, 65.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m04_pnch_high_03", 50, 15, 8, 27, 7.0, 75.0, "larm", "high", "hard", "fromabove"],
+    "low_punch": ["lowpunch1", "m04_pnch_low_01", 48, 5, 5, 38, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m04_pnch_low_02", 64, 8, 4, 52, 6.0, 85.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m04_kck_high_01", 53, 9, 6, 38, 5.0, 80.0, "rleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m04_kck_high_02", 43, 6, 6, 31, 6.0, 80.0, "rleg", "high", "normal", "fromright"],
+    "high_kick3": ["highkick3", "m04_kck_high_03", 60, 9, 5, 46, 7.0, 80.0, "lleg", "high", "hard", "fromleft"],
+    "low_kick": ["lowkick1", "m04_kck_low_03", 22, 6, 5, 11, 5.0, 70.0, "lleg", "low", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m04_kck_low_01", 34, 5, 5, 24, 5.0, 100.0, "lleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high": ["specialkickhigh master", "m04_e01_kck_high_03", 73, 14, 3, 56, 12.0, 95.0, "rleg", "high", "brutal", "fromright"],
+    "special_kick_low": ["specialkicklow master", "m04_e01_kck_low_03", 153, 15, 4, 134, 10.0, 90.0, "rleg", "low", "hard", "fromright"],
+    "special_punch_high": ["specialpunchhigh master", "m04_e01_pnch_high_03", 62, 7, 4, 51, 10.0, 135.0, "larm", "high", "hard", "frontal"],
+    "special_punch_low": ["specialpunchlow master", "m04_e01_pnch_low_03", 82, 4, 25, 53, 16.0, 65.0, "larm", "low", "normal", "frontal"],
+    "parry_high": ["parryhigh", "m01_parry_high", 62, 9, 2, 51, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_low": ["parrylow", "m01_kick_low_02", 27, 7, 4, 16, 0.0, 65.0, "rleg", "low", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m04_pnch_high_02", 50, 6, 5, 39, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 master", "m04_sp_pnch_low", 28, 7, 2, 19, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+    "grab2": ["grab2 master", "m04_sp_kck_low", 55, 12, 12, 31, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab1_miss": ["grab1miss master", "m04_sp_pnch_low", 28, 5, 3, 20, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss master", "m04_sp_kck_low", 55, 4, 4, 47, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
+    "endattack": ["endattack master", "m04_end_attack_02", 75, 37, 4, 34, 0.0, 75.0, "lleg", "high", "brutal", "fromleft"],
+}
+const MASTER_REACTION_PROFILE_DATA: Dictionary = {
+    "hit": {
+        "low": {
+            "source_action": "impactlightfrontlow",
+            "animation": "all_impct_light_frnt_low",
+            "animation_radius": 50.0,
+            "exit_start_frame": 14,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "impactlightfrontmid",
+            "animation": "all_impct_light_frnt_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 16,
+            "animation_duration_frames": 16,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "impactlightfronthigh",
+            "animation": "all_impct_light_frnt_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+    "block": {
+        "low": {
+            "source_action": "lowblock",
+            "animation": "all_block_low",
+            "animation_radius": 60.0,
+            "exit_start_frame": 10,
+            "animation_duration_frames": 23,
+            "linking_frame": 14,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "midblock",
+            "animation": "all_block_mid",
+            "animation_radius": 60.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "highblock",
+            "animation": "all_block_high",
+            "animation_radius": 60.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+}
+
+const SINFU_ANIMATION_RADII_DATA: Dictionary = {
+    "all_block_high": 60.0,
+    "all_block_low": 60.0,
+    "all_block_mid": 60.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 50.0,
+    "all_impct_light_frnt_mid": 40.0,
+    "m01_attack_to_floor": 45.0,
+    "m01_kick_low_02": 40.0,
+    "m01_parry_high": 40.0,
+    "m02_grab_01": 25.0,
+    "m04_e02_idle_01": 50.0,
+    "m04_e02_kck_high_03": 50.0,
+    "m04_e02_kck_low_03": 55.0,
+    "m04_e02_pnch_low_03": 55.0,
+    "m04_end_attack_02": 25.0,
+    "m04_grab_01": 25.0,
+    "m04_kck_high_01": 50.0,
+    "m04_kck_high_02": 50.0,
+    "m04_kck_high_03": 40.0,
+    "m04_kck_low_01": 50.0,
+    "m04_kck_low_02": 50.0,
+    "m04_kck_low_03": 50.0,
+    "m04_pnch_high_01": 40.0,
+    "m04_pnch_high_02": 25.0,
+    "m04_pnch_high_03": 60.0,
+    "m04_pnch_low_01": 40.0,
+    "m04_pnch_low_02": 40.0,
+    "m04_pnch_low_03": 40.0,
+    "m04_sp_kck_low": 25.0,
+    "m04_sp_pnch_high": 25.0,
+    "m04_sp_pnch_high_fail": 40.0,
+}
+const SINFU_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m04_pnch_high_01", 68, 6, 5, 57, 5.0, 75.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m04_pnch_high_02", 50, 6, 5, 39, 6.0, 65.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m04_pnch_high_03", 50, 15, 8, 27, 7.0, 75.0, "larm", "high", "hard", "fromabove"],
+    "low_punch": ["lowpunch1", "m04_pnch_low_01", 48, 5, 5, 38, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m04_pnch_low_02", 64, 8, 4, 52, 6.0, 85.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m04_kck_high_01", 53, 9, 6, 38, 5.0, 80.0, "rleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m04_kck_high_02", 43, 6, 6, 31, 6.0, 80.0, "rleg", "high", "normal", "fromright"],
+    "high_kick3": ["highkick3", "m04_kck_high_03", 60, 9, 5, 46, 7.0, 80.0, "lleg", "high", "hard", "fromleft"],
+    "low_kick": ["lowkick1", "m04_kck_low_03", 22, 6, 5, 11, 5.0, 70.0, "lleg", "low", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m04_kck_low_01", 34, 5, 5, 24, 5.0, 100.0, "lleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high": ["specialkickhigh sinfu", "m04_e02_kck_high_03", 85, 9, 6, 70, 10.0, 55.0, "lleg", "high", "hard", "frontal"],
+    "special_kick_low": ["specialkicklow sinfu", "m04_e02_kck_low_03", 76, 10, 16, 50, 12.0, 75.0, "rleg", "low", "normal", "fromleft"],
+    "special_punch_low": ["specialpunchlow sinfu", "m04_e02_pnch_low_03", 104, 11, 4, 89, 10.0, 75.0, "rarm", "medium", "hard", "frontal"],
+    "parry_high": ["parryhigh", "m01_parry_high", 62, 9, 2, 51, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_low": ["parrylow", "m01_kick_low_02", 27, 7, 4, 16, 0.0, 65.0, "rleg", "low", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m04_pnch_high_02", 50, 6, 5, 39, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 sinfu", "m04_grab_01", 103, 34, 11, 58, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab2": ["grab2 sinfu", "m04_sp_kck_low", 55, 12, 12, 31, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab1_miss": ["grab1miss sinfu", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss sinfu", "m04_sp_kck_low", 55, 4, 4, 47, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
+    "endattack": ["endattack sinfu", "m04_end_attack_02", 75, 37, 3, 35, 0.0, 75.0, "rleg", "high", "hard", "fromleft"],
+    "special_punch_high_miss": ["specialpunchhighmiss sinfu", "m04_sp_pnch_high_fail", 71, 10, 3, 58, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "special_punch_high_hit": ["specialpunchhighhit sinfu", "m04_sp_pnch_high", 50, 11, 12, 27, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+}
+const SINFU_REACTION_PROFILE_DATA: Dictionary = {
+    "hit": {
+        "low": {
+            "source_action": "impactlightfrontlow",
+            "animation": "all_impct_light_frnt_low",
+            "animation_radius": 50.0,
+            "exit_start_frame": 14,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "impactlightfrontmid",
+            "animation": "all_impct_light_frnt_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 16,
+            "animation_duration_frames": 16,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "impactlightfronthigh",
+            "animation": "all_impct_light_frnt_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+    "block": {
+        "low": {
+            "source_action": "lowblock",
+            "animation": "all_block_low",
+            "animation_radius": 60.0,
+            "exit_start_frame": 10,
+            "animation_duration_frames": 23,
+            "linking_frame": 14,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "midblock",
+            "animation": "all_block_mid",
+            "animation_radius": 60.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "highblock",
+            "animation": "all_block_high",
+            "animation_radius": 60.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+}
+
+const KEN_ANIMATION_RADII_DATA: Dictionary = {
+    "all_block_high": 40.0,
+    "all_block_low": 40.0,
+    "all_block_mid": 40.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 40.0,
+    "all_impct_light_frnt_mid": 40.0,
+    "m02_attack_to_floor": 45.0,
+    "m02_end_attack_01": 25.0,
+    "m02_grab_01": 25.0,
+    "m02_grab_02": 25.0,
+    "m02_idle_01": 55.0,
+    "m02_kck_high_01": 50.0,
+    "m02_kck_high_02": 40.0,
+    "m02_kck_high_03": 50.0,
+    "m02_kck_low_01": 50.0,
+    "m02_kck_low_02": 50.0,
+    "m02_kck_low_03": 70.0,
+    "m02_parry_high": 40.0,
+    "m02_pnch_high_01": 40.0,
+    "m02_pnch_high_02": 60.0,
+    "m02_pnch_high_03": 30.0,
+    "m02_pnch_low_01": 40.0,
+    "m02_pnch_low_02": 40.0,
+    "m02_pnch_low_03": 45.0,
+    "m02_sp_kck_high": 50.0,
+    "m02_sp_kck_low": 45.0,
+    "m02_sp_pnch_high": 30.0,
+    "m02_sp_pnch_low": 45.0,
+}
+const KEN_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m02_pnch_low_03", 57, 14, 7, 36, 7.0, 70.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m02_kck_low_03", 35, 9, 6, 20, 7.0, 110.0, "rleg", "low", "hard", "frontal"],
+    "high_punch": ["highpunch1", "m02_pnch_high_01", 40, 7, 3, 30, 5.0, 60.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m02_pnch_high_03", 46, 8, 4, 34, 6.0, 70.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m02_pnch_high_02", 20, 8, 4, 8, 7.0, 80.0, "larm", "high", "hard", "frontal"],
+    "low_punch": ["lowpunch1", "m02_pnch_low_01", 31, 7, 4, 20, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m02_pnch_low_02", 27, 7, 4, 16, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m02_pnch_low_03", 57, 14, 7, 36, 7.0, 70.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m02_kck_high_01", 50, 7, 6, 37, 5.0, 80.0, "lleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m02_kck_high_03", 52, 14, 5, 33, 6.0, 80.0, "lleg", "high", "normal", "frontal"],
+    "high_kick3": ["highkick3", "m02_kck_high_02", 50, 9, 4, 37, 8.0, 80.0, "lleg", "high", "hard", "frontal"],
+    "low_kick": ["lowkick1", "m02_kck_low_01", 26, 5, 4, 17, 4.0, 65.0, "lleg", "low", "normal", "fromright"],
+    "low_kick2": ["lowkick2", "m02_kck_low_02", 24, 8, 4, 12, 4.0, 65.0, "rleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m02_kck_low_03", 35, 9, 6, 20, 7.0, 110.0, "rleg", "low", "hard", "frontal"],
+    "special_kick_high": ["specialkickhigh ken", "m02_sp_kck_high", 48, 20, 4, 24, 13.0, 75.0, "rleg", "high", "hard", "frontal"],
+    "special_kick_low": ["specialkicklow ken", "m02_sp_kck_low", 60, 15, 7, 38, 12.0, 65.0, "rleg", "low", "hard", "frontal"],
+    "special_punch_high": ["specialpunchhigh ken", "m02_sp_pnch_high", 58, 9, 7, 42, 15.0, 80.0, "larm", "high", "hard", "frontal"],
+    "special_punch_low": ["specialpunchlow ken", "m02_sp_pnch_low", 47, 8, 15, 24, 14.0, 60.0, "larm", "medium", "normal", "frontal"],
+    "parry_high": ["parryhigh", "m02_parry_high", 19, 9, 2, 8, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m02_pnch_low_03", 57, 14, 5, 38, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 ken", "m02_grab_01", 47, 32, 7, 8, 16.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab2": ["grab2 ken", "m02_grab_02", 98, 65, 6, 27, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab1_miss": ["grab1miss ken", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss ken", "m02_grab_01", 47, 4, 4, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m02_attack_to_floor", 34, 8, 5, 21, 6.0, 105.0, "rarm", "low", "normal", "frontal"],
+    "endattack": ["endattack ken", "m02_end_attack_01", 132, 18, 1, 113, 0.0, 45.0, "rleg", "high", "hard", "fromleft"],
+}
+const KEN_REACTION_PROFILE_DATA: Dictionary = {
+    "hit": {
+        "low": {
+            "source_action": "impactlightfrontlow",
+            "animation": "all_impct_light_frnt_low",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "impactlightfrontmid",
+            "animation": "all_impct_light_frnt_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 14,
+            "animation_duration_frames": 16,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "impactlightfronthigh",
+            "animation": "all_impct_light_frnt_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+    "block": {
+        "low": {
+            "source_action": "lowblock",
+            "animation": "all_block_low",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 23,
+            "linking_frame": 14,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "midblock",
+            "animation": "all_block_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "highblock",
+            "animation": "all_block_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+}
+
+
 const BRUCE_EXACT_REACTION_DATA: Dictionary = {
     "hit": [
         {
@@ -1164,6 +1824,9 @@ var REACTION_PROFILES: Dictionary = {}
 var EXACT_REACTIONS: Dictionary = {}
 var attack_config_path: String = ATTACK_CONFIG_PATH
 var attack_config_error: String = ""
+# Resolved from SET_ATTACK_PROFILES for non-Bruce fighting sets; empty means
+# the brucelee.set rules.
+var attack_set_profile: Dictionary = {}
 var radius_scale: float = 1.0
 var source_units_to_world: float = WORLD_CHARACTER_HEIGHT / SOURCE_CHARACTER_HEIGHT
 var source_animation_radii: Dictionary = SOURCE_ANIMATION_RADII_DATA.duplicate(true)
@@ -1478,6 +2141,7 @@ func _load_attack_definitions() -> bool:
     radius_scale = 1.0
     source_units_to_world = WORLD_CHARACTER_HEIGHT / SOURCE_CHARACTER_HEIGHT
     source_animation_radii = SOURCE_ANIMATION_RADII_DATA.duplicate(true)
+    attack_set_profile = SET_ATTACK_PROFILES.get(attack_config_path, {})
     if not FileAccess.file_exists(attack_config_path):
         attack_config_error = "missing " + attack_config_path
         return false
@@ -1509,6 +2173,21 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
     var archive_value: Variant = config.get("source_archive", "")
     if typeof(archive_value) == TYPE_STRING and String(archive_value) == "thai.set":
         return _parse_thai_mapped_attack_config(config)
+    if attack_config_path == MASTER_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "kungfu.set", MASTER_ATTACK_DATA,
+            MASTER_ANIMATION_RADII_DATA, MASTER_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == SINFU_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "kungfu.set", SINFU_ATTACK_DATA,
+            SINFU_ANIMATION_RADII_DATA, SINFU_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == KEN_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "karate.set", KEN_ATTACK_DATA,
+            KEN_ANIMATION_RADII_DATA, KEN_REACTION_PROFILE_DATA
+        )
     var schema_value: Variant = config.get("schema_version")
     if not _is_number(schema_value) or float(schema_value) != 4.0:
         return _reject_attack_config("unsupported schema version")
@@ -1939,6 +2618,200 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
     return result
 
 
+func _parse_set_mapped_attack_config(
+        config: Dictionary,
+        set_name: String,
+        attack_data: Dictionary,
+        radii_data: Dictionary,
+        reaction_data: Dictionary
+) -> Dictionary:
+    # Mapped fighting-set profile: the JSON may only restate what the recovered
+    # table holds, and every table row must be present. This is the same
+    # contract as _parse_thai_mapped_attack_config, generalised so kungfu.set
+    # (Master/SinFu) and karate.set (Ken) reuse it instead of Brick's table.
+    var schema_value: Variant = config.get("schema_version")
+    if not _is_number(schema_value) or float(schema_value) != 4.0:
+        return _reject_attack_config("unsupported schema version")
+    if (typeof(config.get("source_archive")) != TYPE_STRING
+            or String(config.get("source_archive")) != set_name):
+        return _reject_attack_config("unexpected source archive")
+    var frame_rate_value: Variant = config.get("frame_rate")
+    if (not _is_number(frame_rate_value)
+            or absf(float(frame_rate_value) - SOURCE_FRAME_RATE) > 0.001):
+        return _reject_attack_config("frame rate does not match the source")
+    var geometry_value: Variant = config.get("source_geometry")
+    if not geometry_value is Dictionary:
+        return _reject_attack_config("source_geometry is not an object")
+    var geometry: Dictionary = geometry_value
+    for key: String in [
+            "source_height", "world_height", "radius_scale",
+            "idle_source_archive", "animation_radii"]:
+        if not geometry.has(key):
+            return _reject_attack_config("source_geometry lacks " + key)
+    if (not _is_number(geometry["source_height"])
+            or not _is_number(geometry["world_height"])
+            or not _is_number(geometry["radius_scale"])):
+        return _reject_attack_config("source_geometry contains non-numeric scale values")
+    var source_height: float = float(geometry["source_height"])
+    var world_height: float = float(geometry["world_height"])
+    var loaded_radius_scale: float = float(geometry["radius_scale"])
+    if (typeof(geometry["idle_source_archive"]) != TYPE_STRING
+            or String(geometry["idle_source_archive"]) != set_name):
+        return _reject_attack_config("unexpected idle source archive")
+    if (source_height <= 0.0
+            or absf(source_height - SOURCE_CHARACTER_HEIGHT) > 0.001
+            or world_height <= 0.0
+            or absf(world_height - WORLD_CHARACTER_HEIGHT) > 0.001
+            or loaded_radius_scale <= 0.0
+            or absf(loaded_radius_scale - 1.0) > 0.001):
+        return _reject_attack_config("source_geometry has invalid or unexpected scale values")
+    var radii_value: Variant = geometry["animation_radii"]
+    if not radii_value is Dictionary:
+        return _reject_attack_config("animation_radii is not an object")
+    var radii: Dictionary = radii_value
+    var loaded_radii: Dictionary = {}
+    for animation: String in radii_data:
+        if not radii.has(animation) or not _is_number(radii[animation]):
+            return _reject_attack_config("animation_radii." + animation + " is missing or non-numeric")
+        var radius: float = float(radii[animation])
+        if radius <= 0.0 or absf(radius - float(radii_data[animation])) > 0.001:
+            return _reject_attack_config("animation_radii." + animation + " does not match " + set_name)
+        loaded_radii[animation] = radius
+    for animation: String in radii:
+        if not _is_number(radii[animation]) or float(radii[animation]) <= 0.0:
+            return _reject_attack_config("animation_radii." + animation + " is invalid")
+        loaded_radii[animation] = float(radii[animation])
+    var loaded_reactions: Dictionary = _parse_reaction_profiles(
+        config.get("reaction_profiles"), reaction_data
+    )
+    if loaded_reactions.is_empty():
+        return {}
+    var configured_attacks: Variant = config.get("attacks")
+    if not configured_attacks is Dictionary:
+        return _reject_attack_config("attacks is not an object")
+    var attacks: Dictionary = configured_attacks
+    for required_action: String in attack_data:
+        if not attacks.has(required_action):
+            return _reject_attack_config(set_name + " mapping lacks " + required_action)
+    var result: Dictionary = {}
+    for action: String in attacks.keys():
+        if not attack_data.has(action):
+            return _reject_attack_config(
+                set_name + " mapping contains an unknown action: " + action
+            )
+        var entry_value: Variant = attacks[action]
+        if not entry_value is Dictionary:
+            return _reject_attack_config(action + " is not an object")
+        var entry: Dictionary = entry_value
+        for key: String in [
+                "source_action", "animation", "animation_frame_count",
+                "startup_frames", "active_frames", "recovery_frames",
+                "damage", "source_impact"]:
+            if not entry.has(key):
+                return _reject_attack_config(action + " lacks " + key)
+        if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
+                or not _is_number(entry["recovery_frames"])
+                or not _is_number(entry["animation_frame_count"])
+                or not _is_number(entry["damage"])):
+            return _reject_attack_config(action + " contains non-numeric values")
+        var startup_frames: int = int(entry["startup_frames"])
+        var active_frames: int = int(entry["active_frames"])
+        var recovery_frames: int = int(entry["recovery_frames"])
+        var frame_count: int = int(entry["animation_frame_count"])
+        if (float(entry["startup_frames"]) != float(startup_frames)
+                or float(entry["active_frames"]) != float(active_frames)
+                or float(entry["recovery_frames"]) != float(recovery_frames)
+                or float(entry["animation_frame_count"]) != float(frame_count)
+                or startup_frames < 0 or active_frames <= 0 or recovery_frames < 0
+                or startup_frames + active_frames + recovery_frames != frame_count):
+            return _reject_attack_config(action + " phase frames do not match the clip")
+        var expected: Array = attack_data.get(action, [])
+        if (String(entry["source_action"]) != String(expected[0])
+                or String(entry["animation"]) != String(expected[1])
+                or frame_count != int(expected[2])
+                or startup_frames != int(expected[3])
+                or active_frames != int(expected[4])
+                or recovery_frames != int(expected[5])
+                or absf(float(entry["damage"]) - float(expected[6])) > 0.001):
+            return _reject_attack_config(
+                action + " does not match recovered " + set_name + " frames"
+            )
+        var impact_value: Variant = entry["source_impact"]
+        if not impact_value is Dictionary:
+            return _reject_attack_config(action + " source_impact is not an object")
+        var impact: Dictionary = impact_value
+        for key: String in ["attack_radius", "body_part", "height", "strength", "direction"]:
+            if not impact.has(key):
+                return _reject_attack_config(action + " impact lacks " + key)
+        if (not _is_number(impact["attack_radius"])
+                or absf(float(impact["attack_radius"]) - float(expected[7])) > 0.001
+                or String(impact["body_part"]) != String(expected[8])
+                or String(impact["height"]) != String(expected[9])
+                or String(impact["strength"]) != String(expected[10])
+                or String(impact["direction"]) != String(expected[11])):
+            return _reject_attack_config(
+                action + " impact does not match recovered " + set_name + " data"
+            )
+        var multi_impacts: Array = []
+        if entry.has("multi_impacts"):
+            if not entry["multi_impacts"] is Array:
+                return _reject_attack_config(action + " multi_impacts is not an array")
+            for multi_value: Variant in entry["multi_impacts"]:
+                if not multi_value is Dictionary:
+                    return _reject_attack_config(action + " multi impact is not an object")
+                var multi_impact: Dictionary = multi_value
+                for key: String in [
+                        "damage", "damage_time", "attack_radius",
+                        "body_part", "height", "strength", "direction"]:
+                    if not multi_impact.has(key):
+                        return _reject_attack_config(action + " multi impact lacks " + key)
+                var timing_value: Variant = multi_impact["damage_time"]
+                if (not timing_value is Array or Array(timing_value).size() != 2
+                        or not _is_number(timing_value[0]) or not _is_number(timing_value[1])
+                        or float(timing_value[0]) < 0.0
+                        or float(timing_value[1]) < float(timing_value[0])
+                        or float(timing_value[1]) >= float(frame_count)):
+                    return _reject_attack_config(action + " multi impact timing is invalid")
+                if (not _is_number(multi_impact["damage"])
+                        or not _is_number(multi_impact["attack_radius"])):
+                    return _reject_attack_config(action + " multi impact values are non-numeric")
+                if String(multi_impact["body_part"]) not in ["larm", "rarm", "lleg", "rleg"]:
+                    return _reject_attack_config(action + " multi impact body part is invalid")
+                if String(multi_impact["height"]) not in ["high", "medium", "low"]:
+                    return _reject_attack_config(action + " multi impact height is invalid")
+                if String(multi_impact["strength"]) not in ["hard", "normal", "brutal"]:
+                    return _reject_attack_config(action + " multi impact strength is invalid")
+                if String(multi_impact["direction"]) not in ["frontal", "fromleft", "fromright", "fromabove"]:
+                    return _reject_attack_config(action + " multi impact direction is invalid")
+                multi_impacts.append(multi_impact.duplicate(true))
+            var window_start: int = int(multi_impacts[0]["damage_time"][0])
+            var window_end: int = int(multi_impacts[multi_impacts.size() - 1]["damage_time"][1])
+            if (window_start != startup_frames
+                    or window_end - window_start + 1 != active_frames):
+                return _reject_attack_config(
+                    action + " multi impact windows do not span the active phase"
+                )
+        var animation_radius: float = float(radii_data.get(String(entry["animation"]), -1.0))
+        result[action] = {
+            "startup": float(startup_frames) / SOURCE_FRAME_RATE,
+            "active": float(active_frames) / SOURCE_FRAME_RATE,
+            "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
+            "damage": float(entry["damage"]),
+            "source_action": String(entry["source_action"]),
+            "animation": String(entry["animation"]),
+            "animation_frame_count": frame_count,
+            "animation_radius": animation_radius,
+            "source_impact": impact.duplicate(true),
+            "multi_impacts": multi_impacts,
+        }
+    radius_scale = loaded_radius_scale
+    source_units_to_world = world_height / source_height
+    source_animation_radii = loaded_radii
+    REACTION_PROFILES = loaded_reactions
+    EXACT_REACTIONS = {}
+    return result
+
+
 func _parse_exact_reactions(value: Variant) -> Dictionary:
     if not value is Dictionary:
         return _reject_attack_config("exact_reactions is not an object")
@@ -2075,11 +2948,22 @@ func _try_load_candidate_visual() -> void:
         push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
     var missing: Array[String] = []
+    # A mapped set candidate may ship only the character-specific clips (the
+    # Master candidate has no m04 base punch/kick yet). Such candidates still
+    # load; per-action availability stays gated by supports_attack().
+    var required_clips: Array[String] = ["idle", "punch", "kick"]
+    if not attack_set_profile.is_empty():
+        # A mapped set candidate may ship only some of the set's clips (the
+        # Master candidate has no m04 base punch/kick yet); those are optional.
+        required_clips = ["idle"]
     for action: String in ["idle", "punch", "kick"]:
+        if not candidate_clips.has(action):
+            continue
         var expected: String = candidate_clips[action]
         var matched: String = _find_animation_clip(_candidate_animation, expected)
         if matched.is_empty():
-            missing.append(expected)
+            if action in required_clips:
+                missing.append(expected)
         else:
             _candidate_clip_paths[action] = matched
     if not missing.is_empty():
@@ -2103,7 +2987,9 @@ func _try_load_candidate_visual() -> void:
             "move", "ko", "high_punch", "high_kick",
             "low_punch", "low_kick",
             "high_punch3", "low_punch3", "low_kick3", "high_kick3",
-            "special_kick_high",
+            "special_kick_high", "special_kick_low",
+            "special_punch_high", "special_punch_low",
+            "attack_to_floor", "endattack",
             "special_kick_high_brick", "special_kick_low_brick",
             "special_punch_high_brick", "special_punch_low_brick",
             "parry_high_brick", "parry_low_brick", "parry_attack_brick",
@@ -2608,11 +3494,13 @@ func _verified_post_hit_return_state() -> String:
         last_reaction_clip_implemented
         and _candidate_clip_paths.has(last_reaction_animation)
     )
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+    if (bool(attack_set_profile.get("facedown_low_impact", false))
             and last_reaction_source_action == "impacthardfrontlow"
-            and last_reaction_animation == BRICK_FRONT_LOW_CLIP
+            and last_reaction_animation == String(
+                attack_set_profile.get("front_low_clip", BRICK_FRONT_LOW_CLIP)
+            )
             and reaction_clip_ready
-            and _candidate_clip_paths.has(BRICK_FACEDOWN_IDLE_CLIP)):
+            and _candidate_clip_paths.has(_facedown_idle_clip())):
         return "facedownidle"
     if (reaction_clip_ready
             and return_action == "idle2"
@@ -2739,7 +3627,7 @@ func _advance_return_state(delta: float) -> void:
     if state == "facedownidle":
         var before: float = state_time
         state_time += maxf(delta, 0.0)
-        if (attack_config_path != BRICK_ATTACK_CONFIG_PATH
+        if (bool(attack_set_profile.get("facedown_getup", true))
                 and _facedown_getup_requested(before, state_time)):
             _begin_facedown_getup()
             return
@@ -2901,7 +3789,7 @@ func _begin_faceup_getup() -> void:
 func _accepts_facedown_low_impact(impact_height: String, blocked: bool, damage: float) -> bool:
     return (
         state == "facedownidle"
-        and attack_config_path != BRICK_ATTACK_CONFIG_PATH
+        and not bool(attack_set_profile.get("facedown_low_impact", false))
         and not blocked
         and impact_height == "low"
         and health - damage > 0.0
@@ -3068,7 +3956,7 @@ func _accepts_link_input(virtual_key: String) -> bool:
     # Otherwise a press made while guarding becomes the first key of a later
     # sequence.
     if (guard_held
-            or attack_config_path == BRICK_ATTACK_CONFIG_PATH
+            or not attack_set_profile.is_empty()
             or virtual_key not in [
                 "a", "b", "c", "d",
                 "up", "down", "left", "right", "in", "out",
@@ -3237,7 +4125,7 @@ func _native_link_unique_ok(link: Dictionary) -> bool:
     var unique: Array = Array(link.get("unique", []))
     if unique.is_empty():
         return true
-    var tag: String = "brick" if attack_config_path == BRICK_ATTACK_CONFIG_PATH else "brucelee"
+    var tag: String = String(attack_set_profile.get("link_tag", "brucelee"))
     for value: Variant in unique:
         if String(value).to_lower().contains(tag):
             return true
@@ -3718,9 +4606,8 @@ func _normalize_press_token(token: String) -> String:
 
 
 func _load_native_links() -> void:
-    var path: String = (
-        BRICK_NATIVE_LINKS_PATH if attack_config_path == BRICK_ATTACK_CONFIG_PATH
-        else NATIVE_LINKS_PATH
+    var path: String = String(
+        attack_set_profile.get("native_links", NATIVE_LINKS_PATH)
     )
     var file: FileAccess = FileAccess.open(path, FileAccess.READ)
     if file == null:
@@ -4455,7 +5342,7 @@ func current_source_pose() -> String:
     if not candidate_loaded or not SOURCE_ACTION_POSES.has(state):
         return ""
     # Only these actions currently have Brick-specific candidate mappings.
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+    if (not attack_set_profile.is_empty()
             and state not in ["idle", "facedownidle", "impactfacedown"]):
         return ""
     var animation: String = current_source_animation()
@@ -4529,17 +5416,15 @@ func _owner_idle_animation() -> String:
 
 
 func _facedown_idle_clip() -> String:
-    if attack_config_path == BRICK_ATTACK_CONFIG_PATH:
-        return BRICK_FACEDOWN_IDLE_CLIP
-    return FACEDOWN_IDLE_CLIP
+    return String(attack_set_profile.get("facedown_idle_clip", FACEDOWN_IDLE_CLIP))
 
 
 func _stored_animation_radius(animation: String) -> float:
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            and animation == FACEDOWN_IMPACT_CLIP):
-        # thai.set action 92 uses radius 85. The Bruce set uses 80 for the
-        # same animation, so this value is character-config specific.
-        return BRICK_FACEDOWN_IMPACT_RADIUS
+    if (animation == FACEDOWN_IMPACT_CLIP
+            and attack_set_profile.has("facedown_impact_radius")):
+        # thai.set action 92 uses radius 85, kungfu.set/karate.set use 80 for
+        # the same animation, so this value is character-config specific.
+        return float(attack_set_profile["facedown_impact_radius"])
     if (state in ["stunimpact", "impactstun"]
             and STUN_IMPACT_SOURCE_RADII.has(animation)
             and _is_number(STUN_IMPACT_SOURCE_RADII[animation])):
@@ -4555,9 +5440,9 @@ func _stored_animation_radius(animation: String) -> float:
 
 
 func _profile_for_animation(animation: String) -> Dictionary:
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            and animation == BRICK_FRONT_LOW_CLIP):
-        return BRICK_FRONT_LOW_REACTION
+    if (animation == String(attack_set_profile.get("front_low_clip", BRICK_FRONT_LOW_CLIP))
+            and attack_set_profile.has("front_low_reaction")):
+        return attack_set_profile["front_low_reaction"]
     for group_value: Variant in [REACTION_PROFILES, EXACT_REACTIONS]:
         if not group_value is Dictionary:
             continue
@@ -4586,19 +5471,23 @@ func source_radius_for_current_animation() -> float:
         # all_stunned_fall is shared with stunfall; the recovered impact action
         # uses radius 75 while stunfall uses 70.
         return 75.0 * radius_scale
-    if state in ["startup", "active", "recovery"] and attack_kind == "parry_attack":
-        # The recovered parryattack action uses radius 25 although its ANM is
-        # shared with m01_pnch_high_03 (60 in the generic animation table).
-        return 25.0 * radius_scale
-    if state in ["startup", "active", "recovery"] and attack_kind == "parry_low":
-        # The recovered parrylow action uses 40 although m01_kick_low_02's
-        # generic table entry is 50.
-        return 40.0 * radius_scale
-    if (state in ["startup", "active", "recovery"]
-            and attack_kind == "special_punch_low_miss"):
-        # The recovered specialpunchlowmiss action uses 45 although the shared
-        # m01_sp_pnch_low_fail table entry is 25.
-        return 45.0 * radius_scale
+    # These three overrides are brucelee.set values for actions whose ANM is
+    # shared with another clip. Mapped set configs load their own per-action
+    # radii from the set, so the overrides must not leak into them.
+    if attack_set_profile.is_empty():
+        if state in ["startup", "active", "recovery"] and attack_kind == "parry_attack":
+            # The recovered parryattack action uses radius 25 although its ANM is
+            # shared with m01_pnch_high_03 (60 in the generic animation table).
+            return 25.0 * radius_scale
+        if state in ["startup", "active", "recovery"] and attack_kind == "parry_low":
+            # The recovered parrylow action uses 40 although m01_kick_low_02's
+            # generic table entry is 50.
+            return 40.0 * radius_scale
+        if (state in ["startup", "active", "recovery"]
+                and attack_kind == "special_punch_low_miss"):
+            # The recovered specialpunchlowmiss action uses 45 although the shared
+            # m01_sp_pnch_low_fail table entry is 25.
+            return 45.0 * radius_scale
     var animation: String = current_source_animation()
     var radius: float = _stored_animation_radius(animation)
     if radius < 0.0:
@@ -4650,19 +5539,17 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
             "animation_duration_frames": 45,
             "linking_frame": 0,
         }
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH and not blocked
+    if (attack_set_profile.has("front_high_reaction") and not blocked
             and String(impact.get("strength", "")) == "hard"
             and String(impact.get("height", "")) == "high"
             and String(impact.get("direction", "")) == "frontal"
             and _candidate_clip_paths.has("all_impct_hard_frnt_high")):
-        return {
-            "source_action": "impacthardfronthigh",
-            "animation": "all_impct_hard_frnt_high",
-            "exit_start_frame": 23,
-            "animation_duration_frames": 35,
-            "linking_frame": 0,
-            "return_action": "faceupidle",
-        }
+        var front_high: Dictionary = (
+            attack_set_profile["front_high_reaction"].duplicate(true)
+        )
+        front_high["source_action"] = "impacthardfronthigh"
+        front_high["linking_frame"] = 0
+        return front_high
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
         if (String(exact.get("source_action", "")) in [
@@ -4683,7 +5570,7 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
 
 func _is_brick_facedown_low_impact(impact: Dictionary, blocked: bool) -> bool:
     return (
-        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        bool(attack_set_profile.get("facedown_low_impact", false))
         and state == "facedownidle"
         and not blocked
         and String(impact.get("height", "")) == "low"
@@ -4692,7 +5579,7 @@ func _is_brick_facedown_low_impact(impact: Dictionary, blocked: bool) -> bool:
 
 func _is_brick_facedown_impact_reaction(reaction: Dictionary) -> bool:
     return (
-        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        bool(attack_set_profile.get("facedown_low_impact", false))
         and String(reaction.get("source_action", "")) == "impactfacedown"
         and String(reaction.get("animation", "")) == FACEDOWN_IMPACT_CLIP
     )
@@ -4709,14 +5596,17 @@ func _accepts_brick_faceup_candidate(damage: float, blocked: bool) -> bool:
     if state in ["startup", "active", "recovery"]:
         mapped_state = (attack_kind in ["punch", "kick"] and ATTACKS.has(attack_kind)
             and _candidate_clip_paths.has(attack_kind))
+    var front_low: String = String(
+        attack_set_profile.get("front_low_clip", BRICK_FRONT_LOW_CLIP)
+    )
     return (
-        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        bool(attack_set_profile.get("facedown_low_impact", false))
         and candidate_loaded
         and mapped_state
         and not blocked
         and health - damage > 0.0
-        and _candidate_clip_paths.has(BRICK_FRONT_LOW_CLIP)
-        and _candidate_clip_paths.has(BRICK_FACEDOWN_IDLE_CLIP)
+        and _candidate_clip_paths.has(front_low)
+        and _candidate_clip_paths.has(_facedown_idle_clip())
     )
 
 
@@ -5246,23 +6136,11 @@ func _animate_candidate() -> void:
     var requested: String = "idle"
     var start_frame: int = 0
     if state in ["startup", "active", "recovery"]:
-        if attack_kind == "punch":
-            requested = "punch"
-        elif attack_kind == "kick":
-            requested = "kick"
-        elif attack_kind in ["high_punch", "high_kick", "low_punch", "low_kick",
-                "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high",
-                "special_kick_high_brick", "special_kick_low_brick",
-                "special_punch_high_brick", "special_punch_low_brick",
-                "parry_high_brick", "parry_low_brick", "parry_attack_brick",
-                "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick",
-                "grab1_miss_brick", "grab2_miss_brick",
-                "high_punch2", "low_punch2", "high_kick2", "low_kick2",
-                "special_kick_low_miss", "special_kick_low_hit",
-                "special_punch_low_miss", "special_punch_low_hit",
-                "special_punch_high_miss", "special_punch_high_hit",
-                "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2",
-                "endattack1", "endattack2"]:
+        # Any attack kind whose clip the candidate provides plays that clip.
+        # The previous explicit list only named the brucelee.set slots; mapped
+        # set configs (kungfu/karate) use their own slot names, so the check is
+        # the clip map itself.
+        if _candidate_clip_paths.has(attack_kind):
             requested = attack_kind
     elif state in ["grabbed1", "grabbed2"] and _candidate_clip_paths.has(state):
         requested = state
