@@ -327,7 +327,7 @@ func _prepare_current() -> void:
     # have radius 0.34.  That overlap pushes the player to the arena edge and
     # then off the floor.  Keep the visual dummy, but do not collide with it.
     computer.collision_layer = 0
-    computer.collision_mask = 0
+    computer.collision_mask = 1
     computer.health = 9999.0
     computer.state = "idle"
     computer.attack_kind = ""
