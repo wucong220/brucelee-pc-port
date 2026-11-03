@@ -7,10 +7,22 @@ signal command_requested(command: String)
 
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
-const MAIN_COMMANDS: Array[String] = ["fight", "training", "move_training", "gallery", "temple_a", "temple_b", "quit"]
+## Scene entries are handled by main.gd, which reloads main.tscn with a different
+## BRUCELEE_SCENE variant. "scenes_back" and "scenes" never leave this script.
+const SCENE_COMMANDS: Array[String] = [
+    "temple_a", "temple_b", "halla", "squareb", "harboura", "scenes_back",
+]
+const SCENE_LABELS: Array[String] = [
+    "TEMPLE YARD A", "TEMPLE YARD B", "TOURNAMENT HALL A",
+    "SQUARE B", "HARBOUR A", "BACK",
+]
+const MAIN_COMMANDS: Array[String] = [
+    "fight", "training", "move_training", "gallery",
+    "temple_a", "temple_b", "scenes", "quit",
+]
 const MAIN_LABELS: Array[String] = [
     "VS FIGHT", "GROUND TRAINING", "MOVE TRAINING", "MOVE GALLERY",
-    "TEMPLE YARD A", "TEMPLE YARD B", "QUIT GAME"
+    "TEMPLE YARD A", "TEMPLE YARD B", "SCENES", "QUIT GAME",
 ]
 const PAUSE_COMMANDS: Array[String] = ["resume", "restart", "main_menu", "quit"]
 const PAUSE_LABELS: Array[String] = [
@@ -26,6 +38,8 @@ var background_loaded: bool = false
 var background_error: String = ""
 var background_path: String = ""
 var item_labels: Array[Label] = []
+var screen_root: Control
+var panel_box: VBoxContainer
 var background: TextureRect
 var background_main_texture: Texture2D
 var background_practice_texture: Texture2D
@@ -39,6 +53,11 @@ var accept_sfx_error: String = ""
 var menu_sfx_errors: Dictionary = {}
 var last_sfx_played: String = ""
 var last_accept_was_attack: bool = false
+## Last item index that mouse motion selected; -1 until the pointer moves.
+## Hover is driven by real motion events only, so a cursor resting over an item
+## when the menu opens cannot hijack the default keyboard focus.
+var hover_index: int = -1
+var main_index_before_scenes: int = 0
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -88,6 +107,7 @@ func _build_ui() -> void:
     screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(screen)
+    screen_root = screen
     var fallback: ColorRect = ColorRect.new()
     fallback.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     fallback.color = Color(0.035, 0.045, 0.065, 1.0)
@@ -114,6 +134,7 @@ func _build_ui() -> void:
     panel.custom_minimum_size = Vector2(380.0, 0.0)
     panel.add_theme_constant_override("separation", 4)
     center.add_child(panel)
+    panel_box = panel
     var title: Label = Label.new()
     title.text = "DRAGON WARRIOR"
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -140,6 +161,9 @@ func _build_ui() -> void:
         label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
         label.add_theme_font_size_override("font_size", 18)
+        label.mouse_filter = Control.MOUSE_FILTER_STOP
+        label.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+        label.gui_input.connect(_on_item_gui_input.bind(index))
         panel.add_child(label)
         item_labels.append(label)
     status_label = Label.new()
@@ -215,7 +239,24 @@ func show_main_menu() -> void:
     mode_label.text = "MAIN MENU"
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"
+    hover_index = -1
     _refresh_items(MAIN_LABELS)
+    _refresh_selection()
+
+func show_scene_menu() -> void:
+    ## Scene selection submenu. Reached through the SCENES entry only.
+    if menu_state == "main":
+        main_index_before_scenes = selected_index
+    menu_state = "scenes"
+    selected_index = 0
+    visible = true
+    mode_label.text = "SELECT SCENE"
+    status_label.text = ""
+    controls_label.text = (
+        "UP/DOWN or D-PAD   ENTER/J/A load   ESC/B/START back"
+    )
+    hover_index = -1
+    _refresh_items(SCENE_LABELS)
     _refresh_selection()
 
 func show_pause_menu() -> void:
@@ -225,20 +266,20 @@ func show_pause_menu() -> void:
     mode_label.text = "PAUSED"
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm   ESC/B/START resume"
+    hover_index = -1
     _refresh_items(PAUSE_LABELS)
     _refresh_selection()
 
 func hide_menu() -> void:
     menu_state = "hidden"
     visible = false
+    hover_index = -1
 
 func show_error(value: String) -> void:
     status_label.text = value
 
 func selected_command() -> String:
-    var commands: Array[String] = (
-        MAIN_COMMANDS if menu_state == "main" else PAUSE_COMMANDS
-    )
+    var commands: Array[String] = _commands()
     if selected_index < 0 or selected_index >= commands.size():
         return ""
     return commands[selected_index]
@@ -251,45 +292,107 @@ func handle_input_event(event: InputEvent) -> bool:
         return false
     if not PrototypeControls.is_press_edge(event):
         return false
-    var commands: Array[String] = _commands()
     if event.is_action_pressed(PrototypeControls.MENU_UP):
-        selected_index = wrapi(selected_index - 1, 0, commands.size())
-        _refresh_selection()
-        if nav_sfx != null:
-            last_sfx_played = "nav"
-            nav_sfx.play()
+        _move_selection(-1)
     elif event.is_action_pressed(PrototypeControls.MENU_DOWN):
-        selected_index = wrapi(selected_index + 1, 0, commands.size())
-        _refresh_selection()
-        if nav_sfx != null:
-            last_sfx_played = "nav"
-            nav_sfx.play()
+        _move_selection(1)
     elif event.is_action_pressed(PrototypeControls.MENU_ACCEPT):
-        var command: String = selected_command()
-        if not command.is_empty():
-            if accept_sfx != null:
-                last_sfx_played = "accept"
-                accept_sfx.play()
-            last_accept_was_attack = event.is_action_pressed(PrototypeControls.ATTACK_A)
-            command_requested.emit(command)
+        _accept_selected(event.is_action_pressed(PrototypeControls.ATTACK_A))
     elif event.is_action_pressed(PrototypeControls.MENU_CANCEL):
-        if menu_state == "pause":
-            if back_sfx != null:
-                last_sfx_played = "back"
-                back_sfx.play()
-            command_requested.emit("resume")
+        _cancel()
     else:
         return false
     return true
 
 func _commands() -> Array[String]:
-    if menu_state == "main":
-        return MAIN_COMMANDS
-    return PAUSE_COMMANDS
+    match menu_state:
+        "main":
+            return MAIN_COMMANDS
+        "scenes":
+            return SCENE_COMMANDS
+        _:
+            return PAUSE_COMMANDS
 
 func _input(event: InputEvent) -> void:
     if handle_input_event(event):
         get_viewport().set_input_as_handled()
+
+func _move_selection(step: int) -> void:
+    var commands: Array[String] = _commands()
+    if commands.is_empty():
+        return
+    selected_index = wrapi(selected_index + step, 0, commands.size())
+    _refresh_selection()
+    _play_sfx(nav_sfx, "nav")
+
+func _accept_selected(was_attack: bool) -> void:
+    var command: String = selected_command()
+    if command.is_empty():
+        return
+    _play_sfx(accept_sfx, "accept")
+    last_accept_was_attack = was_attack
+    if menu_state == "scenes":
+        if command == "scenes_back":
+            last_accept_was_attack = false
+            _return_to_main_from_scenes()
+            return
+        command_requested.emit(command)
+        return
+    if command == "scenes":
+        last_accept_was_attack = false
+        show_scene_menu()
+        return
+    command_requested.emit(command)
+
+func _cancel() -> void:
+    if menu_state == "scenes":
+        _play_sfx(back_sfx, "back")
+        _return_to_main_from_scenes()
+    elif menu_state == "pause":
+        _play_sfx(back_sfx, "back")
+        command_requested.emit("resume")
+
+func _return_to_main_from_scenes() -> void:
+    menu_state = "main"
+    selected_index = clampi(main_index_before_scenes, 0, MAIN_COMMANDS.size() - 1)
+    mode_label.text = "MAIN MENU"
+    status_label.text = ""
+    controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"
+    hover_index = -1
+    _refresh_items(MAIN_LABELS)
+    _refresh_selection()
+
+func _play_sfx(player: AudioStreamPlayer, label: String) -> void:
+    if player == null:
+        return
+    last_sfx_played = label
+    player.play()
+
+func _on_item_gui_input(event: InputEvent, index: int) -> void:
+    if not visible:
+        return
+    var commands: Array[String] = _commands()
+    if index < 0 or index >= commands.size():
+        return
+    if event is InputEventMouseMotion:
+        # Real pointer motion over the row selects it. A stationary cursor never
+        # produces a motion event, so opening a menu cannot steal the default
+        # keyboard selection.
+        if index != selected_index:
+            hover_index = index
+            selected_index = index
+            _refresh_selection()
+            _play_sfx(nav_sfx, "nav")
+        return
+    var mouse_button: InputEventMouseButton = event as InputEventMouseButton
+    if mouse_button == null or not mouse_button.pressed:
+        return
+    if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+        return
+    selected_index = index
+    _refresh_selection()
+    _accept_selected(false)
+    get_viewport().set_input_as_handled()
 
 func _refresh_items(labels: Array[String]) -> void:
     for index: int in range(item_labels.size()):
@@ -311,3 +414,51 @@ func _refresh_selection() -> void:
             Color(1.0, 0.82, 0.36) if selected else Color(0.84, 0.86, 0.90)
         )
     _refresh_background_preview()
+
+## Measurement hook used by tests and by the scene-menu regression check.
+## Returns the real Control geometry after layout, plus any visible item that
+## falls outside the menu canvas.
+func layout_report() -> Dictionary:
+    var screen_rect: Rect2 = (
+        screen_root.get_global_rect() if screen_root != null else Rect2()
+    )
+    var inner: Rect2 = screen_rect.grow(-2.0)
+    var panel_rect: Rect2 = (
+        panel_box.get_global_rect() if panel_box != null else Rect2()
+    )
+    var items: Array = []
+    var clipped: Array = []
+    for index: int in range(item_labels.size()):
+        var label: Label = item_labels[index]
+        if not label.visible:
+            continue
+        var rect: Rect2 = label.get_global_rect()
+        var inside: bool = inner.encloses(rect)
+        items.append({
+            "index": index,
+            "text": String(label.get_meta("base_text", label.text)),
+            "rect": _rect_array(rect),
+            "inside": inside,
+        })
+        if not inside:
+            clipped.append(index)
+    return {
+        "state": menu_state,
+        "selected_index": selected_index,
+        "selected_command": selected_command(),
+        "commands": _commands().duplicate(),
+        "screen": _rect_array(screen_rect),
+        "panel": _rect_array(panel_rect),
+        "panel_min": (
+            [panel_box.get_combined_minimum_size().x,
+             panel_box.get_combined_minimum_size().y]
+            if panel_box != null else []
+        ),
+        "items": items,
+        "clipped_items": clipped,
+        "panel_inside": inner.encloses(panel_rect),
+        "hover_index": hover_index,
+    }
+
+func _rect_array(rect: Rect2) -> Array:
+    return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]

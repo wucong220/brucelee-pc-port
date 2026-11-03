@@ -885,6 +885,18 @@ func _on_menu_command(command: String) -> void:
             OS.set_environment("BRUCELEE_SCENE", "templeyardb")
             OS.set_environment("BRUCELEE_MAIN_MENU", "0")
             get_tree().reload_current_scene()
+        "halla":
+            OS.set_environment("BRUCELEE_SCENE", "halla")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+            get_tree().reload_current_scene()
+        "squareb":
+            OS.set_environment("BRUCELEE_SCENE", "squareb")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+            get_tree().reload_current_scene()
+        "harboura":
+            OS.set_environment("BRUCELEE_SCENE", "harboura")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+            get_tree().reload_current_scene()
         "quit":
             get_tree().quit()
 
