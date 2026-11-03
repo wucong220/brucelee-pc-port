@@ -1,8 +1,8 @@
-# Current port status (2026-11-03 09:50)
+# Current port status (2026-11-03 10:00)
 
 ## Package
 
-`D:\BruceLeeWork\DragonWarrior-Current45-20261103`
+`D:\BruceLeeWork\DragonWarrior-Current46-20261103`
 
 - Built through `build_windows.ps1 -RuntimeAssetRoot`.
 - Includes exe/pck, audio, menu, scene, ui, launch.ps1, A/B/HallA direct launchers.
@@ -14,7 +14,8 @@
   ATC RGBA block-order and top-down orientation corrections.
 - Tournament Hall A: interior renders after skipping `bl_scene04a_hw_fx_biglighta`
   and `bl_scene04a_hw_fx_biglightb`; together those two planes overdraw the screen white.
-- A/B menu selection and direct launchers, plus `DragonWarrior_HallA_Direct.cmd`.
+- A/B menu selection and direct launchers, plus `DragonWarrior_HallA_Direct.cmd`
+  and a `TOURNAMENT HALL A` main-menu entry.
 - J menu-confirm enters the fight and preserves the first attack.
 - SPECIAL LOW KICK (`S` hold, then `D+U`) verified to `special_kick_low_hit`.
 
