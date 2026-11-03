@@ -19,7 +19,7 @@
   6.065-degree Z rotation and uses `apply_rotation` so the loader applies it.
 - Rooftops A: 29 far + 16 near.
 - Rooftops B: 21 far + 15 near.
-- Tournament Hall B: 16 far + 2 near (interior, no skydome).
+- Tournament Hall B: 13 far + 3 near (interior, no skydome).
 
 ## Generic loader
 
