@@ -510,8 +510,6 @@ func _build_original_far_scene() -> void:
         if "alphagroup" in entry_name:
             material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
             material.alpha_scissor_threshold = 0.5
-        if _scene_variant() == "halla":
-            material.cull_mode = BaseMaterial3D.CULL_DISABLED
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             (mesh_node as MeshInstance3D).material_override = material
         root.add_child(instance)
