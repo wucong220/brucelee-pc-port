@@ -600,7 +600,7 @@ func _build_game_text_overlay() -> void:
     _game_text_rect.position = (
         get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
     )
-    _game_text_rect.scale = Vector2(1.6, 1.6)
+    _game_text_rect.scale = Vector2(-1.6, 1.6)
     _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
     _game_text_rect.flip_h = false
     _game_text_rect.visible = false
