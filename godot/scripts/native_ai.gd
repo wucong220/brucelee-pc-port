@@ -62,7 +62,7 @@ var fighter: PortFighter
 var opponent: PortFighter
 var character_key: String = ""
 var profile: Dictionary = {}
-var difficulty_index: int = 2
+var difficulty_index: int = 2  # medium: UI index 1 -> trunc(2*1) = slot 2
 
 ## Native AI state (`my_state`), set by a leaf's `set_state` and read by
 ## `treecheckmystate`.  Persists across frames exactly like the native node.
@@ -124,6 +124,17 @@ func configure(
     var entry: Variant = profiles.get(key, {})
     profile = Dictionary(entry).get("profile", {}) if entry is Dictionary else {}
     _rng.seed = seed_value
+    var difficulty: String = OS.get_environment("BRUCELEE_AI_DIFFICULTY")
+    match difficulty:
+        "easy":
+            difficulty_index = 0
+        "medium", "":
+            difficulty_index = 2
+        "hard":
+            difficulty_index = 4
+        _:
+            if difficulty.is_valid_int():
+                difficulty_index = clampi(int(difficulty), 0, 4)
 
 
 func set_difficulty(index: int) -> void:
