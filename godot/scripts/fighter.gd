@@ -1168,6 +1168,12 @@ const ENDATTACK_VICTIM_DATA: Dictionary = {
     "grabbed1": ["endattackcomp1", 93],
     "grabbed2": ["endattackcomp2", 130],
 }
+# The native endattack1/2 links require oppposestun, not grabbed1/2: the
+# finisher converts a stunned victim into the corresponding endattackcomp.
+const ENDATTACK_VICTIM_STUN_DATA: Dictionary = {
+    "endattack1": ["endattackcomp1", 93],
+    "endattack2": ["endattackcomp2", 130],
+}
 # "endattack" is the mapped-set finisher name (kungfu/karate); without it the
 # victim of a Ken/Master/SinFu finisher is never consumed and endattackcomp is
 # unreachable for those sets.
@@ -5958,8 +5964,8 @@ func _physics_process(delta: float) -> void:
             and state == "active"
             and not _endattack_victim_started
             and opponent != null and is_instance_valid(opponent)
-            and opponent.state in ["grabbed1", "grabbed2"]):
-        if opponent.begin_endattack_victim():
+            and opponent.state in ["grabbed1", "grabbed2", "hitstun", "stun"]):
+        if opponent.begin_endattack_victim(attack_kind):
             _endattack_victim_started = true
     _try_follow_links()
     if (state == "active" and ATTACKS.has(attack_kind)
@@ -6490,8 +6496,10 @@ func begin_grabbed(kind: String) -> bool:
     return true
 
 
-func begin_endattack_victim() -> bool:
+func begin_endattack_victim(attacker_kind: String = "") -> bool:
     var data: Array = ENDATTACK_VICTIM_DATA.get(state, [])
+    if data.is_empty() and state in ["hitstun", "stun"]:
+        data = ENDATTACK_VICTIM_STUN_DATA.get(attacker_kind, [])
     if data.is_empty():
         return false
     var clip_key: String = String(data[0])
