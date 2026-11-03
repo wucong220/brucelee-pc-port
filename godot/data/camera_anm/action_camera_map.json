@@ -1,0 +1,234 @@
+{
+ "schema": 1,
+ "source": "derived mechanically from the decoded camera keyframes and the recovered fighting-set action tables (reports/action_camera_map.json carries the per-row evidence)",
+ "camera_clips": {
+  "all_end_attack_01_forset02": {
+   "camera": "all_end_attack_01_forset02",
+   "file": "all_end_attack_01_forset02.json",
+   "frames": 132,
+   "fps": 30.0,
+   "set_actions": [
+    "endattackcomp1",
+    "endattackcompkarate 1",
+    "endattackcomp 1"
+   ]
+  },
+  "all_end_attack_01_forset03": {
+   "camera": "all_end_attack_01_forset03",
+   "file": "all_end_attack_01_forset03.json",
+   "frames": 93,
+   "fps": 30.0,
+   "set_actions": [
+    "endattackcomp1",
+    "endattackcompthai 1",
+    "endattackcomp 1"
+   ]
+  },
+  "all_end_attack_02_forset02": {
+   "camera": "all_end_attack_02_forset02",
+   "file": "all_end_attack_02_forset02.json",
+   "frames": 155,
+   "fps": 30.0,
+   "set_actions": [
+    "endattackcomp2",
+    "endattackcompkarate 2",
+    "endattackcomp 2"
+   ]
+  },
+  "all_end_attack_02_forset03": {
+   "camera": "all_end_attack_02_forset03",
+   "file": "all_end_attack_02_forset03.json",
+   "frames": 130,
+   "fps": 30.0,
+   "set_actions": [
+    "endattackcomp2",
+    "endattackcompthai 2",
+    "endattackcomp 2"
+   ]
+  },
+  "all_grabbed_01_forset02": {
+   "camera": "all_grabbed_01_forset02",
+   "file": "all_grabbed_01_forset02.json",
+   "frames": 47,
+   "fps": 30.0,
+   "set_actions": [
+    "grabbed1",
+    "grabcompl1 chief",
+    "grabcompl1 ken"
+   ]
+  },
+  "all_grabbed_01_forset03": {
+   "camera": "all_grabbed_01_forset03",
+   "file": "all_grabbed_01_forset03.json",
+   "frames": 90,
+   "fps": 30.0,
+   "set_actions": [
+    "grabbed1",
+    "grabcompl1 brick",
+    "grabcompl1 johnson",
+    "grabcompl1 smallboy"
+   ]
+  },
+  "all_grabbed_01_forset04": {
+   "camera": "all_grabbed_01_forset04",
+   "file": "all_grabbed_01_forset04.json",
+   "frames": 103,
+   "fps": 30.0,
+   "set_actions": [
+    "grabbed1",
+    "grabcompl1 loming",
+    "grabcompl1 shenlo",
+    "grabcompl1 sinfu"
+   ]
+  },
+  "all_grabbed_02_forset02": {
+   "camera": "all_grabbed_02_forset02",
+   "file": "all_grabbed_02_forset02.json",
+   "frames": 98,
+   "fps": 30.0,
+   "set_actions": [
+    "grabbed2",
+    "grabcompl2 chief",
+    "grabcompl2 ken"
+   ]
+  },
+  "all_grabbed_02_forset03": {
+   "camera": "all_grabbed_02_forset03",
+   "file": "all_grabbed_02_forset03.json",
+   "frames": 78,
+   "fps": 30.0,
+   "set_actions": [
+    "grabbed2",
+    "grabcompl2 brick",
+    "grabcompl2 johnson",
+    "grabcompl2 smallboy"
+   ]
+  },
+  "all_sp_kck_low_forset04": {
+   "camera": "all_sp_kck_low_forset04",
+   "file": "all_sp_kck_low_forset04.json",
+   "frames": 55,
+   "fps": 30.0,
+   "set_actions": [
+    "grabbed2",
+    "grabcompl2 master",
+    "grabcompl2 sinfu"
+   ]
+  },
+  "all_sp_pnch_low_forset04": {
+   "camera": "all_sp_pnch_low_forset04",
+   "file": "all_sp_pnch_low_forset04.json",
+   "frames": 28,
+   "fps": 30.0,
+   "set_actions": [
+    "grabbed1",
+    "grabcompl1 master",
+    "impactbrutalmid"
+   ]
+  },
+  "m01_end_attack_01": {
+   "camera": "m01_end_attack_01",
+   "file": "m01_end_attack_01.json",
+   "frames": 377,
+   "fps": 30.0,
+   "set_actions": [
+    "endattack1"
+   ]
+  },
+  "m01_end_attack_01_forbigguy": {
+   "camera": "m01_end_attack_01_forbigguy",
+   "file": "m01_end_attack_01_forbigguy.json",
+   "frames": 377,
+   "fps": 30.0,
+   "set_actions": [
+    "endattack1"
+   ]
+  },
+  "m01_end_attack_02": {
+   "camera": "m01_end_attack_02",
+   "file": "m01_end_attack_02.json",
+   "frames": 235,
+   "fps": 30.0,
+   "set_actions": [
+    "endattack2"
+   ]
+  },
+  "m01_grab_01": {
+   "camera": "m01_grab_01",
+   "file": "m01_grab_01.json",
+   "frames": 150,
+   "fps": 30.0,
+   "set_actions": [
+    "grab1"
+   ]
+  },
+  "m01_grab_02": {
+   "camera": "m01_grab_02",
+   "file": "m01_grab_02.json",
+   "frames": 180,
+   "fps": 30.0,
+   "set_actions": [
+    "grab2"
+   ]
+  },
+  "m01_sp_kick_low": {
+   "camera": "m01_sp_kick_low",
+   "file": "m01_sp_kick_low.json",
+   "frames": 39,
+   "fps": 30.0,
+   "set_actions": [
+    "special_kick_low_hit",
+    "specialkicklowhit"
+   ]
+  },
+  "m01_sp_pnch_high": {
+   "camera": "m01_sp_pnch_high",
+   "file": "m01_sp_pnch_high.json",
+   "frames": 80,
+   "fps": 30.0,
+   "set_actions": [
+    "special_punch_high_hit",
+    "specialpunchhighhit"
+   ]
+  },
+  "m01_sp_pnch_low": {
+   "camera": "m01_sp_pnch_low",
+   "file": "m01_sp_pnch_low.json",
+   "frames": 178,
+   "fps": 30.0,
+   "set_actions": [
+    "special_punch_low_hit",
+    "specialpunchlowhit"
+   ]
+  },
+  "m02_grab_01": {
+   "camera": "m02_grab_01",
+   "file": "m02_grab_01.json",
+   "frames": 47,
+   "fps": 30.0,
+   "set_actions": [
+    "grab1_miss",
+    "grab2_miss",
+    "grab1",
+    "grab1_miss_brick",
+    "grab2_miss_brick",
+    "grab1 chief",
+    "grab1 ken",
+    "grab1miss",
+    "grab1miss brick",
+    "grab1miss chief",
+    "grab1miss johnson",
+    "grab1miss ken",
+    "grab1miss shenlo",
+    "grab1miss sinfu",
+    "grab1miss smallboy",
+    "grab2miss",
+    "grab2miss brick",
+    "grab2miss chief",
+    "grab2miss johnson",
+    "grab2miss ken",
+    "grab2miss smallboy"
+   ]
+  }
+ }
+}

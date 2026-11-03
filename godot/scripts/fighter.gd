@@ -6916,6 +6916,54 @@ func current_source_animation() -> String:
     return _owner_idle_animation()
 
 
+func current_camera_animation() -> String:
+    ## Clip that owns an authored camera sub-animation for the current state.
+    ## CBeatEmUpGame::CameraUpdate (@0x188d88) reads it from
+    ## CFighter::GetCurrentAnimation(camera dummy), where the dummy is the
+    ## local player's fighter.  The state's recovered animation is the base;
+    ## the candidate clip is preferred only when it is that animation or its
+    ## recovered Animations.versions size version (the camera belongs to the
+    ## clip that is actually played).  grabbed1/grabbed2 and endattackcomp1/2
+    ## have no branch in current_source_animation(), so their victim slot clip
+    ## is reported here.
+    var base: String = ""
+    if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
+        base = String(_victim_selected_animation.get(state, ""))
+        if base.is_empty():
+            base = String(candidate_clips.get(state, ""))
+    else:
+        base = current_source_animation()
+    if base.is_empty():
+        return ""
+    if candidate_animation_clip == base:
+        return base
+    if not candidate_animation_clip.is_empty():
+        var resolved: Dictionary = size_variant_for(base)
+        if String(resolved.get("clip", "")) == candidate_animation_clip:
+            return candidate_animation_clip
+    return base
+
+
+func current_camera_frame() -> float:
+    ## 30 fps source frame of current_camera_animation(), or -1.0 when the
+    ## current state has no per-frame action clock for the camera to follow.
+    ## The decoded camera .anm is the camera sub-animation of the same action
+    ## .anm (every wired clip's frame count equals the action's recovered frame
+    ## count), so the action's own source frame is the camera frame.
+    if state in ["startup", "active", "recovery"] and ATTACKS.has(attack_kind):
+        return _current_attack_source_frame()
+    if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
+        var clip: String = current_camera_animation()
+        var frames: int = int(_victim_selected_frames.get(state, 0))
+        if frames <= 0:
+            frames = int(VICTIM_CLIP_FRAMES.get(clip, 0))
+        if frames <= 0:
+            return -1.0
+        # grabbed/endattackcomp state_time counts down from frames / 30 fps.
+        return clampf(float(frames) - state_time * SOURCE_FRAME_RATE, 0.0, float(frames))
+    return -1.0
+
+
 func current_source_pose() -> String:
     if not candidate_loaded or not SOURCE_ACTION_POSES.has(state):
         return ""

@@ -356,6 +356,33 @@ var _camera_anm_b: Vector3 = Vector3.ZERO
 # pre-existing analytic follow camera.
 const INTRO_CAMERA_CLIP: String = "m01_intro_01"
 
+# ---- Original action cameras (grab / grabbed / end-attack / special) ----
+# Decoded from adreno_200/cameras/*_camera.anm by the isolated
+# camera-anm-20261104 research; the JSONs are shipped as data/camera_anm/.
+# CBeatEmUpGame::CameraUpdate (@0x188d88) takes the camera sub-animation from
+# CFighter::GetCurrentAnimation(fighter[this+0x7e0]) -- the local player's
+# fighter -- with dummy = that fighter and mirror = 0 for every gameplay state.
+# data/camera_anm/action_camera_map.json is derived mechanically from the
+# decoded keyframes plus the recovered fighting-set action tables (see
+# reports/action_camera_map.json in the isolated output for the per-row
+# evidence).  When the player's current animation is in that table its
+# keyframes are played frame-for-frame; when the clip has no camera, or the
+# JSON is missing, the analytic follow camera keeps the view exactly as an
+# animation without a camera sub-animation would.
+const ACTION_CAMERA_MAP_PATH: String = "res://data/camera_anm/action_camera_map.json"
+var _action_camera_map_path: String = ACTION_CAMERA_MAP_PATH
+var _action_camera_map: Dictionary = {}
+var _action_camera_map_loaded: bool = false
+var _action_camera_anm = null
+var _action_camera_clip: String = ""
+var _action_camera_camera: String = ""
+var _action_camera_frame: int = 0
+var _action_camera_anchor: PortFighter = null
+var _action_camera_mirror: bool = false
+var _action_camera_a: Vector3 = Vector3.ZERO
+var _action_camera_b: Vector3 = Vector3.ZERO
+var _action_camera_missing_json: Array[String] = []
+
 # AI-only prototype costs: the native AI decision is not recovered, so the
 # Brick AI uses these thresholds/costs. They are not part of the player action
 # layer (the player spends per-action action.rage values).
@@ -1738,6 +1765,7 @@ func _reset_round() -> void:
     player.clear_result_pose()
     computer.clear_result_pose()
     _camera_anm_end()
+    _action_camera_end()
     # Native RestartValues() does not stop running game text animators, so a
     # round reset must not hide the result text either; only the per-side
     # COUNTER animation memory is cleared.
@@ -2590,6 +2618,113 @@ func _intro_camera_play_authored(delta: float) -> bool:
         )
     return true
 
+func _action_camera_load_map() -> void:
+    ## Load the derived camera map once.  A missing/invalid map leaves it empty,
+    ## which makes every action fall back to the analytic follow camera.
+    if _action_camera_map_loaded:
+        return
+    _action_camera_map_loaded = true
+    _action_camera_map = {}
+    var file: FileAccess = FileAccess.open(_action_camera_map_path, FileAccess.READ)
+    if file == null:
+        push_warning("action camera map missing: " + _action_camera_map_path)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if typeof(parsed) != TYPE_DICTIONARY:
+        push_warning("action camera map is not a dictionary")
+        return
+    var clips: Variant = Dictionary(parsed).get("camera_clips", {})
+    if typeof(clips) == TYPE_DICTIONARY:
+        _action_camera_map = clips
+
+
+func _action_camera_begin(clip: String, camera: String) -> bool:
+    ## Start the authored camera that belongs to the player's `clip`.  The dummy
+    ## reference frame is captured once, exactly like
+    ## CBeatEmUpCamera::StartAnimation: dummy position = the local player,
+    ## dummy yaw = player -> opponent (source Z-up).  mirror stays false because
+    ## CameraUpdate only sets it for states 1/2/12/13.
+    if _action_camera_anm == null:
+        _action_camera_anm = CameraAnm.new()
+    var path: String = _camera_anm_dir + camera + ".json"
+    if not FileAccess.file_exists(path) or not _action_camera_anm.load_json(path):
+        _action_camera_clip = ""
+        _action_camera_camera = ""
+        _action_camera_anchor = null
+        return false
+    var a: Vector3 = _camera_anm_fighter_point(player)
+    var b: Vector3 = _camera_anm_fighter_point(computer)
+    if (b - a).length() < 0.001:
+        b = a + Vector3(player.facing, 0.0, 0.0)
+    _action_camera_clip = clip
+    _action_camera_camera = camera
+    _action_camera_frame = 0
+    _action_camera_anchor = player
+    _action_camera_mirror = false
+    _action_camera_a = a
+    _action_camera_b = b
+    return true
+
+
+func _action_camera_end() -> void:
+    _action_camera_clip = ""
+    _action_camera_camera = ""
+    _action_camera_frame = 0
+    _action_camera_anchor = null
+
+
+func _action_camera_tick() -> bool:
+    ## Per-frame playback (no interpolation: 34/70 clips contain real one-frame
+    ## cuts) of the authored camera owned by the local player's current
+    ## animation.  Returns false when no authored camera applies, so the
+    ## analytic follow camera keeps the view.
+    if (not is_instance_valid(player) or not is_instance_valid(computer)
+            or _result_camera_override
+            or match_state in [MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE]):
+        _action_camera_end()
+        return false
+    var clip: String = player.current_camera_animation()
+    if clip.is_empty():
+        _action_camera_end()
+        return false
+    if clip != _action_camera_clip:
+        _action_camera_load_map()
+        var row: Variant = _action_camera_map.get(clip, null)
+        if row == null:
+            _action_camera_end()
+            return false
+        var camera: String = String(Dictionary(row).get("camera", ""))
+        if camera.is_empty() or _action_camera_missing_json.has(camera):
+            _action_camera_end()
+            return false
+        if not _action_camera_begin(clip, camera):
+            _action_camera_missing_json.append(camera)
+            push_warning("action camera json missing: " + camera)
+            _action_camera_end()
+            return false
+    var frame: float = player.current_camera_frame()
+    if frame < 0.0:
+        _action_camera_end()
+        return false
+    var last: int = _action_camera_anm.frame_count() - 1
+    if last < 0:
+        _action_camera_end()
+        return false
+    var index: int = int(minf(frame, float(last)))
+    if index + 1 < _action_camera_frame:
+        # The same animation restarted (source frame rewound): StartAnimation
+        # would capture a fresh dummy reference frame.
+        if not _action_camera_begin(clip, _action_camera_camera):
+            _action_camera_end()
+            return false
+        index = int(minf(maxf(frame, 0.0), float(last)))
+    _action_camera_frame = index
+    _action_camera_anm.apply_to(
+        fight_camera, index, _action_camera_a, _action_camera_b, _action_camera_mirror
+    )
+    return true
+
+
 func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
     if (not is_instance_valid(fight_camera) or not is_instance_valid(player)
             or not is_instance_valid(computer)):
@@ -2608,6 +2743,10 @@ func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
         var target: Vector3 = winner_node.global_position + Vector3(0.0, 1.0, 0.0)
         fight_camera.global_position = target + Vector3(0.0, 1.4, 4.2)
         fight_camera.look_at(target, Vector3.UP)
+        return
+    if _action_camera_tick():
+        # The player's current animation owns an authored camera; it overrides
+        # both the intro tail and the analytic follow camera while it runs.
         return
     if _camera_anm_clip == INTRO_CAMERA_CLIP and match_state in [
             MATCH_STATE_INTRO, MATCH_STATE_FIGHT]:
