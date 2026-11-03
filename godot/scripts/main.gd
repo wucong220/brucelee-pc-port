@@ -11,6 +11,7 @@ const MoveGallery = preload("res://scripts/move_gallery.gd")
 const FxLanternPulse = preload("res://scripts/fx_lanterns_pulse.gd")
 const FxVapourReflector = preload("res://scripts/fx_vapour_reflector.gd")
 const AudioCueMap = preload("res://scripts/audio_cue_map.gd")
+const CameraAnm = preload("res://scripts/camera_anm_player.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -185,6 +186,12 @@ const GAME_TEXT_SEQ_COUNTER_OPPONENT := 8
 const GAME_TEXT_SEQ_GREAT := 9
 const GAME_TEXT_SEQ_GREAT_LOW := 10
 const GAME_TEXT_MAX_OVERLAYS := 4
+# Every recovered ingamesprites.list record also carries its own commentator
+# sample (`sounds`: archive path + time in seconds).  Native
+# LaunchGameTextAnimation() starts one CSpriteAnimator per call, each with its
+# own sound; YOU_WIN + PERFECT therefore overlap (Perfect.wav is at +1.5 s).
+# One player per in-flight sample, bounded and round-robin reused.
+const RESULT_AUDIO_MAX_PLAYERS := 8
 # Native player-round-win text thresholds (CBeatEmUpGame::SetState 7, local
 # flag 0): winner health < 0x14 -> GREAT, winner health == 100 -> PERFECT.
 const ROUND_GREAT_HEALTH := 20.0
@@ -237,7 +244,17 @@ var _music_player: AudioStreamPlayer = null
 var _music_stream: AudioStream = null
 var _music_streams: Dictionary = {}
 var _result_audio: Dictionary = {}
+var _result_audio_paths: Dictionary = {}
+var _result_players: Array[AudioStreamPlayer] = []
+var _result_player_cursor: int = 0
+# First pooled player; kept for existing debug helpers.
 var _result_player: AudioStreamPlayer = null
+# One entry per commentator playback:
+# {key, sequence, sample, file, path, length_ms}.  The recovered
+# ingamesprites.list record owns the sample and its offset, so this log is the
+# evidence that each result cue fires exactly once per game-text launch.
+var result_audio_play_log: Array = []
+var result_audio_play_count: int = 0
 var _game_text_textures: Dictionary = {}
 # Recovered ingamesprites.list animation records, keyed by the record index
 # (0..10).  COUNTER (7/8) and GREAT (9/10) share one texture each but carry
@@ -298,6 +315,21 @@ var _round_end_handled: bool = false
 var _intro_fight_shown: bool = false
 var _result_pose_seconds: float = 0.0
 var _result_camera_override: bool = false
+
+# ---- Original camera .anm playback for the MATCH_WIN/MATCH_LOSE result state ----
+# Decoded from adreno_200/cameras/m01_victory_01_camera.anm by the isolated
+# camera-anm-20261104 research. The JSON is shipped next to data/; no keyframe
+# is invented here. When the file is missing, _camera_anm_play_authored() returns
+# false and the result camera keeps the pre-existing fixed winner shot.
+const CAMERA_ANM_DIR: String = "res://data/camera_anm/"
+var _camera_anm_dir: String = CAMERA_ANM_DIR
+var _camera_anm = null
+var _camera_anm_clip: String = ""
+var _camera_anm_frame: float = 0.0
+var _camera_anm_mirror: bool = false
+var _camera_anm_anchor: PortFighter = null
+var _camera_anm_a: Vector3 = Vector3.ZERO
+var _camera_anm_b: Vector3 = Vector3.ZERO
 
 # AI-only prototype costs: the native AI decision is not recovered, so the
 # Brick AI uses these thresholds/costs. They are not part of the player action
@@ -1159,6 +1191,10 @@ func _build_game_text_overlay() -> void:
             _game_text_sequences[index] = {
                 "sprite_key": sprite_key,
                 "steps": steps,
+                # Recovered per-record commentator sample(s): [{sample, time}].
+                # The audio is launched with the exact game-text record, not by
+                # a separate threshold.
+                "sounds": record.get("sounds", []),
             }
         break
     # Keep the first overlay alive so tests/debug helpers can always read
@@ -1219,11 +1255,13 @@ func _show_game_text(key: String, duration: float, sequence: int = -1) -> void:
     if not _game_text_textures.has(key):
         return
     var steps: Array = []
+    var record_matched: bool = false
     if sequence >= 0:
         if _game_text_sequences.has(sequence):
             var record: Dictionary = _game_text_sequences[sequence]
             var record_key: String = String(record.get("sprite_key", ""))
             if record_key == key:
+                record_matched = true
                 var recovered: Variant = record.get("steps", [])
                 if recovered is Array:
                     steps = recovered
@@ -1270,9 +1308,86 @@ func _show_game_text(key: String, duration: float, sequence: int = -1) -> void:
                 total += float(Dictionary(step_value).get("duration", 0.0))
         overlay["timer"] = maxf(duration, total + 0.1)
         _apply_game_text_step(overlay, 0.0)
+    # The recovered record owns its commentator sample and the offset at which
+    # the native animator plays it.  Schedule from this launch only: an
+    # unmatched/legacy key (sequence -1) stays silent rather than guessing.
+    var sample_plan: Array = []
+    if record_matched:
+        sample_plan = _game_text_sample_plan(sequence)
+    overlay["samples"] = sample_plan
+    overlay["sample_elapsed"] = 0.0
     game_text_launch_log.append({"key": key, "sequence": sequence})
     if game_text_launch_log.size() > 64:
         game_text_launch_log.pop_front()
+    # Fire zero-offset samples at launch time, exactly once.
+    _update_game_text_samples(overlay, 0.0)
+
+
+func _game_text_sample_plan(sequence: int) -> Array:
+    ## Recovered `sounds` array of one ingamesprites.list record, resolved to
+    ## AudioCueMap keys.  No thresholds, offsets or filenames are invented: the
+    ## record carries `sample` and `time` verbatim.
+    var plan: Array = []
+    if sequence < 0 or not _game_text_sequences.has(sequence):
+        return plan
+    var record: Dictionary = _game_text_sequences[sequence]
+    var sounds: Variant = record.get("sounds", [])
+    if not sounds is Array:
+        return plan
+    for sound_value: Variant in sounds:
+        if not sound_value is Dictionary:
+            continue
+        var sound: Dictionary = sound_value
+        var sample: String = String(sound.get("sample", ""))
+        if sample.is_empty():
+            continue
+        var key: String = _commentator_key_for_sample(sample)
+        if key.is_empty():
+            push_warning("game text sequence %d sample is not in the cue map: %s"
+                    % [sequence, sample])
+            continue
+        plan.append({
+            "key": key,
+            "time": float(sound.get("time", 0.0)),
+            "sample": sample,
+        })
+    return plan
+
+
+func _commentator_key_for_sample(sample: String) -> String:
+    ## maps e.g. "sounds/commentator_voice/you_win.wav" to the cue-map key
+    ## ("win") by comparing the recovered archive filename with COMMENTATOR.
+    var filename: String = sample.get_file()
+    for key: String in AudioCueMap.COMMENTATOR:
+        if String(AudioCueMap.COMMENTATOR[key]).nocasecmp_to(filename) == 0:
+            return key
+    return ""
+
+
+func _update_game_text_samples(overlay: Dictionary, delta: float) -> void:
+    ## Advance this launch's recovered sample clock.  Each pending entry plays
+    ## once and is removed, so repeated frames cannot double-fire a cue.
+    var plan_value: Variant = overlay.get("samples", [])
+    if not plan_value is Array:
+        return
+    var plan: Array = plan_value
+    if plan.is_empty():
+        return
+    overlay["sample_elapsed"] = float(overlay.get("sample_elapsed", 0.0)) + delta
+    var elapsed: float = float(overlay["sample_elapsed"])
+    while not plan.is_empty():
+        var entry: Dictionary = plan[0]
+        if float(entry.get("time", 0.0)) > elapsed + 0.0001:
+            break
+        plan.pop_front()
+        var key: String = String(entry.get("key", ""))
+        if key.is_empty():
+            continue
+        _play_result_audio(
+            key,
+            int(overlay.get("sequence", -1)),
+            String(entry.get("sample", "")),
+        )
 
 
 func _apply_game_text_step(overlay: Dictionary, t: float) -> void:
@@ -1294,6 +1409,7 @@ func _update_game_text_sequence(delta: float) -> void:
     for overlay in _game_text_overlays:
         if not bool(overlay["active"]):
             continue
+        _update_game_text_samples(overlay, delta)
         var rect: Sprite2D = overlay["rect"]
         var steps: Array = overlay["steps"]
         if not steps.is_empty():
@@ -1324,6 +1440,8 @@ func _hide_game_text_overlays() -> void:
     for overlay in _game_text_overlays:
         overlay["active"] = false
         overlay["timer"] = 0.0
+        # A stopped animator does not play its remaining sample.
+        overlay["samples"] = []
         var rect: Sprite2D = overlay["rect"]
         rect.visible = false
 
@@ -1577,6 +1695,7 @@ func _reset_round() -> void:
     computer.visible = true
     player.clear_result_pose()
     computer.clear_result_pose()
+    _camera_anm_end()
     # Native RestartValues() does not stop running game text animators, so a
     # round reset must not hide the result text either; only the per-side
     # COUNTER animation memory is cleared.
@@ -1902,6 +2021,8 @@ func _load_result_audio() -> void:
     roots.append(OS.get_executable_path().get_base_dir().path_join("audio/commentator"))
     for root: String in roots:
         for key: String in ["win", "lose", "draw", "fight", "ready", "time_out", "great", "perfect"]:
+            if _result_audio.has(key):
+                continue
             var filename: String = String(AudioCueMap.COMMENTATOR.get(key, ""))
             if filename.is_empty():
                 continue
@@ -1911,23 +2032,57 @@ func _load_result_audio() -> void:
             var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
             if stream != null:
                 _result_audio[key] = stream
-    if _result_audio.is_empty():
-        return
-    _result_player = AudioStreamPlayer.new()
-    _result_player.volume_db = 2.0
-    combat_audio.add_child(_result_player)
+                _result_audio_paths[key] = path
 
 
-func _play_result_audio(key: String) -> void:
+func _play_result_audio(key: String, sequence: int = -1, sample: String = "") -> void:
+    ## Plays one recovered commentator cue and records the exact stream/asset it
+    ## used.  The caller is the game-text sample schedule, so every launch owns
+    ## at most one playback per recovered sample (no separate threshold path).
     if _result_audio.is_empty():
         _load_result_audio()
-    if _result_player == null:
-        return
     var stream: AudioStream = _result_audio.get(key)
     if stream == null:
         return
-    _result_player.stream = stream
-    _result_player.play()
+    var player: AudioStreamPlayer = _acquire_result_player()
+    if player == null:
+        return
+    player.stream = stream
+    player.play()
+    result_audio_play_count += 1
+    result_audio_play_log.append({
+        "key": key,
+        "sequence": sequence,
+        "sample": sample,
+        "file": String(AudioCueMap.COMMENTATOR.get(key, "")),
+        "path": String(_result_audio_paths.get(key, "")),
+        "length_ms": int(round(stream.get_length() * 1000.0)),
+    })
+    if result_audio_play_log.size() > 64:
+        result_audio_play_log.pop_front()
+
+
+func _acquire_result_player() -> AudioStreamPlayer:
+    ## Native starts an independent sound per LaunchGameTextAnimation call, so
+    ## YOU_WIN (+0 s) and PERFECT (+1.5 s) must not cut each other off.  Grow a
+    ## small pool first, then reuse round-robin; the recovered call sites never
+    ## run more than three sequences at once.
+    if not is_instance_valid(combat_audio):
+        return null
+    if _result_players.size() < RESULT_AUDIO_MAX_PLAYERS:
+        var created: AudioStreamPlayer = AudioStreamPlayer.new()
+        created.volume_db = 2.0
+        combat_audio.add_child(created)
+        _result_players.append(created)
+        if _result_player == null:
+            _result_player = created
+        return created
+    var reused: AudioStreamPlayer = _result_players[
+        _result_player_cursor % _result_players.size()
+    ]
+    _result_player_cursor += 1
+    reused.stop()
+    return reused
 
 
 func _start_round_intro() -> void:
@@ -1945,7 +2100,8 @@ func _start_round_intro() -> void:
     _enter_match_state(MATCH_STATE_INTRO)
     _intro_fight_shown = false
     _show_game_text("READY", 0.8, GAME_TEXT_SEQ_READY)
-    _play_result_audio("ready")
+    # Ready_Alt_1.wav is the recovered sample of game-text record 0 and is
+    # scheduled by _show_game_text; do not play it a second time here.
 
 
 func _load_bruce_voice_audio() -> void:
@@ -2236,6 +2392,84 @@ func _restart_fight_camera() -> void:
     _cam_initialized = true
 
 
+func _camera_anm_fighter_point(fighter: PortFighter) -> Vector3:
+    # True source Z-up point: (world x, -world z, height above the fighter
+    # origin) in .anm source units. The decoded camera data is Z-up, so this
+    # differs from _camera_fighter_point() (which is Godot Y-up for the
+    # analytic camera).
+    var p: Vector3 = fighter.global_position
+    return Vector3(p.x, -p.z, p.y - PortFighter.PLAYER_ORIGIN_HEIGHT) / CAM_SOURCE_UNITS_TO_WORLD
+
+
+func _camera_anm_begin(
+        clip: String, winner: PortFighter, player_pre: Vector3, computer_pre: Vector3
+) -> bool:
+    ## Start the authored result camera for `winner`. `player_pre`/`computer_pre`
+    ## are the two fighters' source points *before* SetState(12/13) moves both to
+    ## the origin; they give the dummy yaw (winner -> loser). SetState(12/13)
+    ## then renders the winner at the origin, so the anchors are rebased so the
+    ## selected dummy lands there. mirror=true selects the computer as the dummy
+    ## exactly as CBeatEmUpCamera::StartAnimation swaps A/B for states 12/13.
+    if _camera_anm == null:
+        _camera_anm = CameraAnm.new()
+    if not _camera_anm.load_json(_camera_anm_dir + clip + ".json"):
+        _camera_anm_clip = ""
+        _camera_anm_anchor = null
+        return false
+    var mirror: bool = winner == computer
+    var winner_pre: Vector3 = computer_pre if mirror else player_pre
+    var pose_origin: Vector3 = _camera_anm_fighter_point(winner)  # winner at the origin
+    var rebase: Vector3 = pose_origin - winner_pre
+    var a: Vector3 = player_pre + rebase
+    var b: Vector3 = computer_pre + rebase
+    if mirror:
+        # Computer (winner) is the dummy at the origin; keep a non-degenerate
+        # winner->loser direction using the winner's facing when the two
+        # captured points coincide.
+        if (a - b).length() < 0.001:
+            a = b + Vector3(winner.facing, 0.0, 0.0)
+    else:
+        if (b - a).length() < 0.001:
+            b = a + Vector3(winner.facing, 0.0, 0.0)
+    _camera_anm_clip = clip
+    _camera_anm_frame = 0.0
+    _camera_anm_anchor = winner
+    _camera_anm_mirror = mirror
+    _camera_anm_a = a
+    _camera_anm_b = b
+    return true
+
+
+func _camera_anm_end() -> void:
+    _camera_anm_clip = ""
+    _camera_anm_frame = 0.0
+    _camera_anm_anchor = null
+
+
+func _camera_anm_play_authored(delta: float) -> bool:
+    ## Sample the decoded clip by frame (never interpolate: 34/70 clips contain
+    ## real single-frame camera cuts). Holds the last frame until the state
+    ## leaves 12/13; returns false only when no clip is loaded (missing JSON).
+    if _camera_anm == null or _camera_anm_clip.is_empty() or _camera_anm_anchor == null:
+        return false
+    var last: int = _camera_anm.frame_count() - 1
+    if last < 0:
+        return false
+    _camera_anm_frame += maxf(delta, 0.0) * 30.0
+    var index: int = int(minf(_camera_anm_frame, float(last)))
+    var pose: Dictionary = _camera_anm.place_world(
+        index, _camera_anm_a, _camera_anm_b, _camera_anm_mirror
+    )
+    fight_camera.fov = float(pose["fov_degrees"])
+    if bool(pose["has_target"]):
+        fight_camera.global_position = pose["camera_world"]
+        fight_camera.look_at(pose["target_world"], Vector3.UP)
+    else:
+        _camera_anm.apply_to(
+            fight_camera, index, _camera_anm_a, _camera_anm_b, _camera_anm_mirror
+        )
+    return true
+
 func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
     if (not is_instance_valid(fight_camera) or not is_instance_valid(player)
             or not is_instance_valid(computer)):
@@ -2244,6 +2478,10 @@ func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
         _restart_fight_camera()
     if _result_camera_override and match_state in [
             MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE]:
+        if _camera_anm_play_authored(delta):
+            return
+        # Fail-back: keep the pre-existing fixed result camera when the authored
+        # clip is missing (JSON absent) or could not be loaded.
         var winner_node: PortFighter = (
             player if pending_round_winner == 1 else computer
         )
@@ -2416,11 +2654,13 @@ func _on_time_up() -> void:
     _show_game_text(
         "TIME_IS_UP", float(ROUND_PHASE_WAIT_MS) / 1000.0, GAME_TEXT_SEQ_TIME_IS_UP
     )
-    _play_result_audio("time_out")
+    # Time_Out.wav is record 4's recovered sample and fires from the launch.
     _enter_match_state(MATCH_STATE_TIME_UP)
 
 
 func _enter_match_state(next_state: int) -> void:
+    if next_state not in [MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE]:
+        _camera_anm_end()
     match_state = next_state
     match_state_time = 0.0
     _round_end_handled = false
@@ -2455,7 +2695,8 @@ func _advance_round_intro() -> void:
     if not _intro_fight_shown and match_state_time >= 0.8:
         _intro_fight_shown = true
         _show_game_text("FIGHT", 1.2, GAME_TEXT_SEQ_FIGHT)
-        _play_result_audio("fight")
+        # Fight.wav is record 1's recovered sample at +2.0 s; the launch
+        # schedule below plays it once at that offset.
     if match_state_time > float(ROUND_PHASE_WAIT_MS) / 1000.0:
         _enter_match_state(MATCH_STATE_FIGHT)
         done = false
@@ -2475,7 +2716,7 @@ func _resolve_time_up_winner() -> void:
         pending_round_winner = 0
         hud.show_message("TIME UP · DRAW · ROUND %d" % round_number)
         _show_game_text("DRAW", float(ROUND_PHASE_WAIT_MS) / 1000.0, GAME_TEXT_SEQ_DRAW)
-        _play_result_audio("draw")
+        # Draw.wav is record 5's recovered sample and fires from the launch.
         _enter_match_state(MATCH_STATE_DRAW)
         return
     if player_health > computer_health:
@@ -2539,6 +2780,10 @@ func _begin_winner_result_pose() -> void:
     var winner_is_player: bool = pending_round_winner == 1
     var winner: PortFighter = player if winner_is_player else computer
     var loser: PortFighter = computer if winner_is_player else player
+    # Capture both fighters before SetPosToOrigin: this keeps the authored
+    # camera's dummy yaw (winner -> loser) non-degenerate.
+    var player_pre: Vector3 = _camera_anm_fighter_point(player)
+    var computer_pre: Vector3 = _camera_anm_fighter_point(computer)
     player.global_position = Vector3(0.0, 1.20, 0.0)
     computer.global_position = Vector3(0.0, 1.20, 0.0)
     player.move_axis = Vector2.ZERO
@@ -2546,6 +2791,7 @@ func _begin_winner_result_pose() -> void:
     player.visible = winner_is_player
     computer.visible = not winner_is_player
     _result_camera_override = true
+    _camera_anm_begin("m01_victory_01", winner, player_pre, computer_pre)
     # The KO text from state 7/8 has finished by the time SetState(12/13)
     # begins; clear it so only the victory/defeat clip is presented.
     _hide_game_text_overlays()

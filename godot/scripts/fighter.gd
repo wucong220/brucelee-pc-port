@@ -7148,7 +7148,7 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
                     "impactlightleftlow", "impactlightrightlow",
                     "impacthardleftlow", "impacthardlefthigh", "impacthardabove",
                     "impacthardfrontlow",
-                ] and not _medium_lethal_impactable()):
+                ] and is_player and not _medium_lethal_impactable()):
             return {}
         return exact
     # Hard and brutal attacks have no light-height fallback for hits when the
