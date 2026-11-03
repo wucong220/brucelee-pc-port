@@ -553,7 +553,7 @@ func _build_game_text_overlay() -> void:
     layer.layer = 15
     add_child(layer)
     _game_text_rect = Sprite2D.new()
-    _game_text_rect.position = Vector2(480.0, 220.0)
+    _game_text_rect.position = Vector2(300.0, 220.0)
     _game_text_rect.scale = Vector2(1.6, 1.6)
     _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
     _game_text_rect.visible = false
