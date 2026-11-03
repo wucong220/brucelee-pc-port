@@ -8,6 +8,8 @@ const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const MoveTraining = preload("res://scripts/move_training.gd")
 const MoveGallery = preload("res://scripts/move_gallery.gd")
+const FxLanternPulse = preload("res://scripts/fx_lanterns_pulse.gd")
+const FxVapourReflector = preload("res://scripts/fx_vapour_reflector.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -543,6 +545,26 @@ func _build_near_manifest(scene_root: String) -> void:
         if not entry_value is Dictionary:
             continue
         var entry: Dictionary = entry_value
+        if bool(entry.get("pulse", false)):
+            var curves_path: String = base.path_join(
+                String(entry.get("pulse_curves", "lantern_pulse_curves.json")))
+            var pulse: Node3D = FxLanternPulse.build(base, curves_path, scale_value)
+            if pulse.get_child_count() == 0:
+                pulse.free()
+                continue
+            root.add_child(pulse)
+            for replaced_name: Variant in entry.get("replaces", []):
+                _hide_far_fx_entry(String(replaced_name))
+            continue
+        if bool(entry.get("reflector", false)):
+            var reflector: Node3D = FxVapourReflector.build(base, scale_value)
+            if reflector.get_child_count() == 0:
+                reflector.free()
+                continue
+            root.add_child(reflector)
+            for replaced_name: Variant in entry.get("replaces", []):
+                _hide_far_fx_entry(String(replaced_name))
+            continue
         var glb_path: String = base.path_join(String(entry.get("file", "")))
         if not FileAccess.file_exists(glb_path):
             continue
@@ -821,6 +843,26 @@ func _build_fx_anim_scene() -> void:
         if not entry_value is Dictionary:
             continue
         var entry: Dictionary = entry_value
+        if bool(entry.get("pulse", false)):
+            var curves_path: String = base.path_join(
+                String(entry.get("pulse_curves", "lantern_pulse_curves.json")))
+            var pulse: Node3D = FxLanternPulse.build(base, curves_path, scale_value)
+            if pulse.get_child_count() == 0:
+                pulse.free()
+                continue
+            root.add_child(pulse)
+            for replaced_name: Variant in entry.get("replaces", []):
+                _hide_far_fx_entry(String(replaced_name))
+            continue
+        if bool(entry.get("reflector", false)):
+            var reflector: Node3D = FxVapourReflector.build(base, scale_value)
+            if reflector.get_child_count() == 0:
+                reflector.free()
+                continue
+            root.add_child(reflector)
+            for replaced_name: Variant in entry.get("replaces", []):
+                _hide_far_fx_entry(String(replaced_name))
+            continue
         var glb_path: String = base.path_join(String(entry.get("file", "")))
         var used_static_group := false
         if not FileAccess.file_exists(glb_path):
