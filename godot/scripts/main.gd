@@ -93,7 +93,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "attack_config": "res://data/attack_config_johnson.json",
     },
     "chief": {
-        "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\chief01_full_body_hair_84_all_20261103.glb",
+        "glb": "D:\\BruceLeeWork\\chief-loming-fix-20261103\\candidates\\chief01_full_body_hair_84_bindfix_20261103.glb",
         "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\chief01",
         "clip_prefix": "",
         "master": "",
@@ -101,7 +101,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "attack_config": "res://data/attack_config_chief.json",
     },
     "loming": {
-        "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\loming01_full_body_hair_82_all_20261103.glb",
+        "glb": "D:\\BruceLeeWork\\chief-loming-fix-20261103\\candidates\\loming01_full_body_hair_82_bindfix_20261103.glb",
         "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\loming01",
         "clip_prefix": "",
         "master": "",
