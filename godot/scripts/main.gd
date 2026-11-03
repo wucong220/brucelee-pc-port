@@ -521,8 +521,7 @@ func _build_original_far_scene() -> void:
             continue
         var entry: Dictionary = entry_value
         var entry_name: String = String(entry.get("name", ""))
-        if "skydome" in entry_name:
-            continue
+        var is_skydome: bool = _is_skydome_entry(entry)
         var glb_path: String = base.path_join(String(entry.get("file", "")))
         if not FileAccess.file_exists(glb_path):
             continue
@@ -539,28 +538,36 @@ func _build_original_far_scene() -> void:
         if "combatarea" in entry_name:
             _scene_origin = Vector3(float(pos[0]), 0.0, -float(pos[1])) * scale_value
         var material: StandardMaterial3D = fallback_material
-        var texture_name: String = String(entry.get("texture", ""))
-        if not texture_name.is_empty():
-            var texture_path: String = base.path_join(texture_name)
-            if FileAccess.file_exists(texture_path):
-                var image: Image = Image.new()
-                if image.load(texture_path) == OK:
-                    material = StandardMaterial3D.new()
-                    material.albedo_texture = ImageTexture.create_from_image(image)
-                    material.albedo_color = Color.WHITE
-                    material.roughness = 0.95
-                    _far_scene_texture_count += 1
-        if "alphagroup" in entry_name:
-            material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-            material.alpha_scissor_threshold = 0.5
-        if "fx_" in entry_name or "light" in entry_name:
-            material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-            material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-            material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-            material.cull_mode = BaseMaterial3D.CULL_DISABLED
-            material.albedo_color = Color(1.0, 1.0, 1.0, 0.8)
+        if is_skydome:
+            material = _make_skydome_material(entry, base)
+        else:
+            var texture_name: String = String(entry.get("texture", ""))
+            if not texture_name.is_empty():
+                var texture_path: String = base.path_join(texture_name)
+                if FileAccess.file_exists(texture_path):
+                    var image: Image = Image.new()
+                    if image.load(texture_path) == OK:
+                        material = StandardMaterial3D.new()
+                        material.albedo_texture = ImageTexture.create_from_image(image)
+                        material.albedo_color = Color.WHITE
+                        material.roughness = 0.95
+                        _far_scene_texture_count += 1
+            if "alphagroup" in entry_name:
+                material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+                material.alpha_scissor_threshold = 0.5
+            if "fx_" in entry_name or "light" in entry_name:
+                material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+                material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+                material.cull_mode = BaseMaterial3D.CULL_DISABLED
+                material.albedo_color = Color(1.0, 1.0, 1.0, 0.8)
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
-            (mesh_node as MeshInstance3D).material_override = material
+            var mesh_instance: MeshInstance3D = mesh_node
+            mesh_instance.material_override = material
+            if is_skydome:
+                # A sky dome encloses the arena, so a cast shadow would darken
+                # the whole far scene.
+                mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
         root.add_child(instance)
     if root.get_child_count() > 0:
         root.position = -_scene_origin
@@ -570,6 +577,52 @@ func _build_original_far_scene() -> void:
             _procedural_floor.visible = false
         for line: MeshInstance3D in _procedural_arena_lines:
             line.visible = false
+
+
+func _is_skydome_entry(entry: Dictionary) -> bool:
+    # Manifests may rename the entry to dodge older loaders; the explicit role,
+    # the original visual name and the mesh file name all keep this data-driven.
+    if String(entry.get("role", "")).to_lower() == "skydome":
+        return true
+    for key: String in ["name", "file", "source_name", "source_visual"]:
+        if "skydome" in String(entry.get(key, "")).to_lower():
+            return true
+    return false
+
+
+func _make_skydome_material(entry: Dictionary, base: String) -> StandardMaterial3D:
+    var material: StandardMaterial3D = StandardMaterial3D.new()
+    material.albedo_color = Color(0.42, 0.52, 0.66, 1.0)
+    material.roughness = 1.0
+    var texture_name: String = String(entry.get("texture", ""))
+    if not texture_name.is_empty():
+        var texture_path: String = base.path_join(texture_name)
+        if FileAccess.file_exists(texture_path):
+            var image: Image = Image.new()
+            if image.load(texture_path) == OK:
+                material.albedo_texture = ImageTexture.create_from_image(image)
+                material.albedo_color = Color.WHITE
+    # The authored sky blend mode is "none": keep the dome opaque.
+    material.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+    material.blend_mode = BaseMaterial3D.BLEND_MODE_MIX
+    # A sky is not lit by the arena light and never receives shadows.
+    material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+    material.disable_receive_shadows = true
+    var authored_cull: String = ""
+    if entry.get("material") is Dictionary:
+        authored_cull = String(
+            (entry["material"] as Dictionary).get("cull_mode", "")
+        ).to_lower()
+    match authored_cull:
+        "front":
+            material.cull_mode = BaseMaterial3D.CULL_FRONT
+        "back":
+            material.cull_mode = BaseMaterial3D.CULL_BACK
+        _:
+            # A sky dome is seen from the inside; the manifest does not carry a
+            # winding guarantee, so render both sides rather than a black sky.
+            material.cull_mode = BaseMaterial3D.CULL_DISABLED
+    return material
 
 
 func _apply_original_sky() -> void:
