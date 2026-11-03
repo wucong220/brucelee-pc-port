@@ -375,6 +375,7 @@ func _build_near_manifest(scene_root: String) -> void:
 
 func _build_original_scene_props() -> void:
     if _scene_variant() == "halla":
+        _build_near_manifest("scene/halla/near")
         return
     if _scene_variant() == "templeyardb":
         _build_near_manifest("scene/templeyardb/near")
