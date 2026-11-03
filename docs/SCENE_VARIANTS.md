@@ -9,9 +9,10 @@
   additive/unshaded handling is applied to `fx_`/light entries instead of
   per-scene culling. 3 near props are loaded from `scene/halla/near`.
 - Square B: 11 far visuals + sky; manifest entry renamed `bl_squareb_hw_sky`
-  so the loader does not skip the inward-facing dome.
-- Harbour A: 3 far visuals (quay, tyre, fence); sparse but renders. The full
-  harbour vista lives in sibling animation scenes and is not composed yet.
+  so the loader does not skip the inward-facing dome. 13 near props added.
+- Harbour A: 69-instance composed vista: quay, 19 boats, sails, sea hotel,
+  sea palace, rocks, sea plane, birds and sunset sky. `cloth`/`vapor` are
+  excluded because their meshes/transforms are not statically bakeable.
 
 ## Generic loader
 
