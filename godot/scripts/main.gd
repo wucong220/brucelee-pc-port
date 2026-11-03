@@ -349,8 +349,8 @@ func _build_near_manifest(scene_root: String) -> void:
         if instance == null:
             continue
         var pos: Array = entry.get("position", [0.0, 0.0, 0.0])
-        instance.position = Vector3(float(pos[0]), float(pos[2]), -float(pos[1])) * scale_value * scene_fit
-        instance.scale = Vector3.ONE * scale_value * scene_fit
+        instance.position = Vector3(float(pos[0]), float(pos[2]), -float(pos[1])) * scale_value
+        instance.scale = Vector3.ONE * scale_value
         var entry_material: StandardMaterial3D = material
         var texture_name: String = String(entry.get("texture", ""))
         if not texture_name.is_empty():
@@ -471,7 +471,6 @@ func _build_original_far_scene() -> void:
     var root: Node3D = Node3D.new()
     root.name = "OriginalFarScene"
     var scale_value: float = PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
-    var scene_fit: float = 0.18 if _scene_variant() == "halla" else 1.0
     for entry_value: Variant in parsed:
         if not entry_value is Dictionary:
             continue
