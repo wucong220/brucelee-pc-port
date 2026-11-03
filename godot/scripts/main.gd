@@ -11,6 +11,8 @@ const MoveGallery = preload("res://scripts/move_gallery.gd")
 const FxLanternPulse = preload("res://scripts/fx_lanterns_pulse.gd")
 const FxVapourReflector = preload("res://scripts/fx_vapour_reflector.gd")
 const AudioCueMap = preload("res://scripts/audio_cue_map.gd")
+## Recovered impact/block SFX + 21 music-track library (data-only table).
+const SfxMusicMap = preload("res://scripts/sfx_music_map.gd")
 const CameraAnm = preload("res://scripts/camera_anm_player.gd")
 ## Story-mode flow (isolated prototype).  Only instantiated when
 ## BRUCELEE_STORY_FLOW=1, so the existing prototype paths are untouched.
@@ -249,9 +251,21 @@ var _candidate_audio_error: Dictionary = {}
 var _voice_audio: Dictionary = {}
 var _voice_audio_error: Dictionary = {}
 var _active_voice: AudioStreamPlayer = null
+# Recovered adreno_200/sounds/sfx library (38 WAVs).  Distinct from the three
+# legacy candidate-audio streams: the package copy is self-contained and is
+# read without CandidatePathGuard (music/commentator already use the same
+# package-relative convention).
+var _sfx_audio: Dictionary = {}
+var _sfx_audio_error: Dictionary = {}
+var _sfx_play_log: Array = []
+var _sfx_play_count: int = 0
+var _footstep_accum: Dictionary = {}
+var _footstep_index: Dictionary = {}
 var _music_player: AudioStreamPlayer = null
 var _music_stream: AudioStream = null
 var _music_streams: Dictionary = {}
+var _music_stream_paths: Dictionary = {}
+var _music_key: String = ""
 var _result_audio: Dictionary = {}
 var _result_audio_paths: Dictionary = {}
 var _result_players: Array[AudioStreamPlayer] = []
@@ -488,6 +502,7 @@ func _ready() -> void:
 
 
 func _start_direct_intro() -> void:
+    _play_scene_music()
     if OS.get_environment("BRUCELEE_ROUND_INTRO") == "0":
         return
     await RenderingServer.frame_post_draw
@@ -1558,6 +1573,7 @@ func _build_fighters() -> void:
     player.combat_hit.connect(_on_hit)
     computer.combat_hit.connect(_on_hit)
     player.attack_started.connect(_on_player_attack_started)
+    computer.attack_started.connect(_on_opponent_attack_started)
 
 func _opponent_attack_config() -> String:
     ## The opponent's fighting set decides the clip table and the move data.
@@ -2053,14 +2069,59 @@ func _build_combat_audio() -> void:
             _candidate_audio_error[event] = "candidate audio failed to load: " + path
             continue
         _candidate_audio[event] = stream
+    # Recovered 38-file impact/block library (package audio/sfx).  The legacy
+    # three-stream candidate set stays as a fallback for the old validator.
+    _load_combat_sfx()
     # Restore the original eager Bruce voice load (commit 013b55a): commit
     # 132ff62's whole-file churn moved the only call into the export self
     # test, which left validate_bruce_voice_audio failing at HEAD.
     _load_bruce_voice_audio()
-    _load_menu_music()
+    _load_music_library()
 
 
-func _load_menu_music() -> void:
+func _load_combat_sfx() -> void:
+    ## Loads every original adreno_200/sounds/sfx WAV from the package.  The
+    ## package copy is read directly (like audio/music and audio/commentator);
+    ## CandidatePathGuard rejects exe-base-directory paths in template builds,
+    ## so it is intentionally not used for shipped package assets.
+    var roots: Array[String] = []
+    var env_root: String = OS.get_environment("BRUCELEE_SFX_ROOT")
+    if not env_root.is_empty():
+        roots.append(env_root)
+    roots.append(OS.get_executable_path().get_base_dir().path_join("audio/sfx"))
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
+            "BruceLee-PC-Port/candidate-sfx-20261030/adreno_200/sounds/sfx"
+        ))
+    _sfx_audio.clear()
+    _sfx_audio_error.clear()
+    for filename: String in SfxMusicMap.SFX_FILES:
+        var loaded: AudioStreamWAV = null
+        var last_error: String = ""
+        for root: String in roots:
+            var path: String = root.path_join(filename)
+            if not FileAccess.file_exists(path):
+                continue
+            var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
+            if stream == null:
+                last_error = "SFX failed to load: " + path
+                continue
+            loaded = stream
+            break
+        if loaded == null:
+            if last_error.is_empty():
+                last_error = "SFX not found in: " + ", ".join(roots)
+            _sfx_audio_error[filename] = last_error
+            continue
+        _sfx_audio[filename] = loaded
+
+
+func _sfx_ready() -> bool:
+    return _sfx_audio.size() == SfxMusicMap.SFX_FILES.size()
+
+
+func _music_roots() -> Array[String]:
     var roots: Array[String] = []
     var env_root: String = OS.get_environment("BRUCELEE_MUSIC_ROOT")
     if not env_root.is_empty():
@@ -2071,21 +2132,38 @@ func _load_menu_music() -> void:
         roots.append(local_app_data.path_join(
             "BruceLee-PC-Port/bruce-music-20261103"
         ))
+    return roots
+
+
+func _load_music_library() -> void:
+    ## All 21 recovered tracks.  The archive layout (day/, night/, story/,
+    ## misc/) is preserved; a flat <root>/<name>.wav fallback keeps the two
+    ## files shipped by Current156 working without re-copying them.
+    var roots: Array[String] = _music_roots()
     _music_streams.clear()
-    for root: String in roots:
-        for key: String in ["menu", "fight"]:
-            var filename: String = (
-                "Main_Theme_BL.wav" if key == "menu" else "Tournament_Day_BL.wav"
-            )
-            var path: String = root.path_join(filename)
-            if not FileAccess.file_exists(path):
+    _music_stream_paths.clear()
+    for rel: String in SfxMusicMap.MUSIC_FILES:
+        var filename: String = rel.get_file()
+        for root: String in roots:
+            var candidates: Array[String] = [
+                root.path_join(rel),
+                root.path_join(filename),
+            ]
+            var chosen: String = ""
+            for path: String in candidates:
+                if FileAccess.file_exists(path):
+                    chosen = path
+                    break
+            if chosen.is_empty():
                 continue
-            var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
+            var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(chosen)
             if stream == null:
                 continue
             stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
             stream.loop_end = int(stream.get_length() * float(stream.mix_rate))
-            _music_streams[key] = stream
+            _music_streams[rel] = stream
+            _music_stream_paths[rel] = chosen
+            break
     if _music_streams.is_empty():
         return
     _music_player = AudioStreamPlayer.new()
@@ -2096,14 +2174,51 @@ func _load_menu_music() -> void:
 
 
 func _play_music(key: String) -> void:
-    if _music_player == null or not _music_streams.has(key):
+    if _music_player == null:
         return
-    var stream: AudioStream = _music_streams[key]
+    var rel: String = key
+    if key == "menu":
+        rel = SfxMusicMap.MENU_MUSIC
+    elif key == "fight":
+        rel = SfxMusicMap.scene_music(
+            OS.get_environment("BRUCELEE_SCENE").to_lower()
+        )
+    if not _music_streams.has(rel):
+        rel = key
+    if not _music_streams.has(rel):
+        return
+    var stream: AudioStream = _music_streams[rel]
     if _music_player.stream == stream and _music_player.playing:
+        _music_key = rel
         return
     _music_stream = stream
+    _music_key = rel
     _music_player.stream = stream
     _music_player.play()
+
+
+func _play_scene_music() -> void:
+    var scene: String = OS.get_environment("BRUCELEE_SCENE").to_lower()
+    var rel: String = SfxMusicMap.scene_music(scene)
+    if rel.is_empty():
+        rel = SfxMusicMap.MENU_MUSIC
+    _play_music(rel)
+
+
+## Story flow calls this with the recovered subevent `music.file`
+## ("sounds/music/story/..."), so the original chapter cue is preserved.
+func play_story_music(path: String) -> void:
+    var rel: String = SfxMusicMap.story_music(path)
+    if not rel.is_empty():
+        _play_music(rel)
+
+
+func play_map_music() -> void:
+    _play_music(SfxMusicMap.MAP_MUSIC)
+
+
+func play_menu_music() -> void:
+    _play_music("menu")
 
 
 func _load_result_audio() -> void:
@@ -2268,6 +2383,9 @@ func _load_voice_for_action(action: String) -> AudioStream:
 
 
 func _on_player_attack_started(action: String) -> void:
+    # Non-voice swing/step/clothing cues for the same original set action are
+    # independent of the Bruce voice table (some actions have SFX but no voice).
+    _play_attack_sfx(action)
     # Voice cue comes from the recovered fighting-set table. Actions that have
     # no original voice (parry, grounded attacks, grab misses) stay silent
     # instead of falling back to the punch grunt.
@@ -2289,6 +2407,27 @@ func _on_player_attack_started(action: String) -> void:
     combat_audio.add_child(voice)
     _active_voice = voice
     voice.play()
+
+
+func _on_opponent_attack_started(action: String) -> void:
+    # Only set-specific cues that exist in the opponent's own fighting set are
+    # added here (currently KungFu faceupattack -> Clothing_2).  The player's
+    # Bruce cue table is not applied to another character's animation.
+    if not _sfx_ready():
+        return
+    var cues: Array = SfxMusicMap.set_cues(_opponent_set_family(), action)
+    if cues.is_empty():
+        return
+    _play_sfx_cues(cues, "opponent_attack:" + action)
+
+
+func _play_attack_sfx(action: String) -> void:
+    if not _sfx_ready():
+        return
+    var cues: Array = SfxMusicMap.attack_cues(action)
+    if cues.is_empty():
+        return
+    _play_sfx_cues(cues, "attack:" + action)
 
 
 ## Set reaction actions that carry a Bruce pain voice. Recovered from
@@ -2365,7 +2504,32 @@ func _voice_roots() -> Array[String]:
     return roots
 
 
-func _play_hit_audio(action: String, blocked: bool) -> void:
+func _play_hit_audio(
+        action: String, blocked: bool, defender: PortFighter = null
+) -> void:
+    ## The defender's last reaction is the exact set action the original
+    ## fighting set attaches its impact/block samples to.  Using it (rather
+    ## than guessing from the attacker's port action) keeps head/body,
+    ## light/heavy and block profiles on their own recovered files.
+    if _sfx_ready() and defender != null:
+        var reaction: String = defender.last_reaction_source_action
+        var cues: Array = SfxMusicMap.action_cues(reaction)
+        if cues.is_empty() and blocked:
+            cues = SfxMusicMap.action_cues("highblock")
+        if not cues.is_empty():
+            var exit_frame: int = defender.last_reaction_exit_frame
+            var filtered: Array = []
+            for value: Variant in cues:
+                if not value is Dictionary:
+                    continue
+                var cue_row: Dictionary = value
+                if exit_frame < 0 or int(cue_row.get("frame", 0)) <= exit_frame + 2:
+                    filtered.append(cue_row)
+            if not filtered.is_empty():
+                _play_sfx_cues(filtered, "reaction:" + reaction)
+                return
+    # Legacy fail-soft path: the three staged candidate WAVs, used only when
+    # the 38-file package library is absent (editor runs / old validator).
     var event: String = ""
     if blocked:
         event = "block"
@@ -2374,8 +2538,6 @@ func _play_hit_audio(action: String, blocked: bool) -> void:
             "low_punch2", "low_punch3", "special_punch_low_hit",
             "special_punch_high_hit", "parry_attack",
         ]:
-        # Only generic punch/kick body-light samples are available in the
-        # candidate audio set; use them as prototype hit sounds.
         event = "punch"
     elif action in [
             "kick", "high_kick", "high_kick2", "high_kick3",
@@ -2393,6 +2555,116 @@ func _play_hit_audio(action: String, blocked: bool) -> void:
     combat_audio.add_child(player)
     player.play()
 
+
+func _play_sfx_cues(cues: Array, label: String) -> void:
+    ## Frame values are the original 30 fps source frames, so a cue at f12 is
+    ## scheduled 0.4 s after the event instead of being flattened to frame 0.
+    for value: Variant in cues:
+        if not value is Dictionary:
+            continue
+        var cue: Dictionary = value
+        var file: String = String(cue.get("file", ""))
+        if file.is_empty():
+            continue
+        var stream: AudioStream = _sfx_audio.get(file)
+        if stream == null:
+            continue
+        var volume: float = clampf(float(cue.get("volume", 1.0)), 0.001, 1.0)
+        var delay: float = maxf(float(cue.get("frame", 0)), 0.0) / 30.0
+        if delay <= 0.0001:
+            _spawn_sfx(stream, volume, label, file)
+            continue
+        get_tree().create_timer(delay).timeout.connect(
+            _spawn_sfx.bind(stream, volume, label, file)
+        )
+
+
+func _spawn_sfx(
+        stream: AudioStream, volume: float, label: String, file: String
+) -> void:
+    if not is_instance_valid(combat_audio):
+        return
+    var player: AudioStreamPlayer = AudioStreamPlayer.new()
+    player.stream = stream
+    player.volume_db = linear_to_db(volume)
+    player.finished.connect(player.queue_free)
+    combat_audio.add_child(player)
+    player.play()
+    _sfx_play_count += 1
+    _sfx_play_log.append({
+        "label": label,
+        "file": file,
+        "volume": volume,
+    })
+    if _sfx_play_log.size() > 128:
+        _sfx_play_log.pop_front()
+
+
+func _opponent_set_family() -> String:
+    match _opponent_attack_config():
+        PortFighter.ATTACK_CONFIG_PATH:
+            return "brucelee"
+        PortFighter.KEN_ATTACK_CONFIG_PATH:
+            return "karate"
+        PortFighter.CHIEF_ATTACK_CONFIG_PATH:
+            return "karate"
+        PortFighter.JOHNSON_ATTACK_CONFIG_PATH:
+            return "thai"
+        PortFighter.SMALLBOY_ATTACK_CONFIG_PATH:
+            return "thai"
+        PortFighter.BRICK_ATTACK_CONFIG_PATH:
+            return "thai"
+        PortFighter.MASTER_ATTACK_CONFIG_PATH:
+            return "kungfu"
+        PortFighter.SINFU_ATTACK_CONFIG_PATH:
+            return "kungfu"
+        PortFighter.SHENLO_ATTACK_CONFIG_PATH:
+            return "kungfu"
+        PortFighter.LOMING_ATTACK_CONFIG_PATH:
+            return "kungfu"
+        _:
+            return "thai"
+
+
+func _update_one_footstep(fighter: PortFighter, family: String, delta: float) -> void:
+    if fighter == null or not is_instance_valid(fighter):
+        return
+    var moving: bool = (
+        fighter.state == "idle"
+        and fighter.move_axis.length() > 0.15
+        and not done
+    )
+    if not moving:
+        _footstep_accum[family] = 0.0
+        return
+    var accum: float = float(_footstep_accum.get(family, 0.0)) + delta
+    var interval: float = 0.34
+    if accum < interval:
+        _footstep_accum[family] = accum
+        return
+    _footstep_accum[family] = accum - interval
+    var cues: Array = SfxMusicMap.move_cues(family)
+    if cues.is_empty():
+        return
+    var index: int = int(_footstep_index.get(family, 0)) % cues.size()
+    _footstep_index[family] = index + 1
+    var cue: Dictionary = cues[index]
+    var file: String = String(cue.get("file", ""))
+    var stream: AudioStream = _sfx_audio.get(file)
+    if stream == null:
+        return
+    _spawn_sfx(
+        stream, float(cue.get("volume", 0.5)),
+        "footstep:" + family, file
+    )
+
+
+func _update_footsteps(delta: float) -> void:
+    if not _sfx_ready():
+        return
+    _update_one_footstep(player, "brucelee", delta)
+    _update_one_footstep(computer, _opponent_set_family(), delta)
+
 func _stop_combat_audio() -> void:
     if is_instance_valid(combat_audio):
         for child: Node in combat_audio.get_children():
@@ -2404,6 +2676,13 @@ func _stop_combat_audio() -> void:
                     player.queue_free()
     _candidate_audio.clear()
     _candidate_audio_error.clear()
+    _sfx_audio.clear()
+    _sfx_audio_error.clear()
+    _sfx_play_log.clear()
+    _music_streams.clear()
+    _music_stream_paths.clear()
+    _music_player = null
+    _music_key = ""
 
 
 func _await_combat_audio_idle(timeout_seconds: float = 2.0) -> void:
@@ -2422,6 +2701,7 @@ func _process(_delta: float) -> void:
     _update_game_text_sequence(_delta)
     _update_player_key_status()
     _update_fight_camera(_delta)
+    _update_footsteps(_delta)
 
 
 func _update_player_key_status() -> void:
@@ -3394,7 +3674,7 @@ func _training_available() -> bool:
 func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damage: float, blocked: bool) -> void:
     if done or training_completed:
         return
-    _play_hit_audio(action, blocked)
+    _play_hit_audio(action, blocked, defender)
     # brucelee.set reaction actions (impact*) carry a Bruce pain voice on the
     # victim; the port never played it. Block reactions have no voice cue, and
     # the defender (not the attacker) is the one screaming.

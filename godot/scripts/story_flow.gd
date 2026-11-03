@@ -329,6 +329,8 @@ func show_difficulty() -> void:
 
 func show_map() -> void:
 	print("STORY_FLOW_MAP")
+	if main != null and main.has_method("play_map_music"):
+		main.play_map_music()
 	_clear_body()
 	show_screen("map")
 	if state == null:
@@ -631,6 +633,10 @@ func show_picture(sub_index: int) -> void:
 	var index: int = clampi(sub_index, 0, subs.size() - 1)
 	var sub: Dictionary = subs[index]
 	playback_cursor = index
+	if sub.has("music") and main != null and main.has_method("play_story_music"):
+		var story_track: String = String(Dictionary(sub["music"]).get("file", ""))
+		if not story_track.is_empty():
+			main.play_story_music(story_track)
 	_set_header(
 		"%s · picture %d/%d" % [
 			lang.text(String(event_row.get("maptitle", ""))), index + 1, subs.size(),
