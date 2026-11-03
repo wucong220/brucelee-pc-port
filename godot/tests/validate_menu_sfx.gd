@@ -37,7 +37,10 @@ func _run() -> void:
         quit(1)
         return
     menu.show_main_menu()
-    _press(menu, KEY_DOWN)
+    # The main menu now lists ARCADE / SURVIVAL / TIME ATTACK directly after
+    # VS FIGHT, so GROUND TRAINING is the 5th row (index 4).
+    for _i: int in range(4):
+        _press(menu, KEY_DOWN)
     if menu.last_sfx_played != "nav":
         push_error("menu navigation sfx did not trigger")
         quit(1)

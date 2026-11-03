@@ -15,6 +15,8 @@ const CameraAnm = preload("res://scripts/camera_anm_player.gd")
 ## Story-mode flow (isolated prototype).  Only instantiated when
 ## BRUCELEE_STORY_FLOW=1, so the existing prototype paths are untouched.
 const StoryFlow = preload("res://scripts/story_flow.gd")
+## Opt-in Arcade / Survival / Time Attack modes (recovered game.states / gui).
+const GameModes = preload("res://scripts/game_modes.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -318,6 +320,7 @@ var round_time_active: bool = false
 var rounds_to_win: int = ROUNDS_TO_WIN
 var player_start_health_override: float = -1.0
 var story_flow: Node = null
+var game_modes: Node = null
 # Local port of the CBeatEmUpGame state machine. match_state is the native
 # EGameState value, match_state_time is GetStateTime() in seconds and
 # pending_round_winner is 0 (draw), 1 (player) or 2 (computer).
@@ -448,12 +451,16 @@ func _ready() -> void:
     move_gallery.exit_requested.connect(_on_move_gallery_exit)
     var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
     var story_mode: bool = OS.get_environment("BRUCELEE_STORY_FLOW") == "1"
+    var game_mode: bool = not OS.get_environment("BRUCELEE_GAME_MODE").is_empty()
     if story_mode:
         story_flow = StoryFlow.new()
         add_child(story_flow)
         story_flow.configure(self, MENU_OPPONENT_CONFIG)
+    game_modes = GameModes.new()
+    add_child(game_modes)
+    game_modes.configure(self, MENU_OPPONENT_CONFIG)
     main_menu_enabled = (
-        false if (export_self_test or story_mode)
+        false if (export_self_test or story_mode or game_mode)
         else _should_show_main_menu()
     )
     _configure_round_time()
@@ -471,10 +478,13 @@ func _ready() -> void:
     if export_self_test:
         call_deferred("_run_export_self_test")
     elif not main_menu_enabled and (
-            not story_mode or OS.get_environment("BRUCELEE_STORY_LAUNCH") == "1"):
+            not story_mode or OS.get_environment("BRUCELEE_STORY_LAUNCH") == "1") and (
+            not game_mode or OS.get_environment("BRUCELEE_MODE_LAUNCH") == "1"):
         call_deferred("_start_direct_intro")
     if story_mode:
         story_flow.open_initial()
+    if game_mode:
+        game_modes.open_initial()
 
 
 func _start_direct_intro() -> void:
@@ -1836,6 +1846,10 @@ func _open_pause_menu() -> void:
         # The story flow owns pause while a story battle (or a story screen) runs.
         story_flow.show_pause("battle")
         return
+    if game_modes != null and String(game_modes.get("screen")) == "battle":
+        # The arcade/survival/time-attack flow owns pause during a mode fight.
+        game_modes.show_pause("battle")
+        return
     menu_paused = true
     player.move_axis = Vector2.ZERO
     computer.move_axis = Vector2.ZERO
@@ -1864,6 +1878,11 @@ func _on_menu_command(command: String) -> void:
             _leave_menu()
             _reset_match()
             _start_round_intro()
+        "arcade", "survival", "timeattack":
+            training_mode = false
+            _leave_menu()
+            hud.visible = false
+            game_modes.open_mode(command)
         "move_training":
             training_mode = false
             _leave_menu()
@@ -3131,6 +3150,8 @@ func _advance_round_end() -> void:
         # playing them again here is the duplicate this patch removes.
         if story_flow != null:
             story_flow.match_finished(player_won)
+        if game_modes != null and String(game_modes.get("screen")) == "battle":
+            game_modes.match_finished(player_won)
     else:
         _start_next_round()
 

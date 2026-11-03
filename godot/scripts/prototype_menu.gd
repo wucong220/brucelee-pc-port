@@ -31,11 +31,13 @@ const OPPONENT_LABELS: Array[String] = [
     "SMALL BOY", "JOHNSON", "THE CHIEF", "LO MING", "BACK",
 ]
 const MAIN_COMMANDS: Array[String] = [
-    "fight", "training", "move_training", "gallery",
+    "fight", "arcade", "survival", "timeattack",
+    "training", "move_training", "gallery",
     "temple_a", "temple_b", "scenes", "opponents", "quit",
 ]
 const MAIN_LABELS: Array[String] = [
-    "VS FIGHT", "GROUND TRAINING", "MOVE TRAINING", "MOVE GALLERY",
+    "VS FIGHT", "ARCADE", "SURVIVAL", "TIME ATTACK",
+    "GROUND TRAINING", "MOVE TRAINING", "MOVE GALLERY",
     "TEMPLE YARD A", "TEMPLE YARD B", "SCENES", "OPPONENTS", "QUIT GAME",
 ]
 const PAUSE_COMMANDS: Array[String] = ["resume", "restart", "main_menu", "quit"]
