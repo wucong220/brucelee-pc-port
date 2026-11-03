@@ -12,6 +12,9 @@ const FxLanternPulse = preload("res://scripts/fx_lanterns_pulse.gd")
 const FxVapourReflector = preload("res://scripts/fx_vapour_reflector.gd")
 const AudioCueMap = preload("res://scripts/audio_cue_map.gd")
 const CameraAnm = preload("res://scripts/camera_anm_player.gd")
+## Story-mode flow (isolated prototype).  Only instantiated when
+## BRUCELEE_STORY_FLOW=1, so the existing prototype paths are untouched.
+const StoryFlow = preload("res://scripts/story_flow.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -309,6 +312,12 @@ var round_reset_timer: float = -1.0
 var round_time_max: int = ROUND_TIME_DEFAULT
 var round_time_left: int = ROUND_TIME_DEFAULT
 var round_time_active: bool = false
+## Story-mode additions: the match config's rounds-to-win comes from the story
+## battle `rounds` field, and a story battle may start the player below full
+## health (`player_starting_health`).  Both default to the prototype values.
+var rounds_to_win: int = ROUNDS_TO_WIN
+var player_start_health_override: float = -1.0
+var story_flow: Node = null
 # Local port of the CBeatEmUpGame state machine. match_state is the native
 # EGameState value, match_state_time is GetStateTime() in seconds and
 # pending_round_winner is 0 (draw), 1 (player) or 2 (computer).
@@ -411,8 +420,17 @@ func _ready() -> void:
     move_gallery.configure(self, player, computer)
     move_gallery.exit_requested.connect(_on_move_gallery_exit)
     var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
-    main_menu_enabled = false if export_self_test else _should_show_main_menu()
+    var story_mode: bool = OS.get_environment("BRUCELEE_STORY_FLOW") == "1"
+    if story_mode:
+        story_flow = StoryFlow.new()
+        add_child(story_flow)
+        story_flow.configure(self, MENU_OPPONENT_CONFIG)
+    main_menu_enabled = (
+        false if (export_self_test or story_mode)
+        else _should_show_main_menu()
+    )
     _configure_round_time()
+    _configure_match_rounds()
     _reset_match()
     _configure_native_ai()
     print("STARTUP_PROFILE environment=%d fighters=%d audio=%d total=%d" % [
@@ -425,8 +443,11 @@ func _ready() -> void:
         _open_main_menu()
     if export_self_test:
         call_deferred("_run_export_self_test")
-    elif not main_menu_enabled:
+    elif not main_menu_enabled and (
+            not story_mode or OS.get_environment("BRUCELEE_STORY_LAUNCH") == "1"):
         call_deferred("_start_direct_intro")
+    if story_mode:
+        story_flow.open_initial()
 
 
 func _start_direct_intro() -> void:
@@ -1706,6 +1727,11 @@ func _reset_round() -> void:
     var computer_x: float = 0.25 if training_mode else (0.75 if demo_close else 2.0)
     player.reset_fighter(Vector3(player_x, 1.20, 0.0))
     computer.reset_fighter(Vector3(computer_x, 1.20, 0.0))
+    # `player_starting_health` applies to the start of the fight (round 1); later
+    # rounds keep the native RestartValues() behaviour.  The native semantics of
+    # this recovered field were not recovered beyond its name.
+    if player_start_health_override > 0.0 and round_number == 1:
+        player.health = player_start_health_override
     # SetState(12/13) hides the loser; a reset must restore both bodies.
     player.visible = true
     computer.visible = true
@@ -1778,6 +1804,10 @@ func _open_main_menu() -> void:
     get_tree().paused = true
 
 func _open_pause_menu() -> void:
+    if story_flow != null:
+        # The story flow owns pause while a story battle (or a story screen) runs.
+        story_flow.show_pause("battle")
+        return
     menu_paused = true
     player.move_axis = Vector2.ZERO
     computer.move_axis = Vector2.ZERO
@@ -2773,8 +2803,25 @@ func _enter_match_state(next_state: int) -> void:
     _round_end_handled = false
 
 
+func _configure_match_rounds() -> void:
+    ## BRUCELEE_MATCH_ROUNDS is the story battle `rounds` value (rounds to win).
+    ## BRUCELEE_PLAYER_START_HEALTH is the story battle `player_starting_health`.
+    ## Both are ignored when the environment does not set them, so the prototype
+    ## match stays ROUNDS_TO_WIN / full health.
+    var setting: String = OS.get_environment("BRUCELEE_MATCH_ROUNDS")
+    rounds_to_win = ROUNDS_TO_WIN
+    if setting.is_valid_int():
+        rounds_to_win = maxi(1, setting.to_int())
+    player_start_health_override = -1.0
+    var health: String = OS.get_environment("BRUCELEE_PLAYER_START_HEALTH")
+    if health.is_valid_float():
+        var value: float = health.to_float()
+        if value > 0.0:
+            player_start_health_override = minf(PortFighter.MAX_HEALTH, value)
+
+
 func _match_target_reached() -> bool:
-    return player_rounds >= ROUNDS_TO_WIN or computer_rounds >= ROUNDS_TO_WIN
+    return player_rounds >= rounds_to_win or computer_rounds >= rounds_to_win
 
 
 func _update_match_state(delta: float) -> void:
@@ -2936,13 +2983,15 @@ func _advance_round_end() -> void:
     if _match_target_reached():
         match_over = true
         done = true
-        var player_won: bool = player_rounds >= ROUNDS_TO_WIN
+        var player_won: bool = player_rounds >= rounds_to_win
         hud.show_message(
             "YOU WIN THE MATCH · R TO RESTART" if player_won
             else "YOU LOSE THE MATCH · R TO RESTART"
         )
         # You_Win/You_Lose already fired with the SetState(7)/(8) game text;
         # playing them again here is the duplicate this patch removes.
+        if story_flow != null:
+            story_flow.match_finished(player_won)
     else:
         _start_next_round()
 

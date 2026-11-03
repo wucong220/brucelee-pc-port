@@ -6804,6 +6804,8 @@ func begin_endattack_victim(attacker_kind: String = "") -> bool:
 
 
 func _try_attack_contact() -> void:
+    if _attack_connected:
+        return
     if (opponent == null or not is_instance_valid(opponent)
             or opponent.state in ["ko", "facedownko"]):
         return
