@@ -487,9 +487,6 @@ func _build_original_far_scene() -> void:
         var entry_name: String = String(entry.get("name", ""))
         if "skydome" in entry_name:
             continue
-        if (_scene_variant() == "halla"
-                and entry_name.begins_with("bl_scene04a_hw_fx_biglight")):
-            continue
         var glb_path: String = base.path_join(String(entry.get("file", "")))
         if not FileAccess.file_exists(glb_path):
             continue
@@ -518,6 +515,12 @@ func _build_original_far_scene() -> void:
         if "alphagroup" in entry_name:
             material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
             material.alpha_scissor_threshold = 0.5
+        if "fx_" in entry_name or "light" in entry_name:
+            material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+            material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+            material.cull_mode = BaseMaterial3D.CULL_DISABLED
+            material.albedo_color = Color(1.0, 1.0, 1.0, 0.8)
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             (mesh_node as MeshInstance3D).material_override = material
         root.add_child(instance)
@@ -1150,8 +1153,6 @@ func _native_camera_pose(a: Vector3, b: Vector3, aspect_scale: float) -> Diction
     if _cam_side != 0:
         lateral = -lateral
     var distance: float = maxf(length, CAM_MIN_DISTANCE) * aspect_scale
-    if _scene_variant() == "halla":
-        distance *= 1.35
     var position: Vector3 = target + lateral * distance
     position.y += CAM_ELEVATION
     return {"position": position, "target": target}
