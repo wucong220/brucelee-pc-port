@@ -559,7 +559,7 @@ void fragment() {
     vec4 tex = texture(TEXTURE, UV);
     float luma = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
     float ink = 1.0 - luma;
-    float alpha = smoothstep(0.55, 0.90, ink);
+    float alpha = tex.a;
     vec3 color = vec3(1.0, 0.86, 0.35);
     COLOR = vec4(color, alpha);
 }
