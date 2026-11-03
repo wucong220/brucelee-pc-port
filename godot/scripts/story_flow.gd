@@ -22,6 +22,7 @@ const StoryDataScript = preload("res://scripts/story_data.gd")
 const StoryStateScript = preload("res://scripts/story_state.gd")
 const StoryRules = preload("res://scripts/story_rules.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
+const StoryLangScript = preload("res://scripts/story_lang.gd")
 
 const ENV_STORY_FLOW: String = "BRUCELEE_STORY_FLOW"
 const ENV_STORY_LAUNCH: String = "BRUCELEE_STORY_LAUNCH"
@@ -38,6 +39,7 @@ var main: Node = null
 var opponent_config: Dictionary = {}
 var data = null
 var state = null
+var lang = null
 
 var screen: String = "hidden"
 var error_text: String = ""
@@ -94,6 +96,8 @@ func open_initial(force_menu: bool = false) -> void:
 		error_text = data.error
 		_show_error("STORY DATA ERROR", error_text)
 		return
+	if lang == null:
+		lang = StoryLangScript.new()
 	if state == null:
 		state = StoryStateScript.new()
 	if OS.get_environment(ENV_STORY_LAUNCH) == "1" and not force_menu:
@@ -335,7 +339,7 @@ func show_map() -> void:
 	var completed: Array = state.completed_list(chapter_id)
 	var done: int = state.chapter_completed_count(chapter_id, event_rows)
 	_set_header(
-		data.chapter_title_key(chapter_index),
+		lang.text(data.chapter_title_key(chapter_index)),
 		"CHAPTER %d/%d · %d/%d EVENTS · EXP %d · %s" % [
 			chapter_index + 1, data.chapter_count(), done, event_rows.size(),
 			state.exp, String(state.difficulty_name).to_upper(),
@@ -370,7 +374,7 @@ func show_map() -> void:
 		if String(event_row.get("chapter_end", "")).to_lower() == "true":
 			marker += " ·END"
 		var base_text: String = "%s%s%s" % [
-			prefix, String(event_row.get("maptitle", "")), marker,
+			prefix, lang.text(String(event_row.get("maptitle", ""))), marker,
 		]
 		var label: Label = _make_label(base_text, 14, color)
 		# Several recovered events share one (mapx, mapy); stack the labels so the
@@ -495,7 +499,7 @@ func show_detail(event_index: int) -> void:
 	if event_row.has("chapter_end"):
 		gate_bits.append("chapter_end " + String(event_row["chapter_end"]))
 	_set_header(
-		"%s   [%s]" % [String(event_row.get("maptitle", "")), String(event_row.get("type", ""))],
+		"%s   [%s]" % [lang.text(String(event_row.get("maptitle", ""))), String(event_row.get("type", ""))],
 		"mapx %d · mapy %d · %s · %d subevents: %d picture · %d battle · %d unlock" % [
 			int(event_row.get("mapx", 0)), int(event_row.get("mapy", 0)),
 			_join(gate_bits), data.subevents(event_row).size(),
@@ -528,7 +532,7 @@ func show_detail(event_index: int) -> void:
 		rows.append("    player     %s (single port candidate)" % String(sub.get("player", "")))
 		rows.append("    scenery    %s [%s] → BRUCELEE_SCENE '%s'" % [
 			String(sub.get("scenery", "")),
-			String(scenery.get("translate_name", "")),
+			lang.text(String(scenery.get("translate_name", ""))),
 			variant if not variant.is_empty() else "(default)",
 		])
 		if sub.has("rounds"):
@@ -555,7 +559,7 @@ func show_detail(event_index: int) -> void:
 			_join(picked, " "), data.difficulty_value(sub, state.difficulty_slot),
 		])
 		if sub.has("advice"):
-			rows.append("    advice     " + String(sub["advice"]))
+			rows.append("    advice     " + lang.text(String(sub["advice"])))
 		if sub.has("aitree"):
 			rows.append("    aitree     " + String(Dictionary(sub["aitree"]).get("file", "")))
 		var flags: Array = []
@@ -629,9 +633,9 @@ func show_picture(sub_index: int) -> void:
 	playback_cursor = index
 	_set_header(
 		"%s · picture %d/%d" % [
-			String(event_row.get("maptitle", "")), index + 1, subs.size(),
+			lang.text(String(event_row.get("maptitle", ""))), index + 1, subs.size(),
 		],
-		"storypicture.ui · text '%s'" % String(sub.get("text", "")),
+		"storypicture.ui · text '%s'" % lang.text(String(sub.get("text", ""))),
 		"J = NEXT · ESC = PAUSE"
 	)
 	var rows: Array = []
@@ -919,7 +923,7 @@ func show_rewards(rows_in: Array, already_completed: bool, maptitle: String) -> 
 	last_reward_rows = rows_in
 	last_reward_already = already_completed
 	last_reward_map = maptitle
-	var subtitle: String = "event %s · %d unlocks recorded" % [maptitle, rows_in.size()]
+	var subtitle: String = "event %s · %d unlocks recorded" % [lang.text(maptitle), rows_in.size()]
 	if already_completed:
 		subtitle += " · (already completed)"
 	if chapter_completed_now:
@@ -970,7 +974,7 @@ func show_records() -> void:
 		var chapter_id: String = data.chapter_id(index)
 		var event_rows: Array = data.events(index)
 		rows.append("chapter %d/%d  %s  %d/%d events" % [
-			index + 1, data.chapter_count(), data.chapter_title_key(index),
+			index + 1, data.chapter_count(), lang.text(data.chapter_title_key(index)),
 			state.chapter_completed_count(chapter_id, event_rows), event_rows.size(),
 		])
 	rows.append("")
