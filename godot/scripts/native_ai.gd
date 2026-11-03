@@ -73,6 +73,9 @@ var last_action: String = ""
 var decisions: Array[Dictionary] = []
 var _repetition: int = 0
 var _last_signature: String = ""
+var _opp_last_attack: String = ""
+var _opp_repeat: int = 0
+var _opp_was_startup: bool = false
 var _rng := RandomNumberGenerator.new()
 
 ## Diagnostics: how many times each native action was selected and which
@@ -134,6 +137,7 @@ func step(delta: float) -> Dictionary:
         return _record("none", "", "", "", "no_fighter")
     if not _can_act():
         return _record("none", "", "", "", "busy")
+    _update_opponent_attack_sequence()
 
     var walk: Dictionary = _walk()
     if walk.has("error"):
@@ -291,7 +295,7 @@ func _eval_condition(node: Dictionary) -> String:
         "opp_attack_height":
             return _opp_attack_height()
         "repetition":
-            return "6_or_more" if _repetition >= 6 else "default"
+            return _classify_repetition(_opp_repeat)
     return "default"
 
 
@@ -314,39 +318,68 @@ func _my_animation() -> String:
     return "default"
 
 
+func _update_opponent_attack_sequence() -> void:
+    if opponent == null or not is_instance_valid(opponent):
+        return
+    var is_startup: bool = opponent.state == "startup"
+    if is_startup and not _opp_was_startup:
+        var action: String = opponent._current_action_name()
+        if not action.is_empty():
+            if action == _opp_last_attack:
+                _opp_repeat += 1
+            else:
+                _opp_repeat = 0
+                _opp_last_attack = action
+    _opp_was_startup = is_startup
+
+
+func _classify_repetition(value: int) -> String:
+    # Native consecutive_attacks is 0-based; the shipped labels are 0..4 and
+    # 6_or_more for the sixth and later identical attack.
+    if value >= 5:
+        return "6_or_more"
+    return str(value)
+
+
 func _rage_band() -> String:
-    var maximum: float = PortFighter.RAGE_MAX
-    if maximum <= 0.0:
-        return "none"
-    var ratio: float = fighter.rage / maximum
-    if ratio >= 1.0 - 0.0001:
+    var value: float = clampf(fighter.rage, 0.0, 100.0)
+    if value >= 100.0:
         return "full"
-    if ratio >= 2.0 / 3.0:
+    if value >= 66.0:
         return "twothirds"
-    if ratio >= 1.0 / 3.0:
+    if value >= 33.0:
         return "onethird"
     return "none"
 
 
 func _distance_band() -> String:
-    var reach: float = _attack_reach()
+    # Recovered conditions.config thresholds are native world units: close
+    # [0,100), medium [100,200), far [200,1000).  The port scale below is the
+    # declared arena-width mapping (ARENA_HALF_X / 400.0), not an invented
+    # reach multiplier.
+    var scale_value: float = PortFighter.ARENA_HALF_X / 400.0
     var separation: float = _separation()
-    var close_factor: float = _tune_float("distance_close_reach_factor", 1.0)
-    var medium_factor: float = _tune_float("distance_medium_reach_factor", 2.0)
-    if separation <= reach * close_factor:
+    if separation < 100.0 * scale_value:
         return "close"
-    if separation <= reach * medium_factor:
+    if separation < 200.0 * scale_value:
         return "medium"
-    return "far"
+    if separation < 1000.0 * scale_value:
+        return "far"
+    return "none"
 
 
 func _in_attack_reach() -> bool:
-    return _separation() <= _attack_reach()
+    # conditions.config "near": [0,120) native units.
+    return _separation() < 120.0 * (PortFighter.ARENA_HALF_X / 400.0)
 
 
 func _near_limits() -> bool:
-    var margin: float = _tune_float("arena_limit_margin", 24.0)
-    return absf(fighter.position.x) >= PortFighter.ARENA_HALF_X - margin
+    # conditions.config "near_limits": distance_to_limit = 400 - |pos| < 50.
+    var scale_value: float = PortFighter.ARENA_HALF_X / 400.0
+    var origin_distance: float = Vector3(
+        fighter.position.x, fighter.position.y, fighter.position.z
+    ).length()
+    return (400.0 - origin_distance / scale_value) < 50.0
 
 
 ## Tuning entries carry {"value", "status", "basis"} in the shipped JSON so the
@@ -363,7 +396,7 @@ func _tune_float(key: String, fallback: float) -> float:
 func _winning() -> bool:
     if opponent == null or not is_instance_valid(opponent):
         return false
-    return fighter.health > opponent.health
+    return fighter.health >= opponent.health
 
 
 func _opp_attacking() -> bool:
