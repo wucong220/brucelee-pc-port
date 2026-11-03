@@ -207,6 +207,53 @@ const SINFU_CLIPS: Dictionary = {
     "stepleft": "m04_steplft",
     "stepright": "m04_steprht",
 }
+const SHENLO_CLIPS: Dictionary = {
+    "idle": "m04_e03_idle_01",
+    "punch": "m04_pnch_low_03",
+    "kick": "m04_kck_low_02",
+    "high_punch": "m04_pnch_high_01",
+    "high_punch2": "m04_pnch_high_02",
+    "high_punch3": "m04_pnch_high_03",
+    "low_punch": "m04_pnch_low_01",
+    "low_punch2": "m04_pnch_low_02",
+    "low_punch3": "m04_pnch_low_03",
+    "high_kick": "m04_kck_high_01",
+    "high_kick2": "m04_kck_high_02",
+    "high_kick3": "m04_kck_high_03",
+    "low_kick": "m04_kck_low_03",
+    "low_kick2": "m04_kck_low_01",
+    "low_kick3": "m04_kck_low_02",
+    "special_kick_high": "m04_e03_kck_high_03",
+    "special_kick_low": "m04_e03_kck_low_03",
+    "special_punch_low": "m04_e03_pnch_low_03",
+    "special_punch_high": "m04_e03_pnch_high_03",
+    "parry_high": "m01_parry_high",
+    "parry_low": "m01_kick_low_02",
+    "parry_attack": "m04_pnch_high_02",
+    "grab1": "m04_grab_01",
+    "grab2": "m04_grab_02",
+    "grab1_miss": "m02_grab_01",
+    "grab2_miss": "m04_grab_02",
+    "attack_to_floor": "m01_attack_to_floor",
+    "endattack": "m04_end_attack_01",
+    "grabbed1": "all_grabbed_01_forset04",
+    "grabbed2": "all_grabbed_02_forset04",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m04_e03_movefwd",
+    "moveleft": "m04_movelft",
+    "moveright": "m04_moverht",
+    "stepfwd": "m04_stepfwd",
+    "stepback": "m04_stepbck",
+    "stepleft": "m04_e03_steplft",
+    "stepright": "m04_e03_steprht",
+}
+
 const KEN_CLIPS: Dictionary = {
     "idle": "m02_idle_01",
     "punch": "m02_pnch_low_03",
@@ -278,6 +325,7 @@ const BRICK_ATTACK_CONFIG_PATH: String = "res://data/fighting_set_m03_mapped_att
 # characters share the set and differ only in the character-suffixed actions.
 const MASTER_ATTACK_CONFIG_PATH: String = "res://data/attack_config_master.json"
 const SINFU_ATTACK_CONFIG_PATH: String = "res://data/attack_config_sinfu.json"
+const SHENLO_ATTACK_CONFIG_PATH: String = "res://data/attack_config_shenlo.json"
 const KEN_ATTACK_CONFIG_PATH: String = "res://data/attack_config_ken.json"
 const KUNGFU_NATIVE_LINKS_PATH: String = "res://data/native_links_kungfu.json"
 const KARATE_NATIVE_LINKS_PATH: String = "res://data/native_links_karate.json"
@@ -364,6 +412,32 @@ const FACEDOWN_KO_RADIUS: float = 100.0
 # is recovered data from the set named in `source_archive`; the reaction exit
 # frames are the outgoing link windows of that set's impact/hard actions.
 const SET_ATTACK_PROFILES: Dictionary = {
+    "res://data/attack_config_shenlo.json": {
+        "source_archive": "kungfu.set",
+        "link_tag": "shenlo",
+        "native_links": KUNGFU_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 75.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+
     "res://data/fighting_set_m03_mapped_attacks.json": {
         "source_archive": "thai.set",
         "link_tag": "brick",
@@ -1358,6 +1432,80 @@ const SINFU_ANIMATION_RADII_DATA: Dictionary = {
     "m04_sp_pnch_high": 25.0,
     "m04_sp_pnch_high_fail": 40.0,
 }
+const SHENLO_ANIMATION_RADII_DATA: Dictionary = {
+    "m01_attack_to_floor": 45.0,
+    "m01_kick_low_02": 40.0,
+    "m01_parry_high": 40.0,
+    "m02_grab_01": 25.0,
+    "m04_e02_kck_high_03": 50.0,
+    "m04_e02_kck_low_03": 55.0,
+    "m04_e02_pnch_low_03": 55.0,
+    "m04_e03_idle_01": 45.0,
+    "m04_e03_kck_high_03": 55.0,
+    "m04_e03_kck_low_03": 50.0,
+    "m04_e03_movebck": 40.0,
+    "m04_e03_movefwd": 40.0,
+    "m04_e03_pnch_high_03": 35.0,
+    "m04_e03_pnch_low_03": 40.0,
+    "m04_e03_steplft": 40.0,
+    "m04_e03_steprht": 40.0,
+    "m04_end_attack_01": 35.0,
+    "m04_end_attack_02": 25.0,
+    "m04_grab_01": 25.0,
+    "m04_grab_02": 25.0,
+    "m04_kck_high_01": 50.0,
+    "m04_kck_high_02": 50.0,
+    "m04_kck_high_03": 40.0,
+    "m04_kck_low_01": 50.0,
+    "m04_kck_low_02": 50.0,
+    "m04_kck_low_03": 50.0,
+    "m04_movebck": 40.0,
+    "m04_movefwd": 40.0,
+    "m04_movelft": 25.0,
+    "m04_moverht": 35.0,
+    "m04_pnch_high_01": 40.0,
+    "m04_pnch_high_02": 25.0,
+    "m04_pnch_high_03": 60.0,
+    "m04_pnch_low_01": 40.0,
+    "m04_pnch_low_02": 40.0,
+    "m04_pnch_low_03": 40.0,
+    "m04_sp_kck_low": 25.0,
+    "m04_sp_pnch_high": 25.0,
+    "m04_sp_pnch_high_fail": 40.0,
+    "m04_stepbck": 40.0,
+    "m04_stepfwd": 35.0,
+    "m04_steplft": 40.0,
+    "m04_steprht": 40.0,
+}
+const SHENLO_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m04_pnch_high_01", 68, 6, 5, 57, 5.0, 75.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m04_pnch_high_02", 50, 6, 5, 39, 6.0, 65.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m04_pnch_high_03", 50, 15, 8, 27, 7.0, 75.0, "larm", "high", "hard", "fromabove"],
+    "low_punch": ["lowpunch1", "m04_pnch_low_01", 48, 5, 5, 38, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m04_pnch_low_02", 64, 8, 4, 52, 6.0, 85.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m04_kck_high_01", 53, 9, 6, 38, 5.0, 80.0, "rleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m04_kck_high_02", 43, 6, 6, 31, 6.0, 80.0, "rleg", "high", "normal", "fromright"],
+    "high_kick3": ["highkick3", "m04_kck_high_03", 60, 9, 5, 46, 7.0, 80.0, "lleg", "high", "hard", "fromleft"],
+    "low_kick": ["lowkick1", "m04_kck_low_03", 22, 6, 5, 11, 5.0, 70.0, "lleg", "low", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m04_kck_low_01", 34, 5, 5, 24, 5.0, 100.0, "lleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high": ["specialkickhigh shenlo", "m04_e03_kck_high_03", 169, 9, 6, 154, 10.0, 80.0, "lleg", "high", "hard", "frontal"],
+    "special_kick_low": ["specialkicklow shenlo", "m04_e03_kck_low_03", 194, 10, 5, 179, 6.0, 70.0, "rleg", "low", "normal", "fromleft"],
+    "special_punch_low": ["specialpunchlow shenlo", "m04_e03_pnch_low_03", 83, 16, 5, 62, 7.0, 85.0, "rarm", "medium", "hard", "frontal"],
+    "parry_high": ["parryhigh", "m01_parry_high", 62, 9, 2, 51, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_low": ["parrylow", "m01_kick_low_02", 27, 7, 4, 16, 0.0, 65.0, "rleg", "low", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m04_pnch_high_02", 50, 6, 5, 39, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 shenlo", "m04_grab_01", 103, 35, 10, 58, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+    "grab2": ["grab2 shenlo", "m04_grab_02", 45, 7, 3, 35, 5.0, 45.0, "larm", "high", "hard", "frontal"],
+    "grab1_miss": ["grab1miss shenlo", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss shenlo", "m04_grab_02", 45, 4, 4, 37, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
+    "endattack": ["endattack shenlo", "m04_end_attack_01", 93, 17, 5, 71, 0.0, 80.0, "rleg", "high", "hard", "fromleft"],
+    "special_punch_high": ["specialpunchhigh shenlo", "m04_e03_pnch_high_03", 115, 14, 5, 96, 7.0, 75.0, "larm", "high", "hard", "fromleft"],
+}
 const SINFU_ATTACK_DATA: Dictionary = {
     "punch": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
     "kick": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
@@ -2211,6 +2359,13 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         return _parse_set_mapped_attack_config(
             config, "kungfu.set", SINFU_ATTACK_DATA,
             SINFU_ANIMATION_RADII_DATA, SINFU_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == SHENLO_ATTACK_CONFIG_PATH:
+        # ShenLo shares kungfu.set reactions with SinFu but owns the m04_e03_*
+        # attack and locomotion clips, so only the attack tables differ.
+        return _parse_set_mapped_attack_config(
+            config, "kungfu.set", SHENLO_ATTACK_DATA,
+            SHENLO_ANIMATION_RADII_DATA, SINFU_REACTION_PROFILE_DATA
         )
     if attack_config_path == KEN_ATTACK_CONFIG_PATH:
         return _parse_set_mapped_attack_config(

@@ -28,6 +28,7 @@ const EXPECTED_IDLE := {
     "sinfu": "m04_idle_01",
     "master": "m04_e01_idle_01",
     "ken": "m02_idle_01",
+    "shenlo": "m04_e03_idle_01",
 }
 
 func _initialize() -> void:
@@ -107,20 +108,21 @@ func _run() -> void:
             "8th main entry should be the OPPONENTS submenu")
     _check(main_labels[7] == "OPPONENTS", "main menu label should read OPPONENTS")
     _check(scene_commands.size() == 11, "SCENES submenu should stay unchanged")
-    _check(opponent_commands.size() == 5 and opponent_labels.size() == 5,
+    _check(opponent_commands.size() == 6 and opponent_labels.size() == 6,
             "OPPONENTS submenu should list 4 opponents plus BACK")
-    _check(opponent_commands == ["brick", "sinfu", "master", "ken", "opponents_back"],
-            "OPPONENTS command order should be BRICK, SIN FU, MASTER, KEN, BACK")
-    _check(opponent_labels == ["BRICK", "SIN FU", "MASTER", "KEN", "BACK"],
-            "OPPONENTS labels should be BRICK, SIN FU, MASTER, KEN, BACK")
+    _check(opponent_commands == ["brick", "sinfu", "master", "ken", "shenlo",
+            "opponents_back"],
+            "OPPONENTS command order should be BRICK, SIN FU, MASTER, KEN, SHEN LO, BACK")
+    _check(opponent_labels == ["BRICK", "SIN FU", "MASTER", "KEN", "SHEN LO", "BACK"],
+            "OPPONENTS labels should be BRICK, SIN FU, MASTER, KEN, SHEN LO, BACK")
     _check(String(opponent_commands[0]) == "brick", "BRICK should be the default entry")
     _check(String(opponent_commands[opponent_commands.size() - 1]) == "opponents_back",
             "OPPONENTS submenu should end with BACK")
 
     # ---- main.gd configuration table.
-    for command: String in ["brick", "sinfu", "master", "ken"]:
+    for command: String in ["brick", "sinfu", "master", "ken", "shenlo"]:
         _check(configs.has(command), "main.gd has no opponent config for " + command)
-    _check(configs.size() == 4, "main.gd should configure exactly 4 opponents")
+    _check(configs.size() == 5, "main.gd should configure exactly 5 opponents")
     for command: Variant in configs:
         var config: Dictionary = configs[command]
         for key: String in ["glb", "texture_root", "clip_prefix", "master",
@@ -192,7 +194,7 @@ func _run() -> void:
         await _capture_layout_pixels(size)
         _menu.show_opponent_menu()
         await process_frame
-        _check_layout(size, 5, "opponents")
+        _check_layout(size, 6, "opponents")
         await _capture_layout_pixels(size)
     root.size = Vector2i(1280, 720)
     await process_frame
@@ -222,7 +224,7 @@ func _run() -> void:
 
     # ---- keyboard: every opponent is reachable and emits its command.
     var emitted: Array[String] = []
-    for index: int in range(4):
+    for index: int in range(5):
         _menu.show_opponent_menu()
         await process_frame
         for _i: int in range(index):
@@ -232,15 +234,15 @@ func _run() -> void:
         await _arrow(KEY_J)  # ATTACK_A also confirms the menu
         emitted.append(command)
         _check(_captured == [command], "J on " + command + " should emit exactly that command")
-    _check(emitted == ["brick", "sinfu", "master", "ken"],
+    _check(emitted == ["brick", "sinfu", "master", "ken", "shenlo"],
             "keyboard order mismatch: " + str(emitted))
 
     # ---- keyboard: BACK and ESC return to the main menu without emitting.
     _menu.show_opponent_menu()
     await process_frame
-    for _i: int in 4:
+    for _i: int in 5:
         await _arrow(KEY_DOWN)
-    _check(_menu.selected_command() == "opponents_back", "DOWN x4 should reach BACK")
+    _check(_menu.selected_command() == "opponents_back", "DOWN x5 should reach BACK")
     _captured.clear()
     await _arrow(KEY_ENTER)
     _check(_menu.menu_state == "main" and _menu.selected_command() == "opponents",
@@ -278,14 +280,14 @@ func _run() -> void:
     _menu.show_opponent_menu()
     await process_frame
     _captured.clear()
-    await _click(_menu.item_labels[4].get_global_rect().get_center())
+    await _click(_menu.item_labels[5].get_global_rect().get_center())
     _check(_menu.menu_state == "main" and _captured.is_empty(),
             "clicking BACK should return to the main menu")
 
     # ---- apply each opponent for real: env + main.tscn reload + candidate load.
     _menu.command_requested.disconnect(_on_command)
     _menu.command_requested.connect(Callable(scene, "_on_menu_command"))
-    for command: String in ["sinfu", "master", "ken", "brick"]:
+    for command: String in ["sinfu", "master", "ken", "shenlo", "brick"]:
         scene = current_scene
         if scene == null:
             _check(false, "no current scene before switching to " + command)

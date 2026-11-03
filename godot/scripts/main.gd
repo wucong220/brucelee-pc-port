@@ -51,6 +51,17 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "material_profile": "body",
         "attack_config": "res://data/attack_config_master.json",
     },
+    "shenlo": {
+        "glb": (
+            "D:\\BruceLeeWork\\shenlo-20261103\\candidates\\"
+            + "shenlo_full_body_89_all_20261103.glb"
+        ),
+        "texture_root": "D:\\BruceLeeWork\\shenlo-20261103\\textures",
+        "clip_prefix": "m04",
+        "master": "",
+        "material_profile": "body",
+        "attack_config": "res://data/attack_config_shenlo.json",
+    },
     "ken": {
         "glb": (
             "D:\\BruceLeeWork\\ken-all26-20261103\\candidate\\"
@@ -1006,6 +1017,8 @@ func _opponent_clips() -> Dictionary:
         return PortFighter.MASTER_CLIPS
     if config_path == PortFighter.SINFU_ATTACK_CONFIG_PATH:
         return PortFighter.SINFU_CLIPS
+    if config_path == PortFighter.SHENLO_ATTACK_CONFIG_PATH:
+        return PortFighter.SHENLO_CLIPS
     if config_path == PortFighter.KEN_ATTACK_CONFIG_PATH:
         return PortFighter.KEN_CLIPS
     return PortFighter.BRICK_CLIPS
@@ -1182,7 +1195,7 @@ func _on_menu_command(command: String) -> void:
             OS.set_environment("BRUCELEE_SCENE", "tournamenthallb")
             OS.set_environment("BRUCELEE_MAIN_MENU", "0")
             get_tree().reload_current_scene()
-        "brick", "sinfu", "master", "ken":
+        "brick", "sinfu", "master", "ken", "shenlo":
             _request_opponent_switch(command)
         "quit":
             get_tree().quit()
