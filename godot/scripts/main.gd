@@ -607,7 +607,7 @@ func _build_fighters() -> void:
     computer.configure_candidate_asset(
         OS.get_environment("BRUCELEE_OPPONENT_GLB"),
         OS.get_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT"),
-        PortFighter.BRICK_CLIPS,
+        _opponent_clips(),
         "body",
         false
     )
@@ -619,6 +619,16 @@ func _build_fighters() -> void:
     player.combat_hit.connect(_on_hit)
     computer.combat_hit.connect(_on_hit)
     player.attack_started.connect(_on_player_attack_started)
+
+func _opponent_clips() -> Dictionary:
+    var prefix: String = OS.get_environment("BRUCELEE_OPPONENT_CLIP_PREFIX")
+    if prefix.is_empty():
+        return PortFighter.BRICK_CLIPS
+    var clips: Dictionary = {}
+    for key: String in PortFighter.BRICK_CLIPS:
+        clips[key] = String(PortFighter.BRICK_CLIPS[key]).replace("m03_", prefix + "_")
+    return clips
+
 
 func _reset_match() -> void:
     round_number = 1
