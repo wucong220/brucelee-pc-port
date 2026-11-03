@@ -10,6 +10,7 @@ const MoveTraining = preload("res://scripts/move_training.gd")
 const MoveGallery = preload("res://scripts/move_gallery.gd")
 const FxLanternPulse = preload("res://scripts/fx_lanterns_pulse.gd")
 const FxVapourReflector = preload("res://scripts/fx_vapour_reflector.gd")
+const AudioCueMap = preload("res://scripts/audio_cue_map.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -1703,6 +1704,10 @@ func _build_combat_audio() -> void:
             _candidate_audio_error[event] = "candidate audio failed to load: " + path
             continue
         _candidate_audio[event] = stream
+    # Restore the original eager Bruce voice load (commit 013b55a): commit
+    # 132ff62's whole-file churn moved the only call into the export self
+    # test, which left validate_bruce_voice_audio failing at HEAD.
+    _load_bruce_voice_audio()
     _load_menu_music()
 
 
@@ -1759,11 +1764,10 @@ func _load_result_audio() -> void:
         roots.append(env_root)
     roots.append(OS.get_executable_path().get_base_dir().path_join("audio/commentator"))
     for root: String in roots:
-        for key: String in ["win", "lose", "draw", "fight", "ready"]:
-            var filename: String = {
-                "win": "You_Win.wav", "lose": "You_Lose.wav", "draw": "Draw.wav",
-                "fight": "Fight.wav", "ready": "Ready_Alt_1.wav",
-            }[key]
+        for key: String in ["win", "lose", "draw", "fight", "ready", "time_out", "great", "perfect"]:
+            var filename: String = String(AudioCueMap.COMMENTATOR.get(key, ""))
+            if filename.is_empty():
+                continue
             var path: String = root.path_join(filename)
             if not FileAccess.file_exists(path):
                 continue
@@ -1821,38 +1825,7 @@ func _load_bruce_voice_audio() -> void:
         roots.append(local_app_data.path_join(
             "BruceLee-PC-Port/bruce-voice-20261103/adreno_200/sounds/voices/bruce_lee"
         ))
-    var voices: Dictionary = {
-        "punch": "attack_light/Hit_Light_1_BL.wav",
-        "kick": "attack_light/Hit_Light_2_BL.wav",
-        "high_punch": "attack_light/Hit_Light_3_BL.wav",
-        "high_kick": "attack_light/Hit_Light_4_BL.wav",
-        "high_punch2": "attack_light/Hit_Light_5_BL.wav",
-        "low_punch2": "attack_light/Hit_Light_6_BL.wav",
-        "high_kick2": "attack_light/Hit_Light_8_BL.wav",
-        "low_kick2": "attack_light/Hit_Light_9_BL.wav",
-        "high_punch3": "attack_light/Hit_Light_3_BL.wav",
-        "low_punch3": "attack_light/Hit_Light_6_BL.wav",
-        "low_kick3": "attack_light/Hit_Light_9_BL.wav",
-        "high_kick3": "attack_light/Hit_Light_4_BL.wav",
-        "parry_high": "attack_light/Hit_Light_5_BL.wav",
-        "parry_attack": "attack_light/Hit_Light_1_BL.wav",
-        "facedownattack": "attack_light/Hit_Light_8_BL.wav",
-        "faceupattack": "attack_light/Hit_Light_9_BL.wav",
-        "attacktofloor": "attack_light/Hit_Light_9_BL.wav",
-        "special_kick_high": "special/m01_sp_kick_high.wav",
-        "special_kick_low_miss": "attack_light/Hit_Light_9_BL.wav",
-        "special_kick_low_hit": "attack_light/Hit_Light_9_BL.wav",
-        "special_punch_low_miss": "special/m01_sp_pnch_low.wav",
-        "special_punch_low_hit": "special/m01_sp_pnch_low.wav",
-        "special_punch_high_miss": "special/M01_SP_Pnch_High.avi_OPTION_2.wav",
-        "special_punch_high_hit": "special/M01_SP_Pnch_High.avi_OPTION_2.wav",
-        "grab1": "special/m01_grab_01.wav",
-        "grab1_miss": "special/m01_grab_01.wav",
-        "grab2": "special/M01_Grab_02_Back_Breaker.wav",
-        "grab2_miss": "special/M01_Grab_02_Back_Breaker.wav",
-        "endattack1": "special/M01_End_Attack_01.avi _BL_Slow_Scream_A.wav",
-        "endattack2": "special/M01_End_Attack_02.avi _BL_Slow_Scream_B.wav",
-    }
+    var voices: Dictionary = AudioCueMap.voice_files()
     for action: String in voices:
         var filename: String = String(voices[action])
         var loaded: AudioStream = null
@@ -1880,38 +1853,7 @@ func _load_bruce_voice_audio() -> void:
 func _load_voice_for_action(action: String) -> AudioStream:
     if _voice_audio.has(action):
         return _voice_audio[action] as AudioStream
-    var voices: Dictionary = {
-        "punch": "attack_light/Hit_Light_1_BL.wav",
-        "kick": "attack_light/Hit_Light_2_BL.wav",
-        "high_punch": "attack_light/Hit_Light_3_BL.wav",
-        "high_kick": "attack_light/Hit_Light_4_BL.wav",
-        "high_punch2": "attack_light/Hit_Light_5_BL.wav",
-        "low_punch2": "attack_light/Hit_Light_6_BL.wav",
-        "high_kick2": "attack_light/Hit_Light_8_BL.wav",
-        "low_kick2": "attack_light/Hit_Light_9_BL.wav",
-        "high_punch3": "attack_light/Hit_Light_3_BL.wav",
-        "low_punch3": "attack_light/Hit_Light_6_BL.wav",
-        "low_kick3": "attack_light/Hit_Light_9_BL.wav",
-        "high_kick3": "attack_light/Hit_Light_4_BL.wav",
-        "parry_high": "attack_light/Hit_Light_5_BL.wav",
-        "parry_attack": "attack_light/Hit_Light_1_BL.wav",
-        "facedownattack": "attack_light/Hit_Light_8_BL.wav",
-        "faceupattack": "attack_light/Hit_Light_9_BL.wav",
-        "attacktofloor": "attack_light/Hit_Light_9_BL.wav",
-        "special_kick_high": "special/m01_sp_kick_high.wav",
-        "special_kick_low_miss": "attack_light/Hit_Light_9_BL.wav",
-        "special_kick_low_hit": "attack_light/Hit_Light_9_BL.wav",
-        "special_punch_low_miss": "special/m01_sp_pnch_low.wav",
-        "special_punch_low_hit": "special/m01_sp_pnch_low.wav",
-        "special_punch_high_miss": "special/M01_SP_Pnch_High.avi_OPTION_2.wav",
-        "special_punch_high_hit": "special/M01_SP_Pnch_High.avi_OPTION_2.wav",
-        "grab1": "special/m01_grab_01.wav",
-        "grab1_miss": "special/m01_grab_01.wav",
-        "grab2": "special/M01_Grab_02_Back_Breaker.wav",
-        "grab2_miss": "special/M01_Grab_02_Back_Breaker.wav",
-        "endattack1": "special/M01_End_Attack_01.avi _BL_Slow_Scream_A.wav",
-        "endattack2": "special/M01_End_Attack_02.avi _BL_Slow_Scream_B.wav",
-    }
+    var voices: Dictionary = AudioCueMap.voice_files()
     if not voices.has(action):
         return null
     var roots: Array[String] = []
@@ -1939,11 +1881,75 @@ func _load_voice_for_action(action: String) -> AudioStream:
 
 
 func _on_player_attack_started(action: String) -> void:
+    # Voice cue comes from the recovered fighting-set table. Actions that have
+    # no original voice (parry, grounded attacks, grab misses) stay silent
+    # instead of falling back to the punch grunt.
+    var cue: Dictionary = AudioCueMap.primary_cue(action)
+    if cue.is_empty():
+        return
     var stream: AudioStream = _voice_audio.get(action)
     if stream == null:
         stream = _load_voice_for_action(action)
     if stream == null:
-        stream = _voice_audio.get("punch")
+        return
+    if is_instance_valid(_active_voice):
+        _active_voice.stop()
+        _active_voice.queue_free()
+    var voice: AudioStreamPlayer = AudioStreamPlayer.new()
+    voice.stream = stream
+    voice.volume_db = linear_to_db(clampf(float(cue.get("volume", 1.0)), 0.001, 1.0))
+    voice.finished.connect(voice.queue_free)
+    combat_audio.add_child(voice)
+    _active_voice = voice
+    voice.play()
+
+
+## Set reaction actions that carry a Bruce pain voice. Recovered from
+## adreno_200/set/brucelee.set reaction records (impact*/specialpunchlowimpact
+## `sounds` entries with is_voice=true); reactions with no original pain voice
+## (impacthard*, low frontal hits, brutal left/right, block profiles) stay
+## silent instead of inventing a cue. The defender's recorded
+## last_reaction_source_action selects the cue, so the voice plays on the exact
+## reaction action the set attaches it to.
+const PAIN_VOICE_CUES: Dictionary = {
+    "impactlightfrontmid": AudioCueMap.PAIN.light,
+    "impactlightlefthigh": AudioCueMap.PAIN.light_high,
+    "impactlightrighthigh": AudioCueMap.PAIN.light_high,
+    "impactfacedown": AudioCueMap.PAIN.light,
+    "impactfaceup": AudioCueMap.PAIN.light,
+    "impacthardfrontmid": AudioCueMap.PAIN.heavy,
+    "impactbrutalmid": AudioCueMap.PAIN.heavy,
+    "specialpunchlowimpact": AudioCueMap.PAIN.heavy_special,
+}
+
+func _play_pain_voice(defender: PortFighter, action: String) -> void:
+    # Only Bruce (the player fighter) has pain voice takes in the archive.
+    if defender != player:
+        return
+    var reaction_action: String = defender.last_reaction_source_action
+    var cue_name: String = ""
+    if PAIN_VOICE_CUES.has(reaction_action):
+        cue_name = String(PAIN_VOICE_CUES[reaction_action])
+    elif action == "special_punch_low_hit":
+        # The special punch low impact reaction is not recorded as its own
+        # reaction source in the port; the set gives specialpunchlowimpact a
+        # heavy pain voice, so map this single attack explicitly.
+        cue_name = String(PAIN_VOICE_CUES.get("specialpunchlowimpact", ""))
+    if cue_name.is_empty():
+        return
+    var stream: AudioStream = _voice_audio.get("__pain__" + cue_name)
+    if stream == null:
+        for root: String in _voice_roots():
+            var path: String = root.path_join(cue_name)
+            var error: String = CandidatePathGuard.external_path_error(
+                path, "Bruce pain voice"
+            )
+            if not error.is_empty():
+                continue
+            stream = AudioStreamWAV.load_from_file(path)
+            if stream != null:
+                _voice_audio["__pain__" + cue_name] = stream
+                break
     if stream == null:
         return
     if is_instance_valid(_active_voice):
@@ -1956,6 +1962,20 @@ func _on_player_attack_started(action: String) -> void:
     combat_audio.add_child(voice)
     _active_voice = voice
     voice.play()
+
+
+func _voice_roots() -> Array[String]:
+    var roots: Array[String] = []
+    var env_root: String = OS.get_environment("BRUCELEE_VOICE_ROOT")
+    if not env_root.is_empty():
+        roots.append(env_root)
+    roots.append(OS.get_executable_path().get_base_dir().path_join("audio/bruce_lee"))
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
+            "BruceLee-PC-Port/bruce-voice-20261103/adreno_200/sounds/voices/bruce_lee"
+        ))
+    return roots
 
 
 func _play_hit_audio(action: String, blocked: bool) -> void:
@@ -2231,7 +2251,7 @@ func _on_time_up() -> void:
     done = true
     hud.set_time(0, true)
     _show_game_text("TIME_IS_UP", float(ROUND_PHASE_WAIT_MS) / 1000.0)
-    _play_result_audio("draw")
+    _play_result_audio("time_out")
     _enter_match_state(MATCH_STATE_TIME_UP)
 
 
@@ -2290,6 +2310,7 @@ func _resolve_time_up_winner() -> void:
         pending_round_winner = 0
         hud.show_message("TIME UP · DRAW · ROUND %d" % round_number)
         _show_game_text("DRAW", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+        _play_result_audio("draw")
         _enter_match_state(MATCH_STATE_DRAW)
         return
     if player_health > computer_health:
@@ -2619,6 +2640,11 @@ func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damag
     if done or training_completed:
         return
     _play_hit_audio(action, blocked)
+    # brucelee.set reaction actions (impact*) carry a Bruce pain voice on the
+    # victim; the port never played it. Block reactions have no voice cue, and
+    # the defender (not the attacker) is the one screaming.
+    if not blocked and attacker != defender:
+        _play_pain_voice(defender, action)
     if ((move_training != null and move_training.is_active())
             or (move_gallery != null and move_gallery.is_active())):
         return
@@ -2665,6 +2691,7 @@ func _on_ko(fighter: PortFighter) -> void:
         "YOU WIN · ROUND %d" % round_number if fighter == computer
         else "YOU LOSE · ROUND %d" % round_number
     )
+    _play_result_audio("win" if fighter == computer else "lose")
     _enter_match_state(
         MATCH_STATE_KO_WIN if fighter == computer else MATCH_STATE_KO_LOSE
     )
