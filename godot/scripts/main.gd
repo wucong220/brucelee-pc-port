@@ -567,6 +567,19 @@ func _build_original_far_scene() -> void:
                 material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
                 material.cull_mode = BaseMaterial3D.CULL_DISABLED
                 material.albedo_color = Color(1.0, 1.0, 1.0, 0.8)
+            var declared_blend: String = String(
+                (entry.get("material", {}) as Dictionary).get("blend_mode", "")
+            )
+            if declared_blend == "alpha test":
+                material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+                material.alpha_scissor_threshold = 0.5
+            elif declared_blend == "alpha blend":
+                material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+            elif declared_blend == "add":
+                material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+                material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+                material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+                material.cull_mode = BaseMaterial3D.CULL_DISABLED
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             var mesh_instance: MeshInstance3D = mesh_node
             mesh_instance.material_override = material
