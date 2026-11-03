@@ -179,8 +179,14 @@ func _run_export_self_test() -> void:
     if expect_opponent_candidate:
         computer.reset_fighter(Vector3(2.0, 1.20, 0.0))
         computer._animate_candidate()
-        if computer.candidate_animation_clip != "m03_idle_01":
-            push_error("EXPORT_SELF_TEST: opponent candidate did not select Brick idle")
+        var expected_idle: String = "m03_idle_01"
+        if OS.get_environment("BRUCELEE_OPPONENT_MASTER") == "1":
+            expected_idle = "m04_e01_idle_01"
+        elif not OS.get_environment("BRUCELEE_OPPONENT_CLIP_PREFIX").is_empty():
+            expected_idle = OS.get_environment("BRUCELEE_OPPONENT_CLIP_PREFIX") + "_idle_01"
+        if computer.candidate_animation_clip != expected_idle:
+            push_error("EXPORT_SELF_TEST: opponent candidate idle="
+                    + computer.candidate_animation_clip + " expected=" + expected_idle)
             get_tree().quit(1)
             return
         opponent_idle_clip = computer.candidate_animation_clip
@@ -287,6 +293,8 @@ func _run_export_self_test() -> void:
         "far_scene_texture_count": _far_scene_texture_count,
         "opponent_candidate_loaded": computer.candidate_loaded,
         "opponent_idle_clip": opponent_idle_clip,
+        "opponent_visual_height": computer.candidate_visual_height,
+        "opponent_load_error": computer.candidate_load_error,
         "opponent_textures_loaded": computer.candidate_textures_loaded,
         "opponent_texture_reason": computer.candidate_texture_reason,
     }))
