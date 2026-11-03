@@ -19,7 +19,7 @@ const MoveGallery = preload("res://scripts/move_gallery.gd")
 ## Paths are the locally tested candidates; they are not shipped with the repo.
 const MENU_OPPONENT_CONFIG: Dictionary = {
     "brick": {
-        "glb": "D:\\BruceLeeWork\\brick_candidate_brutal_20261103.glb",
+        "glb": "D:\\BruceLeeWork\\brick-full-20261103\\candidate\\brick_full_94_20261103.glb",
         "texture_root": (
             "D:\\BaiduSyncdisk\\AI项目\\李小龙\\private_assets\\appdata-msix\\"
             + "BruceLee-PC-Port\\brick-textures-20261030"
