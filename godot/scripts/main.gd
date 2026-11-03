@@ -301,6 +301,7 @@ func _ready() -> void:
     var startup_audio: int = Time.get_ticks_msec()
     hud = PortHUD.new()
     add_child(hud)
+    hud.set_fighter_names("BRUCE LEE", _opponent_display_name())
     _build_game_text_overlay()
     if not OS.get_environment("BRUCELEE_HOLD_GAME_TEXT").is_empty():
         _show_game_text(OS.get_environment("BRUCELEE_HOLD_GAME_TEXT"), 30.0)
@@ -1223,7 +1224,6 @@ func _build_fighters() -> void:
     computer.set_skeleton_class(_opponent_skeleton_class())
     player.configure_result_clips(_player_result_clips())
     computer.configure_result_clips(_opponent_result_clips())
-    hud.set_fighter_names("BRUCE LEE", _opponent_display_name())
     add_child(computer)
     player.opponent = computer
     computer.opponent = player
