@@ -2636,6 +2636,11 @@ var _stun_impact_next_state: String = "stunfall"
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
 var candidate_animation_clip: String = ""
+# Result presentation (CBeatEmUpGame::SetState 12/13). The winner plays a
+# candidate victory clip; the matched loser plays a defeat clip. The clips are
+# not fighting-set actions, so they are only discovered from the loaded GLB.
+var result_clip: String = ""
+var result_pose_active: bool = false
 var candidate_visual_height: float = 0.0
 var candidate_textures_loaded: bool = false
 var candidate_texture_error: String = ""
@@ -7319,6 +7324,74 @@ func receive_hit(
     return true
 
 
+func result_clip_names(kind: String) -> Array[String]:
+    ## Candidate clips whose names contain "victory" or "defeat". These are
+    ## demo result animations (m01_victory_01, m03_victory_01, m01_defeat_01,
+    ## ...). They are not fighting-set actions, so they are only discovered
+    ## from the loaded GLB's animation list.
+    var wanted: String = "victory" if kind == "victory" else "defeat"
+    var names: Array[String] = []
+    for key: Variant in _candidate_clip_paths:
+        var path: String = String(_candidate_clip_paths[key])
+        if path.get_file().contains(wanted):
+            names.append(String(key))
+    names.sort()
+    return names
+
+
+func has_result_clip(kind: String) -> bool:
+    return not result_clip_names(kind).is_empty()
+
+
+func enter_result_pose(kind: String, variant: int = 0) -> bool:
+    ## Port of the winner-only clip switch in CBeatEmUpGame::SetState(12/13).
+    ## Returns false when the character provides no result clip (Master76).
+    var names: Array[String] = result_clip_names(kind)
+    if names.is_empty() or _candidate_animation == null:
+        result_clip = ""
+        result_pose_active = false
+        return false
+    result_clip = names[clampi(variant, 0, names.size() - 1)]
+    if not _candidate_clip_paths.has(result_clip):
+        result_clip = ""
+        result_pose_active = false
+        return false
+    var clip: Animation = _candidate_animation.get_animation(
+        _candidate_clip_paths[result_clip]
+    )
+    if clip != null:
+        clip.loop_mode = Animation.LOOP_NONE
+    state = "result"
+    state_time = 0.0
+    attack_kind = ""
+    move_axis = Vector2.ZERO
+    velocity = Vector3.ZERO
+    result_pose_active = true
+    _play_candidate_action(result_clip)
+    return true
+
+
+func result_clip_duration() -> float:
+    if result_clip.is_empty() or _candidate_animation == null:
+        return 0.0
+    if not _candidate_clip_paths.has(result_clip):
+        return 0.0
+    var clip: Animation = _candidate_animation.get_animation(
+        _candidate_clip_paths[result_clip]
+    )
+    if clip == null:
+        return 0.0
+    return clip.length
+
+
+func clear_result_pose() -> void:
+    result_clip = ""
+    result_pose_active = false
+    if state == "result":
+        state = "idle"
+        state_time = 0.0
+
+
 func reset_fighter(start_position: Vector3) -> void:
     global_position = start_position
     velocity = Vector3.ZERO
@@ -7329,6 +7402,9 @@ func reset_fighter(start_position: Vector3) -> void:
     health = MAX_HEALTH
     state = "idle"
     state_time = 0.0
+    result_clip = ""
+    result_pose_active = false
+    visible = true
     attack_kind = ""
     _attack_connected = false
     _parry_absorbed = false
@@ -7391,7 +7467,11 @@ func _animate_candidate() -> void:
     )
     var requested: String = "idle"
     var start_frame: int = 0
-    if state in ["startup", "active", "recovery"]:
+    if (state == "result" and not result_clip.is_empty()
+            and _candidate_clip_paths.has(result_clip)):
+        # SetState(12/13) winner-only victory / matched defeat clip.
+        requested = result_clip
+    elif state in ["startup", "active", "recovery"]:
         # Any attack kind whose clip the candidate provides plays that clip.
         # The previous explicit list only named the brucelee.set slots; mapped
         # set configs (kungfu/karate) use their own slot names, so the check is

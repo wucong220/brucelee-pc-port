@@ -141,10 +141,27 @@ const ATTACK_CONFIG_SKELETON: Dictionary = {
 const PLAYER_SKELETON_DEFAULT: String = "medium"
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 const ROUNDS_TO_WIN: int = 2
-const ROUND_RESET_DELAY: float = 2.0
+# Native CBeatEmUpGame::Update() leaves states 3/5/7/8/11 only when
+# GetStateTime() is strictly greater than 3000 ms; keep the same threshold.
+const ROUND_PHASE_WAIT_MS: int = 3000
+const ROUND_RESET_DELAY: float = float(ROUND_PHASE_WAIT_MS) / 1000.0
 # Original round clock: CBeatEmUpGame::SetTimerMax() stores the limit in
 # seconds and Update() displays max(0, limit - played_ms / 1000).
 const ROUND_TIME_DEFAULT: int = 60
+
+# Ported EGameState subset from krm::CBeatEmUpGame::SetState/Update
+# (ghidra-out5/SetState.c, ghidra-out5/Update.c).  States 1/2 (attract intro),
+# 6 (replay), 9 (continue), 10, 14 are not implemented because their
+# configuration and runtime semantics are not proven for this prototype.
+const MATCH_STATE_INTRO: int = 3        # SetState(3): both idle, READY/FIGHT text
+const MATCH_STATE_FIGHT: int = 4        # SetState(4): control + round clock
+const MATCH_STATE_TIME_UP: int = 5      # SetState(5): LaunchGameTextAnimation(4)
+const MATCH_STATE_KO_WIN: int = 7       # SetState(7): player round win text
+const MATCH_STATE_KO_LOSE: int = 8      # SetState(8): computer round win text
+const MATCH_STATE_DRAW: int = 11        # SetState(11): draw round text
+const MATCH_STATE_MATCH_WIN: int = 12   # SetState(12): winner-only victory pose
+const MATCH_STATE_MATCH_LOSE: int = 13  # SetState(13): winner-only victory pose
+const MATCH_STATE_ROUND_END: int = 15   # SetState(15): RoundEnded() -> NextRound
 
 # CBeatEmUpCamera::Update, native Z-up formula ported to Godot axes.
 const CAM_SOURCE_UNITS_TO_WORLD: float = (
@@ -213,6 +230,15 @@ var round_reset_timer: float = -1.0
 var round_time_max: int = ROUND_TIME_DEFAULT
 var round_time_left: int = ROUND_TIME_DEFAULT
 var round_time_active: bool = false
+# Local port of the CBeatEmUpGame state machine. match_state is the native
+# EGameState value, match_state_time is GetStateTime() in seconds and
+# pending_round_winner is 0 (draw), 1 (player) or 2 (computer).
+var match_state: int = MATCH_STATE_FIGHT
+var match_state_time: float = 0.0
+var pending_round_winner: int = 0
+var _round_end_handled: bool = false
+var _intro_fight_shown: bool = false
+var _result_pose_seconds: float = 0.0
 
 # AI-only prototype costs: the native AI decision is not recovered, so the
 # Brick AI uses these thresholds/costs. They are not part of the player action
@@ -300,6 +326,8 @@ func _ready() -> void:
 
 
 func _start_direct_intro() -> void:
+    if OS.get_environment("BRUCELEE_ROUND_INTRO") == "0":
+        return
     await RenderingServer.frame_post_draw
     await RenderingServer.frame_post_draw
     _start_round_intro()
@@ -984,7 +1012,15 @@ func _build_game_text_overlay() -> void:
     )
     _game_text_rect.scale = Vector2(1.6, 1.6)
     _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
+    # The archive gametext texels are stored so that the shipped ui/gametext PNG
+    # reads mirrored (e.g. "TIME IS UP" appears horizontally reversed and the
+    # glyph rows are flipped). A vertical flip makes them read correctly and
+    # upright; the four-flip probe confirms flip_v alone is the fix. This is
+    # applied by default and can be disabled with BRUCELEE_GAME_TEXT_FLIP=0 for
+    # an already-corrected source.
+    var game_text_flip: bool = OS.get_environment("BRUCELEE_GAME_TEXT_FLIP") != "0"
     _game_text_rect.flip_h = false
+    _game_text_rect.flip_v = game_text_flip
     _game_text_rect.visible = false
     layer.add_child(_game_text_rect)
     var roots: Array[String] = []
@@ -1016,7 +1052,6 @@ func _show_game_text(key: String, duration: float) -> void:
         get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
     )
     _game_text_rect.texture = _game_text_textures[key]
-    _game_text_rect.flip_h = false
     _game_text_rect.visible = true
     _game_text_timer = duration
 
@@ -1143,6 +1178,8 @@ func _reset_match() -> void:
     computer_rounds = 0
     match_over = false
     round_reset_timer = -1.0
+    pending_round_winner = 0
+    _result_pose_seconds = 0.0
     _reset_round()
 
 
@@ -1152,6 +1189,11 @@ func _reset_round() -> void:
     var computer_x: float = 0.25 if training_mode else (0.75 if demo_close else 2.0)
     player.reset_fighter(Vector3(player_x, 1.20, 0.0))
     computer.reset_fighter(Vector3(computer_x, 1.20, 0.0))
+    # SetState(12/13) hides the loser; a reset must restore both bodies.
+    player.visible = true
+    computer.visible = true
+    player.clear_result_pose()
+    computer.clear_result_pose()
     var demo_rage: String = OS.get_environment("BRUCELEE_DEMO_RAGE")
     if not demo_rage.is_empty() and demo_rage.is_valid_float():
         player.rage = clampf(demo_rage.to_float(), 0.0, PortFighter.RAGE_MAX)
@@ -1166,6 +1208,15 @@ func _reset_round() -> void:
     ai_guard_decision = false
     notice_timer = 1.2
     round_reset_timer = -1.0
+    # CFighter::Restart -> RestartValues -> SetState(0): a fresh round enters
+    # the round-intro path, not the result path. _reset_match is also used by
+    # the R key and by validators, which expect a controllable fight at once.
+    match_state = MATCH_STATE_FIGHT
+    match_state_time = 0.0
+    pending_round_winner = 0
+    _round_end_handled = false
+    _intro_fight_shown = false
+    _result_pose_seconds = 0.0
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
     # CFighter::Restart puts the clock back to the round limit every round;
     # training has no match clock.
@@ -1173,8 +1224,8 @@ func _reset_round() -> void:
     round_time_left = round_time_max if round_time_active else 0
     hud.set_time(round_time_left, round_time_active)
     hud.show_message(
-        "TRAINING 路 K L L / K U U" if training_mode
-        else "ROUND %d 路 FIGHT" % round_number
+        "TRAINING · K L L / K U U" if training_mode
+        else "ROUND %d · FIGHT" % round_number
     )
     _restart_fight_camera()
     _update_fight_camera()
@@ -1488,12 +1539,21 @@ func _play_result_audio(key: String) -> void:
 
 
 func _start_round_intro() -> void:
+    # SetState(3): both fighters idle at the fight-start positions, then
+    # LaunchGameTextAnimation(0)/(1).  Update() state 3 leaves after 3000 ms.
+    if training_mode:
+        return
+    if OS.get_environment("BRUCELEE_ROUND_INTRO") == "0":
+        # Validators need a deterministic fight state without waiting on the
+        # real-time intro coroutine; this is a test configuration, not a result
+        # state.
+        _enter_match_state(MATCH_STATE_FIGHT)
+        done = false
+        return
+    _enter_match_state(MATCH_STATE_INTRO)
+    _intro_fight_shown = false
     _show_game_text("READY", 0.8)
     _play_result_audio("ready")
-    await get_tree().create_timer(0.8).timeout
-    if not done:
-        _show_game_text("FIGHT", 1.2)
-        _play_result_audio("fight")
 
 
 func _load_bruce_voice_audio() -> void:
@@ -1848,24 +1908,25 @@ func _physics_process(delta: float) -> void:
         _sync_guard_state(Input.is_action_pressed(PrototypeControls.GUARD))
         return
     hud.set_context_hint(_contextual_controls())
-    if round_reset_timer > 0.0:
-        player.move_axis = Vector2.ZERO
-        computer.move_axis = Vector2.ZERO
-        round_reset_timer -= delta
-        if round_reset_timer <= 0.0 and not match_over:
-            _start_next_round()
-        return
     if notice_timer > 0.0:
         notice_timer -= delta
         if notice_timer <= 0.0 and not done:
             hud.show_message("")
+    # Drive the ported EGameState machine before any input is read. States
+    # 3/5/7/8/11/12/13/15 all freeze the fighters, matching the native
+    # DummyUpdate path in CBeatEmUpGame::Update().
+    _update_match_state(delta)
+    if match_state != MATCH_STATE_FIGHT:
+        player.move_axis = Vector2.ZERO
+        computer.move_axis = Vector2.ZERO
+        return
     if done or training_completed:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         return
     elapsed += delta
     _update_round_timer()
-    if done:
+    if match_state != MATCH_STATE_FIGHT:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         return
@@ -1899,39 +1960,157 @@ func _update_round_timer() -> void:
 
 
 func _on_time_up() -> void:
-    # Update() state 4 zeroes the clock and leaves state 4; SetState(5)
-    # launches game text animation 4 (BL_gameText-TIME_IS_UP) and 3000 ms
-    # later the round is decided by remaining health (CFighter+0x144):
-    # higher health wins, equal health is the draw path.
+    # Update() state 4 zeroes the clock and enters state 5; SetState(5)
+    # launches game text animation 4 (BL_gameText-TIME_IS_UP).  The round is
+    # not decided until state 5 has run for more than 3000 ms.
     if done or training_completed or not round_time_active:
+        return
+    if match_state != MATCH_STATE_FIGHT:
         return
     done = true
     hud.set_time(0, true)
-    _show_game_text("TIME_IS_UP", 2.0)
-    if training_mode:
-        hud.show_message("TIME UP  路  R TO RESET")
+    _show_game_text("TIME_IS_UP", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+    _play_result_audio("draw")
+    _enter_match_state(MATCH_STATE_TIME_UP)
+
+
+func _enter_match_state(next_state: int) -> void:
+    match_state = next_state
+    match_state_time = 0.0
+    _round_end_handled = false
+
+
+func _match_target_reached() -> bool:
+    return player_rounds >= ROUNDS_TO_WIN or computer_rounds >= ROUNDS_TO_WIN
+
+
+func _update_match_state(delta: float) -> void:
+    ## Port of the CBeatEmUpGame::Update() state switch.  Only the result
+    ## path is timed; state 4 runs the normal control/clock code in
+    ## _physics_process.
+    if match_state == MATCH_STATE_FIGHT:
         return
+    match_state_time += delta
+    match match_state:
+        MATCH_STATE_INTRO:
+            _advance_round_intro()
+        MATCH_STATE_TIME_UP:
+            _advance_time_up()
+        MATCH_STATE_KO_WIN, MATCH_STATE_KO_LOSE, MATCH_STATE_DRAW:
+            _advance_result_text()
+        MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE:
+            _advance_winner_result_pose()
+        MATCH_STATE_ROUND_END:
+            _advance_round_end()
+
+
+func _advance_round_intro() -> void:
+    # LaunchGameTextAnimation(0) is shown by _start_round_intro; (1) follows.
+    if not _intro_fight_shown and match_state_time >= 0.8:
+        _intro_fight_shown = true
+        _show_game_text("FIGHT", 1.2)
+        _play_result_audio("fight")
+    if match_state_time > float(ROUND_PHASE_WAIT_MS) / 1000.0:
+        _enter_match_state(MATCH_STATE_FIGHT)
+        done = false
+
+
+func _advance_time_up() -> void:
+    if match_state_time > float(ROUND_PHASE_WAIT_MS) / 1000.0:
+        _resolve_time_up_winner()
+
+
+func _resolve_time_up_winner() -> void:
+    # Update() state 5: equal health is the draw path (state 11); otherwise the
+    # fighter with more health scores the round and enters state 7 or 8.
     var player_health: float = player.health
     var computer_health: float = computer.health
     if is_equal_approx(player_health, computer_health):
-        hud.show_message("TIME UP  路  DRAW  路  ROUND %d" % round_number)
-    elif player_health > computer_health:
+        pending_round_winner = 0
+        hud.show_message("TIME UP · DRAW · ROUND %d" % round_number)
+        _show_game_text("DRAW", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+        _enter_match_state(MATCH_STATE_DRAW)
+        return
+    if player_health > computer_health:
         player_rounds += 1
-        hud.show_message("TIME UP  路  YOU WIN  路  ROUND %d" % round_number)
+        pending_round_winner = 1
+        hud.show_message("TIME UP · YOU WIN · ROUND %d" % round_number)
+        _show_game_text("YOU_WIN", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+        _enter_match_state(MATCH_STATE_KO_WIN)
     else:
         computer_rounds += 1
-        hud.show_message("TIME UP  路  YOU LOSE  路  ROUND %d" % round_number)
+        pending_round_winner = 2
+        hud.show_message("TIME UP · YOU LOSE · ROUND %d" % round_number)
+        _show_game_text("YOU_LOSE", float(ROUND_PHASE_WAIT_MS) / 1000.0)
+        _enter_match_state(MATCH_STATE_KO_LOSE)
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
-    if player_rounds >= ROUNDS_TO_WIN or computer_rounds >= ROUNDS_TO_WIN:
-        match_over = true
-        round_reset_timer = -1.0
-        hud.show_message(
-            "YOU WIN THE MATCH  路  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
-            else "YOU LOSE THE MATCH  路  R TO RESTART"
-        )
-        _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
+
+
+func _advance_result_text() -> void:
+    # Update() states 7/8/11 share LAB_0018d358: after 3000 ms either enter the
+    # winner-only match pose (12/13) or end the round (15).
+    if match_state_time <= float(ROUND_PHASE_WAIT_MS) / 1000.0:
         return
-    round_reset_timer = ROUND_RESET_DELAY
+    if pending_round_winner != 0 and _match_target_reached():
+        _begin_winner_result_pose()
+    else:
+        _enter_match_state(MATCH_STATE_ROUND_END)
+
+
+func _begin_winner_result_pose() -> void:
+    # SetState(12)/(13): both fighters are moved to the origin, the loser is
+    # hidden, and only the winner plays its victory clip.
+    var winner_is_player: bool = pending_round_winner == 1
+    var winner: PortFighter = player if winner_is_player else computer
+    var loser: PortFighter = computer if winner_is_player else player
+    player.global_position = Vector3(0.0, 1.20, 0.0)
+    computer.global_position = Vector3(0.0, 1.20, 0.0)
+    player.move_axis = Vector2.ZERO
+    computer.move_axis = Vector2.ZERO
+    player.visible = winner_is_player
+    computer.visible = not winner_is_player
+    # The KO text from state 7/8 has finished by the time SetState(12/13)
+    # begins; clear it so only the victory/defeat clip is presented.
+    if _game_text_rect != null:
+        _game_text_rect.visible = false
+        _game_text_timer = 0.0
+    var victory_ok: bool = winner.enter_result_pose("victory")
+    var defeat_ok: bool = loser.enter_result_pose("defeat")
+    _result_pose_seconds = 2.5
+    if victory_ok:
+        _result_pose_seconds = maxf(2.5, winner.result_clip_duration())
+    if not victory_ok or not defeat_ok:
+        print("MATCH_RESULT_GAP winner=%s victory_clip=%s defeat_clip=%s" % [
+            "player" if winner_is_player else "computer",
+            str(victory_ok), str(defeat_ok),
+        ])
+    _enter_match_state(MATCH_STATE_MATCH_WIN if winner_is_player else MATCH_STATE_MATCH_LOSE)
+
+
+func _advance_winner_result_pose() -> void:
+    # Update() states 12/13 leave when the victory clip is nearly over
+    # (duration - 100 ms) or a skip event is consumed.
+    if match_state_time > _result_pose_seconds:
+        _enter_match_state(MATCH_STATE_ROUND_END)
+
+
+func _advance_round_end() -> void:
+    # RoundEnded() is true in state 15.  The match module either raises the
+    # win/lose result screen or calls NextRound() -> RestartValues().
+    if _round_end_handled:
+        return
+    _round_end_handled = true
+    if _match_target_reached():
+        match_over = true
+        done = true
+        var player_won: bool = player_rounds >= ROUNDS_TO_WIN
+        hud.show_message(
+            "YOU WIN THE MATCH · R TO RESTART" if player_won
+            else "YOU LOSE THE MATCH · R TO RESTART"
+        )
+        _play_result_audio("win" if player_won else "lose")
+    else:
+        _start_next_round()
 
 
 func _contextual_controls() -> String:
@@ -2179,45 +2358,46 @@ func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damag
             and action == "attacktofloor" and damage > 0.0 and not blocked
             and defender.state == "impactfacedown"):
         training_completed = true
-        hud.show_message("TRAINING HIT 路 R RETRY 路 F2 EXIT")
+        hud.show_message("TRAINING HIT · R RETRY · F2 EXIT")
         notice_timer = 0.0
         return
     if blocked:
         hud.show_message("BLOCK!")
     elif attacker == player:
-        hud.show_message("HIT 路 " + action.to_upper())
+        hud.show_message("HIT · " + action.to_upper())
     else:
         hud.show_message("TAKE HIT")
     notice_timer = 0.30
 
 func _on_ko(fighter: PortFighter) -> void:
+    # Update() state 4 detects CFighter::IsDefeated(), adds the round win and
+    # calls SetState(7) when the computer was defeated, SetState(8) when the
+    # player was defeated.  The knockout itself must come from a real attack;
+    # this signal handler never invents a state.
     if training_completed or done:
+        return
+    if match_state != MATCH_STATE_FIGHT:
         return
     done = true
     if training_mode:
-        hud.show_message("TRAINING KO  路  R TO RESET")
+        hud.show_message("TRAINING KO · R TO RESET")
         return
     if fighter == computer:
         player_rounds += 1
+        pending_round_winner = 1
     else:
         computer_rounds += 1
-    hud.set_round(round_number, player_rounds, computer_rounds)
-    if player_rounds >= ROUNDS_TO_WIN or computer_rounds >= ROUNDS_TO_WIN:
-        match_over = true
-        round_reset_timer = -1.0
-        _show_game_text(
-            "YOU_WIN" if player_rounds >= ROUNDS_TO_WIN else "YOU_LOSE", 2.5
-        )
-        hud.show_message(
-            "YOU WIN THE MATCH  路  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
-            else "YOU LOSE THE MATCH  路  R TO RESTART"
-        )
-        _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
-        return
-    round_reset_timer = ROUND_RESET_DELAY
-    _show_game_text("YOU_WIN" if fighter == computer else "YOU_LOSE", 2.0)
+        pending_round_winner = 2
+    hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
+    _show_game_text(
+        "YOU_WIN" if fighter == computer else "YOU_LOSE",
+        float(ROUND_PHASE_WAIT_MS) / 1000.0
+    )
     hud.show_message(
-        "YOU WIN 路 ROUND %d" % round_number if fighter == computer
-        else "YOU LOSE 路 ROUND %d" % round_number
+        "YOU WIN · ROUND %d" % round_number if fighter == computer
+        else "YOU LOSE · ROUND %d" % round_number
+    )
+    _enter_match_state(
+        MATCH_STATE_KO_WIN if fighter == computer else MATCH_STATE_KO_LOSE
     )
 
