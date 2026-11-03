@@ -11,6 +11,9 @@ const MoveGallery = preload("res://scripts/move_gallery.gd")
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 const ROUNDS_TO_WIN: int = 2
 const ROUND_RESET_DELAY: float = 2.0
+# Original round clock: CBeatEmUpGame::SetTimerMax() stores the limit in
+# seconds and Update() displays max(0, limit - played_ms / 1000).
+const ROUND_TIME_DEFAULT: int = 60
 
 # CBeatEmUpCamera::Update, native Z-up formula ported to Godot axes.
 const CAM_SOURCE_UNITS_TO_WORLD: float = (
@@ -72,6 +75,9 @@ var player_rounds: int = 0
 var computer_rounds: int = 0
 var match_over: bool = false
 var round_reset_timer: float = -1.0
+var round_time_max: int = ROUND_TIME_DEFAULT
+var round_time_left: int = ROUND_TIME_DEFAULT
+var round_time_active: bool = false
 
 # AI-only prototype costs: the native AI decision is not recovered, so the
 # Brick AI uses these thresholds/costs. They are not part of the player action
@@ -133,6 +139,7 @@ func _ready() -> void:
     move_gallery.exit_requested.connect(_on_move_gallery_exit)
     var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
     main_menu_enabled = false if export_self_test else _should_show_main_menu()
+    _configure_round_time()
     _reset_match()
     print("STARTUP_PROFILE environment=%d fighters=%d audio=%d total=%d" % [
         startup_environment - startup_begin,
@@ -582,25 +589,42 @@ func _build_game_text_overlay() -> void:
     layer.layer = 15
     add_child(layer)
     _game_text_rect = Sprite2D.new()
-    _game_text_rect.position = Vector2(300.0, 220.0)
+    _game_text_rect.position = (
+        get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
+    )
     _game_text_rect.scale = Vector2(1.6, 1.6)
     _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
-    _game_text_rect.flip_h = true
+    _game_text_rect.flip_h = false
     _game_text_rect.visible = false
     layer.add_child(_game_text_rect)
-    var base: String = OS.get_executable_path().get_base_dir().path_join("ui/gametext")
+    var roots: Array[String] = []
+    var env_root: String = OS.get_environment("BRUCELEE_GAME_TEXT_ROOT")
+    if not env_root.is_empty():
+        roots.append(env_root)
+    roots.append(OS.get_executable_path().get_base_dir().path_join("ui/gametext"))
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
+            "BruceLee-PC-Port/local-assets/gui/images/gametext"
+        ))
     for key: String in ["READY", "FIGHT", "YOU_WIN", "YOU_LOSE", "TIME_IS_UP"]:
-        var path: String = base.path_join("BL_gameText-%s.png" % key)
-        if not FileAccess.file_exists(path):
-            continue
-        var image: Image = Image.new()
-        if image.load(path) == OK:
-            _game_text_textures[key] = ImageTexture.create_from_image(image)
+        var filename: String = "BL_gameText-%s.png" % key
+        for root: String in roots:
+            var path: String = root.path_join(filename)
+            if not FileAccess.file_exists(path):
+                continue
+            var image: Image = Image.new()
+            if image.load(path) == OK:
+                _game_text_textures[key] = ImageTexture.create_from_image(image)
+                break
 
 
 func _show_game_text(key: String, duration: float) -> void:
     if _game_text_rect == null or not _game_text_textures.has(key):
         return
+    _game_text_rect.position = (
+        get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
+    )
     _game_text_rect.texture = _game_text_textures[key]
     _game_text_rect.visible = true
     _game_text_timer = duration
@@ -656,6 +680,17 @@ func _opponent_clips() -> Dictionary:
     return clips
 
 
+func _configure_round_time() -> void:
+    # Round length comes from the match config in the original
+    # (CBeatEmUpMatch::LoadProcessBegin -> SetTimerMax).  A value of 0 means
+    # "no time limit": LoadProcessBegin sets game+0x814/0x628 and the HUD
+    # then shows the fixed no-timer text instead of a countdown.
+    var setting: String = OS.get_environment("BRUCELEE_ROUND_TIME")
+    round_time_max = ROUND_TIME_DEFAULT
+    if setting.is_valid_int():
+        round_time_max = maxi(0, setting.to_int())
+
+
 func _reset_match() -> void:
     round_number = 1
     player_rounds = 0
@@ -686,6 +721,11 @@ func _reset_round() -> void:
     notice_timer = 1.2
     round_reset_timer = -1.0
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
+    # CFighter::Restart puts the clock back to the round limit every round;
+    # training has no match clock.
+    round_time_active = (not training_mode) and round_time_max > 0
+    round_time_left = round_time_max if round_time_active else 0
+    hud.set_time(round_time_left, round_time_active)
     hud.show_message(
         "TRAINING · K L L / K U U" if training_mode
         else "ROUND %d · FIGHT" % round_number
@@ -1301,6 +1341,11 @@ func _physics_process(delta: float) -> void:
         computer.move_axis = Vector2.ZERO
         return
     elapsed += delta
+    _update_round_timer()
+    if done:
+        player.move_axis = Vector2.ZERO
+        computer.move_axis = Vector2.ZERO
+        return
     player.move_axis = Input.get_vector(
         PrototypeControls.MOVE_LEFT,
         PrototypeControls.MOVE_RIGHT,
@@ -1315,6 +1360,56 @@ func _physics_process(delta: float) -> void:
         computer.guard_held = false
     else:
         _think_ai(delta)
+
+
+func _update_round_timer() -> void:
+    if not round_time_active or hud == null:
+        return
+    # Original Update() state 4: seconds = timer_max - played_millis / 1000.
+    var remaining: int = maxi(0, round_time_max - int(elapsed))
+    if remaining == round_time_left:
+        return
+    round_time_left = remaining
+    hud.set_time(round_time_left, true)
+    if round_time_left == 0:
+        _on_time_up()
+
+
+func _on_time_up() -> void:
+    # Update() state 4 zeroes the clock and leaves state 4; SetState(5)
+    # launches game text animation 4 (BL_gameText-TIME_IS_UP) and 3000 ms
+    # later the round is decided by remaining health (CFighter+0x144):
+    # higher health wins, equal health is the draw path.
+    if done or training_completed or not round_time_active:
+        return
+    done = true
+    hud.set_time(0, true)
+    _show_game_text("TIME_IS_UP", 2.0)
+    if training_mode:
+        hud.show_message("TIME UP  ·  R TO RESET")
+        return
+    var player_health: float = player.health
+    var computer_health: float = computer.health
+    if is_equal_approx(player_health, computer_health):
+        hud.show_message("TIME UP  ·  DRAW  ·  ROUND %d" % round_number)
+    elif player_health > computer_health:
+        player_rounds += 1
+        hud.show_message("TIME UP  ·  YOU WIN  ·  ROUND %d" % round_number)
+    else:
+        computer_rounds += 1
+        hud.show_message("TIME UP  ·  YOU LOSE  ·  ROUND %d" % round_number)
+    hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
+    if player_rounds >= ROUNDS_TO_WIN or computer_rounds >= ROUNDS_TO_WIN:
+        match_over = true
+        round_reset_timer = -1.0
+        hud.show_message(
+            "YOU WIN THE MATCH  ·  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
+            else "YOU LOSE THE MATCH  ·  R TO RESTART"
+        )
+        _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
+        return
+    round_reset_timer = ROUND_RESET_DELAY
+
 
 func _contextual_controls() -> String:
     if done or training_completed:

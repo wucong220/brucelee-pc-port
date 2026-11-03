@@ -9,6 +9,8 @@ var center_message: Label
 var footer: Label
 var context_hint: Label
 var round_label: Label
+var timer_label: Label
+var _timer_text: int = -1
 
 func _ready() -> void:
     var screen: Control = Control.new()
@@ -34,15 +36,27 @@ func _ready() -> void:
     top.add_child(o)
     _add_label(o, "OPPONENT | CPU", 20)
     opponent_bar = _make_bar(o)
+    # CBruceLeeHUD::Render prints the round clock as "%02d" of the remaining
+    # seconds (font 2) and draws it centred at (242, 26) of its 480x320
+    # reference frame: the middle of the top HUD row, between the life bars.
+    # The round text moves under the clock so both fit that row here.
+    var middle: VBoxContainer = VBoxContainer.new()
+    middle.custom_minimum_size = Vector2(220.0, 0.0)
+    middle.alignment = BoxContainer.ALIGNMENT_CENTER
+    top.add_child(middle)
+    timer_label = Label.new()
+    timer_label.text = "--"
+    timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    timer_label.add_theme_font_size_override("font_size", 40)
+    timer_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.36))
+    middle.add_child(timer_label)
     round_label = Label.new()
     round_label.custom_minimum_size = Vector2(220.0, 0.0)
-    round_label.size_flags_vertical = Control.SIZE_FILL
     round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    round_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     round_label.add_theme_font_size_override("font_size", 18)
     round_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.36))
-    top.add_child(round_label)
-    top.move_child(round_label, 1)
+    middle.add_child(round_label)
+    top.move_child(middle, 1)
     hint = Label.new()
     hint.anchor_left = 0.5
     hint.anchor_right = 0.5
@@ -168,6 +182,20 @@ func set_round(round_number: int, player_wins: int, computer_wins: int, training
         "TRAINING" if training
         else "ROUND %d  ·  %d — %d" % [round_number, player_wins, computer_wins]
     )
+
+
+func set_time(seconds_left: int, active: bool = true) -> void:
+    if timer_label == null:
+        return
+    if not active:
+        timer_label.text = "--"
+        _timer_text = -1
+        return
+    var clamped: int = clampi(seconds_left, 0, 99)
+    if clamped == _timer_text:
+        return
+    _timer_text = clamped
+    timer_label.text = "%02d" % clamped
 
 
 func set_rage(value: float) -> void:

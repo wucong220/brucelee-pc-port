@@ -29,8 +29,11 @@ func _run() -> void:
         return
     scene._reset_match()
     var hud: PortHUD = scene.get("hud")
-    if (hud.round_label.get_parent() is not HBoxContainer
-            or hud.round_label.text != "ROUND 1  ·  0 — 0"):
+    var round_parent: Node = hud.round_label.get_parent()
+    var round_in_row: bool = (
+        round_parent is HBoxContainer or round_parent is VBoxContainer
+    )
+    if (not round_in_row or hud.round_label.text != "ROUND 1  ·  0 — 0"):
         push_error("Round label is not embedded in the top HUD row")
         quit(1)
         return
