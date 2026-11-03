@@ -707,7 +707,7 @@ func _show_game_text(key: String, duration: float) -> void:
         get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
     )
     _game_text_rect.texture = _game_text_textures[key]
-    _game_text_rect.flip_h = true
+    _game_text_rect.flip_h = false
     _game_text_rect.visible = true
     _game_text_timer = duration
 
