@@ -1,4 +1,4 @@
-extends Node3D
+﻿extends Node3D
 ## Gameplay demonstrator: intentionally original, with placeholder meshes.
 ## Original character models/animations and exact rules remain unported.
 
@@ -151,6 +151,14 @@ func _ready() -> void:
         _open_main_menu()
     if export_self_test:
         call_deferred("_run_export_self_test")
+    elif not main_menu_enabled:
+        call_deferred("_start_direct_intro")
+
+
+func _start_direct_intro() -> void:
+    await RenderingServer.frame_post_draw
+    await RenderingServer.frame_post_draw
+    _start_round_intro()
 
 
 func _run_export_self_test() -> void:
@@ -732,8 +740,8 @@ func _reset_round() -> void:
     round_time_left = round_time_max if round_time_active else 0
     hud.set_time(round_time_left, round_time_active)
     hud.show_message(
-        "TRAINING · K L L / K U U" if training_mode
-        else "ROUND %d · FIGHT" % round_number
+        "TRAINING 路 K L L / K U U" if training_mode
+        else "ROUND %d 路 FIGHT" % round_number
     )
     _restart_fight_camera()
     _update_fight_camera()
@@ -742,6 +750,7 @@ func _reset_round() -> void:
 func _start_next_round() -> void:
     round_number += 1
     _reset_round()
+    _start_round_intro()
 
 func _should_show_main_menu() -> bool:
     var setting: String = OS.get_environment("BRUCELEE_MAIN_MENU")
@@ -971,7 +980,7 @@ func _play_result_audio(key: String) -> void:
 
 
 func _start_round_intro() -> void:
-    _show_game_text("READY", 0.9)
+    _show_game_text("READY", 0.8)
     _play_result_audio("ready")
     await get_tree().create_timer(0.8).timeout
     if not done:
@@ -1391,25 +1400,25 @@ func _on_time_up() -> void:
     hud.set_time(0, true)
     _show_game_text("TIME_IS_UP", 2.0)
     if training_mode:
-        hud.show_message("TIME UP  ·  R TO RESET")
+        hud.show_message("TIME UP  路  R TO RESET")
         return
     var player_health: float = player.health
     var computer_health: float = computer.health
     if is_equal_approx(player_health, computer_health):
-        hud.show_message("TIME UP  ·  DRAW  ·  ROUND %d" % round_number)
+        hud.show_message("TIME UP  路  DRAW  路  ROUND %d" % round_number)
     elif player_health > computer_health:
         player_rounds += 1
-        hud.show_message("TIME UP  ·  YOU WIN  ·  ROUND %d" % round_number)
+        hud.show_message("TIME UP  路  YOU WIN  路  ROUND %d" % round_number)
     else:
         computer_rounds += 1
-        hud.show_message("TIME UP  ·  YOU LOSE  ·  ROUND %d" % round_number)
+        hud.show_message("TIME UP  路  YOU LOSE  路  ROUND %d" % round_number)
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
     if player_rounds >= ROUNDS_TO_WIN or computer_rounds >= ROUNDS_TO_WIN:
         match_over = true
         round_reset_timer = -1.0
         hud.show_message(
-            "YOU WIN THE MATCH  ·  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
-            else "YOU LOSE THE MATCH  ·  R TO RESTART"
+            "YOU WIN THE MATCH  路  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
+            else "YOU LOSE THE MATCH  路  R TO RESTART"
         )
         _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
         return
@@ -1702,13 +1711,13 @@ func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damag
             and action == "attacktofloor" and damage > 0.0 and not blocked
             and defender.state == "impactfacedown"):
         training_completed = true
-        hud.show_message("TRAINING HIT · R RETRY · F2 EXIT")
+        hud.show_message("TRAINING HIT 路 R RETRY 路 F2 EXIT")
         notice_timer = 0.0
         return
     if blocked:
         hud.show_message("BLOCK!")
     elif attacker == player:
-        hud.show_message("HIT · " + action.to_upper())
+        hud.show_message("HIT 路 " + action.to_upper())
     else:
         hud.show_message("TAKE HIT")
     notice_timer = 0.30
@@ -1718,7 +1727,7 @@ func _on_ko(fighter: PortFighter) -> void:
         return
     done = true
     if training_mode:
-        hud.show_message("TRAINING KO  ·  R TO RESET")
+        hud.show_message("TRAINING KO  路  R TO RESET")
         return
     if fighter == computer:
         player_rounds += 1
@@ -1732,14 +1741,15 @@ func _on_ko(fighter: PortFighter) -> void:
             "YOU_WIN" if player_rounds >= ROUNDS_TO_WIN else "YOU_LOSE", 2.5
         )
         hud.show_message(
-            "YOU WIN THE MATCH  ·  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
-            else "YOU LOSE THE MATCH  ·  R TO RESTART"
+            "YOU WIN THE MATCH  路  R TO RESTART" if player_rounds >= ROUNDS_TO_WIN
+            else "YOU LOSE THE MATCH  路  R TO RESTART"
         )
         _play_result_audio("win" if player_rounds >= ROUNDS_TO_WIN else "lose")
         return
     round_reset_timer = ROUND_RESET_DELAY
     _show_game_text("YOU_WIN" if fighter == computer else "YOU_LOSE", 2.0)
     hud.show_message(
-        "YOU WIN · ROUND %d" % round_number if fighter == computer
-        else "YOU LOSE · ROUND %d" % round_number
+        "YOU WIN 路 ROUND %d" % round_number if fighter == computer
+        else "YOU LOSE 路 ROUND %d" % round_number
     )
+
