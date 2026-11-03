@@ -23,6 +23,12 @@
 - Also tried `bl_brucelee_01_High.Skl` (`4A6D4532…2E3`): converter rejects
   `candidate source identity or target identity does not match`.
   No successful retarget; no Brick brutal clip was merged.
+- Corrected the ANM SHA-256 used in earlier attempts: the actual
+  `all_sp_pnch_low_forset04.anm` hash is
+  `82CBDE2C8EEA15DAAC5C19AFBC535113C976141234332395BCB7B19BC5C3BB6F`
+  (not `188b6994…`). Retrying with the corrected hash still fails with
+  `animation reference or skeleton SHA-256 does not match expectation`,
+  so the source skeleton/reference remains the blocker.
 
 ## `m02_movefwd`
 
