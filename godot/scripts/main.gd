@@ -1,4 +1,4 @@
-﻿extends Node3D
+extends Node3D
 ## Gameplay demonstrator: intentionally original, with placeholder meshes.
 ## Original character models/animations and exact rules remain unported.
 
@@ -653,7 +653,7 @@ func _build_game_text_overlay() -> void:
     _game_text_rect.position = (
         get_viewport().get_visible_rect().size * Vector2(0.5, 0.42)
     )
-    _game_text_rect.scale = Vector2(-1.6, 1.6)
+    _game_text_rect.scale = Vector2(1.6, 1.6)
     _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
     _game_text_rect.flip_h = false
     _game_text_rect.visible = false
@@ -676,6 +676,7 @@ func _build_game_text_overlay() -> void:
                 continue
             var image: Image = Image.new()
             if image.load(path) == OK:
+                image.flip_x()
                 _game_text_textures[key] = ImageTexture.create_from_image(image)
                 break
 
