@@ -4,28 +4,35 @@
 
 - Temple Yard A: 18 far props / 18 textures, 3 near props, verified screenshot.
 - Temple Yard B: 18 far props / 18 textures, 3 near props, verified screenshot.
-  `bigtemple` now renders with the corrected ATC RGBA block order and top-down
-  row orientation.
-- Tournament Hall A: interior renders after skipping
-  `bl_scene04a_hw_fx_biglighta` and `bl_scene04a_hw_fx_biglightb`; together
-  those two planes overdraw the whole screen white. The remaining original
-  meshes are loaded.
+  `bigtemple` renders with corrected ATC RGBA block order and top-down orientation.
+- Tournament Hall A: 14 far visuals render with the generic camera; generic
+  additive/unshaded handling is applied to `fx_`/light entries instead of
+  per-scene culling. 3 near props are loaded from `scene/halla/near`.
+
+## Generic loader
+
+The engine now loads `scene/<BRUCELEE_SCENE>/far` and
+`scene/<BRUCELEE_SCENE>/near` for any variant. There is no per-scene camera:
+`_native_camera_pose` is shared, matching `CBeatEmUpCamera::Update`.
+
+## Available original content
+
+Full `data.zpak` report: 2144 resources, 70 `.scene`, 10
+`*_FarObjects.scene`, and 5 character skeletons (Bruce, Brick, Master,
+SinFu, Ken). Square B was extracted and converted to 11 GLBs / 9 PNGs, but its
+camera still sits inside the roof; it is not shipped yet.
 
 ## Not working
 
-- Tournament Hall A: 14 far / 3 near visuals parsed and converted, but the
-  current one-mesh/one-texture path paints whole architecture surfaces with a
-  texture sheet. Not imported.
-- Original game text: the decoded `BL_gameText-*` alpha is a splat mask, not
-  letter shapes; direct alpha-to-white display produces a white blob. Disabled.
-- Brick brutal reaction: source skeleton/reference for
-  `all_sp_pnch_low_forset04` still unidentified.
+- Square B: extracted/converted but not visually usable yet.
+- `TIME_IS_UP`: attempted, unverified, reverted.
+- Brick brutal: candidate retarget only; see P1_ASSET_BLOCKERS.
 
 ## Runtime entry points
 
-- `DragonWarrior.cmd`: opens the main menu with Temple Yard A loaded
-- `DragonWarrior_TempleYardB.cmd`: opens the main menu with Temple Yard B loaded
-- `DragonWarrior_A_Direct.cmd`: starts Temple Yard A fight directly
-- `DragonWarrior_B_Direct.cmd`: starts Temple Yard B fight directly
-- Main menu `TEMPLE YARD A/B`: reloads and now starts the selected arena
-  directly (`BRUCELEE_MAIN_MENU=0`)
+- `DragonWarrior.cmd`: main menu with Temple Yard A behind it
+- `DragonWarrior_TempleYardB.cmd`: main menu with Temple Yard B behind it
+- `DragonWarrior_A_Direct.cmd`: Temple Yard A fight directly
+- `DragonWarrior_B_Direct.cmd`: Temple Yard B fight directly
+- `DragonWarrior_HallA_Direct.cmd`: Tournament Hall A directly
+- Main menu `TEMPLE YARD A/B`: reload into the selected arena
