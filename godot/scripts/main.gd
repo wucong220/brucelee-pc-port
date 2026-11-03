@@ -599,10 +599,13 @@ func _build_fighters() -> void:
     computer = PortFighter.new()
     computer.configure("Opponent (placeholder)", false, Color(0.20, 0.65, 0.76))
     computer.configure_attack_config(PortFighter.BRICK_ATTACK_CONFIG_PATH)
+    var opponent_clips: Dictionary = PortFighter.BRICK_CLIPS
+    if OS.get_environment("BRUCELEE_OPPONENT_KEN") == "1":
+        opponent_clips = _ken_clips()
     computer.configure_candidate_asset(
         OS.get_environment("BRUCELEE_OPPONENT_GLB"),
         OS.get_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT"),
-        PortFighter.BRICK_CLIPS,
+        opponent_clips,
         "body",
         false
     )
@@ -614,6 +617,13 @@ func _build_fighters() -> void:
     player.combat_hit.connect(_on_hit)
     computer.combat_hit.connect(_on_hit)
     player.attack_started.connect(_on_player_attack_started)
+
+func _ken_clips() -> Dictionary:
+    var clips: Dictionary = {}
+    for key: String in PortFighter.BRICK_CLIPS:
+        clips[key] = String(PortFighter.BRICK_CLIPS[key]).replace("m03_", "m02_")
+    return clips
+
 
 func _reset_match() -> void:
     round_number = 1
