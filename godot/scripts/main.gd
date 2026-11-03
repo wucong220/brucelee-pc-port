@@ -379,6 +379,14 @@ func _build_near_manifest(scene_root: String) -> void:
                     entry_material.albedo_texture = ImageTexture.create_from_image(image)
                     entry_material.albedo_color = Color.WHITE
                     entry_material.roughness = 0.9
+        var blend_mode: String = String(
+            (entry.get("material", {}) as Dictionary).get("blend_mode", "")
+        )
+        if blend_mode == "alpha test":
+            entry_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+            entry_material.alpha_scissor_threshold = 0.5
+        elif blend_mode == "alpha blend":
+            entry_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             (mesh_node as MeshInstance3D).material_override = entry_material
         root.add_child(instance)
