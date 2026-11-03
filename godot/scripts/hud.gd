@@ -9,7 +9,6 @@ var center_message: Label
 var footer: Label
 var context_hint: Label
 var round_label: Label
-var time_label: Label
 
 func _ready() -> void:
     var screen: Control = Control.new()
@@ -44,15 +43,6 @@ func _ready() -> void:
     round_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.36))
     top.add_child(round_label)
     top.move_child(round_label, 1)
-    time_label = Label.new()
-    time_label.custom_minimum_size = Vector2(90.0, 0.0)
-    time_label.size_flags_vertical = Control.SIZE_FILL
-    time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    time_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    time_label.add_theme_font_size_override("font_size", 26)
-    time_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.36))
-    top.add_child(time_label)
-    top.move_child(time_label, 2)
     hint = Label.new()
     hint.anchor_left = 0.5
     hint.anchor_right = 0.5
@@ -178,10 +168,6 @@ func set_round(round_number: int, player_wins: int, computer_wins: int, training
         "TRAINING" if training
         else "ROUND %d  ·  %d — %d" % [round_number, player_wins, computer_wins]
     )
-
-
-func set_time(seconds: float) -> void:
-    time_label.text = "%02d" % maxi(0, int(ceilf(seconds)))
 
 
 func set_rage(value: float) -> void:
