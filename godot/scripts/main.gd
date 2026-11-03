@@ -1223,6 +1223,7 @@ func _build_fighters() -> void:
     computer.set_skeleton_class(_opponent_skeleton_class())
     player.configure_result_clips(_player_result_clips())
     computer.configure_result_clips(_opponent_result_clips())
+    hud.set_fighter_names("BRUCE LEE", _opponent_display_name())
     add_child(computer)
     player.opponent = computer
     computer.opponent = player
@@ -1249,6 +1250,31 @@ func _opponent_attack_config() -> String:
     return PortFighter.BRICK_ATTACK_CONFIG_PATH
 
 
+func _opponent_display_name() -> String:
+    ## Opponent menu command = characters.list key for the packaged name
+    ## textures. Direct launchers still resolve by their fighting-set config.
+    var key: String = OS.get_environment("BRUCELEE_OPPONENT_NAME_KEY")
+    if not key.is_empty() and key != "opponents_back":
+        return key
+    match _opponent_attack_config():
+        PortFighter.SINFU_ATTACK_CONFIG_PATH:
+            return "sinfu"
+        PortFighter.MASTER_ATTACK_CONFIG_PATH:
+            return "themaster"
+        PortFighter.KEN_ATTACK_CONFIG_PATH:
+            return "kengodall"
+        PortFighter.SHENLO_ATTACK_CONFIG_PATH:
+            return "shenlo"
+        PortFighter.SMALLBOY_ATTACK_CONFIG_PATH:
+            return "smallboy"
+        PortFighter.JOHNSON_ATTACK_CONFIG_PATH:
+            return "johnson"
+        PortFighter.CHIEF_ATTACK_CONFIG_PATH:
+            return "chief"
+        PortFighter.LOMING_ATTACK_CONFIG_PATH:
+            return "loming"
+        _:
+            return "brickdavis"
 func _player_skeleton_class() -> String:
     ## Bruce Lee's four skins are all "medium" in characters.list. The env
     ## override exists so a test can hold the body fixed and vary the class the
@@ -1587,6 +1613,7 @@ func _apply_opponent_switch(command: String) -> void:
     OS.set_environment(
         "BRUCELEE_OPPONENT_SKELETON", String(config.get("skeleton", ""))
     )
+    OS.set_environment("BRUCELEE_OPPONENT_NAME_KEY", command)
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
     get_tree().reload_current_scene()
 

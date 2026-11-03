@@ -505,6 +505,12 @@ func set_health(player_health: float, enemy_health: float) -> void:
     _life_target[1] = opponent_bar.value
 
 
+func set_fighter_names(player_name: String, opponent_name: String) -> void:
+    if _name_labels.size() >= 2:
+        _name_labels[0].text = player_name
+        _name_labels[1].text = opponent_name
+
+
 func set_round(round_number: int, player_wins: int, computer_wins: int,
         training: bool = false) -> void:
     _wins[0] = maxi(player_wins, 0)
