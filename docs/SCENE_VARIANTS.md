@@ -8,6 +8,10 @@
 - Tournament Hall A: 14 far visuals render with the generic camera; generic
   additive/unshaded handling is applied to `fx_`/light entries instead of
   per-scene culling. 3 near props are loaded from `scene/halla/near`.
+- Square B: 11 far visuals + sky; manifest entry renamed `bl_squareb_hw_sky`
+  so the loader does not skip the inward-facing dome.
+- Harbour A: 3 far visuals (quay, tyre, fence); sparse but renders. The full
+  harbour vista lives in sibling animation scenes and is not composed yet.
 
 ## Generic loader
 
