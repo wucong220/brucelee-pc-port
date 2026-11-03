@@ -63,7 +63,7 @@
     "linking_frame": 0,
     "return_action": "idle",
     "return_implemented": true,
-    "clip_implemented": true,
+    "clip_implemented": false,
     "evidence": {
      "rule": "outgoing native link window + ANM duration",
      "link_target": "idle",
@@ -82,7 +82,7 @@
     "linking_frame": 0,
     "return_action": "idle",
     "return_implemented": true,
-    "clip_implemented": true,
+    "clip_implemented": false,
     "evidence": {
      "rule": "outgoing native link window + ANM duration",
      "link_target": "idle",
@@ -101,7 +101,7 @@
     "linking_frame": 0,
     "return_action": "idle",
     "return_implemented": true,
-    "clip_implemented": true,
+    "clip_implemented": false,
     "evidence": {
      "rule": "outgoing native link window + ANM duration",
      "link_target": "idle",
@@ -122,7 +122,7 @@
     "linking_frame": 14,
     "return_action": "idle",
     "return_implemented": true,
-    "clip_implemented": true,
+    "clip_implemented": false,
     "evidence": {
      "rule": "outgoing native link window + ANM duration",
      "link_target": "idle",
@@ -141,7 +141,7 @@
     "linking_frame": 0,
     "return_action": "idle",
     "return_implemented": true,
-    "clip_implemented": true,
+    "clip_implemented": false,
     "evidence": {
      "rule": "outgoing native link window + ANM duration",
      "link_target": "idle",
@@ -160,7 +160,7 @@
     "linking_frame": 0,
     "return_action": "idle",
     "return_implemented": true,
-    "clip_implemented": true,
+    "clip_implemented": false,
     "evidence": {
      "rule": "outgoing native link window + ANM duration",
      "link_target": "idle",
