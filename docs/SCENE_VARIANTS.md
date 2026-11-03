@@ -15,11 +15,16 @@
   excluded because their meshes/transforms are not statically bakeable.
 - Harbour B: 35 far + 6 near, composed from `no_static`; steam is an
   optional alternate because its transforms are animation snapshots.
-- Square A: 16 far + 13 near, night market; `bl_squarea_hw_group01` keeps a
+- Square A: 29 far + 13 near, night market, lanterns and papers; `bl_squarea_hw_group01` keeps a
   6.065-degree Z rotation and uses `apply_rotation` so the loader applies it.
 - Rooftops A: 29 far + 16 near.
 - Rooftops B: 21 far + 15 near.
 - Tournament Hall B: 13 far + 3 near (interior, no skydome).
+- Square B: 76 far (birds, lanterns, papers) + 13 near.
+- Harbour A: 86 far (74 base + 12 circling birds).
+- Harbour B: 74 far (35 base + birds, steam, cloth line) + 6 near.
+- Rooftops A: 36 far (29 base + 7 FX) + 16 near.
+- Rooftops B: 28 far (21 base + 7 FX) + 15 near.
 
 ## Generic loader
 
