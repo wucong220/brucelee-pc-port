@@ -4427,7 +4427,14 @@ func _disable_candidate_character_position_tracks(clip: Animation) -> void:
         ]:
             continue
         var target: Node = animation_root.get_node_or_null(clip.track_get_path(track))
-        if target == _candidate_character:
+        var path_text: String = String(clip.track_get_path(track))
+        # The GLB wraps the authored character under Z_up_to_glTF_Y_up/root,
+        # so resolving the absolute track path can miss the character node.
+        # Its position track carries the per-clip source translation (for
+        # m01_kck_front_step it drives the visible mesh down/forward) and must
+        # never move the visual by itself; gameplay uses attack_root_motion.
+        if target == _candidate_character or path_text == "character" \
+                or path_text.ends_with("/character"):
             clip.track_set_enabled(track, false)
 
 
