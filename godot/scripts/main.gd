@@ -559,8 +559,8 @@ void fragment() {
     vec4 tex = texture(TEXTURE, UV);
     float luma = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
     float ink = 1.0 - luma;
-    float alpha = max(ink, luma * 0.45);
-    vec3 color = mix(vec3(1.0), vec3(0.95, 0.12, 0.06), ink);
+    float alpha = ink;
+    vec3 color = vec3(1.0, 0.86, 0.35);
     COLOR = vec4(color, alpha);
 }
 """
