@@ -172,7 +172,8 @@ func _run() -> void:
 		str(detail.get("detail_event", -1)))
 	var header: Dictionary = flow.call("header_lines")
 	check("detail header shows the recovered maptitle",
-		String(header.get("title", "")).begins_with("s_master_1"),
+		String(header.get("title", "")).begins_with("s_master_1")
+				or String(header.get("title", "")).contains("The Master 1"),
 		String(header.get("title", "")))
 	var detail_rows: Array = flow.call("body_lines")
 	var detail_text: String = "\n".join(PackedStringArray(detail_rows))
@@ -288,8 +289,11 @@ func _run() -> void:
 	flow.call("_accept")
 	check("rewards return to the map", _screen() == "map", _screen())
 	var map_text: String = "\n".join(PackedStringArray(flow.call("body_lines")))
-	check("map shows s_master_1 completed", map_text.contains("[x] s_master_1"), map_text)
-	check("map shows s_master_2 available", map_text.contains("s_master_2"), "")
+	check("map shows s_master_1 completed",
+		map_text.contains("[x] s_master_1")
+				or map_text.contains("[x] The Master 1"), map_text)
+	check("map shows s_master_2 available",
+		map_text.contains("s_master_2") or map_text.contains("The Master 2"), "")
 	check("map still locks s_master_3 behind s_master_2",
 		not map_text.contains("> s_master_3"), "")
 

@@ -23,6 +23,7 @@ const StoryStateScript = preload("res://scripts/story_state.gd")
 const StoryRules = preload("res://scripts/story_rules.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const StoryLangScript = preload("res://scripts/story_lang.gd")
+const StoryPictureView = preload("res://scripts/story_picture_view.gd")
 
 const ENV_STORY_FLOW: String = "BRUCELEE_STORY_FLOW"
 const ENV_STORY_LAUNCH: String = "BRUCELEE_STORY_LAUNCH"
@@ -52,6 +53,8 @@ var body: Control
 var footer_label: Label
 var banner: Label
 var banner_background: ColorRect
+## Draws the decoded original story/*.tex artwork for picture subevents.
+var picture_view: Control
 
 var mode_cursor: int = 0
 var slot_cursor: int = 0
@@ -120,6 +123,12 @@ func _build_chrome() -> void:
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(dim)
+
+	picture_view = StoryPictureView.new()
+	picture_view.name = "StoryPictureView"
+	picture_view.visible = false
+	root.add_child(picture_view)
+	picture_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -217,10 +226,35 @@ func _show_rows(rows: Array, selected: int) -> void:
 		list.add_child(_make_label(text, 16, color))
 
 
+## Compact layer listing drawn as a faint overlay above the decoded artwork.
+func _show_rows_compact(rows: Array) -> void:
+	var backdrop: ColorRect = ColorRect.new()
+	backdrop.color = Color(0.01, 0.015, 0.025, 0.55)
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	backdrop.size = Vector2(770, rows.size() * 15 + 10)
+	body.add_child(backdrop)
+	var list: VBoxContainer = VBoxContainer.new()
+	list.add_theme_constant_override("separation", 0)
+	list.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	list.modulate = Color(1, 1, 1, 0.92)
+	body.add_child(list)
+	for index: int in range(rows.size()):
+		var label: Label = _make_label(String(rows[index]), 11,
+			COLOR_TEXT if index == 0 else COLOR_DIM)
+		list.add_child(label)
+
+
 func show_screen(screen_name: String) -> void:
 	screen = screen_name
 	var visible_now: bool = screen_name != "hidden" and screen_name != "battle"
-	dim.visible = visible_now
+	var picture_now: bool = screen_name == "picture"
+	if picture_view != null:
+		picture_view.visible = picture_now
+		if not picture_now:
+			picture_view.call("hide_caption")
+	# The picture screen lets the decoded artwork own the background; the dark
+	# story chrome dim is suppressed so the original art is not tinted.
+	dim.visible = visible_now and not picture_now
 	title_label.visible = visible_now
 	subtitle_label.visible = visible_now
 	body.visible = visible_now
@@ -238,6 +272,9 @@ func show_screen(screen_name: String) -> void:
 func hide_all() -> void:
 	screen = "hidden"
 	dim.visible = false
+	if picture_view != null:
+		picture_view.visible = false
+		picture_view.call("hide_caption")
 	title_label.visible = false
 	subtitle_label.visible = false
 	body.visible = false
@@ -648,16 +685,22 @@ func show_picture(sub_index: int) -> void:
 	if sub.has("music"):
 		rows.append("music   " + String(Dictionary(sub["music"]).get("file", "")))
 	var layers: Array = sub.get("layers", [])
-	rows.append("layers  %d" % layers.size())
+	var render_report: Dictionary = {}
+	if picture_view != null:
+		render_report = picture_view.call("render", sub)
+	rows.append("layers  %d  ·  bound %d  ·  missing %d" % [
+		layers.size(), int(render_report.get("loaded", 0)),
+		(render_report.get("missing", []) as Array).size(),
+	])
 	for layer_index: int in range(layers.size()):
 		var layer: Dictionary = layers[layer_index]
 		var picture_file: String = String(Dictionary(layer.get("picture", {})).get("file", ""))
 		var bits: Array = [picture_file]
-		for key: String in ["x", "y", "scale", "color", "alpha", "width", "height"]:
+		for key: String in ["x", "y", "scale", "color", "alpha"]:
 			if layer.has(key):
 				bits.append("%s %s" % [key, str(layer[key])])
 		rows.append("    layer %d  %s" % [layer_index, _join(bits, " · ")])
-	_show_rows(rows, -1)
+	_show_rows_compact(rows)
 
 
 func _advance_picture() -> void:
