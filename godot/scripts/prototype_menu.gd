@@ -24,10 +24,11 @@ const SCENE_LABELS: Array[String] = [
 ## MASTER, material profile) and reloads main.tscn. "brick" restores the shipped
 ## Brick candidate; "opponents_back" and "opponents" never leave this script.
 const OPPONENT_COMMANDS: Array[String] = [
-    "brick", "sinfu", "master", "ken", "shenlo", "opponents_back",
+    "brick", "sinfu", "master", "ken", "shenlo", "smallboy", "johnson", "chief", "loming", "opponents_back",
 ]
 const OPPONENT_LABELS: Array[String] = [
-    "BRICK", "SIN FU", "MASTER", "KEN", "SHEN LO", "BACK",
+    "BRICK", "SIN FU", "MASTER", "KEN", "SHEN LO",
+    "SMALL BOY", "JOHNSON", "THE CHIEF", "LO MING", "BACK",
 ]
 const MAIN_COMMANDS: Array[String] = [
     "fight", "training", "move_training", "gallery",
