@@ -1075,7 +1075,7 @@ func _build_game_text_overlay() -> void:
         roots.append(local_app_data.path_join(
             "BruceLee-PC-Port/local-assets/gui/images/gametext"
         ))
-    for key: String in ["READY", "FIGHT", "YOU_WIN", "YOU_LOSE", "TIME_IS_UP"]:
+    for key: String in ["READY", "FIGHT", "YOU_WIN", "YOU_LOSE", "TIME_IS_UP", "DRAW", "PERFECT", "GREAT", "COUNTER"]:
         var filename: String = "BL_gameText-%s.png" % key
         for root: String in roots:
             var path: String = root.path_join(filename)
