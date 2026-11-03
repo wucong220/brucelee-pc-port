@@ -112,34 +112,34 @@ func _build_ui() -> void:
     screen.add_child(center)
     var panel: VBoxContainer = VBoxContainer.new()
     panel.custom_minimum_size = Vector2(380.0, 0.0)
-    panel.add_theme_constant_override("separation", 10)
+    panel.add_theme_constant_override("separation", 6)
     center.add_child(panel)
     var title: Label = Label.new()
     title.text = "DRAGON WARRIOR"
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    title.add_theme_font_size_override("font_size", 38)
+    title.add_theme_font_size_override("font_size", 32)
     title.add_theme_color_override("font_color", Color(1.0, 0.78, 0.30))
     panel.add_child(title)
     var subtitle: Label = Label.new()
     subtitle.text = "PC COMBAT PROTOTYPE"
     subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    subtitle.add_theme_font_size_override("font_size", 18)
+    subtitle.add_theme_font_size_override("font_size", 16)
     subtitle.add_theme_color_override("font_color", Color(0.86, 0.88, 0.92))
     panel.add_child(subtitle)
     var spacer: Control = Control.new()
-    spacer.custom_minimum_size = Vector2(0.0, 18.0)
+    spacer.custom_minimum_size = Vector2(0.0, 10.0)
     panel.add_child(spacer)
     mode_label = Label.new()
     mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    mode_label.add_theme_font_size_override("font_size", 20)
+    mode_label.add_theme_font_size_override("font_size", 18)
     mode_label.add_theme_color_override("font_color", Color(0.70, 0.78, 0.90))
     panel.add_child(mode_label)
     for index: int in range(maxi(MAIN_LABELS.size(), PAUSE_LABELS.size())):
         var label: Label = Label.new()
-        label.custom_minimum_size = Vector2(0.0, 42.0)
+        label.custom_minimum_size = Vector2(0.0, 34.0)
         label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-        label.add_theme_font_size_override("font_size", 25)
+        label.add_theme_font_size_override("font_size", 22)
         panel.add_child(label)
         item_labels.append(label)
     status_label = Label.new()
