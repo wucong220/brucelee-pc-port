@@ -3507,6 +3507,17 @@ func _think_ai(delta: float) -> void:
     ## uniform move choice and 1/3 + 2/3 rage gates.
     if native_ai == null:
         return
+    # A chosen guard is a held action in the native tree. Re-walking the tree
+    # during the attacker's startup/active frames can randomly replace it with
+    # a different branch, so hold the decision until the threat has resolved.
+    if (computer.guard_held and player != null
+            and player.state in ["startup", "active"]):
+        computer.move_axis = Vector2.ZERO
+        return
+    if computer.guard_held and player != null and player.state == "recovery":
+        # The guard decision ends when the attack is no longer a threat; the
+        # next tree walk is free to choose movement or a punish.
+        computer.guard_held = false
     # The tree owns locomotion while it is allowed to act; attacks keep
     # move_axis at zero so attack root motion is not fought by input.
     computer.move_axis = Vector2.ZERO
