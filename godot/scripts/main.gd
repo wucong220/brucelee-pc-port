@@ -241,6 +241,7 @@ var pending_round_winner: int = 0
 var _round_end_handled: bool = false
 var _intro_fight_shown: bool = false
 var _result_pose_seconds: float = 0.0
+var _result_camera_override: bool = false
 
 # AI-only prototype costs: the native AI decision is not recovered, so the
 # Brick AI uses these thresholds/costs. They are not part of the player action
@@ -1222,6 +1223,7 @@ func _reset_match() -> void:
     round_reset_timer = -1.0
     pending_round_winner = 0
     _result_pose_seconds = 0.0
+    _result_camera_override = false
     _reset_round()
 
 
@@ -1259,6 +1261,7 @@ func _reset_round() -> void:
     _round_end_handled = false
     _intro_fight_shown = false
     _result_pose_seconds = 0.0
+    _result_camera_override = false
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
     # CFighter::Restart puts the clock back to the round limit every round;
     # training has no match clock.
@@ -1879,6 +1882,15 @@ func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
         return
     if not _cam_initialized:
         _restart_fight_camera()
+    if _result_camera_override and match_state in [
+            MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE]:
+        var winner_node: PortFighter = (
+            player if pending_round_winner == 1 else computer
+        )
+        var target: Vector3 = winner_node.global_position + Vector3(0.0, 1.0, 0.0)
+        fight_camera.global_position = target + Vector3(0.0, 1.4, 4.2)
+        fight_camera.look_at(target, Vector3.UP)
+        return
     var a: Vector3 = _camera_fighter_point(player)
     var b: Vector3 = _camera_fighter_point(computer)
     var alpha: float = 1.0 - pow(CAM_SMOOTH_OLD, maxf(delta, 0.0) * CAM_UPDATE_HZ)
@@ -2111,6 +2123,7 @@ func _begin_winner_result_pose() -> void:
     computer.move_axis = Vector2.ZERO
     player.visible = winner_is_player
     computer.visible = not winner_is_player
+    _result_camera_override = true
     # The KO text from state 7/8 has finished by the time SetState(12/13)
     # begins; clear it so only the victory/defeat clip is presented.
     if _game_text_rect != null:
