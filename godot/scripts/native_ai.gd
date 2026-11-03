@@ -560,6 +560,28 @@ func _apply_move(token: String, _delta: float) -> void:
     var forward: float = signf(to_opponent.x)
     var lateral: float = signf(to_opponent.z)
     var hold: float = 1.0
+    if not fighter.polar_movement_enabled:
+        # A world-space fighter (the opponent AI) must advance along the full
+        # opponent vector, not just its x sign; otherwise a side-stepping
+        # player leaves a permanent z gap that stepfwd can never close.
+        var toward: Vector2 = Vector2(to_opponent.x, to_opponent.z)
+        if toward.length_squared() > 0.000001:
+            toward = toward.normalized()
+        match token:
+            DISPATCH_MOVE_FWD, DISPATCH_STEP_FWD:
+                fighter.move_axis = toward
+            DISPATCH_SKIP_FWD:
+                fighter.move_axis = toward * 1.5
+            DISPATCH_MOVE_BACK, DISPATCH_STEP_BACK:
+                fighter.move_axis = -toward * 0.6
+            DISPATCH_SKIP_BACK:
+                fighter.move_axis = -toward
+            DISPATCH_MOVE_LEFT, DISPATCH_STEP_LEFT:
+                fighter.move_axis = Vector2(-toward.y, toward.x)
+            DISPATCH_MOVE_RIGHT, DISPATCH_STEP_RIGHT:
+                fighter.move_axis = Vector2(toward.y, -toward.x)
+        fighter.move_axis *= hold
+        return
     match token:
         DISPATCH_MOVE_FWD, DISPATCH_STEP_FWD:
             fighter.move_axis = Vector2(forward, 0.0)
