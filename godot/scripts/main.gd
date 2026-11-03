@@ -35,6 +35,7 @@ var _cam_smooth_b: Vector3 = Vector3.ZERO
 var _cam_zoom: float = 0.0
 var _cam_side: int = CAM_SIDE
 var _cam_initialized: bool = false
+var _scene_origin: Vector3 = Vector3.ZERO
 var _procedural_floor: Node3D = null
 var _procedural_arena_lines: Array[MeshInstance3D] = []
 var _procedural_arena_hidden: bool = false
@@ -468,6 +469,7 @@ func _build_original_far_scene() -> void:
         if DirAccess.dir_exists_absolute(candidate_base):
             scene_root = candidate
     var base: String = OS.get_executable_path().get_base_dir().path_join(scene_root)
+    _scene_origin = Vector3.ZERO
     var manifest_path: String = base.path_join("far_manifest.json")
     if not FileAccess.file_exists(manifest_path):
         return
@@ -503,6 +505,8 @@ func _build_original_far_scene() -> void:
         var pos: Array = entry.get("position", [0.0, 0.0, 0.0])
         instance.position = Vector3(float(pos[0]), float(pos[2]), -float(pos[1])) * scale_value
         instance.scale = Vector3.ONE * scale_value
+        if "combatarea" in entry_name:
+            _scene_origin = Vector3(float(pos[0]), 0.0, -float(pos[1])) * scale_value
         var material: StandardMaterial3D = fallback_material
         var texture_name: String = String(entry.get("texture", ""))
         if not texture_name.is_empty():
@@ -528,6 +532,7 @@ func _build_original_far_scene() -> void:
             (mesh_node as MeshInstance3D).material_override = material
         root.add_child(instance)
     if root.get_child_count() > 0:
+        root.position = -_scene_origin
         add_child(root)
         _procedural_arena_hidden = true
         if _procedural_floor != null:
