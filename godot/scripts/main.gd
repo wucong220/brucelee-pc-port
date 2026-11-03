@@ -1534,6 +1534,7 @@ func _physics_process(delta: float) -> void:
         return
     hud.set_health(player.health, computer.health)
     hud.set_rage(player.rage)
+    hud.set_opponent_rage(computer.rage)
     if main_menu_active or menu_paused:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO

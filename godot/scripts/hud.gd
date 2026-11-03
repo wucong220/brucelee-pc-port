@@ -535,8 +535,7 @@ func set_rage(value: float) -> void:
     _chi_target[0] = rage_bar.value
 
 
-## Opponent chi is not tracked by the port yet; kept so the right-hand chi bar
-## can be driven when the opponent gains a chi resource.
+## Drive the original right-hand chi sprite from the opponent's rage value.
 func set_opponent_rage(value: float) -> void:
     _chi_target[1] = clampf(value, 0.0, 100.0)
 
