@@ -32,7 +32,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     "sinfu": {
         "glb": (
             "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
-            + "sinfu_hair_two-skin_62_20261103.glb"
+            + "sinfu_hair_two-skin_reactions_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\sinfu-tex",
         "clip_prefix": "m04",
@@ -43,7 +43,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     "master": {
         "glb": (
             "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
-            + "master_hair_two-skin_kungfu13_20261103.glb"
+            + "master_full_hair_54_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\master-candidate-20261103\\textures",
         "clip_prefix": "",
