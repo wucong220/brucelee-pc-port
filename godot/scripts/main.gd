@@ -558,6 +558,7 @@ func _build_game_text_overlay() -> void:
     _game_text_rect.position = Vector2(300.0, 220.0)
     _game_text_rect.scale = Vector2(1.6, 1.6)
     _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
+    _game_text_rect.flip_h = true
     _game_text_rect.visible = false
     layer.add_child(_game_text_rect)
     var base: String = OS.get_executable_path().get_base_dir().path_join("ui/gametext")
