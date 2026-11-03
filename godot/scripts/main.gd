@@ -139,6 +139,17 @@ func _ready() -> void:
         _open_main_menu()
     if export_self_test:
         call_deferred("_run_export_self_test")
+    elif not OS.get_environment("BRUCELEE_CAPTURE_PATH").is_empty():
+        call_deferred("_capture_viewport")
+
+
+func _capture_viewport() -> void:
+    await get_tree().process_frame
+    await get_tree().process_frame
+    await get_tree().create_timer(1.0).timeout
+    var image: Image = get_viewport().get_texture().get_image()
+    if image != null:
+        image.save_png(OS.get_environment("BRUCELEE_CAPTURE_PATH"))
 
 
 func _run_export_self_test() -> void:
