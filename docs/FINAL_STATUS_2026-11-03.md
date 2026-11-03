@@ -1,8 +1,8 @@
-# Current port status (2026-11-03 10:55)
+# Current port status (2026-11-03 11:05)
 
 ## Package
 
-`D:\BruceLeeWork\DragonWarrior-Current61-20261103`
+`D:\BruceLeeWork\DragonWarrior-Current63-20261103`
 
 - Built through `build_windows.ps1 -RuntimeAssetRoot`.
 - Includes exe/pck, audio, menu, scene, ui, launch.ps1, A/B/HallA direct launchers.
