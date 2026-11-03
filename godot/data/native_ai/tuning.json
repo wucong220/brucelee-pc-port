@@ -1,0 +1,56 @@
+{
+ "_note": [
+  "Every numeric value the recovered AI tree needs is either a float from",
+  "adreno_200/characters.list (ai_profile), a float stored in ai/standard.tree",
+  "(param / params_by_difficulty), or one of the entries below.",
+  "status RECOVERED  = value comes from original data or original code, with",
+  "                    the address/offset recorded in docs/EVIDENCE.md.",
+  "status UNRECOVERED = the original value is not present in the recovered",
+  "                    assets/decompilation; the value is a declared port",
+  "                    parameter and MUST NOT be read as original behaviour.",
+  "                    docs/RECOVERY_GAPS.md names the missing function."
+ ],
+ "difficulty_index": {
+  "value": 2,
+  "status": "UNRECOVERED",
+  "basis": "standard.tree stores five params_by_difficulty slots ([0.3,0.2,0.1,0,0] etc.). Which slot the arcade/story match passes is a CBeatEmUpGame::Init argument (0x18aa08, params 3..8) and is not recoverable from the assets alone.",
+  "range": [0, 4]
+ },
+ "distance_close_reach_factor": {
+  "value": 1.0,
+  "status": "UNRECOVERED",
+  "basis": "The native `distance` variable is written by CBeatEmUpGame::Update (ELF 0x18c1bc, ghidra 0x19c1bc) from a float field; the close/medium thresholds themselves are not in the recovered data. 1.0 x PortFighter.attack_reach_world() reproduces the port's already-validated native reach."
+ },
+ "distance_medium_reach_factor": {
+  "value": 2.0,
+  "status": "UNRECOVERED",
+  "basis": "Same variable as above; medium band bound is a declared port parameter."
+ },
+ "arena_limit_margin": {
+  "value": 24.0,
+  "status": "UNRECOVERED",
+  "basis": "`near_limits` is computed by code that is not in the recovered decompilation; the margin to PortFighter.ARENA_HALF_X is a declared port parameter."
+ },
+ "attacktofloor_windows": {
+  "status": "RECOVERED",
+  "basis": "candobasicattacks group member window per fighting set (tools/kdf_combo_group_inventory.py) plus the direct attacktofloor->idle2 link time.",
+  "sets": {
+   "brucelee.set": {
+    "animation": "m01_attack_to_floor",
+    "duration_frames": 90,
+    "group_window": [45, 90],
+    "exit_link_to_idle2": [80, 90],
+    "entry_frame": 9,
+    "blending": 6
+   },
+   "thai.set": {
+    "animation": "m03_attack_to_floor",
+    "duration_frames": 61,
+    "group_window": [45, 61],
+    "exit_link_to_idle2": [61, 61],
+    "entry_frame": 4,
+    "blending": 2
+   }
+  }
+ }
+}

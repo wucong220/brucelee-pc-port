@@ -1,0 +1,5369 @@
+{
+ "actionadvancefw": {
+  "actions": [
+   "stepfwd"
+  ],
+  "set_state": "default"
+ },
+ "actionadvancetoattackdistance_treeiaattacktostunnedwhennear": {
+  "actions": [
+   "stepfwd"
+  ],
+  "set_state": "advance_to_attack_distance_and_treeiaattacktostunnedwhennear"
+ },
+ "actionadvancetoattackrange_attack_defend": {
+  "children": [
+   {
+    "actions": [
+     "skipfwd"
+    ],
+    "case": "true",
+    "set_state": "move_to_attack_range_and_attack_or_defend"
+   },
+   {
+    "actions": [
+     "stepfwd"
+    ],
+    "case": "false",
+    "set_state": "move_to_attack_range_and_attack_or_defend"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "useskipfwd"
+ },
+ "actionadvancetoattackrange_attacktofloor_lowblock": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionblock"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "set_state": "move_fw_check_if_attack_to_floor_or_low_block"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "actions": [
+         "movefwd shenlo",
+         "movefwd"
+        ],
+        "case": "stepfwd"
+       },
+       {
+        "actions": [
+         "movefwd"
+        ],
+        "case": "movefwd"
+       },
+       {
+        "actions": [
+         "movefwd shenlo"
+        ],
+        "case": "movefwd shenlo"
+       },
+       {
+        "case": "stepleft shenlo",
+        "node": "actionidle"
+       },
+       {
+        "case": "stepright shenlo",
+        "node": "actionidle"
+       },
+       {
+        "case": "stepleft",
+        "node": "actionidle"
+       },
+       {
+        "case": "stepright",
+        "node": "actionidle"
+       },
+       {
+        "actions": [
+         "stepfwd"
+        ],
+        "case": "default"
+       }
+      ],
+      "condition": "my_animation"
+     }
+    ],
+    "condition": "near"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "actionadvancetoattackrange_treeiaattacknormalwhenclose": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionblock"
+   },
+   {
+    "actions": [
+     "stepfwd"
+    ],
+    "case": "false",
+    "set_state": "advance_to_attack_distance_and_treeiaattacknormalwhenclose"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "actionattackcombo1": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighpunchc1"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowpunchc1"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighkickc1"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowkickc1"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "actionattackcombo2": {
+  "children": [
+   {
+    "case": "check_if_combo2",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsingleattackhighpunchc2"
+       },
+       {
+        "case": "false",
+        "node": "actionsingleattacklowpunchc2"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsingleattackhighkickc2"
+       },
+       {
+        "case": "false",
+        "node": "actionsingleattacklowkickc2"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo2_to_end",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsingleattackhighpunchc2end"
+       },
+       {
+        "case": "false",
+        "node": "actionsingleattacklowpunchc2end"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsingleattackhighkickc2end"
+       },
+       {
+        "case": "false",
+        "node": "actionsingleattacklowkickc2end"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo2_high",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighpunchc2"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattackhighkickc2"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo2_low",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattacklowpunchc2"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowkickc2"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo2_high_to_end",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighpunchc2end"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattackhighkickc2end"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo2_low_to_end",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattacklowpunchc2end"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowkickc2end"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "my_state"
+ },
+ "actionattackcombo3": {
+  "children": [
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsingleattackhighpunchc3"
+       },
+       {
+        "case": "false",
+        "node": "actionsingleattacklowpunchc3"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsingleattackhighkickc3"
+       },
+       {
+        "case": "false",
+        "node": "actionsingleattacklowkickc3"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo3_to_end",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsingleattackhighpunchc3"
+       },
+       {
+        "case": "false",
+        "node": "actionsingleattacklowpunchc3"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsingleattackhighkickc3"
+       },
+       {
+        "case": "false",
+        "node": "actionsingleattacklowkickc3"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo3_high",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighpunchc3"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattackhighkickc3"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo3_low",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattacklowpunchc3"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowkickc3"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo3_high_to_end",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighpunchc3"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattackhighkickc3"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "check_if_combo3_low_to_end",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattacklowpunchc3"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowkickc3"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "my_state"
+ },
+ "actionattackfromfloor": {
+  "actions": [
+   "faceupattack",
+   "facedownattack",
+   "faceupimpact"
+  ]
+ },
+ "actionattacksinglecombo": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionsingleattack"
+   },
+   {
+    "case": "false",
+    "node": "actionattackcombo1"
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_dificulty": [
+   0.30000001192092896,
+   0.20000000298023224,
+   0.10000000149011612,
+   0.0,
+   0.0
+  ]
+ },
+ "actionattacktofloor": {
+  "action_record": "true",
+  "actions": [
+   "attacktofloor"
+  ]
+ },
+ "actionblock": {
+  "children": [
+   {
+    "case": "6_or_more",
+    "node": "doblockguessingheight"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "doblockguessingheight"
+     },
+     {
+      "case": "false",
+      "node": "doblocknoguessingheight"
+     }
+    ],
+    "condition": "random_probability",
+    "params_by_difficulty": [
+     0.699999988079071,
+     0.75,
+     0.800000011920929,
+     1.0,
+     1.0
+    ]
+   }
+  ],
+  "condition": "repetition"
+ },
+ "actionblock_grab": {
+  "children": [
+   {
+    "case": "6_or_more",
+    "node": "doblockguessingheight"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblock_grabalways"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionblockhigh_grab"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "true",
+          "node": "actionblockmedium_grab"
+         },
+         {
+          "case": "false",
+          "node": "actionblocklow_grab"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.5
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.33000001311302185
+     }
+    ],
+    "condition": "random_probability",
+    "params_by_difficulty": [
+     0.699999988079071,
+     0.75,
+     0.800000011920929,
+     1.0,
+     1.0
+    ]
+   }
+  ],
+  "condition": "repetition"
+ },
+ "actionblock_grabalways": {
+  "children": [
+   {
+    "case": "low",
+    "node": "actionblocklow"
+   },
+   {
+    "case": "medium",
+    "node": "actionblockmedium"
+   },
+   {
+    "case": "high",
+    "node": "actionblockhigh"
+   }
+  ],
+  "condition": "opp_attack_height"
+ },
+ "actionblockhigh": {
+  "actions": [
+   "highblockbrutal",
+   "highblockhard",
+   "highblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "default"
+ },
+ "actionblockhigh_grab": {
+  "actions": [
+   "highblockbrutal",
+   "highblockhard",
+   "highblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_end_attack_grab"
+ },
+ "actionblocklow": {
+  "actions": [
+   "highblockhard",
+   "lowblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "default"
+ },
+ "actionblocklow_grab": {
+  "actions": [
+   "highblockhard",
+   "lowblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_end_attack_grab"
+ },
+ "actionblockmedium": {
+  "actions": [
+   "highblockbrutal",
+   "highblockhard",
+   "midblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "default"
+ },
+ "actionblockmedium_grab": {
+  "actions": [
+   "highblockbrutal",
+   "highblockhard",
+   "midblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_end_attack_grab"
+ },
+ "actionblockorcounter": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionblockorcounterhard"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblockorcountermedium"
+     },
+     {
+      "case": "false",
+      "node": "actionblockorcountereasy"
+     }
+    ],
+    "condition": "random_probability",
+    "params_by_difficulty": [
+     0.0,
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ]
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_difficulty": [
+   0.0,
+   0.0,
+   0.0,
+   1.0,
+   1.0
+  ]
+ },
+ "actionblockorcountereasy": {
+  "children": [
+   {
+    "case": "false",
+    "node": "treecheckmystate"
+   },
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "doblockguessingheight"
+     },
+     {
+      "case": "false",
+      "node": "doblocknoguessingheight"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "guessheighteasy"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "doblockeasy"
+ },
+ "actionblockorcounterhard": {
+  "children": [
+   {
+    "case": "false",
+    "node": "treecheckmystate"
+   },
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "doblockguessingheight"
+     },
+     {
+      "case": "false",
+      "node": "doblocknoguessingheight"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "guessheighthard"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "doblockhard"
+ },
+ "actionblockorcountermedium": {
+  "children": [
+   {
+    "case": "false",
+    "node": "treecheckmystate"
+   },
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "doblockguessingheight"
+     },
+     {
+      "case": "false",
+      "node": "doblocknoguessingheight"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "guessheightmedium"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "doblockmedium"
+ },
+ "actioncounter_attack": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actioncounter_attackalways"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actioncounterhigh_attack"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actioncountermedium_attack"
+       },
+       {
+        "case": "false",
+        "node": "actioncounterlow_attack"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.33000001311302185
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_difficulty": [
+   0.699999988079071,
+   0.75,
+   0.800000011920929,
+   1.0,
+   1.0
+  ]
+ },
+ "actioncounter_attack_or_actionsteplr_attack": {
+  "children": [
+   {
+    "case": "false",
+    "node": "actionsteplr_attack"
+   },
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actioncounter_attack"
+     },
+     {
+      "case": "false",
+      "node": "actionsteplr_attack"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "doacounter"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "actioncounter_attackalways": {
+  "children": [
+   {
+    "case": "low",
+    "node": "actioncounterlow_attack"
+   },
+   {
+    "case": "medium",
+    "node": "actioncountermedium_attack"
+   },
+   {
+    "case": "high",
+    "node": "actioncounterhigh_attack"
+   }
+  ],
+  "condition": "opp_attack_height"
+ },
+ "actioncounterhigh_attack": {
+  "actions": [
+   "parryhigh"
+  ],
+  "set_state": "default"
+ },
+ "actioncounterlow_attack": {
+  "actions": [
+   "parrylow"
+  ],
+  "set_state": "default"
+ },
+ "actioncountermedium_attack": {
+  "actions": [
+   "parrylow"
+  ],
+  "set_state": "default"
+ },
+ "actiondoinggrab1step1": {
+  "children": [
+   {
+    "actions": [
+     "stepfwd"
+    ],
+    "case": "true"
+   },
+   {
+    "case": "false",
+    "set_state": "doing_grab_1_step_2"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.800000011920929
+ },
+ "actiondoinggrab1step2": {
+  "children": [
+   {
+    "actions": [
+     "skipfwd"
+    ],
+    "case": "true"
+   },
+   {
+    "case": "false",
+    "node": "actiongrab1"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.800000011920929
+ },
+ "actiondoinggrab2step1": {
+  "children": [
+   {
+    "actions": [
+     "stepfwd"
+    ],
+    "case": "true"
+   },
+   {
+    "case": "false",
+    "set_state": "doing_grab_2_step_2"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.800000011920929
+ },
+ "actiondoinggrab2step2": {
+  "children": [
+   {
+    "actions": [
+     "skipfwd"
+    ],
+    "case": "true"
+   },
+   {
+    "case": "false",
+    "node": "actiongrab2"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.800000011920929
+ },
+ "actiondomovebackn": {
+  "children": [
+   {
+    "case": "faceupidle",
+    "node": "treeiaisonfloorwhilemoving"
+   },
+   {
+    "case": "facedownidle",
+    "node": "treeiaisonfloorwhilemoving"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblock"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "close",
+        "node": "actionidle"
+       },
+       {
+        "case": "default",
+        "children": [
+         {
+          "case": "true",
+          "node": "actionidle"
+         },
+         {
+          "case": "false",
+          "children": [
+           {
+            "actions": [
+             "stepback"
+            ],
+            "case": "default"
+           },
+           {
+            "case": "moveback",
+            "children": [
+             {
+              "actions": [
+               "moveback"
+              ],
+              "case": "true"
+             },
+             {
+              "case": "false",
+              "node": "actionidle"
+             }
+            ],
+            "condition": "random_probability",
+            "param": 0.800000011920929
+           },
+           {
+            "case": "moveback shenlo",
+            "children": [
+             {
+              "actions": [
+               "moveback shenlo",
+               "moveback"
+              ],
+              "case": "true"
+             },
+             {
+              "case": "false",
+              "node": "actionidle"
+             }
+            ],
+            "condition": "random_probability",
+            "param": 0.800000011920929
+           },
+           {
+            "case": "skipback",
+            "children": [
+             {
+              "actions": [
+               "skipback"
+              ],
+              "case": "true"
+             },
+             {
+              "case": "false",
+              "node": "actionidle"
+             }
+            ],
+            "condition": "random_probability",
+            "param": 0.800000011920929
+           },
+           {
+            "case": "stepback",
+            "children": [
+             {
+              "case": "false",
+              "node": "actionidle"
+             },
+             {
+              "case": "true",
+              "children": [
+               {
+                "actions": [
+                 "stepback"
+                ],
+                "case": "true"
+               },
+               {
+                "case": "false",
+                "children": [
+                 {
+                  "actions": [
+                   "moveback shenlo",
+                   "moveback"
+                  ],
+                  "case": "true"
+                 },
+                 {
+                  "actions": [
+                   "skipback"
+                  ],
+                  "case": "false"
+                 }
+                ],
+                "condition": "random_probability",
+                "param": 0.5
+               }
+              ],
+              "condition": "random_probability",
+              "param": 0.33000001311302185
+             }
+            ],
+            "condition": "random_probability",
+            "param": 0.800000011920929
+           }
+          ],
+          "condition": "my_animation"
+         }
+        ],
+        "condition": "near_limits"
+       }
+      ],
+      "condition": "distance"
+     }
+    ],
+    "condition": "opp_attacking"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "actiondomovefwdn": {
+  "children": [
+   {
+    "case": "faceupidle",
+    "node": "treeiaisonfloorwhilemoving"
+   },
+   {
+    "case": "facedownidle",
+    "node": "treeiaisonfloorwhilemoving"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblock"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "close",
+        "set_state": "default"
+       },
+       {
+        "case": "default",
+        "children": [
+         {
+          "actions": [
+           "stepfwd"
+          ],
+          "case": "default"
+         },
+         {
+          "case": "movefwd",
+          "children": [
+           {
+            "actions": [
+             "movefwd"
+            ],
+            "case": "true"
+           },
+           {
+            "case": "false",
+            "node": "actionidle"
+           }
+          ],
+          "condition": "random_probability",
+          "param": 0.800000011920929
+         },
+         {
+          "case": "movefwd shenlo",
+          "children": [
+           {
+            "actions": [
+             "movefwd shenlo"
+            ],
+            "case": "true"
+           },
+           {
+            "case": "false",
+            "node": "actionidle"
+           }
+          ],
+          "condition": "random_probability",
+          "param": 0.800000011920929
+         },
+         {
+          "case": "stepfwd",
+          "children": [
+           {
+            "case": "false",
+            "node": "actionidle"
+           },
+           {
+            "case": "true",
+            "children": [
+             {
+              "actions": [
+               "stepfwd"
+              ],
+              "case": "true"
+             },
+             {
+              "actions": [
+               "movefwd shenlo",
+               "movefwd"
+              ],
+              "case": "false"
+             }
+            ],
+            "condition": "random_probability",
+            "param": 0.5
+           }
+          ],
+          "condition": "random_probability",
+          "param": 0.800000011920929
+         }
+        ],
+        "condition": "my_animation"
+       }
+      ],
+      "condition": "distance"
+     }
+    ],
+    "condition": "opp_attacking"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "actiondomoveleft0": {
+  "actions": [
+   "stepleft shenlo",
+   "stepleft"
+  ],
+  "set_state": "domoveleftn"
+ },
+ "actiondomoveleftn": {
+  "children": [
+   {
+    "case": "faceupidle",
+    "node": "treeiaisonfloorwhilemoving"
+   },
+   {
+    "case": "facedownidle",
+    "node": "treeiaisonfloorwhilemoving"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblock"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "actions": [
+         "stepleft shenlo",
+         "stepleft"
+        ],
+        "case": "default"
+       },
+       {
+        "case": "moveleft",
+        "children": [
+         {
+          "actions": [
+           "moveleft"
+          ],
+          "case": "true"
+         },
+         {
+          "case": "false",
+          "node": "actionidle"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.800000011920929
+       },
+       {
+        "case": "stepleft shenlo",
+        "children": [
+         {
+          "actions": [
+           "stepleft shenlo"
+          ],
+          "case": "true"
+         },
+         {
+          "case": "false",
+          "node": "actionidle"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.800000011920929
+       },
+       {
+        "case": "stepleft",
+        "children": [
+         {
+          "case": "false",
+          "node": "actionidle"
+         },
+         {
+          "case": "true",
+          "children": [
+           {
+            "actions": [
+             "stepleft shenlo",
+             "stepleft"
+            ],
+            "case": "true"
+           },
+           {
+            "actions": [
+             "moveleft"
+            ],
+            "case": "false"
+           }
+          ],
+          "condition": "random_probability",
+          "param": 0.5
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.800000011920929
+       }
+      ],
+      "condition": "my_animation"
+     }
+    ],
+    "condition": "opp_attacking"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "actiondomoveleftright": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actiondomoveleft0"
+   },
+   {
+    "case": "false",
+    "node": "actiondomoveright0"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "actiondomoveright0": {
+  "actions": [
+   "stepright shenlo",
+   "stepright"
+  ],
+  "set_state": "domoverightn"
+ },
+ "actiondomoverightn": {
+  "children": [
+   {
+    "case": "faceupidle",
+    "node": "treeiaisonfloorwhilemoving"
+   },
+   {
+    "case": "facedownidle",
+    "node": "treeiaisonfloorwhilemoving"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblock"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "actions": [
+         "stepright shenlo",
+         "stepright"
+        ],
+        "case": "default"
+       },
+       {
+        "case": "moveright",
+        "children": [
+         {
+          "actions": [
+           "moveright"
+          ],
+          "case": "true"
+         },
+         {
+          "case": "false",
+          "node": "actionidle"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.800000011920929
+       },
+       {
+        "case": "stepright shenlo",
+        "children": [
+         {
+          "actions": [
+           "stepright shenlo"
+          ],
+          "case": "true"
+         },
+         {
+          "case": "false",
+          "node": "actionidle"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.800000011920929
+       },
+       {
+        "case": "stepright",
+        "children": [
+         {
+          "case": "false",
+          "node": "actionidle"
+         },
+         {
+          "case": "true",
+          "children": [
+           {
+            "actions": [
+             "stepright shenlo",
+             "stepright"
+            ],
+            "case": "true"
+           },
+           {
+            "actions": [
+             "moveright"
+            ],
+            "case": "false"
+           }
+          ],
+          "condition": "random_probability",
+          "param": 0.5
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.800000011920929
+       }
+      ],
+      "condition": "my_animation"
+     }
+    ],
+    "condition": "opp_attacking"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "actiondospecialfromcombo31chi": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialph"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialpl"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "punchhighfromcombo"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialkh"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialkl"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "kickhighfromcombo"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "punchfromcombo"
+ },
+ "actiondospecialfromidle1chi": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialph"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialpl"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "punchhighfromidle"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialkh"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialkl"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "kickhighfromidle"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "punchfromidle"
+ },
+ "actiondospecialfromidle1chibl": {
+  "action_record": "true",
+  "actions": [
+   "specialkickhigh"
+  ],
+  "set_state": "default"
+ },
+ "actiondospecialfromidle1chisf": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actiondospecialpl"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialkh"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialkl"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "kickhighfromidle"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "punchfromidle"
+ },
+ "actiondospecialfromidle2chibl": {
+  "children": [
+   {
+    "case": "false",
+    "node": "actiondospecialkl"
+   },
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialph"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialpl"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "punchhighfromidle"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "punchfromidle"
+ },
+ "actiondospecialfromidle2chisf": {
+  "action_record": "true",
+  "actions": [
+   "specialpunchhigh"
+  ],
+  "set_state": "default"
+ },
+ "actiondospecialkh": {
+  "action_record": "true",
+  "actions": [
+   "specialkickhigh",
+   "specialkickhigh brick",
+   "specialkickhigh chief",
+   "specialkickhigh johnson",
+   "specialkickhigh ken",
+   "specialkickhigh loming",
+   "specialkickhigh master",
+   "specialkickhigh shenlo",
+   "specialkickhigh sinfu",
+   "specialkickhigh smallboy"
+  ],
+  "set_state": "default"
+ },
+ "actiondospecialkl": {
+  "action_record": "true",
+  "actions": [
+   "specialkicklowmiss",
+   "specialkicklow chief",
+   "specialkicklow brick",
+   "specialkicklow johnson",
+   "specialkicklow ken",
+   "specialkicklow loming",
+   "specialkicklow master",
+   "specialkicklow shenlo",
+   "specialkicklow sinfu",
+   "specialkicklow smallboy"
+  ],
+  "set_state": "default"
+ },
+ "actiondospecialph": {
+  "action_record": "true",
+  "actions": [
+   "specialpunchhigh",
+   "specialpunchhigh brick",
+   "specialpunchhigh chief",
+   "specialpunchhigh johnson",
+   "specialpunchhigh ken",
+   "specialpunchhigh loming",
+   "specialpunchhigh master",
+   "specialpunchhigh shenlo",
+   "specialpunchhigh sinfu",
+   "specialpunchhigh smallboy"
+  ],
+  "set_state": "default"
+ },
+ "actiondospecialpl": {
+  "action_record": "true",
+  "actions": [
+   "specialpunchlowmiss",
+   "specialpunchlow brick",
+   "specialpunchlow chief",
+   "specialpunchlow johnson",
+   "specialpunchlow ken",
+   "specialpunchlow loming",
+   "specialpunchlow master",
+   "specialpunchlow shenlo",
+   "specialpunchlow sinfu",
+   "specialpunchlow smallboy"
+  ],
+  "set_state": "default"
+ },
+ "actionendattack": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "endattack2"
+      ],
+      "case": "true",
+      "set_state": "default"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "endattack1"
+      ],
+      "case": "false",
+      "set_state": "default"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "endattack shenlo",
+     "endattack master",
+     "endattack loming",
+     "endattack sinfu",
+     "endattack smallboy",
+     "endattack johnson",
+     "endattack chief",
+     "endattack ken",
+     "endattack brick"
+    ],
+    "case": "false",
+    "set_state": "default"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "isbrucelee"
+ },
+ "actionescapewhenclose": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionescapewhenclose_retreat"
+   },
+   {
+    "case": "false",
+    "node": "actionescapewhenclose_block"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "actionescapewhenclose_block": {
+  "children": [
+   {
+    "case": "6_or_more",
+    "node": "actionescapewhenclose_blockalways"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionescapewhenclose_blockalways"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionescapewhenclose_blockhigh"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "true",
+          "node": "actionescapewhenclose_blockmedium"
+         },
+         {
+          "case": "false",
+          "node": "actionescapewhenclose_blocklow"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.5
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.33000001311302185
+     }
+    ],
+    "condition": "random_probability",
+    "params_by_difficulty": [
+     0.699999988079071,
+     0.75,
+     0.800000011920929,
+     1.0,
+     1.0
+    ]
+   }
+  ],
+  "condition": "repetition"
+ },
+ "actionescapewhenclose_blockalways": {
+  "children": [
+   {
+    "case": "low",
+    "node": "actionescapewhenclose_blocklow"
+   },
+   {
+    "case": "medium",
+    "node": "actionescapewhenclose_blockmedium"
+   },
+   {
+    "case": "high",
+    "node": "actionescapewhenclose_blockhigh"
+   }
+  ],
+  "condition": "opp_attack_height"
+ },
+ "actionescapewhenclose_blockhigh": {
+  "actions": [
+   "highblockbrutal",
+   "highblockhard",
+   "highblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_attack_ends_to_retreat_when_close"
+ },
+ "actionescapewhenclose_blocklow": {
+  "actions": [
+   "highblockhard",
+   "lowblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_attack_ends_to_retreat_when_close"
+ },
+ "actionescapewhenclose_blockmedium": {
+  "actions": [
+   "highblockbrutal",
+   "highblockhard",
+   "midblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_attack_ends_to_retreat_when_close"
+ },
+ "actionescapewhenclose_lastskipback": {
+  "actions": [
+   "skipback"
+  ],
+  "set_state": "default"
+ },
+ "actionescapewhenclose_retreat": {
+  "actions": [
+   "stepback"
+  ],
+  "set_state": "wait_to_idle_to_skip_back_when_close"
+ },
+ "actionescapewhenclose_skipback": {
+  "children": [
+   {
+    "case": "true",
+    "set_state": "default"
+   },
+   {
+    "actions": [
+     "skipback"
+    ],
+    "case": "false",
+    "set_state": "check_if_attack_continues_to_skip_back_again"
+   }
+  ],
+  "condition": "near_limits"
+ },
+ "actionescapewhenfar": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionescapewhenfar_retreat"
+   },
+   {
+    "case": "false",
+    "node": "actionescapewhenfar_block"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "actionescapewhenfar_block": {
+  "children": [
+   {
+    "case": "6_or_more",
+    "node": "actionescapewhenfar_blockalways"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionescapewhenfar_blockalways"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionescapewhenfar_blockhigh"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "false",
+          "node": "actionescapewhenfar_blockmedium"
+         },
+         {
+          "case": "false",
+          "node": "actionescapewhenfar_blocklow"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.5
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.33000001311302185
+     }
+    ],
+    "condition": "random_probability",
+    "params_by_difficulty": [
+     0.699999988079071,
+     0.75,
+     0.800000011920929,
+     1.0,
+     1.0
+    ]
+   }
+  ],
+  "condition": "repetition"
+ },
+ "actionescapewhenfar_blockalways": {
+  "children": [
+   {
+    "case": "low",
+    "node": "actionescapewhenfar_blocklow"
+   },
+   {
+    "case": "medium",
+    "node": "actionescapewhenfar_blockmedium"
+   },
+   {
+    "case": "high",
+    "node": "actionescapewhenfar_blockhigh"
+   }
+  ],
+  "condition": "opp_attack_height"
+ },
+ "actionescapewhenfar_blockhigh": {
+  "actions": [
+   "highblockbrutal",
+   "highblockhard",
+   "highblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_attack_ends_to_retreat_when_far"
+ },
+ "actionescapewhenfar_blocklow": {
+  "actions": [
+   "highblockhard",
+   "lowblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_attack_ends_to_retreat_when_far"
+ },
+ "actionescapewhenfar_blockmedium": {
+  "actions": [
+   "highblockbrutal",
+   "highblockhard",
+   "midblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_attack_ends_to_retreat_when_far"
+ },
+ "actionescapewhenfar_retreat": {
+  "actions": [
+   "stepback"
+  ],
+  "set_state": "wait_to_idle_to_skip_back_when_far"
+ },
+ "actionescapewhenfar_skipback": {
+  "children": [
+   {
+    "case": "true",
+    "set_state": "default"
+   },
+   {
+    "actions": [
+     "skipback"
+    ],
+    "case": "false",
+    "set_state": "go_to_block"
+   }
+  ],
+  "condition": "near_limits"
+ },
+ "actiongetup": {
+  "actions": [
+   "faceupgetup",
+   "facedowngetup"
+  ]
+ },
+ "actiongetup_attack_defend": {
+  "actions": [
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "wait_to_idle_to_attack_or_defend"
+ },
+ "actiongrab": {
+  "children": [
+   {
+    "case": "actiongrab1",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "actiongrab2",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiongrab1"
+     },
+     {
+      "case": "false",
+      "node": "actiongrab2"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "my_last_action"
+ },
+ "actiongrab1": {
+  "action_record": "true",
+  "actions": [
+   "grab1miss",
+   "grab1miss shenlo",
+   "grab1miss master",
+   "grab1miss loming",
+   "grab1miss sinfu",
+   "grab1miss smallboy",
+   "grab1miss johnson",
+   "grab1miss chief",
+   "grab1miss ken",
+   "grab1miss brick",
+   "grab1",
+   "grab1 shenlo",
+   "grab1 master",
+   "grab1 loming",
+   "grab1 sinfu",
+   "grab1 smallboy",
+   "grab1 johnson",
+   "grab1 chief",
+   "grab1 ken",
+   "grab1 brick"
+  ],
+  "set_state": "default"
+ },
+ "actiongrab2": {
+  "action_record": "true",
+  "actions": [
+   "grab2miss",
+   "grab2miss shenlo",
+   "grab2miss master",
+   "grab2miss loming",
+   "grab2miss sinfu",
+   "grab2 smallboy",
+   "grab2miss johnson",
+   "grab2miss chief",
+   "grab2miss ken",
+   "grab2miss brick",
+   "grab2",
+   "grab2 shenlo",
+   "grab2 master",
+   "grab2 loming",
+   "grab2 sinfu",
+   "grab2 smallboy",
+   "grab2 johnson",
+   "grab2 chief",
+   "grab2 ken",
+   "grab2 brick"
+  ],
+  "set_state": "default"
+ },
+ "actionidle": {
+  "actions": [
+   "idle",
+   "idle2",
+   "idle3",
+   "idle shenlo",
+   "idle master",
+   "idle loming",
+   "idle sinfu"
+  ],
+  "set_state": "default"
+ },
+ "actionlowblock": {
+  "actions": [
+   "highblockhard",
+   "lowblock",
+   "faceupgetup",
+   "facedowngetup"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattack": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighpunch"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowpunch"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighkick"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowkick"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "actionsingleattack_combo": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighpunchc0"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowpunchc0"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattackhighkickc0"
+     },
+     {
+      "case": "false",
+      "node": "actionsingleattacklowkickc0"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "actionsingleattackhighkick": {
+  "action_record": "true",
+  "actions": [
+   "highkick1"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattackhighkickc0": {
+  "action_record": "true",
+  "actions": [
+   "highkick1"
+  ],
+  "set_state": "check_if_combo1"
+ },
+ "actionsingleattackhighkickc1": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "highkick1"
+      ],
+      "case": "true",
+      "set_state": "check_if_combo2_to_end"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "highkick1"
+      ],
+      "case": "false",
+      "set_state": "check_if_combo2_high_to_end"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "changeheights"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "highkick1"
+      ],
+      "case": "true",
+      "set_state": "check_if_combo2"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "highkick1"
+      ],
+      "case": "false",
+      "set_state": "check_if_combo2_high"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "changeheights"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.20000000298023224
+ },
+ "actionsingleattackhighkickc2": {
+  "children": [
+   {
+    "action_record": "true",
+    "actions": [
+     "highkick2"
+    ],
+    "case": "true",
+    "set_state": "check_if_combo3"
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "highkick2"
+    ],
+    "case": "false",
+    "set_state": "check_if_combo3_high"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "changeheights"
+ },
+ "actionsingleattackhighkickc2end": {
+  "children": [
+   {
+    "action_record": "true",
+    "actions": [
+     "highkick2"
+    ],
+    "case": "true",
+    "set_state": "check_if_combo3_to_end"
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "highkick2"
+    ],
+    "case": "false",
+    "set_state": "check_if_combo3_high_to_end"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "changeheights"
+ },
+ "actionsingleattackhighkickc3": {
+  "action_record": "true",
+  "actions": [
+   "highkick3"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattackhighpunch": {
+  "action_record": "true",
+  "actions": [
+   "highpunch1"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattackhighpunchc0": {
+  "action_record": "true",
+  "actions": [
+   "highpunch1"
+  ],
+  "set_state": "check_if_combo1"
+ },
+ "actionsingleattackhighpunchc1": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "highpunch1"
+      ],
+      "case": "true",
+      "set_state": "check_if_combo2_to_end"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "highpunch1"
+      ],
+      "case": "false",
+      "set_state": "check_if_combo2_high_to_end"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "changeheights"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "highpunch1"
+      ],
+      "case": "true",
+      "set_state": "check_if_combo2"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "highpunch1"
+      ],
+      "case": "false",
+      "set_state": "check_if_combo2_high"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "changeheights"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.20000000298023224
+ },
+ "actionsingleattackhighpunchc2": {
+  "children": [
+   {
+    "action_record": "true",
+    "actions": [
+     "highpunch2"
+    ],
+    "case": "true",
+    "set_state": "check_if_combo3"
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "highpunch2"
+    ],
+    "case": "false",
+    "set_state": "check_if_combo3_high"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "changeheights"
+ },
+ "actionsingleattackhighpunchc2end": {
+  "children": [
+   {
+    "action_record": "true",
+    "actions": [
+     "highpunch2"
+    ],
+    "case": "true",
+    "set_state": "check_if_combo3_to_end"
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "highpunch2"
+    ],
+    "case": "false",
+    "set_state": "check_if_combo3_high_to_end"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "changeheights"
+ },
+ "actionsingleattackhighpunchc3": {
+  "action_record": "true",
+  "actions": [
+   "highpunch3"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattacklowkick": {
+  "action_record": "true",
+  "actions": [
+   "lowkick1"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattacklowkickc0": {
+  "action_record": "true",
+  "actions": [
+   "lowkick1"
+  ],
+  "set_state": "check_if_combo1"
+ },
+ "actionsingleattacklowkickc1": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "lowkick1"
+      ],
+      "case": "true",
+      "set_state": "check_if_combo2_to_end"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "lowkick1"
+      ],
+      "case": "false",
+      "set_state": "check_if_combo2_low_to_end"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "changeheights"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "lowkick1"
+      ],
+      "case": "true",
+      "set_state": "check_if_combo2"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "lowkick1"
+      ],
+      "case": "false",
+      "set_state": "check_if_combo2_low"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "changeheights"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.20000000298023224
+ },
+ "actionsingleattacklowkickc2": {
+  "children": [
+   {
+    "action_record": "true",
+    "actions": [
+     "lowkick2"
+    ],
+    "case": "true",
+    "set_state": "check_if_combo3"
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "lowkick2"
+    ],
+    "case": "false",
+    "set_state": "check_if_combo3_low"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "changeheights"
+ },
+ "actionsingleattacklowkickc2end": {
+  "children": [
+   {
+    "action_record": "true",
+    "actions": [
+     "lowkick2"
+    ],
+    "case": "true",
+    "set_state": "check_if_combo3_to_end"
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "lowkick2"
+    ],
+    "case": "false",
+    "set_state": "check_if_combo3_low_to_end"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "changeheights"
+ },
+ "actionsingleattacklowkickc3": {
+  "action_record": "true",
+  "actions": [
+   "lowkick3"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattacklowpunch": {
+  "action_record": "true",
+  "actions": [
+   "lowpunch1"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattacklowpunchc0": {
+  "action_record": "true",
+  "actions": [
+   "lowpunch1"
+  ],
+  "set_state": "check_if_combo1"
+ },
+ "actionsingleattacklowpunchc1": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "lowpunch1"
+      ],
+      "case": "true",
+      "set_state": "check_if_combo2_to_end"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "lowpunch1"
+      ],
+      "case": "false",
+      "set_state": "check_if_combo2_low_to_end"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "changeheights"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "action_record": "true",
+      "actions": [
+       "lowpunch1"
+      ],
+      "case": "true",
+      "set_state": "check_if_combo2"
+     },
+     {
+      "action_record": "true",
+      "actions": [
+       "lowpunch1"
+      ],
+      "case": "false",
+      "set_state": "check_if_combo2_low"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "changeheights"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.20000000298023224
+ },
+ "actionsingleattacklowpunchc2": {
+  "children": [
+   {
+    "action_record": "true",
+    "actions": [
+     "lowpunch2"
+    ],
+    "case": "true",
+    "set_state": "check_if_combo3"
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "lowpunch2"
+    ],
+    "case": "false",
+    "set_state": "check_if_combo3_low"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "changeheights"
+ },
+ "actionsingleattacklowpunchc2end": {
+  "children": [
+   {
+    "action_record": "true",
+    "actions": [
+     "lowpunch2"
+    ],
+    "case": "true",
+    "set_state": "check_if_combo3_to_end"
+   },
+   {
+    "action_record": "true",
+    "actions": [
+     "lowpunch2"
+    ],
+    "case": "false",
+    "set_state": "check_if_combo3_low_to_end"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "changeheights"
+ },
+ "actionsingleattacklowpunchc3": {
+  "action_record": "true",
+  "actions": [
+   "lowpunch3"
+  ],
+  "set_state": "default"
+ },
+ "actionsingleattackmedium": {
+  "action_record": "true",
+  "actions": [
+   "highkick3"
+  ],
+  "set_state": "default"
+ },
+ "actionstepandmoveback": {
+  "actions": [
+   "stepback"
+  ],
+  "set_state": "domovebackn"
+ },
+ "actionstepandmovefwd": {
+  "actions": [
+   "stepfwd"
+  ],
+  "set_state": "domovefwdn"
+ },
+ "actionstepback_skipback": {
+  "children": [
+   {
+    "actions": [
+     "stepback"
+    ],
+    "case": "true"
+   },
+   {
+    "actions": [
+     "skipback"
+    ],
+    "case": "false"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "actionstepl_center": {
+  "actions": [
+   "stepleft shenlo",
+   "stepleft"
+  ],
+  "set_state": "wait_to_idle_center"
+ },
+ "actionstepleft_attack": {
+  "actions": [
+   "stepleft shenlo",
+   "stepleft"
+  ],
+  "set_state": "wait_to_idle_attack"
+ },
+ "actionsteplr": {
+  "children": [
+   {
+    "actions": [
+     "stepright shenlo",
+     "stepright"
+    ],
+    "case": "true"
+   },
+   {
+    "actions": [
+     "stepleft shenlo",
+     "stepleft"
+    ],
+    "case": "false"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "actionsteplr_attack": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionblock"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionstepleft_attack"
+     },
+     {
+      "case": "false",
+      "node": "actionstepright_attack"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "actionsteplr_center": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionblock"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionstepl_center"
+     },
+     {
+      "case": "false",
+      "node": "actionstepr_center"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "actionstepr_center": {
+  "actions": [
+   "stepright shenlo",
+   "stepright"
+  ],
+  "set_state": "wait_to_idle_center"
+ },
+ "actionstepright_attack": {
+  "actions": [
+   "stepright shenlo",
+   "stepright"
+  ],
+  "set_state": "wait_to_idle_attack"
+ },
+ "actionswhenisnearlimits": {
+  "children": [
+   {
+    "case": "false",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "false",
+      "node": "actioncounter_attack_or_actionsteplr_attack"
+     },
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actiondomoveleftright"
+       },
+       {
+        "case": "false",
+        "node": "actionblock"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.33000001311302185
+   }
+  ],
+  "condition": "winning"
+ },
+ "actionswhenisnearlimits_noreturn": {
+  "children": [
+   {
+    "case": "false",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblock"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "default",
+        "node": "actionsteplr"
+       },
+       {
+        "case": "close",
+        "node": "actioncounter_attack_or_actionsteplr_attack"
+       }
+      ],
+      "condition": "distance"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "winning"
+ },
+ "checkifendwithnormal": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "false",
+    "node": "actionendattack"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.20000000298023224
+ },
+ "chooseattack": {
+  "children": [
+   {
+    "case": "true",
+    "node": "treeiaattacknormal"
+   },
+   {
+    "case": "false",
+    "node": "treeiaattackidle"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "doblock": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actioncounter_attack"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionblock"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "true",
+          "node": "actionattacksinglecombo"
+         },
+         {
+          "case": "false",
+          "node": "treeiadospring"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "defendwithattackw"
+       }
+      ],
+      "condition": "profile_probability",
+      "str_param": "defendwithblockw"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionblock"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "true",
+          "node": "actionattacksinglecombo"
+         },
+         {
+          "case": "false",
+          "node": "treeiadospring"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "defendwithattackl"
+       }
+      ],
+      "condition": "profile_probability",
+      "str_param": "defendwithblockl"
+     }
+    ],
+    "condition": "winning"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "doacounter"
+ },
+ "doblockguessingheight": {
+  "children": [
+   {
+    "case": "low",
+    "node": "actionblocklow"
+   },
+   {
+    "case": "medium",
+    "node": "actionblockmedium"
+   },
+   {
+    "case": "high",
+    "node": "actionblockhigh"
+   },
+   {
+    "actions": [],
+    "case": "defaulr"
+   }
+  ],
+  "condition": "opp_attack_height"
+ },
+ "doblocknoguessingheight": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionblockhigh"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblockmedium"
+     },
+     {
+      "case": "false",
+      "node": "actionblocklow"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.33000001311302185
+ },
+ "root": {
+  "children": [
+   {
+    "case": "false",
+    "node": "treecheckmystate"
+   },
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "6_or_more",
+      "node": "doblockguessingheight"
+     },
+     {
+      "case": "default",
+      "node": "actionblockorcounter"
+     }
+    ],
+    "condition": "repetition"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "selectside": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actiondomoveleft0"
+   },
+   {
+    "case": "false",
+    "node": "actiondomoveright0"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "selectspecial1chiifbruceleefromcombo3": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actiondospecialfromidle1chibl"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialfromidle1chisf"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialfromcombo31chi"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "issinfu"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "isbrucelee"
+ },
+ "selectspecial1chiifbruceleefromidle": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actiondospecialfromidle1chibl"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialfromidle1chisf"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialfromidle1chi"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "issinfu"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "isbrucelee"
+ },
+ "selectspecial2chiifbruceleefromcombo3": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actiondospecialfromidle2chibl"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialfromidle2chisf"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialfromcombo31chi"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "issinfu"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "isbrucelee"
+ },
+ "selectspecial2chiifbruceleefromidle": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actiondospecialfromidle2chibl"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actiondospecialfromidle1chisf"
+     },
+     {
+      "case": "false",
+      "node": "actiondospecialfromidle1chi"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "issinfu"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "isbrucelee"
+ },
+ "treeadvancetoattackdistance_treeiaattacknormalwhenclose": {
+  "children": [
+   {
+    "case": "laying",
+    "set_state": "default"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "treeiaattacknormalwhenclose"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "actions": [
+         "stepfwd",
+         "idle",
+         "idle2",
+         "idle3"
+        ],
+        "case": "default"
+       },
+       {
+        "case": "stepleft",
+        "node": "actionidle"
+       },
+       {
+        "case": "stepright",
+        "node": "actionidle"
+       },
+       {
+        "case": "stepleft shenlo",
+        "node": "actionidle"
+       },
+       {
+        "case": "stepright shenlo",
+        "node": "actionidle"
+       },
+       {
+        "case": "faceupidle",
+        "node": "treeiaisonfloorwhilemoving"
+       },
+       {
+        "case": "facedownidle",
+        "node": "treeiaisonfloorwhilemoving"
+       },
+       {
+        "actions": [
+         "movefwd"
+        ],
+        "case": "movefwd"
+       },
+       {
+        "actions": [
+         "movefwd shenlo"
+        ],
+        "case": "movefwd shenlo"
+       },
+       {
+        "case": "stepfwd",
+        "children": [
+         {
+          "actions": [
+           "stepfwd"
+          ],
+          "case": "true"
+         },
+         {
+          "actions": [
+           "movefwd shenlo",
+           "movefwd"
+          ],
+          "case": "false"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.5
+       }
+      ],
+      "condition": "my_animation"
+     }
+    ],
+    "condition": "near"
+   }
+  ],
+  "condition": "opp_pose"
+ },
+ "treeadvancetoattackdistance_treeiaattacktostunnedwhennear": {
+  "children": [
+   {
+    "case": "close",
+    "node": "treeiaattacktostunnedwhennear"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "actions": [
+       "stepfwd"
+      ],
+      "case": "default"
+     },
+     {
+      "actions": [
+       "movefwd shenlo",
+       "movefwd"
+      ],
+      "case": "stepfwd"
+     },
+     {
+      "actions": [
+       "movefwd"
+      ],
+      "case": "movefwd"
+     },
+     {
+      "actions": [
+       "movefwd shenlo"
+      ],
+      "case": "movefwd shenlo"
+     }
+    ],
+    "condition": "my_animation"
+   }
+  ],
+  "condition": "distance"
+ },
+ "treeattackdefend": {
+  "children": [
+   {
+    "case": "false",
+    "node": "treeiaattack"
+   },
+   {
+    "case": "true",
+    "node": "treeiadefend"
+   }
+  ],
+  "condition": "winning"
+ },
+ "treecheckifattackcontinuestoskipbackagain": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionescapewhenclose_lastskipback"
+   },
+   {
+    "case": "false",
+    "node": "actionescapewhenclose"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "treecheckifattacktofloororlowblock": {
+  "children": [
+   {
+    "case": "laying",
+    "node": "actionattacktofloor"
+   },
+   {
+    "case": "default",
+    "node": "actionlowblock"
+   }
+  ],
+  "condition": "opp_pose"
+ },
+ "treecheckmystate": {
+  "children": [
+   {
+    "case": "default",
+    "node": "treedefaultbehavior"
+   },
+   {
+    "case": "check_if_combo1",
+    "node": "treedecissioncheckifcombo1"
+   },
+   {
+    "case": "check_if_combo2",
+    "node": "treedecissioncheckifcombo2"
+   },
+   {
+    "case": "check_if_combo2_high",
+    "node": "treedecissioncheckifcombo2"
+   },
+   {
+    "case": "check_if_combo2_low",
+    "node": "treedecissioncheckifcombo2"
+   },
+   {
+    "case": "check_if_combo2_to_end",
+    "node": "treedecissioncheckifcombo2"
+   },
+   {
+    "case": "check_if_combo2_high_to_end",
+    "node": "treedecissioncheckifcombo2"
+   },
+   {
+    "case": "check_if_combo2_low_to_end",
+    "node": "treedecissioncheckifcombo2"
+   },
+   {
+    "case": "check_if_combo3",
+    "node": "treedecissioncheckifcombo3"
+   },
+   {
+    "case": "check_if_combo3_high",
+    "node": "treedecissioncheckifcombo3"
+   },
+   {
+    "case": "check_if_combo3_low",
+    "node": "treedecissioncheckifcombo3"
+   },
+   {
+    "case": "check_if_combo3_to_end",
+    "node": "treedecissioncheckifcombo3"
+   },
+   {
+    "case": "check_if_combo3_high_to_end",
+    "node": "treedecissioncheckifcombo3"
+   },
+   {
+    "case": "check_if_combo3_low_to_end",
+    "node": "treedecissioncheckifcombo3"
+   },
+   {
+    "case": "wait_to_idle_attack",
+    "node": "treewaittoidle_attack"
+   },
+   {
+    "case": "wait_to_idle_attack_after_a_counter",
+    "node": "actionsingleattack"
+   },
+   {
+    "case": "wait_to_idle_special_after_a_counter",
+    "node": "actiondospecialfromidle1chi"
+   },
+   {
+    "case": "wait_to_idle_center",
+    "node": "treewaittoidle_center"
+   },
+   {
+    "case": "wait_to_end_attack_grab",
+    "node": "treewaittoendattack_grab"
+   },
+   {
+    "case": "check_if_attack_to_floor_or_low_block",
+    "node": "treecheckifattacktofloororlowblock"
+   },
+   {
+    "case": "move_fw_check_if_attack_to_floor_or_low_block",
+    "node": "treemovefwcheckifattacktofloororlowblock"
+   },
+   {
+    "case": "wait_to_attack_ends_to_retreat_when_close",
+    "node": "treewaittoattackendtoretreatwhenclose"
+   },
+   {
+    "case": "wait_to_idle_to_skip_back_when_close",
+    "node": "treewaittoidletoskipbackwhenclose"
+   },
+   {
+    "case": "check_if_attack_continues_to_skip_back_again",
+    "node": "treecheckifattackcontinuestoskipbackagain"
+   },
+   {
+    "case": "wait_to_idle_to_skip_back_when_far",
+    "node": "treewaittoidletoskipbackwhenfar"
+   },
+   {
+    "case": "go_to_block",
+    "node": "actionescapewhenfar_block"
+   },
+   {
+    "case": "wait_to_attack_ends_to_retreat_when_far",
+    "node": "treewaittoattackendtoretreatwhenfar"
+   },
+   {
+    "case": "advance_to_attack_distance_and_treeiaattacktostunnedwhennear",
+    "node": "treeadvancetoattackdistance_treeiaattacktostunnedwhennear"
+   },
+   {
+    "case": "advance_to_attack_distance_and_treeiaattacknormalwhenclose",
+    "node": "treeadvancetoattackdistance_treeiaattacknormalwhenclose"
+   },
+   {
+    "case": "move_to_attack_range_and_attack_or_defend",
+    "node": "treemovetoattackrangeandattackordefend"
+   },
+   {
+    "case": "wait_to_idle_to_attack_or_defend",
+    "node": "treewaittoidletoattackordefend"
+   },
+   {
+    "case": "domoveleftn",
+    "node": "actiondomoveleftn"
+   },
+   {
+    "case": "domoverightn",
+    "node": "actiondomoverightn"
+   },
+   {
+    "case": "domovefwdn",
+    "node": "actiondomovefwdn"
+   },
+   {
+    "case": "domovebackn",
+    "node": "actiondomovebackn"
+   },
+   {
+    "case": "doing_grab_1_step_1",
+    "node": "actiondoinggrab1step1"
+   },
+   {
+    "case": "doing_grab_2_step_1",
+    "node": "actiondoinggrab2step1"
+   },
+   {
+    "case": "doing_grab_1_step_2",
+    "node": "actiondoinggrab1step2"
+   },
+   {
+    "case": "doing_grab_2_step_2",
+    "node": "actiondoinggrab2step2"
+   }
+  ],
+  "condition": "my_state"
+ },
+ "treedecissioncheckifcombo1": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionattackcombo1"
+   },
+   {
+    "case": "false",
+    "node": "actionsingleattack"
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "treedecissioncheckifcombo2": {
+  "children": [
+   {
+    "case": "check_if_combo2_high_to_end",
+    "node": "actionattackcombo2"
+   },
+   {
+    "case": "check_if_combo2_low_to_end",
+    "node": "actionattackcombo2"
+   },
+   {
+    "case": "check_if_combo2_to_end",
+    "node": "actionattackcombo2"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionattackcombo2"
+     },
+     {
+      "case": "false",
+      "set_state": "default"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "reachlevel2"
+   }
+  ],
+  "condition": "my_state"
+ },
+ "treedecissioncheckifcombo3": {
+  "children": [
+   {
+    "case": "check_if_combo3_high_to_end",
+    "node": "actionattackcombo3"
+   },
+   {
+    "case": "check_if_combo3_low_to_end",
+    "node": "actionattackcombo3"
+   },
+   {
+    "case": "check_if_combo3_to_end",
+    "node": "actionattackcombo3"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "false",
+      "set_state": "default"
+     },
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "none",
+        "node": "actionattackcombo3"
+       },
+       {
+        "case": "onethird",
+        "children": [
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "false",
+            "node": "actionattackcombo3"
+           },
+           {
+            "case": "true",
+            "node": "selectspecial1chiifbruceleefromcombo3"
+           }
+          ],
+          "condition": "random_probability",
+          "str_param": "dospecialattackhard"
+         },
+         {
+          "case": "false",
+          "children": [
+           {
+            "case": "true",
+            "children": [
+             {
+              "case": "false",
+              "node": "actionattackcombo3"
+             },
+             {
+              "case": "true",
+              "node": "selectspecial1chiifbruceleefromcombo3"
+             }
+            ],
+            "condition": "random_probability",
+            "str_param": "dospecialattackmed"
+           },
+           {
+            "case": "false",
+            "children": [
+             {
+              "case": "false",
+              "node": "actionattackcombo3"
+             },
+             {
+              "case": "true",
+              "node": "selectspecial1chiifbruceleefromcombo3"
+             }
+            ],
+            "condition": "random_probability",
+            "str_param": "dospecialattackeasy"
+           }
+          ],
+          "condition": "random_probability",
+          "params_by_difficulty": [
+           0.0,
+           0.0,
+           1.0,
+           0.0,
+           0.0
+          ]
+         }
+        ],
+        "condition": "random_probability",
+        "params_by_difficulty": [
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         1.0
+        ]
+       },
+       {
+        "case": "default",
+        "children": [
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "false",
+            "node": "actionattackcombo3"
+           },
+           {
+            "case": "true",
+            "node": "selectspecial2chiifbruceleefromcombo3"
+           }
+          ],
+          "condition": "random_probability",
+          "str_param": "dospecialattackhard"
+         },
+         {
+          "case": "false",
+          "children": [
+           {
+            "case": "true",
+            "children": [
+             {
+              "case": "false",
+              "node": "actionattackcombo3"
+             },
+             {
+              "case": "true",
+              "node": "selectspecial2chiifbruceleefromcombo3"
+             }
+            ],
+            "condition": "random_probability",
+            "str_param": "dospecialattackmed"
+           },
+           {
+            "case": "false",
+            "children": [
+             {
+              "case": "false",
+              "node": "actionattackcombo3"
+             },
+             {
+              "case": "true",
+              "node": "selectspecial2chiifbruceleefromcombo3"
+             }
+            ],
+            "condition": "random_probability",
+            "str_param": "dospecialattackeasy"
+           }
+          ],
+          "condition": "random_probability",
+          "params_by_difficulty": [
+           0.0,
+           0.0,
+           1.0,
+           0.0,
+           0.0
+          ]
+         }
+        ],
+        "condition": "random_probability",
+        "params_by_difficulty": [
+         0.0,
+         0.0,
+         0.0,
+         1.0,
+         1.0
+        ]
+       }
+      ],
+      "condition": "my_rage"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "reachlevel3"
+   }
+  ],
+  "condition": "my_state"
+ },
+ "treedefaultbehavior": {
+  "children": [
+   {
+    "case": "default",
+    "node": "treeiaisidle"
+   },
+   {
+    "case": "faceupidle",
+    "node": "treeiaisonfloor"
+   },
+   {
+    "case": "facedownidle",
+    "node": "treeiaisonfloor"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "treeiaattack": {
+  "children": [
+   {
+    "case": "laying",
+    "node": "treeiaattacktofloor"
+   },
+   {
+    "case": "stun",
+    "node": "treeiaattacktostunned"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "chooseattack"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "false",
+        "node": "treeiadospring"
+       },
+       {
+        "case": "true",
+        "node": "chooseattack"
+       }
+      ],
+      "condition": "near_limits"
+     }
+    ],
+    "condition": "random_probability",
+    "params_by_difficulty": [
+     0.8999999761581421,
+     0.925000011920929,
+     0.949999988079071,
+     0.9750000238418579,
+     1.0
+    ]
+   }
+  ],
+  "condition": "opp_pose"
+ },
+ "treeiaattackidle": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionidle"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "close",
+      "children": [
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "true",
+          "node": "treeiaattacknormal"
+         },
+         {
+          "case": "false",
+          "node": "actionsteplr_attack"
+         }
+        ],
+        "condition": "random_probability",
+        "params_by_difficulty": [
+         0.30000001192092896,
+         0.5,
+         0.699999988079071,
+         0.8999999761581421,
+         1.0
+        ]
+       },
+       {
+        "case": "true",
+        "children": [
+         {
+          "case": "true",
+          "node": "treeiadefend_noreturn"
+         },
+         {
+          "case": "false",
+          "node": "actionstepback_skipback"
+         }
+        ],
+        "condition": "random_probability",
+        "params_by_difficulty": [
+         0.30000001192092896,
+         0.5,
+         0.699999988079071,
+         0.8999999761581421,
+         1.0
+        ]
+       }
+      ],
+      "condition": "winning"
+     },
+     {
+      "case": "medium",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsteplr"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "true",
+          "node": "treeiaattacknormal"
+         },
+         {
+          "case": "false",
+          "node": "actionadvancetoattackrange_attack_defend"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.5
+       }
+      ],
+      "condition": "winning"
+     },
+     {
+      "case": "far",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionsteplr"
+       },
+       {
+        "case": "false",
+        "node": "actionadvancetoattackrange_attack_defend"
+       }
+      ],
+      "condition": "winning"
+     }
+    ],
+    "condition": "distance"
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_difficulty": [
+   0.30000001192092896,
+   0.20000000298023224,
+   0.10000000149011612,
+   0.0,
+   0.0
+  ]
+ },
+ "treeiaattacknormal": {
+  "children": [
+   {
+    "case": "close",
+    "node": "treeiaattacknormalwhenclose"
+   },
+   {
+    "case": "medium",
+    "node": "actionadvancetoattackrange_treeiaattacknormalwhenclose"
+   },
+   {
+    "case": "default",
+    "node": "actionadvancetoattackrange_treeiaattacknormalwhenclose"
+   }
+  ],
+  "condition": "distance"
+ },
+ "treeiaattacknormalwhenclose": {
+  "children": [
+   {
+    "case": "none",
+    "node": "try4attacks"
+   },
+   {
+    "case": "onethird",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "children": [
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "true",
+            "node": "selectspecial1chiifbruceleefromidle"
+           },
+           {
+            "case": "false",
+            "children": [
+             {
+              "case": "false",
+              "node": "trytouseagrab"
+             },
+             {
+              "case": "true",
+              "node": "selectspecial1chiifbruceleefromidle"
+             }
+            ],
+            "condition": "random_probability",
+            "param": 0.5
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "grabtwothirds"
+         },
+         {
+          "case": "false",
+          "children": [
+           {
+            "case": "false",
+            "node": "try4attacks"
+           },
+           {
+            "case": "true",
+            "node": "trytouseagrab"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "usesgrabwhenwinning"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "dospecialattackhard"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "true",
+            "children": [
+             {
+              "case": "true",
+              "node": "selectspecial1chiifbruceleefromidle"
+             },
+             {
+              "case": "false",
+              "children": [
+               {
+                "case": "false",
+                "node": "trytouseagrab"
+               },
+               {
+                "case": "true",
+                "node": "selectspecial1chiifbruceleefromidle"
+               }
+              ],
+              "condition": "random_probability",
+              "param": 0.5
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "grabtwothirds"
+           },
+           {
+            "case": "false",
+            "children": [
+             {
+              "case": "false",
+              "node": "try4attacks"
+             },
+             {
+              "case": "true",
+              "node": "trytouseagrab"
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "usesgrabwhenwinning"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "dospecialattackmed"
+         },
+         {
+          "case": "false",
+          "children": [
+           {
+            "case": "true",
+            "children": [
+             {
+              "case": "true",
+              "node": "selectspecial1chiifbruceleefromidle"
+             },
+             {
+              "case": "false",
+              "children": [
+               {
+                "case": "false",
+                "node": "trytouseagrab"
+               },
+               {
+                "case": "true",
+                "node": "selectspecial1chiifbruceleefromidle"
+               }
+              ],
+              "condition": "random_probability",
+              "param": 0.5
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "grabtwothirds"
+           },
+           {
+            "case": "false",
+            "children": [
+             {
+              "case": "false",
+              "node": "try4attacks"
+             },
+             {
+              "case": "true",
+              "node": "trytouseagrab"
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "usesgrabwhenwinning"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "dospecialattackeasy"
+         }
+        ],
+        "condition": "random_probability",
+        "params_by_difficulty": [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0
+        ]
+       }
+      ],
+      "condition": "random_probability",
+      "params_by_difficulty": [
+       0.0,
+       0.0,
+       0.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "selectspecial1chiifbruceleefromidle"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "false",
+          "node": "actiongrab"
+         },
+         {
+          "case": "true",
+          "node": "selectspecial1chiifbruceleefromidle"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.5
+       }
+      ],
+      "condition": "profile_probability",
+      "str_param": "grabtwothirds"
+     }
+    ],
+    "condition": "winning"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "children": [
+         {
+          "case": "false",
+          "node": "trytouseagrab"
+         },
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "true",
+            "children": [
+             {
+              "case": "false",
+              "node": "actiondospecialfromidle1chibl"
+             },
+             {
+              "case": "true",
+              "node": "trytouseagrab"
+             }
+            ],
+            "condition": "random_probability",
+            "param": 0.5
+           },
+           {
+            "case": "false",
+            "children": [
+             {
+              "case": "false",
+              "node": "trytouseagrab"
+             },
+             {
+              "case": "true",
+              "children": [
+               {
+                "case": "false",
+                "node": "actiondospecialfromidle1chisf"
+               },
+               {
+                "case": "true",
+                "node": "trytouseagrab"
+               }
+              ],
+              "condition": "random_probability",
+              "param": 0.5
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "issinfu"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "isbrucelee"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "dospecialattackhard"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "false",
+            "node": "trytouseagrab"
+           },
+           {
+            "case": "true",
+            "children": [
+             {
+              "case": "true",
+              "children": [
+               {
+                "case": "false",
+                "node": "actiondospecialfromidle2chibl"
+               },
+               {
+                "case": "true",
+                "node": "trytouseagrab"
+               }
+              ],
+              "condition": "random_probability",
+              "param": 0.5
+             },
+             {
+              "case": "false",
+              "children": [
+               {
+                "case": "false",
+                "node": "trytouseagrab"
+               },
+               {
+                "case": "true",
+                "children": [
+                 {
+                  "case": "false",
+                  "node": "actiondospecialfromidle2chisf"
+                 },
+                 {
+                  "case": "true",
+                  "node": "trytouseagrab"
+                 }
+                ],
+                "condition": "random_probability",
+                "param": 0.5
+               }
+              ],
+              "condition": "profile_probability",
+              "str_param": "issinfu"
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "isbrucelee"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "dospecialattackmed"
+         },
+         {
+          "case": "false",
+          "children": [
+           {
+            "case": "false",
+            "node": "trytouseagrab"
+           },
+           {
+            "case": "true",
+            "children": [
+             {
+              "case": "true",
+              "children": [
+               {
+                "case": "false",
+                "node": "actiondospecialfromidle2chibl"
+               },
+               {
+                "case": "true",
+                "node": "trytouseagrab"
+               }
+              ],
+              "condition": "random_probability",
+              "param": 0.5
+             },
+             {
+              "case": "false",
+              "children": [
+               {
+                "case": "false",
+                "node": "trytouseagrab"
+               },
+               {
+                "case": "true",
+                "children": [
+                 {
+                  "case": "false",
+                  "node": "actiondospecialfromidle2chisf"
+                 },
+                 {
+                  "case": "true",
+                  "node": "trytouseagrab"
+                 }
+                ],
+                "condition": "random_probability",
+                "param": 0.5
+               }
+              ],
+              "condition": "profile_probability",
+              "str_param": "issinfu"
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "isbrucelee"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "dospecialattackeasy"
+         }
+        ],
+        "condition": "random_probability",
+        "params_by_difficulty": [
+         0.0,
+         0.0,
+         1.0,
+         0.0,
+         0.0
+        ]
+       }
+      ],
+      "condition": "random_probability",
+      "params_by_difficulty": [
+       0.0,
+       0.0,
+       0.0,
+       1.0,
+       1.0
+      ]
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "children": [
+         {
+          "case": "true",
+          "node": "actiongrab"
+         },
+         {
+          "case": "false",
+          "node": "actiondospecialfromidle2chibl"
+         }
+        ],
+        "condition": "random_probability",
+        "param": 0.5
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "false",
+          "node": "actiongrab"
+         },
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "true",
+            "node": "actiongrab"
+           },
+           {
+            "case": "false",
+            "node": "actiondospecialfromidle2chisf"
+           }
+          ],
+          "condition": "random_probability",
+          "param": 0.5
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "issinfu"
+       }
+      ],
+      "condition": "profile_probability",
+      "str_param": "isbrucelee"
+     }
+    ],
+    "condition": "winning"
+   }
+  ],
+  "condition": "my_rage"
+ },
+ "treeiaattacktofloor": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionidle"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionattacktofloor"
+       },
+       {
+        "case": "false",
+        "node": "treeiadefend_noreturn"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.75
+     },
+     {
+      "case": "false",
+      "node": "actionadvancetoattackrange_attacktofloor_lowblock"
+     }
+    ],
+    "condition": "near"
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_difficulty": [
+   0.30000001192092896,
+   0.20000000298023224,
+   0.10000000149011612,
+   0.0,
+   0.0
+  ]
+ },
+ "treeiaattacktostunned": {
+  "children": [
+   {
+    "case": "close",
+    "node": "treeiaattacktostunnedwhennear"
+   },
+   {
+    "case": "default",
+    "node": "treeiaattacktostunnedwhenfar"
+   }
+  ],
+  "condition": "distance"
+ },
+ "treeiaattacktostunnedwhenfar": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionidle"
+   },
+   {
+    "case": "false",
+    "node": "actionadvancetoattackdistance_treeiaattacktostunnedwhennear"
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_difficulty": [
+   0.30000001192092896,
+   0.20000000298023224,
+   0.10000000149011612,
+   0.0,
+   0.0
+  ]
+ },
+ "treeiaattacktostunnedwhennear": {
+  "children": [
+   {
+    "case": "none",
+    "node": "checkifendwithnormal"
+   },
+   {
+    "case": "onethird",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "selectspecial1chiifbruceleefromidle"
+       },
+       {
+        "case": "false",
+        "node": "checkifendwithnormal"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.33000001311302185
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "selectspecial1chiifbruceleefromidle"
+       },
+       {
+        "case": "false",
+        "node": "actionendattack"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "canendwithspatend"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "selectspecial2chiifbruceleefromidle"
+       },
+       {
+        "case": "false",
+        "node": "checkifendwithnormal"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.33000001311302185
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "true",
+        "node": "selectspecial2chiifbruceleefromidle"
+       },
+       {
+        "case": "false",
+        "node": "actionendattack"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "canendwithspatend"
+   }
+  ],
+  "condition": "my_rage"
+ },
+ "treeiadefend": {
+  "children": [
+   {
+    "case": "true",
+    "node": "treeianearlimits"
+   },
+   {
+    "case": "false",
+    "node": "treeiafarlimits"
+   }
+  ],
+  "condition": "near_limits"
+ },
+ "treeiadefend_noreturn": {
+  "children": [
+   {
+    "case": "true",
+    "node": "treeianearlimits_noreturn"
+   },
+   {
+    "case": "false",
+    "node": "treeiafarlimits_noreturn"
+   }
+  ],
+  "condition": "near_limits"
+ },
+ "treeiadospring": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionidle"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "close",
+        "node": "actionstepandmoveback"
+       },
+       {
+        "case": "medium",
+        "children": [
+         {
+          "case": "true",
+          "node": "selectside"
+         },
+         {
+          "case": "false",
+          "children": [
+           {
+            "case": "false",
+            "node": "actionstepandmoveback"
+           },
+           {
+            "case": "true",
+            "node": "actionstepandmovefwd"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "fwdwinning"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "sideswinning"
+       },
+       {
+        "case": "far",
+        "children": [
+         {
+          "case": "false",
+          "node": "actionstepandmovefwd"
+         },
+         {
+          "case": "true",
+          "node": "selectside"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "sideswinning"
+       }
+      ],
+      "condition": "distance"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "idlewinning"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionidle"
+     },
+     {
+      "case": "false",
+      "children": [
+       {
+        "case": "close",
+        "node": "actionstepandmoveback"
+       },
+       {
+        "case": "medium",
+        "children": [
+         {
+          "case": "true",
+          "node": "selectside"
+         },
+         {
+          "case": "false",
+          "children": [
+           {
+            "case": "false",
+            "node": "actionstepandmoveback"
+           },
+           {
+            "case": "true",
+            "node": "actionstepandmovefwd"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "fwdlosing"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "sideslosing"
+       },
+       {
+        "case": "far",
+        "children": [
+         {
+          "case": "false",
+          "node": "actionstepandmovefwd"
+         },
+         {
+          "case": "true",
+          "node": "selectside"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "sideslosing"
+       }
+      ],
+      "condition": "distance"
+     }
+    ],
+    "condition": "profile_probability",
+    "str_param": "idlelosing"
+   }
+  ],
+  "condition": "winning"
+ },
+ "treeiafarlimits": {
+  "children": [
+   {
+    "case": "close",
+    "children": [
+     {
+      "case": "false",
+      "node": "treeianearlimits"
+     },
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actionidle"
+       },
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "false",
+          "node": "actioncounter_attack_or_actionsteplr_attack"
+         },
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "none",
+            "node": "actioncounter_attack_or_actionsteplr_attack"
+           },
+           {
+            "case": "onethird",
+            "children": [
+             {
+              "case": "true",
+              "node": "actioncounter_attack_or_actionsteplr_attack"
+             },
+             {
+              "case": "false",
+              "node": "trytocounter"
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "grabtwothirds"
+           },
+           {
+            "case": "twothirds",
+            "node": "trytocounter"
+           },
+           {
+            "case": "full",
+            "node": "trytocounter"
+           }
+          ],
+          "condition": "my_rage"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "usesgrabwhenwinning"
+       }
+      ],
+      "condition": "random_probability",
+      "params_by_difficulty": [
+       0.30000001192092896,
+       0.20000000298023224,
+       0.10000000149011612,
+       0.0,
+       0.0
+      ]
+     }
+    ],
+    "condition": "winning"
+   },
+   {
+    "case": "default",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionidle"
+     },
+     {
+      "case": "false",
+      "node": "actionsteplr_center"
+     }
+    ],
+    "condition": "random_probability",
+    "params_by_difficulty": [
+     0.30000001192092896,
+     0.20000000298023224,
+     0.10000000149011612,
+     0.0,
+     0.0
+    ]
+   }
+  ],
+  "condition": "distance"
+ },
+ "treeiafarlimits_noreturn": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionidle"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "default",
+      "node": "actionsteplr_center"
+     },
+     {
+      "case": "close",
+      "children": [
+       {
+        "case": "false",
+        "children": [
+         {
+          "case": "default",
+          "node": "actiongrab"
+         },
+         {
+          "case": "none",
+          "node": "actionattacksinglecombo"
+         },
+         {
+          "case": "onethird",
+          "children": [
+           {
+            "case": "true",
+            "node": "actionattacksinglecombo"
+           },
+           {
+            "case": "false",
+            "node": "actiongrab"
+           }
+          ],
+          "condition": "profile_probability",
+          "str_param": "grabtwothirds"
+         }
+        ],
+        "condition": "my_rage"
+       },
+       {
+        "case": "true",
+        "children": [
+         {
+          "case": "false",
+          "node": "actioncounter_attack_or_actionsteplr_attack"
+         },
+         {
+          "case": "true",
+          "children": [
+           {
+            "case": "default",
+            "node": "actionblock_grab"
+           },
+           {
+            "case": "none",
+            "node": "actioncounter_attack_or_actionsteplr_attack"
+           },
+           {
+            "case": "onethird",
+            "children": [
+             {
+              "case": "true",
+              "node": "actioncounter_attack_or_actionsteplr_attack"
+             },
+             {
+              "case": "false",
+              "node": "actionblock_grab"
+             }
+            ],
+            "condition": "profile_probability",
+            "str_param": "grabtwothirds"
+           }
+          ],
+          "condition": "my_rage"
+         }
+        ],
+        "condition": "profile_probability",
+        "str_param": "usesgrabwhenwinning"
+       }
+      ],
+      "condition": "winning"
+     }
+    ],
+    "condition": "distance"
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_difficulty": [
+   0.30000001192092896,
+   0.20000000298023224,
+   0.10000000149011612,
+   0.0,
+   0.0
+  ]
+ },
+ "treeiaisidle": {
+  "children": [
+   {
+    "case": "false",
+    "node": "treeiaattack"
+   },
+   {
+    "case": "true",
+    "node": "treeiadefend"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "treeiaisonfloor": {
+  "children": [
+   {
+    "case": "default",
+    "node": "actiongetup"
+   },
+   {
+    "case": "close",
+    "children": [
+     {
+      "case": "false",
+      "node": "actionattackfromfloor"
+     },
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "true",
+        "node": "actiongetup"
+       },
+       {
+        "case": "false",
+        "node": "actiongetup_attack_defend"
+       }
+      ],
+      "condition": "random_probability",
+      "param": 0.5
+     }
+    ],
+    "condition": "winning"
+   }
+  ],
+  "condition": "distance"
+ },
+ "treeiaisonfloorwhilemoving": {
+  "children": [
+   {
+    "case": "default",
+    "node": "actiongetup",
+    "set_state": "default"
+   },
+   {
+    "actions": [
+     "faceupattack",
+     "facedownattack",
+     "faceupimpact"
+    ],
+    "case": "close",
+    "set_state": "default"
+   }
+  ],
+  "condition": "distance"
+ },
+ "treeianearlimits": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionidle"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "close",
+      "children": [
+       {
+        "case": "false",
+        "node": "actionswhenisnearlimits"
+       },
+       {
+        "case": "true",
+        "children": [
+         {
+          "case": "laying",
+          "node": "actionblock"
+         },
+         {
+          "case": "default",
+          "node": "actionswhenisnearlimits"
+         }
+        ],
+        "condition": "opp_pose"
+       }
+      ],
+      "condition": "random_probability",
+      "params_by_difficulty": [
+       0.30000001192092896,
+       0.5,
+       0.699999988079071,
+       0.8999999761581421,
+       1.0
+      ]
+     },
+     {
+      "case": "default",
+      "children": [
+       {
+        "case": "false",
+        "node": "treeiaattack"
+       },
+       {
+        "case": "true",
+        "children": [
+         {
+          "case": "true",
+          "node": "actionblock"
+         },
+         {
+          "case": "false",
+          "node": "actionsteplr"
+         }
+        ],
+        "condition": "random_probability",
+        "params": 0.5
+       }
+      ],
+      "condition": "winning"
+     }
+    ],
+    "condition": "distance"
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_difficulty": [
+   0.30000001192092896,
+   0.20000000298023224,
+   0.10000000149011612,
+   0.0,
+   0.0
+  ]
+ },
+ "treeianearlimits_noreturn": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionidle"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "false",
+      "node": "actionswhenisnearlimits_noreturn"
+     },
+     {
+      "case": "true",
+      "children": [
+       {
+        "case": "laying",
+        "node": "actionblock"
+       },
+       {
+        "case": "default",
+        "node": "actionswhenisnearlimits_noreturn"
+       }
+      ],
+      "condition": "opp_pose"
+     }
+    ],
+    "condition": "random_probability",
+    "params_by_difficulty": [
+     0.30000001192092896,
+     0.5,
+     0.699999988079071,
+     0.8999999761581421,
+     1.0
+    ]
+   }
+  ],
+  "condition": "random_probability",
+  "params_by_difficulty": [
+   0.30000001192092896,
+   0.20000000298023224,
+   0.10000000149011612,
+   0.0,
+   0.0
+  ]
+ },
+ "treemovefwcheckifattacktofloororlowblock": {
+  "children": [
+   {
+    "case": "true",
+    "set_state": "check_if_attack_to_floor_or_low_block"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "actions": [
+       "movefwd shenlo",
+       "movefwd"
+      ],
+      "case": "stepfwd"
+     },
+     {
+      "actions": [
+       "movefwd"
+      ],
+      "case": "movefwd"
+     },
+     {
+      "actions": [
+       "movefwd shenlo"
+      ],
+      "case": "movefwd shenlo"
+     },
+     {
+      "actions": [
+       "stepfwd"
+      ],
+      "case": "default"
+     }
+    ],
+    "condition": "my_animation"
+   }
+  ],
+  "condition": "near"
+ },
+ "treemovetoattackrangeandattackordefend": {
+  "children": [
+   {
+    "case": "true",
+    "node": "treeiadefend"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "close",
+      "node": "treeiaattack"
+     },
+     {
+      "case": "default",
+      "children": [
+       {
+        "actions": [
+         "skipfwd",
+         "faceupgetup",
+         "facedowngetup"
+        ],
+        "case": "true"
+       },
+       {
+        "actions": [
+         "stepfwd",
+         "faceupgetup",
+         "facedowngetup"
+        ],
+        "case": "false"
+       }
+      ],
+      "condition": "profile_probability",
+      "str_param": "useskipfwd"
+     }
+    ],
+    "condition": "distance"
+   }
+  ],
+  "condition": "winning"
+ },
+ "treewaittoattackendtoretreatwhenclose": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionescapewhenclose_block"
+   },
+   {
+    "case": "false",
+    "node": "actionescapewhenclose_retreat"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "treewaittoattackendtoretreatwhenfar": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionescapewhenfar_block"
+   },
+   {
+    "case": "false",
+    "node": "actionescapewhenfar_retreat"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "treewaittoendattack_grab": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actionblock_grab"
+   },
+   {
+    "case": "false",
+    "node": "actiongrab"
+   }
+  ],
+  "condition": "opp_attacking"
+ },
+ "treewaittoidle_attack": {
+  "children": [
+   {
+    "case": "default",
+    "node": "actionidle"
+   },
+   {
+    "case": "faceupidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "facedownidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "idle",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "idle2",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "idle3",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "idle sinfu",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "idle shenlo",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "idle master",
+    "node": "actionattacksinglecombo"
+   },
+   {
+    "case": "idle loming",
+    "node": "actionattacksinglecombo"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "treewaittoidle_center": {
+  "children": [
+   {
+    "case": "default",
+    "node": "actionidle"
+   },
+   {
+    "case": "faceupidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "facedownidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "idle",
+    "node": "actionadvancefw"
+   },
+   {
+    "case": "idle2",
+    "node": "actionadvancefw"
+   },
+   {
+    "case": "idle3",
+    "node": "actionadvancefw"
+   },
+   {
+    "case": "idle sinfu",
+    "node": "actionadvancefw"
+   },
+   {
+    "case": "idle shenlo",
+    "node": "actionadvancefw"
+   },
+   {
+    "case": "idle master",
+    "node": "actionadvancefw"
+   },
+   {
+    "case": "idle loming",
+    "node": "actionadvancefw"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "treewaittoidletoattackordefend": {
+  "children": [
+   {
+    "case": "faceupidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "facedownidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "idle",
+    "node": "treeattackdefend"
+   },
+   {
+    "case": "idle2",
+    "node": "treeattackdefend"
+   },
+   {
+    "case": "idle3",
+    "node": "treeattackdefend"
+   },
+   {
+    "case": "idle sinfu",
+    "node": "treeattackdefend"
+   },
+   {
+    "case": "idle shenlo",
+    "node": "treeattackdefend"
+   },
+   {
+    "case": "idle master",
+    "node": "treeattackdefend"
+   },
+   {
+    "case": "idle loming",
+    "node": "treeattackdefend"
+   },
+   {
+    "case": "default",
+    "set_state": "wait_to_idle_to_attack_or_defend"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "treewaittoidletoskipbackwhenclose": {
+  "children": [
+   {
+    "case": "default",
+    "node": "actionescapewhenclose_skipback"
+   },
+   {
+    "case": "faceupidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "facedownidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "stepfwd",
+    "node": "treewaittoidletoskipbackwhenclose_checkdistance"
+   },
+   {
+    "case": "movefwd",
+    "node": "treewaittoidletoskipbackwhenclose_checkdistance"
+   },
+   {
+    "case": "movefwd shenlo",
+    "node": "treewaittoidletoskipbackwhenclose_checkdistance"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "treewaittoidletoskipbackwhenclose_checkdistance": {
+  "children": [
+   {
+    "case": "close",
+    "node": "actionescapewhenclose_skipback"
+   },
+   {
+    "case": "default",
+    "set_state": "wait_to_idle_to_skip_back_when_close"
+   }
+  ],
+  "condition": "distance"
+ },
+ "treewaittoidletoskipbackwhenfar": {
+  "children": [
+   {
+    "case": "default",
+    "node": "actionescapewhenfar_skipback"
+   },
+   {
+    "case": "faceupidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "facedownidle",
+    "node": "actiongetup"
+   },
+   {
+    "case": "stepfwd",
+    "node": "treewaittoidletoskipbackwhenfar_checkdistance"
+   },
+   {
+    "case": "movefwd",
+    "node": "treewaittoidletoskipbackwhenfar_checkdistance"
+   },
+   {
+    "case": "movefwd shenlo",
+    "node": "treewaittoidletoskipbackwhenfar_checkdistance"
+   }
+  ],
+  "condition": "my_animation"
+ },
+ "treewaittoidletoskipbackwhenfar_checkdistance": {
+  "children": [
+   {
+    "case": "close",
+    "node": "actionescapewhenclose_skipback"
+   },
+   {
+    "case": "default",
+    "set_state": "wait_to_idle_to_skip_back_when_far"
+   }
+  ],
+  "condition": "distance"
+ },
+ "try4attacks": {
+  "children": [
+   {
+    "case": "true",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattack"
+     },
+     {
+      "case": "false",
+      "node": "actionattackcombo1"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionsingleattack_combo"
+     },
+     {
+      "case": "false",
+      "node": "actionattackcombo3"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "random_probability",
+  "param": 0.5
+ },
+ "trytocounter": {
+  "children": [
+   {
+    "case": "true",
+    "node": "actioncounter_attack"
+   },
+   {
+    "case": "false",
+    "children": [
+     {
+      "case": "true",
+      "node": "actionblock_grab"
+     },
+     {
+      "case": "false",
+      "node": "actionsteplr_attack"
+     }
+    ],
+    "condition": "random_probability",
+    "param": 0.5
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "doacounter"
+ },
+ "trytouseagrab": {
+  "children": [
+   {
+    "case": "false",
+    "node": "try4attacks"
+   },
+   {
+    "case": "true",
+    "node": "actiongrab"
+   }
+  ],
+  "condition": "profile_probability",
+  "str_param": "usesgrabwhenwinning"
+ }
+}

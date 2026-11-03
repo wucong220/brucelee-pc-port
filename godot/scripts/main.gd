@@ -129,6 +129,9 @@ var menu_paused: bool = false
 var elapsed: float = 0.0
 var notice_timer: float = 0.0
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+# Recovered native AI (adreno_200/ai/standard.tree + characters.list).
+const NativeAI = preload("res://scripts/native_ai.gd")
+var native_ai: RefCounted = null
 var round_number: int = 1
 var player_rounds: int = 0
 var computer_rounds: int = 0
@@ -208,6 +211,7 @@ func _ready() -> void:
     main_menu_enabled = false if export_self_test else _should_show_main_menu()
     _configure_round_time()
     _reset_match()
+    _configure_native_ai()
     print("STARTUP_PROFILE environment=%d fighters=%d audio=%d total=%d" % [
         startup_environment - startup_begin,
         startup_fighters - startup_environment,
@@ -1835,87 +1839,31 @@ func _contextual_controls() -> String:
         return "Downed opponent: press K L L / K U U in order (close range)"
     return ""
 
-func _think_ai(delta: float) -> void:
-    var separation: float = player.position.x - computer.position.x
-    var separation_z: float = player.position.z - computer.position.z
-    var distance: float = Vector2(separation, separation_z).length()
-    var source_reach: float = maxf(
-        computer.attack_reach_world("punch", player),
-        computer.attack_reach_world("kick", player)
-    )
-    computer.move_axis = Vector2.ZERO
-    if distance > source_reach:
-        computer.move_axis.x = signf(separation)
-        computer.move_axis.y = signf(separation_z)
-    elif distance < source_reach * 0.65:
-        computer.move_axis.x = -signf(separation) * 0.35
-        computer.move_axis.y = -signf(separation_z) * 0.35
-    var in_attack_reach: bool = distance <= source_reach
-    # Prototype AI makes one decision per attack when the attack first poses
-    # a nearby threat, and holds it through the active window.
-    var player_threat: bool = _player_attack_poses_guard_threat()
-    if not player_threat:
-        ai_guard_sequence = -1
-        ai_guard_decision = false
-    if (player_threat and player.attack_sequence != ai_guard_sequence
-            and distance <= player.attack_reach_world(player.attack_kind, computer)):
-        ai_guard_sequence = player.attack_sequence
-        ai_guard_decision = rng.randf() < 0.25
-    var parry_started: bool = false
-    if (player_threat and player.attack_sequence == ai_guard_sequence
-            and ai_guard_decision and computer.state in ["idle", "idle2", "idle3"]
-            and distance <= player.attack_reach_world(player.attack_kind, computer)):
-        var parry_names: Array[String] = _ai_move_names(
-            ["parry_low"] if _player_attack_is_low() else ["parry_high"]
-        )
-        var parry_kind: String = parry_names[0] if not parry_names.is_empty() else ""
-        var parry_cost: float = float(AI_SPECIAL_RAGE_COSTS.get(parry_kind, 0.0))
-        if (not parry_kind.is_empty() and computer.rage >= parry_cost
-                and computer.supports_attack(parry_kind) and rng.randf() < 0.5):
-            computer.guard_held = false
-            if computer.request_attack(parry_kind):
-                computer.rage = maxf(0.0, computer.rage - parry_cost)
-                parry_started = true
-    computer.guard_held = (not parry_started and player_threat
-            and player.attack_sequence == ai_guard_sequence and ai_guard_decision)
-    ai_timer -= delta
-    if ai_timer <= 0.0:
-        ai_timer = rng.randf_range(0.45, 0.95)
-        if in_attack_reach:
-            var moves: Array[String] = _ai_move_names([
-                "punch", "kick",
-                "high_punch", "high_punch2", "high_punch3",
-                "low_punch", "low_punch2", "low_punch3",
-                "high_kick", "high_kick2", "high_kick3",
-                "low_kick", "low_kick2", "low_kick3",
-            ])
-            if player.state in ["facedownidle", "faceupidle"]:
-                moves.append_array(_ai_move_names(["attack_to_floor"]))
-            if player.state in ["grabbed1", "grabbed2"]:
-                moves.append_array(_ai_move_names(["endattack"]))
-            # Prototype AI choice: the sets gate these on ragethird/rage2thirds;
-            # the native AI decision is not recovered, so this only spends rage.
-            if computer.rage >= float(int(PortFighter.RAGE_MAX / 3.0)):
-                moves.append_array(_ai_move_names([
-                    "special_kick_high", "special_kick_low",
-                ]))
-            if computer.rage >= float(int(PortFighter.RAGE_MAX * 2.0 / 3.0)):
-                moves.append_array(_ai_move_names([
-                    "special_punch_high", "special_punch_low",
-                    "grab1", "grab2", "grab1_miss", "grab2_miss",
-                ]))
-            var available: Array[String] = []
-            for move: String in moves:
-                if (computer.supports_attack(move)
-                        and computer.attack_reach_world(move, player) >= distance):
-                    available.append(move)
-            if not available.is_empty():
-                var chosen: String = available[rng.randi_range(0, available.size() - 1)]
-                if computer.request_attack(chosen):
-                    var cost: float = float(AI_SPECIAL_RAGE_COSTS.get(chosen, 0.0))
-                    if cost > 0.0:
-                        computer.rage = maxf(0.0, computer.rage - cost)
+func _configure_native_ai() -> void:
+    ## Loads the recovered decision tree and Brick's ai_profile.  Failure is
+    ## loud: the prototype thresholds are gone, so a missing tree must not
+    ## silently fall back to them.
+    native_ai = NativeAI.new()
+    if not native_ai.load_data():
+        push_error("Native AI data failed to load: " + native_ai.load_error)
+        native_ai = null
+        return
+    var difficulty: int = int(native_ai.tuning.get("difficulty_index", {}).get("value", 2))
+    native_ai.set_difficulty(difficulty)
+    native_ai.configure(computer, player, "brick davis", rng.seed)
 
+
+func _think_ai(delta: float) -> void:
+    ## Original: CFighter::AIUpdate() walks CDecisionTree::MakeDecision() every
+    ## update (ELF 0x1a8b2c) and follows the selected link.  The recovered tree
+    ## and per-character ai_profile replace the prototype's 0.45-0.95 s timer,
+    ## uniform move choice and 1/3 + 2/3 rage gates.
+    if native_ai == null:
+        return
+    # The tree owns locomotion while it is allowed to act; attacks keep
+    # move_axis at zero so attack root motion is not fought by input.
+    computer.move_axis = Vector2.ZERO
+    native_ai.step(delta)
 
 func _ai_move_names(slots: Array[String]) -> Array[String]:
     ## Mapped set configs name their character slots without a suffix

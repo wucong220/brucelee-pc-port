@@ -496,6 +496,13 @@ const FACEUP_KO_RADIUS: float = 100.0
 const ATTACK_TO_FLOOR_CLIP: String = "m01_attack_to_floor"
 const ATTACK_TO_FLOOR_DURATION_FRAMES: int = 90
 const ATTACK_TO_FLOOR_EXIT_START_FRAME: int = 80
+## Recovered candobasicattacks group windows (tools/kdf_combo_group_inventory.py):
+## brucelee.set m01_attack_to_floor [45,90] and thai.set m03_attack_to_floor
+## [45,61].  The group window is when a candobasicattacks link may start, so the
+## action is cancellable from frame 45 even though its own exit link to idle2
+## only opens at frame 80 (Bruce) / 61 (Brick).  The prototype used 80 as the
+## cancel start, which is 35 frames late.
+const ATTACK_CANCEL_START_FRAMES: Dictionary = {"attacktofloor": 45}
 const ATTACK_TO_FLOOR_DAMAGE_START_FRAME: int = 18
 const ATTACK_TO_FLOOR_DAMAGE_END_FRAME: int = 23
 const ATTACK_TO_FLOOR_DAMAGE: float = 6.0
@@ -4743,12 +4750,14 @@ func request_attack(kind: String) -> bool:
         return false
     if not _uses_standing_idle_rules():
         # The grab finisher starts from the tail of the grab attack while the
-        # victim is still held; other attacks still require a standing idle.
+        # victim is still held; other attacks still require a standing idle,
+        # except inside a recovered group cancel window (attacktofloor [45,..]).
         if not (kind == "endattack_brick"
                 and state in ["startup", "active", "recovery"]
                 and opponent != null and is_instance_valid(opponent)
                 and opponent.state in ["grabbed1", "grabbed2"]):
-            return false
+            if not attack_cancel_window_open():
+                return false
     attack_kind = kind
     attack_sequence += 1
     _attack_connected = false
@@ -5073,6 +5082,28 @@ func _native_entry_frame(target_action: String, fallback: int) -> int:
         if typeof(entry_value) == TYPE_INT or typeof(entry_value) == TYPE_FLOAT:
             return int(entry_value)
     return fallback
+
+
+func attack_cancel_window_start() -> int:
+    ## Native group-window start for the current action, or -1 when the action
+    ## has no recovered cancel window.  Frames are source frames at 30 fps.
+    var action: String = _current_action_name()
+    if action.is_empty():
+        return -1
+    if not ATTACK_CANCEL_START_FRAMES.has(action):
+        return -1
+    return int(ATTACK_CANCEL_START_FRAMES[action])
+
+
+func attack_cancel_window_open() -> bool:
+    var start: int = attack_cancel_window_start()
+    if start < 0:
+        return false
+    if not ATTACKS.has(attack_kind):
+        return false
+    var frame: float = state_time * SOURCE_FRAME_RATE
+    var duration: float = float(ATTACKS[attack_kind]["animation_frame_count"])
+    return frame + 0.0001 >= float(start) and frame <= duration + 0.0001
 
 
 func _native_link_start_frame(source_action: String, fallback: int) -> int:
