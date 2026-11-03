@@ -19,13 +19,23 @@ const SCENE_LABELS: Array[String] = [
     "SQUARE A", "SQUARE B", "HARBOUR A", "HARBOUR B",
     "ROOFTOPS A", "ROOFTOPS B", "TOURNAMENT HALL B", "BACK",
 ]
+## Opponent entries are handled by main.gd, which writes the
+## BRUCELEE_OPPONENT_* environment (candidate GLB, texture root, clip prefix or
+## MASTER, material profile) and reloads main.tscn. "brick" restores the shipped
+## Brick candidate; "opponents_back" and "opponents" never leave this script.
+const OPPONENT_COMMANDS: Array[String] = [
+    "brick", "sinfu", "master", "ken", "opponents_back",
+]
+const OPPONENT_LABELS: Array[String] = [
+    "BRICK", "SIN FU", "MASTER", "KEN", "BACK",
+]
 const MAIN_COMMANDS: Array[String] = [
     "fight", "training", "move_training", "gallery",
-    "temple_a", "temple_b", "scenes", "quit",
+    "temple_a", "temple_b", "scenes", "opponents", "quit",
 ]
 const MAIN_LABELS: Array[String] = [
     "VS FIGHT", "GROUND TRAINING", "MOVE TRAINING", "MOVE GALLERY",
-    "TEMPLE YARD A", "TEMPLE YARD B", "SCENES", "QUIT GAME",
+    "TEMPLE YARD A", "TEMPLE YARD B", "SCENES", "OPPONENTS", "QUIT GAME",
 ]
 const PAUSE_COMMANDS: Array[String] = ["resume", "restart", "main_menu", "quit"]
 const PAUSE_LABELS: Array[String] = [
@@ -60,7 +70,8 @@ var last_accept_was_attack: bool = false
 ## Hover is driven by real motion events only, so a cursor resting over an item
 ## when the menu opens cannot hijack the default keyboard focus.
 var hover_index: int = -1
-var main_index_before_scenes: int = 0
+## Main-menu row that opened the current submenu, so BACK/ESC can restore it.
+var main_index_before_submenu: int = 0
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -249,7 +260,7 @@ func show_main_menu() -> void:
 func show_scene_menu() -> void:
     ## Scene selection submenu. Reached through the SCENES entry only.
     if menu_state == "main":
-        main_index_before_scenes = selected_index
+        main_index_before_submenu = selected_index
     menu_state = "scenes"
     selected_index = 0
     visible = true
@@ -260,6 +271,23 @@ func show_scene_menu() -> void:
     )
     hover_index = -1
     _refresh_items(SCENE_LABELS)
+    _refresh_selection()
+
+func show_opponent_menu() -> void:
+    ## Opponent selection submenu. Reached through the OPPONENTS entry only.
+    ## The command itself is applied by main.gd (environment + scene reload).
+    if menu_state == "main":
+        main_index_before_submenu = selected_index
+    menu_state = "opponents"
+    selected_index = 0
+    visible = true
+    mode_label.text = "SELECT OPPONENT"
+    status_label.text = ""
+    controls_label.text = (
+        "UP/DOWN or D-PAD   ENTER/J/A apply   ESC/B/START back"
+    )
+    hover_index = -1
+    _refresh_items(OPPONENT_LABELS)
     _refresh_selection()
 
 func show_pause_menu() -> void:
@@ -313,6 +341,8 @@ func _commands() -> Array[String]:
             return MAIN_COMMANDS
         "scenes":
             return SCENE_COMMANDS
+        "opponents":
+            return OPPONENT_COMMANDS
         _:
             return PAUSE_COMMANDS
 
@@ -337,7 +367,14 @@ func _accept_selected(was_attack: bool) -> void:
     if menu_state == "scenes":
         if command == "scenes_back":
             last_accept_was_attack = false
-            _return_to_main_from_scenes()
+            _return_to_main_menu()
+            return
+        command_requested.emit(command)
+        return
+    if menu_state == "opponents":
+        if command == "opponents_back":
+            last_accept_was_attack = false
+            _return_to_main_menu()
             return
         command_requested.emit(command)
         return
@@ -345,19 +382,23 @@ func _accept_selected(was_attack: bool) -> void:
         last_accept_was_attack = false
         show_scene_menu()
         return
+    if command == "opponents":
+        last_accept_was_attack = false
+        show_opponent_menu()
+        return
     command_requested.emit(command)
 
 func _cancel() -> void:
-    if menu_state == "scenes":
+    if menu_state == "scenes" or menu_state == "opponents":
         _play_sfx(back_sfx, "back")
-        _return_to_main_from_scenes()
+        _return_to_main_menu()
     elif menu_state == "pause":
         _play_sfx(back_sfx, "back")
         command_requested.emit("resume")
 
-func _return_to_main_from_scenes() -> void:
+func _return_to_main_menu() -> void:
     menu_state = "main"
-    selected_index = clampi(main_index_before_scenes, 0, MAIN_COMMANDS.size() - 1)
+    selected_index = clampi(main_index_before_submenu, 0, MAIN_COMMANDS.size() - 1)
     mode_label.text = "MAIN MENU"
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"

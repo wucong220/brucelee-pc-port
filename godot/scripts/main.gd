@@ -8,6 +8,59 @@ const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const MoveTraining = preload("res://scripts/move_training.gd")
 const MoveGallery = preload("res://scripts/move_gallery.gd")
+## Opponent-selection entries emitted by the prototype menu. Each value is the
+## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
+##   glb              candidate GLB path ("" means the built-in placeholder)
+##   texture_root     directory holding <kind>_diffuse/normal/material.png
+##   clip_prefix      candidate clip prefix, e.g. "m04" ("" means m03/Brick)
+##   master           "1" selects the Master m04_e01_* clip table
+##   material_profile CandidateMaterialLoader profile ("body" or "body_hair")
+## Paths are the locally tested candidates; they are not shipped with the repo.
+const MENU_OPPONENT_CONFIG: Dictionary = {
+    "brick": {
+        "glb": "D:\\BruceLeeWork\\brick_candidate_brutal_20261103.glb",
+        "texture_root": (
+            "D:\\BaiduSyncdisk\\AI项目\\李小龙\\private_assets\\appdata-msix\\"
+            + "BruceLee-PC-Port\\brick-textures-20261030"
+        ),
+        "clip_prefix": "",
+        "master": "",
+        "material_profile": "body",
+    },
+    "sinfu": {
+        "glb": (
+            "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
+            + "sinfu_hair_two-skin_62_20261103.glb"
+        ),
+        "texture_root": "D:\\BruceLeeWork\\sinfu-tex",
+        "clip_prefix": "m04",
+        "master": "",
+        "material_profile": "body",
+    },
+    "master": {
+        "glb": (
+            "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
+            + "master_hair_two-skin_kungfu13_20261103.glb"
+        ),
+        "texture_root": "D:\\BruceLeeWork\\master-candidate-20261103\\textures",
+        "clip_prefix": "",
+        "master": "1",
+        "material_profile": "body",
+    },
+    "ken": {
+        "glb": (
+            "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
+            + "ken_hair_two-skin_native45_20261103.glb"
+        ),
+        "texture_root": (
+            "D:\\BruceLeeWork\\character-integration-fixed-20261103\\"
+            + "assets\\ken-textures"
+        ),
+        "clip_prefix": "m02",
+        "master": "",
+        "material_profile": "body_hair",
+    },
+}
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 const ROUNDS_TO_WIN: int = 2
 const ROUND_RESET_DELAY: float = 2.0
@@ -938,11 +991,48 @@ func _on_menu_command(command: String) -> void:
             OS.set_environment("BRUCELEE_SCENE", "tournamenthallb")
             OS.set_environment("BRUCELEE_MAIN_MENU", "0")
             get_tree().reload_current_scene()
+        "brick", "sinfu", "master", "ken":
+            _request_opponent_switch(command)
         "quit":
             get_tree().quit()
 
     if confirm_attack and command in ["fight", "training"]:
         call_deferred("_apply_menu_confirm_attack")
+
+
+func _request_opponent_switch(command: String) -> void:
+    ## Opponent entries rebuild the fighters with the selected candidate. Two
+    ## things must happen before the reload:
+    ##  1. leave the menu, because reloading while SceneTree.paused is set builds
+    ##     the new scene inside a paused tree (everything freezes);
+    ##  2. defer the reload, because this runs inside the menu's input/signal
+    ##     callback and the menu being freed is the node currently dispatching
+    ##     the event.
+    _leave_menu()
+    call_deferred("_apply_opponent_switch", command)
+
+
+func _apply_opponent_switch(command: String) -> void:
+    var config_value: Variant = MENU_OPPONENT_CONFIG.get(command)
+    if not config_value is Dictionary:
+        return
+    var config: Dictionary = config_value
+    OS.set_environment("BRUCELEE_OPPONENT_GLB", String(config.get("glb", "")))
+    OS.set_environment(
+        "BRUCELEE_OPPONENT_TEXTURE_ROOT", String(config.get("texture_root", ""))
+    )
+    OS.set_environment(
+        "BRUCELEE_OPPONENT_CLIP_PREFIX", String(config.get("clip_prefix", ""))
+    )
+    OS.set_environment(
+        "BRUCELEE_OPPONENT_MASTER", String(config.get("master", ""))
+    )
+    OS.set_environment(
+        "BRUCELEE_OPPONENT_MATERIAL_PROFILE",
+        String(config.get("material_profile", "body"))
+    )
+    OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+    get_tree().reload_current_scene()
 
 
 func _apply_menu_confirm_attack() -> void:
