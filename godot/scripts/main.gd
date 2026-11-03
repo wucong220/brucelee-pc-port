@@ -594,7 +594,7 @@ func _build_game_text_overlay() -> void:
     )
     _game_text_rect.scale = Vector2(1.6, 1.6)
     _game_text_rect.modulate = Color(1.0, 0.86, 0.35, 1.0)
-    _game_text_rect.flip_h = false
+    _game_text_rect.flip_h = true
     _game_text_rect.visible = false
     layer.add_child(_game_text_rect)
     var roots: Array[String] = []
