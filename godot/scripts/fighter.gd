@@ -800,7 +800,7 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_kick_low_02": 50.0,
     "m01_sp_kick_low_fail": 25.0,
     "m01_sp_kick_low": 25.0,
-    "m01_sp_pnch_low_fail": 25.0,
+    "m01_sp_pnch_low_fail": 45.0,
     "m01_sp_pnch_low": 25.0,
     "m01_sp_pnch_high_fail": 40.0,
     "m01_sp_pnch_high": 25.0,
@@ -6780,8 +6780,9 @@ func source_radius_for_current_animation() -> float:
             return 40.0 * radius_scale
         if (state in ["startup", "active", "recovery"]
                 and attack_kind == "special_punch_low_miss"):
-            # The recovered specialpunchlowmiss action uses 45 although the shared
-            # m01_sp_pnch_low_fail table entry is 25.
+            # The recovered specialpunchlowmiss action uses 45; the shared
+            # m01_sp_pnch_low_fail table entry also carries 45 in brucelee.set,
+            # so this override is now redundant but harmless.
             return 45.0 * radius_scale
     var animation: String = current_source_animation()
     var radius: float = _stored_animation_radius(animation)

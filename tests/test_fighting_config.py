@@ -44,7 +44,7 @@ class TestFightingConfig(unittest.TestCase):
                 "m01_end_attack_01": 45.0,
                 "m01_end_attack_02": 45.0,
                 "m01_sp_pnch_high_fail": 40.0,
-                "m01_sp_pnch_low_fail": 25.0,
+                "m01_sp_pnch_low_fail": 45.0,
                 "m01_sp_kick_low_fail": 25.0,
                 "all_impct_light_frnt_low": 40.0,
                 "all_impct_light_frnt_mid": 40.0,
