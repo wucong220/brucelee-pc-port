@@ -2637,11 +2637,17 @@ var _stun_impact_next_state: String = "stunfall"
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
 var candidate_animation_clip: String = ""
-# Result presentation (CBeatEmUpGame::SetState 12/13). The winner plays a
-# candidate victory clip; the matched loser plays a defeat clip. The clips are
-# not fighting-set actions, so they are only discovered from the loaded GLB.
+# Result presentation (CBeatEmUpGame::SetState 12/13/14). The winner plays the
+# result clip that characters.list already bound to this fighter when the match
+# configuration was built; the hidden loser is never given an animation in
+# SetState(12/13). The pools are the archive lists, not the loaded GLB's clip
+# names, because a candidate GLB can also carry other characters' result clips.
 var result_clip: String = ""
 var result_pose_active: bool = false
+var character_result_clips: Dictionary = {}
+var result_clip_index_victory: int = 0
+var result_clip_index_defeat: int = 0
+var result_clip_gap_last: String = ""
 var candidate_visual_height: float = 0.0
 var candidate_textures_loaded: bool = false
 var candidate_texture_error: String = ""
@@ -7327,11 +7333,104 @@ func receive_hit(
     return true
 
 
+# characters.list animations.victory / animations.defeat per character, in
+# archive order (adreno_200/characters.list). The native match configuration
+# stores
+#   GetAnimation(charIndex, "victory", zmathRandomGet() % GetAnimationNumVersions)
+# and
+#   GetAnimation(charIndex, "defeat", 0)
+# in TFighterConfig+0x5c / +0x60, and CBeatEmUpGame::LoadFighterAnimations loads
+# those two names as the "Victory"/"Defeat" free animations. Only the victory
+# index is a random draw; the defeat index is the literal 0.
+const RESULT_CLIPS_BRUCELEE: Dictionary = {
+    "victory": ["m01_victory_01", "m01_victory_02"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_BRICK: Dictionary = {
+    "victory": ["m03_victory_02"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_SINFU: Dictionary = {
+    "victory": ["m04_e02_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_MASTER: Dictionary = {
+    "victory": ["m04_e01_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_SHENLO: Dictionary = {
+    "victory": ["m04_e03_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_KEN: Dictionary = {
+    "victory": ["m02_e01_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_SMALLBOY: Dictionary = {
+    "victory": ["m03_victory_03"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_JOHNSON: Dictionary = {
+    "victory": ["m03_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_CHIEF: Dictionary = {
+    "victory": ["m02_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_LOMING: Dictionary = {
+    "victory": ["m04_victory_01", "m04_victory_02"],
+    "defeat": ["m01_defeat_01"],
+}
+
+
+func configure_result_clips(pools: Dictionary) -> void:
+    ## characters.list animations.intro/victory/defeat for this character. Set
+    ## once before the fighter enters the tree; the result pose uses the pool
+    ## rather than the loaded GLB's animation list.
+    character_result_clips = pools.duplicate(true)
+    result_clip_index_victory = 0
+    result_clip_index_defeat = 0
+
+
+func select_result_clips(victory_roll: int) -> void:
+    ## Port of the per-match version choice in
+    ## IBeatEmUpGameMode::SetFighterConfigFromCharacterList (0x1ff418):
+    ## `version = zmathRandomGet() % GetAnimationNumVersions(...)` for the
+    ## victory animation and the literal version 0 for the defeat animation.
+    ## The draw happens once per match, not per round and not at pose time.
+    var victory: Array[String] = result_clip_pool("victory")
+    result_clip_index_victory = 0
+    if not victory.is_empty():
+        result_clip_index_victory = victory_roll % victory.size()
+    result_clip_index_defeat = 0
+
+
+func result_clip_pool(kind: String) -> Array[String]:
+    var names: Array[String] = []
+    var raw: Variant = character_result_clips.get(kind)
+    if raw is Array:
+        for value: Variant in raw:
+            names.append(String(value))
+    return names
+
+
+func _selected_result_clip(kind: String) -> String:
+    var pool: Array[String] = result_clip_pool(kind)
+    if pool.is_empty():
+        return ""
+    var index: int = (
+        result_clip_index_victory if kind == "victory" else result_clip_index_defeat
+    )
+    return pool[clampi(index, 0, pool.size() - 1)]
+
+
 func result_clip_names(kind: String) -> Array[String]:
     ## Candidate clips whose names contain "victory" or "defeat". These are
     ## demo result animations (m01_victory_01, m03_victory_01, m01_defeat_01,
     ## ...). They are not fighting-set actions, so they are only discovered
-    ## from the loaded GLB's animation list.
+    ## from the loaded GLB's animation list. They are used only to report an
+    ## asset gap: a candidate GLB can carry another character's result clip.
     var wanted: String = "victory" if kind == "victory" else "defeat"
     var names: Array[String] = []
     for key: Variant in _candidate_clip_paths:
@@ -7343,18 +7442,44 @@ func result_clip_names(kind: String) -> Array[String]:
 
 
 func has_result_clip(kind: String) -> bool:
+    ## True when this fighter can present the result kind: either the clip
+    ## characters.list selected for it or, for a documented asset gap, any
+    ## loaded result clip.
+    var pool: Array[String] = result_clip_pool(kind)
+    for name: String in pool:
+        if _candidate_clip_paths.has(name):
+            return true
     return not result_clip_names(kind).is_empty()
 
 
-func enter_result_pose(kind: String, variant: int = 0) -> bool:
+func enter_result_pose(kind: String) -> bool:
     ## Port of the winner-only clip switch in CBeatEmUpGame::SetState(12/13).
-    ## Returns false when the character provides no result clip (Master76).
-    var names: Array[String] = result_clip_names(kind)
-    if names.is_empty() or _candidate_animation == null:
+    ## The native call passes only the category ("Victory"/"Defeat"); the clip
+    ## was fixed when the match configuration was built, so nothing here draws
+    ## a new index. Returns false when the character provides no result clip.
+    result_clip_gap_last = ""
+    var wanted: String = _selected_result_clip(kind)
+    if _candidate_animation == null:
         result_clip = ""
         result_pose_active = false
         return false
-    result_clip = names[clampi(variant, 0, names.size() - 1)]
+    if wanted.is_empty():
+        result_clip_gap_last = "no characters.list %s pool" % kind
+    elif _candidate_clip_paths.has(wanted):
+        result_clip = wanted
+    else:
+        # The candidate GLB does not carry this character's characters.list
+        # clip. Keep the pose visible with a loaded result clip and report the
+        # gap instead of silently presenting another character's animation.
+        var fallback: Array[String] = result_clip_names(kind)
+        result_clip_gap_last = (
+            "characters.list %s clip %s missing from GLB" % [kind, wanted]
+        )
+        if fallback.is_empty():
+            result_clip = ""
+            result_pose_active = false
+            return false
+        result_clip = fallback[0]
     if not _candidate_clip_paths.has(result_clip):
         result_clip = ""
         result_pose_active = false

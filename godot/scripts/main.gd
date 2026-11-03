@@ -228,6 +228,13 @@ var menu_paused: bool = false
 var elapsed: float = 0.0
 var notice_timer: float = 0.0
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+# Port of zmathRandomGet() (libdefault.so 0x58d820). zmathRandomSetSeed seeds a
+# 32-bit LCG whose static initializer stores 0x6425AF14 (_GLOBAL__I_zaprandom.cpp
+# 0x58d900), and every call returns bits 16..31 of the advanced state, so the
+# native range is 0..65535. IBeatEmUpGameMode::SetFighterConfigFromCharacterList
+# uses `zmathRandomGet() % version_count` as the characters.list animation
+# version, so the same generator keeps the port's pick reproducible.
+var _zmath_state: int = 0x6425AF14
 # Recovered native AI (adreno_200/ai/standard.tree + characters.list).
 const NativeAI = preload("res://scripts/native_ai.gd")
 var native_ai: RefCounted = null
@@ -1214,6 +1221,8 @@ func _build_fighters() -> void:
         false
     )
     computer.set_skeleton_class(_opponent_skeleton_class())
+    player.configure_result_clips(_player_result_clips())
+    computer.configure_result_clips(_opponent_result_clips())
     add_child(computer)
     player.opponent = computer
     computer.opponent = player
@@ -1291,6 +1300,55 @@ func _opponent_clips() -> Dictionary:
     return PortFighter.BRICK_CLIPS
 
 
+func _player_result_clips() -> Dictionary:
+    ## Bruce Lee a..d share one animations table in characters.list:
+    ## victory [m01_victory_01, m01_victory_02], defeat [m01_defeat_01].
+    return PortFighter.RESULT_CLIPS_BRUCELEE
+
+
+func _opponent_result_clips() -> Dictionary:
+    ## Same character keying as _opponent_clips(): the fighting-set config path
+    ## identifies the fighter and characters.list gives its animations.victory /
+    ## animations.defeat lists.
+    var config_path: String = _opponent_attack_config()
+    if config_path == PortFighter.MASTER_ATTACK_CONFIG_PATH:
+        return PortFighter.RESULT_CLIPS_MASTER
+    if config_path == PortFighter.SINFU_ATTACK_CONFIG_PATH:
+        return PortFighter.RESULT_CLIPS_SINFU
+    if config_path == PortFighter.SHENLO_ATTACK_CONFIG_PATH:
+        return PortFighter.RESULT_CLIPS_SHENLO
+    if config_path == PortFighter.KEN_ATTACK_CONFIG_PATH:
+        return PortFighter.RESULT_CLIPS_KEN
+    if config_path == PortFighter.SMALLBOY_ATTACK_CONFIG_PATH:
+        return PortFighter.RESULT_CLIPS_SMALLBOY
+    if config_path == PortFighter.JOHNSON_ATTACK_CONFIG_PATH:
+        return PortFighter.RESULT_CLIPS_JOHNSON
+    if config_path == PortFighter.CHIEF_ATTACK_CONFIG_PATH:
+        return PortFighter.RESULT_CLIPS_CHIEF
+    if config_path == PortFighter.LOMING_ATTACK_CONFIG_PATH:
+        return PortFighter.RESULT_CLIPS_LOMING
+    return PortFighter.RESULT_CLIPS_BRICK
+
+
+func _zmath_random_get() -> int:
+    ## zmathRandomGet(): state = state * 0x41C64E6D + 0x3039, return bits 16..31.
+    _zmath_state = (_zmath_state * 0x41C64E6D + 0x3039) & 0xFFFFFFFF
+    return (_zmath_state >> 16) & 0xFFFF
+
+
+func _select_match_result_clips() -> void:
+    ## StartFight() -> CBeatEmUpGameModes::SetCurrentMatchConfig() ->
+    ## IBeatEmUpGameMode::SetFighterConfigFromCharacterList(), which runs once
+    ## per match and draws the intro version before the victory version. The
+    ## port has no intro animation, but it still consumes that draw so the
+    ## victory index follows the native draw order.
+    for fighter: PortFighter in [player, computer]:
+        if fighter == null:
+            continue
+        _zmath_random_get()
+        fighter.select_result_clips(_zmath_random_get())
+
+
 func _configure_round_time() -> void:
     # Round length comes from the match config in the original
     # (CBeatEmUpMatch::LoadProcessBegin -> SetTimerMax).  A value of 0 means
@@ -1310,6 +1368,9 @@ func _reset_match() -> void:
     round_reset_timer = -1.0
     pending_round_winner = 0
     _result_pose_seconds = 0.0
+    # StartFight() builds the match configuration once per match, so the
+    # result clips are re-drawn here and not in _reset_round().
+    _select_match_result_clips()
     _result_camera_override = false
     _reset_round()
 
@@ -2201,7 +2262,8 @@ func _advance_result_text() -> void:
 
 func _begin_winner_result_pose() -> void:
     # SetState(12)/(13): both fighters are moved to the origin, the loser is
-    # hidden, and only the winner plays its victory clip.
+    # hidden, and only the winner gets a SetAnimation call -- the native code
+    # never gives the hidden loser a "Defeat" animation in 12/13.
     var winner_is_player: bool = pending_round_winner == 1
     var winner: PortFighter = player if winner_is_player else computer
     var loser: PortFighter = computer if winner_is_player else player
@@ -2218,15 +2280,20 @@ func _begin_winner_result_pose() -> void:
         _game_text_rect.visible = false
         _game_text_timer = 0.0
     var victory_ok: bool = winner.enter_result_pose("victory")
-    var defeat_ok: bool = loser.enter_result_pose("defeat")
-    _result_pose_seconds = 2.5
-    if victory_ok:
-        _result_pose_seconds = maxf(2.5, winner.result_clip_duration())
-    if not victory_ok or not defeat_ok:
-        print("MATCH_RESULT_GAP winner=%s victory_clip=%s defeat_clip=%s" % [
+    loser.clear_result_pose()
+    if not winner.result_clip_gap_last.is_empty():
+        print("MATCH_RESULT_GAP winner=%s %s" % [
             "player" if winner_is_player else "computer",
-            str(victory_ok), str(defeat_ok),
+            winner.result_clip_gap_last,
         ])
+    # Update() state 12/13 leaves when GetStateTime() > GetDuration() - 100 with
+    # unsigned milliseconds. A clip shorter than 100 ms makes the native
+    # comparison wrap and the state never ends; the port keeps its 2.5 s
+    # fallback for that case and for a missing clip so the match can still close.
+    var clip_millis: int = int(round(winner.result_clip_duration() * 1000.0))
+    _result_pose_seconds = 2.5
+    if victory_ok and clip_millis >= 100:
+        _result_pose_seconds = float(clip_millis - 100) / 1000.0
     _enter_match_state(MATCH_STATE_MATCH_WIN if winner_is_player else MATCH_STATE_MATCH_LOSE)
 
 
