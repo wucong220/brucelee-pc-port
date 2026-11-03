@@ -2650,6 +2650,12 @@ var frame_state_machine_enabled: bool = (
 var _attack_clock_ms: float = 0.0
 var _attack_clock_start_frame: int = 0
 var _attack_clock_active: bool = false
+# Reaction clock drives hitstun/blockstun exits by the recovered return-link
+# frame instead of the fixed 0.30s/0.14s phase countdown.
+var _reaction_clock_ms: float = 0.0
+var _reaction_clock_start_frame: int = 0
+var _reaction_clock_active: bool = false
+var _reaction_return_action: String = ""
 var attack_kind: String = ""
 var attack_sequence: int = 0
 var _attack_root_tracks: Dictionary = {}
@@ -4671,6 +4677,8 @@ func _enter_locomotion_state(next_state: String, start_frame: int = 0) -> void:
     state_time = float(start_frame) / SOURCE_FRAME_RATE
     attack_kind = ""
     _attack_clock_active = false
+    _reaction_clock_active = false
+    _reaction_return_action = ""
     _clear_link_state()
     _clear_reaction_tracking()
     if (candidate_visual_blending_enabled
@@ -5306,6 +5314,59 @@ func _current_attack_source_frame() -> float:
         # keep the larger of the two so neither path rewinds the source frame.
         return minf(maxf(frame, phase_frame), float(details["animation_frame_count"]))
     return phase_frame
+
+
+
+func _advance_frame_reaction(delta: float) -> void:
+    var exit_frame: float = float(maxi(last_reaction_exit_frame, 0))
+    var remaining: float = maxf(delta, 0.0)
+    var step: float = 1.0 / 120.0
+    var guard_steps: int = 0
+    while remaining > 0.0000001 and state in ["hitstun", "blockstun"]:
+        guard_steps += 1
+        if guard_steps > 4096:
+            push_warning("reaction frame step cap")
+            return
+        var tick: float = minf(remaining, step)
+        if tick <= 0.0:
+            return
+        remaining -= tick
+        _reaction_clock_ms += tick * 1000.0
+        var frame: float = minf(
+            float(_reaction_clock_start_frame) + float(int(_reaction_clock_ms * 0.03)),
+            exit_frame
+        )
+        state_time = maxf((exit_frame - frame) / SOURCE_FRAME_RATE, 0.0)
+        if frame + 0.0001 < exit_frame:
+            continue
+        var target_state: String = _reaction_return_target()
+        _enter_locomotion_state(target_state)
+        return
+
+
+func _reaction_return_target() -> String:
+    if _reaction_return_action.is_empty():
+        return _verified_post_hit_return_state()
+    var clip_key: String = _reaction_return_clip(_reaction_return_action)
+    if clip_key.is_empty() or _candidate_clip_paths.has(clip_key):
+        return _reaction_return_action
+    return _verified_post_hit_return_state()
+
+
+func _reaction_return_clip(target: String) -> String:
+    match target:
+        "idle":
+            return String(candidate_clips.get("idle", IDLE2_CLIP))
+        "idle2":
+            return IDLE2_CLIP
+        "idle3":
+            return IDLE3_CLIP
+        "facedownidle":
+            return _facedown_idle_clip()
+        "faceupidle":
+            return _faceup_idle_clip()
+        _:
+            return ""
 
 
 func _phase_attack_source_frame(details: Dictionary) -> float:
@@ -6134,6 +6195,10 @@ func _advance_timed_states(delta: float) -> void:
             and state in ["startup", "active", "recovery"]
             and ATTACKS.has(attack_kind)):
         _advance_frame_attack(delta)
+        return
+    if (frame_state_machine_enabled and _reaction_clock_active
+            and state in ["hitstun", "blockstun"]):
+        _advance_frame_reaction(delta)
         return
     if state in ["grabbed1", "grabbed2"]:
         state_time -= delta
@@ -7464,6 +7529,14 @@ func receive_hit(
         last_reaction_exit_frame = -1
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = false
+    _reaction_clock_active = false
+    _reaction_return_action = ""
+    if (frame_state_machine_enabled and state in ["hitstun", "blockstun"]
+            and reaction.has("return_action")):
+        _reaction_clock_start_frame = last_reaction_entry_frame
+        _reaction_clock_ms = 0.0
+        _reaction_return_action = String(reaction["return_action"])
+        _reaction_clock_active = true
     position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -ARENA_HALF_X, ARENA_HALF_X)
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("all_impct_hard_frnt_high")
@@ -7769,6 +7842,10 @@ func reset_fighter(start_position: Vector3) -> void:
     _attack_clock_ms = 0.0
     _attack_clock_start_frame = 0
     _attack_clock_active = false
+    _reaction_clock_ms = 0.0
+    _reaction_clock_start_frame = 0
+    _reaction_clock_active = false
+    _reaction_return_action = ""
     result_clip = ""
     result_pose_active = false
     visible = true
