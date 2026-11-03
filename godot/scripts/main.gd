@@ -1254,27 +1254,36 @@ func _opponent_display_name() -> String:
     ## Opponent menu command = characters.list key for the packaged name
     ## textures. Direct launchers still resolve by their fighting-set config.
     var key: String = OS.get_environment("BRUCELEE_OPPONENT_NAME_KEY")
-    if not key.is_empty() and key != "opponents_back":
-        return key
-    match _opponent_attack_config():
-        PortFighter.SINFU_ATTACK_CONFIG_PATH:
-            return "sinfu"
-        PortFighter.MASTER_ATTACK_CONFIG_PATH:
-            return "themaster"
-        PortFighter.KEN_ATTACK_CONFIG_PATH:
-            return "kengodall"
-        PortFighter.SHENLO_ATTACK_CONFIG_PATH:
-            return "shenlo"
-        PortFighter.SMALLBOY_ATTACK_CONFIG_PATH:
-            return "smallboy"
-        PortFighter.JOHNSON_ATTACK_CONFIG_PATH:
-            return "johnson"
-        PortFighter.CHIEF_ATTACK_CONFIG_PATH:
-            return "chief"
-        PortFighter.LOMING_ATTACK_CONFIG_PATH:
-            return "loming"
-        _:
-            return "brickdavis"
+    if key.is_empty() or key == "opponents_back":
+        match _opponent_attack_config():
+            PortFighter.SINFU_ATTACK_CONFIG_PATH:
+                key = "sinfu"
+            PortFighter.MASTER_ATTACK_CONFIG_PATH:
+                key = "themaster"
+            PortFighter.KEN_ATTACK_CONFIG_PATH:
+                key = "kengodall"
+            PortFighter.SHENLO_ATTACK_CONFIG_PATH:
+                key = "shenlo"
+            PortFighter.SMALLBOY_ATTACK_CONFIG_PATH:
+                key = "smallboy"
+            PortFighter.JOHNSON_ATTACK_CONFIG_PATH:
+                key = "johnson"
+            PortFighter.CHIEF_ATTACK_CONFIG_PATH:
+                key = "chief"
+            PortFighter.LOMING_ATTACK_CONFIG_PATH:
+                key = "loming"
+            _:
+                key = "brickdavis"
+    match key.to_lower():
+        "sinfu": return "SIN FU"
+        "themaster", "master": return "THE MASTER"
+        "kengodall", "ken": return "KEN GODALL"
+        "shenlo": return "SHEN LO"
+        "smallboy": return "SMALL BOY"
+        "johnson": return "JOHNSON"
+        "chief": return "CHIEF"
+        "loming": return "LO MING"
+        _: return "BRICK DAVIS"
 func _player_skeleton_class() -> String:
     ## Bruce Lee's four skins are all "medium" in characters.list. The env
     ## override exists so a test can hold the body fixed and vary the class the
