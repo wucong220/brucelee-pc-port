@@ -6,6 +6,10 @@
 - Temple Yard B: 18 far props / 18 textures, 3 near props, verified screenshot.
   `bigtemple` now renders with the corrected ATC RGBA block order and top-down
   row orientation.
+- Tournament Hall A: interior renders after skipping
+  `bl_scene04a_hw_fx_biglighta` and `bl_scene04a_hw_fx_biglightb`; together
+  those two planes overdraw the whole screen white. The remaining original
+  meshes are loaded.
 
 ## Not working
 
