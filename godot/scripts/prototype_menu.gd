@@ -10,11 +10,14 @@ const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 ## Scene entries are handled by main.gd, which reloads main.tscn with a different
 ## BRUCELEE_SCENE variant. "scenes_back" and "scenes" never leave this script.
 const SCENE_COMMANDS: Array[String] = [
-    "temple_a", "temple_b", "halla", "squareb", "harboura", "scenes_back",
+    "temple_a", "temple_b", "halla", "squarea", "squareb",
+    "harboura", "harbourb", "rooftopsa", "rooftopsb", "tournamenthallb",
+    "scenes_back",
 ]
 const SCENE_LABELS: Array[String] = [
     "TEMPLE YARD A", "TEMPLE YARD B", "TOURNAMENT HALL A",
-    "SQUARE B", "HARBOUR A", "BACK",
+    "SQUARE A", "SQUARE B", "HARBOUR A", "HARBOUR B",
+    "ROOFTOPS A", "ROOFTOPS B", "TOURNAMENT HALL B", "BACK",
 ]
 const MAIN_COMMANDS: Array[String] = [
     "fight", "training", "move_training", "gallery",

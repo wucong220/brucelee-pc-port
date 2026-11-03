@@ -898,6 +898,26 @@ func _on_menu_command(command: String) -> void:
             OS.set_environment("BRUCELEE_SCENE", "harboura")
             OS.set_environment("BRUCELEE_MAIN_MENU", "0")
             get_tree().reload_current_scene()
+        "squarea":
+            OS.set_environment("BRUCELEE_SCENE", "squarea")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+            get_tree().reload_current_scene()
+        "harbourb":
+            OS.set_environment("BRUCELEE_SCENE", "harbourb")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+            get_tree().reload_current_scene()
+        "rooftopsa":
+            OS.set_environment("BRUCELEE_SCENE", "rooftopsa")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+            get_tree().reload_current_scene()
+        "rooftopsb":
+            OS.set_environment("BRUCELEE_SCENE", "rooftopsb")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+            get_tree().reload_current_scene()
+        "tournamenthallb":
+            OS.set_environment("BRUCELEE_SCENE", "tournamenthallb")
+            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+            get_tree().reload_current_scene()
         "quit":
             get_tree().quit()
 
