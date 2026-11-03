@@ -5369,6 +5369,25 @@ func _reaction_return_clip(target: String) -> String:
             return ""
 
 
+
+func _native_reaction_return_data(source_action: String) -> Dictionary:
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != source_action:
+            continue
+        var target: String = _link_text(link, "to")
+        if target not in ["idle", "idle2", "idle3", "faceupidle", "facedownidle"]:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() < 2:
+            continue
+        return {
+            "exit_start_frame": int(window[0]),
+            "animation_duration_frames": int(window[1]),
+            "return_action": target,
+        }
+    return {}
+
+
 func _phase_attack_source_frame(details: Dictionary) -> float:
     var remaining_frames: float = state_time * SOURCE_FRAME_RATE
     if state == "startup":
@@ -7468,6 +7487,16 @@ func receive_hit(
         return false
     var state_before: String = state
     var medium_lethal_eligible: bool = _medium_lethal_impactable()
+    if (not reaction.has("exit_start_frame") and reaction.has("source_action")):
+        var native_return: Dictionary = _native_reaction_return_data(
+            String(reaction["source_action"])
+        )
+        if not native_return.is_empty():
+            reaction["exit_start_frame"] = int(native_return["exit_start_frame"])
+            reaction["animation_duration_frames"] = int(
+                native_return.get("animation_duration_frames", 0)
+            )
+            reaction["return_action"] = String(native_return["return_action"])
     var reaction_root_source: float = float(
         REACTION_ROOT_PUSH_SOURCE.get(String(reaction.get("source_action", "")), -1.0)
     )
