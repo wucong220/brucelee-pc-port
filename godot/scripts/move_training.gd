@@ -146,7 +146,8 @@ func close() -> void:
     state = "hidden"
     visible = false
     if player != null:
-            player.set_physics_process(true)
+        player.attack_root_motion_enabled = true
+        player.set_physics_process(true)
     if computer != null:
         computer.set_physics_process(true)
 
@@ -260,6 +261,8 @@ func handle_input_event(event: InputEvent) -> bool:
 
 
 func _show_select() -> void:
+    if player != null:
+        player.attack_root_motion_enabled = true
     title_label.visible = true
     list_label.visible = true
     list_hint.visible = true
@@ -292,6 +295,10 @@ func _refresh_select_list() -> void:
 func _start_at(index: int) -> void:
     current_index = clampi(index, 0, entries.size() - 1)
     state = "active"
+    # Training poses are shown in place against a fixed dummy. Attack root
+    # motion would drive the player through the dummy (notably the 1.25 m
+    # m01_kck_front_step special high kick), so suppress it only in training.
+    player.attack_root_motion_enabled = false
     title_label.visible = false
     list_label.visible = false
     list_hint.visible = false

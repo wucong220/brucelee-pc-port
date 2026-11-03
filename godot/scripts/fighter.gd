@@ -2604,6 +2604,7 @@ var state_time: float = 0.0
 var attack_kind: String = ""
 var attack_sequence: int = 0
 var _attack_root_tracks: Dictionary = {}
+var attack_root_motion_enabled: bool = true
 var _attack_root_sequence: int = -1
 var _attack_root_previous_frame: float = -1.0
 var _attack_root_previous_value: Vector3 = Vector3.ZERO
@@ -2840,6 +2841,8 @@ func _seed_attack_root_motion() -> void:
 
 
 func _apply_attack_root_motion() -> void:
+    if not attack_root_motion_enabled:
+        return
     if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
         return
     var animation_name: String = String(ATTACKS[attack_kind].get("animation", ""))
