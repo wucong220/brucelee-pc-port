@@ -676,7 +676,6 @@ func _build_game_text_overlay() -> void:
                 continue
             var image: Image = Image.new()
             if image.load(path) == OK:
-                image.flip_x()
                 _game_text_textures[key] = ImageTexture.create_from_image(image)
                 break
 
