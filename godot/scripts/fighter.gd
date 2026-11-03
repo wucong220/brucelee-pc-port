@@ -559,9 +559,31 @@ const ENDATTACK_VICTIM_DATA: Dictionary = {
     "grabbed1": ["endattackcomp1", 93],
     "grabbed2": ["endattackcomp2", 130],
 }
-const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
+# "endattack" is the mapped-set finisher name (kungfu/karate); without it the
+# victim of a Ken/Master/SinFu finisher is never consumed and endattackcomp is
+# unreachable for those sets.
+const ENDATTACK_ATTACKS: Dictionary = {
+    "endattack1": true, "endattack2": true, "endattack": true,
+}
+# brucelee.set stores one grabbed victim action per attacker, e.g.
+# "grabcompl1 ken" -> all_grabbed_01_forset02. The victim candidate's static map
+# only carries the Thai (forset03) clip, so the grab resolves the opponent's set
+# from this table at runtime. Keyed by the attacker's config path.
+const VICTIM_OPPONENT_SUFFIX: Dictionary = {
+    "res://data/fighting_set_m03_mapped_attacks.json": "brick",
+    "res://data/attack_config_master.json": "master",
+    "res://data/attack_config_sinfu.json": "sinfu",
+    "res://data/attack_config_ken.json": "ken",
+}
+# endattackcomp names its per-attacker actions by set family: only thai and
+# karate have one. kungfu has no endattackcomp action, so it must fail closed.
+const ENDATTACK_OPPONENT_ACTION: Dictionary = {
+    "res://data/fighting_set_m03_mapped_attacks.json": "endattackcompthai",
+    "res://data/attack_config_ken.json": "endattackcompkarate",
+}
 const NON_CONTACT_ATTACKS: Dictionary = {
-    "endattack1": true, "endattack2": true, "parry_low": true,
+    "endattack1": true, "endattack2": true, "endattack": true,
+    "parry_low": true,
     "parry_high_brick": true, "parry_low_brick": true,
     "endattack_brick": true,
     "grab1_miss_brick": true, "grab2_miss_brick": true,
@@ -5247,12 +5269,71 @@ func _register_landed_hit(damage: float, blocked: bool) -> void:
             rage = minf(RAGE_MAX, rage + rage_gain)
 
 
+func _attacker_set_suffix() -> String:
+    if opponent == null or not is_instance_valid(opponent):
+        return ""
+    return String(VICTIM_OPPONENT_SUFFIX.get(opponent.attack_config_path, ""))
+
+
+func _victim_clip_available(animation: String) -> String:
+    # Match the set's clip name against the victim's AnimationPlayer. The
+    # candidate may store a "<prefix>/<name>" variant, so return the playable
+    # name, or "" when the clip is absent. No substitute is guessed.
+    if animation.is_empty() or _candidate_animation == null:
+        return ""
+    var matched: String = _find_animation_clip(_candidate_animation, animation)
+    if matched.is_empty() or not _candidate_clip_paths.values().has(matched):
+        return ""
+    return matched
+
+
+func _select_grab_victim_clip(slot_key: String) -> bool:
+    # slot_key is grabbed1/grabbed2; the set action is grabcompl1/2 <attacker>.
+    var suffix: String = _attacker_set_suffix()
+    if suffix.is_empty():
+        return false
+    var action: String = (
+        "grabcompl" + slot_key.substr(slot_key.length() - 1) + " " + suffix
+    )
+    var row: Dictionary = _native_actions.get(action, {})
+    var animation: String = String(row.get("animation", ""))
+    var matched: String = _victim_clip_available(animation)
+    if matched.is_empty():
+        return false
+    _candidate_clip_paths[slot_key] = matched
+    return true
+
+
+func _select_endattack_victim_clip(slot_key: String) -> bool:
+    # slot_key is endattackcomp1/endattackcomp2. Only thai/karate carry a
+    # prefixed action; kungfu has none and therefore fails closed.
+    if opponent == null or not is_instance_valid(opponent):
+        return false
+    var prefix: String = String(
+        ENDATTACK_OPPONENT_ACTION.get(opponent.attack_config_path, "")
+    )
+    if prefix.is_empty():
+        return false
+    var action: String = prefix + " " + slot_key.substr(slot_key.length() - 1)
+    var row: Dictionary = _native_actions.get(action, {})
+    var animation: String = String(row.get("animation", ""))
+    var matched: String = _victim_clip_available(animation)
+    if matched.is_empty():
+        return false
+    _candidate_clip_paths[slot_key] = matched
+    return true
+
+
 func begin_grabbed(kind: String) -> bool:
     var data: Array = GRAB_VICTIM_DATA.get(kind, [])
     if data.is_empty():
         return false
     var clip_key: String = String(data[0])
     if not _candidate_clip_paths.has(clip_key):
+        return false
+    # The player's static map holds only the Thai victim set; use his recovered
+    # per-opponent action instead, and refuse the grab if the variant is absent.
+    if is_player and not _select_grab_victim_clip(clip_key):
         return false
     state = clip_key
     state_time = float(data[1]) / SOURCE_FRAME_RATE
@@ -5268,6 +5349,8 @@ func begin_endattack_victim() -> bool:
         return false
     var clip_key: String = String(data[0])
     if not _candidate_clip_paths.has(clip_key):
+        return false
+    if is_player and not _select_endattack_victim_clip(clip_key):
         return false
     state = clip_key
     state_time = float(data[1]) / SOURCE_FRAME_RATE
