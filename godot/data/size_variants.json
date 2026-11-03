@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "source": {
+    "resource": "adreno_200/Animations.versions",
+    "sha256": "9eb43487da722d00c63e665326e229a27018ce1519ee08f2476cb7cedbbfaffb",
+    "data_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "resource_id": "7861fdd80b1e051d3f68da3853801bc1",
+    "index_ordinal": 1814,
+    "pakd_offset": 7619376
+  },
+  "skeleton_classes": {
+    "default": "medium",
+    "versioned": [
+      "small",
+      "large"
+    ],
+    "source": "adreno_200/characters.list \"skeleton\" field; every fighter entry is small, medium or large"
+  },
+  "audiences": {
+    "self": "my_skeleton: the owner of the base clip picks by its own class",
+    "opponent": "opp_skeleton: the owner picks by the other fighter's class"
+  },
+  "notes": [
+    "Derived metadata: base clip -> alternate clip files from Animations.versions. No payload is copied.",
+    "Class spellings are the archived ones; two version files carry a typo in the original archive (m01_end_attack_02_for_smallguy, m03_grab_02_for_small_guy) and are used verbatim.",
+    "A base clip without a version for a class plays the base clip."
+  ],
+  "variants": {
+    "all_idle_face_up": {
+      "audience": "self",
+      "versions": {
+        "large": "all_idle_face_up_forbigguy",
+        "small": "all_idle_face_up_forsmallguy"
+      }
+    },
+    "all_idle_face_down": {
+      "audience": "self",
+      "versions": {
+        "large": "all_idle_face_down_forbigguy",
+        "small": "all_idle_face_down_forsmallguy"
+      }
+    },
+    "m01_grab_01": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m01_grab_01_forbigguy",
+        "small": "m01_grab_01_forsmallguy"
+      }
+    },
+    "m01_grab_02": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m01_grab_02_forbigguy",
+        "small": "m01_grab_02_forsmallguy"
+      }
+    },
+    "m01_sp_pnch_high": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m01_sp_pnch_high_forbigguy",
+        "small": "m01_sp_pnch_high_forsmallguy"
+      }
+    },
+    "m01_end_attack_01": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m01_end_attack_01_forbigguy",
+        "small": "m01_end_attack_01_forsmallguy"
+      }
+    },
+    "m01_end_attack_02": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m01_end_attack_02_forbigguy",
+        "small": "m01_end_attack_02_for_smallguy"
+      }
+    },
+    "m02_end_attack_01": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m02_end_attack_01_forbigguy",
+        "small": "m02_end_attack_01_forsmallguy"
+      }
+    },
+    "m02_grab_01": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m02_grab_01_forbigguy",
+        "small": "m02_grab_01_forsmallguy"
+      }
+    },
+    "m03_end_attack_01": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m03_end_attack_01_forbigguy",
+        "small": "m03_end_attack_01_forsmallguy"
+      }
+    },
+    "m03_grab_01": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m03_grab_01_forbigguy",
+        "small": "m03_grab_01_forsmallguy"
+      }
+    },
+    "m03_grab_02": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m03_grab_02_forbigguy",
+        "small": "m03_grab_02_for_small_guy"
+      }
+    },
+    "m04_grab_01": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m04_grab_01_forbigguy",
+        "small": "m04_grab_01_forsmallguy"
+      }
+    },
+    "m02_grabbed_02_forset01": {
+      "audience": "opponent",
+      "versions": {
+        "small": "master_grabbed_02_forset01"
+      }
+    },
+    "m01_end_attack_01_camera": {
+      "audience": "opponent",
+      "versions": {
+        "large": "m01_end_attack_01_forbigguy_camera"
+      }
+    }
+  }
+}

@@ -28,6 +28,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "",
         "material_profile": "body",
         "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+        "skeleton": "large",
     },
     "sinfu": {
         "glb": (
@@ -39,6 +40,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "",
         "material_profile": "body",
         "attack_config": "res://data/attack_config_sinfu.json",
+        "skeleton": "medium",
     },
     "master": {
         "glb": (
@@ -50,6 +52,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "1",
         "material_profile": "body",
         "attack_config": "res://data/attack_config_master.json",
+        "skeleton": "small",
     },
     "shenlo": {
         "glb": (
@@ -61,6 +64,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "",
         "material_profile": "body",
         "attack_config": "res://data/attack_config_shenlo.json",
+        "skeleton": "medium",
     },
     "ken": {
         "glb": (
@@ -75,6 +79,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "",
         "material_profile": "body_hair",
         "attack_config": "res://data/attack_config_ken.json",
+        "skeleton": "medium",
     },
     "smallboy": {
         "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\smallboy_full_body_hair_87_all_20261103.glb",
@@ -83,6 +88,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "",
         "material_profile": "body_hair",
         "attack_config": "res://data/attack_config_smallboy.json",
+        "skeleton": "large",
     },
     "johnson": {
         "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\johnson_full_body_88_all_20261103.glb",
@@ -91,6 +97,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "",
         "material_profile": "body",
         "attack_config": "res://data/attack_config_johnson.json",
+        "skeleton": "large",
     },
     "chief": {
         "glb": "D:\\BruceLeeWork\\chief-loming-fix-20261103\\candidates\\chief01_full_body_hair_84_bindfix_20261103.glb",
@@ -99,6 +106,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "",
         "material_profile": "body_hair",
         "attack_config": "res://data/attack_config_chief.json",
+        "skeleton": "large",
     },
     "loming": {
         "glb": "D:\\BruceLeeWork\\chief-loming-fix-20261103\\candidates\\loming01_full_body_hair_82_bindfix_20261103.glb",
@@ -107,8 +115,30 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "master": "",
         "material_profile": "body_hair",
         "attack_config": "res://data/attack_config_loming.json",
+        "skeleton": "large",
     },
 }
+# characters.list "skeleton" per fighting set, used for the size-class clip
+# versions (adreno_200/Animations.versions). Keyed by the same config path the
+# opponent already uses to identify its character, so a launcher that only sets
+# BRUCELEE_OPPONENT_ATTACK_CONFIG still gets the right class:
+#   brucelee (bruce lee a..d) medium, kungfu (shen lo, sin fu) medium,
+#   kungfu (the master) small, kungfu (lo ming a/b) large,
+#   karate (ken godall) medium, karate (chief a/b) large,
+#   thai (smallboy, brick davis, johnson) large.
+const ATTACK_CONFIG_SKELETON: Dictionary = {
+    "res://data/fighting_set_m03_mapped_attacks.json": "large",
+    "res://data/fighting_set_low_attacks.json": "medium",
+    "res://data/attack_config_smallboy.json": "large",
+    "res://data/attack_config_johnson.json": "large",
+    "res://data/attack_config_chief.json": "large",
+    "res://data/attack_config_loming.json": "large",
+    "res://data/attack_config_ken.json": "medium",
+    "res://data/attack_config_master.json": "small",
+    "res://data/attack_config_sinfu.json": "medium",
+    "res://data/attack_config_shenlo.json": "medium",
+}
+const PLAYER_SKELETON_DEFAULT: String = "medium"
 const CANDIDATE_HEIGHT_TOLERANCE: float = 0.01
 const ROUNDS_TO_WIN: int = 2
 const ROUND_RESET_DELAY: float = 2.0
@@ -1001,6 +1031,7 @@ func _build_fighters() -> void:
         PortFighter.CANDIDATE_CLIPS,
         "body_hair"
     )
+    player.set_skeleton_class(_player_skeleton_class())
     add_child(player)
     computer = PortFighter.new()
     computer.configure("Opponent (placeholder)", false, Color(0.20, 0.65, 0.76))
@@ -1017,6 +1048,7 @@ func _build_fighters() -> void:
         opponent_material_profile,
         false
     )
+    computer.set_skeleton_class(_opponent_skeleton_class())
     add_child(computer)
     player.opponent = computer
     computer.opponent = player
@@ -1041,6 +1073,36 @@ func _opponent_attack_config() -> String:
     if prefix == "m02":
         return PortFighter.KEN_ATTACK_CONFIG_PATH
     return PortFighter.BRICK_ATTACK_CONFIG_PATH
+
+
+func _player_skeleton_class() -> String:
+    ## Bruce Lee's four skins are all "medium" in characters.list. The env
+    ## override exists so a test can hold the body fixed and vary the class the
+    ## size-variant table keys on.
+    var configured: String = OS.get_environment("BRUCELEE_PLAYER_SKELETON")
+    if configured.is_empty():
+        return PLAYER_SKELETON_DEFAULT
+    return configured
+
+
+func _opponent_skeleton_class() -> String:
+    ## characters.list "skeleton" of the selected opponent. An explicit env
+    ## value wins; otherwise the fighting-set config identifies the character.
+    var configured: String = OS.get_environment("BRUCELEE_OPPONENT_SKELETON")
+    if not configured.is_empty():
+        return configured
+    var table: Dictionary = MENU_OPPONENT_CONFIG
+    for key: Variant in table:
+        var entry: Variant = table[key]
+        if not entry is Dictionary:
+            continue
+        if String(Dictionary(entry).get("attack_config", "")) == _opponent_attack_config():
+            var declared: String = String(Dictionary(entry).get("skeleton", ""))
+            if not declared.is_empty():
+                return declared
+    return String(
+        ATTACK_CONFIG_SKELETON.get(_opponent_attack_config(), PLAYER_SKELETON_DEFAULT)
+    )
 
 
 func _opponent_clips() -> Dictionary:
@@ -1277,6 +1339,9 @@ func _apply_opponent_switch(command: String) -> void:
     )
     OS.set_environment(
         "BRUCELEE_OPPONENT_ATTACK_CONFIG", String(config.get("attack_config", ""))
+    )
+    OS.set_environment(
+        "BRUCELEE_OPPONENT_SKELETON", String(config.get("skeleton", ""))
     )
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
     get_tree().reload_current_scene()

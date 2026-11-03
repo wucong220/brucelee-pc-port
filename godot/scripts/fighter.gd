@@ -1197,6 +1197,37 @@ const ENDATTACK_OPPONENT_ACTION: Dictionary = {
     "res://data/fighting_set_m03_mapped_attacks.json": "endattackcompthai",
     "res://data/attack_config_ken.json": "endattackcompkarate",
 }
+# ---------------------------------------------------------------------------
+# Size-class animation versions (recovered).
+#
+# adreno_200/Animations.versions lists alternate clip files for one base clip:
+# {"binary": <base clip>, "versions": [{"my_skeleton"|"opp_skeleton": <class>,
+# "binary": <version clip>}]}. characters.list gives every fighter its class in
+# the "skeleton" field (small / medium / large). A version exists only for
+# small and large, so a medium fighter plays the base clip.
+#
+# The port plays the version the original table selects for the grab and grab
+# finisher slots. A required version that the loaded candidate lacks is never
+# replaced by the wrong-size clip: the grab/finisher fails closed instead.
+#
+# The same table also versions all_idle_face_down/up (ground idles, audience
+# "self") and m01_sp_pnch_high (the special high punch, audience "opponent").
+# Those slots stay on their base clips in this port; they are listed in the
+# size-variant delivery report as a deliberate gap.
+const SIZE_VARIANTS_PATH: String = "res://data/size_variants.json"
+const SIZE_CLASS_SMALL: String = "small"
+const SIZE_CLASS_MEDIUM: String = "medium"
+const SIZE_CLASS_LARGE: String = "large"
+# Attack slots whose original clips carry size versions. Kept explicit so the
+# resolved clip can only replace a slot that really has a recovered version.
+const SIZE_CLASS_ATTACKS: Dictionary = {
+    "grab1": true, "grab2": true,
+    "grab1_brick": true, "grab2_brick": true,
+    "grab1_miss": true, "grab2_miss": true,
+    "grab1_miss_brick": true, "grab2_miss_brick": true,
+    "endattack1": true, "endattack2": true,
+    "endattack": true, "endattack_brick": true,
+}
 const NON_CONTACT_ATTACKS: Dictionary = {
     "endattack1": true, "endattack2": true, "endattack": true,
     "parry_low": true,
@@ -2616,6 +2647,23 @@ var candidate_visual_blend_pending_seconds: float = 0.0
 var candidate_visual_blend_seconds_last: float = 0.0
 var candidate_visual_blend_source_action_last: String = ""
 var candidate_visual_blend_target_action_last: String = ""
+# Size-class selection state (adreno_200/Animations.versions). skeleton_class is
+# the fighter's characters.list "skeleton" value; the rest records the last
+# resolution so a test or the HUD can prove which version was chosen.
+var skeleton_class: String = SIZE_CLASS_MEDIUM
+var _size_variants: Dictionary = {}
+var size_variants_error: String = ""
+var size_variant_status_last: String = ""
+var size_variant_class_last: String = ""
+var size_variant_base_last: String = ""
+var size_variant_clip_last: String = ""
+var size_variant_error: String = ""
+# The archived animation name behind each resolved victim slot, so the
+# size-variant lookup uses the set's clip name instead of a candidate path.
+var _victim_selected_animation: Dictionary = {}
+# Base candidate path per grab/finisher slot, captured once the candidate clips
+# are mapped, so a version resolution can always be undone.
+var _size_variant_base_path: Dictionary = {}
 var _time: float = 0.0
 var _body: MeshInstance3D
 var _left_arm: MeshInstance3D
@@ -2820,6 +2868,203 @@ func _root_motion_delta_to_pc_world(delta: Vector3, animation_name: String) -> V
     )
 
 
+func _load_size_variants() -> void:
+    ## Read the derived Animations.versions table once. A table that cannot be
+    ## read is a hard error: every grab/finisher then fails closed (the class
+    ## decision cannot be made), instead of silently playing base clips.
+    ## BRUCELEE_SIZE_VARIANTS overrides the path (tests, packaging).
+    _size_variants.clear()
+    size_variants_error = ""
+    var path: String = OS.get_environment("BRUCELEE_SIZE_VARIANTS")
+    if path.is_empty():
+        path = SIZE_VARIANTS_PATH
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        size_variants_error = "missing " + path
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        size_variants_error = "size variant table is not an object"
+        return
+    var table: Variant = Dictionary(parsed).get("variants")
+    if not table is Dictionary:
+        size_variants_error = "size variant table has no variants object"
+        return
+    for base: Variant in Dictionary(table):
+        var entry: Variant = Dictionary(table)[base]
+        if not entry is Dictionary:
+            continue
+        var audience: String = String(Dictionary(entry).get("audience", ""))
+        var versions: Variant = Dictionary(entry).get("versions")
+        if audience not in ["self", "opponent"] or not versions is Dictionary:
+            continue
+        var classes: Dictionary = {}
+        for size_class: Variant in Dictionary(versions):
+            var clip: String = String(Dictionary(versions)[size_class]).strip_edges()
+            if not clip.is_empty():
+                classes[String(size_class).strip_edges().to_lower()] = clip
+        if not classes.is_empty():
+            _size_variants[String(base)] = {
+                "audience": audience, "versions": classes,
+            }
+
+
+func set_skeleton_class(value: String) -> void:
+    ## characters.list "skeleton" value: small, medium or large. Anything else
+    ## is kept verbatim so size_variant_for can fail closed on it.
+    skeleton_class = value.strip_edges().to_lower()
+
+
+func skeleton_class_name() -> String:
+    var value: String = skeleton_class.strip_edges().to_lower()
+    if value in [SIZE_CLASS_SMALL, SIZE_CLASS_MEDIUM, SIZE_CLASS_LARGE]:
+        return value
+    return ""
+
+
+func size_variant_for(base_clip: String) -> Dictionary:
+    ## Resolve one archived base clip to the version its owner's class selects.
+    ## status: "base"     - no version exists, or the class is medium;
+    ##         "variant"  - the class version is loaded and can play;
+    ##         "unavailable" - a version is required but cannot be played.
+    var result: Dictionary = {
+        "status": "base", "clip": base_clip, "class": "", "reason": "",
+    }
+    var entry: Variant = _size_variants.get(base_clip)
+    if not entry is Dictionary:
+        return result
+    var audience: String = String(Dictionary(entry).get("audience", ""))
+    var owner: PortFighter = opponent if audience == "opponent" else self
+    if owner == null or not is_instance_valid(owner):
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": the size version is keyed by the "
+            + ("opponent" if audience == "opponent" else "own")
+            + " skeleton class and no such fighter is set"
+        )
+        return result
+    var klass: String = owner.skeleton_class_name()
+    result["class"] = klass
+    if klass.is_empty():
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": unknown skeleton class "
+            + JSON.stringify(owner.skeleton_class)
+        )
+        return result
+    var versions: Dictionary = Dictionary(entry)["versions"]
+    if klass == SIZE_CLASS_MEDIUM or not versions.has(klass):
+        # The original archive lists no version for this class: the base clip is
+        # the original choice, not a wrong-size substitute.
+        return result
+    var version_clip: String = String(versions[klass])
+    var matched: String = ""
+    if _candidate_animation != null:
+        matched = _find_animation_clip(_candidate_animation, version_clip)
+    if matched.is_empty():
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": " + klass + " version " + version_clip
+            + " is not in the loaded candidate"
+        )
+        return result
+    result["status"] = "variant"
+    result["clip"] = matched
+    return result
+
+
+func size_variant_state() -> Dictionary:
+    ## Everything a test or the HUD needs to prove which clip was selected.
+    return {
+        "skeleton_class": skeleton_class,
+        "table_entries": _size_variants.size(),
+        "table_error": size_variants_error,
+        "status": size_variant_status_last,
+        "class_used": size_variant_class_last,
+        "base": size_variant_base_last,
+        "clip": size_variant_clip_last,
+        "error": size_variant_error,
+        "playing": candidate_animation_clip,
+    }
+
+
+func _size_variant_base_clip(action: String) -> String:
+    ## The archived animation name of an action, not the resolved candidate
+    ## path: the version table is keyed by archived file basenames.
+    var mapped: String = String(candidate_clips.get(action, ""))
+    if not mapped.is_empty():
+        return mapped
+    if ATTACKS.has(action):
+        return String(ATTACKS[action].get("animation", ""))
+    return ""
+
+
+func _snapshot_size_variant_base_paths() -> void:
+    ## Remember the base candidate path of every grab/finisher slot so a later
+    ## class resolution can always restore it; without this a resolved version
+    ## could survive into a different matchup.
+    _size_variant_base_path.clear()
+    for action: Variant in SIZE_CLASS_ATTACKS:
+        var key: String = String(action)
+        if _candidate_clip_paths.has(key):
+            _size_variant_base_path[key] = _candidate_clip_paths[key]
+
+
+func _prepare_size_variant(kind: String) -> bool:
+    ## Resolve the size version for one attack slot. Returns false when a
+    ## required version is unavailable (or the table itself is missing), which
+    ## must refuse the grab/finisher instead of playing the base clip.
+    if not SIZE_CLASS_ATTACKS.has(kind):
+        return true
+    var base_clip: String = _size_variant_base_clip(kind)
+    if base_clip.is_empty():
+        return true
+    if not candidate_loaded:
+        # No candidate clips are loaded, so there is no clip to choose from and
+        # no wrong-size clip to avoid: the placeholder rig plays no clip at all.
+        size_variant_status_last = "base"
+        size_variant_class_last = ""
+        size_variant_base_last = base_clip
+        size_variant_clip_last = base_clip
+        size_variant_error = ""
+        return true
+    return _apply_size_variant(kind, base_clip)
+
+
+func _apply_size_variant(slot: String, base_clip: String) -> bool:
+    ## Point slot at the size version of base_clip and record the decision.
+    ## Returns false when a required version is unavailable: the caller must
+    ## then refuse the grab/finisher instead of playing the base clip.
+    var base_path: String = String(_size_variant_base_path.get(slot, ""))
+    if not size_variants_error.is_empty():
+        # Without the recovered table the class decision cannot be made, so the
+        # grab/finisher fails closed rather than silently using the base clip.
+        size_variant_status_last = "unavailable"
+        size_variant_class_last = ""
+        size_variant_base_last = base_clip
+        size_variant_clip_last = base_clip
+        size_variant_error = size_variants_error + " (size class table unavailable)"
+        if not base_path.is_empty():
+            _candidate_clip_paths[slot] = base_path
+        return false
+    var resolved: Dictionary = size_variant_for(base_clip)
+    size_variant_status_last = String(resolved.get("status", ""))
+    size_variant_class_last = String(resolved.get("class", ""))
+    size_variant_base_last = base_clip
+    size_variant_clip_last = String(resolved.get("clip", base_clip))
+    size_variant_error = String(resolved.get("reason", ""))
+    if size_variant_status_last == "unavailable":
+        # Never leave a previously resolved version in the slot.
+        if not base_path.is_empty():
+            _candidate_clip_paths[slot] = base_path
+        return false
+    if size_variant_status_last == "variant":
+        _candidate_clip_paths[slot] = String(resolved["clip"])
+    elif not base_path.is_empty():
+        _candidate_clip_paths[slot] = base_path
+    return true
+
+
 func _ready() -> void:
     if OS.get_environment("BRUCELEE_CANDIDATE_VISUAL_BLENDING") == "1":
         candidate_visual_blending_enabled = true
@@ -2828,6 +3073,7 @@ func _ready() -> void:
     _load_native_links()
     _load_attack_root_motion()
     _load_movement_root_motion()
+    _load_size_variants()
     collision_layer = 2
     collision_mask = 1 | 2
     var capsule: CapsuleShape3D = CapsuleShape3D.new()
@@ -3916,6 +4162,7 @@ func _try_load_candidate_visual() -> void:
     for visual: MeshInstance3D in _placeholder_visuals:
         visual.visible = false
     candidate_loaded = true
+    _snapshot_size_variant_base_paths()
     _play_candidate_action("idle")
 
 
@@ -5333,16 +5580,22 @@ func _try_follow_links() -> bool:
             return true
         if not ATTACKS.has(target):
             continue
+        # Size-class versions are resolved before the link is consumed: a
+        # required but missing version must not swallow the input and must not
+        # start the chained grab/finisher with the wrong-size clip.
+        if not _prepare_size_variant(target):
+            continue
+        if not _begin_chained_attack(
+            target,
+            int(link.get("entry_frame", 0)),
+            int(link.get("blending", 0))
+        ):
+            continue
         # The native link conditions (ragethird / rage2thirds) gate on the
         # meter; the set has no per-link rage cost field, so do not spend here.
         _consume_link_events(link)
         if consume_all:
             _clear_link_events()
-        _begin_chained_attack(
-            target,
-            int(link.get("entry_frame", 0)),
-            int(link.get("blending", 0))
-        )
         return true
     return false
 
@@ -5499,6 +5752,12 @@ func request_attack(kind: String) -> bool:
                 and opponent.state in ["grabbed1", "grabbed2"]):
             if not attack_cancel_window_open():
                 return false
+    if not _prepare_size_variant(kind):
+        # The original selects the grab/finisher clip from the opponent's
+        # skeleton class. A required version the candidate cannot play is a
+        # refusal, never a fall back to the wrong-size base clip.
+        push_warning(character_name + " " + kind + " refused: " + size_variant_error)
+        return false
     attack_kind = kind
     attack_sequence += 1
     _attack_connected = false
@@ -5764,7 +6023,7 @@ func _apply_attack_start_frame(kind: String, start_frame: int) -> void:
 
 func _begin_chained_attack(
         kind: String, start_frame: int = 0, blend_frames: int = 0
-) -> void:
+) -> bool:
     # Native first links for the special moves are the miss/fail animations.
     # They are not useful as playable moves; go straight to the hit variants.
     if kind in ["special_kick_low_miss", "special_punch_low_miss",
@@ -5772,6 +6031,11 @@ func _begin_chained_attack(
         var hit_kind: String = kind.replace("_miss", "_hit")
         if ATTACKS.has(hit_kind):
             kind = hit_kind
+    # A link target that is a grab/finisher must pass the same size-class gate as
+    # a requested attack, otherwise the link would play the base clip.
+    if not _prepare_size_variant(kind):
+        push_warning(character_name + " " + kind + " link refused: " + size_variant_error)
+        return false
     attack_kind = kind
     var rage_cost: float = _action_rage_value(kind)
     if rage_cost < 0.0:
@@ -5790,6 +6054,7 @@ func _begin_chained_attack(
     if blend_frames > 0:
         _queue_candidate_visual_blend(float(blend_frames) / SOURCE_FRAME_RATE)
     attack_started.emit(kind)
+    return true
 
 
 func _native_link_blending_to(target_action: String, fallback: int) -> int:
@@ -6020,6 +6285,7 @@ func _select_grab_victim_clip(slot_key: String) -> bool:
     if matched.is_empty():
         return false
     _candidate_clip_paths[slot_key] = matched
+    _victim_selected_animation[slot_key] = animation
     return true
 
 
@@ -6040,6 +6306,29 @@ func _select_endattack_victim_clip(slot_key: String) -> bool:
     if matched.is_empty():
         return false
     _candidate_clip_paths[slot_key] = matched
+    _victim_selected_animation[slot_key] = animation
+    return true
+
+
+func _apply_victim_size_variant(slot_key: String) -> bool:
+    ## The victim clips can carry their own size version (Animations.versions
+    ## "opp_skeleton" on a grabbed/endattackcomp clip). Resolve it against the
+    ## archived clip name the set selected and fail closed when it is missing.
+    var animation: String = String(
+        _victim_selected_animation.get(
+            slot_key, String(candidate_clips.get(slot_key, ""))
+        )
+    )
+    if animation.is_empty():
+        return true
+    if not candidate_loaded:
+        # Placeholder rig: no candidate clip exists to swap for a version.
+        return true
+    if not _apply_size_variant(slot_key, animation):
+        push_warning(
+            character_name + " " + slot_key + " refused: " + size_variant_error
+        )
+        return false
     return true
 
 
@@ -6053,6 +6342,8 @@ func begin_grabbed(kind: String) -> bool:
     # The player's static map holds only the Thai victim set; use his recovered
     # per-opponent action instead, and refuse the grab if the variant is absent.
     if is_player and not _select_grab_victim_clip(clip_key):
+        return false
+    if not _apply_victim_size_variant(clip_key):
         return false
     state = clip_key
     state_time = float(data[1]) / SOURCE_FRAME_RATE
@@ -6070,6 +6361,8 @@ func begin_endattack_victim() -> bool:
     if not _candidate_clip_paths.has(clip_key):
         return false
     if is_player and not _select_endattack_victim_clip(clip_key):
+        return false
+    if not _apply_victim_size_variant(clip_key):
         return false
     state = clip_key
     state_time = float(data[1]) / SOURCE_FRAME_RATE
