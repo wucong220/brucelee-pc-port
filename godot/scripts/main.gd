@@ -67,6 +67,7 @@ var elapsed: float = 0.0
 var notice_timer: float = 0.0
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var round_number: int = 1
+var round_time_left: float = 99.0
 var player_rounds: int = 0
 var computer_rounds: int = 0
 var match_over: bool = false
@@ -639,12 +640,19 @@ func _reset_round() -> void:
     notice_timer = 1.2
     round_reset_timer = -1.0
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
+    _reset_round_time()
     hud.show_message(
         "TRAINING · K L L / K U U" if training_mode
         else "ROUND %d · FIGHT" % round_number
     )
     _restart_fight_camera()
     _update_fight_camera()
+
+
+func _reset_round_time() -> void:
+    var override: String = OS.get_environment("BRUCELEE_ROUND_TIME")
+    round_time_left = override.to_float() if override.is_valid_float() else 99.0
+    hud.set_time(round_time_left)
 
 
 func _start_next_round() -> void:
@@ -1096,6 +1104,15 @@ func _exit_tree() -> void:
     combat_audio = null
 
 func _process(_delta: float) -> void:
+    if not done and not main_menu_enabled and not training_mode:
+        round_time_left = maxf(0.0, round_time_left - _delta)
+        if hud != null:
+            hud.set_time(round_time_left)
+        if round_time_left <= 0.0:
+            done = true
+            _show_game_text("TIME_IS_UP", 2.5)
+            if hud != null:
+                hud.show_message("TIME IS UP  ·  R TO RESTART")
     if _game_text_timer > 0.0:
         _game_text_timer -= _delta
         if _game_text_timer <= 0.0 and _game_text_rect != null:
