@@ -3011,10 +3011,29 @@ func _try_load_candidate_visual() -> void:
         )
         if not matched_optional.is_empty():
             _candidate_clip_paths[action] = matched_optional
-    # The candidate GLB may contain extra shared reaction clips that are not
-    # keys in the per-character action map. Keep them addressable by native
-    # animation name so reaction links can select them.
+    # Candidate-provided reactions are separate from source-link flags. Never
+    # expose one through the generic animation table before its tracks pass the
+    # reaction safety check, including reactions selected by native links.
+    var reaction_names: Dictionary = {}
+    for group: String in REACTION_PROFILES:
+        for profile: Variant in Dictionary(REACTION_PROFILES[group]).values():
+            reaction_names[String(profile.get("animation", ""))] = true
+    for group: String in EXACT_REACTIONS:
+        for profile: Variant in EXACT_REACTIONS[group]:
+            reaction_names[String(profile.get("animation", ""))] = true
+    for group: String in _native_reactions:
+        for profile: Variant in _native_reactions[group]:
+            reaction_names[String(profile.get("animation", ""))] = true
+    for reaction_name: String in reaction_names:
+        var matched: String = _find_animation_clip(_candidate_animation, reaction_name)
+        _candidate_clip_paths.erase(reaction_name)
+        if not matched.is_empty() and _candidate_skeleton != null:
+            if _prepare_candidate_reaction(_candidate_animation.get_animation(matched)):
+                _candidate_clip_paths[reaction_name] = matched
     for anim_name: String in _candidate_animation.get_animation_list():
+        var native_name: String = anim_name.get_file()
+        if reaction_names.has(native_name):
+            continue
         if not _candidate_clip_paths.values().has(anim_name):
             _candidate_clip_paths[anim_name] = anim_name
     # Reaction clips are optional so earlier three-clip local assets still work.
