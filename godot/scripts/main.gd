@@ -621,6 +621,16 @@ func _build_fighters() -> void:
     player.attack_started.connect(_on_player_attack_started)
 
 func _opponent_clips() -> Dictionary:
+    if OS.get_environment("BRUCELEE_OPPONENT_MASTER") == "1":
+        return {
+            "idle": "m04_e01_idle_01",
+            "punch": "m04_e01_pnch_low_03",
+            "kick": "m04_e01_kck_low_03",
+            "high_punch": "m04_e01_pnch_high_03",
+            "high_kick": "m04_e01_kck_high_03",
+            "special_punch_low": "m04_sp_pnch_low",
+            "special_kick_low": "m04_sp_kck_low",
+        }
     var prefix: String = OS.get_environment("BRUCELEE_OPPONENT_CLIP_PREFIX")
     if prefix.is_empty():
         return PortFighter.BRICK_CLIPS
