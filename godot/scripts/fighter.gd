@@ -2883,13 +2883,31 @@ func _root_motion_delta_to_pc_world(delta: Vector3, animation_name: String) -> V
     # The only place raw ANM positions are converted into PC world motion.
     # Source movement tracks establish the axes: movefwd/stepfwd are -Y,
     # moveback/stepback are +Y, steplft is +X and steprht is -X. Local +X is
-    # forward and local +Z is right, so source +X (left) maps to local -Z.
-    # Per-clip status remains EMPIRICAL/UNVERIFIED for non-movement clips.
-    return Vector3(
-        facing * (-delta.y) * source_units_to_world,
-        0.0,
-        facing * (-delta.x) * source_units_to_world
-    )
+    # forward (toward the opponent) and local +Z is right, so source +X (left)
+    # maps to local -Z.
+    #
+    # Native krm::CFighter::UpdatePositionWithRootDisplacement (@0x1b1934)
+    # rotates the per-frame root delta by the fighter's CURRENT rotation; and
+    # krm::CFighter::FacingUpdate (@0x1b170c) has already aimed local +X at the
+    # opponent (rotation.y = atan2(-dz, dx)). So the delta must be rotated by
+    # the full facing yaw, NOT collapsed onto the world X axis. Using only the
+    # scalar "facing" sign matches native only while the fighter line lies
+    # along world X; at any other bearing it maps stepfwd onto world +/-X
+    # instead of the opponent direction, inverting forward/lateral control on
+    # screen (the camera keeps the fighter axis horizontal, so this shows up
+    # as left/right vs into/out-of-screen inversion).
+    var forward: Vector3
+    if absf(rotation.y) > 0.0001:
+        forward = Vector3(cos(rotation.y), 0.0, -sin(rotation.y))
+    else:
+        # No yaw has been applied yet (tests / pre-facing setup); honour the
+        # legacy facing scalar. In gameplay rotation.y is set every physics
+        # frame before root motion is applied, so this branch is not taken.
+        forward = Vector3(facing, 0.0, 0.0)
+    forward = forward.normalized()
+    var right: Vector3 = Vector3(forward.z, 0.0, -forward.x)
+    var world: Vector3 = forward * (-delta.y) + right * delta.x
+    return world * source_units_to_world
 
 
 func _load_size_variants() -> void:
