@@ -5489,7 +5489,7 @@ func _opponent_distance() -> float:
 func _fighter_pose() -> String:
     # Recovered action pose: stand / laying / crouch / stun / jump.
     if state in ["hitstun", "blockstun", "stun", "stun2", "stunfall",
-            "stunimpact", "impactstun"]:
+            "stunimpact", "impactstun", "grabbed1", "grabbed2"]:
         return "stun"
     if state in ["facedownidle", "facedownko", "facedowngetup", "facedownattack",
             "impactfacedown", "impacttofloor", "faceupidle", "faceupko",
