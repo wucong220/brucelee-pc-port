@@ -149,6 +149,8 @@ func close() -> void:
         player.attack_root_motion_enabled = true
         player.set_physics_process(true)
     if computer != null:
+        computer.collision_layer = 2
+        computer.collision_mask = 1 | 2
         computer.set_physics_process(true)
 
 
@@ -321,6 +323,11 @@ func _prepare_current() -> void:
     player.rage = 100.0
     computer.set_physics_process(false)
     computer.reset_fighter(Vector3(0.25, 1.20, 0.0))
+    # Training setups teleport the dummy to within 0.22 m while both capsules
+    # have radius 0.34.  That overlap pushes the player to the arena edge and
+    # then off the floor.  Keep the visual dummy, but do not collide with it.
+    computer.collision_layer = 0
+    computer.collision_mask = 0
     computer.health = 9999.0
     computer.state = "idle"
     computer.attack_kind = ""
