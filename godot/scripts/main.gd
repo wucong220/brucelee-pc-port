@@ -2596,10 +2596,11 @@ func _handle_fighter_attack_input(
     # directions are separate key presses (see _record_direction_press) and
     # native link conditions read held state via InputStatusCheck, so they must
     # not be folded into the attack event.
-    # Step-prerequisite specials/grab: accept the final attack press directly
-    # while the corresponding step action is held, so a transient miss/link
-    # window cannot swallow the move.
-    if fighter.is_player and fighter.state == "idle":
+    # Move Training may start the documented move directly from its final
+    # key.  Normal VS must use the recovered native link tables; the direct
+    # step+key path would bypass link sequences and rage gates there.
+    if fighter.is_player and fighter.state == "idle" \
+            and move_training != null and move_training.is_active():
         var step_action: String = fighter._native_movement_action()
         var direct_target: String = ""
         if step_action == "stepleft" and event.is_action_pressed(action_d):
