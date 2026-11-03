@@ -535,6 +535,12 @@ func _build_original_far_scene() -> void:
         var pos: Array = entry.get("position", [0.0, 0.0, 0.0])
         instance.position = Vector3(float(pos[0]), float(pos[2]), -float(pos[1])) * scale_value
         instance.scale = Vector3.ONE * scale_value
+        if bool(entry.get("apply_rotation", false)):
+            var rot: Array = entry.get("rotation", [0.0, 0.0, 0.0, 1.0])
+            if rot.size() >= 4:
+                instance.quaternion = Quaternion(
+                    float(rot[0]), float(rot[1]), float(rot[2]), float(rot[3])
+                )
         if "combatarea" in entry_name:
             _scene_origin = Vector3(float(pos[0]), 0.0, -float(pos[1])) * scale_value
         var material: StandardMaterial3D = fallback_material
