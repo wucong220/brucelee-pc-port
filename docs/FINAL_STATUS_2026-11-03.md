@@ -1,8 +1,8 @@
-# Current port status (2026-11-03 08:45)
+# Current port status (2026-11-03 09:15)
 
 ## Package
 
-`D:\BruceLeeWork\DragonWarrior-Current42-20261103`
+`D:\BruceLeeWork\DragonWarrior-Current43-20261103`
 
 - Built through `build_windows.ps1 -RuntimeAssetRoot`.
 - Includes exe/pck, audio, menu, scene, ui, launch.ps1, main/B/direct launchers.
@@ -20,5 +20,6 @@
 
 - Tournament Hall A: white/triangular background after import; not exposed.
 - Original game-text textures: decoded alpha is a splat mask, not lettering.
-- Brick brutal: `all_sp_pnch_low_forset04` source skeleton still unidentified.
+- Brick brutal: `all_sp_pnch_low_forset04` retargeted Bruce→Brick and merged;
+  self-test reports `opponent_brutal_clip: true`. Candidate, not native-verified.
 - Remaining 8 characters, 8 scenes, most UI and many audio files are still absent.
