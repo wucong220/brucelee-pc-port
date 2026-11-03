@@ -214,6 +214,10 @@ const CAM_MIN_DISTANCE: float = 275.0
 const CAM_TARGET_HEIGHT: float = 112.0
 const CAM_ELEVATION: float = 0.0
 const CAM_SIDE: int = 0
+# Godot Camera3D default vertical FOV, which is what the analytic follow camera
+# has always used (the formula carries no fov). It is re-asserted every analytic
+# frame so an authored .anm clip's animated fov cannot leak into the fight view.
+const CAM_FIGHT_FOV: float = 75.0
 
 var player: PortFighter
 var computer: PortFighter
@@ -330,6 +334,18 @@ var _camera_anm_mirror: bool = false
 var _camera_anm_anchor: PortFighter = null
 var _camera_anm_a: Vector3 = Vector3.ZERO
 var _camera_anm_b: Vector3 = Vector3.ZERO
+
+# ---- Original camera .anm playback for the MATCH_STATE_INTRO (SetState(3)) ----
+# Decoded from adreno_200/cameras/m01_intro_01_camera.anm (121 frames @ 30 fps,
+# fov 56.35 deg -> 9.0 deg, camera height ~0.63-0.74 m, distance ~1.9-2.1 m).
+# The JSON is shipped as data/camera_anm/m01_intro_01.json; no keyframe is
+# invented here. Decompiled CBeatEmUpGame::CameraUpdate (@ 0x188d88) picks the
+# dummy fighter from the local-player flag (this+0x7e0) and passes mirror = 0
+# for every state other than 1/2/12/13; SetState(3) starts the intro animation
+# on both fighters, so a single-player build rides fighter 0's intro clip, i.e.
+# m01_intro_01 for match 1. When the file is missing the intro keeps the
+# pre-existing analytic follow camera.
+const INTRO_CAMERA_CLIP: String = "m01_intro_01"
 
 # AI-only prototype costs: the native AI decision is not recovered, so the
 # Brick AI uses these thresholds/costs. They are not part of the player action
@@ -2098,6 +2114,7 @@ func _start_round_intro() -> void:
         done = false
         return
     _enter_match_state(MATCH_STATE_INTRO)
+    _intro_camera_begin()
     _intro_fight_shown = false
     _show_game_text("READY", 0.8, GAME_TEXT_SEQ_READY)
     # Ready_Alt_1.wav is the recovered sample of game-text record 0 and is
@@ -2401,6 +2418,45 @@ func _camera_anm_fighter_point(fighter: PortFighter) -> Vector3:
     return Vector3(p.x, -p.z, p.y - PortFighter.PLAYER_ORIGIN_HEIGHT) / CAM_SOURCE_UNITS_TO_WORLD
 
 
+func _intro_camera_local_fighter() -> PortFighter:
+    ## CBeatEmUpGame::CameraUpdate (@0x188d88) selects the camera dummy with
+    ## `CFighter *f = this + (byte)this[0x7e0] * 0x1b8 + 0x24`. The port is a
+    ## single-player build whose human always occupies fighter slot 0 (the left
+    ## start slot), so this[0x7e0] == 0 and the dummy is `player`.
+    return player
+
+
+func _intro_camera_begin(
+        anchor: PortFighter = null, mirror: bool = false
+) -> bool:
+    ## Arm the authored SetState(3) round-intro camera. Unlike states 12/13,
+    ## SetState(3) leaves both fighters at their fight-start positions, so the
+    ## anchors are the live fighter points (no rebase). The dummy is the local
+    ## player's fighter (decompiled CameraUpdate @0x188d88: uVar4 = this[0x7e0],
+    ## mirror = 0 for state 3); the opponent only supplies the yaw direction.
+    ## `anchor`/`mirror` are exposed so the same wiring also covers the
+    ## opponent-side (player-on-the-right) case without inventing keyframes.
+    if _camera_anm == null:
+        _camera_anm = CameraAnm.new()
+    if not _camera_anm.load_json(_camera_anm_dir + INTRO_CAMERA_CLIP + ".json"):
+        _camera_anm_clip = ""
+        _camera_anm_anchor = null
+        return false
+    var dummy: PortFighter = anchor if anchor != null else _intro_camera_local_fighter()
+    var other: PortFighter = computer if dummy == player else player
+    var a: Vector3 = _camera_anm_fighter_point(dummy)
+    var b: Vector3 = _camera_anm_fighter_point(other)
+    if (b - a).length() < 0.001:
+        b = a + Vector3(dummy.facing, 0.0, 0.0)
+    _camera_anm_clip = INTRO_CAMERA_CLIP
+    _camera_anm_frame = 0.0
+    _camera_anm_anchor = dummy
+    _camera_anm_mirror = mirror
+    _camera_anm_a = a
+    _camera_anm_b = b
+    return true
+
+
 func _camera_anm_begin(
         clip: String, winner: PortFighter, player_pre: Vector3, computer_pre: Vector3
 ) -> bool:
@@ -2470,6 +2526,40 @@ func _camera_anm_play_authored(delta: float) -> bool:
         )
     return true
 
+
+func _intro_camera_play_authored(delta: float) -> bool:
+    ## Per-frame playback of the SetState(3) intro clip (30 fps, no
+    ## interpolation). Unlike the result camera, this one *finishes*: when the
+    ## frame counter passes the last authored frame it ends and returns false so
+    ## the analytic follow camera takes over. Native CameraUpdate keeps the
+    ## authored camera overriding the analytic one until StopAnimation/timeout
+    ## (report E10), and the clip is 4.03 s while SetState(3) lasts 3.0 s, so the
+    ## final fov ramp (frames 90-120, 56 deg -> 9 deg) plays over the first
+    ## ~1 s of the fight exactly as natively timed.
+    if (_camera_anm == null or _camera_anm_clip != INTRO_CAMERA_CLIP
+            or _camera_anm_anchor == null):
+        return false
+    var last: int = _camera_anm.frame_count() - 1
+    if last < 0:
+        return false
+    _camera_anm_frame += maxf(delta, 0.0) * 30.0
+    if _camera_anm_frame > float(last):
+        _camera_anm_end()
+        return false
+    var index: int = int(_camera_anm_frame)
+    var pose: Dictionary = _camera_anm.place_world(
+        index, _camera_anm_a, _camera_anm_b, _camera_anm_mirror
+    )
+    fight_camera.fov = float(pose["fov_degrees"])
+    if bool(pose["has_target"]):
+        fight_camera.global_position = pose["camera_world"]
+        fight_camera.look_at(pose["target_world"], Vector3.UP)
+    else:
+        _camera_anm.apply_to(
+            fight_camera, index, _camera_anm_a, _camera_anm_b, _camera_anm_mirror
+        )
+    return true
+
 func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
     if (not is_instance_valid(fight_camera) or not is_instance_valid(player)
             or not is_instance_valid(computer)):
@@ -2489,6 +2579,14 @@ func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
         fight_camera.global_position = target + Vector3(0.0, 1.4, 4.2)
         fight_camera.look_at(target, Vector3.UP)
         return
+    if _camera_anm_clip == INTRO_CAMERA_CLIP and match_state in [
+            MATCH_STATE_INTRO, MATCH_STATE_FIGHT]:
+        # SetState(3) READY/FIGHT: play the authored m01_intro_01 camera per
+        # frame; it deliberately survives the INTRO -> FIGHT transition so the
+        # authored fov ramp finishes natively. When the JSON is missing the clip
+        # stays empty and the analytic follow camera below keeps the old framing.
+        if _intro_camera_play_authored(delta):
+            return
     var a: Vector3 = _camera_fighter_point(player)
     var b: Vector3 = _camera_fighter_point(computer)
     var alpha: float = 1.0 - pow(CAM_SMOOTH_OLD, maxf(delta, 0.0) * CAM_UPDATE_HZ)
@@ -2497,6 +2595,7 @@ func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
     var pose: Dictionary = _native_camera_pose(
         _cam_smooth_a, _cam_smooth_b, _camera_aspect_scale()
     )
+    fight_camera.fov = CAM_FIGHT_FOV
     fight_camera.global_position = (pose["position"] as Vector3) * CAM_SOURCE_UNITS_TO_WORLD
     fight_camera.look_at((pose["target"] as Vector3) * CAM_SOURCE_UNITS_TO_WORLD, Vector3.UP)
 
@@ -2660,7 +2759,15 @@ func _on_time_up() -> void:
 
 func _enter_match_state(next_state: int) -> void:
     if next_state not in [MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE]:
-        _camera_anm_end()
+        # The authored intro camera is allowed to survive INTRO(3) -> FIGHT(4)
+        # so its 4.03 s clip finishes as natively timed (CameraUpdate keeps it
+        # until StopAnimation/timeout); every other transition ends it.
+        var keep_intro: bool = (
+            next_state == MATCH_STATE_FIGHT
+            and _camera_anm_clip == INTRO_CAMERA_CLIP
+        )
+        if not keep_intro:
+            _camera_anm_end()
     match_state = next_state
     match_state_time = 0.0
     _round_end_handled = false
