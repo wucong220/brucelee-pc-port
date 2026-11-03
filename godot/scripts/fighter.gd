@@ -2641,6 +2641,15 @@ var guard_held: bool = false
 var opponent: PortFighter
 var state: String = "idle"
 var state_time: float = 0.0
+# BasicUpdate frame clock. Labels startup/active/recovery stay for callers,
+# but hits and the idle return follow the source frame when this is on.
+# Set BRUCELEE_FRAME_STATE_MACHINE=0 to restore the phase countdown.
+var frame_state_machine_enabled: bool = (
+    OS.get_environment("BRUCELEE_FRAME_STATE_MACHINE") != "0"
+)
+var _attack_clock_ms: float = 0.0
+var _attack_clock_start_frame: int = 0
+var _attack_clock_active: bool = false
 var attack_kind: String = ""
 var attack_sequence: int = 0
 var _attack_root_tracks: Dictionary = {}
@@ -4661,6 +4670,7 @@ func _enter_locomotion_state(next_state: String, start_frame: int = 0) -> void:
     state = next_state
     state_time = float(start_frame) / SOURCE_FRAME_RATE
     attack_kind = ""
+    _attack_clock_active = false
     _clear_link_state()
     _clear_reaction_tracking()
     if (candidate_visual_blending_enabled
@@ -5287,6 +5297,18 @@ func _current_attack_source_frame() -> float:
     if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
         return -1.0
     var details: Dictionary = ATTACKS[attack_kind]
+    var phase_frame: float = _phase_attack_source_frame(details)
+    if frame_state_machine_enabled and _attack_clock_active:
+        # frame = truncate((now_ms - start_ms) * 0.03 * speed), clamped to the ANM.
+        var advanced: int = int(_attack_clock_ms * 0.03)
+        var frame: float = float(_attack_clock_start_frame + advanced)
+        # Manual tests and entry-frame callers mutate the phase timer directly;
+        # keep the larger of the two so neither path rewinds the source frame.
+        return minf(maxf(frame, phase_frame), float(details["animation_frame_count"]))
+    return phase_frame
+
+
+func _phase_attack_source_frame(details: Dictionary) -> float:
     var remaining_frames: float = state_time * SOURCE_FRAME_RATE
     if state == "startup":
         remaining_frames += (
@@ -5973,6 +5995,9 @@ func request_attack(kind: String) -> bool:
     _grab_connected = false
     _endattack_victim_started = false
     _multi_impact_applied.clear()
+    _attack_clock_ms = 0.0
+    _attack_clock_start_frame = 0
+    _attack_clock_active = true
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
     _seed_attack_root_motion()
@@ -6105,6 +6130,11 @@ func _advance_locomotion_visual(delta: float) -> void:
             _locomotion_root_ready = false
 
 func _advance_timed_states(delta: float) -> void:
+    if (frame_state_machine_enabled
+            and state in ["startup", "active", "recovery"]
+            and ATTACKS.has(attack_kind)):
+        _advance_frame_attack(delta)
+        return
     if state in ["grabbed1", "grabbed2"]:
         state_time -= delta
         if state_time <= 0.000001:
@@ -6165,6 +6195,84 @@ func _advance_timed_states(delta: float) -> void:
         _apply_attack_root_motion()
         _advance_state()
 
+
+func _sync_attack_phase_from_frame() -> void:
+    if not ATTACKS.has(attack_kind):
+        return
+    var details: Dictionary = ATTACKS[attack_kind]
+    var frame: float = _current_attack_source_frame()
+    var startup_frames: float = float(details["startup"]) * SOURCE_FRAME_RATE
+    var active_frames: float = float(details["active"]) * SOURCE_FRAME_RATE
+    var total_frames: float = float(details["animation_frame_count"])
+    if frame < startup_frames:
+        state = "startup"
+        state_time = (startup_frames - frame) / SOURCE_FRAME_RATE
+    elif frame < startup_frames + active_frames:
+        state = "active"
+        state_time = (startup_frames + active_frames - frame) / SOURCE_FRAME_RATE
+    else:
+        state = "recovery"
+        state_time = maxf((total_frames - frame) / SOURCE_FRAME_RATE, 0.0)
+
+
+func _advance_frame_attack(delta: float) -> void:
+    # Visit every integer source frame, including when a physics step is large.
+    var remaining: float = maxf(delta, 0.0)
+    var step: float = 1.0 / 120.0
+    var guard_steps: int = 0
+    while remaining > 0.0000001 and state in ["startup", "active", "recovery"]:
+        guard_steps += 1
+        if guard_steps > 4096:
+            push_warning("frame attack step cap")
+            return
+        var tick: float = minf(remaining, step)
+        if tick <= 0.0:
+            return
+        remaining -= tick
+        var before: int = int(_current_attack_source_frame())
+        _attack_clock_ms += tick * 1000.0
+        var frame: float = _current_attack_source_frame()
+        _sync_attack_phase_from_frame()
+        if int(frame) != before:
+            if ATTACKS.has(attack_kind) and not NON_CONTACT_ATTACKS.has(attack_kind):
+                if not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty():
+                    _try_multi_impact_contacts()
+                elif not _attack_connected and state == "active":
+                    _try_attack_contact()
+            _apply_attack_root_motion()
+        var details: Dictionary = ATTACKS[attack_kind]
+        var total: float = float(details["animation_frame_count"])
+        var native_return: Dictionary = _native_recovery_return()
+        if not native_return.is_empty():
+            var target_state: String = String(native_return["state"])
+            if target_state == "idle2" and not _candidate_clip_paths.has(IDLE2_CLIP):
+                target_state = "idle"
+            elif target_state == "idle3" and not _candidate_clip_paths.has(IDLE3_CLIP):
+                target_state = "idle"
+            _enter_locomotion_state(
+                target_state,
+                int(native_return.get("entry_frame", 0))
+            )
+            return
+        if frame + 0.0001 >= total:
+            _enter_locomotion_state("idle")
+            return
+
+
+func _idle_return_start_frame(native_return: Dictionary) -> float:
+    var action: String = _current_action_name()
+    var target: String = String(native_return.get("state", ""))
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != action:
+            continue
+        if _link_text(link, "to") != target:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() >= 2:
+            return float(window[0])
+    return 9999.0
+
+
 func _try_multi_impact_contacts() -> void:
     var details: Dictionary = ATTACKS[attack_kind]
     var impacts: Array = details.get("multi_impacts", [])
@@ -6183,13 +6291,16 @@ func _try_multi_impact_contacts() -> void:
         var distance: float = Vector2(dx, dz).length()
         var reach: float = (float(impact["attack_radius"]) * radius_scale
                 + opponent.source_radius_for_current_animation()) * source_units_to_world
-        if _multi_impact_applied.is_empty() and distance > reach:
+        # The frame clock judges every impact on its own window. The phase
+        # machine keeps the old "first hit chains the rest" shortcut.
+        if frame_state_machine_enabled:
+            if distance > reach:
+                continue
+            if dx * facing < -0.1 and not GRAB_ATTACKS.has(attack_kind):
+                continue
+        elif _multi_impact_applied.is_empty() and distance > reach:
             continue
-        # Once the first impact lands, later impacts still belong to the same
-        # connected sequence. Block push or grab hold motion can move the
-        # target slightly outside the opening reach or behind the facing line;
-        # do not discard the remaining connected hits.
-        if (_multi_impact_applied.is_empty() and dx * facing < -0.1
+        elif (_multi_impact_applied.is_empty() and dx * facing < -0.1
                 and not GRAB_ATTACKS.has(attack_kind)):
             continue
         var blocked: bool = opponent.guard_held and (
@@ -6217,6 +6328,9 @@ func _apply_attack_start_frame(kind: String, start_frame: int) -> void:
     var active_frames: float = float(details.get("active", 0.0)) * fps
     var total_frames: float = float(details.get("animation_frame_count", 0))
     var frame: float = clampf(float(start_frame), 0.0, maxf(total_frames - 1.0, 0.0))
+    _attack_clock_ms = 0.0
+    _attack_clock_start_frame = int(frame)
+    _attack_clock_active = true
     if frame < startup_frames:
         state = "startup"
         state_time = (startup_frames - frame) / fps
@@ -7652,6 +7766,9 @@ func reset_fighter(start_position: Vector3) -> void:
     health = MAX_HEALTH
     state = "idle"
     state_time = 0.0
+    _attack_clock_ms = 0.0
+    _attack_clock_start_frame = 0
+    _attack_clock_active = false
     result_clip = ""
     result_pose_active = false
     visible = true
