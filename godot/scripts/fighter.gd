@@ -1212,8 +1212,8 @@ const ENDATTACK_OPPONENT_ACTION: Dictionary = {
 #
 # The same table also versions all_idle_face_down/up (ground idles, audience
 # "self") and m01_sp_pnch_high (the special high punch, audience "opponent").
-# Those slots stay on their base clips in this port; they are listed in the
-# size-variant delivery report as a deliberate gap.
+# Both are selected here as well: the ground idles by the downed fighter's own
+# class, the special high punch by the opponent's class.
 const SIZE_VARIANTS_PATH: String = "res://data/size_variants.json"
 const SIZE_CLASS_SMALL: String = "small"
 const SIZE_CLASS_MEDIUM: String = "medium"
@@ -1227,6 +1227,9 @@ const SIZE_CLASS_ATTACKS: Dictionary = {
     "grab1_miss_brick": true, "grab2_miss_brick": true,
     "endattack1": true, "endattack2": true,
     "endattack": true, "endattack_brick": true,
+    # m01_sp_pnch_high also carries size versions (audience "opponent"); only
+    # the hit variant maps it, the miss/fail clip is unversioned.
+    "special_punch_high_hit": true,
 }
 const NON_CONTACT_ATTACKS: Dictionary = {
     "endattack1": true, "endattack2": true, "endattack": true,
@@ -2658,6 +2661,13 @@ var size_variant_class_last: String = ""
 var size_variant_base_last: String = ""
 var size_variant_clip_last: String = ""
 var size_variant_error: String = ""
+# Ground-idle resolution state (all_idle_face_down/up, audience "self"). Kept
+# separate from the attack-slot state so both can be proven independently.
+var ground_idle_status_last: String = ""
+var ground_idle_class_last: String = ""
+var ground_idle_base_last: String = ""
+var ground_idle_clip_last: String = ""
+var ground_idle_error: String = ""
 # The archived animation name behind each resolved victim slot, so the
 # size-variant lookup uses the set's clip name instead of a candidate path.
 var _victim_selected_animation: Dictionary = {}
@@ -2971,6 +2981,92 @@ func size_variant_for(base_clip: String) -> Dictionary:
     result["status"] = "variant"
     result["clip"] = matched
     return result
+
+
+func _size_variant_archived(base_clip: String) -> Dictionary:
+    ## Same rule as size_variant_for, but reports the archived clip name (the
+    ## version file name) instead of a candidate path. Ground-idle slots are
+    ## keyed in _candidate_clip_paths by archived name, so they need this form.
+    var result: Dictionary = {
+        "status": "base", "clip": base_clip, "class": "", "reason": "",
+    }
+    var entry: Variant = _size_variants.get(base_clip)
+    if not entry is Dictionary:
+        return result
+    var audience: String = String(Dictionary(entry).get("audience", ""))
+    var owner: PortFighter = opponent if audience == "opponent" else self
+    if owner == null or not is_instance_valid(owner):
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": the size version is keyed by the "
+            + ("opponent" if audience == "opponent" else "own")
+            + " skeleton class and no such fighter is set"
+        )
+        return result
+    var klass: String = owner.skeleton_class_name()
+    result["class"] = klass
+    if klass.is_empty():
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": unknown skeleton class "
+            + JSON.stringify(owner.skeleton_class)
+        )
+        return result
+    var versions: Dictionary = Dictionary(entry).get("versions", {})
+    if klass == SIZE_CLASS_MEDIUM or not versions.has(klass):
+        return result
+    var version_clip: String = String(versions[klass])
+    if not _candidate_clip_paths.has(version_clip):
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": " + klass + " version " + version_clip
+            + " is not in the loaded candidate"
+        )
+        return result
+    result["status"] = "variant"
+    result["clip"] = version_clip
+    return result
+
+
+func _resolved_ground_idle(base_clip: String) -> String:
+    ## Pick the ground-idle clip for the fighter's own class. A required class
+    ## version that the candidate cannot play makes the idle unavailable: the
+    ## caller's _candidate_clip_paths.has() check then keeps the wrong-size base
+    ## clip from playing (fail closed). The decision is recorded for the tests.
+    ground_idle_base_last = base_clip
+    if not size_variants_error.is_empty():
+        ground_idle_status_last = "unavailable"
+        ground_idle_class_last = ""
+        ground_idle_clip_last = ""
+        ground_idle_error = (
+            size_variants_error + " (size class table unavailable)"
+        )
+        return ""
+    var resolved: Dictionary = _size_variant_archived(base_clip)
+    ground_idle_status_last = String(resolved.get("status", ""))
+    ground_idle_class_last = String(resolved.get("class", ""))
+    ground_idle_clip_last = String(resolved.get("clip", base_clip))
+    ground_idle_error = String(resolved.get("reason", ""))
+    if ground_idle_status_last == "unavailable":
+        return ""
+    if not candidate_loaded:
+        # Placeholder rig: no candidate clip exists to swap, so the base name is
+        # reported and the availability check simply finds nothing to play.
+        return base_clip
+    return String(resolved.get("clip", base_clip))
+
+
+func ground_idle_state() -> Dictionary:
+    ## Everything a test or the HUD needs to prove the ground-idle class choice.
+    return {
+        "skeleton_class": skeleton_class,
+        "status": ground_idle_status_last,
+        "class_used": ground_idle_class_last,
+        "base": ground_idle_base_last,
+        "clip": ground_idle_clip_last,
+        "error": ground_idle_error,
+        "playing": candidate_animation_clip,
+    }
 
 
 func size_variant_state() -> Dictionary:
@@ -4096,6 +4192,8 @@ func _try_load_candidate_visual() -> void:
         move.loop_mode = Animation.LOOP_LINEAR
     for looping_return: String in [
         IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
+        "all_idle_face_down_forbigguy", "all_idle_face_up_forbigguy",
+        "all_idle_face_down_forsmallguy", "all_idle_face_up_forsmallguy",
         "move", "movefwd", "moveback", "moveleft", "moveright", "stepfwd", "stepback",
         "stepleft", "stepright",
     ]:
@@ -4522,12 +4620,12 @@ func _verified_post_hit_return_state() -> String:
         return "idle2"
     if (reaction_clip_ready
             and return_action == "facedownidle"
-            and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)
+            and _candidate_clip_paths.has(_facedown_idle_clip())
             and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP)):
         return "facedownidle"
     if (reaction_clip_ready
             and return_action == "faceupidle"
-            and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)):
+            and _candidate_clip_paths.has(_faceup_idle_clip())):
         return "faceupidle"
     return "idle"
 
@@ -4836,7 +4934,7 @@ func _accepts_impact_to_floor(
         and impact_height == "low"
         and health - damage > 0.0
         and _candidate_clip_paths.has(FACEUP_IMPACT_TO_FLOOR_CLIP)
-        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+        and _candidate_clip_paths.has(_faceup_idle_clip())
     )
 
 
@@ -4851,7 +4949,7 @@ func _accepts_faceup_low_impact(
         and impact_height == "low"
         and health - damage > 0.0
         and _candidate_clip_paths.has(FACEUP_IMPACT_CLIP)
-        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+        and _candidate_clip_paths.has(_faceup_idle_clip())
     )
 
 
@@ -4860,7 +4958,7 @@ func _accepts_faceup_ko(damage: float, blocked: bool) -> bool:
         state == "faceupidle"
         and not blocked
         and health - damage <= 0.0
-        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+        and _candidate_clip_paths.has(_faceup_idle_clip())
     )
 
 
@@ -6471,9 +6569,9 @@ func current_source_animation() -> String:
     if state == "impactfaceup":
         return FACEUP_IMPACT_CLIP
     if state == "faceupko":
-        return FACEUP_IDLE_CLIP
+        return _faceup_idle_clip()
     if state == "faceupidle":
-        return FACEUP_IDLE_CLIP
+        return _faceup_idle_clip()
     if state == "faceupgetup":
         return FACEUP_GETUP_CLIP
     if state == "faceupattack":
@@ -6561,7 +6659,20 @@ func _owner_idle_animation() -> String:
 
 
 func _facedown_idle_clip() -> String:
+    ## all_idle_face_down is versioned by the owner's own skeleton class. A
+    ## required version the candidate lacks yields "" (fail closed); otherwise a
+    ## resolved class version wins, and the profile value remains the base.
+    var resolved: String = _resolved_ground_idle(FACEDOWN_IDLE_CLIP)
+    if resolved.is_empty() and ground_idle_status_last == "unavailable":
+        return ""
+    if not resolved.is_empty() and resolved != FACEDOWN_IDLE_CLIP:
+        return resolved
     return String(attack_set_profile.get("facedown_idle_clip", FACEDOWN_IDLE_CLIP))
+
+
+func _faceup_idle_clip() -> String:
+    ## all_idle_face_up is versioned by the owner's own skeleton class.
+    return _resolved_ground_idle(FACEUP_IDLE_CLIP)
 
 
 func _stored_animation_radius(animation: String) -> float:
@@ -7330,10 +7441,10 @@ func _animate_candidate() -> void:
         requested = FACEUP_IMPACT_CLIP
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
-    elif state == "faceupko" and _candidate_clip_paths.has(FACEUP_IDLE_CLIP):
-        requested = FACEUP_IDLE_CLIP
-    elif state == "faceupidle" and _candidate_clip_paths.has(FACEUP_IDLE_CLIP):
-        requested = FACEUP_IDLE_CLIP
+    elif state == "faceupko" and _candidate_clip_paths.has(_faceup_idle_clip()):
+        requested = _faceup_idle_clip()
+    elif state == "faceupidle" and _candidate_clip_paths.has(_faceup_idle_clip()):
+        requested = _faceup_idle_clip()
     elif state == "faceupgetup" and _candidate_clip_paths.has(FACEUP_GETUP_CLIP):
         requested = FACEUP_GETUP_CLIP
     elif state == "faceupattack" and _candidate_clip_paths.has(FACEUP_ATTACK_CLIP):
