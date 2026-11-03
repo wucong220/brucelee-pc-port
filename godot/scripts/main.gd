@@ -555,7 +555,11 @@ func _build_game_text_overlay() -> void:
 shader_type canvas_item;
 void fragment() {
     vec4 tex = texture(TEXTURE, UV);
-    COLOR = vec4(1.0, 1.0, 1.0, tex.a);
+    float luma = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
+    float ink = 1.0 - luma;
+    float alpha = max(ink, luma * 0.45);
+    vec3 color = mix(vec3(1.0), vec3(0.95, 0.12, 0.06), ink);
+    COLOR = vec4(color, alpha);
 }
 """
     var material: ShaderMaterial = ShaderMaterial.new()
@@ -893,9 +897,11 @@ func _play_result_audio(key: String) -> void:
 
 
 func _start_round_intro() -> void:
+    _show_game_text("READY", 0.9)
     _play_result_audio("ready")
     await get_tree().create_timer(0.8).timeout
     if not done:
+        _show_game_text("FIGHT", 1.2)
         _play_result_audio("fight")
 
 
