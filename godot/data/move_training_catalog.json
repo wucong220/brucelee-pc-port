@@ -181,7 +181,7 @@
    "id": "parry_high",
    "label": "PARRY HIGH",
    "group": "DEFENSE",
-   "input": "HOLD SHIFT",
+   "input": "S then D during counter, rage>=33",
    "setup": "parry_high",
    "actions": [
     "parry_high"
@@ -192,7 +192,7 @@
    "id": "parry_attack",
    "label": "PARRY COUNTER",
    "group": "DEFENSE",
-   "input": "HOLD SHIFT",
+   "input": "PARRY HIGH then auto at frames 9-10",
    "setup": "parry_attack",
    "actions": [
     "parry_attack"
@@ -225,7 +225,7 @@
    "id": "endattack1",
    "label": "END ATTACK 1",
    "group": "GRAB",
-   "input": "HOLD D + J",
+   "input": "HOLD D + J while opponent is stunned",
    "setup": "endattack1",
    "actions": [
     "endattack1"
@@ -236,7 +236,7 @@
    "id": "endattack2",
    "label": "END ATTACK 2",
    "group": "GRAB",
-   "input": "HOLD D + L",
+   "input": "HOLD D + L while opponent is stunned",
    "setup": "endattack2",
    "actions": [
     "endattack2"

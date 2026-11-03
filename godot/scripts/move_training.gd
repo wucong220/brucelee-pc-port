@@ -222,15 +222,6 @@ func handle_input_event(event: InputEvent) -> bool:
         # native links.
         if not entries.is_empty() and player.attack_kind == "":
             var active_entry: Dictionary = entries[current_index]
-            var active_id: String = String(active_entry.get("id", ""))
-            # Parry lessons are defensive: the prototype's parry input is the
-            # guard key (Shift), matching the guard-first native action.  The
-            # catalog's displayed input is corrected to HOLD SHIFT below.
-            if active_id in ["parry_high", "parry_attack"] \
-                    and event.is_action_pressed(PrototypeControls.GUARD):
-                var parry_target: String = String(active_entry.get("actions", [""])[0])
-                if not parry_target.is_empty() and player.request_attack(parry_target):
-                    return true
             var command: String = String(active_entry.get("input", "")).replace("HOLD ", "")
             var parts: PackedStringArray = command.split(",")
             var final_token: String = parts[parts.size() - 1].strip_edges()
@@ -368,14 +359,12 @@ func _prepare_current() -> void:
     elif setup == "parry_attack":
         _begin_dummy_attack("high_punch")
     elif setup == "endattack1" or setup == "endattack2":
-        # Endattack is a grab finisher: the victim must be in grabbed1/grabbed2,
-        # not hitstun.  Put the training dummy in the real grabbed state so the
-        # endattack link sees the same precondition as the original.
+        # brucelee.set: endattack1/2 require oppposestun + grabdistance, not a
+        # grab state.  Hold the dummy in hitstun inside that distance.
         _prime_source_attack("high_punch", String(entry.get("actions", [""])[0]))
-        var grab_kind: String = "grab1" if setup == "endattack1" else "grab2"
-        if not computer.begin_grabbed(grab_kind):
-            computer.state = "hitstun"
-            computer.state_time = 1.0
+        computer.state = "hitstun"
+        computer.state_time = 1.0
+        computer.global_position = player.global_position + Vector3(0.75, 0.0, 0.0)
     elif setup == "target_down":
         computer.state = "facedownidle"
         computer._animate_candidate()
@@ -502,8 +491,9 @@ func _process(delta: float) -> void:
         if setup in ["stepback", "stepleft", "stepright"] and player != null:
             computer.global_position = player.global_position + Vector3(0.75, 0.0, 0.0)
         if setup == "endattack1" or setup == "endattack2":
-            # begin_grabbed() already set grabbed1/grabbed2; do not overwrite it.
-            pass
+            computer.state = "hitstun"
+            computer.state_time = 1.0
+            computer.global_position = player.global_position + Vector3(0.75, 0.0, 0.0)
         elif setup == "target_down":
             computer.state = "facedownidle"
         else:
