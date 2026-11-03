@@ -510,7 +510,7 @@ const LOMING_ATTACK_DATA: Dictionary = {
     "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
     "endattack": ["endattack loming", "m04_end_attack_01", 93, 17, 3, 73, 0.0, 75.0, "rleg", "high", "brutal", "fromleft"],
     "special_punch_high_miss": ["specialpunchhighmiss sinfu", "m04_sp_pnch_high_fail", 71, 0, 2, 69, 0.0, 0.0, "larm", "high", "normal", "frontal"],
-    "special_punch_high_hit": ["specialpunchhighhit sinfu", "m04_sp_pnch_high", 50, 11, 12, 27, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+    "special_punch_high_hit": ["specialpunchhighhit sinfu", "m04_e02_pnch_high_03", 50, 11, 12, 27, 20.0, 45.0, "larm", "high", "hard", "frontal"],
 }
 const LOMING_ANIMATION_RADII_DATA: Dictionary = {
     "all_block_high": 60.0,
@@ -741,9 +741,9 @@ const LOMING_CLIPS: Dictionary = {
     "attack_to_floor": "m01_attack_to_floor",
     "endattack": "m04_end_attack_01",
     "special_punch_high_miss": "m04_sp_pnch_high_fail",
-    "special_punch_high_hit": "m04_sp_pnch_high",
+    "special_punch_high_hit": "m04_e02_pnch_high_03",
     "grabbed1": "all_grabbed_01_forset04",
-    "grabbed2": "all_sp_kck_low_forset04",
+    "grabbed2": "all_grabbed_02_forset04",
     "highblock": "all_block_high",
     "all_block_low": "all_block_low",
     "all_block_mid": "all_block_mid",

@@ -34,8 +34,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "sinfu": {
         "glb": (
-            "D:\\BruceLeeWork\\character-extras-20261103\\candidates\\"
-            + "sinfu_hair_two-skin_79_all_20261103.glb"
+            "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
+            + "sinfu_hair_two-skin_81_result_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\sinfu-tex",
         "clip_prefix": "m04",
@@ -46,8 +46,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "master": {
         "glb": (
-            "D:\\BruceLeeWork\\result-ground-clips-20261103\\candidates\\"
-            + "master_full_hair_79_result_20261103.glb"
+            "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
+            + "master_full_hair_80_result_20261103.glb"
         ),
         "texture_root": "D:\\BruceLeeWork\\master-candidate-20261103\\textures",
         "clip_prefix": "",
@@ -70,8 +70,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "ken": {
         "glb": (
-            "D:\\BruceLeeWork\\ken-all26-20261103\\candidate\\"
-            + "ken_all26_4306ch.glb"
+            "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
+            + "ken_all26_74_defeat_groundidle_20261103.glb"
         ),
         "texture_root": (
             "D:\\BruceLeeWork\\character-integration-fixed-20261103\\"
@@ -102,7 +102,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "large",
     },
     "chief": {
-        "glb": "D:\\BruceLeeWork\\result-ground-clips-20261103\\candidates\\chief01_full_body_hair_86_groundidle_20261103.glb",
+        "glb": "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\chief01_full_body_hair_86_groundidle_20261103.glb",
         "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\chief01",
         "clip_prefix": "",
         "master": "",
@@ -111,7 +111,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "large",
     },
     "loming": {
-        "glb": "D:\\BruceLeeWork\\result-ground-clips-20261103\\candidates\\loming01_full_body_hair_84_groundidle_20261103.glb",
+        "glb": "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\loming01_full_body_hair_84_groundidle_20261103.glb",
         "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\loming01",
         "clip_prefix": "",
         "master": "",
