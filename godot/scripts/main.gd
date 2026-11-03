@@ -567,9 +567,8 @@ void fragment() {
     var material: ShaderMaterial = ShaderMaterial.new()
     material.shader = shader
     _game_text_rect = TextureRect.new()
-    _game_text_rect.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
     _game_text_rect.size = Vector2(256.0, 128.0)
-    _game_text_rect.position = Vector2(-128.0, -300.0)
+    _game_text_rect.position = Vector2(512.0, 220.0)
     _game_text_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     _game_text_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
     _game_text_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
