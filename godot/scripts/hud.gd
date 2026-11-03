@@ -152,6 +152,8 @@ func _try_load_hud_texture(filename: String) -> ImageTexture:
         ))
     for root: String in roots:
         var path: String = root.path_join(filename)
+        if not FileAccess.file_exists(path):
+            continue
         var image: Image = Image.new()
         if image.load(path) == OK:
             return ImageTexture.create_from_image(image)
