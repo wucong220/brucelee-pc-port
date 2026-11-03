@@ -1174,6 +1174,40 @@ const ENDATTACK_VICTIM_STUN_DATA: Dictionary = {
     "endattack1": ["endattackcomp1", 93],
     "endattack2": ["endattackcomp2", 130],
 }
+# Recovered grabcompl/endattackcomp victim frame counts (30 fps), keyed by the
+# exact archived clip name. Derived read-only from the fighting sets inside
+# data.zpak: adreno_200/set/{brucelee,thai,karate,kungfu}.set -> the
+# grabcompl1/2 and endattackcomp* action binaries -> their ANM header duration.
+# See D:\BruceLeeWork\grab-timings-20261103\data\victim_grab_timings.json.
+#
+# GRAB_VICTIM_DATA / ENDATTACK_VICTIM_DATA above keep the Thai (forset03)
+# values as the static fallback for non-player victims. A player victim now
+# resolves its duration from the actual per-opponent clip below; a clip with
+# no recovered duration makes the grab/finisher fail closed rather than borrow
+# the Thai timing. kungfu (forset04) intentionally has no endattackcomp clip.
+const VICTIM_CLIP_FRAMES: Dictionary = {
+    # brucelee set (forset01)
+    "all_grabbed_01_forset01": 150,
+    "m02_grabbed_02_forset01": 180,
+    "all_end_attack_01_forset01": 377,
+    "all_end_attack_02_forset01": 235,
+    # karate set (forset02)
+    "all_grabbed_01_forset02": 47,
+    "all_grabbed_02_forset02": 98,
+    "all_end_attack_01_forset02": 132,
+    "all_end_attack_02_forset02": 155,
+    # thai set (forset03) - matches the legacy hardcoded fallback (90/78/93/130)
+    "all_grabbed_01_forset03": 90,
+    "all_grabbed_02_forset03": 78,
+    "all_end_attack_01_forset03": 93,
+    "all_end_attack_02_forset03": 130,
+    # kungfu set (forset04) - grab clips only; no endattackcomp clip exists
+    "all_grabbed_01_forset04": 103,
+    "all_grabbed_02_forset04": 45,
+    # kungfu special-grab variants referenced by the master/sinfu rows
+    "all_sp_pnch_low_forset04": 28,
+    "all_sp_kck_low_forset04": 55,
+}
 # "endattack" is the mapped-set finisher name (kungfu/karate); without it the
 # victim of a Ken/Master/SinFu finisher is never consumed and endattackcomp is
 # unreachable for those sets.
@@ -2689,6 +2723,9 @@ var ground_idle_error: String = ""
 # The archived animation name behind each resolved victim slot, so the
 # size-variant lookup uses the set's clip name instead of a candidate path.
 var _victim_selected_animation: Dictionary = {}
+# Recovered frame count for each resolved player-victim slot, taken from the
+# opponent set's actual clip. Absent means the grab/finisher fails closed.
+var _victim_selected_frames: Dictionary = {}
 # Base candidate path per grab/finisher slot, captured once the candidate clips
 # are mapped, so a version resolution can always be undone.
 var _size_variant_base_path: Dictionary = {}
@@ -6454,8 +6491,16 @@ func _select_grab_victim_clip(slot_key: String) -> bool:
     var matched: String = _victim_clip_available(animation)
     if matched.is_empty():
         return false
+    # Fail closed: the victim holds the exact frame count recovered for this
+    # opponent set's clip; it never borrows the Thai duration.
+    var frames: int = int(VICTIM_CLIP_FRAMES.get(animation, -1))
+    if frames < 0:
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " frames for " + animation)
+        return false
     _candidate_clip_paths[slot_key] = matched
     _victim_selected_animation[slot_key] = animation
+    _victim_selected_frames[slot_key] = frames
     return true
 
 
@@ -6475,8 +6520,14 @@ func _select_endattack_victim_clip(slot_key: String) -> bool:
     var matched: String = _victim_clip_available(animation)
     if matched.is_empty():
         return false
+    var frames: int = int(VICTIM_CLIP_FRAMES.get(animation, -1))
+    if frames < 0:
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " frames for " + animation)
+        return false
     _candidate_clip_paths[slot_key] = matched
     _victim_selected_animation[slot_key] = animation
+    _victim_selected_frames[slot_key] = frames
     return true
 
 
@@ -6507,16 +6558,21 @@ func begin_grabbed(kind: String) -> bool:
     if data.is_empty():
         return false
     var clip_key: String = String(data[0])
-    if not _candidate_clip_paths.has(clip_key):
-        return false
+    var frame_count: int = int(data[1])
     # The player's static map holds only the Thai victim set; use his recovered
     # per-opponent action instead, and refuse the grab if the variant is absent.
-    if is_player and not _select_grab_victim_clip(clip_key):
+    if is_player:
+        if not _select_grab_victim_clip(clip_key):
+            return false
+        if not _victim_selected_frames.has(clip_key):
+            return false
+        frame_count = int(_victim_selected_frames[clip_key])
+    if not _candidate_clip_paths.has(clip_key):
         return false
     if not _apply_victim_size_variant(clip_key):
         return false
     state = clip_key
-    state_time = float(data[1]) / SOURCE_FRAME_RATE
+    state_time = float(frame_count) / SOURCE_FRAME_RATE
     attack_kind = ""
     _attack_connected = false
     _restart_candidate_action()
@@ -6530,14 +6586,19 @@ func begin_endattack_victim(attacker_kind: String = "") -> bool:
     if data.is_empty():
         return false
     var clip_key: String = String(data[0])
+    var frame_count: int = int(data[1])
+    if is_player:
+        if not _select_endattack_victim_clip(clip_key):
+            return false
+        if not _victim_selected_frames.has(clip_key):
+            return false
+        frame_count = int(_victim_selected_frames[clip_key])
     if not _candidate_clip_paths.has(clip_key):
-        return false
-    if is_player and not _select_endattack_victim_clip(clip_key):
         return false
     if not _apply_victim_size_variant(clip_key):
         return false
     state = clip_key
-    state_time = float(data[1]) / SOURCE_FRAME_RATE
+    state_time = float(frame_count) / SOURCE_FRAME_RATE
     attack_kind = ""
     _attack_connected = false
     _restart_candidate_action()
