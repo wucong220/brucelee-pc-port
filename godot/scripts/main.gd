@@ -482,8 +482,6 @@ func _build_original_far_scene() -> void:
         var entry_name: String = String(entry.get("name", ""))
         if "skydome" in entry_name:
             continue
-        if _scene_variant() == "" and "redgate" in entry_name:
-            continue
         var glb_path: String = base.path_join(String(entry.get("file", "")))
         if not FileAccess.file_exists(glb_path):
             continue
