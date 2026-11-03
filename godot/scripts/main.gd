@@ -1250,6 +1250,28 @@ func _opponent_attack_config() -> String:
     return PortFighter.BRICK_ATTACK_CONFIG_PATH
 
 
+func _opponent_ai_profile_key() -> String:
+    match _opponent_attack_config():
+        PortFighter.SINFU_ATTACK_CONFIG_PATH:
+            return "sin fu"
+        PortFighter.MASTER_ATTACK_CONFIG_PATH:
+            return "the master"
+        PortFighter.KEN_ATTACK_CONFIG_PATH:
+            return "ken godall"
+        PortFighter.SHENLO_ATTACK_CONFIG_PATH:
+            return "shen lo"
+        PortFighter.SMALLBOY_ATTACK_CONFIG_PATH:
+            return "smallboy"
+        PortFighter.JOHNSON_ATTACK_CONFIG_PATH:
+            return "johnson"
+        PortFighter.CHIEF_ATTACK_CONFIG_PATH:
+            return "chief a"
+        PortFighter.LOMING_ATTACK_CONFIG_PATH:
+            return "lo ming a"
+        _:
+            return "brick davis"
+
+
 func _opponent_display_name() -> String:
     ## Opponent menu command = characters.list key for the packaged name
     ## textures. Direct launchers still resolve by their fighting-set config.
@@ -2393,7 +2415,7 @@ func _configure_native_ai() -> void:
         return
     var difficulty: int = int(native_ai.tuning.get("difficulty_index", {}).get("value", 2))
     native_ai.set_difficulty(difficulty)
-    native_ai.configure(computer, player, "brick davis", rng.seed)
+    native_ai.configure(computer, player, _opponent_ai_profile_key(), rng.seed)
 
 
 func _think_ai(delta: float) -> void:

@@ -146,9 +146,9 @@ func set_difficulty(index: int) -> void:
 func step(delta: float) -> Dictionary:
     if fighter == null or not is_instance_valid(fighter):
         return _record("none", "", "", "", "no_fighter")
+    _update_opponent_attack_sequence()
     if not _can_act():
         return _record("none", "", "", "", "busy")
-    _update_opponent_attack_sequence()
 
     var walk: Dictionary = _walk()
     if walk.has("error"):
@@ -312,8 +312,8 @@ func _eval_condition(node: Dictionary) -> String:
 
 func _probability(node: Dictionary) -> float:
     var by_difficulty: Variant = node.get("params_by_difficulty")
-    if by_difficulty == null:
-        by_difficulty = node.get("params_by_dificulty")  # shipped typo
+    # Native only registers params_by_difficulty; "params_by_dificulty" is
+    # dead data in .rodata and must not be treated as a fallback.
     if by_difficulty is Array and not Array(by_difficulty).is_empty():
         var values: Array = by_difficulty
         return float(values[clampi(difficulty_index, 0, values.size() - 1)])
@@ -390,7 +390,8 @@ func _near_limits() -> bool:
     var origin_distance: float = Vector3(
         fighter.position.x, fighter.position.y, fighter.position.z
     ).length()
-    return (400.0 - origin_distance / scale_value) < 50.0
+    var distance_to_limit: float = 400.0 - origin_distance / scale_value
+    return distance_to_limit >= 0.0 and distance_to_limit < 50.0
 
 
 ## Tuning entries carry {"value", "status", "basis"} in the shipped JSON so the
@@ -464,6 +465,16 @@ func _pick_action(actions: Array) -> Dictionary:
     var short_name: String = character_key.split(" ")[0]
     if short_name != character_key:
         tokens.append(short_name)
+    var compact: String = character_key.replace(" ", "")
+    if compact != character_key and not tokens.has(compact):
+        tokens.append(compact)
+    match character_key:
+        "brick davis": tokens.append("brick")
+        "ken godall": tokens.append("ken")
+        "the master": tokens.append("master")
+        "lo ming a", "lo ming b": tokens.append("loming")
+        "shen lo": tokens.append("shenlo")
+        "sin fu": tokens.append("sinfu")
     var mine: Array[String] = []
     var generic: Array[String] = []
     var rest: Array[String] = []
