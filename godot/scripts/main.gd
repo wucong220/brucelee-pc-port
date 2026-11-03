@@ -54,7 +54,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     "ken": {
         "glb": (
             "D:\\BruceLeeWork\\character-hair-20261103\\out\\"
-            + "ken_hair_two-skin_native45_20261103.glb"
+            + "ken_hair_two-skin_native45_reactions22_20261103.glb"
         ),
         "texture_root": (
             "D:\\BruceLeeWork\\character-integration-fixed-20261103\\"
