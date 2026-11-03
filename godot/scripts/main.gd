@@ -1161,6 +1161,8 @@ func _native_camera_pose(a: Vector3, b: Vector3, aspect_scale: float) -> Diction
     if _cam_side != 0:
         lateral = -lateral
     var distance: float = maxf(length, CAM_MIN_DISTANCE) * aspect_scale
+    if _scene_variant() == "halla":
+        distance *= 1.35
     var position: Vector3 = target + lateral * distance
     position.y += CAM_ELEVATION
     return {"position": position, "target": target}
