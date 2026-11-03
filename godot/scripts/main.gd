@@ -2941,7 +2941,8 @@ func _advance_round_end() -> void:
             "YOU WIN THE MATCH · R TO RESTART" if player_won
             else "YOU LOSE THE MATCH · R TO RESTART"
         )
-        _play_result_audio("win" if player_won else "lose")
+        # You_Win/You_Lose already fired with the SetState(7)/(8) game text;
+        # playing them again here is the duplicate this patch removes.
     else:
         _start_next_round()
 
@@ -3234,7 +3235,8 @@ func _on_ko(fighter: PortFighter) -> void:
         "YOU WIN · ROUND %d" % round_number if fighter == computer
         else "YOU LOSE · ROUND %d" % round_number
     )
-    _play_result_audio("win" if fighter == computer else "lose")
+    # You_Win/You_Lose are the recovered samples of the game text launched by
+    # _show_round_result_text above; this call used to duplicate them.
     _enter_match_state(
         MATCH_STATE_KO_WIN if fighter == computer else MATCH_STATE_KO_LOSE
     )
