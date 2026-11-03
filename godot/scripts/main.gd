@@ -1005,11 +1005,13 @@ func _build_original_far_scene() -> void:
 
 func _build_fx_anim_scene() -> void:
     var variant: String = _scene_variant()
-    if variant.is_empty():
-        return
-    var base: String = OS.get_executable_path().get_base_dir().path_join(
-        "scene/%s/fx_anim" % variant
-    )
+    # Temple Yard A is the default scene and keeps its assets in `scene/far`,
+    # so its FX groups live in `scene/far/fx_anim`.  An empty BRUCELEE_SCENE
+    # must therefore not skip this stage (it used to return here).
+    var fx_dir: String = "scene/far/fx_anim"
+    if not variant.is_empty():
+        fx_dir = "scene/%s/fx_anim" % variant
+    var base: String = OS.get_executable_path().get_base_dir().path_join(fx_dir)
     var manifest_path: String = base.path_join("fx_anim_manifest.json")
     if not FileAccess.file_exists(manifest_path):
         return
