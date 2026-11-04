@@ -15,27 +15,32 @@ extends RefCounted
 ## Recursion into the tree stops after MAX_WALK steps; the native evaluator has
 ## no such guard, but a malformed/edited tree must not hang the game loop.
 ##
-## Block selection: the shipped block leaves list the strength variants
-## (highblockbrutal / highblockhard) ahead of the block for the height that the
-## tree's `opp_attack_height` branch picked.  The port resolves that list through
-## the recovered canblock rows (`PortFighter.canblock_row_for`), keyed on the
-## opponent's *current* impact record (strength +0x1C, height +0x18), and hands
-## the chosen action to `PortFighter.begin_block()` so the fighter holds the
-## native high/mid/low guard instead of one block flag.  When the opponent's
-## impact metadata is missing the leaf's own height guess is used; when no
-## listed action matches the recovered row the generic picker still applies.
+## Action selection: the shipped action leaves are a *set*, not a priority list.
+## `CFighter::AIUpdate` (libdefault.so 0x001a8b2c) scans the current action's
+## native link array in source order and follows the first link whose
+## `TimeWindowCheck`, action-set/key gate and `CheckConditions` all pass.
+## `_native_link_pick()` projects that rule onto the existing recovered
+## `PortFighter._native_links` table.  If the native table/methods are usable
+## but no link is eligible, the result is a deliberate no-action
+## (`native_no_eligible_link`), never the old picker.  The old leaf/action-map
+## picker is available only behind an explicit, default-off opt-in and only for
+## completely unavailable native data/methods.
 ##
-## Time windows: a block leaf is a `from_group` canblock/canblock2 decision, so
-## it only exists while the fighter's *current action* is inside that action's
-## authored canblock window (PortFighter.guard_window_open, data read from the
-## set's native_links*.json).  Outside the window - or in a set that authors no
-## canblock group for that action - the decision fails closed and no guard is
-## held.  No frame number is invented here and `facing` is never substituted.
+## Block selection: the existing canblock rows/guard-window diagnostics remain
+## in place for `_apply_block` and `_record`; no row value, action variant,
+## weight or time window is invented here.
+##
+## Time windows: the AI gate computes the current action frame against the
+## set's authored link `time` / `from_group` windows.  It does not use the
+## player-input idle shortcut in PortFighter._native_link_window_ok, which would
+## make an idle self-link [120,120] win at frame 0.  The existing
+## `guard_window_open` canblock diagnostics are preserved unchanged.
 
 const TREE_PATH := "res://data/native_ai/standard_tree.json"
 const PROFILES_PATH := "res://data/native_ai/ai_profiles.json"
 const ACTION_MAP_PATH := "res://data/native_ai/action_map.json"
 const TUNING_PATH := "res://data/native_ai/tuning.json"
+const NativeActionSelector = preload("res://scripts/native_action_selector.gd")
 
 const MAX_WALK := 64
 ## The native state machine's initial state (CDecisionTree parses a "default"
@@ -146,6 +151,13 @@ var difficulty_index: int = 2  # medium: UI index 1 -> trunc(2*1) = slot 2
 var state: String = INITIAL_STATE
 var last_node: String = ""
 var last_action: String = ""
+## Compact native-link selection diagnostics from the latest step.  The full
+## evaluation array is intentionally not retained per decision record.
+var last_native_selection: Dictionary = {}
+## Compatibility only: the old leaf/action-map picker may be explicitly enabled
+## for a caller that cannot supply native links.  Default is off; even when on,
+## it is never used for a native table that simply has no eligible link.
+var legacy_picker_opt_in: bool = false
 
 var decisions: Array[Dictionary] = []
 var _repetition: int = 0
@@ -221,9 +233,20 @@ func set_difficulty(index: int) -> void:
     difficulty_index = clampi(index, 0, 4)
 
 
+## Explicit opt-in for the pre-native compatibility picker.  Default is false.
+## Environment `BRUCELEE_AI_LEGACY_PICKER=1` is the other explicit switch.
+func set_legacy_picker_opt_in(enabled: bool) -> void:
+    legacy_picker_opt_in = enabled
+
+
+func _legacy_picker_enabled() -> bool:
+    return legacy_picker_opt_in or OS.get_environment("BRUCELEE_AI_LEGACY_PICKER") == "1"
+
+
 ## Walk the tree once and execute the resulting node.  Returns a decision record
 ## {"kind", "action", "native", "node", "state", "reason"} for tests/logs.
 func step(delta: float) -> Dictionary:
+    last_native_selection = {}
     if fighter == null or not is_instance_valid(fighter):
         return _record("none", "", "", "", "no_fighter")
     _update_opponent_attack_sequence()
@@ -245,11 +268,45 @@ func step(delta: float) -> Dictionary:
         state = next_state
         return _record("none", "", "", node_name, "state_change")
 
-    var native_action: String = ""
-    var dispatch: String = ""
-    var picked: Dictionary = _pick_action(actions)
-    native_action = String(picked.get("native", ""))
-    dispatch = String(picked.get("dispatch", ""))
+    # Native CFighter::AIUpdate rule: scan the current action's native links in
+    # source order.  A selected link is authoritative.  A usable native table
+    # with no eligible link returns no action (no FollowLink); it never falls
+    # through to the old picker.  The old picker is an explicit opt-in only for
+    # the case where native link methods/data are completely unavailable.
+    var native_attempt: Dictionary = _native_link_pick(actions)
+    last_native_selection = native_attempt.duplicate(true)
+    var picked: Dictionary = {}
+    var native_ready: bool = (
+        bool(native_attempt.get("available", false))
+        and bool(native_attempt.get("ok", false))
+    )
+    if not native_ready:
+        if _legacy_picker_enabled():
+            picked = _pick_action(actions)
+            last_native_selection["fallback"] = "legacy_picker_opt_in"
+        else:
+            state = next_state
+            last_action = ""
+            return _record(
+                "none", "", "", node_name, "native_data_unavailable", true
+            )
+    elif not bool(native_attempt.get("selected", false)):
+        state = next_state
+        last_action = ""
+        return _record(
+            "none", "", "", node_name, "native_no_eligible_link", true
+        )
+    else:
+        picked = native_attempt
+
+    var native_action: String = String(picked.get("native", ""))
+    var dispatch: String = String(picked.get("dispatch", ""))
+    if native_action.is_empty():
+        state = next_state
+        last_action = ""
+        return _record(
+            "none", "", "", node_name, "native_no_action_legacy_opt_in", true
+        )
 
     var signature: String = native_action + "|" + node_name
     if signature == _last_signature:
@@ -282,10 +339,17 @@ func step(delta: float) -> Dictionary:
         kind = "attack"
         if not _apply_attack(native_action, dispatch):
             kind = "attack_rejected"
-    return _record(kind, dispatch, native_action, node_name, "")
+    return _record(kind, dispatch, native_action, node_name, "", true)
 
 
-func _record(kind: String, action: String, native: String, node: String, reason: String) -> Dictionary:
+func _record(
+    kind: String,
+    action: String,
+    native: String,
+    node: String,
+    reason: String,
+    include_native_selection: bool = false
+) -> Dictionary:
     var entry: Dictionary = {
         "kind": kind,
         "action": action,
@@ -305,6 +369,9 @@ func _record(kind: String, action: String, native: String, node: String, reason:
             fighter.guard_window_open()
             if fighter != null and is_instance_valid(fighter) else false
         ),
+        # Compact native-link diagnostics.  It records the source-order attempt
+        # without persisting the full evaluation list for every decision.
+        "native_selection": last_native_selection.duplicate(true) if include_native_selection else {},
     }
     if decisions.size() > 256:
         decisions.pop_front()
@@ -620,6 +687,245 @@ func _separation() -> float:
 
 
 # --- actions ---------------------------------------------------------------
+
+
+## Project the proven CFighter::AIUpdate rule onto PortFighter._native_links.
+##
+## Native evidence: libdefault.so 0x001a8b2c calls TimeWindowCheck, compares
+## the link action hash with the terminal action set, checks key sequence/status
+## only when the action is not in that set, then calls CheckConditions; the first
+## eligible link wins in the active-set link array's source order.
+##
+## The full selector evaluation is not stored in every decision record.  This
+## function returns a compact diagnostic dictionary; the actual selection is
+## delegated to NativeActionSelector.select_first_eligible().
+func _native_link_pick(actions: Array) -> Dictionary:
+    var diag: Dictionary = {
+        "available": false,
+        "ok": false,
+        "selected": false,
+        "reason": "native_link_data_unavailable",
+        "candidate_count": 0,
+        "evaluated_count": 0,
+        "link_index": -1,
+        "action": "",
+        "native": "",
+        "dispatch": "",
+        "skip_counts": {},
+    }
+    if fighter == null or not is_instance_valid(fighter):
+        diag["reason"] = "no_fighter"
+        return diag
+    for method: String in [
+            "_native_link_applies", "_native_link_unique_ok",
+            "_native_link_window_ok", "_native_link_window_for_action",
+            "_native_link_conditions_ok", "_link_text"]:
+        if not fighter.has_method(method):
+            diag["reason"] = "native_link_api_missing:" + method
+            return diag
+    var links_value: Variant = fighter.get("_native_links")
+    if not links_value is Array:
+        diag["reason"] = "native_links_missing"
+        return diag
+    var links: Array = links_value
+    if links.is_empty():
+        diag["reason"] = "native_links_empty"
+        return diag
+
+    var candidates: Array[Dictionary] = []
+    var mappings: Array[Dictionary] = []
+    var skip_counts: Dictionary = {}
+    for index in range(links.size()):
+        var link_value: Variant = links[index]
+        if not link_value is Dictionary:
+            skip_counts["not_dictionary"] = int(skip_counts.get("not_dictionary", 0)) + 1
+            continue
+        var link: Dictionary = link_value
+        if not bool(fighter._native_link_applies(link)):
+            skip_counts["not_applies"] = int(skip_counts.get("not_applies", 0)) + 1
+            continue
+        if not bool(fighter._native_link_unique_ok(link)):
+            skip_counts["unique_filtered"] = int(skip_counts.get("unique_filtered", 0)) + 1
+            continue
+        var target: String = fighter._link_text(link, "to")
+        if target.is_empty():
+            skip_counts["missing_target"] = int(skip_counts.get("missing_target", 0)) + 1
+            continue
+        var steps_value: Variant = link.get("steps")
+        var status_value: Variant = link.get("status")
+        if not steps_value is Array or not status_value is Array:
+            skip_counts["missing_gate_data"] = int(skip_counts.get("missing_gate_data", 0)) + 1
+            continue
+        var steps: Array = steps_value
+        var status: Array = status_value
+        candidates.append({
+            "action": target,
+            "time_window_open": _native_link_window_ok_for_ai(link),
+            "has_key_sequence": _has_nonempty_step(steps),
+            "has_key_status": not status.is_empty(),
+            "conditions_pass": _native_link_conditions_ok_for_ai(link),
+        })
+        mappings.append({
+            "link_index": index,
+            "link": link,
+            "target": target,
+            "from": fighter._link_text(link, "from"),
+            "from_group": fighter._link_text(link, "from_group"),
+        })
+
+    diag["available"] = true
+    diag["candidate_count"] = candidates.size()
+    diag["skip_counts"] = skip_counts
+    if candidates.is_empty():
+        diag["ok"] = true
+        diag["reason"] = "no_applicable_links"
+        return diag
+
+    var result: Dictionary = NativeActionSelector.select_first_eligible(candidates, actions)
+    diag["ok"] = bool(result.get("ok", false))
+    diag["reason"] = String(result.get("reason", ""))
+    var evaluations: Array = Array(result.get("evaluations", []))
+    diag["evaluated_count"] = evaluations.size()
+    if not bool(diag["ok"]):
+        diag["selected"] = false
+        return diag
+    if not bool(result.get("selected", false)):
+        diag["selected"] = false
+        return diag
+
+    var candidate_index: int = int(result.get("index", -1))
+    if candidate_index < 0 or candidate_index >= mappings.size():
+        diag["ok"] = false
+        diag["reason"] = "selector_index_out_of_range"
+        return diag
+    var mapping: Dictionary = mappings[candidate_index]
+    var link: Dictionary = mapping["link"]
+    var selected_candidate: Dictionary = candidates[candidate_index]
+    var dispatch: String = _dispatch_for_native(link)
+    diag["selected"] = true
+    diag["index"] = candidate_index
+    diag["link_index"] = int(mapping["link_index"])
+    diag["action"] = String(mapping["target"])
+    diag["native"] = String(mapping["target"])
+    diag["link_from"] = String(mapping["from"])
+    diag["link_from_group"] = String(mapping["from_group"])
+    diag["dispatch"] = dispatch
+    diag["has_key_sequence"] = bool(selected_candidate.get("has_key_sequence", false))
+    diag["has_key_status"] = bool(selected_candidate.get("has_key_status", false))
+    diag["time_window_open"] = bool(selected_candidate.get("time_window_open", false))
+    diag["conditions_pass"] = bool(selected_candidate.get("conditions_pass", false))
+    if dispatch.is_empty():
+        diag["reason"] = "native_link_unmapped"
+    for evaluation_value: Variant in evaluations:
+        if not evaluation_value is Dictionary:
+            continue
+        var evaluation: Dictionary = evaluation_value
+        if int(evaluation.get("index", -1)) != candidate_index:
+            continue
+        diag["listed"] = bool(evaluation.get("listed", false))
+        diag["gate_reason"] = String(evaluation.get("gate_reason", ""))
+        break
+    return diag
+
+
+func _has_nonempty_step(steps: Array) -> bool:
+    for step_value: Variant in steps:
+        if step_value is Array and not Array(step_value).is_empty():
+            return true
+    return false
+
+
+## Native CheckConditions `impact` is not the port's hit-bookkeeping flag.
+##
+## Decompiled `krm::CFighter::CheckConditions` @0x001b3920 (the branch reached
+## from `IsAttacking(other)` @0x001b02c4) checks:
+##   - other+0x164 != 0       -> the opponent has a current impact record
+##   - distance <= radius     -> impact+0x10 * attacker+0x15C + defender radius
+##   - other+0x16c <= impact+0 -> impact has not already been processed
+## The port's `_attack_hit_landed` flips only after contact, so using it here
+## made every canblock link fail during the opponent's startup.  For the AI
+## decision path, use the live opponent attack/impact record and the recovered
+## reach formula instead.
+func _native_impact_condition_ok() -> bool:
+    if opponent == null or not is_instance_valid(opponent):
+        return false
+    if opponent.state not in ["startup", "active"]:
+        return false
+    if opponent.attack_kind.is_empty() or not opponent.ATTACKS.has(opponent.attack_kind):
+        return false
+    if _opp_impact_metadata().is_empty():
+        return false
+    # attack_reach_world() adds the defender source radius, matching the native
+    # formula's GetRadius(this) term.
+    if _separation() > opponent.attack_reach_world(opponent.attack_kind, fighter):
+        return false
+    # The native high-water comparison prevents reusing an already-consumed
+    # impact.  The port's equivalent consumed marker is _attack_hit_landed.
+    if bool(opponent._attack_hit_landed):
+        return false
+    return true
+
+
+func _native_link_conditions_ok_for_ai(link: Dictionary) -> bool:
+    for condition_value: Variant in Array(link.get("conditions", [])):
+        var condition: String = String(condition_value)
+        if not _native_condition_ok_for_ai(condition, link):
+            return false
+    return true
+
+
+func _native_condition_ok_for_ai(condition: String, link: Dictionary) -> bool:
+    if condition == "impact":
+        return _native_impact_condition_ok()
+    return bool(fighter._native_condition_ok(condition, link))
+
+
+## Native TimeWindowCheck projection for the AI link scan.  PortFighter's
+## _native_link_window_ok() intentionally opens idle for the *player input* path;
+## native AIUpdate must still test the idle animation's own source frame against
+## the link window (otherwise idle->idle [120,120] would win at frame 0).
+func _native_link_window_ok_for_ai(link: Dictionary) -> bool:
+    if fighter == null or not is_instance_valid(fighter):
+        return false
+    var action: String = fighter._current_action_name()
+    var window: Array = fighter._native_link_window_for_action(link, action)
+    if window.size() < 2:
+        return false
+    var frame: float
+    if fighter.state in ["idle", "idle2", "idle3", "facedownidle", "faceupidle"]:
+        frame = fighter.state_time * float(PortFighter.SOURCE_FRAME_RATE)
+    else:
+        frame = fighter._current_attack_source_frame()
+    if frame < 0.0:
+        return false
+    var start: float = float(window[0])
+    var end: float = float(window[1])
+    if window.size() >= 3:
+        start = maxf(start, float(window[2]))
+    var linking_frame: int = int(link.get("linking_frame", 0))
+    if linking_frame > 0 and frame + 0.0001 < float(linking_frame):
+        return false
+    return frame + 0.0001 >= start and frame <= end + 0.0001
+
+
+func _dispatch_for_native(link: Dictionary) -> String:
+    if fighter == null or not is_instance_valid(fighter):
+        return ""
+    var target: String = fighter._link_text(link, "to")
+    if target.is_empty():
+        return ""
+    if fighter.has_method("_native_target_kind"):
+        var target_kind: String = String(fighter._native_target_kind(link))
+        if not target_kind.is_empty() and (
+                target_kind.begins_with("__") or fighter.supports_attack(target_kind)):
+            return target_kind
+    for slot_value: Variant in Array(action_map.get(_action_base(target), [])):
+        var slot: String = String(slot_value)
+        if slot.begins_with("__"):
+            return slot
+        if fighter.supports_attack(slot):
+            return slot
+    return ""
 
 
 ## Choose among the leaf's alternatives.  The shipped tree lists one entry per

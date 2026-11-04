@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 ## Headless acceptance test for the recovered native AI patch.
 ##
 ## Usage:
@@ -238,6 +238,11 @@ func _sample_actions(player: PortFighter, brick: PortFighter, ai: RefCounted,
         brick.position = player.position + Vector3(0.5, 0.0, 0.0)
         player.health = 40.0
         brick.health = 100.0
+        # The recovered grab2miss entry links are `from: stepright` [0,24].
+        # Keep the fighter in idle (so AI may act) but report the native
+        # stepright action through the held-direction fallback; sampling from
+        # idle alone is not a native-valid fixture for the rage-gated grabs.
+        brick.move_axis = Vector2(0.0, -1.0)
         var decision: Dictionary = ai.step(1.0 / 60.0)
         var native: String = String(decision.get("native", ""))
         if not native.is_empty():
