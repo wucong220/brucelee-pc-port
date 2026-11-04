@@ -416,10 +416,11 @@ var _result_pose_seconds: float = 0.0
 var _result_camera_override: bool = false
 
 # ---- Original camera .anm playback for the MATCH_WIN/MATCH_LOSE result state ----
-# Decoded from adreno_200/cameras/m01_victory_01_camera.anm by the isolated
-# camera-anm-20261104 research. The JSON is shipped next to data/; no keyframe
-# is invented here. When the file is missing, _camera_anm_play_authored() returns
-# false and the result camera keeps the pre-existing fixed winner shot.
+# Decoded from adreno_200/cameras/<clip>_camera.anm by the isolated
+# camera-anm-20261104 research.  The camera clip is the one selected by the
+# actual characters.list victory pool and zmath draw, not a fixed m01 clip.
+# When the JSON is missing, _camera_anm_play_authored() returns false and the
+# result camera keeps the pre-existing fixed winner shot.
 const CAMERA_ANM_DIR: String = "res://data/camera_anm/"
 var _camera_anm_dir: String = CAMERA_ANM_DIR
 var _camera_anm = null
@@ -430,17 +431,24 @@ var _camera_anm_anchor: PortFighter = null
 var _camera_anm_a: Vector3 = Vector3.ZERO
 var _camera_anm_b: Vector3 = Vector3.ZERO
 
-# ---- Original camera .anm playback for the MATCH_STATE_INTRO (SetState(3)) ----
-# Decoded from adreno_200/cameras/m01_intro_01_camera.anm (121 frames @ 30 fps,
-# fov 56.35 deg -> 9.0 deg, camera height ~0.63-0.74 m, distance ~1.9-2.1 m).
-# The JSON is shipped as data/camera_anm/m01_intro_01.json; no keyframe is
-# invented here. Decompiled CBeatEmUpGame::CameraUpdate (@ 0x188d88) picks the
-# dummy fighter from the local-player flag (this+0x7e0) and passes mirror = 0
-# for every state other than 1/2/12/13; SetState(3) starts the intro animation
-# on both fighters, so a single-player build rides fighter 0's intro clip, i.e.
-# m01_intro_01 for match 1. When the file is missing the intro keeps the
-# pre-existing analytic follow camera.
-const INTRO_CAMERA_CLIP: String = "m01_intro_01"
+# ---- Original camera .anm playback for intro states 1/2/3 ----
+# The intro clip is selected by characters.list animations.intro and the
+# recovered per-fighter zmathRandomGet() % count draw.  Its camera sub-animation
+# is the clip with the same name; the mapping table is data-derived (16/16
+# character intro clips have a decoded camera).  No fixed m01_intro_01 fallback
+# is used when the selected clip has no camera: the view falls through to the
+# analytic camera instead.
+const INTRO_CAMERA_MAP_PATH: String = "res://data/camera_anm/intro_camera_map.json"
+const VICTORY_CAMERA_MAP_PATH: String = "res://data/camera_anm/victory_camera_map.json"
+var _intro_camera_map_path: String = INTRO_CAMERA_MAP_PATH
+var _intro_camera_map: Dictionary = {}
+var _intro_camera_map_loaded: bool = false
+var _victory_camera_map_path: String = VICTORY_CAMERA_MAP_PATH
+var _victory_camera_map: Dictionary = {}
+var _victory_camera_map_loaded: bool = false
+var _intro_camera_clip: String = ""
+var _intro_camera_camera: String = ""
+var _intro_camera_active: bool = false
 
 # ---- Original action cameras (grab / grabbed / end-attack / special) ----
 # Decoded from adreno_200/cameras/*_camera.anm by the isolated
@@ -1847,13 +1855,13 @@ func _zmath_random_get() -> int:
 func _select_match_result_clips() -> void:
     ## StartFight() -> CBeatEmUpGameModes::SetCurrentMatchConfig() ->
     ## IBeatEmUpGameMode::SetFighterConfigFromCharacterList(), which runs once
-    ## per match and draws the intro version before the victory version. The
-    ## port has no intro animation, but it still consumes that draw so the
-    ## victory index follows the native draw order.
+    ## per match and draws the intro version before the victory version.  The
+    ## intro draw is preserved: it selects the actual characters.list intro clip
+    ## whose camera sub-animation is used in states 1/2/3.
     for fighter: PortFighter in [player, computer]:
         if fighter == null:
             continue
-        _zmath_random_get()
+        fighter.select_intro_clip(_zmath_random_get())
         fighter.select_result_clips(_zmath_random_get())
 
 
@@ -2567,9 +2575,15 @@ func _configure_attract_flags() -> void:
     native_states.attract_fighter1_available = not _intro_clip_for(computer).is_empty()
 
 
-## characters.list intro pool for a fighter, in archive order.  The player is a
-## Bruce Lee skin (all four share one pool); the opponent follows the menu id.
+## characters.list animations.intro pool for a fighter, in archive order.  The
+## fighter carries the pool configured from characters.list; the static tables
+## remain only as a fallback for a fighter constructed outside the normal setup.
 func _intro_pool_for(fighter: PortFighter) -> Array[String]:
+    if fighter == null:
+        return []
+    var configured: Array[String] = fighter.intro_clip_pool()
+    if not configured.is_empty():
+        return configured
     if fighter == player:
         return INTRO_CLIPS_PLAYER
     var opponent_id: String = OS.get_environment("BRUCELEE_OPPONENT_NAME_KEY")
@@ -2580,13 +2594,16 @@ func _intro_pool_for(fighter: PortFighter) -> Array[String]:
     return names
 
 
-## First pool clip the fighter's candidate GLB actually contains.  Empty when
-## the character's intro was not shipped with the candidate, which is a refusal,
-## not a cue to substitute another character's intro.
+## The actual selected characters.list intro clip, but only when the candidate
+## GLB contains it.  Empty means the selected clip was not shipped with this
+## candidate: fail closed rather than substitute another character's intro.
 func _intro_clip_for(fighter: PortFighter) -> String:
     if fighter == null:
         return ""
     var clips: Dictionary = fighter.get("_candidate_clip_paths")
+    var selected: String = fighter.selected_intro_clip()
+    if not selected.is_empty():
+        return selected if clips.has(selected) else ""
     for clip_name in _intro_pool_for(fighter):
         if clips.has(clip_name):
             return clip_name
@@ -2651,6 +2668,12 @@ func _enter_attract_state(target: int) -> bool:
         return false
     _enter_match_state(target)
     _play_intro_clip(fighter, clip_name)
+    # SetState(1)/(2) moves both fighters to the origin before CameraUpdate; the
+    # camera dummy is fighter0 for state 1 and fighter1 for state 2, so use the
+    # actual fighter anchor and allow the degenerate A==B point (native atan2(0,0)
+    # is 0, giving the fixed pi/2 dummy yaw).  Missing camera JSON fails closed
+    # to the analytic view.
+    _intro_camera_begin(fighter, false, clip_name, true)
     print("NATIVE_STATE_ENTER state=%d clip=%s seconds=%.3f" % [
         target, clip_name, clip_seconds])
     return true
@@ -2790,7 +2813,11 @@ func _start_round_intro() -> void:
         done = false
         return
     _enter_match_state(MATCH_STATE_INTRO)
-    _intro_camera_begin()
+    var intro_clip: String = _intro_clip_for(player)
+    if intro_clip.is_empty():
+        _intro_camera_end()
+    else:
+        _intro_camera_begin(player, false, intro_clip)
     _intro_fight_shown = false
     _show_game_text("READY", 0.8, GAME_TEXT_SEQ_READY)
     # Ready_Alt_1.wav is the recovered sample of game-text record 0 and is
@@ -3311,46 +3338,109 @@ func _intro_camera_local_fighter() -> PortFighter:
     return player
 
 
+func _camera_map_clip(map: Dictionary, clip: String) -> String:
+    if clip.is_empty():
+        return ""
+    var row: Variant = map.get(clip, {})
+    if typeof(row) != TYPE_DICTIONARY:
+        return ""
+    return String(Dictionary(row).get("camera", ""))
+
+
+func _intro_camera_load_map() -> void:
+    if _intro_camera_map_loaded:
+        return
+    _intro_camera_map_loaded = true
+    _intro_camera_map = {}
+    var file: FileAccess = FileAccess.open(_intro_camera_map_path, FileAccess.READ)
+    if file == null:
+        push_warning("intro camera map missing: " + _intro_camera_map_path)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if typeof(parsed) == TYPE_DICTIONARY:
+        var clips: Variant = Dictionary(parsed).get("camera_clips", {})
+        if typeof(clips) == TYPE_DICTIONARY:
+            _intro_camera_map = clips
+
+
+func _victory_camera_load_map() -> void:
+    if _victory_camera_map_loaded:
+        return
+    _victory_camera_map_loaded = true
+    _victory_camera_map = {}
+    var file: FileAccess = FileAccess.open(_victory_camera_map_path, FileAccess.READ)
+    if file == null:
+        push_warning("victory camera map missing: " + _victory_camera_map_path)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if typeof(parsed) == TYPE_DICTIONARY:
+        var clips: Variant = Dictionary(parsed).get("camera_clips", {})
+        if typeof(clips) == TYPE_DICTIONARY:
+            _victory_camera_map = clips
+
+
+func _intro_camera_end() -> void:
+    var old_camera: String = _intro_camera_camera
+    _intro_camera_active = false
+    _intro_camera_clip = ""
+    _intro_camera_camera = ""
+    if not old_camera.is_empty() and _camera_anm_clip == old_camera:
+        _camera_anm_end()
+
+
 func _intro_camera_begin(
-        anchor: PortFighter = null, mirror: bool = false
+        anchor: PortFighter = null, mirror: bool = false,
+        clip: String = "", allow_degenerate: bool = false
 ) -> bool:
-    ## Arm the authored SetState(3) round-intro camera. Unlike states 12/13,
-    ## SetState(3) leaves both fighters at their fight-start positions, so the
-    ## anchors are the live fighter points (no rebase). The dummy is the local
-    ## player's fighter (decompiled CameraUpdate @0x188d88: uVar4 = this[0x7e0],
-    ## mirror = 0 for state 3); the opponent only supplies the yaw direction.
-    ## `anchor`/`mirror` are exposed so the same wiring also covers the
-    ## opponent-side (player-on-the-right) case without inventing keyframes.
+    ## Arm the authored camera for an actual intro clip.  The clip comes from the
+    ## characters.list intro pool selected by the preserved zmath draw; its
+    ## camera sub-animation is looked up in the data-derived intro map.  A
+    ## missing map entry or missing JSON is a refusal, never a fallback to a
+    ## different intro's camera.  `allow_degenerate` keeps A==B for states 1/2,
+    ## where SetState moves both fighters to the origin before CameraUpdate.
     if _camera_anm == null:
         _camera_anm = CameraAnm.new()
-    if not _camera_anm.load_json(_camera_anm_dir + INTRO_CAMERA_CLIP + ".json"):
-        _camera_anm_clip = ""
-        _camera_anm_anchor = null
-        return false
+    _intro_camera_load_map()
     var dummy: PortFighter = anchor if anchor != null else _intro_camera_local_fighter()
+    var wanted_clip: String = clip
+    if wanted_clip.is_empty() and dummy != null:
+        wanted_clip = dummy.selected_intro_clip()
+    var camera_clip: String = _camera_map_clip(_intro_camera_map, wanted_clip)
+    if wanted_clip.is_empty() or camera_clip.is_empty():
+        _intro_camera_end()
+        return false
+    if not _camera_anm.load_json(_camera_anm_dir + camera_clip + ".json"):
+        _intro_camera_end()
+        return false
     var other: PortFighter = computer if dummy == player else player
     var a: Vector3 = _camera_anm_fighter_point(dummy)
     var b: Vector3 = _camera_anm_fighter_point(other)
-    if (b - a).length() < 0.001:
+    if not allow_degenerate and (b - a).length() < 0.001:
         b = a + Vector3(dummy.facing, 0.0, 0.0)
-    _camera_anm_clip = INTRO_CAMERA_CLIP
+    _camera_anm_clip = camera_clip
     _camera_anm_frame = 0.0
     _camera_anm_anchor = dummy
     _camera_anm_mirror = mirror
     _camera_anm_a = a
     _camera_anm_b = b
+    _intro_camera_clip = wanted_clip
+    _intro_camera_camera = camera_clip
+    _intro_camera_active = true
     return true
 
 
 func _camera_anm_begin(
         clip: String, winner: PortFighter, player_pre: Vector3, computer_pre: Vector3
 ) -> bool:
-    ## Start the authored result camera for `winner`. `player_pre`/`computer_pre`
-    ## are the two fighters' source points *before* SetState(12/13) moves both to
-    ## the origin; they give the dummy yaw (winner -> loser). SetState(12/13)
-    ## then renders the winner at the origin, so the anchors are rebased so the
-    ## selected dummy lands there. mirror=true selects the computer as the dummy
-    ## exactly as CBeatEmUpCamera::StartAnimation swaps A/B for states 12/13.
+    ## Start the authored result camera for `winner`. `clip` is the camera clip
+    ## already resolved from the actual winner clip (characters.list victory
+    ## pool + zmath draw). `player_pre`/`computer_pre` are the two fighters'
+    ## source points *before* SetState(12/13) moves both to the origin; they give
+    ## the dummy yaw (winner -> loser). SetState(12/13) then renders the winner
+    ## at the origin, so the anchors are rebased so the selected dummy lands
+    ## there. mirror=true selects the computer as the dummy exactly as
+    ## CBeatEmUpCamera::StartAnimation swaps A/B for states 12/13.
+    _intro_camera_end()
     if _camera_anm == null:
         _camera_anm = CameraAnm.new()
     if not _camera_anm.load_json(_camera_anm_dir + clip + ".json"):
@@ -3413,23 +3503,20 @@ func _camera_anm_play_authored(delta: float) -> bool:
 
 
 func _intro_camera_play_authored(delta: float) -> bool:
-    ## Per-frame playback of the SetState(3) intro clip (30 fps, no
+    ## Per-frame playback of the actual selected intro camera (30 fps, no
     ## interpolation). Unlike the result camera, this one *finishes*: when the
     ## frame counter passes the last authored frame it ends and returns false so
-    ## the analytic follow camera takes over. Native CameraUpdate keeps the
-    ## authored camera overriding the analytic one until StopAnimation/timeout
-    ## (report E10), and the clip is 4.03 s while SetState(3) lasts 3.0 s, so the
-    ## final fov ramp (frames 90-120, 56 deg -> 9 deg) plays over the first
-    ## ~1 s of the fight exactly as natively timed.
-    if (_camera_anm == null or _camera_anm_clip != INTRO_CAMERA_CLIP
-            or _camera_anm_anchor == null):
+    ## the analytic follow camera takes over. The clip is the one that belongs to
+    ## the fighter's selected characters.list intro, never a hardcoded m01 clip.
+    if (not _intro_camera_active or _camera_anm == null
+            or _camera_anm_clip.is_empty() or _camera_anm_anchor == null):
         return false
     var last: int = _camera_anm.frame_count() - 1
     if last < 0:
         return false
     _camera_anm_frame += maxf(delta, 0.0) * 30.0
     if _camera_anm_frame > float(last):
-        _camera_anm_end()
+        _intro_camera_end()
         return false
     var index: int = int(_camera_anm_frame)
     var pose: Dictionary = _camera_anm.place_world(
@@ -3575,12 +3662,13 @@ func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
         # The player's current animation owns an authored camera; it overrides
         # both the intro tail and the analytic follow camera while it runs.
         return
-    if _camera_anm_clip == INTRO_CAMERA_CLIP and match_state in [
+    if _intro_camera_active and match_state in [
+            MATCH_STATE_ATTRACT_FIGHTER0, MATCH_STATE_ATTRACT_FIGHTER1,
             MATCH_STATE_INTRO, MATCH_STATE_FIGHT]:
-        # SetState(3) READY/FIGHT: play the authored m01_intro_01 camera per
-        # frame; it deliberately survives the INTRO -> FIGHT transition so the
-        # authored fov ramp finishes natively. When the JSON is missing the clip
-        # stays empty and the analytic follow camera below keeps the old framing.
+        # The selected characters.list intro's own camera sub-animation.  It
+        # deliberately survives INTRO -> FIGHT so a clip longer than the 3 s
+        # READY state finishes as natively timed; a missing map/JSON leaves the
+        # active flag false and the analytic follow camera below keeps the view.
         if _intro_camera_play_authored(delta):
             return
     var a: Vector3 = _camera_fighter_point(player)
@@ -3761,15 +3849,19 @@ func _on_time_up() -> void:
 
 
 func _enter_match_state(next_state: int) -> void:
-    if next_state not in [MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE]:
+    if next_state in [MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE]:
+        # Result states own a separate authored camera begun after the state
+        # switch; only clear any intro camera that was still active.
+        _intro_camera_end()
+    else:
         # The authored intro camera is allowed to survive INTRO(3) -> FIGHT(4)
-        # so its 4.03 s clip finishes as natively timed (CameraUpdate keeps it
+        # so its authored clip finishes as natively timed (CameraUpdate keeps it
         # until StopAnimation/timeout); every other transition ends it.
         var keep_intro: bool = (
-            next_state == MATCH_STATE_FIGHT
-            and _camera_anm_clip == INTRO_CAMERA_CLIP
+            next_state == MATCH_STATE_FIGHT and _intro_camera_active
         )
         if not keep_intro:
+            _intro_camera_end()
             _camera_anm_end()
     match_state = next_state
     match_state_time = 0.0
@@ -3963,12 +4055,22 @@ func _begin_winner_result_pose() -> void:
     player.visible = winner_is_player
     computer.visible = not winner_is_player
     _result_camera_override = true
-    _camera_anm_begin("m01_victory_01", winner, player_pre, computer_pre)
     # The KO text from state 7/8 has finished by the time SetState(12/13)
     # begins; clear it so only the victory/defeat clip is presented.
     _hide_game_text_overlays()
     var victory_ok: bool = winner.enter_result_pose("victory")
     loser.clear_result_pose()
+    # The camera belongs to the clip that is actually played (characters.list
+    # victory pool + the preserved zmath draw).  A candidate asset gap may
+    # substitute a loaded result clip; the camera follows that actual clip.
+    _victory_camera_load_map()
+    var result_camera_clip: String = _camera_map_clip(
+        _victory_camera_map, winner.result_clip
+    )
+    if victory_ok and not result_camera_clip.is_empty():
+        _camera_anm_begin(result_camera_clip, winner, player_pre, computer_pre)
+    else:
+        _camera_anm_end()
     if not winner.result_clip_gap_last.is_empty():
         print("MATCH_RESULT_GAP winner=%s %s" % [
             "player" if winner_is_player else "computer",

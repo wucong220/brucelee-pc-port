@@ -1,0 +1,30 @@
+{
+ "schema": 1,
+ "source": "characters.list animations.defeat and the recovered camera sub-animation rule: X_camera.anm belongs to action X",
+ "camera_clips": {
+  "m01_defeat_01": {
+   "camera": "m01_defeat_01",
+   "file": "m01_defeat_01.json",
+   "frames": 117,
+   "fps": 30.0,
+   "characters": [
+    "bruce lee a",
+    "bruce lee b",
+    "bruce lee c",
+    "bruce lee d",
+    "shen lo",
+    "the master",
+    "smallboy",
+    "sin fu",
+    "chief a",
+    "chief b",
+    "ken godall",
+    "brick davis",
+    "johnson",
+    "lo ming a",
+    "lo ming b"
+   ],
+   "evidence": "adreno_200/characters.list animations.defeat"
+  }
+ }
+}

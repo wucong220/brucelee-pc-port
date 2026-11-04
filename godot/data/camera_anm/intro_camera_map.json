@@ -1,0 +1,182 @@
+{
+ "schema": 1,
+ "source": "characters.list animations.intro and the recovered camera sub-animation rule: X_camera.anm belongs to action X",
+ "camera_clips": {
+  "m01_intro_01": {
+   "camera": "m01_intro_01",
+   "file": "m01_intro_01.json",
+   "frames": 121,
+   "fps": 30.0,
+   "characters": [
+    "bruce lee a",
+    "bruce lee b",
+    "bruce lee c",
+    "bruce lee d"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m01_intro_02": {
+   "camera": "m01_intro_02",
+   "file": "m01_intro_02.json",
+   "frames": 137,
+   "fps": 30.0,
+   "characters": [
+    "bruce lee a",
+    "bruce lee b",
+    "bruce lee c",
+    "bruce lee d"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m01_intro_03": {
+   "camera": "m01_intro_03",
+   "file": "m01_intro_03.json",
+   "frames": 178,
+   "fps": 30.0,
+   "characters": [
+    "bruce lee a",
+    "bruce lee b",
+    "bruce lee c",
+    "bruce lee d"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m01_intro_04": {
+   "camera": "m01_intro_04",
+   "file": "m01_intro_04.json",
+   "frames": 120,
+   "fps": 30.0,
+   "characters": [
+    "bruce lee a",
+    "bruce lee b",
+    "bruce lee c",
+    "bruce lee d"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m02_e01_intro_01": {
+   "camera": "m02_e01_intro_01",
+   "file": "m02_e01_intro_01.json",
+   "frames": 188,
+   "fps": 30.0,
+   "characters": [
+    "chief a",
+    "chief b"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m02_e01_intro_02": {
+   "camera": "m02_e01_intro_02",
+   "file": "m02_e01_intro_02.json",
+   "frames": 141,
+   "fps": 30.0,
+   "characters": [
+    "chief a",
+    "chief b"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m02_intro_01": {
+   "camera": "m02_intro_01",
+   "file": "m02_intro_01.json",
+   "frames": 63,
+   "fps": 30.0,
+   "characters": [
+    "chief a",
+    "chief b"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m02_intro_02": {
+   "camera": "m02_intro_02",
+   "file": "m02_intro_02.json",
+   "frames": 81,
+   "fps": 30.0,
+   "characters": [
+    "ken godall"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m02_intro_03": {
+   "camera": "m02_intro_03",
+   "file": "m02_intro_03.json",
+   "frames": 77,
+   "fps": 30.0,
+   "characters": [
+    "ken godall"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m03_intro_01": {
+   "camera": "m03_intro_01",
+   "file": "m03_intro_01.json",
+   "frames": 298,
+   "fps": 30.0,
+   "characters": [
+    "johnson"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m03_intro_02": {
+   "camera": "m03_intro_02",
+   "file": "m03_intro_02.json",
+   "frames": 167,
+   "fps": 30.0,
+   "characters": [
+    "brick davis"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m03_intro_03": {
+   "camera": "m03_intro_03",
+   "file": "m03_intro_03.json",
+   "frames": 76,
+   "fps": 30.0,
+   "characters": [
+    "smallboy"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m04_e01_intro_01": {
+   "camera": "m04_e01_intro_01",
+   "file": "m04_e01_intro_01.json",
+   "frames": 108,
+   "fps": 30.0,
+   "characters": [
+    "the master"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m04_e02_intro_01": {
+   "camera": "m04_e02_intro_01",
+   "file": "m04_e02_intro_01.json",
+   "frames": 190,
+   "fps": 30.0,
+   "characters": [
+    "sin fu"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m04_e03_intro_01": {
+   "camera": "m04_e03_intro_01",
+   "file": "m04_e03_intro_01.json",
+   "frames": 211,
+   "fps": 30.0,
+   "characters": [
+    "shen lo"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  },
+  "m04_intro_01": {
+   "camera": "m04_intro_01",
+   "file": "m04_intro_01.json",
+   "frames": 140,
+   "fps": 30.0,
+   "characters": [
+    "lo ming a",
+    "lo ming b"
+   ],
+   "evidence": "adreno_200/characters.list animations.intro"
+  }
+ }
+}

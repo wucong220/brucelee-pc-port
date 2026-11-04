@@ -2739,6 +2739,8 @@ var candidate_animation_clip: String = ""
 var result_clip: String = ""
 var result_pose_active: bool = false
 var character_result_clips: Dictionary = {}
+var character_intro_clips: Array[String] = []
+var intro_clip_index: int = 0
 var result_clip_index_victory: int = 0
 var result_clip_index_defeat: int = 0
 var result_clip_gap_last: String = ""
@@ -8116,52 +8118,62 @@ func receive_hit(
     return true
 
 
-# characters.list animations.victory / animations.defeat per character, in
-# archive order (adreno_200/characters.list). The native match configuration
-# stores
+# characters.list animations.intro / victory / defeat per character, in archive
+# order (adreno_200/characters.list). The native match configuration stores
+#   GetAnimation(charIndex, "intro",   zmathRandomGet() % GetAnimationNumVersions)
 #   GetAnimation(charIndex, "victory", zmathRandomGet() % GetAnimationNumVersions)
-# and
-#   GetAnimation(charIndex, "defeat", 0)
-# in TFighterConfig+0x5c / +0x60, and CBeatEmUpGame::LoadFighterAnimations loads
-# those two names as the "Victory"/"Defeat" free animations. Only the victory
-# index is a random draw; the defeat index is the literal 0.
+#   GetAnimation(charIndex, "defeat",  0)
+# in TFighterConfig+0x58/+0x5c/+0x60, and CBeatEmUpGame::LoadFighterAnimations
+# loads those names.  The intro draw is preserved and used by the round-intro
+# camera and the attract-state camera; the victory draw selects the result
+# camera.  No pool entry is invented.
 const RESULT_CLIPS_BRUCELEE: Dictionary = {
+    "intro": ["m01_intro_01", "m01_intro_02", "m01_intro_03", "m01_intro_04"],
     "victory": ["m01_victory_01", "m01_victory_02"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_BRICK: Dictionary = {
+    "intro": ["m03_intro_02"],
     "victory": ["m03_victory_02"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_SINFU: Dictionary = {
+    "intro": ["m04_e02_intro_01"],
     "victory": ["m04_e02_victory_01"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_MASTER: Dictionary = {
+    "intro": ["m04_e01_intro_01"],
     "victory": ["m04_e01_victory_01"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_SHENLO: Dictionary = {
+    "intro": ["m04_e03_intro_01"],
     "victory": ["m04_e03_victory_01"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_KEN: Dictionary = {
+    "intro": ["m02_intro_02", "m02_intro_03"],
     "victory": ["m02_e01_victory_01"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_SMALLBOY: Dictionary = {
+    "intro": ["m03_intro_03"],
     "victory": ["m03_victory_03"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_JOHNSON: Dictionary = {
+    "intro": ["m03_intro_01"],
     "victory": ["m03_victory_01"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_CHIEF: Dictionary = {
+    "intro": ["m02_e01_intro_01", "m02_e01_intro_02", "m02_intro_01"],
     "victory": ["m02_victory_01"],
     "defeat": ["m01_defeat_01"],
 }
 const RESULT_CLIPS_LOMING: Dictionary = {
+    "intro": ["m04_intro_01"],
     "victory": ["m04_victory_01", "m04_victory_02"],
     "defeat": ["m01_defeat_01"],
 }
@@ -8172,8 +8184,35 @@ func configure_result_clips(pools: Dictionary) -> void:
     ## once before the fighter enters the tree; the result pose uses the pool
     ## rather than the loaded GLB's animation list.
     character_result_clips = pools.duplicate(true)
+    character_intro_clips.clear()
+    var intro_raw: Variant = character_result_clips.get("intro", [])
+    if intro_raw is Array:
+        for value: Variant in intro_raw:
+            character_intro_clips.append(String(value))
+    intro_clip_index = 0
     result_clip_index_victory = 0
     result_clip_index_defeat = 0
+
+
+func intro_clip_pool() -> Array[String]:
+    return character_intro_clips.duplicate()
+
+
+func select_intro_clip(intro_roll: int) -> void:
+    ## Port of the intro version choice in
+    ## IBeatEmUpGameMode::SetFighterConfigFromCharacterList (0x1ff418):
+    ## `version = zmathRandomGet() % GetAnimationNumVersions(...)`.
+    ## The draw is consumed once per fighter per match; the selected clip owns
+    ## the authored camera sub-animation.
+    intro_clip_index = 0
+    if not character_intro_clips.is_empty():
+        intro_clip_index = intro_roll % character_intro_clips.size()
+
+
+func selected_intro_clip() -> String:
+    if character_intro_clips.is_empty():
+        return ""
+    return character_intro_clips[clampi(intro_clip_index, 0, character_intro_clips.size() - 1)]
 
 
 func select_result_clips(victory_roll: int) -> void:
