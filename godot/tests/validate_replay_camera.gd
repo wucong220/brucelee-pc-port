@@ -8,6 +8,10 @@ extends SceneTree
 ##   CameraUpdate @0x188d88: state 6 uses dummy=fighter[0x7e0], mirror=0
 ##   Update case 6 @0x18d0ac: sample=elapsed+2*base, 0.5x, ReplayEnded loops
 ##   camera_anm: 30 fps, X_camera.anm belongs to action clip X, no interpolation
+##   CBeatEmUpCamera::Update @0x244230: analytic branch (camera+0x0c==0) with
+##     param_9=(state==6) adds DAT_002444a0 = +100.0 source Z to camZ only
+##   A recorded clip with no "camera" KDF sub-animation does not arm
+##     StartAnimation, so it uses that analytic branch instead of state 14.
 ##
 ## Run with BRUCELEE_PLAYER_GLB / BRUCELEE_OPPONENT_GLB pointing at the verified
 ## local candidates; this script also sets them to those paths when absent.
@@ -28,6 +32,11 @@ const NO_CAMERA_CLIP: String = "m01_idle_01"
 const SWITCH_AT: int = 20
 const RECORD_COUNT: int = 40
 const ANALYTIC_FOV: float = 75.0
+## CBeatEmUpCamera::Update param_9 (state==6) offset, DAT_002444a0, source Z units.
+const LIFT_SOURCE: float = 100.0
+const CAM_SCALE: float = (
+    PortFighter.WORLD_CHARACTER_HEIGHT / PortFighter.SOURCE_CHARACTER_HEIGHT
+)
 
 var failures: Array[String] = []
 var checks: int = 0
@@ -237,6 +246,38 @@ func _check_no_analytic(node: Node, label: String) -> void:
         "distance=%.4f" % cam.global_position.distance_to(analytic))
 
 
+func _check_analytic_pose(node: Node, player: PortFighter, computer: PortFighter,
+        label: String) -> void:
+    ## Verify the recovered state-6 analytic branch: the exact follow pose from
+    ## _native_camera_pose(a, b, 1.0), plus DAT_002444a0 = +100.0 source Z on
+    ## the CAMERA only.  The look-at target and up are unchanged.
+    var cam = node.get("fight_camera")
+    _check(_approx(float(cam.fov), ANALYTIC_FOV, 0.001),
+        label + ": FOV is the analytic 75 degrees",
+        "fov=%.3f" % float(cam.fov))
+    var a: Vector3 = node.call("_camera_fighter_point", player)
+    var b: Vector3 = node.call("_camera_fighter_point", computer)
+    var pose: Dictionary = node.call("_native_camera_pose", a, b, 1.0)
+    var base_position: Vector3 = pose["position"] as Vector3
+    var expected: Vector3 = base_position + Vector3(0.0, LIFT_SOURCE, 0.0)
+    expected *= CAM_SCALE
+    var unlifted: Vector3 = base_position * CAM_SCALE
+    _check(_vector_near(cam.global_position, expected, 0.005),
+        label + ": camera is the analytic follow pose + 100 source-Z",
+        "live=%s expected=%s" % [str(cam.global_position), str(expected)])
+    _check(_approx(cam.global_position.y - unlifted.y, LIFT_SOURCE * CAM_SCALE, 0.005),
+        label + ": camera height lift is exactly DAT_002444a0 = 100.0 source units",
+        "lift=%.6f expected=%.6f" % [
+            cam.global_position.y - unlifted.y, LIFT_SOURCE * CAM_SCALE,
+        ])
+    var target_world: Vector3 = (pose["target"] as Vector3) * CAM_SCALE
+    var to_target: Vector3 = (target_world - cam.global_position).normalized()
+    var forward: Vector3 = -cam.global_transform.basis.z.normalized()
+    _check(forward.dot(to_target) > 0.9999,
+        label + ": look-at target is unchanged (no lift on the target)",
+        "dot=%.8f" % forward.dot(to_target))
+
+
 func _expected_frame(node: Node, clip: String) -> int:
     var rows: Dictionary = _load_replay_map()
     var row: Dictionary = Dictionary(rows.get(clip, {}))
@@ -317,6 +358,7 @@ func _reset_for_scenario(node: Node) -> void:
     node.set("_replay_camera_map", {})
     node.set("_replay_camera_anms", {})
     node.set("_replay_camera_fail_reason", "")
+    node.set("_replay_camera_analytic", false)
     node.call("_reset_match")
     _force_match_lost_by_player(node)
     if flow == null:
@@ -395,32 +437,65 @@ func _run() -> void:
     main.call("_update_fight_camera", FRAME)
     _camera_matches(main, FIRST_CLIP, "state 6 after loop Restart")
 
-    # ---- Fail closed: one clip with no recovered camera ----
+    # ---- Recovered analytic fallback: a clip with no recovered camera ----
+    # Direct disassembly proves such a clip does not arm StartAnimation, so
+    # CBeatEmUpCamera::Update's analytic branch (param_9 = state==6, +100 Z)
+    # runs.  It must NOT fall back to state 14.
     _reset_for_scenario(main)
     _fill_buffers(main, NO_CAMERA_CLIP, NO_CAMERA_CLIP)
     main.call("_on_ko", player)
-    _check(int(main.get("match_state")) == 14,
-        "a clip without a camera refuses state 6 and falls back to state 14",
+    _check(int(main.get("match_state")) == 6,
+        "a clip without a camera stays in state 6 (no state-14 fallback)",
         "match_state=%d" % int(main.get("match_state")))
+    _check(int(states.state) == 6, "NativeMatchStates records the state-6 entry")
+    _check(not bool(main.get("_replay_camera_active")),
+        "no authored replay camera is armed for a no-camera clip")
+    _check(bool(main.get("_replay_camera_analytic")),
+        "the recovered analytic branch is armed for a no-camera clip")
+    _check(String(main.get("_replay_camera_clip")) == NO_CAMERA_CLIP,
+        "the analytic branch tracks the player's recorded clip",
+        "clip=%s" % String(main.get("_replay_camera_clip")))
     var trace_refused: bool = false
     for entry: Dictionary in states.trace:
         if (int(entry.get("state", -1)) == 6
                 and String(entry.get("result", "")) == "refused"
-                and String(entry.get("reason", "")) == "no-recovered-replay-camera"):
+                and String(entry.get("reason", "")).contains("no-recovered-camera")):
             trace_refused = true
-    _check(trace_refused,
-        "NativeMatchStates.trace preserves the camera refusal after state 14 entry",
+    _check(not trace_refused,
+        "NativeMatchStates.trace has no no-camera refusal",
         "trace=%s" % str(states.trace))
     _check(String(states.fail_reason).is_empty(),
-        "successful state 14 entry clears the transient fail_reason",
+        "the state-6 entry leaves fail_reason clear",
         "reason=%s" % String(states.fail_reason))
-    _check(not bool(main.get("_replay_camera_active")),
-        "no authored replay camera is active after the refusal")
-    _check(String(main.get("_replay_camera_fail_reason")).contains(NO_CAMERA_CLIP),
-        "the refusal identifies the clip without a camera",
-        "reason=%s" % String(main.get("_replay_camera_fail_reason")))
+    main.call("_update_fight_camera", FRAME)
+    _check_analytic_pose(main, player, computer, "no-camera clip")
 
-    # ---- Fail closed: strict map missing ----
+    # ---- Per-clip switch: authored camera -> analytic branch ----
+    _reset_for_scenario(main)
+    _fill_buffers(main, FIRST_CLIP, NO_CAMERA_CLIP)
+    main.call("_on_ko", player)
+    _check(int(main.get("match_state")) == 6,
+        "mixed authored/no-camera buffers still enter state 6",
+        "match_state=%d" % int(main.get("match_state")))
+    _check(bool(main.get("_replay_camera_active")),
+        "the authored first clip keeps its recovered camera")
+    main.call("_update_fight_camera", FRAME)
+    _camera_matches(main, FIRST_CLIP, "mixed: authored first clip")
+    var mixed_guard: int = 0
+    while String(main.get("_replay_camera_clip")) != NO_CAMERA_CLIP and mixed_guard < 160:
+        _drive(main, 1)
+        mixed_guard += 1
+    _check(String(main.get("_replay_camera_clip")) == NO_CAMERA_CLIP,
+        "the recorded clip switch reaches the no-camera clip",
+        "clip=%s" % String(main.get("_replay_camera_clip")))
+    _check(not bool(main.get("_replay_camera_active")),
+        "the authored camera is released on switch to a no-camera clip")
+    _check(bool(main.get("_replay_camera_analytic")),
+        "the analytic branch is armed on switch to a no-camera clip")
+    main.call("_update_fight_camera", FRAME)
+    _check_analytic_pose(main, player, computer, "mixed: switched no-camera clip")
+
+    # ---- Named fail closed: strict map missing ----
     _reset_for_scenario(main)
     _fill_buffers(main, FIRST_CLIP, SECOND_CLIP)
     main.set("_replay_camera_map_path", "res://data/camera_anm/this_map_does_not_exist.json")

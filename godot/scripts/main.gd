@@ -604,9 +604,10 @@ var _countdown_handed_off: bool = false
 ## simulation and applies the recorded 0x2c frames itself.  The native body also
 ## calls StopCameraAnimation/Restart, SetReplayCurrentTime(fighter, game+0x838)
 ## and SetPosToFightStartPos.  After the camera Restart, CameraUpdate reads the
-## camera sub-animation from the local player's recorded clip; the port now
-## resolves that clip against only the recovered camera ANM names and refuses
-## state 6 when any recorded clip has no authored camera.  The port's +0x838
+## camera sub-animation from the local player's recorded clip: a clip with a
+## recovered camera ANM plays that authored camera, a clip without one stays in
+## CBeatEmUpCamera::Update's analytic branch (param_9 = state==6, +100 source-Z).
+## The port's +0x838
 ## equivalent is the earliest recorded sample of the current round (the recorder
 ## resets in reset_fighter, exactly like CFighter::Restart clears the +0x194
 ## count) and the fight-start pose is captured here.
@@ -681,13 +682,26 @@ var _action_camera_missing_json: Array[String] = []
 
 # ---- Authored per-clip camera for state 6 (SetState(6) replay) ----
 # replay_camera_map.json is generated mechanically from camera_catalog.json:
-# exactly 70 recovered <clip>_camera.anm rows, no aliases.  The preflight
-# checks every distinct clip in BOTH replay buffers; a missing camera refuses
-# state 6 (story-loss then falls back to state 14) rather than using the
-# analytic follow camera.  State 6 is the CameraUpdate else branch:
-# dummy = fighter[this+0x7e0] (local player, slot 0), mirror = false.
+# exactly 70 recovered <clip>_camera.anm rows, no aliases.  The preflight still
+# requires the map and only refuses structural gaps (missing map, bad buffers,
+# a listed camera whose JSON will not decode).  A recorded clip with NO camera
+# row is NOT a refusal: direct disassembly of CAnimationDescr::ParseFromKDF /
+# CBeatEmUpGame::CameraUpdate / CBeatEmUpCamera::Update proves that such a clip
+# leaves camera+0x0c == 0, so Update takes the analytic follow-camera branch
+# with param_9 = (state == 6), i.e. the follow camera plus a +100 source-Z
+# lift (see REPLAY_CAMERA_ANALYTIC_LIFT_SOURCE).  State 6 is the CameraUpdate
+# else branch: dummy = fighter[this+0x7e0] (local player, slot 0), mirror=false.
 const REPLAY_CAMERA_MAP_PATH: String = "res://data/camera_anm/replay_camera_map.json"
 const REPLAY_CAMERA_FAIL_REASON: String = "no-recovered-replay-camera"
+# CBeatEmUpCamera::Update @0x244230, param_9 != 0 (state 6) branch:
+#   SetCamera(scene, camX+DAT_0024448c, camY+DAT_0024448c,
+#             camZ+DAT_002444a0, targetX, targetY, targetZ,
+#             DAT_0024448c, DAT_0024448c, DAT_002444b4)
+# DAT_0024448c = 0.0, DAT_002444a0 = 100.0, DAT_002444b4 = 1.0 (up=(0,0,1)).
+# So the only state-6 difference is camZ += 100.0 source Z units; the look-at
+# target is unchanged.  In the port's Godot Y-up analytic pose, source Z maps
+# to height (Y), so this is +100 to the camera position's Y before scaling.
+const REPLAY_CAMERA_ANALYTIC_LIFT_SOURCE: float = 100.0
 var _replay_camera_map_path: String = REPLAY_CAMERA_MAP_PATH
 var _replay_camera_map: Dictionary = {}
 var _replay_camera_map_loaded: bool = false
@@ -701,6 +715,9 @@ var _replay_camera_clip_start_ms: int = 0
 var _replay_camera_sample_ms: int = 0
 var _replay_camera_active: bool = false
 var _replay_camera_fail_reason: String = ""
+## True when the current state-6 clip has no authored camera ANM and the
+## recovered analytic branch of CBeatEmUpCamera::Update is in use instead.
+var _replay_camera_analytic: bool = false
 
 # Continue prompt drawn by state 9.  Null until the state is entered.
 var _continue_layer: CanvasLayer = null
@@ -4666,7 +4683,8 @@ func _action_camera_tick() -> bool:
 
 func _replay_camera_load_map() -> bool:
     ## Load the strict 70-camera map once.  A missing/invalid map is empty, so
-    ## preflight refuses state 6 instead of aliasing a camera or falling back.
+    ## preflight still refuses state 6 (named fail closed) instead of guessing
+    ## which clips own authored cameras.
     if _replay_camera_map_loaded:
         return not _replay_camera_map.is_empty()
     _replay_camera_map_loaded = true
@@ -4735,9 +4753,16 @@ func _replay_camera_refuse(reason: String) -> bool:
 
 
 func _replay_camera_preflight(player_buffer, computer_buffer) -> bool:
-    ## Strict port rule: every distinct clip in BOTH buffers must own a
-    ## recovered camera ANM.  This is checked before NativeMatchStates.enter(6),
-    ## so a refused replay never consumes a cursor or enters an analytic view.
+    ## Recovered state-6 camera gate (CBeatEmUpCamera::Update @0x244230).
+    ## The 70-row map is still strict: it must exist and every LISTED camera must
+    ## decode exactly; a missing map / invalid JSON / bad frame count / null or
+    ## empty buffers remain named fail-closed refusals.  A recorded clip with NO
+    ## camera row is deliberately NOT a refusal.  CAnimationDescr::ParseFromKDF
+    ## fills the camera name/resource (+0xf4/+0xec) only when the KDF node
+    ## literally named "camera" exists; the constructor leaves +0xec=0 and
+    ## +0xf4=an empty name.  CameraUpdate @0x188d88 therefore does not arm
+    ## StartAnimation for that clip, camera+0x0c stays 0, and Update takes the
+    ## analytic branch with param_9=(state==6): follow camera + 100 source-Z.
     _replay_camera_fail_reason = ""
     if not _replay_camera_load_map():
         return _replay_camera_refuse("replay-camera-map-missing")
@@ -4757,7 +4782,10 @@ func _replay_camera_preflight(player_buffer, computer_buffer) -> bool:
             seen[clip] = true
             var row: Dictionary = _replay_camera_row(clip)
             if row.is_empty():
-                return _replay_camera_refuse("no-recovered-camera clip=%s" % clip)
+                # No authored camera sub-animation: the native analytic branch
+                # handles this clip.  Never alias a size variant and never
+                # refuse state 6 just because a camera was not authored.
+                continue
             if _replay_camera_player(clip, row) == null:
                 return _replay_camera_refuse("replay-camera-json-invalid clip=%s" % clip)
     return true
@@ -4771,6 +4799,26 @@ func _replay_camera_end() -> void:
     _replay_camera_b = Vector3.ZERO
     _replay_camera_frame = 0
     _replay_camera_clip_start_ms = 0
+    _replay_camera_analytic = false
+
+
+func _replay_camera_arm_analytic(clip: String) -> bool:
+    ## Recovered native path for a clip with NO "camera" KDF sub-animation.
+    ## CAnimationDescr ctor leaves +0xec = 0 and +0xf4 = an empty name, so
+    ## CameraUpdate's strlen(+0xf4 name) gate fails and StartAnimation is NOT
+    ## called.  SetState(6)'s StopCameraAnimation + CBeatEmUpCamera::Restart
+    ## leave camera+0x0c = 0, so CBeatEmUpCamera::Update takes its analytic
+    ## branch with param_9 = (state == 6): the follow camera plus +100 source-Z.
+    ## _restart_fight_camera() is the port equivalent of CBeatEmUpCamera::Restart
+    ## (smoothed A/B seeded at the current fighter points, zoom cleared).
+    _replay_camera_end()
+    _replay_camera_clip = clip
+    _replay_camera_analytic = true
+    _restart_fight_camera()
+    print("REPLAY_CAMERA_ANALYTIC state=6 clip=%s reason=no-camera-anm lift_source=%.1f" % [
+        clip, REPLAY_CAMERA_ANALYTIC_LIFT_SOURCE,
+    ])
+    return true
 
 
 func _replay_camera_begin(clip: String, clip_start_ms: int) -> bool:
@@ -4799,7 +4847,8 @@ func _replay_camera_begin(clip: String, clip_start_ms: int) -> bool:
 func _replay_camera_restart() -> bool:
     ## SetState(6) / loop re-entry: StopCameraAnimation + CBeatEmUpCamera::Restart
     ## are followed by CameraUpdate arming the camera of the player's first
-    ## recorded clip.  No _restart_fight_camera() analytic path is used.
+    ## recorded clip.  If that clip owns a recovered camera ANM the authored
+    ## camera is started; if it has none, the recovered analytic branch is armed.
     _replay_camera_end()
     if native_states == null:
         return _replay_camera_refuse("no-match-state")
@@ -4817,6 +4866,13 @@ func _replay_camera_restart() -> bool:
     _replay_camera_sample_ms = (
         NativeMatchStates.REPLAY_SPEED_FACTOR * int(native_states.replay_base_ms)
     )
+    # A missing/invalid map is a named fail-closed refusal, never a silent
+    # "no camera" analytic fallback (the row lookup can only be trusted when
+    # the strict 70-row catalog is loaded).
+    if not _replay_camera_load_map():
+        return _replay_camera_refuse("replay-camera-map-missing")
+    if _replay_camera_row(clip).is_empty():
+        return _replay_camera_arm_analytic(clip)
     if not _replay_camera_begin(clip, int(record.get("time_ms", 0))):
         return _replay_camera_refuse("replay-camera-begin-failed clip=%s" % clip)
     return true
@@ -4878,7 +4934,7 @@ func _replay_camera_play_authored() -> bool:
 
 func _replay_camera_on_player_record(record: Dictionary, sample_ms: int) -> void:
     _replay_camera_sample_ms = sample_ms
-    if not _replay_camera_active or match_state != MATCH_STATE_REPLAY:
+    if (not _replay_camera_active and not _replay_camera_analytic) or match_state != MATCH_STATE_REPLAY:
         return
     var clip: String = String(record.get("animation", ""))
     if clip.is_empty():
@@ -4886,7 +4942,17 @@ func _replay_camera_on_player_record(record: Dictionary, sample_ms: int) -> void
         _replay_camera_end()
         return
     if clip != _replay_camera_clip:
-        if not _replay_camera_begin(clip, int(record.get("time_ms", 0))):
+        # A per-clip switch re-arms the camera exactly as CFighter::SetAnimation
+        # clears fighter+0x17a: authored camera when the clip owns a recovered
+        # ANM, otherwise the analytic branch (param_9 = state==6).  A missing
+        # catalog is a named failure, never a silent analytic fallback.
+        if not _replay_camera_load_map():
+            push_error("REPLAY_CAMERA_GAP state=6 reason=replay-camera-map-missing")
+            _replay_camera_end()
+            return
+        if _replay_camera_row(clip).is_empty():
+            _replay_camera_arm_analytic(clip)
+        elif not _replay_camera_begin(clip, int(record.get("time_ms", 0))):
             push_error(
                 "REPLAY_CAMERA_GAP state=6 reason=clip-camera-unavailable clip=%s" % clip
             )
@@ -4895,15 +4961,52 @@ func _replay_camera_on_player_record(record: Dictionary, sample_ms: int) -> void
     _replay_camera_play_authored()
 
 
+func _apply_replay_analytic_camera(delta: float) -> void:
+    ## CBeatEmUpCamera::Update @0x244230, analytic branch (camera+0x0c == 0),
+    ## state 6 (param_9 != 0).  This is exactly the recovered follow formula:
+    ##   SA = 0.2*A + 0.8*SA ; SB = 0.2*B + 0.8*SB
+    ##   L = |SB-SA| ; Lc = max(L, 275)
+    ##   target = midpoint(SA,SB) + (0,112,0)
+    ##   u = (SB-SA)/L ; lat = (-u.z, 0, u.x) * (side==0 ? 1 : -1)
+    ##   cam = target + lat*Lc + zoom*(-200)*u   (no PC zoom source -> zoom=0)
+    ##   up = (0,0,1)
+    ## with the state-6 param_9 difference: camZ += 100.0 source Z units.
+    ## _native_camera_pose() implements that formula in Godot Y-up source units;
+    ## aspect_scale is passed as 1.0 because the native Lc has no viewport
+    ## aspect term (that multiplier is only a port framing choice elsewhere).
+    if not _cam_initialized:
+        _restart_fight_camera()
+    var a: Vector3 = _camera_fighter_point(player)
+    var b: Vector3 = _camera_fighter_point(computer)
+    var alpha: float = 1.0 - pow(CAM_SMOOTH_OLD, maxf(delta, 0.0) * CAM_UPDATE_HZ)
+    _cam_smooth_a = _cam_smooth_a.lerp(a, alpha)
+    _cam_smooth_b = _cam_smooth_b.lerp(b, alpha)
+    var pose: Dictionary = _native_camera_pose(_cam_smooth_a, _cam_smooth_b, 1.0)
+    var position: Vector3 = pose["position"] as Vector3
+    # param_9 != 0: SetCamera(camX+0, camY+0, camZ+100, target, up=(0,0,1)).
+    # Only the camera position is lifted; the look-at target and up are unchanged.
+    position.y += REPLAY_CAMERA_ANALYTIC_LIFT_SOURCE
+    fight_camera.fov = CAM_FIGHT_FOV
+    fight_camera.global_position = position * CAM_SOURCE_UNITS_TO_WORLD
+    fight_camera.look_at(
+        (pose["target"] as Vector3) * CAM_SOURCE_UNITS_TO_WORLD, Vector3.UP
+    )
+
+
 func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
     if (not is_instance_valid(fight_camera) or not is_instance_valid(player)
             or not is_instance_valid(computer)):
         return
     if match_state == MATCH_STATE_REPLAY:
-        # SetState(6) Restart must use the per-clip authored camera.  Preflight
-        # refuses state 6 when any recorded clip has no recovered camera, so
-        # this branch never falls through to the analytic follow camera.
+        # SetState(6) Restart: a clip that owns a recovered <clip>_camera.anm
+        # uses that authored camera unchanged.  A clip with no camera uses the
+        # recovered analytic branch with param_9=(state==6), i.e. the follow
+        # camera plus +100 source-Z.  Both are native paths; state 14 is NOT
+        # used for a missing camera.
         if _replay_camera_play_authored():
+            return
+        if _replay_camera_analytic:
+            _apply_replay_analytic_camera(delta)
             return
         push_error("REPLAY_CAMERA_GAP state=6 reason=no-authored-camera")
         return
@@ -5545,11 +5648,12 @@ func _enter_replay_state() -> bool:
     native_states.set_replay_buffers(
         player_recorder.buffer, computer_recorder.buffer, base_ms
     )
-    # Strict replay-camera gate: every distinct clip in both buffers must have
-    # one of the 70 recovered camera ANMs.  Empty buffers are left to the
-    # recovered NativeMatchStates driver so its existing no-replay-buffer
-    # refusal/trace is preserved; non-empty buffers are checked before enter(6),
-    # so a missing camera consumes no cursor and never uses the analytic camera.
+    # Recovered replay-camera gate: the strict 70-row map must exist and every
+    # listed camera must decode; clips with no recovered camera ANM are allowed
+    # through to state 6, where CBeatEmUpCamera::Update's analytic branch applies
+    # (param_9 = state==6, +100 source-Z).  Empty buffers are left to the
+    # recovered NativeMatchStates driver so its no-replay-buffer refusal/trace
+    # is preserved.
     native_states.fail_reason = ""
     var buffers_nonempty: bool = (
         int(player_recorder.size()) > 0 and int(computer_recorder.size()) > 0
@@ -5595,9 +5699,12 @@ func _enter_replay_state() -> bool:
         player.replay_pose_lock = false
         computer.replay_pose_lock = false
         return false
+    var camera_label: String = _replay_camera_camera
+    if _replay_camera_analytic:
+        camera_label = "analytic+100Z"
     print("NATIVE_STATE_ENTER state=6 base_ms=%d player_records=%d computer_records=%d speed_scale=%.3f camera=%s" % [
         base_ms, int(player_recorder.size()), int(computer_recorder.size()),
-        NativeMatchStates.REPLAY_STATE_SPEED_SCALE, _replay_camera_camera,
+        NativeMatchStates.REPLAY_STATE_SPEED_SCALE, camera_label,
     ])
     return true
 
@@ -5606,7 +5713,8 @@ func _replay_restart_pose() -> void:
     ## Update case 6 loops with SetState(6) when both fighters report
     ## ReplayEnded(): re-run the recovered entry body's pose half.  The camera is
     ## restarted (CBeatEmUpCamera::Restart) from the player's first recorded
-    ## authored clip; the next Update applies record 0.
+    ## clip: authored camera if it owns one, otherwise the analytic branch;
+    ## the next Update applies record 0.
     player.global_position = _fight_start_player
     computer.global_position = _fight_start_computer
     player.rotation.y = _fight_start_player_yaw
