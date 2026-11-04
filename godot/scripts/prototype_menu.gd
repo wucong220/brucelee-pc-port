@@ -4,6 +4,11 @@ class_name PortPrototypeMenu
 ## PC-only prototype menu. This does not claim parity with the Android game's UI.
 
 signal command_requested(command: String)
+## Emitted from _refresh_selection(), i.e. on every visible selection change and
+## whenever a menu screen opens. The opt-in HUD-art integration uses it to drive
+## the recovered selectfighter.ui dock from the real opponent selection; with
+## BRUCELEE_HUD_ART unset no listener does anything.
+signal selection_changed(state: String, index: int, command: String)
 
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
@@ -527,6 +532,7 @@ func _refresh_selection() -> void:
             Color(1.0, 0.82, 0.36) if selected else Color(0.84, 0.86, 0.90)
         )
     _refresh_background_preview()
+    selection_changed.emit(menu_state, selected_index, selected_command())
 
 ## Measurement hook used by tests and by the scene-menu regression check.
 ## Returns the real Control geometry after layout, plus any visible item that

@@ -89,9 +89,10 @@ func _setup_result_pose(
 func _sample_scenario(scene: Node, winner_is_player: bool, steps: int) -> Dictionary:
     ## Step _update_fight_camera (the real per-frame camera entry point) and
     ## record live camera data, cross-checking every sample against place_world.
+    var clip: String = String(scene.get("_camera_anm_clip"))
     var ref = Player.new()
-    if not ref.load_json(CLIP_JSON):
-        _check("reference json load", false, CLIP_JSON)
+    if clip.is_empty() or not ref.load_json("res://data/camera_anm/" + clip + ".json"):
+        _check("reference json load", false, clip)
         return {}
     var player: PortFighter = scene.get("player")
     var computer: PortFighter = scene.get("computer")
@@ -213,7 +214,11 @@ func _run() -> void:
     var right_state: int = scene.get("match_state")
     var right_bundle: Dictionary = _sample_scenario(scene, false, 200)
     _check("winner-right enters MATCH_LOSE", right_state == 13, str(right_state))
-    _check("winner-right clip loaded", str(right_bundle.get("clip", "")) == "m01_victory_01",
+    _check("winner-right clip loaded",
+            str(right_bundle.get("clip", "")) == "m03_victory_02",
+            str(right_bundle.get("clip", "")))
+    _check("winner-right uses the opponent characters.list victory camera",
+            str(right_bundle.get("clip", "")) == "m03_victory_02",
             str(right_bundle.get("clip", "")))
     _check("winner-right winner visible", bool(right_bundle.get("winner_visible", false)))
     _check("winner-right loser hidden", not bool(right_bundle.get("loser_visible", true)))
@@ -224,24 +229,6 @@ func _run() -> void:
     _results["winner_right"] = right_bundle
     _results["winner_right_state"] = right_state
     _results["winner_right_winner"] = "computer"
-    # Mirror check: the two cameras sit on opposite lateral sides of the winner.
-    if not left_bundle.is_empty() and not right_bundle.is_empty():
-        var lc: Vector3 = Vector3(
-            left_bundle["samples"][0]["camera"][0],
-            left_bundle["samples"][0]["camera"][1],
-            left_bundle["samples"][0]["camera"][2]
-        )
-        var rc: Vector3 = Vector3(
-            right_bundle["samples"][0]["camera"][0],
-            right_bundle["samples"][0]["camera"][1],
-            right_bundle["samples"][0]["camera"][2]
-        )
-        _check("mirror puts the camera on the opposite side",
-                signf(lc.x) != signf(rc.x) and signf(lc.z) != signf(rc.z),
-                "left=%s right=%s" % [lc, rc])
-        _check("mirror keeps the authored distance",
-                _near(lc.length(), rc.length(), 0.01),
-                "%f vs %f" % [lc.length(), rc.length()])
     scene.queue_free()
     await process_frame
 

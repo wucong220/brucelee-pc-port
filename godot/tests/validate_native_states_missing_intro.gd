@@ -31,6 +31,9 @@ func _initialize() -> void:
     if states == null:
         _finish(main)
         return
+    # Keep this fixture on the first Bruce intro; the actual-draw coverage lives
+    # in validate_remaining_cameras.gd.
+    player.select_intro_clip(0)
 
     var player_clip: String = main.call("_intro_clip_for", player)
     var computer_clip: String = main.call("_intro_clip_for", computer)

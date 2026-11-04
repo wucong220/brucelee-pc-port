@@ -99,6 +99,10 @@ func _setup_intro(scene: Node, scenario: String) -> void:
     ## Real path: reset the match, place the fighters, then enter SetState(3)
     ## through _start_round_intro(), which arms the authored intro camera.
     scene._reset_match()
+    # This regression keeps the original m01_intro_01 fixture stable; the new
+    # validate_remaining_cameras.gd covers all other pool choices.
+    var player: PortFighter = scene.get("player")
+    player.select_intro_clip(0)
     var player_on_right: bool = scenario == "player_right"
     _place(scene, player_on_right)
     OS.set_environment("BRUCELEE_ROUND_INTRO", "1")
@@ -106,7 +110,7 @@ func _setup_intro(scene: Node, scenario: String) -> void:
     if scenario == "opponent_anchor":
         # Re-arm with the opponent as the dummy (the "matching opponent intro"
         # branch). Same clip, same JSON, only the reference fighter changes.
-        scene._intro_camera_begin(scene.get("computer"), false)
+        scene._intro_camera_begin(scene.get("computer"), false, CLIP_NAME)
 
 
 func _torso_world(fighter: PortFighter, height: float) -> Vector3:

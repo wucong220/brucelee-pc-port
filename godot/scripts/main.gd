@@ -16,6 +16,10 @@ const FxMaterialTracks = preload("res://scripts/fx_material_tracks.gd")
 const AudioCueMap = preload("res://scripts/audio_cue_map.gd")
 ## Recovered impact/block SFX + 21 music-track library (data-only table).
 const SfxMusicMap = preload("res://scripts/sfx_music_map.gd")
+## Recovered voice cue timing from adreno_200/set/brucelee.set `sounds[]`
+## (file / frame / volume / unique / is_voice).  Data-only table; the runtime
+## schedules each voice at frame/30 s instead of flattening it to action start.
+const VoiceCueTiming = preload("res://scripts/voice_cue_timing.gd")
 const CameraAnm = preload("res://scripts/camera_anm_player.gd")
 ## Story-mode flow (isolated prototype).  Only instantiated when
 ## BRUCELEE_STORY_FLOW=1, so the existing prototype paths are untouched.
@@ -274,6 +278,10 @@ var _candidate_audio: Dictionary = {}
 var _candidate_audio_error: Dictionary = {}
 var _voice_audio: Dictionary = {}
 var _voice_audio_error: Dictionary = {}
+## Archive-relative voice file -> AudioStream (or null when the package does not
+## hold that character's take).  Attack slots can carry more than one voice cue,
+## so the cache is keyed by file, not by action.
+var _voice_file_cache: Dictionary = {}
 var _active_voice: AudioStreamPlayer = null
 ## Opponent voice overlay instance (lazily created on the first opponent cue).
 var _opponent_voice = null
@@ -2825,42 +2833,43 @@ func _start_round_intro() -> void:
 
 
 func _load_bruce_voice_audio() -> void:
-    var roots: Array[String] = []
-    var env_root: String = OS.get_environment("BRUCELEE_VOICE_ROOT")
-    if not env_root.is_empty():
-        roots.append(env_root)
-    var executable_root: String = OS.get_executable_path().get_base_dir().path_join(
-        "audio/bruce_lee"
-    )
-    roots.append(executable_root)
-    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
-    if not local_app_data.is_empty():
-        roots.append(local_app_data.path_join(
-            "BruceLee-PC-Port/bruce-voice-20261103/adreno_200/sounds/voices/bruce_lee"
-        ))
+    # Deduplicate by file: several actions share the same WAV, and the original
+    # implementation decoded it once per action key.  `_voice_file_cache` keys
+    # the decode by archive path so the same file is only read once.
     var voices: Dictionary = AudioCueMap.voice_files()
     for action: String in voices:
         var filename: String = String(voices[action])
-        var loaded: AudioStream = null
-        var last_error: String = ""
-        for root: String in roots:
-            var path: String = root.path_join(filename)
-            var error: String = CandidatePathGuard.external_path_error(
-                path, "Bruce voice audio"
-            )
-            if not error.is_empty():
-                last_error = error
-                continue
-            var stream: AudioStream = AudioStreamWAV.load_from_file(path)
-            if stream == null:
-                last_error = "Bruce voice failed to load: " + path
-                continue
-            loaded = stream
-            break
+        var loaded: AudioStream = _load_voice_archive_file(
+            "sounds/voices/bruce_lee/" + filename
+        )
         if loaded == null:
-            _voice_audio_error[action] = last_error
+            _voice_audio_error[action] = "Bruce voice failed to load: " + filename
             continue
         _voice_audio[action] = loaded
+    _preload_voice_cue_files()
+
+
+func _preload_voice_cue_files() -> void:
+    ## Warm every voice cue the runtime can schedule.  AudioStreamWAV decode is
+    ## synchronous (over a second per file on this machine), so paying it here
+    ## is what lets the attack/hit path honour frame/30 without a hitch.
+    var files: Dictionary = {}
+    for kind: String in AudioCueMap.CUES:
+        for value: Variant in AudioCueMap.CUES[kind]:
+            if value is Dictionary:
+                files["sounds/voices/bruce_lee/" + String(
+                    Dictionary(value).get("file", "")
+                )] = true
+    for key: String in AudioCueMap.PAIN:
+        files["sounds/voices/bruce_lee/" + String(AudioCueMap.PAIN[key])] = true
+    for action: String in VoiceCueTiming.VOICE_ACTIONS:
+        for value: Variant in VoiceCueTiming.VOICE_ACTIONS[action]:
+            if value is Dictionary:
+                files[String(Dictionary(value).get("file", ""))] = true
+    files.erase("")
+    for file: String in files:
+        if file.begins_with("sounds/voices/bruce_lee/"):
+            _load_voice_archive_file(file)
 
 
 func _load_voice_for_action(action: String) -> AudioStream:
@@ -2869,37 +2878,31 @@ func _load_voice_for_action(action: String) -> AudioStream:
     var voices: Dictionary = AudioCueMap.voice_files()
     if not voices.has(action):
         return null
-    var roots: Array[String] = []
-    var env_root: String = OS.get_environment("BRUCELEE_VOICE_ROOT")
-    if not env_root.is_empty():
-        roots.append(env_root)
-    roots.append(OS.get_executable_path().get_base_dir().path_join("audio/bruce_lee"))
-    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
-    if not local_app_data.is_empty():
-        roots.append(local_app_data.path_join(
-            "BruceLee-PC-Port/bruce-voice-20261103/adreno_200/sounds/voices/bruce_lee"
-        ))
-    var filename: String = String(voices[action])
-    for root: String in roots:
-        var path: String = root.path_join(filename)
-        var error: String = CandidatePathGuard.external_path_error(path, "Bruce voice audio")
-        if not error.is_empty():
-            _voice_audio_error[action] = error
-            continue
-        var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(path)
-        if stream != null:
-            _voice_audio[action] = stream
-            return stream
-    return null
+    var stream: AudioStream = _load_voice_archive_file(
+        "sounds/voices/bruce_lee/" + String(voices[action])
+    )
+    if stream != null:
+        _voice_audio[action] = stream
+    return stream
 
 
 func _on_player_attack_started(action: String) -> void:
     # Non-voice swing/step/clothing cues for the same original set action are
     # independent of the Bruce voice table (some actions have SFX but no voice).
     _play_attack_sfx(action)
-    # Voice cue comes from the recovered fighting-set table. Actions that have
-    # no original voice (parry, grounded attacks, grab misses) stay silent
-    # instead of falling back to the punch grunt.
+    # Voice cues keep the recovered `sounds[].frame`: a f4 cue starts 4/30 s
+    # after the action starts, not at action start.  volume, unique and
+    # is_voice are carried by the table and applied here.
+    _play_attack_voice(action)
+
+
+func _play_attack_voice(action: String) -> void:
+    var cues: Array = VoiceCueTiming.attack_voice_cues(action)
+    var played: int = _play_voice_cues(cues, "brucelee", "attack_voice:" + action)
+    if played > 0:
+        return
+    # Start-of-action fallback: the legacy voice table carries the same primary
+    # cue for this action but no set frame, so play it immediately as before.
     var cue: Dictionary = AudioCueMap.primary_cue(action)
     if cue.is_empty():
         return
@@ -2908,16 +2911,120 @@ func _on_player_attack_started(action: String) -> void:
         stream = _load_voice_for_action(action)
     if stream == null:
         return
-    if is_instance_valid(_active_voice):
-        _active_voice.stop()
-        _active_voice.queue_free()
+    _schedule_voice_cue(
+        stream, clampf(float(cue.get("volume", 1.0)), 0.001, 1.0),
+        "attack_voice:" + action, String(cue.get("file", "")),
+        cue.get("frame", null), ""
+    )
+
+
+func _play_voice_cues(cues: Array, character_id: String, label: String) -> int:
+    ## Schedules every recovered voice cue at its own frame/30 s offset.
+    ## Returns the number of cues actually started (0 when the set has no cue
+    ## for this action, for this character, or the package lacks the WAV).
+    var played: int = 0
+    var seen: Dictionary = {}
+    for value: Variant in cues:
+        if not value is Dictionary:
+            continue
+        var cue: Dictionary = value
+        if not bool(cue.get("is_voice", true)):
+            continue
+        if not VoiceCueTiming.cue_matches(cue, character_id):
+            continue
+        var file: String = String(cue.get("file", ""))
+        if file.is_empty():
+            continue
+        var frame_value: Variant = cue.get("frame", null)
+        var volume: float = clampf(float(cue.get("volume", 1.0)), 0.001, 1.0)
+        var unique: String = String(cue.get("unique", ""))
+        var dedupe: String = "%s|%s|%.3f|%s" % [
+            file, str(frame_value), volume, unique
+        ]
+        if seen.has(dedupe):
+            continue
+        seen[dedupe] = true
+        var stream: AudioStream = _load_voice_archive_file(file)
+        if stream == null:
+            continue
+        _schedule_voice_cue(stream, volume, label, file, frame_value, unique)
+        played += 1
+    return played
+
+
+func _schedule_voice_cue(
+        stream: AudioStream, volume: float, label: String, file: String,
+        frame_value: Variant, unique: String
+) -> void:
+    var delay: float = 0.0
+    if frame_value != null:
+        delay = maxf(float(frame_value), 0.0) / VoiceCueTiming.FRAME_RATE
+    var scheduled_ms: int = Time.get_ticks_msec()
+    if delay <= 0.0001:
+        _spawn_voice(
+            stream, volume, label, file, frame_value, delay, scheduled_ms, unique
+        )
+        return
+    get_tree().create_timer(delay).timeout.connect(
+        _spawn_voice.bind(
+            stream, volume, label, file, frame_value, delay, scheduled_ms, unique
+        )
+    )
+
+
+func _spawn_voice(
+        stream: AudioStream, volume: float, label: String, file: String,
+        frame_value: Variant, delay: float, scheduled_ms: int, unique: String
+) -> void:
+    if not is_instance_valid(combat_audio):
+        return
     var voice: AudioStreamPlayer = AudioStreamPlayer.new()
     voice.stream = stream
-    voice.volume_db = linear_to_db(clampf(float(cue.get("volume", 1.0)), 0.001, 1.0))
+    voice.volume_db = linear_to_db(volume)
     voice.finished.connect(voice.queue_free)
+    # The port has always run one Bruce voice at a time; keep that so a pain
+    # grunt can interrupt a swing grunt instead of stacking them.
+    if is_instance_valid(_active_voice) and _active_voice != voice:
+        _active_voice.stop()
+        if not _active_voice.is_queued_for_deletion():
+            _active_voice.queue_free()
     combat_audio.add_child(voice)
     _active_voice = voice
     voice.play()
+    _record_cue_play(
+        label, file, volume, frame_value, delay, scheduled_ms, true, unique
+    )
+
+
+func _load_voice_archive_file(file: String) -> AudioStream:
+    ## `file` is the set's archive-relative voice path
+    ## (`sounds/voices/bruce_lee/<dir>/<name>.wav`).  Only Bruce's own takes are
+    ## resolvable through the player voice root; other characters stay with the
+    ## opt-in opponent overlay.
+    if file.is_empty():
+        return null
+    if _voice_file_cache.has(file):
+        return _voice_file_cache[file] as AudioStream
+    var relative: String = file
+    const BRUCE_PREFIX := "sounds/voices/bruce_lee/"
+    if relative.begins_with(BRUCE_PREFIX):
+        relative = relative.substr(BRUCE_PREFIX.length())
+    elif relative.begins_with("sounds/voices/"):
+        _voice_file_cache[file] = null
+        return null
+    var stream: AudioStream = null
+    for root: String in _voice_roots():
+        var path: String = root.path_join(relative)
+        var error: String = CandidatePathGuard.external_path_error(
+            path, "Bruce voice timing"
+        )
+        if not error.is_empty():
+            continue
+        stream = AudioStreamWAV.load_from_file(path)
+        if stream != null:
+            break
+    _voice_file_cache[file] = stream
+    return stream
 
 
 func _on_opponent_attack_started(action: String) -> void:
@@ -2961,48 +3068,49 @@ const PAIN_VOICE_CUES: Dictionary = {
 }
 
 func _play_pain_voice(defender: PortFighter, action: String) -> void:
-    # Bruce uses AudioCueMap; every opponent also has recovered pain takes in
-    # its own fighting set, routed through the opt-in overlay so a default
-    # build stays silent for non-player fighters exactly as before.
+    # Bruce uses the recovered set table (frame / volume / unique / is_voice);
+    # every opponent also has recovered pain takes in its own fighting set,
+    # routed through the opt-in overlay so a default build stays silent for
+    # non-player fighters exactly as before.
     if defender != player:
         _play_opponent_pain_voice(defender)
         return
     var reaction_action: String = defender.last_reaction_source_action
+    var cues: Array = VoiceCueTiming.voice_cues(reaction_action)
+    if cues.is_empty() and action == "special_punch_low_hit":
+        # The special punch low impact reaction is not recorded as its own
+        # reaction source in the port; the set gives specialpunchlowimpact a
+        # heavy pain voice, so map this single attack explicitly.
+        reaction_action = "specialpunchlowimpact"
+        cues = VoiceCueTiming.voice_cues(reaction_action)
+    if not cues.is_empty():
+        var played: int = _play_voice_cues(
+            cues, "brucelee", "pain_voice:" + reaction_action
+        )
+        if played > 0:
+            return
+    _play_legacy_pain_voice(reaction_action, action)
+
+
+func _play_legacy_pain_voice(reaction_action: String, action: String) -> void:
+    ## Start-of-action fallback for setups that have no set-derived voice table
+    ## (editor runs / stripped package): the legacy fixed cue, unchanged.
     var cue_name: String = ""
     if PAIN_VOICE_CUES.has(reaction_action):
         cue_name = String(PAIN_VOICE_CUES[reaction_action])
     elif action == "special_punch_low_hit":
-        # The special punch low impact reaction is not recorded as its own
-        # reaction source in the port; the set gives specialpunchlowimpact a
-        # heavy pain voice, so map this single attack explicitly.
         cue_name = String(PAIN_VOICE_CUES.get("specialpunchlowimpact", ""))
     if cue_name.is_empty():
         return
-    var stream: AudioStream = _voice_audio.get("__pain__" + cue_name)
-    if stream == null:
-        for root: String in _voice_roots():
-            var path: String = root.path_join(cue_name)
-            var error: String = CandidatePathGuard.external_path_error(
-                path, "Bruce pain voice"
-            )
-            if not error.is_empty():
-                continue
-            stream = AudioStreamWAV.load_from_file(path)
-            if stream != null:
-                _voice_audio["__pain__" + cue_name] = stream
-                break
+    var stream: AudioStream = _load_voice_archive_file(
+        "sounds/voices/bruce_lee/" + cue_name
+    )
     if stream == null:
         return
-    if is_instance_valid(_active_voice):
-        _active_voice.stop()
-        _active_voice.queue_free()
-    var voice: AudioStreamPlayer = AudioStreamPlayer.new()
-    voice.stream = stream
-    voice.volume_db = 4.0
-    voice.finished.connect(voice.queue_free)
-    combat_audio.add_child(voice)
-    _active_voice = voice
-    voice.play()
+    _spawn_voice(
+        stream, db_to_linear(4.0), "pain_voice:" + reaction_action,
+        cue_name, null, 0.0, Time.get_ticks_msec(), "brucelee"
+    )
 
 
 func _voice_roots() -> Array[String]:
@@ -3110,13 +3218,24 @@ func _play_hit_audio(
     player.play()
 
 
-func _play_sfx_cues(cues: Array, label: String) -> void:
+func _play_sfx_cues(cues: Array, label: String, character_id: String = "") -> void:
     ## Frame values are the original 30 fps source frames, so a cue at f12 is
     ## scheduled 0.4 s after the event instead of being flattened to frame 0.
+    ## `unique` is the fighting-set character variant; empty means generic.
+    ## Exact duplicate rows are played once (the _brick mapping rows concatenate
+    ## the same cue for several opponent variants).
+    var seen: Dictionary = {}
     for value: Variant in cues:
         if not value is Dictionary:
             continue
         var cue: Dictionary = value
+        if bool(cue.get("is_voice", false)):
+            # Voice cues go through _play_voice_cues so they can be resolved
+            # against the voice root and filtered by character.
+            continue
+        var unique: String = String(cue.get("unique", ""))
+        if not unique.is_empty() and unique != character_id:
+            continue
         var file: String = String(cue.get("file", ""))
         if file.is_empty():
             continue
@@ -3124,17 +3243,35 @@ func _play_sfx_cues(cues: Array, label: String) -> void:
         if stream == null:
             continue
         var volume: float = clampf(float(cue.get("volume", 1.0)), 0.001, 1.0)
-        var delay: float = maxf(float(cue.get("frame", 0)), 0.0) / 30.0
+        var frame_value: Variant = cue.get("frame", null)
+        var delay: float = 0.0
+        if frame_value != null:
+            delay = maxf(float(frame_value), 0.0) / 30.0
+        var dedupe: String = "%s|%s|%.3f|%s" % [
+            file, str(frame_value), volume, unique
+        ]
+        if seen.has(dedupe):
+            continue
+        seen[dedupe] = true
+        var scheduled_ms: int = Time.get_ticks_msec()
         if delay <= 0.0001:
-            _spawn_sfx(stream, volume, label, file)
+            _spawn_sfx(
+                stream, volume, label, file, frame_value, delay, scheduled_ms,
+                false, unique
+            )
             continue
         get_tree().create_timer(delay).timeout.connect(
-            _spawn_sfx.bind(stream, volume, label, file)
+            _spawn_sfx.bind(
+                stream, volume, label, file, frame_value, delay, scheduled_ms,
+                false, unique
+            )
         )
 
 
 func _spawn_sfx(
-        stream: AudioStream, volume: float, label: String, file: String
+        stream: AudioStream, volume: float, label: String, file: String,
+        frame_value: Variant = null, delay: float = 0.0, scheduled_ms: int = -1,
+        is_voice: bool = false, unique: String = ""
 ) -> void:
     if not is_instance_valid(combat_audio):
         return
@@ -3144,11 +3281,34 @@ func _spawn_sfx(
     player.finished.connect(player.queue_free)
     combat_audio.add_child(player)
     player.play()
+    _record_cue_play(
+        label, file, volume, frame_value, delay, scheduled_ms, is_voice, unique
+    )
+
+
+func _record_cue_play(
+        label: String, file: String, volume: float, frame_value: Variant,
+        delay: float, scheduled_ms: int, is_voice: bool, unique: String
+) -> void:
+    ## One append per actual playback.  The timing fields are the evidence that
+    ## the cue started at frame/30 s and not at action start.
     _sfx_play_count += 1
+    var frame_out: int = -1
+    if frame_value != null:
+        frame_out = int(frame_value)
+    var played_ms: int = Time.get_ticks_msec()
+    if scheduled_ms < 0:
+        scheduled_ms = played_ms
     _sfx_play_log.append({
         "label": label,
         "file": file,
         "volume": volume,
+        "frame": frame_out,
+        "delay": delay,
+        "scheduled_ms": scheduled_ms,
+        "played_ms": played_ms,
+        "is_voice": is_voice,
+        "unique": unique,
     })
     if _sfx_play_log.size() > 128:
         _sfx_play_log.pop_front()
@@ -3233,6 +3393,7 @@ func _stop_combat_audio() -> void:
     _sfx_audio.clear()
     _sfx_audio_error.clear()
     _sfx_play_log.clear()
+    _voice_file_cache.clear()
     _music_streams.clear()
     _music_stream_paths.clear()
     _music_player = null

@@ -403,7 +403,32 @@ func _check_map_table() -> void:
 		_check("map " + clip + " JSON frame count matches",
 			ref != null and ref.frame_count() == int(expected[clip]),
 			str(ref.frame_count() if ref != null else -1))
-	# Every shipped JSON must be in the map (no orphan camera files).
+	# Every shipped JSON must be in the action map or in one of the cinematic
+	# maps (intro/victory/defeat).  The remaining-camera work ships all decoded
+	# cinematic cameras next to the action cameras, so treat those as owned too.
+	var cinematic: Dictionary = {}
+	for map_name: String in ["intro_camera_map", "victory_camera_map",
+			"defeat_camera_map"]:
+		var map_file: FileAccess = FileAccess.open(
+			CAMERA_DIR + map_name + ".json", FileAccess.READ)
+		if map_file == null:
+			continue
+		var parsed_map: Variant = JSON.parse_string(map_file.get_as_text())
+		if typeof(parsed_map) == TYPE_DICTIONARY:
+			var map_clips: Variant = Dictionary(parsed_map).get("camera_clips", {})
+			if typeof(map_clips) == TYPE_DICTIONARY:
+				for key: Variant in Dictionary(map_clips):
+					cinematic[String(key)] = true
+	var catalog_clips: Dictionary = {}
+	var catalog_file: FileAccess = FileAccess.open(
+		CAMERA_DIR + "camera_catalog.json", FileAccess.READ)
+	if catalog_file != null:
+		var parsed_catalog: Variant = JSON.parse_string(catalog_file.get_as_text())
+		if typeof(parsed_catalog) == TYPE_DICTIONARY:
+			var catalog_rows: Variant = Dictionary(parsed_catalog).get("camera_clips", {})
+			if typeof(catalog_rows) == TYPE_DICTIONARY:
+				for key: Variant in Dictionary(catalog_rows):
+					catalog_clips[String(key)] = true
 	var dir: DirAccess = DirAccess.open(CAMERA_DIR)
 	var orphans: Array[String] = []
 	if dir != null:
@@ -411,8 +436,9 @@ func _check_map_table() -> void:
 			if not name.ends_with(".json"):
 				continue
 			var clip: String = name.trim_suffix(".json")
-			if clip == "action_camera_map" or clip.begins_with("m01_intro") \
-					or clip.begins_with("m01_victory"):
+			if clip == "action_camera_map" or clip == "camera_catalog" \
+					or clip.ends_with("_camera_map") or cinematic.has(clip) \
+					or catalog_clips.has(clip):
 				continue
 			if not clips.has(clip):
 				orphans.append(clip)

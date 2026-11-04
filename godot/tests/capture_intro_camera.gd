@@ -62,6 +62,9 @@ func _setup_intro(scene: Node, scenario: String) -> void:
     scene._reset_match()
     var player: PortFighter = scene.get("player")
     var computer: PortFighter = scene.get("computer")
+    # Keep this legacy screenshot fixture on m01_intro_01; the new capture
+    # script covers the other selected intro cameras.
+    player.select_intro_clip(0)
     if scenario == "player_right":
         player.global_position = Vector3(2.0, 1.20, 0.0)
         computer.global_position = Vector3(-2.0, 1.20, 0.0)
@@ -75,7 +78,7 @@ func _setup_intro(scene: Node, scenario: String) -> void:
     OS.set_environment("BRUCELEE_ROUND_INTRO", "1")
     scene._start_round_intro()
     if scenario == "opponent_anchor":
-        scene._intro_camera_begin(computer, false)
+        scene._intro_camera_begin(computer, false, "m01_intro_01")
 
 
 func _goto_frame(scene: Node, frame: int) -> void:
