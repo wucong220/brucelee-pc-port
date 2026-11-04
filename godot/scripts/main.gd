@@ -37,6 +37,10 @@ const RecordsScreen = preload("res://scripts/progress_records_screen.gd")
 const StyleCatalog = preload("res://scripts/style_catalog.gd")
 const StyleSelectionStore = preload("res://scripts/style_selection_store.gd")
 const StyleEditorScreen = preload("res://scripts/style_editor_screen.gd")
+## Opt-in opponent voice overlay (island opponent-voice-20261104). It is
+## inert unless BRUCELEE_OPPONENT_VOICE=1, and it never replaces the Bruce
+## cue table; see overlay/opponent_voice_cues.json for the recovered cues.
+const OpponentVoiceOverlayScript = preload("res://scripts/opponent_voice_overlay.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -271,6 +275,9 @@ var _candidate_audio_error: Dictionary = {}
 var _voice_audio: Dictionary = {}
 var _voice_audio_error: Dictionary = {}
 var _active_voice: AudioStreamPlayer = null
+## Opponent voice overlay instance (lazily created on the first opponent cue).
+var _opponent_voice = null
+var _opponent_voice_error: String = ""
 # Recovered adreno_200/sounds/sfx library (38 WAVs).  Distinct from the three
 # legacy candidate-audio streams: the package copy is self-contained and is
 # read without CandidatePathGuard (music/commentator already use the same
@@ -2833,6 +2840,7 @@ func _on_opponent_attack_started(action: String) -> void:
     # Only set-specific cues that exist in the opponent's own fighting set are
     # added here (currently KungFu faceupattack -> Clothing_2).  The player's
     # Bruce cue table is not applied to another character's animation.
+    _play_opponent_voice(action)
     if not _sfx_ready():
         return
     var cues: Array = SfxMusicMap.set_cues(_opponent_set_family(), action)
@@ -2869,8 +2877,11 @@ const PAIN_VOICE_CUES: Dictionary = {
 }
 
 func _play_pain_voice(defender: PortFighter, action: String) -> void:
-    # Only Bruce (the player fighter) has pain voice takes in the archive.
+    # Bruce uses AudioCueMap; every opponent also has recovered pain takes in
+    # its own fighting set, routed through the opt-in overlay so a default
+    # build stays silent for non-player fighters exactly as before.
     if defender != player:
+        _play_opponent_pain_voice(defender)
         return
     var reaction_action: String = defender.last_reaction_source_action
     var cue_name: String = ""
@@ -2922,6 +2933,45 @@ func _voice_roots() -> Array[String]:
             "BruceLee-PC-Port/bruce-voice-20261103/adreno_200/sounds/voices/bruce_lee"
         ))
     return roots
+
+
+## Opponent voice overlay (opt-in). Resolves
+##   opponent id -> port attack slot -> recovered set action -> WAV
+## from res://data/opponent_voice_cues.json and stays inert unless
+## BRUCELEE_OPPONENT_VOICE is "1".
+func _opponent_voice_overlay():
+    if _opponent_voice != null:
+        return _opponent_voice
+    _opponent_voice = OpponentVoiceOverlayScript.new()
+    _opponent_voice_error = _opponent_voice.configure(combat_audio)
+    if not _opponent_voice_error.is_empty():
+        push_warning("opponent voice overlay disabled: " + _opponent_voice_error)
+    return _opponent_voice
+
+
+func _opponent_voice_id() -> String:
+    var overlay = _opponent_voice_overlay()
+    return String(overlay.opponent_id_for_config(_opponent_attack_config()))
+
+
+func _play_opponent_voice(action: String) -> void:
+    var overlay = _opponent_voice_overlay()
+    if not overlay.is_ready():
+        return
+    var opponent_id: String = _opponent_voice_id()
+    if opponent_id.is_empty():
+        return
+    overlay.play_attack(opponent_id, action)
+
+
+func _play_opponent_pain_voice(defender: PortFighter) -> void:
+    var overlay = _opponent_voice_overlay()
+    if not overlay.is_ready():
+        return
+    var opponent_id: String = _opponent_voice_id()
+    if opponent_id.is_empty():
+        return
+    overlay.play_pain(opponent_id, defender.last_reaction_source_action)
 
 
 func _play_hit_audio(
