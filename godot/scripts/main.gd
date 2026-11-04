@@ -5377,6 +5377,48 @@ func _advance_round_end() -> void:
         match_over = true
         done = true
         var player_won: bool = player_rounds >= rounds_to_win
+        # CBeatEmUpMatch::Update @0x162870 (RoundEnded() @0x177e64 == state 15):
+        # once the round has ended, the recovered +0x81c/+0x820 round counters
+        # are compared with [match+0x48] (the TMatchConfig rounds-to-win byte).
+        # Reaching the target raises the recovered GUI action FIGHTER1WON
+        # @0x162bf0 (or FIGHTER0WON @0x162934).  RegisterBeatEmUpTriggers binds
+        # those actions to Fighter1Won @0x190d5c / Fighter0Won @0x190d94, which
+        # pick PlayerLost/PlayerWon from the local-player side (engine[0x87c]
+        # +0x54).  PlayerLost() @0x190060 mode 1 (story) is the *only* caller of
+        # SetState(14): 0x19049c -> 0x1904c8 when win_on_lose is false, or
+        # SetState(6) @0x19025c when it is true.
+        #
+        # The +0x81c/+0x820 counters are exactly the ones Update case 5
+        # increments on a TIME_IS_UP round (@0x17d8b0 / @0x17d884), so a
+        # round-timeout match loss reaches state 14 through this recovered path
+        # just like a knockout.  _on_ko already takes the branch at the knockout
+        # frame; this covers every other deciding round (time-up included).
+        if not player_won and _story_player_lost_match():
+            if _story_replay_state_applies():
+                var has_replay: bool = _story_subevent_has_replay()
+                if has_replay:
+                    if _enter_replay_state():
+                        # Native order: SetState(6) -> CurrentGameModeFightWon ->
+                        # StoryModeSubEventFightHasReplay -> ReplayAndStats.
+                        _record_current_game_mode_fight_won()
+                        _refresh_replay_message()
+                        return
+                    _record_current_game_mode_fight_won()
+                    var replay_gap: String = (
+                        String(native_states.fail_reason) if native_states != null else ""
+                    )
+                    if replay_gap.is_empty():
+                        replay_gap = "recorder-unavailable"
+                    print("REPLAY_STATE_GAP state=6 reason=%s fallback=state14" % replay_gap)
+                else:
+                    # Native false half @0x190504: FightWon, StopMusic,
+                    # StoryFightWon; no replay state and no ReplayAndStats page.
+                    _record_current_game_mode_fight_won()
+                    _stop_music_for_story_false_branch()
+                    _resolve_story_fight_won_without_replay()
+                    return
+            if _enter_countdown_state():
+                return
         # SetState(9) is raised from the fight state when the recorded action
         # list matches; the port has no such recording, so the recovered
         # arcaderetryask prompt is offered at the one point the port knows the
