@@ -18,6 +18,9 @@ const FightStats = preload("res://scripts/fight_stats.gd")
 # Additive opt-in reaction gate; instantiated in _ready only when
 # BRUCELEE_NATIVE_REACTION=1. The default path never references it.
 const NativeReactionGate = preload("res://scripts/native_reaction_state.gd")
+## Authored canblock/canblock2 action time windows of the loaded fighting set.
+## Data only: no frame number in this port is a substitute for a missing group.
+const CanBlockWindows = preload("res://scripts/canblock_windows.gd")
 # Opt-in producer for the recovered 0x2c CFighter replay record. _ready only
 # instantiates it when BRUCELEE_REPLAY_RECORD=1; the default path never does.
 const ReplayRecorderScript = preload("res://scripts/replay_recorder.gd")
@@ -2761,6 +2764,11 @@ var _link_events: Array[Dictionary] = []
 var _native_actions: Dictionary = {}
 var _native_reactions: Dictionary = {"hit": [], "block": []}
 var _native_links: Array = []
+## Recovered canblock/canblock2 windows of `native_links*.json`, keyed by the
+## action that owns the window.  Null when no usable set export is loaded: every
+## block decision then fails closed.  Built from the same parsed JSON as
+## `_native_actions`, so the two tables can never disagree.
+var _canblock_windows: CanBlockWindows = null
 # Opt-in recovered reaction gate (see _init_native_reaction_gate). Off unless
 # BRUCELEE_NATIVE_REACTION=1, so the default reaction path is unaffected.
 var native_reaction_enabled: bool = false
@@ -4771,16 +4779,122 @@ static func block_guard_height(action: String) -> String:
     return String(BLOCK_GUARD_HEIGHTS.get(action, ""))
 
 
+## ---------------------------------------------------------------------------
+## Recovered canblock/canblock2 action time windows.
+##
+## The five block rows (CANBLOCK_ROWS) are `from_group` links.  Native
+## TimeWindowCheck checks such a link against the *current animation's* own
+## canblock/canblock2 group window, inclusive of both endpoints; the link is
+## simply not followed outside it.  A guard held forever is not a native block
+## action, so the port gates every block/guard decision on the owning action's
+## authored window.  Windows are read exclusively from the loaded set export -
+## an action with no canblock group has no block window and fails closed, and
+## its `facing` duration is never used as a substitute.
+## ---------------------------------------------------------------------------
+
+
+## Authored canblock windows of one action of this fighter's set, or [] when
+## the set does not author one (fail closed).
+func canblock_windows_for_action(action: String) -> Array[Dictionary]:
+    if _canblock_windows == null:
+        return []
+    return _canblock_windows.windows_for(action)
+
+
+## True only when `frame` lies inside an authored canblock window of `action`.
+func canblock_window_open(action: String, frame: float) -> bool:
+    if _canblock_windows == null:
+        return false
+    return _canblock_windows.open(action, frame)
+
+
+## The authored window that authorises `frame`, or {} when it would fail closed.
+func canblock_containing_window(action: String, frame: float) -> Dictionary:
+    if _canblock_windows == null:
+        return {}
+    return _canblock_windows.containing_window(action, frame)
+
+
+## Provenance of the loaded window table (empty when none is loaded).
+func canblock_window_source() -> Dictionary:
+    if _canblock_windows == null:
+        return {}
+    return _canblock_windows.describe()
+
+
+## The action + source frame that own the current guard decision.
+##
+##   * blockstun/hitstun: the block/impact reaction action itself, so a chained
+##     block uses that block action's own [6,14] / [6,23] / ... window;
+##   * attacks: the attack's native source action (its canblock window, if any);
+##   * ground actions: the state name, which is also the native action name;
+##   * standing states: `_current_action_name()` (idle / idle2 / idle3 or the
+##     current step/move action), at the recovered reaction frame.
+func block_decision_context() -> Dictionary:
+    var action: String = ""
+    if state in ["hitstun", "blockstun"]:
+        action = _native_reaction_action()
+    elif state in ["startup", "active", "recovery"]:
+        action = _current_action_name()
+    elif state in [
+            "faceupattack", "facedownattack", "attacktofloor",
+            "faceupgetup", "facedowngetup", "faceupidle", "facedownidle",
+            "faceupko", "facedownko",
+        ]:
+        action = state
+    else:
+        action = _current_action_name()
+        if action.is_empty():
+            action = state
+    return {
+        "action": action,
+        "frame": maxf(_native_reaction_frame(), 0.0),
+        "state": state,
+    }
+
+
+## Whether the current guard decision is inside its native canblock window.
+## No window table, no owning action, no authored group, or a frame outside the
+## window all fail closed.
+func guard_window_open() -> bool:
+    if _canblock_windows == null:
+        return false
+    var context: Dictionary = block_decision_context()
+    return _canblock_windows.open(
+        String(context["action"]), float(context["frame"])
+    )
+
+
+## Chained block: a fighter already in a block animation can only re-block
+## inside that block action's own authored canblock window.  This replaces the
+## old unconditional "state == blockstun" block, which had no time window.
+func blockstun_window_open() -> bool:
+    if state != "blockstun" or _canblock_windows == null:
+        return false
+    return _canblock_windows.open(
+        _native_reaction_action(), maxf(_native_reaction_frame(), 0.0)
+    )
+
+
 func _can_block_current_hit(impact: Dictionary = {}) -> bool:
+    # Native TimeWindowCheck: the block decision is valid only inside the
+    # owning action's authored canblock/canblock2 window.  Outside it (or when
+    # the set authors no window) the decision fails closed: no block at all.
+    if not guard_window_open():
+        return false
     if _uses_standing_idle_rules():
         return _guard_covers_impact(impact)
     if state != "faceupattack":
         return false
-    var source_frame: float = state_time * SOURCE_FRAME_RATE
-    return source_frame + 0.0001 >= 27.0 and source_frame <= 38.0001
+    # Ground attack: faceupattack's own authored canblock window (brucelee.set
+    # [27,38]) replaces the hardcoded 27/38 numbers, so every fighting set uses
+    # its own recovered frames and a set without that group fails closed.
+    return true
 
 
-## Recovered block gate for the standing guard.
+## Recovered block gate for the standing guard.  `_can_block_current_hit` has
+## already enforced the owning action's authored canblock time window, so this
+## second gate decides only *which* incoming impact a held guard answers.
 ##
 ## The held guard answers only "is a canblock action up?"; which impact it
 ## covers is the opponent's business (CANBLOCK_ROWS is keyed on the incoming
@@ -6355,6 +6469,15 @@ func _load_native_links() -> void:
     if not parsed is Dictionary:
         push_error("Native link metadata is invalid")
         return
+    # The recovered block windows are the same exported group table, parsed once
+    # here so the guard gate and the link scan always read identical data.  A
+    # set export without usable action rows leaves the model null (fail closed).
+    var window_model: CanBlockWindows = CanBlockWindows.new()
+    if window_model.build(Dictionary(parsed), path):
+        _canblock_windows = window_model
+    else:
+        _canblock_windows = null
+        push_error("Native canblock windows failed closed: " + window_model.load_error)
     for action: Variant in parsed.get("actions", []):
         if action is Dictionary:
             _native_actions[str(action.get("name", ""))] = action
@@ -6827,7 +6950,10 @@ func _try_multi_impact_contacts() -> void:
             continue
         var blocked: bool = opponent.guard_held and (
             opponent._can_block_current_hit(impact)
-            or opponent.state == "blockstun")
+            # A chained block is only valid inside the block animation's own
+            # authored canblock window; the old unconditional blockstun clause
+            # had no native window and blocked at every frame.
+            or opponent.blockstun_window_open())
         var reaction: Dictionary = opponent.reaction_for_incoming(impact, blocked)
         if GRAB_ATTACKS.has(attack_kind):
             # A grab pulls the victim into the hold; the generic reaction root

@@ -24,6 +24,13 @@ extends RefCounted
 ## native high/mid/low guard instead of one block flag.  When the opponent's
 ## impact metadata is missing the leaf's own height guess is used; when no
 ## listed action matches the recovered row the generic picker still applies.
+##
+## Time windows: a block leaf is a `from_group` canblock/canblock2 decision, so
+## it only exists while the fighter's *current action* is inside that action's
+## authored canblock window (PortFighter.guard_window_open, data read from the
+## set's native_links*.json).  Outside the window - or in a set that authors no
+## canblock group for that action - the decision fails closed and no guard is
+## held.  No frame number is invented here and `facing` is never substituted.
 
 const TREE_PATH := "res://data/native_ai/standard_tree.json"
 const PROFILES_PATH := "res://data/native_ai/ai_profiles.json"
@@ -288,6 +295,16 @@ func _record(kind: String, action: String, native: String, node: String, reason:
         "reason": reason,
         "guard_action": fighter.guard_block_action if fighter != null else "",
         "guard_height": fighter.guard_height if fighter != null else "",
+        # The authored canblock window that owns this decision.  A closed
+        # window means the block leaf failed closed (no guard is held).
+        "guard_window": (
+            fighter.block_decision_context()
+            if fighter != null and is_instance_valid(fighter) else {}
+        ),
+        "guard_window_open": (
+            fighter.guard_window_open()
+            if fighter != null and is_instance_valid(fighter) else false
+        ),
     }
     if decisions.size() > 256:
         decisions.pop_front()
@@ -744,7 +761,15 @@ func _apply_attack(native: String, kind: String) -> bool:
 func _apply_block(native_action: String) -> void:
     # Native highblock/midblock/lowblock (+ the hard/brutal block rows): the tree
     # names the guard action, so the fighter holds that selection instead of a
-    # bare flag.  An entry that is not a recovered block action keeps the port's
+    # bare flag.  A block leaf is a block/guard *decision* and is therefore only
+    # valid while the fighter's current action is inside its authored
+    # canblock/canblock2 window.  Outside (or with no authored window) it fails
+    # closed: no guard is held, so no contact can be blocked.  The contact gate
+    # in PortFighter._can_block_current_hit enforces the same rule at impact.
+    if not fighter.guard_window_open():
+        fighter.end_guard()
+        return
+    # An entry that is not a recovered block action keeps the port's
     # unqualified guard.
     if not fighter.begin_block(_action_base(native_action)):
         fighter.begin_guard()
