@@ -2681,6 +2681,20 @@ const BLOCK_GUARD_HEIGHTS: Dictionary = {
     "highblockhard": "high",
     "highblockbrutal": "high",
 }
+## Recovered direct-input guard row.
+##
+## Every block link in the four shipped sets (brucelee orders 92-101 and the
+## same ten rows in thai/karate/kungfu) carries exactly `left` + `pressed` in
+## all three layout variants.  No link carries `up`, `down`, `a`, `b`, `c`, `d`
+## or `f`, and no link maps any input token to highblock/midblock/lowblock: the
+## target is the row selected by the *incoming* impact.  The direct-input guard
+## therefore has one proven gesture (hold left) and no height token.
+##
+## The table is deliberately empty.  It is the fail-closed record of that
+## proof: a future export may add a token only when a native link really maps
+## it to a height band.  Nothing here may be filled from a port convention.
+const DIRECT_GUARD_STATUS: String = "left"
+const DIRECT_GUARD_HEIGHT_BY_TOKEN: Dictionary = {}
 var ATTACKS: Dictionary = {}
 ## Clips captured before the first Style Editor override, so every re-apply
 ## starts from the character's own table instead of stacking swaps.
@@ -4779,6 +4793,40 @@ static func block_guard_height(action: String) -> String:
     return String(BLOCK_GUARD_HEIGHTS.get(action, ""))
 
 
+## Height band selected by one direct-input token, or "" when the shipped
+## native data has no recovered token -> height row.  The table is empty today.
+static func direct_guard_height_for(token: String) -> String:
+    return String(DIRECT_GUARD_HEIGHT_BY_TOKEN.get(token, ""))
+
+
+## Resolve the currently held native status tokens into a direct-input guard.
+##
+## `left` is the only proven guard token (all ten canblock/canblock2 rows in
+## every shipped set require exactly it).  Any other token - including the
+## vertical `up`/`down` and the attack `a`/`b`/`c`/`d`/`f` tokens - is *not* a
+## height selector: it is ignored for height and can never invent a high, mid
+## or low band.  With no `left` the decision fails closed (guard=false).
+##
+## The returned action/height stay empty while DIRECT_GUARD_HEIGHT_BY_TOKEN is
+## empty.  A future proven row can fill them without changing callers.
+static func direct_guard_input(tokens: Array) -> Dictionary:
+    var has_guard_token: bool = false
+    for value: Variant in tokens:
+        if String(value) == DIRECT_GUARD_STATUS:
+            has_guard_token = true
+            break
+    if not has_guard_token:
+        return {"guard": false, "action": "", "height": ""}
+    var height: String = direct_guard_height_for(DIRECT_GUARD_STATUS)
+    var action: String = ""
+    if not height.is_empty():
+        for candidate: String in BLOCK_GUARD_HEIGHTS:
+            if String(BLOCK_GUARD_HEIGHTS[candidate]) == height:
+                action = candidate
+                break
+    return {"guard": true, "action": action, "height": height}
+
+
 ## ---------------------------------------------------------------------------
 ## Recovered canblock/canblock2 action time windows.
 ##
@@ -5569,10 +5617,32 @@ func record_standing_combo_press(
     return _try_follow_links()
 
 
-func begin_guard() -> void:
+## Start the guard from a set of currently held native status tokens.
+##
+## This is the direct-input path: only the recovered `left` token raises the
+## guard, and the resolver above proves that no held token selects a height.
+## A token set without `left` fails closed (returns false and leaves the guard
+## untouched); callers must call end_guard() on release.
+func begin_guard_from_input(tokens: Array) -> bool:
+    var decision: Dictionary = direct_guard_input(tokens)
+    if not bool(decision.get("guard", false)):
+        return false
+    guard_held = true
+    guard_block_action = String(decision.get("action", ""))
+    guard_height = String(decision.get("height", ""))
     # Decompiled guard path rejects link input, so the event queue is dropped.
-    # This is the *unqualified* guard: the original's block-height input mapping
-    # is not recovered, so holding the guard button must not claim a height.
+    _clear_link_state()
+    return true
+
+
+func begin_guard() -> void:
+    # PC prototype guard key.  It is the port binding for the recovered
+    # hold-left gesture, so it goes through the same direct-input resolver and
+    # must never claim a high/mid/low height.
+    if begin_guard_from_input([DIRECT_GUARD_STATUS]):
+        return
+    # Keep the old unqualified fallback if the proven table is ever emptied or
+    # changed.  No height is invented here.
     guard_held = true
     guard_block_action = ""
     guard_height = ""
