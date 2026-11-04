@@ -6,7 +6,8 @@
   "decoded_sha256": "456eeba2ab422ff36aa586ed9156c3d6da2ec75d291a180eeeddc5d75223f62e",
   "records": 269,
   "achievements": 38,
-  "note": "269 CTX3 records encode one object: a 38-element achievements array {pending_icon, reached_icon, description}."
+  "note": "269 CTX3 records encode one object: a 38-element achievements array {pending_icon, reached_icon, description}.",
+  "display_keys_note": "description_key is the exact `description` literal of each decoded achievements.list row; its .lang value is rendered by progress_records_screen.gd."
  },
  "icon_dir": "gui/images/menu/",
  "icon_table": [
@@ -101,7 +102,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
-   }
+   },
+   "description_key": "achv_arcade_easy"
   },
   {
    "index": 1,
@@ -116,7 +118,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
-   }
+   },
+   "description_key": "achv_arcade_medium"
   },
   {
    "index": 2,
@@ -131,7 +134,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
-   }
+   },
+   "description_key": "achv_arcade_hard"
   },
   {
    "index": 3,
@@ -146,7 +150,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_events_* literal adjacent to chapter_end in libdefault.so .rodata"
-   }
+   },
+   "description_key": "achv_events_5"
   },
   {
    "index": 4,
@@ -161,7 +166,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_events_* literal adjacent to chapter_end in libdefault.so .rodata"
-   }
+   },
+   "description_key": "achv_events_10"
   },
   {
    "index": 5,
@@ -176,7 +182,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_events_* literal adjacent to chapter_end in libdefault.so .rodata"
-   }
+   },
+   "description_key": "achv_events_25"
   },
   {
    "index": 6,
@@ -191,7 +198,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; final attack = end move (number_of_endmoves literal)"
-   }
+   },
+   "description_key": "achv_final_attacks_5"
   },
   {
    "index": 7,
@@ -206,7 +214,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; final attack = end move (number_of_endmoves literal)"
-   }
+   },
+   "description_key": "achv_final_attacks_15"
   },
   {
    "index": 8,
@@ -221,7 +230,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; final attack = end move (number_of_endmoves literal)"
-   }
+   },
+   "description_key": "achv_final_attacks_25"
   },
   {
    "index": 9,
@@ -236,7 +246,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
-   }
+   },
+   "description_key": "achv_finish_chapter_1"
   },
   {
    "index": 10,
@@ -251,7 +262,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
-   }
+   },
+   "description_key": "achv_finish_chapter_2"
   },
   {
    "index": 11,
@@ -266,7 +278,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
-   }
+   },
+   "description_key": "achv_finish_chapter_3"
   },
   {
    "index": 12,
@@ -281,7 +294,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
-   }
+   },
+   "description_key": "achv_finish_chapter_4"
   },
   {
    "index": 13,
@@ -296,7 +310,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
-   }
+   },
+   "description_key": "achv_finish_chapter_5"
   },
   {
    "index": 14,
@@ -311,7 +326,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables (cmp 5,15,25); counter number_of_grabs literal"
-   }
+   },
+   "description_key": "achv_grabs_5"
   },
   {
    "index": 15,
@@ -326,7 +342,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables (cmp 5,15,25); counter number_of_grabs literal"
-   }
+   },
+   "description_key": "achv_grabs_15"
   },
   {
    "index": 16,
@@ -341,7 +358,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables (cmp 5,15,25); counter number_of_grabs literal"
-   }
+   },
+   "description_key": "achv_grabs_25"
   },
   {
    "index": 17,
@@ -356,7 +374,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_greats literal"
-   }
+   },
+   "description_key": "achv_greats_5"
   },
   {
    "index": 18,
@@ -371,7 +390,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_greats literal"
-   }
+   },
+   "description_key": "achv_greats_15"
   },
   {
    "index": 19,
@@ -386,7 +406,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_greats literal"
-   }
+   },
+   "description_key": "achv_greats_25"
   },
   {
    "index": 20,
@@ -401,7 +422,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_perfects literal"
-   }
+   },
+   "description_key": "achv_perfects_5"
   },
   {
    "index": 21,
@@ -416,7 +438,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_perfects literal"
-   }
+   },
+   "description_key": "achv_perfects_15"
   },
   {
    "index": 22,
@@ -431,7 +454,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_perfects literal"
-   }
+   },
+   "description_key": "achv_perfects_25"
   },
   {
    "index": 23,
@@ -445,7 +469,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_story_completed_{easy,medium,hard} literal; difficulty from game_modes.json"
-   }
+   },
+   "description_key": "achv_story_completed_easy"
   },
   {
    "index": 24,
@@ -459,7 +484,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_story_completed_{easy,medium,hard} literal; difficulty from game_modes.json"
-   }
+   },
+   "description_key": "achv_story_completed_medium"
   },
   {
    "index": 25,
@@ -473,7 +499,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_story_completed_{easy,medium,hard} literal; difficulty from game_modes.json"
-   }
+   },
+   "description_key": "achv_story_completed_hard"
   },
   {
    "index": 26,
@@ -488,7 +515,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_survival_* literal next to survival_top/wins in libdefault.so .rodata"
-   }
+   },
+   "description_key": "achv_survival_5"
   },
   {
    "index": 27,
@@ -503,7 +531,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_survival_* literal next to survival_top/wins in libdefault.so .rodata"
-   }
+   },
+   "description_key": "achv_survival_10"
   },
   {
    "index": 28,
@@ -518,7 +547,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_survival_* literal next to survival_top/wins in libdefault.so .rodata"
-   }
+   },
+   "description_key": "achv_survival_20"
   },
   {
    "index": 29,
@@ -533,7 +563,8 @@
     "threshold_forged": false,
     "fail_closed": true,
     "evidence": "achievement literal exists, but game_modes.json recovers only easy/medium/hard for Time Attack; 'beginner' tier not forged -> never auto-award"
-   }
+   },
+   "description_key": "achv_time_attack_beginner"
   },
   {
    "index": 30,
@@ -548,7 +579,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
-   }
+   },
+   "description_key": "achv_time_attack_easy"
   },
   {
    "index": 31,
@@ -563,7 +595,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
-   }
+   },
+   "description_key": "achv_time_attack_medium"
   },
   {
    "index": 32,
@@ -578,7 +611,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
-   }
+   },
+   "description_key": "achv_time_attack_hard"
   },
   {
    "index": 33,
@@ -593,7 +627,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
-   }
+   },
+   "description_key": "achv_versus_1"
   },
   {
    "index": 34,
@@ -608,7 +643,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
-   }
+   },
+   "description_key": "achv_versus_5"
   },
   {
    "index": 35,
@@ -623,7 +659,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
-   }
+   },
+   "description_key": "achv_versus_15"
   },
   {
    "index": 36,
@@ -638,7 +675,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
-   }
+   },
+   "description_key": "achv_versus_25"
   },
   {
    "index": 37,
@@ -653,7 +691,8 @@
     "threshold_forged": true,
     "fail_closed": false,
     "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
-   }
+   },
+   "description_key": "achv_versus_50"
   }
  ]
 }

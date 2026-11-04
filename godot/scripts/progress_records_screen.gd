@@ -16,9 +16,12 @@ class_name ProgressRecordsScreen
 ##   * save status       <- the real user:// save envelope (existence, size,
 ##     saved timestamp, SHA-256 checksum recomputation, fail-closed load)
 ##
-## Achievement rows display the recovered `description` literal verbatim (the
-## original object stores the translation key there; the ten shipped .lang files
-## contain no `achv_*` entries, so no localized achievement text exists to show).
+## Achievement rows display the DECODED `.lang` value of the exact `description`
+## key recovered from achievements.list, in the active BRUCELEE_LANG (default
+## LangEnglish). The header uses the decoded `achievements` title key bound by
+## achievementstable.ui. Every value is copied verbatim from the ten shipped
+## .lang files (data/lang/achievement_lang.json); a key with no decoded value is
+## shown as the literal "NOT RECOVERED" -- no text is ever invented.
 ## The condition column uses only fields present in the recovered condition
 ## descriptor; `unrecovered` rows are labelled NOT RECOVERED and can never be
 ## awarded by AchievementEngine (fail-closed).
@@ -31,6 +34,7 @@ class_name ProgressRecordsScreen
 signal closed
 
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
+const AchievementLang = preload("res://scripts/achievement_lang.gd")
 
 const ACHIEVEMENTS_PATH := "res://data/progress/achievements.json"
 const ICON_DIR := "res://ui/achievement/"
@@ -67,6 +71,7 @@ var _root: Control
 var _header_title: Label
 var _header_detail: Label
 var _save_chip: Label
+var _section_label: Label
 var _grid: GridContainer
 var _row_nodes: Array = []
 var _summary_label: Label
@@ -147,9 +152,17 @@ func achievement_rows() -> Array:
 		var id: String = String(entry["id"])
 		var is_reached: bool = reached.has(id)
 		var fail_closed: bool = bool(cond.get("fail_closed", false))
+		# `description_key` is the exact `description` literal decoded from
+		# achievements.list; resolve it through the .lang table instead of
+		# printing the raw translation key as if it were a label.
+		var text_key: String = String(entry.get("description_key", id))
+		var display_text: String = AchievementLang.text(text_key)
 		rows.append({
 			"index": int(entry["index"]),
 			"id": id,
+			"description_key": text_key,
+			"display_text": display_text,
+			"text_recovered": display_text != AchievementLang.NOT_RECOVERED,
 			"reached": is_reached,
 			"fail_closed": fail_closed,
 			"status": String(cond.get("status", "unrecovered")),
@@ -289,6 +302,22 @@ func icon_status() -> Dictionary:
 	}
 
 
+func text_status() -> Dictionary:
+	## How many rendered rows resolved a decoded .lang value; any row without one
+	## shows the literal NOT RECOVERED marker. Used by the footer note and tests.
+	var recovered: int = 0
+	for row: Variant in _rows:
+		if bool(Dictionary(row).get("text_recovered", false)):
+			recovered += 1
+	return {
+		"total": _rows.size(),
+		"recovered": recovered,
+		"not_recovered": _rows.size() - recovered,
+		"language": AchievementLang.language(),
+		"marker": AchievementLang.NOT_RECOVERED,
+	}
+
+
 func debug_state() -> Dictionary:
 	## Everything the screen displays, for tests and the delivery report.
 	return {
@@ -301,6 +330,7 @@ func debug_state() -> Dictionary:
 		"coverage": unlock_coverage(),
 		"save": save_status(),
 		"icons": icon_status(),
+		"text": text_status(),
 		"note": _note_label.text if _note_label != null else "",
 	}
 
@@ -352,7 +382,8 @@ func _build() -> void:
 	titles.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	titles.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(titles)
-	_header_title = _label("RECORDS · ACHIEVEMENTS", 24, COLOR_ACCENT)
+	_header_title = _label("RECORDS · " + AchievementLang.screen_title(), 24, COLOR_ACCENT)
+	AchievementLang.apply_font(_header_title)
 	titles.add_child(_header_title)
 	_header_detail = _label("", 11, COLOR_DIM)
 	titles.add_child(_header_detail)
@@ -375,7 +406,8 @@ func _build() -> void:
 	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_child(left)
-	left.add_child(_label("38 RECOVERED ACHIEVEMENTS  ·  gold icon = reached", 10, COLOR_DIM))
+	_section_label = _label("", 10, COLOR_DIM)
+	left.add_child(_section_label)
 	_grid = GridContainer.new()
 	_grid.name = "AchievementGrid"
 	_grid.columns = 2
@@ -437,6 +469,13 @@ func _label(text: String, size: int, color: Color) -> Label:
 func refresh() -> void:
 	_ensure_built()
 	_rows = achievement_rows()
+	# Re-resolve the title/section on every refresh so a BRUCELEE_LANG change is
+	# reflected without rebuilding the whole CanvasLayer.
+	_header_title.text = "RECORDS · " + AchievementLang.screen_title()
+	AchievementLang.apply_font(_header_title)
+	_section_label.text = "%d RECOVERED · %s  ·  gold icon = reached" % [
+		_rows.size(), AchievementLang.screen_title()]
+	AchievementLang.apply_font(_section_label)
 	_cursor = clampi(_cursor, 0, maxi(0, _rows.size() - 1))
 	_rebuild_grid()
 	_refresh_summary()
@@ -480,7 +519,8 @@ func _rebuild_grid() -> void:
 		text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cell.add_child(text)
 		var title: Label = _label("", 11, COLOR_TEXT)
-		title.text = "%02d  %s" % [int(entry["index"]), String(entry["id"])]
+		title.text = "%02d  %s" % [int(entry["index"]), String(entry["display_text"])]
+		AchievementLang.apply_font(title)
 		text.add_child(title)
 		var sub: Label = _label("", 8, COLOR_FAINT)
 		sub.text = String(entry["condition_text"])
@@ -594,11 +634,13 @@ func _footer_note() -> String:
 		)
 	elif bound < rows_count:
 		icon_text += "· %d row(s) text-only" % (rows_count - bound)
-	return (
-		icon_text
-		+ "  ·  row labels are the recovered achievements.list description keys"
-		+ "  ·  the 10 shipped .lang files contain no achv_* text"
+	var status: Dictionary = text_status()
+	var decoded: String = (
+		"  ·  titles/descriptions: %d/%d decoded .lang values (%s), %d NOT RECOVERED"
+		% [int(status.get("recovered", 0)), int(status.get("total", 0)),
+			String(status.get("language", "")), int(status.get("not_recovered", 0))]
 	)
+	return icon_text + decoded
 
 
 func _refresh_selection() -> void:
@@ -611,7 +653,8 @@ func _refresh_selection() -> void:
 		var state: Label = node["state"]
 		var selected: bool = index == _cursor
 		var prefix: String = "> " if selected else "   "
-		title.text = prefix + "%02d  %s" % [int(entry["index"]), String(entry["id"])]
+		title.text = prefix + "%02d  %s" % [int(entry["index"]), String(entry["display_text"])]
+		AchievementLang.apply_font(title)
 		title.add_theme_color_override("font_color", (
 			COLOR_ACCENT if selected
 			else (COLOR_TEXT if bool(entry["reached"]) else COLOR_FAINT)))
@@ -629,11 +672,14 @@ func _refresh_selection() -> void:
 		var lines: Array = ["selected  %02d  %s  ·  %s" % [
 			int(entry["index"]), String(entry["id"]),
 			String(entry["state_text"])]]
+		lines.append("text      %s   [.lang key %s]" % [
+			String(entry["display_text"]), String(entry["description_key"])])
 		lines.append("condition %s  (%s)" % [
 			String(entry["condition_text"]), String(entry["status"])])
 		if not String(entry["evidence"]).is_empty():
 			lines.append("evidence  " + String(entry["evidence"]))
 		_detail_label.text = "\n".join(lines)
+		AchievementLang.apply_font(_detail_label)
 
 
 # ---------------------------------------------------------------- helpers

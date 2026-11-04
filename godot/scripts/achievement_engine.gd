@@ -4,11 +4,12 @@ extends RefCounted
 ## Faithful achievement conditions decoded from adreno_200/achievements.list.
 ##
 ## 38 achievements. Each carries a condition descriptor generated only from
-## recovered evidence (resource literals + libdefault.so disassembly). A
+## recovered evidence (resource literals + libdefault.so disassembly) and the
+## exact `description` translation key recovered from achievements.list. A
 ## condition whose threshold/mechanism was NOT forged is marked
 ## status="unrecovered", fail_closed=true and can never be auto-awarded.
 
-var rows: Array = []          # [{index,id,pending_icon_index,reached_icon_index,condition}]
+var rows: Array = []          # [{index,id,description_key,pending_icon_index,reached_icon_index,condition}]
 var loaded := false
 
 
@@ -28,6 +29,10 @@ func load_data(path := "res://data/progress/achievements.json") -> bool:
 		rows.append({
 			"index": int(row["index"]),
 			"id": str(row["id"]),
+			# Exact `description` literal decoded from adreno_200/achievements.list.
+			# It is the .lang key the records screen resolves for display. The id
+			# is only a fallback for a data file from an older schema.
+			"description_key": str(row.get("description_key", row["id"])),
 			"pending_icon_index": int(row["pending_icon_index"]),
 			"reached_icon_index": int(row["reached_icon_index"]),
 			"condition": row["condition"],
