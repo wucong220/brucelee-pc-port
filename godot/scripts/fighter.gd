@@ -1241,6 +1241,36 @@ const VICTIM_CLIP_FRAMES: Dictionary = {
     "all_sp_pnch_low_forset04": 28,
     "all_sp_kck_low_forset04": 55,
 }
+# Recovered exit destination of each victim clip, keyed by the exact archived
+# clip name. Read from the action's outgoing link `to` in
+# adreno_200/set/{brucelee,thai,karate,kungfu}.set: grabcompl* exits to
+# facedownidle/faceupidle, endattackcomp* exits to facedownko/faceupko. The
+# port previously hardcoded grab1->facedownidle / grab2->faceupidle and every
+# endattackcomp->faceupko, which is only correct for the Thai (forset03) set.
+# A clip with no recovered exit makes the grab/finisher fail closed instead of
+# borrowing another set's destination.
+const VICTIM_CLIP_EXIT: Dictionary = {
+    # brucelee set (forset01)
+    "all_grabbed_01_forset01": "faceupidle",
+    "m02_grabbed_02_forset01": "faceupidle",
+    "all_end_attack_01_forset01": "facedownko",
+    "all_end_attack_02_forset01": "facedownko",
+    # karate set (forset02)
+    "all_grabbed_01_forset02": "faceupidle",
+    "all_grabbed_02_forset02": "faceupidle",
+    "all_end_attack_01_forset02": "facedownko",
+    "all_end_attack_02_forset02": "faceupko",
+    # thai set (forset03)
+    "all_grabbed_01_forset03": "facedownidle",
+    "all_grabbed_02_forset03": "faceupidle",
+    "all_end_attack_01_forset03": "faceupko",
+    "all_end_attack_02_forset03": "faceupko",
+    # kungfu set (forset04)
+    "all_grabbed_01_forset04": "faceupidle",
+    "all_grabbed_02_forset04": "facedownidle",
+    "all_sp_pnch_low_forset04": "facedownidle",
+    "all_sp_kck_low_forset04": "facedownidle",
+}
 # "endattack" is the mapped-set finisher name (kungfu/karate); without it the
 # victim of a Ken/Master/SinFu finisher is never consumed and endattackcomp is
 # unreachable for those sets.
@@ -2875,6 +2905,7 @@ var _victim_selected_animation: Dictionary = {}
 # Recovered frame count for each resolved player-victim slot, taken from the
 # opponent set's actual clip. Absent means the grab/finisher fails closed.
 var _victim_selected_frames: Dictionary = {}
+var _victim_exit_states: Dictionary = {}
 # Base candidate path per grab/finisher slot, captured once the candidate clips
 # are mapped, so a version resolution can always be undone.
 var _size_variant_base_path: Dictionary = {}
@@ -7034,15 +7065,22 @@ func _advance_timed_states(delta: float) -> void:
     if state in ["grabbed1", "grabbed2"]:
         state_time -= delta
         if state_time <= 0.000001:
-            state = "facedownidle" if state == "grabbed1" else "faceupidle"
-            state_time = 0.0
-            attack_kind = ""
-            _restart_candidate_action()
+            if _attacker_grab_active():
+                # A held victim must not leave the hold while the attacker's
+                # recovered grab attack still has impacts to land. The countdown
+                # above is still the per-victim clip length; the clip simply
+                # holds its last frame until the grabber releases. Without this
+                # the later recovered grab multi-impacts (e.g. Bruce grab1's
+                # frame-121 hit) are dropped because the victim briefly sits in
+                # a ground idle that refuses hits.
+                state_time = 0.0
+                return
+            _exit_victim_hold(state)
         return
     if state in ["endattackcomp1", "endattackcomp2"]:
         state_time -= delta
         if state_time <= 0.000001:
-            _begin_faceup_ko(0.0)
+            _finish_endattack_comp(state)
         return
     if state == "impactstun":
         _advance_impactstun_state(delta)
@@ -7392,10 +7430,7 @@ func _advance_state() -> void:
             state = "recovery"
             state_time = float(ATTACKS[attack_kind]["recovery"])
         "grabbed1", "grabbed2":
-            state = "facedownidle" if state == "grabbed1" else "faceupidle"
-            state_time = 0.0
-            attack_kind = ""
-            _restart_candidate_action()
+            _exit_victim_hold(state)
         "recovery", "hitstun", "blockstun":
             if state == "recovery":
                 var native_return: Dictionary = _native_recovery_return()
@@ -7531,9 +7566,17 @@ func _select_grab_victim_clip(slot_key: String) -> bool:
         push_warning(character_name + " " + slot_key + " refused: no recovered"
                 + " frames for " + animation)
         return false
+    # The recovered set link also names the state the victim exits to; it is not
+    # the old grab1->facedown / grab2->faceup hardcode.
+    var exit_state: String = String(VICTIM_CLIP_EXIT.get(animation, ""))
+    if exit_state.is_empty():
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " exit state for " + animation)
+        return false
     _candidate_clip_paths[slot_key] = matched
     _victim_selected_animation[slot_key] = animation
     _victim_selected_frames[slot_key] = frames
+    _victim_exit_states[slot_key] = exit_state
     return true
 
 
@@ -7558,9 +7601,42 @@ func _select_endattack_victim_clip(slot_key: String) -> bool:
         push_warning(character_name + " " + slot_key + " refused: no recovered"
                 + " frames for " + animation)
         return false
+    # The recovered set link also names the state the victim exits to; it is not
+    # the old grab1->facedown / grab2->faceup hardcode.
+    var exit_state: String = String(VICTIM_CLIP_EXIT.get(animation, ""))
+    if exit_state.is_empty():
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " exit state for " + animation)
+        return false
     _candidate_clip_paths[slot_key] = matched
     _victim_selected_animation[slot_key] = animation
     _victim_selected_frames[slot_key] = frames
+    _victim_exit_states[slot_key] = exit_state
+    return true
+
+
+func _select_non_player_victim_clip(slot_key: String) -> bool:
+    ## A non-player victim carries the slot -> archived clip row in its own
+    ## character clip map (KEN_CLIPS, BRICK_CLIPS, MASTER_CLIPS, ...). Resolve
+    ## the recovered per-set frame count and exit destination from that exact
+    ## clip; a missing map row or recovery field refuses the grab or finisher
+    ## instead of borrowing another set's timing.
+    var animation: String = String(candidate_clips.get(slot_key, ""))
+    if animation.is_empty():
+        return false
+    var frames: int = int(VICTIM_CLIP_FRAMES.get(animation, -1))
+    if frames < 0:
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " frames for " + animation)
+        return false
+    var exit_state: String = String(VICTIM_CLIP_EXIT.get(animation, ""))
+    if exit_state.is_empty():
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " exit state for " + animation)
+        return false
+    _victim_selected_animation[slot_key] = animation
+    _victim_selected_frames[slot_key] = frames
+    _victim_exit_states[slot_key] = exit_state
     return true
 
 
@@ -7591,21 +7667,24 @@ func begin_grabbed(kind: String) -> bool:
     if data.is_empty():
         return false
     var clip_key: String = String(data[0])
-    var frame_count: int = int(data[1])
-    # The player's static map holds only the Thai victim set; use his recovered
-    # per-opponent action instead, and refuse the grab if the variant is absent.
+    # Both victim roles now resolve the slot's archived clip, its recovered
+    # per-set frame count and its recovered exit state. The player reads the
+    # per-attacker action of his own set; a non-player victim reads its own
+    # character clip map. Either one fails closed instead of borrowing the
+    # static Thai (90/78) timing.
     if is_player:
         if not _select_grab_victim_clip(clip_key):
             return false
-        if not _victim_selected_frames.has(clip_key):
-            return false
-        frame_count = int(_victim_selected_frames[clip_key])
+    elif not _select_non_player_victim_clip(clip_key):
+        return false
+    if not _victim_selected_frames.has(clip_key):
+        return false
     if not _candidate_clip_paths.has(clip_key):
         return false
     if not _apply_victim_size_variant(clip_key):
         return false
     state = clip_key
-    state_time = float(frame_count) / SOURCE_FRAME_RATE
+    state_time = float(int(_victim_selected_frames[clip_key])) / SOURCE_FRAME_RATE
     attack_kind = ""
     _attack_connected = false
     _restart_candidate_action()
@@ -7619,19 +7698,23 @@ func begin_endattack_victim(attacker_kind: String = "") -> bool:
     if data.is_empty():
         return false
     var clip_key: String = String(data[0])
-    var frame_count: int = int(data[1])
+    # Same per-victim resolution as begin_grabbed: the finisher's recovered clip
+    # frames and exit destination come from the victim's own set, never from the
+    # static Thai 93/130 fallback. kungfu has no endattackcomp clip, so a
+    # Master/SinFu victim refuses the finisher.
     if is_player:
         if not _select_endattack_victim_clip(clip_key):
             return false
-        if not _victim_selected_frames.has(clip_key):
-            return false
-        frame_count = int(_victim_selected_frames[clip_key])
+    elif not _select_non_player_victim_clip(clip_key):
+        return false
+    if not _victim_selected_frames.has(clip_key):
+        return false
     if not _candidate_clip_paths.has(clip_key):
         return false
     if not _apply_victim_size_variant(clip_key):
         return false
     state = clip_key
-    state_time = float(frame_count) / SOURCE_FRAME_RATE
+    state_time = float(int(_victim_selected_frames[clip_key])) / SOURCE_FRAME_RATE
     attack_kind = ""
     _attack_connected = false
     _restart_candidate_action()
@@ -7640,6 +7723,40 @@ func begin_endattack_victim(attacker_kind: String = "") -> bool:
     # played when the set has no rows for the clip (see SfxMusicMap).
     endattack_victim_started.emit(clip_key, attacker_kind)
     return true
+
+
+func _attacker_grab_active() -> bool:
+    ## True while the attacker is still inside a recovered grab attack that owns
+    ## this victim's hold. A held victim must not exit to a ground idle between
+    ## the grab's multi-impacts, or the later recovered damage is lost.
+    if opponent == null or not is_instance_valid(opponent):
+        return false
+    return (opponent.attack_kind in GRAB_ATTACKS
+            and opponent.state in ["startup", "active", "recovery"])
+
+
+func _exit_victim_hold(slot_key: String) -> void:
+    ## Leave the hold to the exit state recovered from that set's grabcompl
+    ## link. begin_grabbed always records it (or refuses the hold); the legacy
+    ## slot fallback only covers a manually assigned victim state.
+    var exit_state: String = String(_victim_exit_states.get(slot_key, ""))
+    if exit_state.is_empty():
+        exit_state = "facedownidle" if slot_key == "grabbed1" else "faceupidle"
+    state = exit_state
+    state_time = 0.0
+    attack_kind = ""
+    _restart_candidate_action()
+
+
+func _finish_endattack_comp(slot_key: String) -> void:
+    ## endattackcomp exits to facedownko or faceupko exactly as the set's
+    ## endattackcomp link records (karate endattackcomp 1 -> facedownko, the
+    ## Thai/Karate endattackcomp 2 -> faceupko), not always faceupko.
+    var exit_state: String = String(_victim_exit_states.get(slot_key, "faceupko"))
+    if exit_state == "facedownko":
+        _begin_facedown_ko()
+    else:
+        _begin_faceup_ko(0.0)
 
 
 func _try_attack_contact() -> void:
