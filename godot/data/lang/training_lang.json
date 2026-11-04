@@ -145,6 +145,102 @@
    "LangRussian": "Попробовать снова",
    "LangSpanish": "Inténtalo de nuevo"
   },
+  "brickdavis": {
+   "LangEnglish": "Brick Davis",
+   "LangChineseSimpl": "铁骨戴维斯",
+   "LangChineseTrad": "鐵骨戴維斯",
+   "LangFrench": "Brick Davis",
+   "LangGerman": "Brick Davis",
+   "LangItalian": "Brick Davis",
+   "LangJapanese": "Brick Davis",
+   "LangKorean": "브릭 데이비스",
+   "LangRussian": "Брик Дэвис",
+   "LangSpanish": "Brick Davis"
+  },
+  "brucelee_base": {
+   "LangEnglish": "Bruce Lee - B",
+   "LangChineseSimpl": "李小龙－B",
+   "LangChineseTrad": "李小龍－B",
+   "LangFrench": "Bruce Lee - B",
+   "LangGerman": "Bruce Lee - B",
+   "LangItalian": "Bruce Lee - B",
+   "LangJapanese": "Bruce Lee - B",
+   "LangKorean": "브루스 리 - B",
+   "LangRussian": "Брюс Ли - B",
+   "LangSpanish": "Bruce Lee - B"
+  },
+  "brucelee_jacket": {
+   "LangEnglish": "Bruce Lee - A",
+   "LangChineseSimpl": "李小龙－A",
+   "LangChineseTrad": "李小龍－A",
+   "LangFrench": "Bruce Lee - A",
+   "LangGerman": "Bruce Lee - A",
+   "LangItalian": "Bruce Lee - A",
+   "LangJapanese": "Bruce Lee - A",
+   "LangKorean": "브루스 리 - A",
+   "LangRussian": "Брюс Ли - A",
+   "LangSpanish": "Bruce Lee - A"
+  },
+  "brucelee_kimono": {
+   "LangEnglish": "Bruce Lee - D",
+   "LangChineseSimpl": "李小龙－D",
+   "LangChineseTrad": "李小龍－D",
+   "LangFrench": "Bruce Lee - D",
+   "LangGerman": "Bruce Lee - D",
+   "LangItalian": "Bruce Lee - D",
+   "LangJapanese": "Bruce Lee - D",
+   "LangKorean": "브루스 리 - D",
+   "LangRussian": "Брюс Ли - D",
+   "LangSpanish": "Bruce Lee - D"
+  },
+  "brucelee_tank": {
+   "LangEnglish": "Bruce Lee - C",
+   "LangChineseSimpl": "李小龙－C",
+   "LangChineseTrad": "李小龍－C",
+   "LangFrench": "Bruce Lee - C",
+   "LangGerman": "Bruce Lee - C",
+   "LangItalian": "Bruce Lee - C",
+   "LangJapanese": "Bruce Lee - C",
+   "LangKorean": "브루스 리 - C",
+   "LangRussian": "Брюс Ли - C",
+   "LangSpanish": "Bruce Lee - C"
+  },
+  "chief01": {
+   "LangEnglish": "The Chief - A",
+   "LangChineseSimpl": "老大－A",
+   "LangChineseTrad": "老大－A",
+   "LangFrench": "Le Chef - A",
+   "LangGerman": "Der Chef - A",
+   "LangItalian": "Il capo - A",
+   "LangJapanese": "The ChiefA",
+   "LangKorean": "치프 - A",
+   "LangRussian": "Босс - A",
+   "LangSpanish": "El Jefe - A"
+  },
+  "chief02": {
+   "LangEnglish": "The Chief - B",
+   "LangChineseSimpl": "老大－B",
+   "LangChineseTrad": "老大－B",
+   "LangFrench": "Le Chef - B",
+   "LangGerman": "Der Chef - B",
+   "LangItalian": "Il capo - B",
+   "LangJapanese": "The ChiefB",
+   "LangKorean": "치프 - B",
+   "LangRussian": "Босс - B",
+   "LangSpanish": "El Jefe - B"
+  },
+  "command_list": {
+   "LangEnglish": "Command list",
+   "LangChineseSimpl": "命令清单",
+   "LangChineseTrad": "命令清單",
+   "LangFrench": "Liste de commandes",
+   "LangGerman": "Befehlsliste",
+   "LangItalian": "Elenco comandi",
+   "LangJapanese": "コマンド・リスト",
+   "LangKorean": "명령 목록",
+   "LangRussian": "Список команд",
+   "LangSpanish": "Lista de comandos"
+  },
   "counter": {
    "LangEnglish": "Counter the attack",
    "LangChineseSimpl": "抵挡进攻",
@@ -240,6 +336,18 @@
    "LangKorean": "데베스테이팅 퓨리",
    "LangRussian": "Сокрушительная ярость",
    "LangSpanish": "Furia Demoledora"
+  },
+  "fighti": {
+   "LangEnglish": "Fight!",
+   "LangChineseSimpl": "开始格斗！",
+   "LangChineseTrad": "開始格鬥！",
+   "LangFrench": "Combattez !",
+   "LangGerman": "Kämpft!",
+   "LangItalian": "Combatti!",
+   "LangJapanese": "ファイト！",
+   "LangKorean": "파이트!",
+   "LangRussian": "В бой!",
+   "LangSpanish": "¡Luchar!"
   },
   "free_training": {
    "LangEnglish": "Free Training",
@@ -361,6 +469,30 @@
    "LangRussian": "Сильный верхний удар рукой",
    "LangSpanish": "Puñetazo fuerte alto"
   },
+  "johnson": {
+   "LangEnglish": "Johnson",
+   "LangChineseSimpl": "强森",
+   "LangChineseTrad": "強森",
+   "LangFrench": "Johnson",
+   "LangGerman": "Johnson",
+   "LangItalian": "Johnson",
+   "LangJapanese": "Johnson ",
+   "LangKorean": "존슨",
+   "LangRussian": "Джонсон",
+   "LangSpanish": "Johnson"
+  },
+  "kengodall": {
+   "LangEnglish": "Ken Goodall",
+   "LangChineseSimpl": "康古道",
+   "LangChineseTrad": "康古道",
+   "LangFrench": "Ken Goodall",
+   "LangGerman": "Ken Goodall",
+   "LangItalian": "Ken Goodall",
+   "LangJapanese": "Ken Goodall ",
+   "LangKorean": "켄 구달",
+   "LangRussian": "Кен Гудол",
+   "LangSpanish": "Ken Goodall"
+  },
   "loading1": {
    "LangEnglish": "Change between attack height to break the rival's defense.",
    "LangChineseSimpl": "改变不同攻击高度，突破对方的防御。",
@@ -444,6 +576,30 @@
    "LangKorean": "상대 플레이어가 기절했을 때 가까이 다가가 마무리 일격으로 끝내버리십시오.",
    "LangRussian": "Когда ваш соперник оглушен, приближайтесь к нему и добивайте финальными атаками.",
    "LangSpanish": "Cuando tu rival esté aturdido, acércate y acaba con él con un Ataque Final."
+  },
+  "loming01": {
+   "LangEnglish": "Lo Ming - A",
+   "LangChineseSimpl": "罗明－A",
+   "LangChineseTrad": "羅明－A",
+   "LangFrench": "Lo Ming - A",
+   "LangGerman": "Lo Ming - A",
+   "LangItalian": "Lo Ming - A",
+   "LangJapanese": "Lo Ming - A",
+   "LangKorean": "로 밍 - A",
+   "LangRussian": "Ло Минг - A",
+   "LangSpanish": "Lo Ming - A"
+  },
+  "loming02": {
+   "LangEnglish": "Lo Ming - B",
+   "LangChineseSimpl": "罗明－B",
+   "LangChineseTrad": "羅明－B",
+   "LangFrench": "Lo Ming - B",
+   "LangGerman": "Lo Ming - B",
+   "LangItalian": "Lo Ming - B",
+   "LangJapanese": "Lo Ming - B",
+   "LangKorean": "로 밍 - B",
+   "LangRussian": "Ло Минг - B",
+   "LangSpanish": "Lo Ming - B"
   },
   "low_kick": {
    "LangEnglish": "Low Kick",
@@ -589,6 +745,18 @@
    "LangRussian": "Пауза",
    "LangSpanish": "Pausa"
   },
+  "practice_style": {
+   "LangEnglish": "Training Ground",
+   "LangChineseSimpl": "训练场",
+   "LangChineseTrad": "訓練場",
+   "LangFrench": "Terrain d'entraînement",
+   "LangGerman": "Trainingsplatz",
+   "LangItalian": "Palestra",
+   "LangJapanese": "トレーニング場",
+   "LangKorean": "훈련장",
+   "LangRussian": "Обучение",
+   "LangSpanish": "Zona de Entrenamiento"
+  },
   "resume": {
    "LangEnglish": "Resume",
    "LangChineseSimpl": "恢复",
@@ -601,6 +769,18 @@
    "LangRussian": "Возобновить игру",
    "LangSpanish": "Reanudar"
   },
+  "select_fighter": {
+   "LangEnglish": "Select Fighter",
+   "LangChineseSimpl": "选择武师",
+   "LangChineseTrad": "選擇武師",
+   "LangFrench": "Choisissez un combattant",
+   "LangGerman": "Kämpfer wählen",
+   "LangItalian": "Seleziona lottatore",
+   "LangJapanese": "ファイターセレクト",
+   "LangKorean": "파이터 선택",
+   "LangRussian": "Выбор бойца",
+   "LangSpanish": "Escoger Luchador"
+  },
   "select_training": {
    "LangEnglish": "Select Training",
    "LangChineseSimpl": "选择训练",
@@ -612,6 +792,42 @@
    "LangKorean": "훈련 선택",
    "LangRussian": "Выбрать обучение",
    "LangSpanish": "Elegir entrenamiento"
+  },
+  "settings": {
+   "LangEnglish": "Settings",
+   "LangChineseSimpl": "设置",
+   "LangChineseTrad": "設置",
+   "LangFrench": "Paramètres",
+   "LangGerman": "Einstellungen",
+   "LangItalian": "Impostazioni",
+   "LangJapanese": "設定",
+   "LangKorean": "설정",
+   "LangRussian": "Настройки",
+   "LangSpanish": "Configuración"
+  },
+  "shenlo": {
+   "LangEnglish": "Shen Lo",
+   "LangChineseSimpl": "沈龙",
+   "LangChineseTrad": "沈龍",
+   "LangFrench": "Shen Lo",
+   "LangGerman": "Shen Lo",
+   "LangItalian": "Shen Lo",
+   "LangJapanese": "Shen Lo ",
+   "LangKorean": "셴 로",
+   "LangRussian": "Шень Ло",
+   "LangSpanish": "Shen Lo"
+  },
+  "sinfu": {
+   "LangEnglish": "Sin Fu",
+   "LangChineseSimpl": "秦福",
+   "LangChineseTrad": "秦福",
+   "LangFrench": "Sin Fu",
+   "LangGerman": "Sin Fu",
+   "LangItalian": "Sin Fu",
+   "LangJapanese": "Sin Fu ",
+   "LangKorean": "신 후",
+   "LangRussian": "Син Фу",
+   "LangSpanish": "Sin Fu"
   },
   "skipback": {
    "LangEnglish": "Fast retreat",
@@ -636,6 +852,18 @@
    "LangKorean": "고속 전진",
    "LangRussian": "Быстрый выпад",
    "LangSpanish": "Avance rápido"
+  },
+  "smallboy": {
+   "LangEnglish": "Smallboy",
+   "LangChineseSimpl": "小男孩",
+   "LangChineseTrad": "小男孩",
+   "LangFrench": "Smallboy",
+   "LangGerman": "Smallboy",
+   "LangItalian": "Smallboy",
+   "LangJapanese": "Smallboy ",
+   "LangKorean": "스몰보이",
+   "LangRussian": "Малыш",
+   "LangSpanish": "Smallboy"
   },
   "special_move_training_help": {
    "LangEnglish": "The Chi bar under your life bar controls the availability of special moves.\n\nEach of the 3 sectors of the Chi bar is filled by blocking, countering or with some attacks.\nThe Chi sector  used is emptied after the attacks is launched.\nSome Special attacks may require a different input or a different amount of Chi energy to be executed. \nCheck the Movement list or the Style Editor menu for more information about each attack.",
@@ -756,6 +984,30 @@
    "LangKorean": "오른쪽으로 한 발짝 이동",
    "LangRussian": "Шаг вправо",
    "LangSpanish": "Paso a derecha"
+  },
+  "style_editor": {
+   "LangEnglish": "Style Editor",
+   "LangChineseSimpl": "招式编辑器",
+   "LangChineseTrad": "招式編輯器",
+   "LangFrench": "Editeur de style",
+   "LangGerman": "Stileditor",
+   "LangItalian": "Editor di stile",
+   "LangJapanese": "ファイトスタイル編集",
+   "LangKorean": "스타일 편집기",
+   "LangRussian": "Редактор стиля",
+   "LangSpanish": "Editor de estilo"
+  },
+  "themaster": {
+   "LangEnglish": "The Master",
+   "LangChineseSimpl": "师父",
+   "LangChineseTrad": "師父",
+   "LangFrench": "Le Maître",
+   "LangGerman": "Der Meister",
+   "LangItalian": "Il Maestro",
+   "LangJapanese": "The Master",
+   "LangKorean": "마스터",
+   "LangRussian": "Учитель",
+   "LangSpanish": "El Maestro"
   },
   "training": {
    "LangEnglish": "Training",

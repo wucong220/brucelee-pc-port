@@ -301,6 +301,81 @@
    ],
    "springs": []
   },
+  "pause_noeditor": {
+   "source": "adreno_200/gui/trainingpausenoeditor.ui",
+   "sha256": "680db0ca5b9ecbcb5ca6ceb12e2915d641df44dd5a79d9dcd821ba8cd51ca9eb",
+   "resource_id": "607cafc20c1bb110e2cc6f449067c134",
+   "layout": [
+    {
+     "type": "bllabel",
+     "name": "title",
+     "x": 0,
+     "y": 5,
+     "width": 200,
+     "height": 40,
+     "hspring": "soft",
+     "vspring": "soft",
+     "datasources": {
+      "text": [
+       "translate",
+       "pause"
+      ]
+     },
+     "offscreen": {
+      "x": -200
+     }
+    },
+    {
+     "type": "blmenu",
+     "name": "menu",
+     "x": 20,
+     "y": 60,
+     "width": 460,
+     "height": 220,
+     "hspring": "soft",
+     "vspring": "soft",
+     "focused": "true",
+     "valign": "middle",
+     "font": 2,
+     "progress": 1.0,
+     "border_offset": 40,
+     "sound": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "sounds/menu_sfx/",
+       "basename": "menu_punch_2",
+       "extension": "wav"
+      }
+     },
+     "options": [
+      [
+       "resume",
+       "resume"
+      ],
+      [
+       "select_training",
+       "selecttraining"
+      ],
+      [
+       "command_list",
+       "commands"
+      ],
+      [
+       "settings",
+       "settings"
+      ],
+      [
+       "main_menu",
+       "mainmenu"
+      ]
+     ],
+     "offscreen": {
+      "progress": 0.0
+     }
+    }
+   ],
+   "springs": []
+  },
   "practice_menu": {
    "source": "adreno_200/gui/trainingmenu.ui",
    "sha256": "f4b919c15f0fe04591db608bca29f5b8a649e0ac5d16182665caeca455102386",
@@ -690,6 +765,175 @@
      "bottom": "fight_button"
     }
    ]
+  },
+  "free_config": {
+   "source": "adreno_200/gui/freetrainingconfig.ui",
+   "sha256": "158ccb5307cfe731a83c6a356a4697e84574eb46ab89d8caa1ad8b87fee67703",
+   "resource_id": "7e022b6aef4bc5590cdab4b1ce80d75a",
+   "layout": [
+    {
+     "type": "bllabel",
+     "name": "title",
+     "x": 0,
+     "y": 5,
+     "width": 200,
+     "height": 40,
+     "hspring": "soft",
+     "vspring": "soft",
+     "datasources": {
+      "text": [
+       "translate",
+       "free_training"
+      ]
+     },
+     "offscreen": {
+      "x": -200
+     }
+    },
+    {
+     "type": "blmenu",
+     "name": "menu",
+     "x": 80,
+     "y": 32,
+     "width": 400,
+     "height": 180,
+     "hspring": "soft",
+     "vspring": "soft",
+     "focused": "true",
+     "valign": "middle",
+     "font": 2,
+     "progress": 1.0,
+     "sound": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "sounds/menu_sfx/",
+       "basename": "menu_punch_2",
+       "extension": "wav"
+      }
+     },
+     "options": [
+      [
+       "select_fighter",
+       "fighter"
+      ]
+     ],
+     "offscreen": {
+      "progress": 0.0
+     }
+    },
+    {
+     "type": "picture",
+     "name": "box",
+     "x": 0,
+     "y": 110,
+     "width": 480,
+     "height": 320,
+     "alphablend": "true",
+     "file": {
+      "$file": {
+       "ordinal": 1,
+       "directory": "gui/images/menu/",
+       "basename": "bl_textbox_tga7",
+       "extension": "tex"
+      }
+     },
+     "offscreen": {
+      "y": 320
+     },
+     "scale": "true",
+     "hspring": "soft",
+     "vspring": "soft",
+     "subrect_x": 0,
+     "subrect_y": 0,
+     "subrect_width": 480,
+     "subrect_height": 320
+    }
+   ],
+   "springs": []
+  },
+  "command_list": {
+   "source": "adreno_200/gui/commandlist.ui",
+   "sha256": "1d2015807f6183462b9c5253e03a2d786dbeae2311e1cdd4e61b514f9daea84c",
+   "resource_id": "24264942a5df8fc273a642a6733d314e",
+   "layout": [
+    {
+     "type": "staticrect",
+     "x": 55,
+     "y": 35,
+     "width": 370,
+     "height": 250,
+     "hspring": "soft",
+     "vspring": "soft",
+     "bordercolor": [
+      255,
+      255,
+      255
+     ],
+     "bgcolor": [
+      0,
+      0,
+      0,
+      192
+     ],
+     "offscreen": {
+      "y": -250
+     }
+    },
+    {
+     "type": "blcommandlist",
+     "name": "commandlist",
+     "font": 0,
+     "x": 60,
+     "y": 40,
+     "width": 360,
+     "height": 240,
+     "hspring": "soft",
+     "vspring": "soft",
+     "focused": "true",
+     "offscreen": {
+      "y": -255
+     }
+    },
+    {
+     "type": "blbutton",
+     "name": "back",
+     "x": 2,
+     "y": 270,
+     "width": 48,
+     "height": 48,
+     "align": "center",
+     "valign": "middle",
+     "alphablend": "true",
+     "action": "rsk",
+     "file": {
+      "file": {
+       "$file": {
+        "ordinal": 0,
+        "directory": "gui/images/menu/",
+        "basename": "bl_gui_back_button_stand",
+        "extension": "tex"
+       }
+      },
+      "subrect_x": 8,
+      "subrect_y": 8,
+      "subrect_width": 48,
+      "subrect_height": 48
+     },
+     "sound": {
+      "$file": {
+       "ordinal": 1,
+       "directory": "sounds/menu_sfx/",
+       "basename": "back_bl_shout_short",
+       "extension": "wav"
+      }
+     },
+     "alpha": 1.0,
+     "offscreen": {
+      "alpha": 0.0
+     }
+    }
+   ],
+   "springs": []
   }
  }
 }

@@ -691,6 +691,9 @@ func _ready() -> void:
     add_child(move_training)
     move_training.configure(self, player, computer)
     move_training.exit_requested.connect(_on_move_training_exit)
+    move_training.style_editor_requested.connect(_on_training_style_editor_requested)
+    move_training.free_training_fighter_requested.connect(
+        _on_training_free_fighter_requested)
     move_gallery = MoveGallery.new()
     add_child(move_gallery)
     move_gallery.configure(self, player, computer)
@@ -714,19 +717,11 @@ func _ready() -> void:
     game_modes.configure(self, MENU_OPPONENT_CONFIG)
     game_modes.progress = progress
     # Opt-in Style Editor: decoded catalog + user:// selection file + screen.
-    # With the flag off nothing is created and the menu has no extra row.
+    # With the flag off nothing is created here and the menu has no extra row;
+    # the training menus create it lazily when their Style Editor option is
+    # selected, so all six recovered pause options work.
     if OS.get_environment("BRUCELEE_STYLE_EDITOR") == "1":
-        style_catalog = StyleCatalog.new()
-        if not style_catalog.load_catalog():
-            push_warning("Style Editor catalog failed closed: " + style_catalog.error)
-        style_store = StyleSelectionStore.new()
-        style_store.load_selections(style_catalog)
-        style_editor = StyleEditorScreen.new()
-        add_child(style_editor)
-        style_editor.configure(self, player, style_catalog, style_store)
-        style_editor.closed.connect(_on_style_editor_closed)
-        style_editor.try_requested.connect(_on_style_try)
-        style_editor.selection_saved.connect(_on_style_selection_saved)
+        _ensure_style_editor()
     # Recovered attract/continue states.  The module is always created, but both
     # flows stay opt-in through BRUCELEE_ATTRACT / BRUCELEE_CONTINUE.
     native_states = NativeMatchStates.new()
@@ -747,7 +742,13 @@ func _ready() -> void:
     ])
     if main_menu_enabled:
         _open_main_menu()
-    if export_self_test:
+    if OS.get_environment("BRUCELEE_TRAINING_FREE") == "1":
+        # The free-training fighter dock changed the opponent through the same
+        # env/reload path as the opponent menu.  Consume the flag and reopen the
+        # sandbox against the newly loaded candidate.
+        OS.set_environment("BRUCELEE_TRAINING_FREE", "")
+        call_deferred("_resume_training_free")
+    elif export_self_test:
         call_deferred("_run_export_self_test")
     elif not main_menu_enabled and (
             not story_mode or OS.get_environment("BRUCELEE_STORY_LAUNCH") == "1") and (
@@ -2362,10 +2363,37 @@ func _on_records_closed() -> void:
         hud.visible = false
         get_tree().paused = true
 
+func _ensure_style_editor() -> bool:
+    ## The recovered training menus expose Style Editor (practice menu and the
+    ## six-option pause), so the screen is created lazily even without the main
+    ## menu's BRUCELEE_STYLE_EDITOR row.  Failure is reported, never faked.
+    if style_editor != null:
+        return true
+    style_catalog = StyleCatalog.new()
+    if not style_catalog.load_catalog():
+        push_warning("Style Editor catalog failed closed: " + style_catalog.error)
+        style_catalog = null
+        style_store = null
+        return false
+    style_store = StyleSelectionStore.new()
+    style_store.load_selections(style_catalog)
+    style_editor = StyleEditorScreen.new()
+    add_child(style_editor)
+    style_editor.configure(self, player, style_catalog, style_store)
+    style_editor.closed.connect(_on_style_editor_closed)
+    style_editor.try_requested.connect(_on_style_try)
+    style_editor.selection_saved.connect(_on_style_selection_saved)
+    return true
+
+
 func _open_style_editor() -> void:
-    ## STYLE EDITOR row (only present while BRUCELEE_STYLE_EDITOR=1).
-    if style_editor == null or style_store == null or style_catalog == null:
-        prototype_menu.show_error("STYLE EDITOR NEEDS BRUCELEE_STYLE_EDITOR=1")
+    ## Main-menu STYLE EDITOR row (only present while BRUCELEE_STYLE_EDITOR=1)
+    ## and the recovered training menus both land here.
+    if not _ensure_style_editor():
+        if prototype_menu != null:
+            prototype_menu.show_error("STYLE EDITOR DATA NOT RECOVERED")
+        if move_training != null:
+            move_training.show_notice("STYLE EDITOR DATA NOT RECOVERED", true)
         return
     _apply_style_editor()
     style_editor.open()
@@ -2376,6 +2404,13 @@ func _open_style_editor() -> void:
     get_tree().paused = true
 
 func _on_style_editor_closed() -> void:
+    ## In-training returns to the screen that opened the editor; the main menu
+    ## keeps its existing pause state.
+    if move_training != null and move_training.visible:
+        move_training.on_style_editor_closed()
+        hud.visible = false
+        get_tree().paused = String(move_training.state) == "pause"
+        return
     if prototype_menu != null:
         prototype_menu.set_process_input(true)
         if main_menu_active:
@@ -2383,6 +2418,51 @@ func _on_style_editor_closed() -> void:
     if main_menu_active:
         hud.visible = false
         get_tree().paused = true
+
+
+func _on_training_style_editor_requested() -> void:
+    _open_style_editor()
+
+
+func _on_training_free_fighter_requested(opponent_key: String) -> void:
+    ## Free training fighter choice.  The current candidate starts in-session;
+    ## any other recovered fighter uses the opponent-menu env/reload path and is
+    ## reopened as free training by _resume_training_free().
+    if opponent_key == training_current_opponent_key():
+        move_training.enter_free_training()
+        return
+    if not MENU_OPPONENT_CONFIG.has(opponent_key):
+        move_training.show_notice("TRAINING FIGHTER IS NOT RECOVERED", true)
+        return
+    OS.set_environment("BRUCELEE_TRAINING_FREE", "1")
+    _request_opponent_switch(opponent_key)
+
+
+func _resume_training_free() -> void:
+    if not _training_available():
+        return
+    move_training.open()
+    move_training.enter_free_training()
+
+
+func training_opponent_keys() -> Array[String]:
+    var out: Array[String] = []
+    for key: Variant in MENU_OPPONENT_CONFIG:
+        out.append(String(key))
+    return out
+
+
+func training_current_opponent_key() -> String:
+    var configured := OS.get_environment("BRUCELEE_OPPONENT_NAME_KEY")
+    if MENU_OPPONENT_CONFIG.has(configured):
+        return configured
+    var attack_config := _opponent_attack_config()
+    for key: Variant in MENU_OPPONENT_CONFIG:
+        var entry: Variant = MENU_OPPONENT_CONFIG[key]
+        if entry is Dictionary and String(
+                Dictionary(entry).get("attack_config", "")) == attack_config:
+            return String(key)
+    return "brick"
 
 func _on_style_selection_saved(_group_key: String, _entry_id: String) -> void:
     _apply_style_editor()
@@ -5007,13 +5087,23 @@ func _handle_fighter_attack_input(
 
 
 func _training_available() -> bool:
+    if player == null or computer == null:
+        return false
     var player_clips: Dictionary = player.get("_candidate_clip_paths")
     var computer_clips: Dictionary = computer.get("_candidate_clip_paths")
-    return (player.candidate_loaded and computer.candidate_loaded
+    # The player-side clips are the same Bruce set for every opponent.  The
+    # opponent clips are character-specific: Brick's recovery needs its
+    # facedown idle/impact rows, while the other recovered candidates only need
+    # their own non-empty clip table to stand/attack as the training dummy.
+    var base_ok: bool = (player.candidate_loaded and computer.candidate_loaded
             and player_clips.has(PortFighter.ATTACK_TO_FLOOR_CLIP)
-            and player_clips.has(PortFighter.IDLE2_CLIP)
-            and computer_clips.has(PortFighter.BRICK_FACEDOWN_IDLE_CLIP)
-            and computer_clips.has(PortFighter.FACEDOWN_IMPACT_CLIP))
+            and player_clips.has(PortFighter.IDLE2_CLIP))
+    if not base_ok:
+        return false
+    if training_current_opponent_key() == "brick":
+        return (computer_clips.has(PortFighter.BRICK_FACEDOWN_IDLE_CLIP)
+                and computer_clips.has(PortFighter.FACEDOWN_IMPACT_CLIP))
+    return not computer_clips.is_empty()
 
 func _on_hit(attacker: PortFighter, defender: PortFighter, action: String, damage: float, blocked: bool) -> void:
     if done or training_completed:

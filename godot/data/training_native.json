@@ -23,7 +23,114 @@
    "grabs",
    "special_moves",
    "end_moves"
-  ]
+  ],
+  "practice_menu": {
+   "screen": "adreno_200/gui/trainingmenu.ui",
+   "sha256": "f4b919c15f0fe04591db608bca29f5b8a649e0ac5d16182665caeca455102386",
+   "title_key": "practice_style",
+   "options": [
+    [
+     "training",
+     "training"
+    ],
+    [
+     "style_editor",
+     "editor"
+    ]
+   ]
+  },
+  "free_config": {
+   "screen": "adreno_200/gui/freetrainingconfig.ui",
+   "sha256": "158ccb5307cfe731a83c6a356a4697e84574eb46ab89d8caa1ad8b87fee67703",
+   "title_key": "free_training",
+   "options": [
+    [
+     "select_fighter",
+     "fighter"
+    ]
+   ]
+  },
+  "select_fighter": {
+   "screen": "adreno_200/gui/trainingselectfighter.ui",
+   "sha256": "aeed69a3d67b2c451ea2140f95b9696a3a59f35228c708b1d0bb98ce0b7bf7fe",
+   "name_key": "selectedfightername",
+   "fight_label_key": "fighti",
+   "items": [
+    "bl_brucelee_jacket_icon.tex",
+    "bl_brucelee_base_icon.tex",
+    "bl_brucelee_tank_icon.tex",
+    "bl_brucelee_kimono_icon.tex",
+    "bl_shenlo_icon.tex",
+    "bl_themaster_icon.tex",
+    "bl_smallboy_icon.tex",
+    "bl_sinfu_icon.tex",
+    "bl_thechief01_icon.tex",
+    "bl_thechief02_icon.tex",
+    "bl_kengodall_icon.tex",
+    "bl_brickdavis_icon.tex",
+    "bl_johnson_icon.tex",
+    "bl_loming01_icon.tex",
+    "bl_loming02_icon.tex"
+   ]
+  },
+  "pause": {
+   "screen": "adreno_200/gui/trainingpause.ui",
+   "sha256": "b40b904d869adaa63b3356fd37ceeddcc4ac0eddbde0b67c96a65dba38756d4c",
+   "options": [
+    [
+     "resume",
+     "resume"
+    ],
+    [
+     "select_training",
+     "selecttraining"
+    ],
+    [
+     "style_editor",
+     "styleeditor"
+    ],
+    [
+     "command_list",
+     "commands"
+    ],
+    [
+     "settings",
+     "settings"
+    ],
+    [
+     "main_menu",
+     "mainmenu"
+    ]
+   ],
+   "noeditor_screen": "adreno_200/gui/trainingpausenoeditor.ui",
+   "noeditor_sha256": "680db0ca5b9ecbcb5ca6ceb12e2915d641df44dd5a79d9dcd821ba8cd51ca9eb",
+   "noeditor_options": [
+    [
+     "resume",
+     "resume"
+    ],
+    [
+     "select_training",
+     "selecttraining"
+    ],
+    [
+     "command_list",
+     "commands"
+    ],
+    [
+     "settings",
+     "settings"
+    ],
+    [
+     "main_menu",
+     "mainmenu"
+    ]
+   ]
+  },
+  "command_list": {
+   "screen": "adreno_200/gui/commandlist.ui",
+   "sha256": "1d2015807f6183462b9c5253e03a2d786dbeae2311e1cdd4e61b514f9daea84c"
+  }
  },
  "trainings": [
   {
