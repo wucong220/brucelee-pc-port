@@ -523,8 +523,11 @@ const LOMING_ATTACK_DATA: Dictionary = {
     "grab2_miss": ["grab2miss loming", "m04_grab_02", 45, 4, 4, 37, 0.0, 50.0, "larm", "high", "normal", "frontal"],
     "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
     "endattack": ["endattack loming", "m04_end_attack_01", 93, 17, 3, 73, 0.0, 75.0, "rleg", "high", "brutal", "fromleft"],
-    "special_punch_high_miss": ["specialpunchhighmiss sinfu", "m04_sp_pnch_high_fail", 71, 0, 2, 69, 0.0, 0.0, "larm", "high", "normal", "frontal"],
-    "special_punch_high_hit": ["specialpunchhighhit sinfu", "m04_e02_pnch_high_03", 50, 11, 12, 27, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+    # Lo Ming's own recovered kungfu.set row: `specialpunchhigh loming` starts
+    # animation m04_e02_pnch_high_03 (96 frames at 30 fps, radius 55). It is a
+    # two-impact special (6 + 9 damage) and is the only special the set gives
+    # this character; the SinFu miss/hit pair is not borrowed for it.
+    "special_punch_high": ["specialpunchhigh loming", "m04_e02_pnch_high_03", 96, 7, 9, 80, 15.0, 80.0, "larm", "high", "normal", "fromleft"],
 }
 const LOMING_ANIMATION_RADII_DATA: Dictionary = {
     "all_block_high": 60.0,
@@ -540,6 +543,7 @@ const LOMING_ANIMATION_RADII_DATA: Dictionary = {
     "m04_e02_idle_01": 50.0,
     "m04_e02_kck_high_03": 50.0,
     "m04_e02_kck_low_03": 55.0,
+    "m04_e02_pnch_high_03": 55.0,
     "m04_e02_pnch_low_03": 55.0,
     "m04_end_attack_01": 25.0,
     "m04_end_attack_02": 25.0,
@@ -757,8 +761,7 @@ const LOMING_CLIPS: Dictionary = {
     "grab2_miss": "m04_grab_02",
     "attack_to_floor": "m01_attack_to_floor",
     "endattack": "m04_end_attack_01",
-    "special_punch_high_miss": "m04_sp_pnch_high_fail",
-    "special_punch_high_hit": "m04_e02_pnch_high_03",
+    "special_punch_high": "m04_e02_pnch_high_03",
     "grabbed1": "all_grabbed_01_forset04",
     "grabbed2": "all_grabbed_02_forset04",
     "highblock": "all_block_high",
@@ -6439,6 +6442,14 @@ func request_attack(kind: String) -> bool:
         # skeleton class. A required version the candidate cannot play is a
         # refusal, never a fall back to the wrong-size base clip.
         push_warning(character_name + " " + kind + " refused: " + size_variant_error)
+        return false
+    if candidate_loaded and not _candidate_clip_paths.has(kind):
+        # Fail closed: a recovered attack kind whose clip the candidate does not
+        # provide is refused outright.  The port never substitutes an idle clip
+        # or another fighting set's animation for it (e.g. Lo Ming's recovered
+        # `specialpunchhigh loming` clip m04_e02_pnch_high_03).
+        push_warning(character_name + " " + kind
+                + " refused: candidate has no clip for this attack kind")
         return false
     attack_kind = kind
     attack_sequence += 1
