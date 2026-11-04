@@ -4,20 +4,25 @@
 #   powershell ... -File godot\tests\run_style_editor_tests.ps1 -SkipShots
 #
 # Steps (all against THIS tree):
-#   1. validate_style_editor ...... the replayed feature (101 assertions)
-#   2. validate_fight_stats_main .. Current168 fight_stats counters (must stay green)
-#   3. smoke_test ................. the current upstream smoke suite, unmodified
-#   4. story_flow_validate ........ story-mode data/rules regression
-#   5. validate_game_modes ........ arcade/survival/time-attack rules regression
-#   6. capture_style_editor ....... windowed 1280x720 screenshots (10 PNGs)
+#   1. validate_style_editor ........ the replayed feature (101 assertions)
+#   2. validate_style_editor_runtime  the same feature on the real main.tscn +
+#                                     the real candidate GLB (22 assertions)
+#   3. validate_fight_stats_main .... Current168 fight_stats counters (must stay green)
+#   4. smoke_test ................... the current upstream smoke suite, unmodified
+#   5. story_flow_validate .......... story-mode data/rules regression
+#   6. validate_game_modes .......... arcade/survival/time-attack rules regression
+#   7. capture_style_editor ......... windowed 1280x720 screenshots (10 PNGs)
 # Exit 0 only when every step is OK.
-# -SkipShots runs steps 1-5 only.
+# -SkipShots runs steps 1-6 only.
 #
-# This file is pure ASCII on purpose.
+# This file is pure ASCII on purpose. The candidate assets live under a CJK
+# folder name, so the texture root is resolved by wildcard (or passed in).
 
 param(
     [switch]$SkipShots,
-    [string]$Godot = "D:\BruceLeeWork\story-flow-151-20261104\tools\godot.exe"
+    [string]$Godot = "D:\BruceLeeWork\story-flow-151-20261104\tools\godot.exe",
+    [string]$PlayerGlb = "D:\BruceLeeWork\bruce-full-20261103\out\bruce_full_121_20261103.glb",
+    [string]$TextureRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,6 +34,18 @@ New-Item -ItemType Directory -Force $logs | Out-Null
 New-Item -ItemType Directory -Force $shots | Out-Null
 
 if (-not (Test-Path $Godot)) { throw "Godot not found: $Godot" }
+
+if ([string]::IsNullOrEmpty($TextureRoot)) { $TextureRoot = $env:CAPTURE_TEXTURE_ROOT }
+if ([string]::IsNullOrEmpty($TextureRoot)) {
+    $hit = Get-ChildItem -Path "D:\BaiduSyncdisk\AI*\*\private_assets\appdata-msix\BruceLee-PC-Port\candidate-textures-verified-20261029" `
+        -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($hit -ne $null) { $TextureRoot = $hit.FullName }
+}
+foreach ($pair in @(@("player GLB", $PlayerGlb), @("texture root", $TextureRoot))) {
+    if ([string]::IsNullOrEmpty($pair[1]) -or -not (Test-Path -LiteralPath $pair[1])) {
+        throw ("candidate asset missing: " + $pair[0] + " -> " + $pair[1])
+    }
+}
 
 # Never inherit flag state from the caller: every step sets its own.
 $clearedNames = @(
@@ -91,6 +108,11 @@ function Invoke-Capture {
 
 Invoke-Godot -Name "validate_style_editor" -LogFile "validate_style_editor.log" -Arguments @(
     "--headless", "--path", $godotProject, "--script", "res://tests/validate_style_editor.gd", "--quit-after", "600"
+)
+
+Invoke-Godot -Name "validate_style_editor_runtime" -LogFile "validate_style_editor_runtime.log" -Arguments @(
+    "--headless", "--path", $godotProject, "--script", "res://tests/validate_style_editor_runtime.gd",
+    "--quit-after", "20000", "--", $PlayerGlb, $TextureRoot
 )
 
 Invoke-Godot -Name "validate_fight_stats_main" -LogFile "validate_fight_stats_main.log" -Arguments @(
