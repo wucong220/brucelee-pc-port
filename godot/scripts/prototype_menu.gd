@@ -12,6 +12,8 @@ signal selection_changed(state: String, index: int, command: String)
 
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
+## Canonical map of the nine recovered menu SFX and the original trigger roles.
+const MenuSfxMap = preload("res://scripts/menu_sfx_map.gd")
 ## Recovered .lang localization for the shared main/pause/scene/opponent menus.
 const Lang = preload("res://scripts/menu_lang.gd")
 ## Scene entries are handled by main.gd, which reloads main.tscn with a different
@@ -108,6 +110,10 @@ var controls_label: Label
 var nav_sfx: AudioStreamPlayer
 var accept_sfx: AudioStreamPlayer
 var back_sfx: AudioStreamPlayer
+var page_flip_sfx: AudioStreamPlayer
+## Only populated when the original data carries a deny cue; MenuSfxMap.DENIED is
+## empty today, so this stays null (locked/denied actions are silent, not invented).
+var denied_sfx: AudioStreamPlayer
 var accept_sfx_error: String = ""
 var menu_sfx_errors: Dictionary = {}
 var last_sfx_played: String = ""
@@ -205,25 +211,55 @@ func _build_scene_dock() -> void:
     scene_dock = dock
 
 func _load_menu_sfx() -> void:
-    nav_sfx = _load_sfx("Menu_Punch_2.wav", "nav")
-    accept_sfx = _load_sfx("Select_Play_Bl_Shout.wav", "accept")
-    back_sfx = _load_sfx("Back_BL_Shout_Short.wav", "back")
+    nav_sfx = _load_sfx(MenuSfxMap.NAV, "nav")
+    accept_sfx = _load_sfx(MenuSfxMap.ACCEPT, "accept")
+    back_sfx = _load_sfx(MenuSfxMap.BACK, "back")
+    page_flip_sfx = _load_sfx(MenuSfxMap.PAGE_FLIP, "page_flip")
+    if MenuSfxMap.has_denied_cue():
+        denied_sfx = _load_sfx(MenuSfxMap.DENIED, "denied")
     accept_sfx_error = String(menu_sfx_errors.get("accept", ""))
 
-func _load_sfx(filename: String, label: String) -> AudioStreamPlayer:
+## Resolves a menu SFX file to an on-disk path following the prototype's root
+## rules.  Returns "" when LOCALAPPDATA is unavailable.
+func _resolve_menu_sfx_path(filename: String, label: String) -> String:
     var sfx_path: String = OS.get_environment("BRUCELEE_MENU_SFX_PATH")
     if label != "accept" or sfx_path.is_empty():
         var root: String = OS.get_environment("BRUCELEE_MENU_SFX_ROOT")
         if root.is_empty():
             var local_app_data: String = OS.get_environment("LOCALAPPDATA")
             if local_app_data.is_empty():
-                menu_sfx_errors[label] = "LOCALAPPDATA is unavailable"
-                return null
+                return ""
             root = local_app_data.path_join(
                 "BruceLee-PC-Port/p5-menu-assets-20261030/"
                 + "adreno_200/sounds/menu_sfx"
             )
         sfx_path = root.path_join(filename)
+    return sfx_path
+
+## Loads one menu SFX stream by exact archive filename.  Public so any recovered
+## menu screen (or the validator) can load an original file on demand; records
+## errors under the filename so a missing file is visible instead of silent.
+func load_menu_sfx_stream(filename: String) -> AudioStreamWAV:
+    var sfx_path: String = _resolve_menu_sfx_path(filename, "inventory")
+    if sfx_path.is_empty():
+        menu_sfx_errors[filename] = "LOCALAPPDATA is unavailable"
+        return null
+    var error: String = CandidatePathGuard.external_path_error(
+        sfx_path, "prototype menu sfx"
+    )
+    if not error.is_empty():
+        menu_sfx_errors[filename] = error
+        return null
+    var stream: AudioStreamWAV = AudioStreamWAV.load_from_file(sfx_path)
+    if stream == null:
+        menu_sfx_errors[filename] = "prototype menu sfx failed to load: " + sfx_path
+    return stream
+
+func _load_sfx(filename: String, label: String) -> AudioStreamPlayer:
+    var sfx_path: String = _resolve_menu_sfx_path(filename, label)
+    if sfx_path.is_empty():
+        menu_sfx_errors[label] = "LOCALAPPDATA is unavailable"
+        return null
     var error: String = CandidatePathGuard.external_path_error(
         sfx_path, "prototype menu sfx"
     )
@@ -438,9 +474,12 @@ func _move_scene_dock(delta: int) -> void:
         return
     if scene_dock.move(delta):
         if bool(scene_dock.sfx_missing):
-            # The recovered page-flip sound is missing from this staging root;
-            # keep the menu's existing navigation sound rather than inventing one.
-            _play_sfx(nav_sfx, "nav")
+            # The dock's own decoded page-flip stream is missing; fall back to the
+            # recovered page-flip file this menu loaded, then to nav. Never invent.
+            if page_flip_sfx != null:
+                _play_sfx(page_flip_sfx, "page_flip")
+            else:
+                _play_sfx(nav_sfx, "nav")
     _refresh_selection()
 
 func _confirm_scene_dock() -> void:
@@ -452,6 +491,7 @@ func _confirm_scene_dock() -> void:
         return
     if scene_dock.selected_locked():
         scene_dock.set_hint(SCENE_LOCKED)
+        _play_denied()
         return
     var row: Dictionary = scene_dock.selected_row()
     if row.is_empty():
@@ -626,6 +666,7 @@ func _accept_selected(was_attack: bool) -> void:
         # the progress save emits no command and says so.  The text submenu has
         # no recovered locked-row widget, so the message is port chrome.
         status_label.text = SCENE_LOCKED
+        _play_denied()
         last_accept_was_attack = false
         return
     _play_sfx(accept_sfx, "accept")
@@ -679,6 +720,13 @@ func _play_sfx(player: AudioStreamPlayer, label: String) -> void:
         return
     last_sfx_played = label
     player.play()
+
+## Plays the "denied" cue only when the original data provides one. MenuSfxMap.DENIED
+## is empty because the original UI/engine has no deny cue; locked/denied actions
+## therefore stay silent rather than substituting an invented file.
+func _play_denied() -> void:
+    if denied_sfx != null:
+        _play_sfx(denied_sfx, "denied")
 
 func _on_item_gui_input(event: InputEvent, index: int) -> void:
     if not visible:
