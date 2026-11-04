@@ -168,6 +168,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
             "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
             + "ken_all26_74_defeat_groundidle_20261103.glb"
         ),
+        "glb_package": "models\\ken_all26_78.glb",
+        "sha256": "3557043fc3ef7acd915620947a2bb9f5df54e406ef1fbeb081cfa1f3c514c166",
         "texture_root": (
             "D:\\BruceLeeWork\\character-integration-fixed-20261103\\"
             + "assets\\ken-textures"
