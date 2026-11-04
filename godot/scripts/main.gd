@@ -327,6 +327,8 @@ var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 # uses `zmathRandomGet() % version_count` as the characters.list animation
 # version, so the same generator keeps the port's pick reproducible.
 var _zmath_state: int = 0x6425AF14
+# Recovered TFightResults field names / category keys (scripts/fight_stats.gd).
+const FightStats = preload("res://scripts/fight_stats.gd")
 # Recovered native AI (adreno_200/ai/standard.tree + characters.list).
 const NativeAI = preload("res://scripts/native_ai.gd")
 var native_ai: RefCounted = null
@@ -334,6 +336,13 @@ var round_number: int = 1
 var player_rounds: int = 0
 var computer_rounds: int = 0
 var match_over: bool = false
+# TFightResults +0x10 is the player fighter record byte +0x174: the number of
+# rounds this match was won without taking a hit (CBeatEmUpGame::SetState 7/8
+# increments it when the round winner's health == 100).  Reset only by
+# _reset_match(), which mirrors CBeatEmUpMatch::Restart -> SetInitialRoundValues.
+var fight_perfects: int = 0
+# TFightResults +0x14: CBeatEmUpMatch::GetMatchTotalMillis at fight registration.
+var match_started_msec: int = 0
 var round_reset_timer: float = -1.0
 var round_time_max: int = ROUND_TIME_DEFAULT
 var round_time_left: int = ROUND_TIME_DEFAULT
@@ -1799,6 +1808,16 @@ func _reset_match() -> void:
     round_reset_timer = -1.0
     pending_round_winner = 0
     _result_pose_seconds = 0.0
+    # CBeatEmUpMatch::Restart 0x161df4 -> CBeatEmUpGame::SetInitialRoundValues
+    # 0x178d44: both fighters' animation-category records are cleared and the
+    # new match starts.  NextRound -> RestartValues does not clear them, so this
+    # is the only per-fight reset.
+    fight_perfects = 0
+    match_started_msec = Time.get_ticks_msec()
+    if player != null:
+        player.reset_anim_categories()
+    if computer != null:
+        computer.reset_anim_categories()
     # StartFight() builds the match configuration once per match, so the
     # result clips are re-drawn here and not in _reset_round().
     _select_match_result_clips()
@@ -3420,12 +3439,43 @@ func _show_round_result_text(winner: PortFighter, player_won: bool) -> void:
             progress.note_grade("great")
         if is_equal_approx(winner.health, PortFighter.MAX_HEALTH):
             progress.note_grade("perfect")
+    # TFightResults +0x10: the player fighter record byte +0x174 counts every
+    # round this fighter wins with untouched health (CBeatEmUpGame::SetState 7
+    # when the local player scored: `ldrb/add/strb [fighter+0x174]`).  It is the
+    # per-match perfect count the story score reads, not a lifetime total.
+    if winner == player and is_equal_approx(winner.health, PortFighter.MAX_HEALTH):
+        fight_perfects += 1
     if winner.health < ROUND_GREAT_HEALTH:
         _show_game_text("GREAT", wait, GAME_TEXT_SEQ_GREAT)
     else:
         _show_game_text("YOU_WIN", wait, GAME_TEXT_SEQ_YOU_WIN)
     if is_equal_approx(winner.health, PortFighter.MAX_HEALTH):
         _show_game_text("PERFECT", wait, GAME_TEXT_SEQ_PERFECT)
+
+
+## The recovered TFightResults snapshot for the fight that just ended
+## (CBeatEmUpGameModes::RegisterLastFightVariables 0x15ca6c +
+## CurrentGameModeFightWon 0x1571fc).  Field names match the native offsets:
+##   health_remaining -> +0x00, counters -> +0x04, special_moves -> +0x08,
+##   ending_moves -> +0x0c, perfects -> +0x10, match_millis -> +0x14.
+func get_fight_results() -> Dictionary:
+    var health: float = PortFighter.MAX_HEALTH
+    var counters: int = 0
+    var special_moves: int = 0
+    var ending_moves: int = 0
+    if player != null:
+        health = player.health
+        counters = player.anim_category(FightStats.COUNTER)
+        special_moves = player.anim_category(FightStats.SPECIAL)
+        ending_moves = player.anim_category(FightStats.ENDMOVE)
+    return {
+        "health_remaining": int(round(health)),
+        "counters": counters,
+        "special_moves": special_moves,
+        "ending_moves": ending_moves,
+        "perfects": fight_perfects,
+        "match_millis": maxi(0, Time.get_ticks_msec() - match_started_msec),
+    }
 
 
 func _advance_result_text() -> void:

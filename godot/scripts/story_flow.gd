@@ -840,7 +840,7 @@ func _resume_pending_battle() -> bool:
 # StoryEventCompletionBonus 0x1e47a8.  D = 0 easy / 1 medium / 2 hard.
 
 
-func _story_exp_fight_base(kind: String, difficulty: int) -> int:
+static func _story_exp_fight_base(kind: String, difficulty: int) -> int:
 	match kind:
 		"vsbattle", "timeattack":
 			return 25 * difficulty + 100
@@ -852,7 +852,7 @@ func _story_exp_fight_base(kind: String, difficulty: int) -> int:
 			return 0
 
 
-func _story_exp_completion_bonus(kind: String, difficulty: int) -> int:
+static func _story_exp_completion_bonus(kind: String, difficulty: int) -> int:
 	# Native HasStoryModeSubEventScoreSummary 0x1e45c0 returns false for
 	# vsbattle, so only these three kinds reach StorySubEventComplete.
 	match kind:
@@ -867,10 +867,45 @@ func _story_exp_completion_bonus(kind: String, difficulty: int) -> int:
 
 
 func _story_exp_move_stats() -> Dictionary:
-	# Native TFightResults +0x04..+0x10 (counter / special / endmove / perfect).
-	# The port does not tally these per fight yet, so this returns an empty
-	# dictionary (= "not measured") and the award below is logged as partial.
-	return {}
+	# Native TFightResults +0x04..+0x10 (counter / special / endmove presence
+	# flags and the player's perfect-round count).  They are read back from the
+	# live fighter's recovered animation-category record
+	# (CFighter::GetAnmCategory 0x1a6d50), which only main.gd can observe; an
+	# absent match means the values were not measured and the award stays partial.
+	if main == null or not main.has_method("get_fight_results"):
+		return {}
+	var results: Dictionary = main.get_fight_results()
+	return {
+		"counters": int(results.get("counters", 0)),
+		"special_moves": int(results.get("special_moves", 0)),
+		"ending_moves": int(results.get("ending_moves", 0)),
+		"perfects": int(results.get("perfects", 0)),
+	}
+
+
+static func story_exp_fight_score(
+		kind: String, difficulty: int, health: int,
+		move_stats: Dictionary, remaining_seconds: int = -1) -> int:
+	## CBruceLeeStoryMode::FightWon 0x1e73bc, verbatim:
+	##   vsbattle / arcade: base + (D+1)*health + 10*(counters+specials)
+	##                      + 15*endmoves + 20*perfects
+	##   survival:          base + (D+1)*health
+	##   timeattack:        base + (D+2) * remaining seconds
+	##   any other kind:    0
+	var base: int = _story_exp_fight_base(kind, difficulty)
+	match kind:
+		"vsbattle", "arcade":
+			return base + (difficulty + 1) * health \
+				+ 10 * (int(move_stats.get("counters", 0))
+					+ int(move_stats.get("special_moves", 0))) \
+				+ 15 * int(move_stats.get("ending_moves", 0)) \
+				+ 20 * int(move_stats.get("perfects", 0))
+		"survival":
+			return base + (difficulty + 1) * health
+		"timeattack":
+			return base + (difficulty + 2) * maxi(0, remaining_seconds)
+		_:
+			return 0
 
 
 func _award_story_exp(won: bool, health: float, elapsed: float, outcome: String) -> void:
@@ -879,32 +914,27 @@ func _award_story_exp(won: bool, health: float, elapsed: float, outcome: String)
 	var kind: String = String(battle_run.get("kind", ""))
 	var win_on_lose: bool = String(battle_run.get("win_on_lose", "")).to_lower() == "true"
 	var difficulty: int = clampi(int(state.difficulty_slot), 0, 2)
-	var amount: int = 0
-	var partial: bool = false
-	if won or win_on_lose:
-		var base: int = _story_exp_fight_base(kind, difficulty)
-		var hp: int = int(round(health))
-		var stats: Dictionary = _story_exp_move_stats()
-		match kind:
-			"vsbattle", "arcade":
-				amount = base + (difficulty + 1) * hp \
-					+ 10 * (int(stats.get("counters", 0)) + int(stats.get("special_moves", 0))) \
-					+ 15 * int(stats.get("ending_moves", 0)) \
-					+ 20 * int(stats.get("perfects", 0))
-				partial = stats.is_empty()
-			"survival":
-				amount = base + (difficulty + 1) * hp
-			"timeattack":
-				var limit: int = int(battle_run.get("time_limit", 0))
-				var remaining: int = maxi(0, limit - int(round(elapsed)))
-				amount = base + (difficulty + 2) * remaining
+	if not (won or win_on_lose):
+		return
+	var stats: Dictionary = _story_exp_move_stats()
+	var partial: bool = kind in ["vsbattle", "arcade"] and stats.is_empty()
+	var remaining: int = -1
+	if kind == "timeattack":
+		var limit: int = int(battle_run.get("time_limit", 0))
+		remaining = maxi(0, limit - int(round(elapsed)))
+	var amount: int = story_exp_fight_score(
+		kind, difficulty, int(round(health)), stats, remaining
+	)
 	if outcome == "complete":
 		amount += _story_exp_completion_bonus(kind, difficulty)
 	if amount <= 0:
 		return
 	var total: int = state.add_exp(amount)
-	print("STORY_FLOW_EXP +%d kind=%s difficulty=%d health=%d outcome=%s total=%d partial=%s" % [
-		amount, kind, difficulty, int(round(health)), outcome, total, str(partial),
+	print("STORY_FLOW_EXP +%d kind=%s difficulty=%d health=%d outcome=%s total=%d counters=%d specials=%d endmoves=%d perfects=%d partial=%s" % [
+		amount, kind, difficulty, int(round(health)), outcome, total,
+		int(stats.get("counters", 0)), int(stats.get("special_moves", 0)),
+		int(stats.get("ending_moves", 0)), int(stats.get("perfects", 0)),
+		str(partial),
 	])
 
 

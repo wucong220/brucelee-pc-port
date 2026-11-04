@@ -8,6 +8,8 @@ signal attack_started(action: String)
 signal parry_succeeded(action: String)
 
 const BASE_SPEED: float = 3.6
+## Recovered TFightResults counter classification (animation-category table).
+const FightStats = preload("res://scripts/fight_stats.gd")
 const MAX_HEALTH: float = 100.0
 const CANDIDATE_SOURCE_MIN_Y: float = -0.09393310546875
 const CANDIDATE_SOURCE_HEIGHT: float = 173.415954589844
@@ -2658,6 +2660,12 @@ var _reaction_clock_active: bool = false
 var _reaction_return_action: String = ""
 var attack_kind: String = ""
 var attack_sequence: int = 0
+# CFighter animation-category record (CFighter+0x1a0 in the native object).
+# CFighter::SetAnimation 0x1a6e94 stores every category name carried by the
+# animation it starts; CFighter::GetAnmCategory 0x1a6d50 reads them back.  The
+# stored value is a presence flag, so this is the same 0/1 record that fills
+# TFightResults +0x04/+0x08/+0x0c.
+var anim_categories: Dictionary = {}
 var _attack_root_tracks: Dictionary = {}
 var attack_root_motion_enabled: bool = true
 var _attack_root_sequence: int = -1
@@ -5263,6 +5271,30 @@ func _current_action_name() -> String:
     return ""
 
 
+func note_animation_categories(kind: String) -> void:
+    ## CFighter::SetAnimation 0x1a6e94 records every category carried by the
+    ## animation it starts into the fighter record.  Membership comes only from
+    ## the recovered category table (FightStats); an action with no recovered
+    ## category records nothing.
+    var action: String = FightStats.action_for_kind(ATTACKS, kind)
+    for category: String in FightStats.categories_for_action(action):
+        anim_categories[category] = true
+
+
+func anim_category(category: String) -> int:
+    ## CFighter::GetAnmCategory 0x1a6d50: 1 when the category was recorded for
+    ## this fighter since the record was reset, else 0.
+    return 1 if bool(anim_categories.get(category, false)) else 0
+
+
+func reset_anim_categories() -> void:
+    ## CFighter::ResetAnimCategoriesRecord 0x1a1058.  The native record is
+    ## cleared from CBeatEmUpGame::SetInitialRoundValues 0x178d44 (reached only
+    ## from CBeatEmUpMatch::Restart 0x161df4 <- RestartFight), i.e. once per
+    ## match -- CBeatEmUpMatch::NextRound -> RestartValues does not clear it.
+    anim_categories.clear()
+
+
 func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
     var tokens: Array = event.get("tokens", [])
     var required_tokens: Array = step if step is Array else [step]
@@ -6069,6 +6101,7 @@ func request_attack(kind: String) -> bool:
         return false
     attack_kind = kind
     attack_sequence += 1
+    note_animation_categories(kind)
     _attack_connected = false
     _parry_absorbed = false
     _attack_hit_landed = false
@@ -6442,6 +6475,7 @@ func _begin_chained_attack(
         push_warning(character_name + " " + kind + " link refused: " + size_variant_error)
         return false
     attack_kind = kind
+    note_animation_categories(kind)
     var rage_action: String = String(
         ATTACKS.get(kind, {}).get("source_action", kind)
     )

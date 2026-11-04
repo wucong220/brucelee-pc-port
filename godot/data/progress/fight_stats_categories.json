@@ -1,0 +1,188 @@
+{
+ "schema": "brucelee-fight-stats-categories/1",
+ "source": "audit-combat-20261103/_evidence/actions_{brucelee,karate,kungfu,thai}.json decoded fighting sets (CAnimationDescr category lists)",
+ "native": {
+  "recorder": "krm::CFighter::SetAnimation @ 0x1a6e94",
+  "reader": "krm::CFighter::GetAnmCategory @ 0x1a6d50",
+  "reset": "krm::CFighter::ResetAnimCategoriesRecord @ 0x1a1058, called only by krm::CBeatEmUpGame::SetInitialRoundValues @ 0x178d44 (krm::CBeatEmUpMatch::Restart @ 0x161df4 <- RestartFight), i.e. once per match",
+  "record": "SetAnimation stores every category name carried by the animation it starts as a presence flag: the record map value is written unconditionally as 1 (0x1a76e0 mov r3,#1; str r3,[r8]) in both the found and the inserted path, so GetAnmCategory returns 1/0, not a play count",
+  "fields": {
+   "TFightResults+0x04": "GetAnmCategory(player, \"counter\")",
+   "TFightResults+0x08": "GetAnmCategory(player, \"special\")",
+   "TFightResults+0x0c": "GetAnmCategory(player, \"endmove\")",
+   "TFightResults+0x10": "player fighter record byte +0x174 (perfect rounds)"
+  }
+ },
+ "categories": {
+  "counter": "animations whose decoded category list contains 'counter' (parryhigh/parrylow only)",
+  "special": "animations whose decoded category list contains 'special' (the special punch/kick animations)",
+  "endmove": "animations whose decoded category list contains 'endmove' (the end attacks)"
+ },
+ "per_set_action_counts": {
+  "brucelee": 53,
+  "karate": 12,
+  "kungfu": 22,
+  "thai": 17
+ },
+ "actions": {
+  "endattack brick": [
+   "endmove"
+  ],
+  "endattack chief": [
+   "endmove"
+  ],
+  "endattack johnson": [
+   "endmove"
+  ],
+  "endattack ken": [
+   "endmove"
+  ],
+  "endattack loming": [
+   "endmove"
+  ],
+  "endattack master": [
+   "endmove"
+  ],
+  "endattack shenlo": [
+   "endmove"
+  ],
+  "endattack sinfu": [
+   "endmove"
+  ],
+  "endattack smallboy": [
+   "endmove"
+  ],
+  "endattack1": [
+   "endmove"
+  ],
+  "endattack2": [
+   "endmove"
+  ],
+  "parryhigh": [
+   "counter"
+  ],
+  "parrylow": [
+   "counter"
+  ],
+  "specialkickhigh": [
+   "special"
+  ],
+  "specialkickhigh brick": [
+   "special"
+  ],
+  "specialkickhigh chief": [
+   "special"
+  ],
+  "specialkickhigh johnson": [
+   "special"
+  ],
+  "specialkickhigh ken": [
+   "special"
+  ],
+  "specialkickhigh loming": [
+   "special"
+  ],
+  "specialkickhigh master": [
+   "special"
+  ],
+  "specialkickhigh shenlo": [
+   "special"
+  ],
+  "specialkickhigh sinfu": [
+   "special"
+  ],
+  "specialkickhigh smallboy": [
+   "special"
+  ],
+  "specialkicklow brick": [
+   "special"
+  ],
+  "specialkicklow chief": [
+   "special"
+  ],
+  "specialkicklow johnson": [
+   "special"
+  ],
+  "specialkicklow ken": [
+   "special"
+  ],
+  "specialkicklow loming": [
+   "special"
+  ],
+  "specialkicklow master": [
+   "special"
+  ],
+  "specialkicklow shenlo": [
+   "special"
+  ],
+  "specialkicklow sinfu": [
+   "special"
+  ],
+  "specialkicklow smallboy": [
+   "special"
+  ],
+  "specialkicklowhit": [
+   "special"
+  ],
+  "specialpunchhigh brick": [
+   "special"
+  ],
+  "specialpunchhigh chief": [
+   "special"
+  ],
+  "specialpunchhigh johnson": [
+   "special"
+  ],
+  "specialpunchhigh ken": [
+   "special"
+  ],
+  "specialpunchhigh loming": [
+   "special"
+  ],
+  "specialpunchhigh master": [
+   "special"
+  ],
+  "specialpunchhigh shenlo": [
+   "special"
+  ],
+  "specialpunchhigh smallboy": [
+   "special"
+  ],
+  "specialpunchhighhit": [
+   "special"
+  ],
+  "specialpunchhighhit sinfu": [
+   "special"
+  ],
+  "specialpunchlow brick": [
+   "special"
+  ],
+  "specialpunchlow chief": [
+   "special"
+  ],
+  "specialpunchlow johnson": [
+   "special"
+  ],
+  "specialpunchlow ken": [
+   "special"
+  ],
+  "specialpunchlow loming": [
+   "special"
+  ],
+  "specialpunchlow master": [
+   "special"
+  ],
+  "specialpunchlow shenlo": [
+   "special"
+  ],
+  "specialpunchlow sinfu": [
+   "special"
+  ],
+  "specialpunchlow smallboy": [
+   "special"
+  ],
+  "specialpunchlowhit": [
+   "special"
+  ]
+ }
+}
