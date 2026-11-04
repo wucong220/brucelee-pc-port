@@ -3,21 +3,25 @@ class_name RootTrackEvaluator
 
 ## Port bridge for the ROOT TRANSFORM VALUE at a recovered sample index.
 ##
-## IMPORTANT: this is NOT native ANM decoding. The native
-## CRootPlayerBase::GetOutput / CAnimProvider::BuildFrame path that turns a
-## sample index into a TTransform was NOT recovered (documented as unrecovered
-## in docs/FIGHTING_SET_FINDINGS.md). This evaluator reads a real Godot
-## AnimationPlayer position track at the integer sample index produced by the
-## recovered ReplaySampleMath arithmetic, so the headless / matrix tests can
-## exercise the real Godot animation path without inventing native math.
+## Native ANM decoding is now recovered for raw tracks (see
+## scripts/anm_track_codec.gd + scripts/native_root_output.gd). Bind a decoded
+## ANM clip with bind_anm() and this evaluator returns the recovered native
+## TTransform VALUE at BOTH integer and fractional (smooth-flag) samples.
+## Without an ANM binding the legacy Godot AnimationPlayer bridge is kept for
+## the existing port tests, and fractional samples still FAIL CLOSED.
 ##
-## Fractional samples (native smooth-flag branch) fail closed here: the native
-## BuildFrame interpolation is unrecovered, so `supports_fractional()` is false.
+## Evidence: docs/FIGHTING_SET_FINDINGS.md, report/REPORT.md of
+## D:\BruceLeeWork\buildframe-fractional-20261104 (direct ARM disassembly of
+## libdefault.so sha256 1da7a30...). Unproven codecs (e.g. waveletsample on a
+## root track) and out-of-range samples fail closed.
+
+const NativeRootOutputScript = preload("res://scripts/native_root_output.gd")
 
 var animation_player: AnimationPlayer = null
 var clip_name: String = ""
 var track_index: int = -1
 var last_error: String = ""
+var anm_fixture: Dictionary = {}
 
 
 func _init(player: AnimationPlayer = null) -> void:
@@ -45,8 +49,35 @@ func set_clip(name: String) -> bool:
     return true
 
 
+func bind_anm(fixture: Dictionary) -> bool:
+    ## Bind proven decoded ANM root tracks. Only rawfixedsample/rawfloatsample
+    ## codecs are accepted; anything else fails closed.
+    last_error = ""
+    if fixture == null or fixture.is_empty():
+        last_error = "anm-clip-required"
+        return false
+    var tracks: Dictionary = fixture.get("tracks", {})
+    var positions: Variant = tracks.get("positions", null)
+    if positions == null:
+        last_error = "missing-positions"
+        return false
+    var codec: String = String(positions["codec"])
+    if codec != "rawfixedsample" and codec != "rawfloatsample":
+        last_error = "unsupported-codec:" + codec
+        return false
+    for key in ["rotations", "scales"]:
+        var extra: Variant = tracks.get(key, null)
+        if extra != null:
+            var extra_codec: String = String(extra["codec"])
+            if extra_codec != "rawfixedsample" and extra_codec != "rawfloatsample":
+                last_error = "unsupported-codec:" + extra_codec
+                return false
+    anm_fixture = fixture
+    return true
+
+
 func supports_fractional() -> bool:
-    return false
+    return not anm_fixture.is_empty()
 
 
 func fields_for_clip(_name: String) -> Dictionary:
@@ -63,7 +94,24 @@ func key_count() -> int:
     return anim.track_get_key_count(track_index)
 
 
+func root_transform(sample: float) -> Dictionary:
+    ## Recovered CRootPlayerBase::GetOutput TTransform VALUE at `sample`.
+    if anm_fixture.is_empty():
+        last_error = "anm-clip-not-bound"
+        return {"ok": false, "reason": "anm-clip-not-bound"}
+    var out: Dictionary = NativeRootOutputScript.compose(anm_fixture, sample)
+    if not bool(out["ok"]):
+        last_error = String(out["reason"])
+    return out
+
+
 func root_position(sample: float) -> Variant:
+    if not anm_fixture.is_empty():
+        var out: Dictionary = root_transform(sample)
+        if not bool(out["ok"]):
+            return null
+        var p: Array = out["position"]
+        return Vector3(float(p[0]), float(p[1]), float(p[2]))
     last_error = ""
     if animation_player == null or track_index < 0:
         last_error = "clip-not-bound"
