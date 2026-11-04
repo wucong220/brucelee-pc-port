@@ -2631,6 +2631,45 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
         },
     ],
 }
+## Recovered canblock rows.
+##
+## brucelee.set stores five block links in group `canblock` and the same five in
+## `canblock2` (data/native_links.json orders 92-101, from_group
+## canblock/canblock2).  Each row is `impact` plus the opponent's attack
+## strength (and, for a normal attack, its height) and names the animation the
+## defender plays:
+##
+##   orders 92 / 97   impact + normal + heightlow  -> lowblock
+##   orders 93 / 98   impact + normal + heighthigh -> highblock
+##   orders 94 / 99   impact + normal + heightmed  -> midblock
+##   orders 95 / 100  impact + hard   (no height)  -> highblockhard
+##   orders 96 / 101  impact + brutal (no height)  -> highblockbrutal
+##
+## Two facts follow from the rows themselves and are not port choices:
+##   1. the row is chosen by the *incoming* impact, never by the height the
+##      defender is holding, so the held high/mid/low guard must not gate the
+##      block - the defender switches to the row's animation instead;
+##   2. a block row means "no damage", because every target animation carries
+##      only `canblock*` groups and therefore fails CFighter::DamageReceiveCheck.
+## Rows whose strength/height the set never encodes do not exist, so an impact
+## carrying one of those values is fail-closed instead of given a made-up row.
+const CANBLOCK_ROWS: Array[Dictionary] = [
+    {"strength": "normal", "height": "low", "target": "lowblock", "orders": [92, 97]},
+    {"strength": "normal", "height": "high", "target": "highblock", "orders": [93, 98]},
+    {"strength": "normal", "height": "medium", "target": "midblock", "orders": [94, 99]},
+    {"strength": "hard", "height": "", "target": "highblockhard", "orders": [95, 100]},
+    {"strength": "brutal", "height": "", "target": "highblockbrutal", "orders": [96, 101]},
+]
+## Guard actions the fighter can hold, with the height band each one covers.
+## The hard/brutal rows are the high block family (their ANMs are
+## all_block_high_hard / all_block_high_brutal), so they cover `high`.
+const BLOCK_GUARD_HEIGHTS: Dictionary = {
+    "highblock": "high",
+    "midblock": "medium",
+    "lowblock": "low",
+    "highblockhard": "high",
+    "highblockbrutal": "high",
+}
 var ATTACKS: Dictionary = {}
 ## Clips captured before the first Style Editor override, so every re-apply
 ## starts from the character's own table instead of stacking swaps.
@@ -2668,6 +2707,13 @@ var polar_movement_enabled: bool = false
 var training_step_lock: bool = false
 var held_directions: Dictionary = {}
 var guard_held: bool = false
+## Recovered guard selection held with `guard_held` (see CANBLOCK_ROWS):
+## `guard_block_action` is the native action name (highblock / midblock /
+## lowblock / highblockhard / highblockbrutal) and `guard_height` its height
+## band.  Both stay empty for the unqualified guard: the original's block-height
+## input mapping is not recovered, so direct-input callers never invent one.
+var guard_block_action: String = ""
+var guard_height: String = ""
 var opponent: PortFighter
 var state: String = "idle"
 var state_time: float = 0.0
@@ -4692,13 +4738,52 @@ func _uses_standing_idle_rules() -> bool:
     return state in ["idle", "idle2", "idle3"]
 
 
-func _can_block_current_hit() -> bool:
+## The recovered canblock row for an incoming impact, or {} when the set does
+## not encode that strength/height combination (see CANBLOCK_ROWS).
+static func canblock_row_for(strength: String, height: String) -> Dictionary:
+    for row: Dictionary in CANBLOCK_ROWS:
+        if String(row["strength"]) != strength:
+            continue
+        var row_height: String = String(row["height"])
+        if not row_height.is_empty() and row_height != height:
+            continue
+        return row
+    return {}
+
+
+## Height band covered by a recovered guard action ("" for anything else).
+static func block_guard_height(action: String) -> String:
+    return String(BLOCK_GUARD_HEIGHTS.get(action, ""))
+
+
+func _can_block_current_hit(impact: Dictionary = {}) -> bool:
     if _uses_standing_idle_rules():
-        return true
+        return _guard_covers_impact(impact)
     if state != "faceupattack":
         return false
     var source_frame: float = state_time * SOURCE_FRAME_RATE
     return source_frame + 0.0001 >= 27.0 and source_frame <= 38.0001
+
+
+## Recovered block gate for the standing guard.
+##
+## The held guard answers only "is a canblock action up?"; which impact it
+## covers is the opponent's business (CANBLOCK_ROWS is keyed on the incoming
+## strength/height).  The port therefore asks the row table whether this impact
+## has a block row at all.  Fallbacks:
+##   * an unqualified guard (guard_held set by direct input or by a caller that
+##     has no height - the original's block-height input mapping lives in
+##     adreno_200/input.config and is unrecovered) keeps the port's existing
+##     unconditional guard;
+##   * an impact record without a strength carries no recovered enum, so it is
+##     treated as missing metadata and keeps the same unconditional guard.
+func _guard_covers_impact(impact: Dictionary) -> bool:
+    if guard_block_action.is_empty():
+        return true
+    var strength: String = String(impact.get("strength", ""))
+    if strength.is_empty():
+        return true
+    return not canblock_row_for(strength, String(impact.get("height", ""))).is_empty()
 
 
 func _clear_reaction_tracking() -> void:
@@ -5210,12 +5295,35 @@ func record_standing_combo_press(
 
 func begin_guard() -> void:
     # Decompiled guard path rejects link input, so the event queue is dropped.
+    # This is the *unqualified* guard: the original's block-height input mapping
+    # is not recovered, so holding the guard button must not claim a height.
     guard_held = true
+    guard_block_action = ""
+    guard_height = ""
     _clear_link_state()
+
+
+## Hold one of the recovered block actions. The native AI tree names the action
+## (actionblockhigh/actionblockmedium/actionblocklow and the hard/brutal block
+## rows); the port keeps that selection so the block gate and the metadata-less
+## fallback reaction know which guard is up, instead of collapsing the native
+## high/mid/low decision into a single flag.
+func begin_block(action: String) -> bool:
+    if not BLOCK_GUARD_HEIGHTS.has(action):
+        return false
+    if not guard_held:
+        # Raising the guard rejects link input (same rule as begin_guard).
+        _clear_link_state()
+    guard_held = true
+    guard_block_action = action
+    guard_height = String(BLOCK_GUARD_HEIGHTS[action])
+    return true
 
 
 func end_guard() -> void:
     guard_held = false
+    guard_block_action = ""
+    guard_height = ""
 
 
 func _accepts_link_input(virtual_key: String) -> bool:
@@ -6123,7 +6231,8 @@ func _try_attack_to_floor_contact() -> void:
     var dz: float = opponent.global_position.z - global_position.z
     if Vector2(dx, dz).length() > attack_reach_world("attacktofloor", opponent) or dx * facing < -0.1:
         return
-    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var blocked: bool = (opponent.guard_held
+            and opponent._can_block_current_hit(ATTACK_TO_FLOOR_IMPACT))
     var reaction: Dictionary = opponent.reaction_for_incoming(ATTACK_TO_FLOOR_IMPACT, blocked)
     if not opponent.receive_hit(
         ATTACK_TO_FLOOR_DAMAGE, blocked, 0.0, facing, reaction
@@ -6489,7 +6598,8 @@ func _try_multi_impact_contacts() -> void:
                 and not GRAB_ATTACKS.has(attack_kind)):
             continue
         var blocked: bool = opponent.guard_held and (
-            opponent._can_block_current_hit() or opponent.state == "blockstun")
+            opponent._can_block_current_hit(impact)
+            or opponent.state == "blockstun")
         var reaction: Dictionary = opponent.reaction_for_incoming(impact, blocked)
         if GRAB_ATTACKS.has(attack_kind):
             # A grab pulls the victim into the hold; the generic reaction root
@@ -6701,7 +6811,8 @@ func _try_facedown_attack_contact() -> void:
         return
     if dx * facing < -0.1:
         return
-    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var blocked: bool = (opponent.guard_held
+            and opponent._can_block_current_hit(FACEDOWN_ATTACK_IMPACT))
     var reaction: Dictionary = opponent.reaction_for_incoming(
         FACEDOWN_ATTACK_IMPACT, blocked
     )
@@ -6730,7 +6841,8 @@ func _try_faceup_attack_contact() -> void:
         return
     if dx * facing < -0.1:
         return
-    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var blocked: bool = (opponent.guard_held
+            and opponent._can_block_current_hit(FACEUP_ATTACK_IMPACT))
     var reaction: Dictionary = opponent.reaction_for_incoming(
         FACEUP_ATTACK_IMPACT, blocked
     )
@@ -6934,7 +7046,9 @@ func _try_attack_contact() -> void:
         return
     if dx * facing < -0.1:
         return
-    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var blocked: bool = (opponent.guard_held
+            and opponent._can_block_current_hit(
+                Dictionary(details.get("source_impact", {}))))
     var reaction: Dictionary = {}
     if details.has("source_impact"):
         reaction = opponent.reaction_for_incoming(details["source_impact"], blocked)
@@ -7311,6 +7425,21 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
             "enabled": true,
             "result": "incomplete-impact-record",
         }
+    if blocked:
+        # Recovered block selection: a block row exists for the five strength/
+        # height combinations in CANBLOCK_ROWS, and _matching_exact_reaction
+        # then resolves the row's target action below. An impact without a
+        # recovered strength/height (synthetic contact) has no row, so the held
+        # guard action supplies the block reaction instead of nothing.
+        var block_row: Dictionary = canblock_row_for(
+            String(impact.get("strength", "")), String(impact.get("height", ""))
+        )
+        if block_row.is_empty() and not guard_block_action.is_empty():
+            var held_block: Dictionary = _reaction_for_block_action(
+                guard_block_action
+            )
+            if not held_block.is_empty():
+                return held_block
     if _is_brick_facedown_low_impact(impact, blocked):
         return BRICK_FACEDOWN_IMPACT_REACTION.duplicate(true)
     if (not blocked and String(impact.get("strength", "")) == "brutal"
@@ -7734,6 +7863,39 @@ func _condition_attribute(conditions: Array, prefix: String) -> String:
                 return "medium"
             return suffix
     return ""
+
+
+## Reaction row whose source action is `action`, i.e. the target of the recovered
+## canblock row (lowblock / midblock / highblock / highblockhard /
+## highblockbrutal). Returns {} when the loaded config and candidate provide no
+## reaction for it, so callers keep their existing priority order.
+func _reaction_for_block_action(action: String) -> Dictionary:
+    var entries: Array = []
+    var exact_value: Variant = EXACT_REACTIONS.get("block", [])
+    if exact_value is Array:
+        entries.append_array(Array(exact_value))
+    var native_value: Variant = _native_reactions.get("block", [])
+    if native_value is Array:
+        entries.append_array(Array(native_value))
+    for entry_value: Variant in entries:
+        if not entry_value is Dictionary:
+            continue
+        var entry: Dictionary = entry_value
+        if String(entry.get("source_action", "")) != action:
+            continue
+        if not entry.has("exit_start_frame") or not entry.has("animation"):
+            continue
+        var resolved: Dictionary = entry.duplicate(true)
+        resolved["entry_frame"] = int(resolved.get("entry_frame", 0))
+        return resolved
+    var profiles: Variant = REACTION_PROFILES.get("block", {})
+    if profiles is Dictionary:
+        for profile_value: Variant in Dictionary(profiles).values():
+            if (profile_value is Dictionary
+                    and String(Dictionary(profile_value).get("source_action", "")) == action
+                    and Dictionary(profile_value).has("exit_start_frame")):
+                return Dictionary(profile_value).duplicate(true)
+    return {}
 
 
 func _matching_exact_reaction(impact: Dictionary, blocked: bool) -> Dictionary:
@@ -8484,6 +8646,8 @@ func reset_fighter(start_position: Vector3) -> void:
     last_reaction_entry_frame = 0
     last_reaction_clip_implemented = false
     guard_held = false
+    guard_block_action = ""
+    guard_height = ""
     combo_hits = 0
     rage = 0.0
     _attack_hit_landed = false

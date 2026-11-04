@@ -14,6 +14,16 @@ extends RefCounted
 ##
 ## Recursion into the tree stops after MAX_WALK steps; the native evaluator has
 ## no such guard, but a malformed/edited tree must not hang the game loop.
+##
+## Block selection: the shipped block leaves list the strength variants
+## (highblockbrutal / highblockhard) ahead of the block for the height that the
+## tree's `opp_attack_height` branch picked.  The port resolves that list through
+## the recovered canblock rows (`PortFighter.canblock_row_for`), keyed on the
+## opponent's *current* impact record (strength +0x1C, height +0x18), and hands
+## the chosen action to `PortFighter.begin_block()` so the fighter holds the
+## native high/mid/low guard instead of one block flag.  When the opponent's
+## impact metadata is missing the leaf's own height guess is used; when no
+## listed action matches the recovered row the generic picker still applies.
 
 const TREE_PATH := "res://data/native_ai/standard_tree.json"
 const PROFILES_PATH := "res://data/native_ai/ai_profiles.json"
@@ -45,6 +55,19 @@ const DISPATCH_GETUP := "__getup__"
 const BLOCK_TOKENS: Array[String] = [
     DISPATCH_BLOCK_HIGH, DISPATCH_BLOCK_MID, DISPATCH_BLOCK_LOW,
 ]
+## Recovered block actions a block leaf can list.  The shipped leaves order them
+## by the opponent's attack strength, then by the leaf's own height guess:
+##   actionblockhigh/actionblockmedium: highblockbrutal, highblockhard, <height>
+##   actionblocklow:                    highblockhard, lowblock
+## (the low leaf deliberately carries no brutal variant, so a brutal attack
+## against a low guess falls back to the leaf's own guard and the canblock row
+## still plays highblockbrutal on impact).
+const BLOCK_ACTIONS: Array[String] = [
+    "highblockbrutal", "highblockhard", "highblock", "midblock", "lowblock",
+]
+## Height-specific guards a leaf can hold; these are the `opp_attack_height`
+## branches of the tree (doblockguessingheight and *_blockalways).
+const BLOCK_GUARD_ACTIONS: Array[String] = ["highblock", "midblock", "lowblock"]
 const MOVE_TOKENS: Array[String] = [
     DISPATCH_MOVE_FWD, DISPATCH_MOVE_BACK, DISPATCH_MOVE_LEFT,
     DISPATCH_MOVE_RIGHT, DISPATCH_SKIP_FWD, DISPATCH_SKIP_BACK,
@@ -188,7 +211,7 @@ func step(delta: float) -> Dictionary:
         kind = "unsupported"
     elif dispatch.begins_with("__block"):
         kind = "block"
-        _apply_block(dispatch)
+        _apply_block(native_action)
     elif MOVE_TOKENS.has(dispatch):
         kind = "move"
         _apply_move(dispatch, delta)
@@ -213,6 +236,8 @@ func _record(kind: String, action: String, native: String, node: String, reason:
         "node": node,
         "state": state,
         "reason": reason,
+        "guard_action": fighter.guard_block_action if fighter != null else "",
+        "guard_height": fighter.guard_height if fighter != null else "",
     }
     if decisions.size() > 256:
         decisions.pop_front()
@@ -428,12 +453,46 @@ func _opp_pose() -> String:
 
 
 func _opp_attack_height() -> String:
+    # conditions.config "opp_attack_height" reads the opponent's *current*
+    # impact record height (CFighter+0x164 -> +0x18).  The port's equivalent is
+    # the source_impact row of the attack the opponent is playing: ATTACKS rows
+    # keep it under "source_impact", so reading a top-level "height" always
+    # missed and every guess collapsed to the fallback below.
     if opponent == null or not is_instance_valid(opponent):
         return "medium"
+    var height: String = String(_opp_impact_metadata().get("height", ""))
+    if height in ["high", "medium", "low"]:
+        return height
+    # Metadata missing (no live attack / no recovered height): the tree still
+    # needs a band, and the port's declared fallback is the middle one.
+    return "medium"
+
+
+## The opponent's current impact record metadata, or {} when there is none.
+##
+## Recovered from CFighter::CheckConditions (oppattackstrength* / oppattackheight*
+## read record+0x1C / record+0x18).  The port models that record with the
+## `source_impact` block of the attack the opponent is currently playing; it is
+## absent whenever no attack is live, which is exactly the "impact metadata
+## missing" case every block-selection fallback below names.
+func _opp_impact_metadata() -> Dictionary:
+    if opponent == null or not is_instance_valid(opponent):
+        return {}
     if not opponent.ATTACKS.has(opponent.attack_kind):
-        return "medium"
-    var height: String = String(Dictionary(opponent.ATTACKS[opponent.attack_kind]).get("height", "medium"))
-    return height if height in ["high", "medium", "low"] else "medium"
+        return {}
+    var impact_value: Variant = Dictionary(
+        opponent.ATTACKS[opponent.attack_kind]
+    ).get("source_impact", {})
+    if not impact_value is Dictionary:
+        return {}
+    var impact: Dictionary = impact_value
+    var strength: String = String(impact.get("strength", ""))
+    if strength.is_empty():
+        return {}
+    return {
+        "height": String(impact.get("height", "")),
+        "strength": strength,
+    }
 
 
 func _attack_reach() -> float:
@@ -461,6 +520,14 @@ func _separation() -> float:
 ## and animation.  Order: this character's entry, then the generic entry, then
 ## anything the fighting set actually supports.
 func _pick_action(actions: Array) -> Dictionary:
+    # A block leaf is resolved through the recovered canblock rows before the
+    # generic per-character pick, so the native high/mid/low (and hard/brutal)
+    # guard selection survives instead of collapsing into one block token.
+    var block_choice: String = _block_choice(actions)
+    if not block_choice.is_empty():
+        var block_token: String = _block_dispatch(block_choice)
+        if not block_token.is_empty():
+            return {"native": block_choice, "dispatch": block_token}
     var tokens: Array[String] = [character_key]
     var short_name: String = character_key.split(" ")[0]
     if short_name != character_key:
@@ -515,11 +582,61 @@ func _action_base(native: String) -> String:
     return native.substr(0, space) if space > 0 else native
 
 
+## Choose the guard a block leaf holds, from the leaf's own action list.
+##
+## The shipped tree already encodes the recovered canblock rows in that list: a
+## leaf lists the strength variants (highblockbrutal, highblockhard) followed by
+## the block for the height the tree's `opp_attack_height` branch selected.  The
+## matching is therefore done against the rows themselves
+## (PortFighter.canblock_row_for) using the opponent's current impact record, so
+## the port never re-derives the mapping:
+##   * a recovered row for the opponent's strength/height names the action to
+##     hold - e.g. normal+low -> lowblock, hard+anything -> highblockhard;
+##   * the row's target must be in this leaf's list, otherwise the leaf cannot
+##     play it (the low leaf has no highblockbrutal) and the fallback applies.
+## Fallbacks:
+##   * no impact metadata (no live attack or no recovered strength) -> the
+##     leaf's height-specific guard, i.e. the tree's own height guess;
+##   * nothing recognised -> the first listed block action, and finally "" so
+##     _pick_action keeps its existing generic priority.
+func _block_choice(actions: Array) -> String:
+    var candidates: Array[String] = []
+    for value: Variant in actions:
+        var native: String = String(value)
+        if BLOCK_ACTIONS.has(_action_base(native)):
+            candidates.append(native)
+    if candidates.is_empty():
+        return ""
+    var metadata: Dictionary = _opp_impact_metadata()
+    if not metadata.is_empty():
+        var row: Dictionary = PortFighter.canblock_row_for(
+            String(metadata.get("strength", "")),
+            String(metadata.get("height", ""))
+        )
+        var target: String = String(row.get("target", ""))
+        if not target.is_empty():
+            for native: String in candidates:
+                if _action_base(native) == target:
+                    return native
+    for native: String in candidates:
+        if BLOCK_GUARD_ACTIONS.has(_action_base(native)):
+            return native
+    return candidates[0]
+
+
+func _block_dispatch(native: String) -> String:
+    for slot_value: Variant in Array(action_map.get(_action_base(native), [])):
+        var slot: String = String(slot_value)
+        if slot.begins_with("__block"):
+            return slot
+    return ""
+
+
 func _apply_attack(native: String, kind: String) -> bool:
-    # PortFighter.request_attack() refuses while guard_held, so a tree decision
+    # PortFighter.request_attack() refuses while guarding, so a tree decision
     # to attack must drop the guard first (the native block action ends when the
     # next decision picks a different action).
-    fighter.guard_held = false
+    fighter.end_guard()
     if not fighter.request_attack(kind):
         return false
     # Recovered per-action rage cost: the set stores negative values on the
@@ -532,15 +649,17 @@ func _apply_attack(native: String, kind: String) -> bool:
     return true
 
 
-func _apply_block(_token: String) -> void:
-    # Native highblock/midblock/lowblock: hold the guard.  PortFighter has a
-    # single guard flag; the block-height clips are visual only.  Parries are
-    # separate tree actions (actioncounter*_attack -> parryhigh/parrylow).
-    fighter.guard_held = true
+func _apply_block(native_action: String) -> void:
+    # Native highblock/midblock/lowblock (+ the hard/brutal block rows): the tree
+    # names the guard action, so the fighter holds that selection instead of a
+    # bare flag.  An entry that is not a recovered block action keeps the port's
+    # unqualified guard.
+    if not fighter.begin_block(_action_base(native_action)):
+        fighter.begin_guard()
 
 
 func _apply_idle() -> void:
-    fighter.guard_held = false
+    fighter.end_guard()
     fighter.move_axis = Vector2.ZERO
 
 
@@ -555,7 +674,7 @@ func _apply_getup() -> void:
 
 
 func _apply_move(token: String, _delta: float) -> void:
-    fighter.guard_held = false
+    fighter.end_guard()
     var to_opponent: Vector3 = opponent.position - fighter.position
     var forward: float = signf(to_opponent.x)
     var lateral: float = signf(to_opponent.z)

@@ -4894,7 +4894,7 @@ func _think_ai(delta: float) -> void:
     if computer.guard_held and player != null and player.state == "recovery":
         # The guard decision ends when the attack is no longer a threat; the
         # next tree walk is free to choose movement or a punish.
-        computer.guard_held = false
+        computer.end_guard()
     # The tree owns locomotion while it is allowed to act; attacks keep
     # move_axis at zero so attack root motion is not fought by input.
     computer.move_axis = Vector2.ZERO
