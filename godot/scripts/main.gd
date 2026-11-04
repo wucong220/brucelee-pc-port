@@ -275,7 +275,7 @@ const PACKAGE_MODELS_OPT_IN_ENV: String = "BRUCELEE_ALLOW_PACKAGE_MODELS"
 const PLAYER_SKIN_CONFIG: Dictionary = {
     "skin01": {
         "glb_package": "models\\bruce_skin01.glb",
-        "sha256": "128782fa257712972ee2e1f846dff9892af2d945f2e10bda5beb1a908468da06",
+        "sha256": "e540d8dd6478416db65dd9bc30eec1fed32ee6bb9b48d7a3fd78b0acd5bc284f",
         "material_profile": "body_hair",
     },
     "skin02": {
