@@ -33,6 +33,7 @@
       "m04_e02_idle_01": 50.0,
       "m04_e02_kck_high_03": 50.0,
       "m04_e02_kck_low_03": 55.0,
+      "m04_e02_pnch_high_03": 55.0,
       "m04_e02_pnch_low_03": 55.0,
       "m04_end_attack_01": 25.0,
       "m04_end_attack_02": 25.0,
@@ -923,56 +924,65 @@
         ]
       }
     },
-    "special_punch_high_miss": {
-      "source_action": "specialpunchhighmiss sinfu",
-      "animation": "m04_sp_pnch_high_fail",
-      "animation_radius": 40.0,
-      "animation_frame_count": 71,
-      "startup_frames": 0,
-      "active_frames": 2,
-      "recovery_frames": 69,
-      "damage": 0.0,
+    "special_punch_high": {
+      "source_action": "specialpunchhigh loming",
+      "animation": "m04_e02_pnch_high_03",
+      "animation_radius": 55.0,
+      "animation_frame_count": 96,
+      "startup_frames": 7,
+      "active_frames": 9,
+      "recovery_frames": 80,
+      "damage": 15.0,
       "source_impact": {
-        "attack_radius": 0.0,
+        "attack_radius": 80.0,
         "body_part": "larm",
         "height": "high",
         "strength": "normal",
-        "direction": "frontal"
+        "direction": "fromleft"
       },
       "evidence": {
-        "rule": "adreno_200/set/kungfu.set damage_time window + ANM duration",
-        "impact_windows": [],
-        "impact_damage": []
-      }
-    },
-    "special_punch_high_hit": {
-      "source_action": "specialpunchhighhit sinfu",
-      "animation": "m04_sp_pnch_high",
-      "animation_radius": 25.0,
-      "animation_frame_count": 50,
-      "startup_frames": 11,
-      "active_frames": 12,
-      "recovery_frames": 27,
-      "damage": 20.0,
-      "source_impact": {
-        "attack_radius": 45.0,
-        "body_part": "larm",
-        "height": "high",
-        "strength": "hard",
-        "direction": "frontal"
-      },
-      "evidence": {
-        "rule": "adreno_200/set/kungfu.set damage_time window + ANM duration",
+        "rule": "adreno_200/set/kungfu.set damage_time windows + ANM duration",
         "impact_windows": [
           [
-            11,
-            22
+            7,
+            9
+          ],
+          [
+            13,
+            15
           ]
         ],
         "impact_damage": [
-          20.0
+          6.0,
+          9.0
         ]
-      }
+      },
+      "multi_impacts": [
+        {
+          "damage": 6.0,
+          "damage_time": [
+            7,
+            9
+          ],
+          "attack_radius": 80.0,
+          "body_part": "larm",
+          "height": "high",
+          "strength": "normal",
+          "direction": "fromleft"
+        },
+        {
+          "damage": 9.0,
+          "damage_time": [
+            13,
+            15
+          ],
+          "attack_radius": 80.0,
+          "body_part": "rarm",
+          "height": "high",
+          "strength": "hard",
+          "direction": "frontal"
+        }
+      ]
     }
   },
   "missing": []
