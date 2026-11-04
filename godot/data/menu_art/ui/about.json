@@ -1,0 +1,282 @@
+{
+ "screen": "about.ui",
+ "source": {
+  "path": "adreno_200/gui/about.ui",
+  "bytes": 1868,
+  "sha256": "b3faf2cfed5e31600f35fa5f2e781d00a27316ebfaf843274b387ddb87a4e0a5",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 48,
+   "records": 126,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "64f8e0c788917c78c17e59cc13b6a591"
+  }
+ },
+ "coverage": {
+  "record_count": 126,
+  "reached_records": 126,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "gui/images/menu/",
+   "basename": "bl_gui_back_button_stand",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 1,
+   "directory": "sounds/menu_sfx/",
+   "basename": "back_bl_shout_short",
+   "extension": "wav"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "label",
+  "name",
+  "version",
+  "font",
+  "x",
+  "y",
+  "width",
+  "height",
+  "hspring",
+  "soft",
+  "vspring",
+  "effect",
+  "stroke",
+  "textcolor",
+  "align",
+  "center",
+  "valign",
+  "middle",
+  "datasources",
+  "text",
+  "gamemodes",
+  "gameversion",
+  "offscreen",
+  "alpha",
+  "disclaimer",
+  "top",
+  "translate",
+  "blbutton",
+  "back",
+  "alphablend",
+  "true",
+  "action",
+  "rsk",
+  "file",
+  "subrect_x",
+  "subrect_y",
+  "subrect_width",
+  "subrect_height",
+  "sound",
+  "springs",
+  "gui/images/menu/",
+  "bl_gui_back_button_stand",
+  "tex",
+  "sounds/menu_sfx/",
+  "back_bl_shout_short",
+  "wav"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "label",
+    "name": "version",
+    "font": 0,
+    "x": 40,
+    "y": 60,
+    "width": 400,
+    "height": 30,
+    "hspring": "soft",
+    "vspring": "soft",
+    "effect": "stroke",
+    "textcolor": [
+     255,
+     255,
+     0
+    ],
+    "align": "center",
+    "valign": "middle",
+    "datasources": {
+     "text": [
+      "gamemodes",
+      "gameversion"
+     ]
+    },
+    "offscreen": {
+     "alpha": 0.0
+    }
+   },
+   {
+    "type": "label",
+    "name": "disclaimer",
+    "font": 0,
+    "x": 40,
+    "y": 90,
+    "width": 400,
+    "height": 160,
+    "hspring": "soft",
+    "vspring": "soft",
+    "textcolor": [
+     255,
+     255,
+     255
+    ],
+    "align": "center",
+    "valign": "top",
+    "effect": "stroke",
+    "datasources": {
+     "text": [
+      "translate",
+      "disclaimer"
+     ]
+    },
+    "offscreen": {
+     "alpha": 0.0
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "back",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "align": "center",
+    "valign": "middle",
+    "alphablend": "true",
+    "action": "rsk",
+    "file": {
+     "file": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_back_button_stand",
+       "extension": "tex"
+      }
+     },
+     "subrect_x": 8,
+     "subrect_y": 8,
+     "subrect_width": 48,
+     "subrect_height": 48
+    },
+    "sound": {
+     "$file": {
+      "ordinal": 1,
+      "directory": "sounds/menu_sfx/",
+      "basename": "back_bl_shout_short",
+      "extension": "wav"
+     }
+    },
+    "alpha": 1.0,
+    "offscreen": {
+     "alpha": 0.0
+    }
+   }
+  ],
+  "springs": []
+ },
+ "layout": [
+  {
+   "type": "label",
+   "name": "version",
+   "font": 0,
+   "x": 40,
+   "y": 60,
+   "width": 400,
+   "height": 30,
+   "hspring": "soft",
+   "vspring": "soft",
+   "effect": "stroke",
+   "textcolor": [
+    255,
+    255,
+    0
+   ],
+   "align": "center",
+   "valign": "middle",
+   "datasources": {
+    "text": [
+     "gamemodes",
+     "gameversion"
+    ]
+   },
+   "offscreen": {
+    "alpha": 0.0
+   }
+  },
+  {
+   "type": "label",
+   "name": "disclaimer",
+   "font": 0,
+   "x": 40,
+   "y": 90,
+   "width": 400,
+   "height": 160,
+   "hspring": "soft",
+   "vspring": "soft",
+   "textcolor": [
+    255,
+    255,
+    255
+   ],
+   "align": "center",
+   "valign": "top",
+   "effect": "stroke",
+   "datasources": {
+    "text": [
+     "translate",
+     "disclaimer"
+    ]
+   },
+   "offscreen": {
+    "alpha": 0.0
+   }
+  },
+  {
+   "type": "blbutton",
+   "name": "back",
+   "x": 2,
+   "y": 270,
+   "width": 48,
+   "height": 48,
+   "align": "center",
+   "valign": "middle",
+   "alphablend": "true",
+   "action": "rsk",
+   "file": {
+    "file": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "gui/images/menu/",
+      "basename": "bl_gui_back_button_stand",
+      "extension": "tex"
+     }
+    },
+    "subrect_x": 8,
+    "subrect_y": 8,
+    "subrect_width": 48,
+    "subrect_height": 48
+   },
+   "sound": {
+    "$file": {
+     "ordinal": 1,
+     "directory": "sounds/menu_sfx/",
+     "basename": "back_bl_shout_short",
+     "extension": "wav"
+    }
+   },
+   "alpha": 1.0,
+   "offscreen": {
+    "alpha": 0.0
+   }
+  }
+ ],
+ "springs": []
+}

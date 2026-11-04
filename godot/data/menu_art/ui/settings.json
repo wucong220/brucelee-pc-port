@@ -1,0 +1,349 @@
+{
+ "screen": "settings.ui",
+ "source": {
+  "path": "adreno_200/gui/settings.ui",
+  "bytes": 2140,
+  "sha256": "33a0e0d80eee3a56789aaab3f34f276911f64d8372bd6d3be82c37352e5bda7a",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 55,
+   "records": 145,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "ee4cbd6a16a0decea55da8fa22b34819"
+  }
+ },
+ "coverage": {
+  "record_count": 145,
+  "reached_records": 145,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "sounds/menu_sfx/",
+   "basename": "menu_punch_2",
+   "extension": "wav"
+  },
+  {
+   "ordinal": 1,
+   "directory": "gui/images/menu/",
+   "basename": "bl_textbox_tga7",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 2,
+   "directory": "gui/images/menu/",
+   "basename": "bl_gui_back_button_stand",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 3,
+   "directory": "sounds/menu_sfx/",
+   "basename": "back_bl_shout_short",
+   "extension": "wav"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "bllabel",
+  "name",
+  "title",
+  "x",
+  "y",
+  "width",
+  "height",
+  "hspring",
+  "soft",
+  "vspring",
+  "datasources",
+  "text",
+  "translate",
+  "settings",
+  "offscreen",
+  "blmenu",
+  "menu",
+  "focused",
+  "true",
+  "valign",
+  "middle",
+  "font",
+  "progress",
+  "sound",
+  "options",
+  "audio",
+  "languages",
+  "lang",
+  "picture",
+  "box",
+  "alphablend",
+  "file",
+  "scale",
+  "subrect_x",
+  "subrect_y",
+  "subrect_width",
+  "subrect_height",
+  "blbutton",
+  "lsk",
+  "align",
+  "center",
+  "action",
+  "backtomain",
+  "alpha",
+  "springs",
+  "sounds/menu_sfx/",
+  "menu_punch_2",
+  "wav",
+  "gui/images/menu/",
+  "bl_textbox_tga7",
+  "tex",
+  "bl_gui_back_button_stand",
+  "back_bl_shout_short"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "bllabel",
+    "name": "title",
+    "x": 0,
+    "y": 5,
+    "width": 200,
+    "height": 40,
+    "hspring": "soft",
+    "vspring": "soft",
+    "datasources": {
+     "text": [
+      "translate",
+      "settings"
+     ]
+    },
+    "offscreen": {
+     "x": -200
+    }
+   },
+   {
+    "type": "blmenu",
+    "name": "menu",
+    "x": 80,
+    "y": 2,
+    "width": 400,
+    "height": 180,
+    "hspring": "soft",
+    "vspring": "soft",
+    "focused": "true",
+    "valign": "middle",
+    "font": 2,
+    "progress": 1.0,
+    "sound": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "sounds/menu_sfx/",
+      "basename": "menu_punch_2",
+      "extension": "wav"
+     }
+    },
+    "options": [
+     [
+      "audio",
+      "audio"
+     ],
+     [
+      "languages",
+      "lang"
+     ]
+    ],
+    "offscreen": {
+     "progress": 0.0
+    }
+   },
+   {
+    "type": "picture",
+    "name": "box",
+    "x": 0,
+    "y": 130,
+    "width": 480,
+    "height": 320,
+    "alphablend": "true",
+    "hspring": "soft",
+    "vspring": "soft",
+    "file": {
+     "$file": {
+      "ordinal": 1,
+      "directory": "gui/images/menu/",
+      "basename": "bl_textbox_tga7",
+      "extension": "tex"
+     }
+    },
+    "offscreen": {
+     "y": 320
+    },
+    "scale": "true",
+    "subrect_x": 0,
+    "subrect_y": 0,
+    "subrect_width": 480,
+    "subrect_height": 320
+   },
+   {
+    "type": "blbutton",
+    "name": "lsk",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "align": "center",
+    "valign": "middle",
+    "alphablend": "true",
+    "action": "backtomain",
+    "file": {
+     "file": {
+      "$file": {
+       "ordinal": 2,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_back_button_stand",
+       "extension": "tex"
+      }
+     },
+     "subrect_x": 8,
+     "subrect_y": 8,
+     "subrect_width": 48,
+     "subrect_height": 48
+    },
+    "sound": {
+     "$file": {
+      "ordinal": 3,
+      "directory": "sounds/menu_sfx/",
+      "basename": "back_bl_shout_short",
+      "extension": "wav"
+     }
+    },
+    "offscreen": {
+     "alpha": 0.0
+    }
+   }
+  ],
+  "springs": []
+ },
+ "layout": [
+  {
+   "type": "bllabel",
+   "name": "title",
+   "x": 0,
+   "y": 5,
+   "width": 200,
+   "height": 40,
+   "hspring": "soft",
+   "vspring": "soft",
+   "datasources": {
+    "text": [
+     "translate",
+     "settings"
+    ]
+   },
+   "offscreen": {
+    "x": -200
+   }
+  },
+  {
+   "type": "blmenu",
+   "name": "menu",
+   "x": 80,
+   "y": 2,
+   "width": 400,
+   "height": 180,
+   "hspring": "soft",
+   "vspring": "soft",
+   "focused": "true",
+   "valign": "middle",
+   "font": 2,
+   "progress": 1.0,
+   "sound": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "sounds/menu_sfx/",
+     "basename": "menu_punch_2",
+     "extension": "wav"
+    }
+   },
+   "options": [
+    [
+     "audio",
+     "audio"
+    ],
+    [
+     "languages",
+     "lang"
+    ]
+   ],
+   "offscreen": {
+    "progress": 0.0
+   }
+  },
+  {
+   "type": "picture",
+   "name": "box",
+   "x": 0,
+   "y": 130,
+   "width": 480,
+   "height": 320,
+   "alphablend": "true",
+   "hspring": "soft",
+   "vspring": "soft",
+   "file": {
+    "$file": {
+     "ordinal": 1,
+     "directory": "gui/images/menu/",
+     "basename": "bl_textbox_tga7",
+     "extension": "tex"
+    }
+   },
+   "offscreen": {
+    "y": 320
+   },
+   "scale": "true",
+   "subrect_x": 0,
+   "subrect_y": 0,
+   "subrect_width": 480,
+   "subrect_height": 320
+  },
+  {
+   "type": "blbutton",
+   "name": "lsk",
+   "x": 2,
+   "y": 270,
+   "width": 48,
+   "height": 48,
+   "align": "center",
+   "valign": "middle",
+   "alphablend": "true",
+   "action": "backtomain",
+   "file": {
+    "file": {
+     "$file": {
+      "ordinal": 2,
+      "directory": "gui/images/menu/",
+      "basename": "bl_gui_back_button_stand",
+      "extension": "tex"
+     }
+    },
+    "subrect_x": 8,
+    "subrect_y": 8,
+    "subrect_width": 48,
+    "subrect_height": 48
+   },
+   "sound": {
+    "$file": {
+     "ordinal": 3,
+     "directory": "sounds/menu_sfx/",
+     "basename": "back_bl_shout_short",
+     "extension": "wav"
+    }
+   },
+   "offscreen": {
+    "alpha": 0.0
+   }
+  }
+ ],
+ "springs": []
+}

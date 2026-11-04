@@ -3,19 +3,26 @@ class_name PortMenuArt
 ## Opt-in original-art front menu (BRUCELEE_MENU_ART=1).
 ##
 ## The text menu (prototype_menu.gd) stays in the inheritance chain unchanged:
-## this subclass only replaces the MAIN and PLAY screens with the recovered
+## this subclass replaces the MAIN, PLAY and the four recovered main-menu
+## sub-pages (Player Profile / Settings / Credits / About) with the recovered
 ## 480x320 artwork, and keeps the base class for the pause / records / style
 ## editor hooks main.gd already calls.
 ##
 ## Everything drawn comes from the recovered archive resources decoded by the
-## isolated menu-art-20261104 run:
+## isolated menu-art-20261104 / menu-pages-20261104 runs:
 ##   * widget positions/sizes/types : adreno_200/gui/<screen>.ui (CTX3), decoded
 ##     into res://data/menu_art/ui/<screen>.json;
 ##   * pictures                     : adreno_200/gui/images/... .tex, decoded
-##     into res://ui/menu_art/menu/... and .../background/...;
+##     into res://ui/menu_art/menu/... , .../background/... , .../versus/... and
+##     .../other/...;
 ##   * dock order and names         : characters.list / sceneries.list, checked
-##     into res://data/menu_art/menu_art.json (shipped for provenance; the two
-##     rendered menus have no dock).
+##     into res://data/menu_art/menu_art.json (shipped for provenance; none of
+##     the rendered menu screens has a dock).
+##
+## Data that the archive does not provide is never guessed: rows that would
+## open a screen with no decoded layout/values show the explicit
+## "NOT RECOVERED IN THIS BUILD" status, and the About version/disclaimer and
+## the Credit roll text are drawn with that same explicit marker.
 ##
 ## Text labels stay the existing MenuLang overlay. A key the table does not
 ## cover is shown as a readable placeholder, never as invented game text.
@@ -37,7 +44,7 @@ class_name PortMenuArt
 
 const UI_DIR := "res://data/menu_art/ui/"
 const ART_ROOT := "res://ui/menu_art/"
-const ART_DIRS := ["menu", "menu_zdk", "mini", "background"]
+const ART_DIRS := ["menu", "menu_zdk", "mini", "background", "versus", "other"]
 const Controls = preload("res://scripts/prototype_controls.gd")
 
 const DESIGN_W := 480.0
@@ -47,31 +54,73 @@ const COLOR_SELECTED := Color(1.0, 1.0, 0.0, 1.0)
 const COLOR_IDLE := Color(1.0, 1.0, 1.0, 1.0)
 const STATUS_NOT_RECOVERED := "NOT RECOVERED IN THIS BUILD"
 
-## screen id -> layout file, background texture, required widget names
+## screen id -> layout file, background texture, required widget names.
+##
+## "player_profile", "settings" and "about" are opened from the main menu and
+## their .ui files contain no background picture, so the main-menu background is
+## kept as a CANDIDATE (recorded in reports/menu_pages_validation.json). The two
+## credit screens carry their own full-screen picture, so their backdrop entry is
+## empty and the decoded layout draws the background itself.
 const SCREENS := {
 	"mainmenu": {
 		"layout": "mainmenu",
 		"background": "bl_gui_backgrond_mainmenu",
+		"background_basis": "name match: gui/mainmenu.ui <-> gui/images/background/BL_GUI_backgrond_mainmenu.tex",
 		"required": ["logo", "title", "menu"],
 	},
 	"playmenu": {
 		"layout": "playmenu",
 		"background": "bl_gui_backgrond_playmenu",
+		"background_basis": "name match: gui/playmenu.ui <-> gui/images/background/BL_GUI_backgrond_playmenu.tex",
 		"required": ["title", "playmenu", "lsk"],
+	},
+	"player_profile": {
+		"layout": "playerprofile",
+		"background": "bl_gui_backgrond_mainmenu",
+		"background_basis": "CANDIDATE: playerprofile.ui has no background picture; opened from the main menu keeps the main-menu background",
+		"required": ["title", "menu", "back"],
+	},
+	"settings": {
+		"layout": "settings",
+		"background": "bl_gui_backgrond_mainmenu",
+		"background_basis": "CANDIDATE: settings.ui has no background picture; opened from the main menu keeps the main-menu background",
+		"required": ["title", "menu", "box", "lsk"],
+	},
+	"credits": {
+		"layout": "creditsselect",
+		"background": "",
+		"background_basis": "creditsselect.ui draws its own full-screen picture gui/images/versus/BL_VersusScreen_background.tex at (0,0,480,320)",
+		"required": ["picture", "title", "lsk"],
+	},
+	"about": {
+		"layout": "about",
+		"background": "bl_gui_backgrond_mainmenu",
+		"background_basis": "CANDIDATE: about.ui has no background picture; opened from the main menu keeps the main-menu background",
+		"required": ["version", "disclaimer", "back"],
+	},
+	"credits_dle": {
+		"layout": "creditsdle",
+		"background": "",
+		"background_basis": "creditsdle.ui draws its own full-screen picture gui/images/versus/BL_VersusScreen_background.tex at (0,0,480,320)",
+		"required": ["picture"],
+	},
+	"credits_ig": {
+		"layout": "creditsindiagames",
+		"background": "",
+		"background_basis": "creditsindiagames.ui draws its own full-screen picture gui/images/versus/BL_VersusScreen_background.tex at (0,0,480,320)",
+		"required": ["picture"],
 	},
 }
 
 ## Recovered mainmenu.ui options, in decoded order. Play opens the recovered
-## play menu; Quit is the current quit command. The other four recovered rows
-## stay visible but fail closed with an explicit status: the port has no
-## player-profile / settings / credits / about screen, and pretending otherwise
-## would invent behaviour.
+## play menu, the four middle rows open the recovered sub-page layouts, and Quit
+## emits the existing quit command.
 const MAIN_ROWS := [
 	{"key": "play", "action": "play"},
-	{"key": "player_profile", "action": "unavailable"},
-	{"key": "settings", "action": "unavailable"},
-	{"key": "credits", "action": "unavailable"},
-	{"key": "about", "action": "unavailable"},
+	{"key": "player_profile", "action": "screen", "screen": "player_profile"},
+	{"key": "settings", "action": "screen", "screen": "settings"},
+	{"key": "credits", "action": "screen", "screen": "credits"},
+	{"key": "about", "action": "screen", "screen": "about"},
 	{"key": "quit", "action": "command", "command": "quit"},
 ]
 
@@ -87,6 +136,37 @@ const PLAY_ROWS := [
 	{"key": "practice_style", "action": "command", "command": "training"},
 ]
 
+## Recovered playerprofile.ui rows. Each would continue into a further screen
+## (achievements / statistics / art / fighters) whose layout or data is not part
+## of the decoded set; they stay visible and fail closed with the explicit status
+## instead of opening a guessed screen.
+const PROFILE_ROWS := [
+	{"key": "achievements", "action": "unavailable"},
+	{"key": "statistics", "action": "unavailable"},
+	{"key": "art", "action": "unavailable"},
+	{"key": "fighters", "action": "unavailable"},
+]
+
+## Recovered settings.ui rows. The audio/languages sub-layouts are decoded but
+## their values (slider state, language selection) are not part of this task, so
+## the rows fail closed with the explicit status.
+const SETTINGS_ROWS := [
+	{"key": "audio", "action": "unavailable"},
+	{"key": "languages", "action": "unavailable"},
+]
+
+## Recovered creditsselect.ui options. The select page is the two logo buttons
+## (not a text menu); the two credit rolls exist as decoded layouts but their
+## scroll text is not recovered, so those screens show NOT RECOVERED.
+const CREDIT_ROWS := [
+	{"key": "dle", "action": "screen", "screen": "credits_dle"},
+	{"key": "indiagames", "action": "screen", "screen": "credits_ig"},
+]
+
+## Recovered creditsselect.ui selection geometry: the invisible dle/indiagames
+## hit buttons sit on these logo pictures.
+const CREDIT_LOGO_WIDGETS := ["dlepicture", "indiagamespicture"]
+
 ## Readable placeholders for recovered keys the MenuLang table does not cover.
 ## These are labels, never game behaviour; the recovered translation wins the
 ## moment the table gains the key.
@@ -94,6 +174,14 @@ const PLACEHOLDER_LABELS := {
 	"player_profile": "Player Profile",
 	"credits": "Credits",
 	"about": "About",
+	"achievements": "Achievements",
+	"statistics": "Statistics",
+	"art": "Art",
+	"fighters": "Fighters",
+	"audio": "Audio",
+	"languages": "Languages",
+	"dle": "Digital Legends",
+	"indiagames": "IndiaGames",
 	"story_mode": "Story Mode",
 	"practice_style": "Practice Style",
 	"play_menu": "Play Menu",
@@ -167,13 +255,13 @@ func hide_menu() -> void:
 
 func show_error(value: String) -> void:
 	super.show_error(value)
-	if menu_state == "art_main" or menu_state == "art_play":
+	if _is_art_menu():
 		status_text = value
 		_refresh_status()
 
 
 func selected_command() -> String:
-	if menu_state == "art_main" or menu_state == "art_play":
+	if _is_art_menu():
 		var row: Dictionary = _selected_row()
 		if row.is_empty():
 			return ""
@@ -186,9 +274,17 @@ func selected_command() -> String:
 func handle_input_event(event: InputEvent) -> bool:
 	if not visible:
 		return false
-	if menu_state == "art_main" or menu_state == "art_play":
+	if _is_art_menu():
 		return _handle_art_input(event)
 	return super.handle_input_event(event)
+
+
+## True while any recovered-art screen (main, play, or one of the sub-pages) owns
+## the menu. The base text menu handles every other state (pause / records /
+## style editor).
+func _is_art_menu() -> bool:
+	return menu_state == "art_main" or menu_state == "art_play" \
+		or menu_state == "art_page"
 
 
 # ---------------------------------------------------------------- art input
@@ -201,6 +297,10 @@ func _handle_art_input(event: InputEvent) -> bool:
 		_move_art_selection(-1)
 	elif event.is_action_pressed(Controls.MENU_DOWN):
 		_move_art_selection(1)
+	elif screen_id == "credits" and event.is_action_pressed(Controls.MOVE_LEFT):
+		_move_credits_selection(-1)
+	elif screen_id == "credits" and event.is_action_pressed(Controls.MOVE_RIGHT):
+		_move_credits_selection(1)
 	elif event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
 		_confirm_art(was_attack)
 	elif event.is_action_pressed(Controls.MENU_CANCEL) or _is_backspace(event):
@@ -227,6 +327,15 @@ func _move_art_selection(delta: int) -> void:
 	_show_art_screen(screen_id)
 
 
+## The recovered creditsselect.ui uses LEFT/RIGHT between its two logo buttons.
+func _move_credits_selection(delta: int) -> void:
+	if screen_id != "credits":
+		return
+	status_text = ""
+	selection = clampi(selection + delta, 0, CREDIT_ROWS.size() - 1)
+	_show_art_screen("credits")
+
+
 func _confirm_art(was_attack: bool) -> void:
 	var row: Dictionary = _selected_row()
 	if row.is_empty():
@@ -237,6 +346,11 @@ func _confirm_art(was_attack: bool) -> void:
 			selection = 0
 			menu_state = "art_play"
 			_show_art_screen("playmenu")
+		"screen":
+			status_text = ""
+			selection = 0
+			menu_state = "art_page"
+			_show_art_screen(String(row.get("screen", "")))
 		"command":
 			last_accept_was_attack = was_attack
 			command_requested.emit(String(row.get("command", "")))
@@ -249,11 +363,23 @@ func _confirm_art(was_attack: bool) -> void:
 
 func _back_art() -> void:
 	status_text = ""
-	if screen_id == "playmenu":
-		selection = 0
-		menu_state = "art_main"
-		_show_art_screen("mainmenu")
-	# At the recovered main menu BACK is a no-op, matching the text menu.
+	match screen_id:
+		"playmenu":
+			selection = 0
+			menu_state = "art_main"
+			_show_art_screen("mainmenu")
+		"player_profile", "settings", "credits", "about":
+			# Return to the main-menu row that opened this page.
+			selection = _main_row_index_for(screen_id)
+			menu_state = "art_main"
+			_show_art_screen("mainmenu")
+		"credits_dle", "credits_ig":
+			selection = 0
+			menu_state = "art_page"
+			_show_art_screen("credits")
+		_:
+			# At the recovered main menu BACK is a no-op, matching the text menu.
+			pass
 
 
 func _launch_story() -> void:
@@ -281,8 +407,31 @@ func _rows_for(key: String) -> Array:
 			return MAIN_ROWS
 		"playmenu":
 			return PLAY_ROWS
+		"player_profile":
+			return PROFILE_ROWS
+		"settings":
+			return SETTINGS_ROWS
+		"credits":
+			return CREDIT_ROWS
 		_:
 			return []
+
+
+## Index of the main-menu row whose action opens `screen`, or 0.
+func _main_row_index_for(screen: String) -> int:
+	for index: int in range(MAIN_ROWS.size()):
+		var row: Dictionary = MAIN_ROWS[index]
+		if String(row.get("screen", "")) == screen:
+			return index
+	return 0
+
+
+## Recovered widget node by name on the current screen, or {}.
+func _screen_node(screen: String, widget_name: String) -> Dictionary:
+	for node: Variant in (_screens[screen]["layout"] as Array):
+		if String((node as Dictionary).get("name", "")) == widget_name:
+			return node as Dictionary
+	return {}
 
 
 # ---------------------------------------------------------------- art build
@@ -323,6 +472,10 @@ func _file_key(reference: Dictionary) -> String:
 			folder = "mini"
 		"gui/images/background/":
 			folder = "background"
+		"gui/images/versus/":
+			folder = "versus"
+		"gui/images/other/":
+			folder = "other"
 		_:
 			_fail("unmapped texture directory '" + directory + "'")
 			return ""
@@ -359,10 +512,17 @@ func _load_screens() -> bool:
 			_fail("layout has no widgets: " + path)
 			return false
 		var names: Dictionary = {}
+		var widget_index: int = 0
 		for node: Variant in layout:
 			if typeof(node) != TYPE_DICTIONARY:
 				_fail("layout widget is not an object: " + path)
 				return false
+			# creditsdle.ui / creditsindiagames.ui carry the scroll-text widget
+			# without a `name` key. It is not used for lookup, so give it a
+			# synthetic id instead of rejecting a faithfully decoded layout.
+			if not (node as Dictionary).has("name") \
+					or String((node as Dictionary).get("name", "")).is_empty():
+				(node as Dictionary)["name"] = "__unnamed_%d" % widget_index
 			for field: String in ["name", "type", "x", "y", "width", "height"]:
 				if not (node as Dictionary).has(field):
 					_fail("layout widget misses " + field + ": " + path)
@@ -376,6 +536,7 @@ func _load_screens() -> bool:
 				_fail("duplicate widget name in " + path)
 				return false
 			names[String(node["name"])] = true
+			widget_index += 1
 		for required: Variant in SCREENS[screen]["required"]:
 			if not names.has(String(required)):
 				_fail("layout " + path + " misses required widget " + String(required))
@@ -534,18 +695,42 @@ func _show_art_screen(screen: String) -> void:
 		return
 	screen_id = screen
 	_clear_stage()
-	var background: Texture2D = _background_texture(screen)
-	if background == null:
-		return
-	var backdrop: TextureRect = _make_texture_rect(
-		background, Rect2(0, 0, DESIGN_W, DESIGN_H), false)
-	backdrop.name = "Background"
-	_stage.add_child(backdrop)
+	# The credit screens draw their own full-screen recovered picture; every
+	# other screen has a name-matched (or documented CANDIDATE) backdrop.
+	var screen_data: Dictionary = SCREENS[screen] as Dictionary
+	var basename: String = String(screen_data.get("background", ""))
+	if not basename.is_empty():
+		var background: Texture2D = _background_texture(screen)
+		if background == null:
+			return
+		var backdrop: TextureRect = _make_texture_rect(
+			background, Rect2(0, 0, DESIGN_W, DESIGN_H), false)
+		backdrop.name = "Background"
+		_stage.add_child(backdrop)
 
 	for node: Variant in (_screens[screen]["layout"] as Array):
 		_build_art_widget(screen, node as Dictionary)
 
+	if screen == "credits":
+		_add_credits_selection()
 	_refresh_status()
+
+
+## creditsselect.ui has no blmenu: the recovered focus is one of the two logo
+## buttons. Draw the recovered focus colour around the selected logo picture.
+func _add_credits_selection() -> void:
+	var index: int = clampi(selection, 0, CREDIT_LOGO_WIDGETS.size() - 1)
+	var node: Dictionary = _screen_node("credits", String(CREDIT_LOGO_WIDGETS[index]))
+	if node.is_empty():
+		return
+	var outline: Control = RectOutline.new()
+	outline.name = "CreditsSelection"
+	outline.position = _rect_of(node).position
+	outline.size = _rect_of(node).size
+	outline.line_color = Color8(255, 255, 0)
+	outline.line_width = 2.0
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(outline)
 
 
 func _build_art_widget(screen: String, node: Dictionary) -> void:
@@ -558,12 +743,30 @@ func _build_art_widget(screen: String, node: Dictionary) -> void:
 				_file_key(_file_reference(node["file"] as Dictionary)))
 			if texture == null:
 				return
-			var picture: TextureRect = _make_texture_rect(texture, rect,
+			# A recovered picture may crop its texture through the authored
+			# subrect (the credit background and the settings box both use
+			# (0,0,480,320) out of a 512x512 atlas).
+			var draw_texture: Texture2D = texture
+			if node.has("subrect_width"):
+				var atlas: AtlasTexture = AtlasTexture.new()
+				atlas.atlas = texture
+				atlas.region = Rect2(
+					float(node.get("subrect_x", 0)),
+					float(node.get("subrect_y", 0)),
+					float(node["subrect_width"]),
+					float(node["subrect_height"]))
+				draw_texture = atlas
+			var picture: TextureRect = _make_texture_rect(draw_texture, rect,
 				String(node.get("mantainaspectratio", "false")) == "true")
 			picture.name = "Picture_" + widget_name
 			_stage.add_child(picture)
 			_built_rects[widget_name] = rect
 		"blbutton":
+			# creditsselect.ui's dle/indiagames buttons are invisible hit areas
+			# on top of the logo pictures; they carry no `file`.
+			if not node.has("file"):
+				_built_rects[widget_name] = rect
+				return
 			var file_node: Dictionary = node["file"]
 			var reference: Dictionary = file_node["file"]
 			var texture: Texture2D = _texture(_file_key(_file_reference(reference)))
@@ -600,6 +803,22 @@ func _build_art_widget(screen: String, node: Dictionary) -> void:
 		"blmenu":
 			_build_art_menu(screen, node, rect)
 			_built_rects[widget_name] = rect
+		"credits":
+			# The credit roll text lives in the localization archive, which is
+			# not decoded here. Show the recovered prefix/number range (data,
+			# not invented names) plus an explicit NOT RECOVERED marker.
+			var prefix: String = String(node.get("prefix", ""))
+			var first_number: int = int(node.get("first_number", 0))
+			var last_number: int = int(node.get("last_number", 0))
+			var caption: String = STATUS_NOT_RECOVERED
+			if not prefix.is_empty():
+				caption = "%s (%d-%d)\n%s" % [prefix, first_number, last_number,
+					STATUS_NOT_RECOVERED]
+			var scroll_label: Label = _make_label(
+				caption, rect, 16, Color(1.0, 0.85, 0.3, 1.0), true)
+			scroll_label.name = "Label_Credits"
+			_stage.add_child(scroll_label)
+			_built_rects[widget_name] = rect
 		_:
 			_fail("unsupported widget type '" + type + "' in " + screen)
 
@@ -609,6 +828,12 @@ func _file_reference(reference: Dictionary) -> Dictionary:
 
 
 func _label_text_for(screen: String, node: Dictionary) -> String:
+	var widget_name: String = String(node.get("name", ""))
+	# about.ui's version comes from a live `gameversion` variable and its
+	# disclaimer text is a localization value the MenuLang overlay does not
+	# cover. Neither string is in the decoded data, so both areas say so.
+	if screen == "about" and (widget_name == "version" or widget_name == "disclaimer"):
+		return STATUS_NOT_RECOVERED
 	var sources: Dictionary = node.get("datasources", {})
 	var text_source: Variant = sources.get("text")
 	if typeof(text_source) == TYPE_ARRAY and (text_source as Array).size() == 2:
@@ -616,6 +841,8 @@ func _label_text_for(screen: String, node: Dictionary) -> String:
 		var value: String = String((text_source as Array)[1])
 		if kind == "translate":
 			return _text_for(value)
+		if kind == "gamemodes" and value == "gameversion":
+			return STATUS_NOT_RECOVERED
 		_fail("unsupported label datasource '" + kind + "' in " + screen)
 		return ""
 	_fail("label " + String(node.get("name", "?")) + " has no text datasource")
@@ -667,5 +894,15 @@ func option_labels() -> Array:
 	var out: Array = []
 	for child: Node in _stage.get_children():
 		if String(child.name).begins_with("Option_"):
+			out.append((child as Label).text)
+	return out
+
+
+## Every label drawn on the current screen, in tree order. Used to assert the
+## explicit NOT RECOVERED areas (About version/disclaimer, credit rolls).
+func label_texts() -> Array:
+	var out: Array = []
+	for child: Node in _stage.get_children():
+		if child is Label:
 			out.append((child as Label).text)
 	return out
