@@ -1,0 +1,661 @@
+{
+  "scope": "brucelee.set only (the source of the port's SFX_ACTIONS/ATTACK_SFX tables)",
+  "note": "These non-voice sounds[] rows of thai/karate/kungfu also live outside sounds/sfx. They are NOT part of this 23-row delivery: the opponent/voice overlay owns those sets. Listed here explicitly so nothing is silently dropped.",
+  "row_count": 63,
+  "by_set": {
+    "brucelee": 0,
+    "thai": 41,
+    "karate": 0,
+    "kungfu": 22
+  },
+  "distinct_files": [
+    "hit_light_male_ls_b_attackgrunt04_small_boy.wav",
+    "hurt__lightmale_ls_g_hurtpunch10_brick_davies.wav",
+    "hurt_light_male_ls_b_hurtpunch05_small_boy.wav",
+    "hurt_light_male_ls_c_hurtpunch05_ken.wav",
+    "hurt_light_male_ls_d_hurtpunch02_johnson.wav",
+    "hurt_light_male_ls_f_sin_fu_b.wav",
+    "hurt_light_male_ls_h_hurtgrunt05_the_cheif.wav",
+    "hurt_light_male_ls_l_hurtpunch09_lo_ming.wav",
+    "m04_grab_02.avi_master_1_of_2.wav",
+    "male_ls_j_attackgrunt02_shen_lo.wav",
+    "male_ls_j_painscream04_shen_lo.wav",
+    "master_pain_lt_3.wav",
+    "pain_light_2_bl.wav",
+    "small_boy_chains_seperate_1.wav",
+    "small_boy_chains_seperate_2.wav",
+    "small_boy_chains_seperate_3.wav"
+  ],
+  "rows": [
+    {
+      "set": "thai",
+      "action": "highpunch2",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 7,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "highpunch3",
+      "file": "small_boy_chains_seperate_1.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 8,
+      "volume": 0.7,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "lowpunch1",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 7,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "lowpunch2",
+      "file": "small_boy_chains_seperate_1.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 6,
+      "volume": 0.15,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "lowpunch3",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 6,
+      "volume": 0.6,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "highkick1",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 12,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "highkick2",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 9,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "lowkick1",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 5,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "lowkick2",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 7,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardfronthigh",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 17,
+      "volume": 0.15,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardfronthigh",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 27,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impactbrutalleft",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 21,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "stunhardimpact",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 19,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "stunhardimpact",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 27,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "stunbrutalimpact",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 21,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "stunbrutalimpact",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 34,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "attacktofloor",
+      "file": "small_boy_chains_seperate_1.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 8,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "specialkickhigh smallboy",
+      "file": "hit_light_male_ls_b_attackgrunt04_small_boy.wav",
+      "directory": "sounds/voices/smallboy/attack_light/",
+      "frame": 1,
+      "volume": 0.85,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "specialkicklow smallboy",
+      "file": "small_boy_chains_seperate_1.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 3,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "specialpunchhigh smallboy",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 4,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "specialpunchlow smallboy",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 14,
+      "volume": 0.6,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "endattack smallboy",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 40,
+      "volume": 0.75,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "grab1 smallboy",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 51,
+      "volume": 0.7,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "grab2 smallboy",
+      "file": "small_boy_chains_seperate_1.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 50,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardfrontlow",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 13,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardabove",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 9,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardlefthigh",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 11,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardlefthigh",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 27,
+      "volume": 0.15,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardrighthigh",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 11,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardrighthigh",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 15,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardrightlow",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 12,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardrightlow",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 20,
+      "volume": 0.15,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardleftlow",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 11,
+      "volume": 0.15,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impacthardleftlow",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 20,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "stunfall",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 37,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "stunfall",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 54,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impactbrutalright",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 23,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "impactbrutalmid",
+      "file": "small_boy_chains_seperate_3.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 20,
+      "volume": 0.45,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "highblockhard",
+      "file": "small_boy_chains_seperate_2.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 0,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "highblockbrutal",
+      "file": "small_boy_chains_seperate_1.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 1,
+      "volume": 0.55,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "thai",
+      "action": "parryattack",
+      "file": "small_boy_chains_seperate_1.wav",
+      "directory": "sounds/voices/smallboy/special/",
+      "frame": 8,
+      "volume": 0.7,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grab2 master",
+      "file": "m04_grab_02.avi_master_1_of_2.wav",
+      "directory": "sounds/voices/the_master/special/",
+      "frame": 10,
+      "volume": 0.9,
+      "unique": "themaster",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "hurt_light_male_ls_l_hurtpunch09_lo_ming.wav",
+      "directory": "sounds/voices/lo_ming/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "loming",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "male_ls_j_painscream04_shen_lo.wav",
+      "directory": "sounds/voices/shen_lo/heavy_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "shenlo",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "hurt_light_male_ls_f_sin_fu_b.wav",
+      "directory": "sounds/voices/sin_fu/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "sinfu",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "master_pain_lt_3.wav",
+      "directory": "sounds/voices/the_master/pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "themaster",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "hurt__lightmale_ls_g_hurtpunch10_brick_davies.wav",
+      "directory": "sounds/voices/brick_davies/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "brickdavis",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "pain_light_2_bl.wav",
+      "directory": "sounds/voices/bruce_lee/pain_light/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "brucelee",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "hurt_light_male_ls_h_hurtgrunt05_the_cheif.wav",
+      "directory": "sounds/voices/chief/pain_light/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "chief",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "hurt_light_male_ls_d_hurtpunch02_johnson.wav",
+      "directory": "sounds/voices/johnson/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "johnson",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "hurt_light_male_ls_c_hurtpunch05_ken.wav",
+      "directory": "sounds/voices/ken_goodall/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "kengodall",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 shenlo",
+      "file": "hurt_light_male_ls_b_hurtpunch05_small_boy.wav",
+      "directory": "sounds/voices/smallboy/pain_light/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "hurt_light_male_ls_l_hurtpunch09_lo_ming.wav",
+      "directory": "sounds/voices/lo_ming/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "loming",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "male_ls_j_painscream04_shen_lo.wav",
+      "directory": "sounds/voices/shen_lo/heavy_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "shenlo",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "hurt_light_male_ls_f_sin_fu_b.wav",
+      "directory": "sounds/voices/sin_fu/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "sinfu",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "master_pain_lt_3.wav",
+      "directory": "sounds/voices/the_master/pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "themaster",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "hurt__lightmale_ls_g_hurtpunch10_brick_davies.wav",
+      "directory": "sounds/voices/brick_davies/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "brickdavis",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "pain_light_2_bl.wav",
+      "directory": "sounds/voices/bruce_lee/pain_light/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "brucelee",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "hurt_light_male_ls_h_hurtgrunt05_the_cheif.wav",
+      "directory": "sounds/voices/chief/pain_light/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "chief",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "hurt_light_male_ls_d_hurtpunch02_johnson.wav",
+      "directory": "sounds/voices/johnson/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "johnson",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "hurt_light_male_ls_c_hurtpunch05_ken.wav",
+      "directory": "sounds/voices/ken_goodall/light_pain/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "kengodall",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grabcompl2 loming",
+      "file": "hurt_light_male_ls_b_hurtpunch05_small_boy.wav",
+      "directory": "sounds/voices/smallboy/pain_light/",
+      "frame": 7,
+      "volume": 0.9,
+      "unique": "smallboy",
+      "is_voice": false
+    },
+    {
+      "set": "kungfu",
+      "action": "grab1miss shenlo",
+      "file": "male_ls_j_attackgrunt02_shen_lo.wav",
+      "directory": "sounds/voices/shen_lo/light_attack/",
+      "frame": 7,
+      "volume": 0.55,
+      "unique": "",
+      "is_voice": false
+    }
+  ]
+}

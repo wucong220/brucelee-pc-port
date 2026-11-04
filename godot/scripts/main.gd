@@ -21,6 +21,10 @@ const FxMaterialTracks = preload("res://scripts/fx_material_tracks.gd")
 const AudioCueMap = preload("res://scripts/audio_cue_map.gd")
 ## Recovered impact/block SFX + 21 music-track library (data-only table).
 const SfxMusicMap = preload("res://scripts/sfx_music_map.gd")
+## Explicit local audio library: cue key -> one exact local WAV + pinned
+## SHA-256.  Extends the 38-file SFX library only with the 13 WAVs proved
+## byte-identical to their data.zpak resources (23 recovered rows).
+const LocalAudioLibrary = preload("res://scripts/local_audio_library.gd")
 ## Recovered voice cue timing from adreno_200/set/brucelee.set `sounds[]`
 ## (file / frame / volume / unique / is_voice).  Data-only table; the runtime
 ## schedules each voice at frame/30 s instead of flattening it to action start.
@@ -440,6 +444,9 @@ var hud_art_menu_overlay = null
 # package-relative convention).
 var _sfx_audio: Dictionary = {}
 var _sfx_audio_error: Dictionary = {}
+# 13 hash-pinned extension streams keyed by lowercase WAV basename.
+var _extended_sfx_audio: Dictionary = {}
+var _extended_sfx_error: String = ""
 var _sfx_play_log: Array = []
 var _sfx_play_count: int = 0
 # Per-action dedup bookkeeping: one generation token per schedule group.  A new
@@ -2926,6 +2933,7 @@ func _build_combat_audio() -> void:
     # Recovered 38-file impact/block library (package audio/sfx).  The legacy
     # three-stream candidate set stays as a fallback for the old validator.
     _load_combat_sfx()
+    _load_extended_sfx()
     # Restore the original eager Bruce voice load (commit 013b55a): commit
     # 132ff62's whole-file churn moved the only call into the export self
     # test, which left validate_bruce_voice_audio failing at HEAD.
@@ -2969,6 +2977,42 @@ func _load_combat_sfx() -> void:
             _sfx_audio_error[filename] = last_error
             continue
         _sfx_audio[filename] = loaded
+
+
+func _load_extended_sfx() -> void:
+    ## Loads the 13 proven extension WAVs through the explicit local audio
+    ## library.  configure() preflights every entry (existence, RIFF/WAVE,
+    ## pinned SHA-256, decode); any failure leaves the extension empty, so the
+    ## affected rows stay silent instead of borrowing another WAV.
+    _extended_sfx_audio.clear()
+    _extended_sfx_error = ""
+    var library = LocalAudioLibrary.new()
+    if not library.load_manifest():
+        _extended_sfx_error = library.get_error()
+        return
+    var roots: Array[String] = []
+    var env_root: String = OS.get_environment(LocalAudioLibrary.ENV_ROOT)
+    if not env_root.is_empty():
+        roots.append(env_root)
+    roots.append(OS.get_executable_path().get_base_dir())
+    var local_app_data: String = OS.get_environment("LOCALAPPDATA")
+    if not local_app_data.is_empty():
+        roots.append(local_app_data.path_join(
+            "BruceLee-PC-Port/package-audio-current214"
+        ))
+    for root: String in roots:
+        if library.configure(root):
+            break
+    if not library.is_configured():
+        _extended_sfx_error = library.get_error()
+        return
+    for key: Variant in library.cue_keys():
+        var info: Dictionary = library.entry_for(String(key))
+        if String(info.get("kind", "")) != "proven_extension":
+            continue
+        var stream: AudioStream = library.stream_for(String(key))
+        if stream != null:
+            _extended_sfx_audio[String(key)] = stream
 
 
 func _sfx_ready() -> bool:
@@ -3945,6 +3989,10 @@ func _play_sfx_cues(
         if file.is_empty():
             continue
         var stream: AudioStream = _sfx_audio.get(file)
+        if stream == null:
+            # The 23 recovered non-voice rows name exact voice-path WAVs;
+            # only the hash-pinned extension may satisfy them.
+            stream = _extended_sfx_audio.get(file.to_lower())
         if stream == null:
             continue
         var volume: float = clampf(float(cue.get("volume", 1.0)), 0.001, 1.0)

@@ -1643,10 +1643,57 @@ const SET_ACTION_SFX: Dictionary = {
 }
 
 
+## 23 recovered non-voice `sounds[]` rows whose WAVs live outside
+## `audio/sfx` (all under `sounds/voices/...` in data.zpak).  Every row is
+## copied verbatim from adreno_200/set/brucelee.set (file/frame/volume/unique);
+## the explicit local audio library pins each WAV by SHA-256.  If a pinned WAV
+## or the library is missing, the row stays silent (no substitute WAV).
+const EXTENDED_SFX_CUES: Dictionary = {
+    "grab2 master": [
+        {"file": "hit_light_6_bl.wav", "frame": 10, "volume": 0.700, "unique": ""},
+       ],
+    "grabcompl2 loming": [
+        {"file": "hurt_light_male_ls_l_hurtpunch09_lo_ming.wav", "frame": 7, "volume": 1.000, "unique": "loming"},
+        {"file": "male_ls_j_painscream04_shen_lo.wav", "frame": 7, "volume": 1.000, "unique": "shenlo"},
+        {"file": "hurt_light_male_ls_f_sin_fu_b.wav", "frame": 7, "volume": 1.000, "unique": "sinfu"},
+        {"file": "master_pain_lt_3.wav", "frame": 7, "volume": 0.700, "unique": "themaster"},
+        {"file": "hurt__lightmale_ls_g_hurtpunch10_brick_davies.wav", "frame": 7, "volume": 1.000, "unique": "brickdavis"},
+        {"file": "pain_light_2_bl.wav", "frame": 7, "volume": 1.000, "unique": "brucelee"},
+        {"file": "hurt_light_male_ls_h_hurtgrunt05_the_cheif.wav", "frame": 7, "volume": 1.000, "unique": "chief"},
+        {"file": "hurt_light_male_ls_d_hurtpunch02_johnson.wav", "frame": 7, "volume": 1.000, "unique": "johnson"},
+        {"file": "hurt_light_male_ls_c_hurtpunch05_ken.wav", "frame": 7, "volume": 1.000, "unique": "kengodall"},
+        {"file": "hurt_light_male_ls_b_hurtpunch05_small_boy.wav", "frame": 7, "volume": 1.000, "unique": "smallboy"},
+       ],
+    "grabcompl2 shenlo": [
+        {"file": "hurt_light_male_ls_l_hurtpunch09_lo_ming.wav", "frame": 7, "volume": 1.000, "unique": "loming"},
+        {"file": "male_ls_j_painscream04_shen_lo.wav", "frame": 7, "volume": 1.000, "unique": "shenlo"},
+        {"file": "hurt_light_male_ls_f_sin_fu_b.wav", "frame": 7, "volume": 1.000, "unique": "sinfu"},
+        {"file": "master_pain_lt_3.wav", "frame": 7, "volume": 0.700, "unique": "themaster"},
+        {"file": "hurt__lightmale_ls_g_hurtpunch10_brick_davies.wav", "frame": 7, "volume": 1.000, "unique": "brickdavis"},
+        {"file": "pain_light_2_bl.wav", "frame": 7, "volume": 1.000, "unique": "brucelee"},
+        {"file": "hurt_light_male_ls_h_hurtgrunt05_the_cheif.wav", "frame": 7, "volume": 1.000, "unique": "chief"},
+        {"file": "hurt_light_male_ls_d_hurtpunch02_johnson.wav", "frame": 7, "volume": 1.000, "unique": "johnson"},
+        {"file": "hurt_light_male_ls_c_hurtpunch05_ken.wav", "frame": 7, "volume": 1.000, "unique": "kengodall"},
+        {"file": "hurt_light_male_ls_b_hurtpunch05_small_boy.wav", "frame": 7, "volume": 1.000, "unique": "smallboy"},
+       ],
+    "specialkickhigh smallboy": [
+        {"file": "hit_light_2_bl.wav", "frame": 3, "volume": 0.700, "unique": ""},
+       ],
+    "specialpunchhigh loming": [
+        {"file": "hit_light_1_bl.wav", "frame": 6, "volume": 0.700, "unique": ""},
+       ],
+}
+
+
 static func action_cues(action: String) -> Array:
+    ## Rows from SFX_ACTIONS plus the recovered rows whose WAVs live
+    ## outside the 38-file library (resolved by the explicit library).
+    var cues: Array = []
     if SFX_ACTIONS.has(action):
-        return SFX_ACTIONS[action]
-    return []
+        cues.append_array(SFX_ACTIONS[action])
+    if EXTENDED_SFX_CUES.has(action):
+        cues.append_array(EXTENDED_SFX_CUES[action])
+    return cues
 
 
 static func attack_cues(kind: String) -> Array:
