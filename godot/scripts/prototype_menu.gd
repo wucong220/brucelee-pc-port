@@ -68,6 +68,16 @@ const RECORDS_LABEL: String = "RECORDS"
 const ENV_STYLE_EDITOR: String = "BRUCELEE_STYLE_EDITOR"
 const STYLE_EDITOR_COMMAND: String = "style_editor"
 const STYLE_EDITOR_LABEL: String = "STYLE EDITOR"
+## Opt-in recovered scene dock (BRUCELEE_SCENE_SELECT=1).  The scene submenu is
+## then drawn from the decoded selectscenery.ui dock (10 icon cards in the
+## recovered order, with the recovered icons and labels) instead of the text
+## rows below.  The text rows stay the scene menu whenever the flag is off or
+## the dock fails closed (missing layout, dock/list mismatch, missing icon), so
+## no screen is ever half-drawn.  Confirming a card emits the same scene command
+## the text rows emit, so the scene switch itself stays in main.gd.
+const ENV_SCENE_SELECT: String = "BRUCELEE_SCENE_SELECT"
+const SceneSelectDock = preload("res://scripts/scene_select_dock.gd")
+const SCENE_DOCK_UNAVAILABLE: String = "SCENE DOCK UNAVAILABLE - TEXT MENU"
 
 var menu_state: String = "hidden"
 var selected_index: int = 0
@@ -90,6 +100,10 @@ var accept_sfx_error: String = ""
 var menu_sfx_errors: Dictionary = {}
 var last_sfx_played: String = ""
 var last_accept_was_attack: bool = false
+## Opt-in recovered scene dock; null unless BRUCELEE_SCENE_SELECT=1 and the
+## decoded layout, the sceneries.list rows and every icon all loaded.
+var scene_dock = null
+var scene_dock_error: String = ""
 ## Last item index that mouse motion selected; -1 until the pointer moves.
 ## Hover is driven by real motion events only, so a cursor resting over an item
 ## when the menu opens cannot hijack the default keyboard focus.
@@ -103,7 +117,33 @@ func _ready() -> void:
     _build_ui()
     _load_background()
     _load_menu_sfx()
+    _build_scene_dock()
     hide_menu()
+
+## True only while the opt-in recovered scene dock is enabled. Static and
+## side-effect free so a test can read the flag without a running tree.
+static func scene_select_enabled() -> bool:
+    return OS.get_environment(ENV_SCENE_SELECT) == "1"
+
+## Creates the recovered scene dock when BRUCELEE_SCENE_SELECT=1.  A dock that
+## cannot be built from the decoded layout/list/icons is dropped here (fail
+## closed) and the text scene rows stay the scene menu.
+func _build_scene_dock() -> void:
+    scene_dock = null
+    scene_dock_error = ""
+    if not scene_select_enabled():
+        return
+    var dock = SceneSelectDock.new()
+    dock.name = "SceneSelectDock"
+    add_child(dock)
+    if not dock.configure(Lang.language()):
+        scene_dock_error = String(dock.error)
+        push_error("prototype_menu: scene dock failed closed: " + scene_dock_error)
+        printerr("prototype_menu: scene dock FAIL CLOSED: " + scene_dock_error)
+        remove_child(dock)
+        dock.queue_free()
+        return
+    scene_dock = dock
 
 func _load_menu_sfx() -> void:
     nav_sfx = _load_sfx("Menu_Punch_2.wav", "nav")
@@ -279,6 +319,7 @@ func _refresh_background_preview() -> void:
     )
 
 func show_main_menu() -> void:
+    _hide_scene_dock()
     menu_state = "main"
     selected_index = 0
     visible = true
@@ -304,10 +345,63 @@ func show_scene_menu() -> void:
     hover_index = -1
     _refresh_items(SCENE_LABELS)
     _refresh_selection()
+    _show_scene_dock()
+
+## Shows the recovered dock for the scene submenu when it is available.  With
+## the flag off, or after a fail-closed load, this is a no-op and the text rows
+## just refreshed above stay the scene menu.
+func _show_scene_dock() -> void:
+    if scene_dock == null:
+        if scene_select_enabled() and not scene_dock_error.is_empty():
+            status_label.text = SCENE_DOCK_UNAVAILABLE
+        return
+    scene_dock.select_index(0)
+    scene_dock.show_dock()
+    panel_box.visible = false
+    status_label.text = ""
+
+func _hide_scene_dock() -> void:
+    if scene_dock != null:
+        scene_dock.hide_dock()
+    if panel_box != null:
+        panel_box.visible = true
+
+## True while the dock owns the scene submenu (loaded, shown, and the submenu
+## is the current state).
+func _scene_dock_active() -> bool:
+    return scene_dock != null and menu_state == "scenes" and bool(scene_dock.visible)
+
+func _move_scene_dock(delta: int) -> void:
+    if scene_dock == null:
+        return
+    if scene_dock.move(delta):
+        if bool(scene_dock.sfx_missing):
+            # The recovered page-flip sound is missing from this staging root;
+            # keep the menu's existing navigation sound rather than inventing one.
+            _play_sfx(nav_sfx, "nav")
+    _refresh_selection()
+
+func _confirm_scene_dock() -> void:
+    ## Emits the scene command main.gd already implements, exactly like the text
+    ## scene rows; main.gd applies BRUCELEE_SCENE and reloads into that scene.
+    if scene_dock == null:
+        return
+    var row: Dictionary = scene_dock.selected_row()
+    if row.is_empty():
+        return
+    var command: String = String(row.get("command", ""))
+    if command.is_empty():
+        scene_dock.set_hint("NO MENU COMMAND FOR SCENE VARIANT")
+        return
+    _play_sfx(accept_sfx, "accept")
+    last_accept_was_attack = false
+    _hide_scene_dock()
+    command_requested.emit(command)
 
 func show_opponent_menu() -> void:
     ## Opponent selection submenu. Reached through the OPPONENTS entry only.
     ## The command itself is applied by main.gd (environment + scene reload).
+    _hide_scene_dock()
     if menu_state == "main":
         main_index_before_submenu = selected_index
     menu_state = "opponents"
@@ -323,6 +417,7 @@ func show_opponent_menu() -> void:
     _refresh_selection()
 
 func show_pause_menu() -> void:
+    _hide_scene_dock()
     menu_state = "pause"
     selected_index = 0
     visible = true
@@ -334,14 +429,21 @@ func show_pause_menu() -> void:
     _refresh_selection()
 
 func hide_menu() -> void:
+    _hide_scene_dock()
     menu_state = "hidden"
     visible = false
     hover_index = -1
 
 func show_error(value: String) -> void:
     status_label.text = value
+    # While the recovered dock owns the scene submenu the text panel is hidden,
+    # so the message goes to the dock's own line instead of a hidden label.
+    if _scene_dock_active():
+        scene_dock.set_hint(value)
 
 func selected_command() -> String:
+    if _scene_dock_active():
+        return String(scene_dock.selected_row().get("command", ""))
     var commands: Array[String] = _commands()
     if selected_index < 0 or selected_index >= commands.size():
         return ""
@@ -355,6 +457,8 @@ func handle_input_event(event: InputEvent) -> bool:
         return false
     if not PrototypeControls.is_press_edge(event):
         return false
+    if _scene_dock_active():
+        return _handle_scene_dock_input(event)
     if event.is_action_pressed(PrototypeControls.MENU_UP):
         _move_selection(-1)
     elif event.is_action_pressed(PrototypeControls.MENU_DOWN):
@@ -366,6 +470,33 @@ func handle_input_event(event: InputEvent) -> bool:
     else:
         return false
     return true
+
+## Dock input.  The recovered dock is a single horizontal row with
+## `wraparround=false`, so LEFT/RIGHT move the selection and both ends clamp;
+## ENTER / SPACE / J / pad-A apply the card, ESC / BACKSPACE / pad-B return to
+## the main menu (the same BACK the text scene rows use).  UP/DOWN have no
+## meaning on a one-row dock and are ignored instead of moving a hidden list.
+func _handle_scene_dock_input(event: InputEvent) -> bool:
+    if event.is_action_pressed(PrototypeControls.MOVE_LEFT):
+        _move_scene_dock(-1)
+        return true
+    if event.is_action_pressed(PrototypeControls.MOVE_RIGHT):
+        _move_scene_dock(1)
+        return true
+    if event.is_action_pressed(PrototypeControls.MENU_ACCEPT) or _is_space(event):
+        _confirm_scene_dock()
+        return true
+    if event.is_action_pressed(PrototypeControls.MENU_CANCEL) or _is_backspace(event):
+        _play_sfx(back_sfx, "back")
+        _return_to_main_menu()
+        return true
+    return false
+
+func _is_space(event: InputEvent) -> bool:
+    return event is InputEventKey and (event as InputEventKey).keycode == KEY_SPACE
+
+func _is_backspace(event: InputEvent) -> bool:
+    return event is InputEventKey and (event as InputEventKey).keycode == KEY_BACKSPACE
 
 ## True only while the opt-in progress service is enabled. Kept static and
 ## side-effect free so the flag can be read from tests without a running tree.
@@ -458,6 +589,7 @@ func _cancel() -> void:
         command_requested.emit("resume")
 
 func _return_to_main_menu() -> void:
+    _hide_scene_dock()
     menu_state = "main"
     var commands: Array[String] = main_commands()
     selected_index = clampi(main_index_before_submenu, 0, maxi(commands.size() - 1, 0))
@@ -581,3 +713,45 @@ func layout_report() -> Dictionary:
 
 func _rect_array(rect: Rect2) -> Array:
     return [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+
+## ------------------------------------------------- recovered scene dock hooks
+## Read-only accessors used by tests/validate_scene_select.gd; they never
+## change menu behaviour.
+
+## Recovered scenes exactly as the dock shows them (empty when the dock is off
+## or failed closed).
+func scene_dock_rows() -> Array:
+    if scene_dock == null:
+        return []
+    return scene_dock.catalog.rows()
+
+## Dock geometry in the 480x320 layout space (empty when the dock is off).
+func scene_dock_rects() -> Dictionary:
+    if scene_dock == null:
+        return {}
+    return scene_dock.built_rects()
+
+func scene_dock_label() -> String:
+    if scene_dock == null:
+        return ""
+    return scene_dock.label_text()
+
+## Texture regions drawn for the cards (the decoded option crop).
+func scene_dock_card_regions() -> Array:
+    if scene_dock == null:
+        return []
+    return scene_dock.card_regions()
+
+func scene_dock_selection() -> int:
+    if scene_dock == null:
+        return -1
+    return int(scene_dock.selection)
+
+## True while the dock is loaded, shown and the scene submenu is the state.
+func scene_dock_visible() -> bool:
+    return _scene_dock_active()
+
+## The text scene rows are still laid out under the dock (the fallback); this
+## reports whether the text panel is currently the visible scene menu.
+func scene_text_rows_visible() -> bool:
+    return panel_box != null and panel_box.visible

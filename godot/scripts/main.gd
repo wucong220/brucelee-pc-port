@@ -2511,6 +2511,12 @@ func _on_menu_command(command: String) -> void:
         prototype_menu.last_accept_was_attack = false
     if command in ["fight", "training", "move_training", "gallery"]:
         _play_music("fight")
+    if MENU_SCENE_COMMANDS.has(command):
+        # Scene entries switch BRUCELEE_SCENE and reload into the selected arena.
+        # The text scene rows and the recovered scene dock emit the same
+        # commands, so this is the one place a scene is applied.
+        _request_scene_switch(command)
+        return
     match command:
         "fight":
             training_mode = false
@@ -2551,46 +2557,6 @@ func _on_menu_command(command: String) -> void:
             _reset_match()
         "main_menu":
             _open_main_menu()
-        "temple_a":
-            OS.set_environment("BRUCELEE_SCENE", "")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "temple_b":
-            OS.set_environment("BRUCELEE_SCENE", "templeyardb")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "halla":
-            OS.set_environment("BRUCELEE_SCENE", "halla")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "squareb":
-            OS.set_environment("BRUCELEE_SCENE", "squareb")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "harboura":
-            OS.set_environment("BRUCELEE_SCENE", "harboura")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "squarea":
-            OS.set_environment("BRUCELEE_SCENE", "squarea")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "harbourb":
-            OS.set_environment("BRUCELEE_SCENE", "harbourb")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "rooftopsa":
-            OS.set_environment("BRUCELEE_SCENE", "rooftopsa")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "rooftopsb":
-            OS.set_environment("BRUCELEE_SCENE", "rooftopsb")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
-        "tournamenthallb":
-            OS.set_environment("BRUCELEE_SCENE", "tournamenthallb")
-            OS.set_environment("BRUCELEE_MAIN_MENU", "0")
-            get_tree().reload_current_scene()
         "brick", "sinfu", "master", "ken", "shenlo", "smallboy", "johnson", "chief", "loming":
             _request_opponent_switch(command)
         "quit":
@@ -2598,6 +2564,41 @@ func _on_menu_command(command: String) -> void:
 
     if confirm_attack and command in ["fight", "training"]:
         call_deferred("_apply_menu_confirm_attack")
+
+## Scene command -> BRUCELEE_SCENE variant.  The ten scene entries are exactly
+## the rows of the decoded `sceneries.list` (`port_scene_variant`); "" is the
+## default Temple Yard A arena.  `scene_catalog.gd` builds the recovered dock
+## from the same table and a test keeps the two in step.
+const MENU_SCENE_COMMANDS: Dictionary = {
+    "temple_a": "",
+    "temple_b": "templeyardb",
+    "halla": "halla",
+    "squarea": "squarea",
+    "squareb": "squareb",
+    "harboura": "harboura",
+    "harbourb": "harbourb",
+    "rooftopsa": "rooftopsa",
+    "rooftopsb": "rooftopsb",
+    "tournamenthallb": "tournamenthallb",
+}
+
+func _request_scene_switch(command: String) -> void:
+    ## Two things must happen before a scene reload, for the same reasons as the
+    ## opponent switch below:
+    ##  1. leave the menu, because the main menu pauses the SceneTree and
+    ##     reloading inside a paused tree builds the new match frozen (nothing in
+    ##     it processes, so the round intro never finishes);
+    ##  2. defer the reload, because this runs inside the menu's input/signal
+    ##     callback and the menu being freed is the node dispatching the event.
+    _leave_menu()
+    call_deferred("_apply_scene_switch", command)
+
+func _apply_scene_switch(command: String) -> void:
+    if not MENU_SCENE_COMMANDS.has(command):
+        return
+    OS.set_environment("BRUCELEE_SCENE", String(MENU_SCENE_COMMANDS[command]))
+    OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+    get_tree().reload_current_scene()
 
 
 func _request_opponent_switch(command: String) -> void:
