@@ -50,6 +50,14 @@ var run: Dictionary = {}
 var battle_spec: Dictionary = {}
 var battle_started_msec: int = 0
 var last_result: Dictionary = {}
+## Native CBeatEmUpGameModes::CurrentGameModeFightWon (0x1571fc) postconditions:
+## game-modes byte +0x840 becomes 1 and game-modes +0x04 receives GetCurrentMili.
+## The same call also passes the TFightResults snapshot to the current mode's
+## virtual FightWon slot; StoryFlow owns that recovered story-mode score split.
+var current_fight_won: bool = false
+var current_fight_won_msec: int = -1
+var current_fight_results: Dictionary = {}
+
 
 var root: Control
 var dim: ColorRect
@@ -375,6 +383,28 @@ func _apply_match_loader_env(spec: Dictionary) -> void:
 
 func _reload_scene() -> void:
 	get_tree().reload_current_scene()
+
+
+## CBeatEmUpGameModes::CurrentGameModeFightWon 0x1571fc.  The native routine
+## captures the current TFightResults fields and match millis, dispatches the
+## mode-object vtable FightWon slot (for story: CBruceLeeStoryMode::FightWon
+## 0x1e73bc), then sets +0x840 = 1 and +0x04 = GetCurrentMili().  This port
+## stores the proven snapshot/timestamp and leaves the recovered story-score
+## split to StoryFlow; it does not invent a replacement stats side effect.
+func current_game_mode_fight_won(results: Dictionary, mode: String = "") -> void:
+	current_fight_won = true
+	current_fight_won_msec = Time.get_ticks_msec()
+	current_fight_results = results.duplicate(true)
+	var active_mode: String = mode if not mode.is_empty() else current_mode
+	print("GAME_MODES_FIGHT_WON mode=%s health=%d counters=%d specials=%d endmoves=%d perfects=%d match_millis=%d" % [
+		active_mode,
+		int(results.get("health_remaining", -1)),
+		int(results.get("counters", -1)),
+		int(results.get("special_moves", -1)),
+		int(results.get("ending_moves", -1)),
+		int(results.get("perfects", -1)),
+		int(results.get("match_millis", -1)),
+	])
 
 
 ## main.gd calls this once a match ends.

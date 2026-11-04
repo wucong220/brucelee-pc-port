@@ -96,6 +96,14 @@ func _force_result(scene_node: Node, player_wins: bool, max_rounds: int = 4) -> 
 			return
 		scene_node.call("_on_ko",
 			scene_node.get("computer") if player_wins else scene_node.get("player"))
+		# The second story fight is s_master_2: its authored win_on_lose loss
+		# enters the real state-6 replay.  The replayandstats menu's only native
+		# option is "continue" -> replayend; the port confirm key is Enter/J.
+		if int(scene_node.get("match_state")) == 6:
+			var enter := InputEventKey.new()
+			enter.keycode = KEY_ENTER
+			enter.pressed = true
+			scene_node.call("_handle_replay_input", enter)
 		await _wait_until(
 			func() -> bool:
 				return (
@@ -338,6 +346,7 @@ func _run() -> void:
 				func() -> bool:
 					return (
 						_screen() == "picture"
+						or _screen() == "notice"
 						or _screen() == "rewards"
 						or _screen() == "defeat"
 					),
@@ -346,7 +355,7 @@ func _run() -> void:
 			check("second match result reaches the story flow", resolved2, _screen())
 			flow = _flow()
 			guard = 0
-			while _screen() == "picture" and guard < 24:
+			while (_screen() == "picture" or _screen() == "notice") and guard < 24:
 				flow.call("_accept")
 				guard += 1
 				await process_frame

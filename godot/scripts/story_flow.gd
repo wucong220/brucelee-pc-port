@@ -88,7 +88,13 @@ var last_reward_rows: Array = []
 var last_reward_already: bool = false
 var last_reward_map: String = ""
 var last_advanced: Dictionary = {}
+## Native CBeatEmUpGameModes::CurrentGameModeFightWon (0x1571fc) invokes
+## CBruceLeeStoryMode::FightWon(TFightResults*) at state-6 entry.  This flag
+## makes that one-time fight-score payment idempotent; the later ReplayEnd ->
+## StoryFightWon path must not pay the same fight score again.
+var _fight_won_recorded: bool = false
 var chapter_completed_now: bool = false
+
 var story_finished: bool = false
 var auto_launch_armed: bool = false
 
@@ -952,7 +958,8 @@ static func story_exp_fight_score(
 			return 0
 
 
-func _award_story_exp(won: bool, health: float, elapsed: float, outcome: String) -> void:
+func _award_story_exp(won: bool, health: float, elapsed: float, outcome: String,
+		include_fight_score: bool = true) -> void:
 	if state == null:
 		return
 	var kind: String = String(battle_run.get("kind", ""))
@@ -966,20 +973,59 @@ func _award_story_exp(won: bool, health: float, elapsed: float, outcome: String)
 	if kind == "timeattack":
 		var limit: int = int(battle_run.get("time_limit", 0))
 		remaining = maxi(0, limit - int(round(elapsed)))
-	var amount: int = story_exp_fight_score(
-		kind, difficulty, int(round(health)), stats, remaining
-	)
+	var amount: int = 0
+	if include_fight_score:
+		amount = story_exp_fight_score(
+			kind, difficulty, int(round(health)), stats, remaining
+		)
+	## CBruceLeeStoryMode::StoryEventCompletionBonus is the ReplayEnd /
+	## StoryFightWon half; CurrentGameModeFightWon paid only FightWon's score.
 	if outcome == "complete":
 		amount += _story_exp_completion_bonus(kind, difficulty)
 	if amount <= 0:
 		return
 	var total: int = state.add_exp(amount)
-	print("STORY_FLOW_EXP +%d kind=%s difficulty=%d health=%d outcome=%s total=%d counters=%d specials=%d endmoves=%d perfects=%d partial=%s" % [
+	print("STORY_FLOW_EXP +%d kind=%s difficulty=%d health=%d outcome=%s total=%d counters=%d specials=%d endmoves=%d perfects=%d partial=%s fight_score=%s" % [
 		amount, kind, difficulty, int(round(health)), outcome, total,
 		int(stats.get("counters", 0)), int(stats.get("special_moves", 0)),
 		int(stats.get("ending_moves", 0)), int(stats.get("perfects", 0)),
-		str(partial),
+		str(partial), str(include_fight_score),
 	])
+
+
+func current_battle_has_replay() -> bool:
+	## CBruceLeeStoryMode::StoryModeSubEventFightHasReplay @ native 0x1e4540
+	## (Ghidra 0x1f4540) compares [story+0x5c] against the four GOT-loaded
+	## HashStrings gid_vsbattle, gid_arcade, gid_survival and gid_timeattack:
+	## relocations 0x602cc8 / 0x602338 / 0x603e5c / 0x60352c.  The decoded story
+	## data has exactly these four battle type strings; picture and unlock are
+	## the only other authored subevent types and are not in the predicate.
+	## Unknown/empty kinds are not replayable (fail closed, never true by guess).
+	return String(battle_run.get("kind", "")).to_lower() in StoryRules.BATTLE_TYPES
+
+
+func current_game_mode_fight_won(results: Dictionary = {}) -> void:
+	## CBeatEmUpGameModes::CurrentGameModeFightWon @ 0x1571fc, called by
+	## PlayerLost immediately after SetState(6) and before the
+	## StoryModeSubEventFightHasReplay predicate.  Its mode-object vtable slot
+	## (+0xc from the CBruceLeeStoryMode vptr = vtable+0x14) is
+	## CBruceLeeStoryMode::FightWon(TFightResults*) @ 0x1e73bc, so this pays the
+	## fight score at replay entry, not at ReplayEnd.  Event completion and
+	## StoryEventCompletionBonus remain on the ReplayEnd -> StoryFightWon path.
+	if state == null or not state.has_pending():
+		print("STORY_FLOW_FIGHT_WON_GAP reason=no-active-battle")
+		return
+	if _fight_won_recorded:
+		print("STORY_FLOW_FIGHT_WON_SKIP reason=duplicate")
+		return
+	_fight_won_recorded = true
+	var health: float = float(results.get("health_remaining", 100))
+	var elapsed: float = float(Time.get_ticks_msec() - battle_started_msec) / 1000.0
+	print("STORY_FLOW_FIGHT_WON kind=%s health=%d match_millis=%d" % [
+		String(battle_run.get("kind", "")), int(round(health)),
+		int(results.get("match_millis", -1)),
+	])
+	_award_story_exp(true, health, elapsed, "fight")
 
 
 func current_battle_win_on_lose() -> bool:
@@ -993,6 +1039,8 @@ func current_battle_win_on_lose() -> bool:
 func match_finished(won: bool) -> void:
 	if state == null or not state.has_pending():
 		return
+	var fight_score_paid: bool = _fight_won_recorded
+	_fight_won_recorded = false
 	var elapsed: float = float(Time.get_ticks_msec() - battle_started_msec) / 1000.0
 	var health: float = 100.0
 	if main != null:
@@ -1015,10 +1063,13 @@ func match_finished(won: bool) -> void:
 		"difficulty_value": int(battle_spec.get("difficulty_value", -1)),
 	})
 	var outcome: String = String(advanced.get("outcome", "failed"))
-	print("STORY_FLOW_RESULT outcome=%s won=%s event=%s" % [
-		outcome, str(won), String(battle_run.get("event", "")),
+	print("STORY_FLOW_RESULT outcome=%s won=%s event=%s fight_score_paid=%s" % [
+		outcome, str(won), String(battle_run.get("event", "")), str(fight_score_paid),
 	])
-	_award_story_exp(won, health, elapsed, outcome)
+	# CurrentGameModeFightWon already paid FightWon's score at replay entry.
+	# Only the StoryEventCompletionBonus remains for the ReplayEnd path.
+	_award_story_exp(won, health, elapsed, outcome, not fight_score_paid)
+
 	if outcome == "next":
 		state.set_pending({
 			"run": battle_run,

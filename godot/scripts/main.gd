@@ -5059,14 +5059,60 @@ func _story_player_lost_match() -> bool:
 
 
 func _story_replay_state_applies() -> bool:
-    ## PlayerLost story branch, true half: StoryCurrentFightWinOnLose() != 0 ->
-    ## 0x19023c SetState(6) replay (0x19025c) and, when the subevent has replay
-    ## data, gui/replayandstats (0x190288 -> "ReplayAndStats"); its "continue"
-    ## action is "replayend" in game.states, and ReplayEnd's mode-1 path is
-    ## StoryFightWon (ReplayEnd @0x190540).
+    ## PlayerLost story branch, outer win_on_lose test:
+    ## StoryCurrentFightWinOnLose() != 0 -> 0x19023c SetState(6).  The next
+    ## native call is CurrentGameModeFightWon, then the separate
+    ## StoryModeSubEventFightHasReplay predicate chooses ReplayAndStats vs
+    ## StopMusic + StoryFightWon (0x190260..0x190504).
     if not _story_player_lost_match():
         return false
     return bool(story_flow.call("current_battle_win_on_lose"))
+
+
+func _story_subevent_has_replay() -> bool:
+    ## CBruceLeeStoryMode::StoryModeSubEventFightHasReplay @ 0x1e4540.  The
+    ## four GOT HashStrings are vsbattle/arcade/survival/timeattack; picture,
+    ## unlock, empty and unknown kinds fail closed to false.
+    if story_flow == null:
+        return false
+    return bool(story_flow.call("current_battle_has_replay"))
+
+
+func _record_current_game_mode_fight_won() -> void:
+    ## CBeatEmUpGameModes::CurrentGameModeFightWon @ 0x1571fc.  Its vtable
+    ## dispatch resolves to CBruceLeeStoryMode::FightWon(TFightResults*)
+    ## @ 0x1e73bc; StoryFlow pays the fight score here and keeps the later
+    ## StoryFightWon/ReplayEnd completion bonus separate.
+    var results: Dictionary = get_fight_results()
+    if game_modes != null:
+        game_modes.call("current_game_mode_fight_won", results, "story")
+    if story_flow != null:
+        story_flow.call("current_game_mode_fight_won", results)
+
+
+func _stop_music_for_story_false_branch() -> void:
+    ## PlayerLost @0x190504 calls global StopMusic() before StoryFightWon().
+    ## The port boundary is the recovered music player; do not unload or alter
+    ## any user/audio configuration here.
+    if _music_player != null:
+        _music_player.stop()
+    print("STOP_MUSIC source=story_subevent_false_branch")
+
+
+func _resolve_story_fight_won_without_replay() -> void:
+    ## PlayerLost false half @0x190504: StopMusic -> StoryFightWon.  StoryFightWon
+    ## completes the event immediately; no replay state and no ReplayAndStats
+    ## page are entered on this branch.
+    if match_over:
+        return
+    match_over = true
+    done = true
+    _replay_handed_off = true
+    print("STORY_SUBEVENT_REPLAY_BRANCH has_replay=false action=stopmusic+storyfightwon")
+    hud.show_message("STORY CONTINUES")
+    if story_flow != null:
+        story_flow.match_finished(true)
+
 
 
 func _enter_countdown_state() -> bool:
@@ -5207,7 +5253,6 @@ func _enter_replay_state() -> bool:
     _replay_message_seconds = -1
     done = true
     _restart_fight_camera()
-    _refresh_replay_message()
     print("NATIVE_STATE_ENTER state=6 base_ms=%d player_records=%d computer_records=%d speed_scale=%.3f" % [
         base_ms, int(player_recorder.size()), int(computer_recorder.size()),
         NativeMatchStates.REPLAY_STATE_SPEED_SCALE,
@@ -5688,21 +5733,39 @@ func _on_ko(fighter: PortFighter) -> void:
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
     # PlayerLost() mode 1: the recovered story branch reads
     # StoryCurrentFightWinOnLose().  False -> SetState(14) defeat presentation
-    # (0x19022c -> 0x19049c); true -> SetState(6) replay (0x19023c -> 0x19025c).
-    # The replay is only available when the opt-in recovered recorder produced
-    # both 0x2c buffers; without them the port falls back to state 14 rather
-    # than looping an empty replay (a port fail-closed rule, not native
+    # (0x19022c -> 0x19049c); true -> SetState(6) (0x19023c -> 0x19025c), then
+    # CurrentGameModeFightWon, then StoryModeSubEventFightHasReplay:
+    #   true  -> ReplayAndStats (continue -> replayend -> StoryFightWon)
+    #   false -> StopMusic -> StoryFightWon immediately.
+    # The true replay is only presentable when the opt-in recovered recorder
+    # produced both 0x2c buffers; without them the port falls back to state 14
+    # rather than looping an empty replay (a port fail-closed rule, not native
     # branching).
     if fighter == player and _story_player_lost_match():
         if _story_replay_state_applies():
-            if _enter_replay_state():
+            var has_replay: bool = _story_subevent_has_replay()
+            if has_replay:
+                if _enter_replay_state():
+                    # Native order: SetState(6) -> CurrentGameModeFightWon ->
+                    # StoryModeSubEventFightHasReplay -> ReplayAndStats.
+                    _record_current_game_mode_fight_won()
+                    _refresh_replay_message()
+                    return
+                _record_current_game_mode_fight_won()
+                var replay_gap: String = (
+                    String(native_states.fail_reason) if native_states != null else ""
+                )
+                if replay_gap.is_empty():
+                    replay_gap = "recorder-unavailable"
+                print("REPLAY_STATE_GAP state=6 reason=%s fallback=state14" % replay_gap)
+            else:
+                # Native false half @0x190504: CurrentGameModeFightWon already
+                # happened above; now StopMusic + StoryFightWon.  No replay state
+                # and no ReplayAndStats page.
+                _record_current_game_mode_fight_won()
+                _stop_music_for_story_false_branch()
+                _resolve_story_fight_won_without_replay()
                 return
-            var replay_gap: String = (
-                String(native_states.fail_reason) if native_states != null else ""
-            )
-            if replay_gap.is_empty():
-                replay_gap = "recorder-unavailable"
-            print("REPLAY_STATE_GAP state=6 reason=%s fallback=state14" % replay_gap)
         if _enter_countdown_state():
             return
     var player_won: bool = fighter == computer
