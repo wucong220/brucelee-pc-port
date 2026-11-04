@@ -3,8 +3,9 @@ class_name RootTrackEvaluator
 
 ## Port bridge for the ROOT TRANSFORM VALUE at a recovered sample index.
 ##
-## Native ANM decoding is now recovered for raw tracks (see
-## scripts/anm_track_codec.gd + scripts/native_root_output.gd). Bind a decoded
+## Native ANM decoding is now recovered for raw tracks and for the proven
+## `waveletsample` codec (see scripts/anm_track_codec.gd,
+## scripts/wavelet_anm_codec.gd + scripts/native_root_output.gd). Bind a decoded
 ## ANM clip with bind_anm() and this evaluator returns the recovered native
 ## TTransform VALUE at BOTH integer and fractional (smooth-flag) samples.
 ## Without an ANM binding the legacy Godot AnimationPlayer bridge is kept for
@@ -12,10 +13,15 @@ class_name RootTrackEvaluator
 ##
 ## Evidence: docs/FIGHTING_SET_FINDINGS.md, report/REPORT.md of
 ## D:\BruceLeeWork\buildframe-fractional-20261104 (direct ARM disassembly of
-## libdefault.so sha256 1da7a30...). Unproven codecs (e.g. waveletsample on a
-## root track) and out-of-range samples fail closed.
+## libdefault.so sha256 1da7a30...) and
+## D:\BruceLeeWork\wavelet-codec-20261104 (CWaveletDecoder::UpdateToFrame
+## @0x00418aa0 / @0x0041a914 executed under Unicorn on real ANM tracks).
+## Unproven codecs and out-of-range samples fail closed.
 
 const NativeRootOutputScript = preload("res://scripts/native_root_output.gd")
+const WaveletAnmCodecScript = preload("res://scripts/wavelet_anm_codec.gd")
+const _SUPPORTED_CODECS: Array[String] = [
+    "rawfixedsample", "rawfloatsample", "waveletsample"]
 
 var animation_player: AnimationPlayer = null
 var clip_name: String = ""
@@ -49,8 +55,34 @@ func set_clip(name: String) -> bool:
     return true
 
 
+func _prepare_track(track: Variant) -> bool:
+    if track == null or not (track is Dictionary):
+        last_error = "track-required"
+        return false
+    var codec: String = String(track.get("codec", ""))
+    if not _SUPPORTED_CODECS.has(codec):
+        last_error = "unsupported-codec:" + codec
+        return false
+    if codec != "waveletsample":
+        return true
+    ## Decode once at bind time so an invalid stream fails closed before any
+    ## value is evaluated, mirroring the native one-time resource decode.
+    var decoded: Dictionary = WaveletAnmCodecScript.decode(track)
+    if not bool(decoded.get("ok", false)):
+        last_error = "unsupported-codec:waveletsample:" + String(
+            decoded.get("reason", "unknown"))
+        return false
+    if int(decoded.get("nonzero_padding_streams", 0)) != 0:
+        last_error = "unsupported-codec:waveletsample:nonzero-padding"
+        return false
+    track["keys"] = decoded["keys"]
+    track["wavelet_frames"] = int(decoded["frames"])
+    track["wavelet_nonzero_padding"] = int(decoded["nonzero_padding_streams"])
+    return true
+
+
 func bind_anm(fixture: Dictionary) -> bool:
-    ## Bind proven decoded ANM root tracks. Only rawfixedsample/rawfloatsample
+    ## Bind proven decoded ANM root tracks. Only the proven raw and wavelet
     ## codecs are accepted; anything else fails closed.
     last_error = ""
     if fixture == null or fixture.is_empty():
@@ -61,17 +93,12 @@ func bind_anm(fixture: Dictionary) -> bool:
     if positions == null:
         last_error = "missing-positions"
         return false
-    var codec: String = String(positions["codec"])
-    if codec != "rawfixedsample" and codec != "rawfloatsample":
-        last_error = "unsupported-codec:" + codec
+    if not _prepare_track(positions):
         return false
     for key in ["rotations", "scales"]:
         var extra: Variant = tracks.get(key, null)
-        if extra != null:
-            var extra_codec: String = String(extra["codec"])
-            if extra_codec != "rawfixedsample" and extra_codec != "rawfloatsample":
-                last_error = "unsupported-codec:" + extra_codec
-                return false
+        if extra != null and not _prepare_track(extra):
+            return false
     anm_fixture = fixture
     return true
 

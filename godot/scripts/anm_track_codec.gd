@@ -1,7 +1,8 @@
 extends RefCounted
 class_name AnmTrackCodec
 
-## Proven native IAnimCodec::GetFrame math for raw ANM tracks.
+## Proven native IAnimCodec::GetFrame math for raw ANM tracks, plus the proven
+## `waveletsample` decoder (scripts/wavelet_anm_codec.gd).
 ##
 ## Direct ARM evidence (libdefault.so sha256 1da7a30...):
 ##   CRawCodec<GVec3<TFixedPoint<12,int>>, GVec3<float>>::GetFrame @ 0x40b6cc
@@ -9,6 +10,8 @@ class_name AnmTrackCodec
 ##   CRawCodec<GVec3<float>, GVec3<float>>::GetFrame @ 0x40c69c
 ##   CRawCodec<TQuaternion<float>, TQuaternion<float>>::GetFrame @ 0x40c8e8
 ##   CRawStaticCodec<...>::GetFrame @ 0x40b57c (single key, ignores time)
+##   CWaveletDecoder<int,float>::UpdateToFrame @ 0x00418aa0
+##   CWaveletDecoder<short,float>::UpdateToFrame @ 0x0041a914
 ##
 ##   i = (u32)time                       (vcvt.u32.f32; negative saturates to 0)
 ##   frac = time - (float)i
@@ -20,13 +23,17 @@ class_name AnmTrackCodec
 ##
 ## Stored keys: int32[3] (Q12 x 1/4096) for positions/scales,
 ## int16[4] (Q14 x 1/16384) for rotations; rawfloatsample stores float32.
+## Wavelet tracks carry compressed words; they are decoded to float32 samples
+## once by WaveletAnmCodec and then use the same interpolation rules.
 ## All arithmetic is float32 (ARM vmul/vmla/vmls/vnmla); f32() emulates one
 ## register round-trip. Anything outside the proven codecs fails closed.
 
+const WaveletAnmCodecScript = preload("res://scripts/wavelet_anm_codec.gd")
 const INV_Q12: float = 1.0 / 4096.0
 const INV_Q14: float = 1.0 / 16384.0
 const REASON_RANGE: String = "sample-out-of-range"
 const REASON_CODEC: String = "unsupported-codec"
+const REASON_WAVELET: String = "wavelet-decode-failed"
 
 
 static func f32(value: float) -> float:
@@ -44,13 +51,23 @@ static func _split_time(time: float) -> Dictionary:
     return {"i": i, "frac": frac}
 
 
-static func _decode_key(row: Array, codec: String, kind: String) -> Array:
+static func _decode_key(row: Array, codec: String, kind: String,
+                        vector_index: int = 0) -> Array:
     if codec == "rawfixedsample":
         var scale: float = INV_Q14 if kind == "quat" else INV_Q12
         var out: Array = []
         for c in row:
             out.append(f32(float(c) * scale))
         return out
+    if codec == "waveletsample":
+        ## Decoded keys hold one vector per bone offset and frame.
+        if vector_index < 0 or vector_index >= row.size():
+            return []
+        var selected: Array = row[vector_index]
+        var selected_out: Array = []
+        for c in selected:
+            selected_out.append(f32(float(c)))
+        return selected_out
     if codec == "rawfloatsample":
         var outf: Array = []
         for c in row:
@@ -59,8 +76,25 @@ static func _decode_key(row: Array, codec: String, kind: String) -> Array:
     return []
 
 
+static func _prepare_wavelet(track: Dictionary) -> Dictionary:
+    ## Decode a compressed wavelet track once; cached in the track dictionary.
+    if track.has("keys"):
+        return {"ok": true}
+    var decoded: Dictionary = WaveletAnmCodecScript.decode(track)
+    if not bool(decoded.get("ok", false)):
+        return {"ok": false, "reason": REASON_WAVELET + ":" +
+                String(decoded.get("reason", "unknown"))}
+    if int(decoded.get("nonzero_padding_streams", 0)) != 0:
+        return {"ok": false, "reason": REASON_WAVELET + ":nonzero-padding"}
+    track["keys"] = decoded["keys"]
+    track["wavelet_frames"] = int(decoded["frames"])
+    track["wavelet_nonzero_padding"] = int(decoded["nonzero_padding_streams"])
+    return {"ok": true}
+
+
 static func _is_supported(codec: String) -> bool:
-    return codec == "rawfixedsample" or codec == "rawfloatsample"
+    return codec == "rawfixedsample" or codec == "rawfloatsample" \
+        or codec == "waveletsample"
 
 
 static func _exact_key(track: Dictionary, index: int) -> Dictionary:
@@ -70,7 +104,10 @@ static func _exact_key(track: Dictionary, index: int) -> Dictionary:
     var keys: Array = track["keys"]
     if index >= keys.size():
         return {"ok": false, "reason": REASON_RANGE}
-    var v: Array = _decode_key(keys[index], codec, String(track["kind"]))
+    var v: Array = _decode_key(keys[index], codec, String(track["kind"]),
+        int(track.get("vector_index", 0)))
+    if v.is_empty():
+        return {"ok": false, "reason": REASON_RANGE}
     return {"ok": true, "mode": "integer", "value": v}
 
 
@@ -104,6 +141,10 @@ static func sample(track: Dictionary, time: float) -> Dictionary:
     var codec: String = String(track["codec"])
     if not _is_supported(codec):
         return {"ok": false, "reason": REASON_CODEC + ":" + codec}
+    if codec == "waveletsample":
+        var prepared: Dictionary = _prepare_wavelet(track)
+        if not bool(prepared["ok"]):
+            return {"ok": false, "reason": String(prepared["reason"])}
     var keys: Array = track["keys"]
     if keys.is_empty():
         return {"ok": false, "reason": REASON_RANGE}
@@ -120,8 +161,9 @@ static func sample(track: Dictionary, time: float) -> Dictionary:
         return _exact_key(track, i)
     if i + 1 >= keys.size():
         return {"ok": false, "reason": REASON_RANGE}
-    var a: Array = _decode_key(keys[i], codec, String(track["kind"]))
-    var b: Array = _decode_key(keys[i + 1], codec, String(track["kind"]))
+    var vector_index: int = int(track.get("vector_index", 0))
+    var a: Array = _decode_key(keys[i], codec, String(track["kind"]), vector_index)
+    var b: Array = _decode_key(keys[i + 1], codec, String(track["kind"]), vector_index)
     if a.is_empty() or b.is_empty():
         return {"ok": false, "reason": REASON_CODEC + ":" + codec}
     if String(track["kind"]) == "quat":
