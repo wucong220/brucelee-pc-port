@@ -6264,6 +6264,20 @@ func _try_follow_links() -> bool:
             )
             if not _candidate_clip_paths.has(ground_clip):
                 continue
+            # The recovered ground links carry their own source window
+            # (faceupidle -> faceupattack [0,45], facedownidle ->
+            # facedownattack [0,45]).  _native_link_window_ok() deliberately
+            # skips window checks while an idle animation plays, so enforce the
+            # row's own window here: an out-of-window press must not start the
+            # ground attack.
+            if state in ["faceupidle", "facedownidle"]:
+                var ground_window: Array = Array(link.get("time", []))
+                if ground_window.size() < 2:
+                    continue
+                var ground_frame: float = state_time * SOURCE_FRAME_RATE
+                if (ground_frame + 0.0001 < float(ground_window[0])
+                        or ground_frame > float(ground_window[1]) + 0.0001):
+                    continue
             _consume_link_events(link)
             if _link_text(link, "input_reset") == "true":
                 _clear_link_events()
@@ -8532,6 +8546,27 @@ func receive_hit(
     _attack_connected = false
     # Being hit cancels a sequence that matched during the interrupted attack.
     _clear_link_state()
+    # A downed fighter's recovered link table only answers the low impact row
+    # (facedownidle -> impactfacedown) and the healthzero row.  Any other
+    # impact resolves to no playable reaction: the hit still deals its damage,
+    # but it must not invent a standing hitstun/blockstun transition.
+    var downed_reaction_playable: bool = (
+        reaction.has("animation")
+        and _candidate_clip_paths.has(String(reaction["animation"]))
+    )
+    var downed_fail_closed: bool = (
+        state_before == "facedownidle"
+        and health - amount > 0.0
+        and (reaction.is_empty() or not downed_reaction_playable)
+    )
+    if downed_fail_closed:
+        # No recovered link answers this nonlethal impact, and any named
+        # reaction clip is absent.  facedownidle's recovered action carries no
+        # ReceiveDamage group either, so fail closed entirely: no damage, no
+        # state change and no landed-hit record (the same convention as the
+        # Brick ground test).  A lethal hit keeps the recovered healthzero edge
+        # below, which either enters facedownko or the standing ko fallback.
+        return false
     if blocked:
         health = maxf(0.0, health - amount * 0.12)
         state = "blockstun"
@@ -8561,8 +8596,17 @@ func receive_hit(
         last_reaction_clip_implemented = false
     _reaction_clock_active = false
     _reaction_return_action = ""
+    # A reaction whose candidate clip is absent cannot be played.  Fail closed:
+    # do not run its return clock either, because that would walk the fighter
+    # into the reaction's post-hit state (for example idle2) even though the
+    # reaction itself never played.
+    var reaction_clip_ready: bool = (
+        reaction.has("animation")
+        and _candidate_clip_paths.has(String(reaction["animation"]))
+    )
     if (frame_state_machine_enabled and state in ["hitstun", "blockstun"]
-            and reaction.has("return_action")):
+            and reaction.has("return_action")
+            and reaction_clip_ready):
         _reaction_clock_start_frame = last_reaction_entry_frame
         _reaction_clock_ms = 0.0
         _reaction_return_action = String(reaction["return_action"])

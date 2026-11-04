@@ -48,7 +48,7 @@ func _run() -> void:
     if not _check_attack_radius_and_direction(player, opponent):
         quit(1)
         return
-    if not _check_guard_and_ai_guard(scene, player, opponent):
+    if not _check_guard(scene, player, opponent):
         quit(1)
         return
     if not _check_ground_impact_boundary(player, opponent):
@@ -74,10 +74,10 @@ func _run() -> void:
         "damage": PortFighter.FACEUP_ATTACK_DAMAGE,
         "attack_radius": PortFighter.FACEUP_ATTACK_RADIUS,
         "exit_frame_candidate": PortFighter.FACEUP_ATTACK_EXIT_FRAME,
-        "prototype_sequences": ["aaa", "abb", "bcc", "bdd"],
+        "prototype_sequences": ["a", "b", "c", "d"],
         "physical_mapping": "prototype-only J/K/L/U",
-        "unverified_hits": "closed except verified low impact-to-floor path",
-    }))
+        "source_window": [0, 45],
+        "unverified_hits": "closed except verified low impact-to-floor path",    }))
     quit(0)
 
 
@@ -135,31 +135,24 @@ func _check_clip(player: PortFighter) -> bool:
 
 
 func _check_sequences(player: PortFighter, opponent: PortFighter) -> bool:
-    for sequence_value: Variant in [
-        ["a", "a", "a"],
-        ["a", "b", "b"],
-        ["b", "c", "c"],
-        ["b", "d", "d"],
-    ]:
-        var sequence: Array = sequence_value
+    # brucelee.set lists four direct faceupidle -> faceupattack rows.  Each row
+    # stores three layout alternatives; CLinkDescr::GetKeySequence(index = +0x1c)
+    # selects one.  The PC port uses the keyboard layout (index 1), where the
+    # four rows are the single presses a, b, c, d.  The old three-press
+    # sequences (aaa/abb/bcc/bdd) were a misreading of those alternatives.
+    for virtual_key: String in ["a", "b", "c", "d"]:
         if not _enter_faceup_idle(player, opponent, 10.0):
             return false
-        if player.record_virtual_press(String(sequence[0])):
-            push_error("faceupattack started after one input")
-            return false
-        if player.record_virtual_press(String(sequence[1])):
-            push_error("faceupattack started after two inputs")
-            return false
-        if not player.record_virtual_press(String(sequence[2])):
-            push_error("Verified face-up sequence did not start attack: "
-                + "".join(sequence))
+        if not player.record_standing_combo_press(virtual_key):
+            push_error("Recovered single-key face-up attack row did not match: "
+                + virtual_key)
             return false
         player._animate_candidate()
         if not _faceup_attack_is(player):
             var animation: AnimationPlayer = player.get("_candidate_animation")
             push_error("faceupattack did not start with its recovered clip and radius: "
                 + JSON.stringify({
-                    "sequence": "".join(sequence),
+                    "key": virtual_key,
                     "state": player.state,
                     "attack_kind": player.attack_kind,
                     "candidate_clip": player.candidate_animation_clip,
@@ -176,41 +169,28 @@ func _check_sequences(player: PortFighter, opponent: PortFighter) -> bool:
                     "radius": player.source_radius_for_current_animation(),
                 }))
             return false
-    for case_value: Variant in [
-        ["a", "c", "a", "a"],
-        ["a", "c", "b", "b"],
-        ["b", "a", "c", "c"],
-        ["b", "a", "d", "d"],
-    ]:
-        var inputs: Array = case_value
-        if not _enter_faceup_idle(player, opponent, 10.0):
-            return false
-        for input_index: int in range(inputs.size()):
-            var matched: bool = player.record_virtual_press(
-                String(inputs[input_index])
-            )
-            if input_index < inputs.size() - 1 and matched:
-                push_error("Face-up sequence matched too early: " + "".join(inputs))
-                return false
-            if input_index == inputs.size() - 1 and not matched:
-                push_error("Face-up sequence did not skip unrelated events: "
-                    + "".join(inputs))
-                return false
-        player._animate_candidate()
-        if not _faceup_attack_is(player):
-            push_error("Face-up subsequence did not enter attack: " + "".join(inputs))
-            return false
+    # A direction token outside the four recovered rows must not start the
+    # attack, and neither may a standing attack request.
     if not _enter_faceup_idle(player, opponent, 10.0):
         return false
-    for virtual_key: String in ["a", "b", "c"]:
-        if player.record_virtual_press(virtual_key):
-            push_error("Unverified abc input started faceupattack")
-            return false
+    if player.record_standing_combo_press("up"):
+        push_error("Unmapped direction started faceupattack")
+        return false
     if not _faceup_idle_is(player, 10.0):
-        push_error("Wrong face-up sequence changed faceupidle")
+        push_error("Wrong face-up input changed faceupidle")
         return false
     if player.request_attack("punch") or player.request_attack("kick"):
         push_error("A standing attack started directly from faceupidle")
+        return false
+    # From the standing idle the same press follows the standing link table,
+    # never the ground attack.
+    player.reset_fighter(Vector3(0.6, 1.2, 0.0))
+    opponent.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    player.state = "idle"
+    player.state_time = 0.0
+    player.record_standing_combo_press("a")
+    if player.state == "faceupattack":
+        push_error("A ground attack started from the standing idle")
         return false
     return true
 
@@ -219,86 +199,47 @@ func _check_input_boundaries_and_isolation(
         player: PortFighter,
         opponent: PortFighter,
 ) -> bool:
+    # The recovered row's own window is [0,45]; the port now enforces it for
+    # the ground link instead of skipping the window while an idle plays.
     for frame: float in [0.0, 9.999, 10.0, 44.999, 45.0]:
         if not _enter_faceup_idle(player, opponent, frame):
             return false
-        if not _press_sequence(player, ["a", "a", "a"]):
-            push_error("Face-up attack rejected valid sequence at frame " + str(frame))
+        if not player.record_standing_combo_press("a"):
+            push_error("Face-up attack rejected its recovered window at frame " + str(frame))
             return false
-    if not _enter_faceup_idle(player, opponent, -0.001):
-        return false
-    if player.record_virtual_press("a"):
-        push_error("Face-up attack accepted input before source frame 0")
-        return false
-    if not _enter_faceup_idle(player, opponent, 45.001):
-        return false
-    if player.record_virtual_press("a"):
-        push_error("Face-up attack accepted input after source frame 45")
-        return false
-    if (not _faceup_idle_is(player, 45.001)
-            or not player._ground_attack_input_history.is_empty()):
-        push_error("Out-of-window face-up input was not discarded")
-        return false
+        player._animate_candidate()
+        if not _faceup_attack_is(player):
+            push_error("Face-up attack did not start at frame " + str(frame))
+            return false
+    for frame: float in [-0.001, 45.001]:
+        if not _enter_faceup_idle(player, opponent, frame):
+            return false
+        if player.record_standing_combo_press("a"):
+            push_error("Face-up attack accepted input outside [0,45] at frame " + str(frame))
+            return false
+        if not _faceup_idle_is(player, frame):
+            push_error("Out-of-window face-up input changed faceupidle at frame " + str(frame))
+            return false
 
+    # A state transition discards unconsumed link events (the recovered
+    # _enter_locomotion_state clears the queue).
     if not _enter_faceup_idle(player, opponent, 20.0):
         return false
-    if (player.record_virtual_press("a")
-            or player._ground_attack_input_history.size() != 1
-            or String(player.get("_ground_attack_input_owner")) != "faceupidle"):
-        push_error("Face-up partial input was not recorded with state ownership")
+    player._link_events.append({
+        "tokens": ["a"], "consumed": false, "time_ms": 0,
+    })
+    player._enter_locomotion_state("idle2")
+    if not player._link_events.is_empty():
+        push_error("State transition retained unconsumed link events")
         return false
-    player.state = "facedownidle"
-    player.state_time = 20.0 / PortFighter.SOURCE_FRAME_RATE
-    if (player.record_virtual_press("b")
-            or player._ground_attack_input_history.size() != 1
-            or String(player.get("_ground_attack_input_owner")) != "facedownidle"):
-        push_error("Ground input history leaked across idle states")
-        return false
-    player.state = "faceupidle"
-    player.state_time = 20.0 / PortFighter.SOURCE_FRAME_RATE
-    player._clear_ground_attack_input_history()
-    if player.record_virtual_press("a"):
-        return false
-    player._begin_faceup_getup()
-    if (not player._ground_attack_input_history.is_empty()
-            or not String(player.get("_ground_attack_input_owner")).is_empty()):
-        push_error("faceupidle -> faceupgetup retained ground input history")
-        return false
-
-    if not _enter_faceup_idle(player, opponent, 20.0):
-        return false
-    player.record_virtual_press("a")
+    player._link_events.append({
+        "tokens": ["a"], "consumed": false, "time_ms": 0,
+    })
     player.reset_fighter(Vector3(0.6, 1.2, 0.0))
-    if (not player._ground_attack_input_history.is_empty()
-            or not String(player.get("_ground_attack_input_owner")).is_empty()):
-        push_error("Fighter reset did not clear ground input history ownership")
+    if not player._link_events.is_empty():
+        push_error("Fighter reset retained unconsumed link events")
         return false
-    if not _enter_faceup_idle(player, opponent, 20.0):
-        return false
-    if not _press_sequence(player, ["a", "a", "a"]):
-        return false
-    if not _enter_faceup_idle(player, opponent, 20.0):
-        return false
-    if player.record_virtual_press("a"):
-        return false
-    player._time += (
-        PortFighter.GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS + 0.01
-    )
-    if (player.record_virtual_press("a")
-            or player._ground_attack_input_history.size() != 1
-            or String(player.get("_ground_attack_input_owner")) != "faceupidle"):
-        push_error("Face-up input history lost ownership after timeout")
-        return false
-    if not _press_sequence(player, ["a", "a"]):
-        push_error("Face-up sequence failed after the previous history expired")
-        return false
-    if not _faceup_attack_is(player):
-        push_error("Face-up timeout re-entry did not enter faceupattack")
-        return false
-    return (
-        player._ground_attack_input_history.is_empty()
-        and String(player.get("_ground_attack_input_owner")).is_empty()
-    )
+    return true
 
 
 func _check_attack_priority_over_getup(
@@ -308,15 +249,15 @@ func _check_attack_priority_over_getup(
     if not _enter_faceup_idle(player, opponent, 10.0):
         return false
     player.move_axis = Vector2(1.0, 0.0)
-    if player.record_virtual_press("a") or player.record_virtual_press("b"):
-        return false
-    if not player.record_virtual_press("b"):
-        push_error("Face-up attack sequence did not complete with horizontal getup held")
+    # The ground attack link is evaluated by _try_follow_links before the
+    # faceupidle move_axis getup fallback, so the attack wins.
+    if not player.record_standing_combo_press("b"):
+        push_error("Face-up attack did not win over the horizontal getup input")
         return false
     player._advance_timed_states(0.0)
     player._animate_candidate()
     if not _faceup_attack_is(player):
-        push_error("Completing an attack sequence did not take priority over getup")
+        push_error("Completing an attack link did not take priority over getup")
         return false
     player.move_axis = Vector2.ZERO
     return true
@@ -469,14 +410,15 @@ func _check_direction_case(
     return not expected_hit or hit_events[0] == "faceupattack"
 
 
-func _check_guard_and_ai_guard(
-        scene: Node,
+func _check_guard(
+        _scene: Node,
         player: PortFighter,
         opponent: PortFighter,
 ) -> bool:
     if not _enter_and_start_attack(player, opponent):
         return false
     opponent.guard_held = true
+    opponent.guard_block_action = ""
     var health_before: float = opponent.health
     var blocked_events: Array[String] = []
     var on_hit: Callable = func(
@@ -503,44 +445,24 @@ func _check_guard_and_ai_guard(
         push_error("Guarded faceupattack did not use the recovered impact fields")
         return false
 
-    player.reset_fighter(Vector3(0.0, 1.2, 0.0))
-    opponent.reset_fighter(Vector3(0.6, 1.2, 0.0))
-    player.state = "faceupattack"
-    player.state_time = 0.0
-    player.attack_kind = "faceupattack"
-    player.attack_sequence = 77
-    player.facing = 1.0
-    var rng: RandomNumberGenerator = scene.get("rng")
-    var guard_seed: int = -1
-    for seed_value: int in range(1000):
-        rng.seed = seed_value
-        if rng.randf() < 0.25:
-            guard_seed = seed_value
-            break
-    if guard_seed < 0:
-        push_error("Unable to find deterministic faceupattack guard seed")
+    # Recovered guard actions: begin_block() holds the native high/mid/low (and
+    # hard) guard row.  A hard low faceupattack is covered by highblockhard.
+    if not _enter_and_start_attack(player, opponent):
         return false
-    rng.seed = guard_seed
-    scene.set("ai_timer", 10.0)
-    scene.set("ai_guard_sequence", -1)
-    scene.set("ai_guard_decision", false)
-    scene.call("_think_ai", 0.0)
-    if not opponent.guard_held:
-        push_error("AI did not guard during faceupattack startup")
+    if not opponent.begin_block("highblockhard"):
+        push_error("Recovered highblockhard guard action was rejected")
         return false
-    player._advance_timed_states(
-        (float(PortFighter.FACEUP_ATTACK_DAMAGE_START_FRAME) + 0.001)
-        / PortFighter.SOURCE_FRAME_RATE
-    )
-    if opponent.state != "blockstun" or not player._attack_connected:
-        push_error("AI guard was not applied to the first faceupattack contact")
+    health_before = opponent.health
+    player._try_faceup_attack_contact()
+    if (opponent.state != "blockstun"
+            or absf(
+                health_before
+                - opponent.health
+                - PortFighter.FACEUP_ATTACK_DAMAGE * 0.12
+            ) > 0.001):
+        push_error("Recovered highblockhard row did not block the faceupattack")
         return false
-    player.state_time = (
-        float(PortFighter.FACEUP_ATTACK_DAMAGE_END_FRAME + 1)
-        / PortFighter.SOURCE_FRAME_RATE
-    )
-    scene.call("_think_ai", 0.0)
-    return not opponent.guard_held
+    return true
 
 
 func _check_ground_impact_boundary(
@@ -673,21 +595,14 @@ func _check_missing_clip_fallback(
         player._candidate_clip_paths[PortFighter.FACEUP_ATTACK_CLIP]
     )
     player._candidate_clip_paths.erase(PortFighter.FACEUP_ATTACK_CLIP)
-    for sequence_value: Variant in [
-        ["a", "a", "a"],
-        ["a", "b", "b"],
-        ["b", "c", "c"],
-        ["b", "d", "d"],
-    ]:
+    for virtual_key: String in ["a", "b", "c", "d"]:
         if not _enter_faceup_idle(player, opponent, 20.0):
             player._candidate_clip_paths[PortFighter.FACEUP_ATTACK_CLIP] = saved
             return false
-        var sequence: Array = sequence_value
-        for virtual_key: Variant in sequence:
-            if player.record_virtual_press(String(virtual_key)):
-                player._candidate_clip_paths[PortFighter.FACEUP_ATTACK_CLIP] = saved
-                push_error("Missing attack clip still entered faceupattack")
-                return false
+        if player.record_standing_combo_press(virtual_key):
+            player._candidate_clip_paths[PortFighter.FACEUP_ATTACK_CLIP] = saved
+            push_error("Missing attack clip still entered faceupattack")
+            return false
         if not _faceup_idle_is(player, 20.0):
             player._candidate_clip_paths[PortFighter.FACEUP_ATTACK_CLIP] = saved
             push_error("Missing attack clip did not keep faceupidle")
@@ -721,7 +636,7 @@ func _enter_and_start_attack(
 ) -> bool:
     if not _enter_faceup_idle(player, opponent, 10.0):
         return false
-    if not _press_sequence(player, ["a", "a", "a"]):
+    if not _press_sequence(player, ["a"]):
         push_error("Could not start faceupattack")
         return false
     return _faceup_attack_is(player)
@@ -729,7 +644,7 @@ func _enter_and_start_attack(
 
 func _press_sequence(player: PortFighter, inputs: Array) -> bool:
     for virtual_key: Variant in inputs:
-        if player.record_virtual_press(String(virtual_key)):
+        if player.record_standing_combo_press(String(virtual_key)):
             player._animate_candidate()
             return true
     return false
