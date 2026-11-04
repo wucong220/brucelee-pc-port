@@ -10,6 +10,9 @@ const MoveTraining = preload("res://scripts/move_training.gd")
 const MoveGallery = preload("res://scripts/move_gallery.gd")
 const FxLanternPulse = preload("res://scripts/fx_lanterns_pulse.gd")
 const FxVapourReflector = preload("res://scripts/fx_vapour_reflector.gd")
+## Decoded per-visual material tracks (colour / UV offset) that glTF cannot
+## carry.  Inert unless `fx_material_curves.json` sits beside the FX manifest.
+const FxMaterialTracks = preload("res://scripts/fx_material_tracks.gd")
 const AudioCueMap = preload("res://scripts/audio_cue_map.gd")
 ## Recovered impact/block SFX + 21 music-track library (data-only table).
 const SfxMusicMap = preload("res://scripts/sfx_music_map.gd")
@@ -1110,6 +1113,14 @@ func _build_fx_anim_scene() -> void:
         for mesh_node: Node in instance.find_children("*", "MeshInstance3D", true, false):
             var mesh_instance: MeshInstance3D = mesh_node
             mesh_instance.material_override = material
+        # Material (colour / UV offset) tracks cannot live in glTF.  The decoded
+        # curves are per visual, so the driver replaces the shared material of
+        # every visual the authored track addresses; entries without a decoded
+        # track get null and keep the loader material above.
+        if not used_static_group:
+            var material_tracks: Node = FxMaterialTracks.attach(base, entry)
+            if material_tracks != null:
+                instance.add_child(material_tracks)
         root.add_child(instance)
         if playing or used_static_group:
             for replaced_name: Variant in entry.get("replaces", []):
