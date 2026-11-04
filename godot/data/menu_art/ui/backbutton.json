@@ -1,0 +1,359 @@
+{
+ "screen": "backbutton.ui",
+ "source": {
+  "path": "adreno_200/gui/backbutton.ui",
+  "bytes": 972,
+  "sha256": "593a981c17f1428296d97bf79f2c6037a59bd5dc57fe08c12ad28059414a97b0",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 32,
+   "records": 46,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "5fb5a00acc188e3121a180fae98d793a"
+  }
+ },
+ "coverage": {
+  "record_count": 46,
+  "reached_records": 46,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "gui/images/menu/",
+   "basename": "bl_gui_back_button_stand",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 1,
+   "directory": "sounds/menu_sfx/",
+   "basename": "back_bl_shout_short",
+   "extension": "wav"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "blbutton",
+  "name",
+  "back",
+  "x",
+  "y",
+  "width",
+  "height",
+  "align",
+  "center",
+  "valign",
+  "middle",
+  "alphablend",
+  "true",
+  "action",
+  "rsk",
+  "file",
+  "subrect_x",
+  "subrect_y",
+  "subrect_width",
+  "subrect_height",
+  "sound",
+  "alpha",
+  "offscreen",
+  "springs",
+  "gui/images/menu/",
+  "bl_gui_back_button_stand",
+  "tex",
+  "sounds/menu_sfx/",
+  "back_bl_shout_short",
+  "wav"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "blbutton",
+    "name": "back",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "align": "center",
+    "valign": "middle",
+    "alphablend": "true",
+    "action": "rsk",
+    "file": {
+     "file": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_back_button_stand",
+       "extension": "tex"
+      }
+     },
+     "subrect_x": 8,
+     "subrect_y": 8,
+     "subrect_width": 48,
+     "subrect_height": 48
+    },
+    "sound": {
+     "$file": {
+      "ordinal": 1,
+      "directory": "sounds/menu_sfx/",
+      "basename": "back_bl_shout_short",
+      "extension": "wav"
+     }
+    },
+    "alpha": 1.0,
+    "offscreen": {
+     "alpha": 0.0
+    }
+   }
+  ],
+  "springs": []
+ },
+ "layout": [
+  {
+   "type": "blbutton",
+   "name": "back",
+   "x": 2,
+   "y": 270,
+   "width": 48,
+   "height": 48,
+   "align": "center",
+   "valign": "middle",
+   "alphablend": "true",
+   "action": "rsk",
+   "file": {
+    "file": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "gui/images/menu/",
+      "basename": "bl_gui_back_button_stand",
+      "extension": "tex"
+     }
+    },
+    "subrect_x": 8,
+    "subrect_y": 8,
+    "subrect_width": 48,
+    "subrect_height": 48
+   },
+   "sound": {
+    "$file": {
+     "ordinal": 1,
+     "directory": "sounds/menu_sfx/",
+     "basename": "back_bl_shout_short",
+     "extension": "wav"
+    }
+   },
+   "alpha": 1.0,
+   "offscreen": {
+    "alpha": 0.0
+   }
+  }
+ ],
+ "springs": [],
+ "annotated": {
+  "record": 0,
+  "offset": 588,
+  "entries": [
+   [
+    "layout",
+    {
+     "record": 2,
+     "offset": 604,
+     "elements": [
+      {
+       "record": 5,
+       "offset": 628,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 7,
+          "offset": 644,
+          "value": "blbutton"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 9,
+          "offset": 660,
+          "value": "back"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 11,
+          "offset": 676,
+          "value": 2
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 13,
+          "offset": 692,
+          "value": 270
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 15,
+          "offset": 708,
+          "value": 48
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 17,
+          "offset": 724,
+          "value": 48
+         }
+        ],
+        [
+         "align",
+         {
+          "record": 19,
+          "offset": 740,
+          "value": "center"
+         }
+        ],
+        [
+         "valign",
+         {
+          "record": 21,
+          "offset": 756,
+          "value": "middle"
+         }
+        ],
+        [
+         "alphablend",
+         {
+          "record": 23,
+          "offset": 772,
+          "value": "true"
+         }
+        ],
+        [
+         "action",
+         {
+          "record": 25,
+          "offset": 788,
+          "value": "rsk"
+         }
+        ],
+        [
+         "file",
+         {
+          "record": 27,
+          "offset": 804,
+          "entries": [
+           [
+            "file",
+            {
+             "record": 35,
+             "offset": 868,
+             "value": {
+              "$file": {
+               "ordinal": 0,
+               "directory": "gui/images/menu/",
+               "basename": "bl_gui_back_button_stand",
+               "extension": "tex"
+              }
+             }
+            }
+           ],
+           [
+            "subrect_x",
+            {
+             "record": 37,
+             "offset": 884,
+             "value": 8
+            }
+           ],
+           [
+            "subrect_y",
+            {
+             "record": 39,
+             "offset": 900,
+             "value": 8
+            }
+           ],
+           [
+            "subrect_width",
+            {
+             "record": 41,
+             "offset": 916,
+             "value": 48
+            }
+           ],
+           [
+            "subrect_height",
+            {
+             "record": 43,
+             "offset": 932,
+             "value": 48
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "sound",
+         {
+          "record": 29,
+          "offset": 820,
+          "value": {
+           "$file": {
+            "ordinal": 1,
+            "directory": "sounds/menu_sfx/",
+            "basename": "back_bl_shout_short",
+            "extension": "wav"
+           }
+          }
+         }
+        ],
+        [
+         "alpha",
+         {
+          "record": 31,
+          "offset": 836,
+          "value": 1.0
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 33,
+          "offset": 852,
+          "entries": [
+           [
+            "alpha",
+            {
+             "record": 45,
+             "offset": 948,
+             "value": 0.0
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   [
+    "springs",
+    {
+     "record": 4,
+     "offset": 620,
+     "elements": []
+    }
+   ]
+  ]
+ }
+}

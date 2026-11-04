@@ -5,6 +5,10 @@ extends Node3D
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
+## Opt-in original-art front menu (BRUCELEE_MENU_ART=1). It is a subclass of
+## PortPrototypeMenu, so with the flag unset the text menu keeps its existing
+## path and every pause / records / style-editor hook still works.
+const MenuArtMenu = preload("res://scripts/menu_art.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const MoveTraining = preload("res://scripts/move_training.gd")
 const MoveGallery = preload("res://scripts/move_gallery.gd")
@@ -523,7 +527,11 @@ func _ready() -> void:
             "J J J | J K K | K L L | K U U | "
             + "Back+K -> Toward+L -> Toward+L = special (rage 100)"
         )
-    prototype_menu = PortPrototypeMenu.new()
+    # BRUCELEE_MENU_ART=1 swaps in the recovered-art front menu; unset keeps the
+    # existing text menu. Both are PortPrototypeMenu instances, so the pause /
+    # records / style-editor calls below are untouched.
+    var menu_art_enabled: bool = OS.get_environment("BRUCELEE_MENU_ART") == "1"
+    prototype_menu = MenuArtMenu.new() if menu_art_enabled else PortPrototypeMenu.new()
     add_child(prototype_menu)
     prototype_menu.command_requested.connect(_on_menu_command)
     move_training = MoveTraining.new()

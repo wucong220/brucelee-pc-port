@@ -1,0 +1,279 @@
+{
+ "screen": "loadingyingyang.ui",
+ "source": {
+  "path": "adreno_200/gui/loadingyingyang.ui",
+  "bytes": 785,
+  "sha256": "549553123aad8e1ca22f40cf66753fd19f004aab015ea9e9344c5d101de5c8e5",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 25,
+   "records": 36,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "b284e57c97804227ca09e61b6ccda32f"
+  }
+ },
+ "coverage": {
+  "record_count": 36,
+  "reached_records": 36,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "gui/images/versus/",
+   "basename": "bl_versusscreen_yingyang",
+   "extension": "tex"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "picture",
+  "name",
+  "yingyang",
+  "alphablend",
+  "true",
+  "x",
+  "y",
+  "width",
+  "height",
+  "hspring",
+  "soft",
+  "vspring",
+  "file",
+  "center_hotspot",
+  "mantainaspectratio",
+  "datasources",
+  "angle",
+  "gamemodes",
+  "yingyangangle",
+  "springs",
+  "gui/images/versus/",
+  "bl_versusscreen_yingyang",
+  "tex"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "picture",
+    "name": "yingyang",
+    "alphablend": "true",
+    "x": 240,
+    "y": 208,
+    "width": 64,
+    "height": 64,
+    "hspring": "soft",
+    "vspring": "soft",
+    "file": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "gui/images/versus/",
+      "basename": "bl_versusscreen_yingyang",
+      "extension": "tex"
+     }
+    },
+    "center_hotspot": "true",
+    "mantainaspectratio": "true",
+    "datasources": {
+     "angle": [
+      "gamemodes",
+      "yingyangangle"
+     ]
+    }
+   }
+  ],
+  "springs": []
+ },
+ "layout": [
+  {
+   "type": "picture",
+   "name": "yingyang",
+   "alphablend": "true",
+   "x": 240,
+   "y": 208,
+   "width": 64,
+   "height": 64,
+   "hspring": "soft",
+   "vspring": "soft",
+   "file": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "gui/images/versus/",
+     "basename": "bl_versusscreen_yingyang",
+     "extension": "tex"
+    }
+   },
+   "center_hotspot": "true",
+   "mantainaspectratio": "true",
+   "datasources": {
+    "angle": [
+     "gamemodes",
+     "yingyangangle"
+    ]
+   }
+  }
+ ],
+ "springs": [],
+ "annotated": {
+  "record": 0,
+  "offset": 481,
+  "entries": [
+   [
+    "layout",
+    {
+     "record": 2,
+     "offset": 497,
+     "elements": [
+      {
+       "record": 5,
+       "offset": 521,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 7,
+          "offset": 537,
+          "value": "picture"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 9,
+          "offset": 553,
+          "value": "yingyang"
+         }
+        ],
+        [
+         "alphablend",
+         {
+          "record": 11,
+          "offset": 569,
+          "value": "true"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 13,
+          "offset": 585,
+          "value": 240
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 15,
+          "offset": 601,
+          "value": 208
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 17,
+          "offset": 617,
+          "value": 64
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 19,
+          "offset": 633,
+          "value": 64
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 21,
+          "offset": 649,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 23,
+          "offset": 665,
+          "value": "soft"
+         }
+        ],
+        [
+         "file",
+         {
+          "record": 25,
+          "offset": 681,
+          "value": {
+           "$file": {
+            "ordinal": 0,
+            "directory": "gui/images/versus/",
+            "basename": "bl_versusscreen_yingyang",
+            "extension": "tex"
+           }
+          }
+         }
+        ],
+        [
+         "center_hotspot",
+         {
+          "record": 27,
+          "offset": 697,
+          "value": "true"
+         }
+        ],
+        [
+         "mantainaspectratio",
+         {
+          "record": 29,
+          "offset": 713,
+          "value": "true"
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 31,
+          "offset": 729,
+          "entries": [
+           [
+            "angle",
+            {
+             "record": 33,
+             "offset": 745,
+             "elements": [
+              {
+               "record": 34,
+               "offset": 753,
+               "value": "gamemodes"
+              },
+              {
+               "record": 35,
+               "offset": 761,
+               "value": "yingyangangle"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   [
+    "springs",
+    {
+     "record": 4,
+     "offset": 513,
+     "elements": []
+    }
+   ]
+  ]
+ }
+}

@@ -1,0 +1,604 @@
+{
+ "screen": "title.ui",
+ "source": {
+  "path": "adreno_200/gui/title.ui",
+  "bytes": 1451,
+  "sha256": "b4179b2bc4c2e8fa68008a81ab0c4d736d2d771e1b123704af4e08751a8168bf",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 40,
+   "records": 93,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "d8530d2fc88d18166bd09df2c4de364b"
+  }
+ },
+ "coverage": {
+  "record_count": 93,
+  "reached_records": 93,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "gui/images/menu/",
+   "basename": "bl_gui_logo_big",
+   "extension": "tex"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "blbutton",
+  "name",
+  "toucharea",
+  "x",
+  "y",
+  "width",
+  "height",
+  "action",
+  "touch",
+  "hspring",
+  "soft",
+  "vspring",
+  "picture",
+  "logo",
+  "alphablend",
+  "true",
+  "scale",
+  "file",
+  "mantainaspectratio",
+  "offscreen",
+  "alpha",
+  "label",
+  "test_label",
+  "align",
+  "center",
+  "font",
+  "effect",
+  "none",
+  "uppercase",
+  "textcolor",
+  "datasources",
+  "text",
+  "translate",
+  "touch_screen",
+  "springs",
+  "gui/images/menu/",
+  "bl_gui_logo_big",
+  "tex"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "blbutton",
+    "name": "toucharea",
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 320,
+    "action": "touch",
+    "hspring": "soft",
+    "vspring": "soft"
+   },
+   {
+    "type": "picture",
+    "name": "logo",
+    "alphablend": "true",
+    "x": 100,
+    "y": 10,
+    "width": 512,
+    "height": 256,
+    "scale": "true",
+    "hspring": "soft",
+    "vspring": "soft",
+    "file": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "gui/images/menu/",
+      "basename": "bl_gui_logo_big",
+      "extension": "tex"
+     }
+    },
+    "mantainaspectratio": "true",
+    "offscreen": {
+     "alpha": 0.0
+    }
+   },
+   {
+    "type": "label",
+    "name": "test_label",
+    "x": 0,
+    "y": 280,
+    "width": 480,
+    "height": 40,
+    "align": "center",
+    "font": 0,
+    "effect": "none",
+    "uppercase": "true",
+    "hspring": "soft",
+    "vspring": "soft",
+    "textcolor": [
+     255,
+     255,
+     255
+    ],
+    "datasources": {
+     "text": [
+      "translate",
+      "touch_screen"
+     ]
+    },
+    "offscreen": {
+     "alpha": 0.0
+    }
+   }
+  ],
+  "springs": []
+ },
+ "layout": [
+  {
+   "type": "blbutton",
+   "name": "toucharea",
+   "x": 0,
+   "y": 0,
+   "width": 480,
+   "height": 320,
+   "action": "touch",
+   "hspring": "soft",
+   "vspring": "soft"
+  },
+  {
+   "type": "picture",
+   "name": "logo",
+   "alphablend": "true",
+   "x": 100,
+   "y": 10,
+   "width": 512,
+   "height": 256,
+   "scale": "true",
+   "hspring": "soft",
+   "vspring": "soft",
+   "file": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_logo_big",
+     "extension": "tex"
+    }
+   },
+   "mantainaspectratio": "true",
+   "offscreen": {
+    "alpha": 0.0
+   }
+  },
+  {
+   "type": "label",
+   "name": "test_label",
+   "x": 0,
+   "y": 280,
+   "width": 480,
+   "height": 40,
+   "align": "center",
+   "font": 0,
+   "effect": "none",
+   "uppercase": "true",
+   "hspring": "soft",
+   "vspring": "soft",
+   "textcolor": [
+    255,
+    255,
+    255
+   ],
+   "datasources": {
+    "text": [
+     "translate",
+     "touch_screen"
+    ]
+   },
+   "offscreen": {
+    "alpha": 0.0
+   }
+  }
+ ],
+ "springs": [],
+ "annotated": {
+  "record": 0,
+  "offset": 691,
+  "entries": [
+   [
+    "layout",
+    {
+     "record": 2,
+     "offset": 707,
+     "elements": [
+      {
+       "record": 5,
+       "offset": 731,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 9,
+          "offset": 763,
+          "value": "blbutton"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 11,
+          "offset": 779,
+          "value": "toucharea"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 13,
+          "offset": 795,
+          "value": 0
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 15,
+          "offset": 811,
+          "value": 0
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 17,
+          "offset": 827,
+          "value": 480
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 19,
+          "offset": 843,
+          "value": 320
+         }
+        ],
+        [
+         "action",
+         {
+          "record": 21,
+          "offset": 859,
+          "value": "touch"
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 23,
+          "offset": 875,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 25,
+          "offset": 891,
+          "value": "soft"
+         }
+        ]
+       ]
+      },
+      {
+       "record": 6,
+       "offset": 739,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 27,
+          "offset": 907,
+          "value": "picture"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 29,
+          "offset": 923,
+          "value": "logo"
+         }
+        ],
+        [
+         "alphablend",
+         {
+          "record": 31,
+          "offset": 939,
+          "value": "true"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 33,
+          "offset": 955,
+          "value": 100
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 35,
+          "offset": 971,
+          "value": 10
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 37,
+          "offset": 987,
+          "value": 512
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 39,
+          "offset": 1003,
+          "value": 256
+         }
+        ],
+        [
+         "scale",
+         {
+          "record": 41,
+          "offset": 1019,
+          "value": "true"
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 43,
+          "offset": 1035,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 45,
+          "offset": 1051,
+          "value": "soft"
+         }
+        ],
+        [
+         "file",
+         {
+          "record": 47,
+          "offset": 1067,
+          "value": {
+           "$file": {
+            "ordinal": 0,
+            "directory": "gui/images/menu/",
+            "basename": "bl_gui_logo_big",
+            "extension": "tex"
+           }
+          }
+         }
+        ],
+        [
+         "mantainaspectratio",
+         {
+          "record": 49,
+          "offset": 1083,
+          "value": "true"
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 51,
+          "offset": 1099,
+          "entries": [
+           [
+            "alpha",
+            {
+             "record": 53,
+             "offset": 1115,
+             "value": 0.0
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      },
+      {
+       "record": 7,
+       "offset": 747,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 55,
+          "offset": 1131,
+          "value": "label"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 57,
+          "offset": 1147,
+          "value": "test_label"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 59,
+          "offset": 1163,
+          "value": 0
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 61,
+          "offset": 1179,
+          "value": 280
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 63,
+          "offset": 1195,
+          "value": 480
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 65,
+          "offset": 1211,
+          "value": 40
+         }
+        ],
+        [
+         "align",
+         {
+          "record": 67,
+          "offset": 1227,
+          "value": "center"
+         }
+        ],
+        [
+         "font",
+         {
+          "record": 69,
+          "offset": 1243,
+          "value": 0
+         }
+        ],
+        [
+         "effect",
+         {
+          "record": 71,
+          "offset": 1259,
+          "value": "none"
+         }
+        ],
+        [
+         "uppercase",
+         {
+          "record": 73,
+          "offset": 1275,
+          "value": "true"
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 75,
+          "offset": 1291,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 77,
+          "offset": 1307,
+          "value": "soft"
+         }
+        ],
+        [
+         "textcolor",
+         {
+          "record": 79,
+          "offset": 1323,
+          "elements": [
+           {
+            "record": 84,
+            "offset": 1363,
+            "value": 255
+           },
+           {
+            "record": 85,
+            "offset": 1371,
+            "value": 255
+           },
+           {
+            "record": 86,
+            "offset": 1379,
+            "value": 255
+           }
+          ]
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 81,
+          "offset": 1339,
+          "entries": [
+           [
+            "text",
+            {
+             "record": 88,
+             "offset": 1395,
+             "elements": [
+              {
+               "record": 89,
+               "offset": 1403,
+               "value": "translate"
+              },
+              {
+               "record": 90,
+               "offset": 1411,
+               "value": "touch_screen"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 83,
+          "offset": 1355,
+          "entries": [
+           [
+            "alpha",
+            {
+             "record": 92,
+             "offset": 1427,
+             "value": 0.0
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   [
+    "springs",
+    {
+     "record": 4,
+     "offset": 723,
+     "elements": []
+    }
+   ]
+  ]
+ }
+}

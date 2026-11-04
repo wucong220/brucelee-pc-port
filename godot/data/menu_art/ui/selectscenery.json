@@ -1,0 +1,1091 @@
+{
+ "screen": "selectscenery.ui",
+ "source": {
+  "path": "adreno_200/gui/selectscenery.ui",
+  "bytes": 2186,
+  "sha256": "29b6d52e38901f67dbd46001c3183aaec449d7365c357615b34c0a45f4b27a74",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 60,
+   "records": 117,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "95134b48360b5a1dec76b5ff1d1ce3dc"
+  }
+ },
+ "coverage": {
+  "record_count": 117,
+  "reached_records": 117,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "sounds/menu_sfx/",
+   "basename": "story_page_flip_short_version",
+   "extension": "wav"
+  },
+  {
+   "ordinal": 1,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scenelocked_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 2,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene01a_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 3,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene01b_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 4,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene02a_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 5,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene02b_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 6,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene03a_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 7,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene03b_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 8,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene04a_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 9,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene04b_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 10,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene05a_hw_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 11,
+   "directory": "gui/images/mini/",
+   "basename": "bl_scene05b_hw_icon",
+   "extension": "tex"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "label",
+  "name",
+  "scenery_name",
+  "x",
+  "y",
+  "width",
+  "height",
+  "hspring",
+  "soft",
+  "vspring",
+  "font",
+  "textcolor",
+  "effect",
+  "none",
+  "uppercase",
+  "true",
+  "align",
+  "center",
+  "datasources",
+  "text",
+  "gamemodes",
+  "selectedsceneryname",
+  "offscreen",
+  "bldock",
+  "sceneries",
+  "optionwidth",
+  "optionheight",
+  "linerect",
+  "linerectcolor",
+  "separation",
+  "wraparround",
+  "false",
+  "sound",
+  "lockedpicture",
+  "items",
+  "validselectedoption",
+  "selectedscenery",
+  "springs",
+  "hard",
+  "left",
+  "border",
+  "right",
+  "sounds/menu_sfx/",
+  "story_page_flip_short_version",
+  "wav",
+  "gui/images/mini/",
+  "bl_scenelocked_icon",
+  "tex",
+  "bl_scene01a_hw_icon",
+  "bl_scene01b_hw_icon",
+  "bl_scene02a_hw_icon",
+  "bl_scene02b_hw_icon",
+  "bl_scene03a_hw_icon",
+  "bl_scene03b_hw_icon",
+  "bl_scene04a_hw_icon",
+  "bl_scene04b_hw_icon",
+  "bl_scene05a_hw_icon",
+  "bl_scene05b_hw_icon"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "label",
+    "name": "scenery_name",
+    "x": 100,
+    "y": 120,
+    "width": 280,
+    "height": 20,
+    "hspring": "soft",
+    "vspring": "soft",
+    "font": 0,
+    "textcolor": [
+     255,
+     255,
+     0
+    ],
+    "effect": "none",
+    "uppercase": "true",
+    "align": "center",
+    "datasources": {
+     "text": [
+      "gamemodes",
+      "selectedsceneryname"
+     ]
+    },
+    "offscreen": {
+     "y": 350
+    }
+   },
+   {
+    "type": "bldock",
+    "name": "sceneries",
+    "x": -50,
+    "y": 150,
+    "width": 580,
+    "height": 114,
+    "hspring": "soft",
+    "vspring": "soft",
+    "optionwidth": 165,
+    "optionheight": 114,
+    "linerect": "true",
+    "linerectcolor": [
+     255,
+     255,
+     0
+    ],
+    "separation": 0,
+    "wraparround": "false",
+    "sound": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "sounds/menu_sfx/",
+      "basename": "story_page_flip_short_version",
+      "extension": "wav"
+     }
+    },
+    "lockedpicture": {
+     "$file": {
+      "ordinal": 1,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scenelocked_icon",
+      "extension": "tex"
+     }
+    },
+    "items": [
+     {
+      "$file": {
+       "ordinal": 2,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene01a_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 3,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene01b_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 4,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene02a_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 5,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene02b_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 6,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene03a_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 7,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene03b_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 8,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene04a_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 9,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene04b_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 10,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene05a_hw_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 11,
+       "directory": "gui/images/mini/",
+       "basename": "bl_scene05b_hw_icon",
+       "extension": "tex"
+      }
+     }
+    ],
+    "datasources": {
+     "validselectedoption": [
+      "gamemodes",
+      "selectedscenery"
+     ]
+    },
+    "offscreen": {
+     "y": 380
+    }
+   }
+  ],
+  "springs": [
+   {
+    "type": "hard",
+    "left": "border",
+    "right": "sceneries"
+   },
+   {
+    "type": "hard",
+    "left": "sceneries",
+    "right": "border"
+   }
+  ]
+ },
+ "layout": [
+  {
+   "type": "label",
+   "name": "scenery_name",
+   "x": 100,
+   "y": 120,
+   "width": 280,
+   "height": 20,
+   "hspring": "soft",
+   "vspring": "soft",
+   "font": 0,
+   "textcolor": [
+    255,
+    255,
+    0
+   ],
+   "effect": "none",
+   "uppercase": "true",
+   "align": "center",
+   "datasources": {
+    "text": [
+     "gamemodes",
+     "selectedsceneryname"
+    ]
+   },
+   "offscreen": {
+    "y": 350
+   }
+  },
+  {
+   "type": "bldock",
+   "name": "sceneries",
+   "x": -50,
+   "y": 150,
+   "width": 580,
+   "height": 114,
+   "hspring": "soft",
+   "vspring": "soft",
+   "optionwidth": 165,
+   "optionheight": 114,
+   "linerect": "true",
+   "linerectcolor": [
+    255,
+    255,
+    0
+   ],
+   "separation": 0,
+   "wraparround": "false",
+   "sound": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "sounds/menu_sfx/",
+     "basename": "story_page_flip_short_version",
+     "extension": "wav"
+    }
+   },
+   "lockedpicture": {
+    "$file": {
+     "ordinal": 1,
+     "directory": "gui/images/mini/",
+     "basename": "bl_scenelocked_icon",
+     "extension": "tex"
+    }
+   },
+   "items": [
+    {
+     "$file": {
+      "ordinal": 2,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene01a_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 3,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene01b_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 4,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene02a_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 5,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene02b_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 6,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene03a_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 7,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene03b_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 8,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene04a_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 9,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene04b_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 10,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene05a_hw_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 11,
+      "directory": "gui/images/mini/",
+      "basename": "bl_scene05b_hw_icon",
+      "extension": "tex"
+     }
+    }
+   ],
+   "datasources": {
+    "validselectedoption": [
+     "gamemodes",
+     "selectedscenery"
+    ]
+   },
+   "offscreen": {
+    "y": 380
+   }
+  }
+ ],
+ "springs": [
+  {
+   "type": "hard",
+   "left": "border",
+   "right": "sceneries"
+  },
+  {
+   "type": "hard",
+   "left": "sceneries",
+   "right": "border"
+  }
+ ],
+ "annotated": {
+  "record": 0,
+  "offset": 1234,
+  "entries": [
+   [
+    "layout",
+    {
+     "record": 2,
+     "offset": 1250,
+     "elements": [
+      {
+       "record": 5,
+       "offset": 1274,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 8,
+          "offset": 1298,
+          "value": "label"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 10,
+          "offset": 1314,
+          "value": "scenery_name"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 12,
+          "offset": 1330,
+          "value": 100
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 14,
+          "offset": 1346,
+          "value": 120
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 16,
+          "offset": 1362,
+          "value": 280
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 18,
+          "offset": 1378,
+          "value": 20
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 20,
+          "offset": 1394,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 22,
+          "offset": 1410,
+          "value": "soft"
+         }
+        ],
+        [
+         "font",
+         {
+          "record": 24,
+          "offset": 1426,
+          "value": 0
+         }
+        ],
+        [
+         "textcolor",
+         {
+          "record": 26,
+          "offset": 1442,
+          "elements": [
+           {
+            "record": 37,
+            "offset": 1530,
+            "value": 255
+           },
+           {
+            "record": 38,
+            "offset": 1538,
+            "value": 255
+           },
+           {
+            "record": 39,
+            "offset": 1546,
+            "value": 0
+           }
+          ]
+         }
+        ],
+        [
+         "effect",
+         {
+          "record": 28,
+          "offset": 1458,
+          "value": "none"
+         }
+        ],
+        [
+         "uppercase",
+         {
+          "record": 30,
+          "offset": 1474,
+          "value": "true"
+         }
+        ],
+        [
+         "align",
+         {
+          "record": 32,
+          "offset": 1490,
+          "value": "center"
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 34,
+          "offset": 1506,
+          "entries": [
+           [
+            "text",
+            {
+             "record": 41,
+             "offset": 1562,
+             "elements": [
+              {
+               "record": 42,
+               "offset": 1570,
+               "value": "gamemodes"
+              },
+              {
+               "record": 43,
+               "offset": 1578,
+               "value": "selectedsceneryname"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 36,
+          "offset": 1522,
+          "entries": [
+           [
+            "y",
+            {
+             "record": 45,
+             "offset": 1594,
+             "value": 350
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      },
+      {
+       "record": 6,
+       "offset": 1282,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 47,
+          "offset": 1610,
+          "value": "bldock"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 49,
+          "offset": 1626,
+          "value": "sceneries"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 51,
+          "offset": 1642,
+          "value": -50
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 53,
+          "offset": 1658,
+          "value": 150
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 55,
+          "offset": 1674,
+          "value": 580
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 57,
+          "offset": 1690,
+          "value": 114
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 59,
+          "offset": 1706,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 61,
+          "offset": 1722,
+          "value": "soft"
+         }
+        ],
+        [
+         "optionwidth",
+         {
+          "record": 63,
+          "offset": 1738,
+          "value": 165
+         }
+        ],
+        [
+         "optionheight",
+         {
+          "record": 65,
+          "offset": 1754,
+          "value": 114
+         }
+        ],
+        [
+         "linerect",
+         {
+          "record": 67,
+          "offset": 1770,
+          "value": "true"
+         }
+        ],
+        [
+         "linerectcolor",
+         {
+          "record": 69,
+          "offset": 1786,
+          "elements": [
+           {
+            "record": 84,
+            "offset": 1906,
+            "value": 255
+           },
+           {
+            "record": 85,
+            "offset": 1914,
+            "value": 255
+           },
+           {
+            "record": 86,
+            "offset": 1922,
+            "value": 0
+           }
+          ]
+         }
+        ],
+        [
+         "separation",
+         {
+          "record": 71,
+          "offset": 1802,
+          "value": 0
+         }
+        ],
+        [
+         "wraparround",
+         {
+          "record": 73,
+          "offset": 1818,
+          "value": "false"
+         }
+        ],
+        [
+         "sound",
+         {
+          "record": 75,
+          "offset": 1834,
+          "value": {
+           "$file": {
+            "ordinal": 0,
+            "directory": "sounds/menu_sfx/",
+            "basename": "story_page_flip_short_version",
+            "extension": "wav"
+           }
+          }
+         }
+        ],
+        [
+         "lockedpicture",
+         {
+          "record": 77,
+          "offset": 1850,
+          "value": {
+           "$file": {
+            "ordinal": 1,
+            "directory": "gui/images/mini/",
+            "basename": "bl_scenelocked_icon",
+            "extension": "tex"
+           }
+          }
+         }
+        ],
+        [
+         "items",
+         {
+          "record": 79,
+          "offset": 1866,
+          "elements": [
+           {
+            "record": 87,
+            "offset": 1930,
+            "value": {
+             "$file": {
+              "ordinal": 2,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene01a_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 88,
+            "offset": 1938,
+            "value": {
+             "$file": {
+              "ordinal": 3,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene01b_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 89,
+            "offset": 1946,
+            "value": {
+             "$file": {
+              "ordinal": 4,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene02a_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 90,
+            "offset": 1954,
+            "value": {
+             "$file": {
+              "ordinal": 5,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene02b_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 91,
+            "offset": 1962,
+            "value": {
+             "$file": {
+              "ordinal": 6,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene03a_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 92,
+            "offset": 1970,
+            "value": {
+             "$file": {
+              "ordinal": 7,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene03b_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 93,
+            "offset": 1978,
+            "value": {
+             "$file": {
+              "ordinal": 8,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene04a_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 94,
+            "offset": 1986,
+            "value": {
+             "$file": {
+              "ordinal": 9,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene04b_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 95,
+            "offset": 1994,
+            "value": {
+             "$file": {
+              "ordinal": 10,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene05a_hw_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 96,
+            "offset": 2002,
+            "value": {
+             "$file": {
+              "ordinal": 11,
+              "directory": "gui/images/mini/",
+              "basename": "bl_scene05b_hw_icon",
+              "extension": "tex"
+             }
+            }
+           }
+          ]
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 81,
+          "offset": 1882,
+          "entries": [
+           [
+            "validselectedoption",
+            {
+             "record": 98,
+             "offset": 2018,
+             "elements": [
+              {
+               "record": 99,
+               "offset": 2026,
+               "value": "gamemodes"
+              },
+              {
+               "record": 100,
+               "offset": 2034,
+               "value": "selectedscenery"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 83,
+          "offset": 1898,
+          "entries": [
+           [
+            "y",
+            {
+             "record": 102,
+             "offset": 2050,
+             "value": 380
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   [
+    "springs",
+    {
+     "record": 4,
+     "offset": 1266,
+     "elements": [
+      {
+       "record": 103,
+       "offset": 2058,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 106,
+          "offset": 2082,
+          "value": "hard"
+         }
+        ],
+        [
+         "left",
+         {
+          "record": 108,
+          "offset": 2098,
+          "value": "border"
+         }
+        ],
+        [
+         "right",
+         {
+          "record": 110,
+          "offset": 2114,
+          "value": "sceneries"
+         }
+        ]
+       ]
+      },
+      {
+       "record": 104,
+       "offset": 2066,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 112,
+          "offset": 2130,
+          "value": "hard"
+         }
+        ],
+        [
+         "left",
+         {
+          "record": 114,
+          "offset": 2146,
+          "value": "sceneries"
+         }
+        ],
+        [
+         "right",
+         {
+          "record": 116,
+          "offset": 2162,
+          "value": "border"
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  ]
+ }
+}
