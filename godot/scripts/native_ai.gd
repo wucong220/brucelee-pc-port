@@ -35,6 +35,53 @@ const MAX_WALK := 64
 ## state and `treecheckmystate` maps it to `treedefaultbehavior`).
 const INITIAL_STATE := "default"
 
+## The complete `my_animation` value domain recovered from the shipped
+## `standard.tree`: 18 condition nodes share exactly these 23 case strings.
+## `default` is the tree's own fallback child, not an animation name.  The list
+## is the order printed by the read-only audit
+## (`audit-ai-20261103/out/audit_coverage.txt`, section `my_animation`), which
+## was parsed independently from the original `adreno_200/ai/standard.tree`.
+const MY_ANIMATION_CASES: Array[String] = [
+    "default",
+    "facedownidle",
+    "faceupidle",
+    "idle",
+    "idle loming",
+    "idle master",
+    "idle shenlo",
+    "idle sinfu",
+    "idle2",
+    "idle3",
+    "moveback",
+    "moveback shenlo",
+    "movefwd",
+    "movefwd shenlo",
+    "moveleft",
+    "moveright",
+    "skipback",
+    "stepback",
+    "stepfwd",
+    "stepleft",
+    "stepleft shenlo",
+    "stepright",
+    "stepright shenlo",
+]
+const MY_ANIMATION_FALLBACK := "default"
+## Character suffixes that actually occur in the tree's `my_animation` cases:
+## `idle loming/master/shenlo/sinfu` and
+## `movefwd/moveback/stepleft/stepright shenlo`.  Only those five profile keys
+## are listed; every other character reports the generic token.  These are
+## exact suffixes from `standard_tree.json` and the kungfu set action table
+## (`character-movesets-20261103/evidence/set_action_table_kungfu.md`); no
+## suffix is derived from a display name.
+const MY_ANIMATION_CHARACTER_SUFFIXES: Dictionary = {
+    "lo ming a": "loming",
+    "lo ming b": "loming",
+    "shen lo": "shenlo",
+    "sin fu": "sinfu",
+    "the master": "master",
+}
+
 ## Tree leaf actions that are not attacks: the value is the dispatch token.
 const DISPATCH_BLOCK_HIGH := "__block_high__"
 const DISPATCH_BLOCK_MID := "__block_mid__"
@@ -102,9 +149,12 @@ var _opp_was_startup: bool = false
 var _rng := RandomNumberGenerator.new()
 
 ## Diagnostics: how many times each native action was selected and which
-## actions could not be dispatched by the current fighting set.
+## actions could not be dispatched by the current fighting set.  Raw animation
+## names outside the recovered 23-case domain are recorded separately; they
+## never reach the tree, because `_my_animation()` fails closed to `default`.
 var action_counts: Dictionary = {}
 var unsupported_actions: Dictionary = {}
+var unknown_animation_tokens: Dictionary = {}
 
 
 func load_data() -> bool:
@@ -346,12 +396,54 @@ func _probability(node: Dictionary) -> float:
 
 
 func _my_animation() -> String:
-    if fighter.state in ["facedownidle", "faceupidle", "idle", "idle2", "idle3"]:
+    return _my_animation_case(_current_native_animation())
+
+
+func _current_native_animation() -> String:
+    ## The port records the current native action in two places:
+    ##  * `_locomotion_action` is the action actually playing for walking/skip
+    ##    locomotion; `_advance_locomotion_visual()` advances stepfwd -> movefwd
+    ##    (and the other three pairs) after the recovered four-frame chain
+    ##    window.  The AI runs after `main.gd` zeroes the AI's move_axis, so the
+    ##    previous frame's stored locomotion action is the native animation the
+    ##    decision tree sees.
+    ##  * `state` covers the idle/floor actions and `_current_action_name()`
+    ##    returns the native `source_action` for attacks.
+    if fighter == null or not is_instance_valid(fighter):
+        return ""
+    if fighter.state in ["idle", "idle2", "idle3"]:
+        var locomotion: String = String(fighter._locomotion_action)
+        if not locomotion.is_empty():
+            return locomotion
         return fighter.state
-    var action: String = fighter._current_action_name()
-    if not action.is_empty():
-        return action
-    return "default"
+    if fighter.state in ["facedownidle", "faceupidle"]:
+        return fighter.state
+    return String(fighter._current_action_name())
+
+
+func _my_animation_case(raw: String) -> String:
+    ## Resolve one port animation/action name to an exact tree case.
+    ##
+    ## A character-suffixed variant is used only when both the tree names it and
+    ## the fighter's own recovered set contains that action
+    ## (`PortFighter._native_actions`, loaded from the set's native_links file).
+    ## Anything else - including attack names and `skipfwd`, which has no
+    ## `my_animation` case - fails closed to the tree's own `default` branch.
+    if raw.is_empty():
+        return MY_ANIMATION_FALLBACK
+    var suffix: String = _character_animation_suffix()
+    if not suffix.is_empty() and fighter != null and is_instance_valid(fighter):
+        var suffixed: String = raw + " " + suffix
+        if fighter._native_actions.has(suffixed) and MY_ANIMATION_CASES.has(suffixed):
+            return suffixed
+    if MY_ANIMATION_CASES.has(raw):
+        return raw
+    unknown_animation_tokens[raw] = int(unknown_animation_tokens.get(raw, 0)) + 1
+    return MY_ANIMATION_FALLBACK
+
+
+func _character_animation_suffix() -> String:
+    return String(MY_ANIMATION_CHARACTER_SUFFIXES.get(character_key, ""))
 
 
 func _update_opponent_attack_sequence() -> void:
