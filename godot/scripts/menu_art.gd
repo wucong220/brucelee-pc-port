@@ -289,15 +289,23 @@ func _rows_for(key: String) -> Array:
 
 func _index_textures() -> Dictionary:
 	var index: Dictionary = {}
-	for directory: Variant in ART_DIRS:
-		var folder: String = String(directory)
-		var path: String = ART_ROOT + folder
-		var names: PackedStringArray = DirAccess.get_files_at(path)
-		for name: String in names:
-			if not name.to_lower().ends_with(".png"):
-				continue
-			var stem: String = name.get_basename().to_lower()
-			index[folder + "/" + stem] = path.path_join(name)
+	var roots: Array[String] = [ART_ROOT]
+	# Exported packages keep the decoded PNGs beside the executable because the
+	# original artwork is local-only and intentionally not committed.  Source
+	# runs still use res:// directly.
+	var local_root: String = OS.get_executable_path().get_base_dir().path_join("ui/menu_art") + "/"
+	if DirAccess.dir_exists_absolute(local_root):
+		roots.append(local_root)
+	for art_root: String in roots:
+		for directory: Variant in ART_DIRS:
+			var folder: String = String(directory)
+			var path: String = art_root + folder
+			var names: PackedStringArray = DirAccess.get_files_at(path)
+			for name: String in names:
+				if not name.to_lower().ends_with(".png"):
+					continue
+				var stem: String = name.get_basename().to_lower()
+				index[folder + "/" + stem] = path.path_join(name)
 	return index
 
 
