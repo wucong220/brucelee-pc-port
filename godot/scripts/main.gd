@@ -282,17 +282,17 @@ const PLAYER_SKIN_CONFIG: Dictionary = {
     },
     "skin02": {
         "glb_package": "models\\bruce_skin02.glb",
-        "sha256": "df9ff7b67aef757129c9330bdef0ac9568f242b637a05434eb0d5606a567485e",
+        "sha256": "55c1ef7d69313425482e581d5672b599c1f2b7f58f426b731a8905a4d422f978",
         "material_profile": "body_hair",
     },
     "skin03": {
         "glb_package": "models\\bruce_skin03.glb",
-        "sha256": "7551a98c23255415bfefc9634693c43afae2d99a8ce679b5e8e62230dd3b4561",
+        "sha256": "91b999a02ac2b74ab724bebec670596b5059125033c9551fedcfcce6d61b1441",
         "material_profile": "body_hair",
     },
     "skin04": {
         "glb_package": "models\\bruce_skin04.glb",
-        "sha256": "1db5406f75d0f5759b6111bc130fa7381e485bb70ac53bddb67832ebb970d508",
+        "sha256": "0653aa627aebcbe41a7fcf45a19ab1e92585500d9125be79098f7377acf62bc5",
         "material_profile": "body_hair",
     },
 }
