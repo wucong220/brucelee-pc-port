@@ -22,6 +22,7 @@ const VoiceCueTiming = preload("res://scripts/voice_cue_timing.gd")
 const TIMING_TOLERANCE: float = 0.080
 
 var failures: Array[String] = []
+var observations: Array = []
 var scene: Node = null
 var player: PortFighter = null
 var computer: PortFighter = null
@@ -160,6 +161,7 @@ func _expect_action_timing(action: String, quiet_seconds: float) -> void:
             continue
         _assert_timing(entry, int(cue["frame"]), "%s voice" % action, t0)
         _assert_volume(entry, float(cue["volume"]), "%s voice" % action)
+        _note(entry, action, "voice", true, t0)
     for cue_value: Variant in sfx_cues:
         if not cue_value is Dictionary:
             continue
@@ -177,6 +179,32 @@ func _expect_action_timing(action: String, quiet_seconds: float) -> void:
         _assert_volume(
             entry, float(cue.get("volume", 1.0)), "%s sfx %s" % [action, cue["file"]]
         )
+        _note(entry, action, "sfx", false, t0)
+
+
+func _note(
+        entry: Dictionary, action: String, kind: String, is_voice: bool,
+        start_ms: int
+) -> void:
+    observations.append({
+        "action": action,
+        "kind": kind,
+        "file": String(entry.get("file", "")),
+        "frame": int(entry.get("frame", -1)),
+        "is_voice": is_voice,
+        "unique": String(entry.get("unique", "")),
+        "volume": float(entry.get("volume", 0.0)),
+        "expected_seconds": float(int(entry.get("frame", 0)))
+            / VoiceCueTiming.FRAME_RATE,
+        "scheduled_seconds": float(entry.get("delay", 0.0)),
+        "observed_timer_seconds": (
+            float(int(entry.get("played_ms", 0)) - int(entry.get("scheduled_ms", 0)))
+            / 1000.0
+        ),
+        "observed_from_action_start_seconds": (
+            float(int(entry.get("played_ms", 0)) - start_ms) / 1000.0
+        ),
+    })
 
 
 func _assert_timing(
@@ -369,6 +397,7 @@ func _check_pain_voice_frame() -> void:
         return
     _assert_timing(entry, int(bruce_cue["frame"]), "impactbrutalmid pain", t0)
     _assert_volume(entry, float(bruce_cue["volume"]), "impactbrutalmid pain")
+    _note(entry, "impactbrutalmid", "pain_voice", true, t0)
     if String(entry.get("unique", "")) != "brucelee":
         _fail("pain voice lost its unique tag: " + str(entry))
     # No other character's take may leak into Bruce's playback.
@@ -430,5 +459,6 @@ func _finish() -> void:
         "timing_tolerance": TIMING_TOLERANCE,
         "voice_actions": VoiceCueTiming.VOICE_ACTIONS.size(),
         "frames": frames_by_action,
+        "observations": observations,
     }))
     quit(0)

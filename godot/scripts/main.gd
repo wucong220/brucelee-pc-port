@@ -337,6 +337,10 @@ var _sfx_audio: Dictionary = {}
 var _sfx_audio_error: Dictionary = {}
 var _sfx_play_log: Array = []
 var _sfx_play_count: int = 0
+# Per-action dedup bookkeeping: one generation token per schedule group.  A new
+# start of the same action/group bumps its token, so every still-pending cue of
+# the previous instance becomes stale and never plays (no duplicate playback).
+var _sfx_schedule_token: Dictionary = {}
 var _footstep_accum: Dictionary = {}
 var _footstep_index: Dictionary = {}
 var _music_player: AudioStreamPlayer = null
@@ -3147,7 +3151,9 @@ func _on_opponent_attack_started(action: String) -> void:
     var cues: Array = SfxMusicMap.set_cues(_opponent_set_family(), action)
     if cues.is_empty():
         return
-    _play_sfx_cues(cues, "opponent_attack:" + action)
+    # `unique` rows are fighting-set character variants; only this opponent's own
+    # take (or a generic row) may play for its animation.
+    _play_sfx_cues(cues, "opponent_attack:" + action, _opponent_set_character())
 
 
 func _play_attack_sfx(action: String) -> void:
@@ -3156,7 +3162,7 @@ func _play_attack_sfx(action: String) -> void:
     var cues: Array = SfxMusicMap.attack_cues(action)
     if cues.is_empty():
         return
-    _play_sfx_cues(cues, "attack:" + action)
+    _play_sfx_cues(cues, "attack:" + action, "brucelee")
 
 
 ## Set reaction actions that carry a Bruce pain voice. Recovered from
@@ -3298,7 +3304,15 @@ func _play_hit_audio(
                 if exit_frame < 0 or int(cue_row.get("frame", 0)) <= exit_frame + 2:
                     filtered.append(cue_row)
             if not filtered.is_empty():
-                _play_sfx_cues(filtered, "reaction:" + reaction)
+                # The defender's own fighting set owns these reaction samples, so
+                # its `unique` tag selects the take (Bruce vs. the opponent).  The
+                # dedup group is per defender so a simultaneous identical reaction
+                # on the other fighter is not cancelled.
+                _play_sfx_cues(
+                    filtered, "reaction:" + reaction,
+                    _fighter_set_character(defender),
+                    "reaction:%s:%d" % [reaction, defender.get_instance_id()]
+                )
                 return
     # Legacy fail-soft path: the three staged candidate WAVs, used only when
     # the 38-file package library is absent (editor runs / old validator).
@@ -3328,12 +3342,24 @@ func _play_hit_audio(
     player.play()
 
 
-func _play_sfx_cues(cues: Array, label: String, character_id: String = "") -> void:
-    ## Frame values are the original 30 fps source frames, so a cue at f12 is
-    ## scheduled 0.4 s after the event instead of being flattened to frame 0.
+func _play_sfx_cues(
+        cues: Array, label: String, character_id: String = "", group: String = ""
+) -> void:
+    ## Frame values are the recovered 30 fps source frames, so a cue at f12 is
+    ## scheduled 12/30 s after the event instead of being flattened to frame 0.
     ## `unique` is the fighting-set character variant; empty means generic.
     ## Exact duplicate rows are played once (the _brick mapping rows concatenate
     ## the same cue for several opponent variants).
+    ##
+    ## Per-action dedup: `group` (defaulting to `label`) identifies this action
+    ## instance (``attack:punch``, ``reaction:impactbrutalmid:<defender>``, ...).
+    ## Restarting the same action bumps its generation token, so cues still
+    ## pending from the previous instance are dropped instead of playing over the
+    ## new animation (a cancelled punch must not keep firing its f16/f34/f62
+    ## footfalls ~2 s later).
+    var schedule_key: String = group if not group.is_empty() else label
+    var token: int = int(_sfx_schedule_token.get(schedule_key, 0)) + 1
+    _sfx_schedule_token[schedule_key] = token
     var seen: Dictionary = {}
     for value: Variant in cues:
         if not value is Dictionary:
@@ -3356,7 +3382,7 @@ func _play_sfx_cues(cues: Array, label: String, character_id: String = "") -> vo
         var frame_value: Variant = cue.get("frame", null)
         var delay: float = 0.0
         if frame_value != null:
-            delay = maxf(float(frame_value), 0.0) / 30.0
+            delay = maxf(float(frame_value), 0.0) / SfxMusicMap.FRAME_RATE
         var dedupe: String = "%s|%s|%.3f|%s" % [
             file, str(frame_value), volume, unique
         ]
@@ -3365,17 +3391,31 @@ func _play_sfx_cues(cues: Array, label: String, character_id: String = "") -> vo
         seen[dedupe] = true
         var scheduled_ms: int = Time.get_ticks_msec()
         if delay <= 0.0001:
+            # No recovered frame data / frame 0: keep the start-of-action fallback.
             _spawn_sfx(
                 stream, volume, label, file, frame_value, delay, scheduled_ms,
                 false, unique
             )
             continue
         get_tree().create_timer(delay).timeout.connect(
-            _spawn_sfx.bind(
-                stream, volume, label, file, frame_value, delay, scheduled_ms,
-                false, unique
+            _spawn_sfx_if_current.bind(
+                token, schedule_key, stream, volume, label, file, frame_value,
+                delay, scheduled_ms, unique
             )
         )
+
+
+func _spawn_sfx_if_current(
+        token: int, schedule_key: String, stream: AudioStream, volume: float,
+        label: String, file: String, frame_value: Variant, delay: float,
+        scheduled_ms: int, unique: String
+) -> void:
+    ## A newer start of the same action supersedes this pending cue.
+    if int(_sfx_schedule_token.get(schedule_key, 0)) != token:
+        return
+    _spawn_sfx(
+        stream, volume, label, file, frame_value, delay, scheduled_ms, false, unique
+    )
 
 
 func _spawn_sfx(
@@ -3450,6 +3490,46 @@ func _opponent_set_family() -> String:
             return "thai"
 
 
+func _opponent_set_character() -> String:
+    ## Fighting-set `unique` tag of the configured opponent.  Recovered non-voice
+    ## rows tag a character-specific take with the set id (brickdavis, kengodall,
+    ## themaster, ...), which differs from the opponent-menu id (brick, ken,
+    ## master).  Empty means "no known tag", so only generic rows play.
+    match _opponent_attack_config():
+        PortFighter.ATTACK_CONFIG_PATH:
+            return "brucelee"
+        PortFighter.KEN_ATTACK_CONFIG_PATH:
+            return "kengodall"
+        PortFighter.CHIEF_ATTACK_CONFIG_PATH:
+            return "chief"
+        PortFighter.JOHNSON_ATTACK_CONFIG_PATH:
+            return "johnson"
+        PortFighter.SMALLBOY_ATTACK_CONFIG_PATH:
+            return "smallboy"
+        PortFighter.BRICK_ATTACK_CONFIG_PATH:
+            return "brickdavis"
+        PortFighter.MASTER_ATTACK_CONFIG_PATH:
+            return "themaster"
+        PortFighter.SINFU_ATTACK_CONFIG_PATH:
+            return "sinfu"
+        PortFighter.SHENLO_ATTACK_CONFIG_PATH:
+            return "shenlo"
+        PortFighter.LOMING_ATTACK_CONFIG_PATH:
+            return "loming"
+        _:
+            return ""
+
+
+func _fighter_set_character(fighter: PortFighter) -> String:
+    ## The fighter whose own fighting set owns this cue: the player is Bruce,
+    ## anyone else is the configured opponent.
+    if fighter == null:
+        return ""
+    if fighter == player:
+        return "brucelee"
+    return _opponent_set_character()
+
+
 func _update_one_footstep(fighter: PortFighter, family: String, delta: float) -> void:
     if fighter == null or not is_instance_valid(fighter):
         return
@@ -3503,6 +3583,8 @@ func _stop_combat_audio() -> void:
     _sfx_audio.clear()
     _sfx_audio_error.clear()
     _sfx_play_log.clear()
+    # Bumping every group keeps pending frame cues from firing after a stop.
+    _sfx_schedule_token.clear()
     _voice_file_cache.clear()
     _music_streams.clear()
     _music_stream_paths.clear()

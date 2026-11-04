@@ -9,6 +9,10 @@ extends RefCounted
 ## No filename, frame or volume below is synthesised. `file` is
 ## relative to <package>/audio/sfx and <package>/audio/music.
 
+## Every recovered `sounds[].frame` is a native 30 fps source frame, so a cue at
+## f7 must start 7/30 s after its action/hit, never at the event start.
+const FRAME_RATE: float = 30.0
+
 const SFX_FILES: Array[String] = [
     "Air_Kick_Heavy_1.wav",
     "Air_Kick_Light_1.wav",
