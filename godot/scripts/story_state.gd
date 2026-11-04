@@ -16,6 +16,10 @@ var difficulty_slot: int = 0
 var difficulty_name: String = ""
 var chapter_index: int = 0
 var exp: int = 0
+## Story level (native CBruceLeeStoryMode slot+0xa0, new game = 1). Persisted so
+## the LevelUpNotify fires only for a newly gained level, exactly like the native
+## StoryLevelUpPending()/StoryLevelUp() pair (0x1e4684 / 0x1e5abc).
+var level: int = 1
 var completed: Dictionary = {}
 var unlocks: Array = []
 var records: Array = []
@@ -83,6 +87,7 @@ func new_story(slot: int, difficulty_index: int, difficulty_label: String) -> bo
 	difficulty_name = difficulty_label
 	chapter_index = 0
 	exp = 0
+	level = 1
 	completed = {}
 	unlocks = []
 	records = []
@@ -110,6 +115,7 @@ func load_slot(slot: int) -> bool:
 	difficulty_name = String(raw.get("difficulty_name", ""))
 	chapter_index = int(raw.get("chapter_index", 0))
 	exp = int(raw.get("exp", 0))
+	level = int(raw.get("level", 1))
 	var raw_completed: Variant = raw.get("completed", {})
 	completed = raw_completed if raw_completed is Dictionary else {}
 	unlocks = raw.get("unlocks", [])
@@ -142,6 +148,7 @@ func to_dict() -> Dictionary:
 		"difficulty_name": difficulty_name,
 		"chapter_index": chapter_index,
 		"exp": exp,
+		"level": level,
 		"completed": completed,
 		"unlocks": unlocks,
 		"records": records,

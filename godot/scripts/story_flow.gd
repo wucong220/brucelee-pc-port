@@ -24,6 +24,9 @@ const StoryRules = preload("res://scripts/story_rules.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const StoryLangScript = preload("res://scripts/story_lang.gd")
 const StoryPictureView = preload("res://scripts/story_picture_view.gd")
+## Recovered LevelUpNotify / ExperienceUnlock presentation (levelup.ui / unlock.ui).
+const StoryNoticeModelScript = preload("res://scripts/story_notice_model.gd")
+const StoryNoticeViewScript = preload("res://scripts/story_notice_view.gd")
 
 const ENV_STORY_FLOW: String = "BRUCELEE_STORY_FLOW"
 const ENV_STORY_LAUNCH: String = "BRUCELEE_STORY_LAUNCH"
@@ -42,6 +45,13 @@ var opponent_config: Dictionary = {}
 var data = null
 var state = null
 var lang = null
+## Recovered LevelUpNotify / ExperienceUnlock presentation.
+var notice_model = null
+var notice_view: Control = null
+var notice_queue: Array = []
+var pending_reward_rows: Array = []
+var pending_reward_already: bool = false
+var pending_reward_map: String = ""
 
 var screen: String = "hidden"
 var error_text: String = ""
@@ -102,6 +112,8 @@ func open_initial(force_menu: bool = false) -> void:
 		return
 	if lang == null:
 		lang = StoryLangScript.new()
+	if notice_model == null:
+		notice_model = StoryNoticeModelScript.new()
 	if state == null:
 		state = StoryStateScript.new()
 	if OS.get_environment(ENV_STORY_LAUNCH) == "1" and not force_menu:
@@ -130,6 +142,14 @@ func _build_chrome() -> void:
 	picture_view.visible = false
 	root.add_child(picture_view)
 	picture_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	notice_view = StoryNoticeViewScript.new()
+	notice_view.name = "StoryNoticeView"
+	notice_view.visible = false
+	root.add_child(notice_view)
+	notice_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if notice_view.has_signal("dismissed"):
+		notice_view.dismissed.connect(_on_notice_dismissed)
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -249,17 +269,23 @@ func show_screen(screen_name: String) -> void:
 	screen = screen_name
 	var visible_now: bool = screen_name != "hidden" and screen_name != "battle"
 	var picture_now: bool = screen_name == "picture"
+	var notice_now: bool = screen_name == "notice"
 	if picture_view != null:
 		picture_view.visible = picture_now
 		if not picture_now:
 			picture_view.call("hide_caption")
+	if notice_view != null:
+		notice_view.visible = notice_now
+		if not notice_now:
+			notice_view.call("hide_notice")
 	# The picture screen lets the decoded artwork own the background; the dark
-	# story chrome dim is suppressed so the original art is not tinted.
+	# story chrome dim is suppressed so the original art is not tinted. The notice
+	# screen keeps the dim (the recovered black_rect panel sits on top of it).
 	dim.visible = visible_now and not picture_now
-	title_label.visible = visible_now
-	subtitle_label.visible = visible_now
-	body.visible = visible_now
-	footer_label.visible = visible_now
+	title_label.visible = visible_now and not notice_now
+	subtitle_label.visible = visible_now and not notice_now
+	body.visible = visible_now and not notice_now
+	footer_label.visible = visible_now and not notice_now
 	banner.visible = screen_name == "battle"
 	banner_background.visible = screen_name == "battle"
 	# The fight HUD belongs to the match; story screens cover it completely.
@@ -276,6 +302,9 @@ func hide_all() -> void:
 	if picture_view != null:
 		picture_view.visible = false
 		picture_view.call("hide_caption")
+	if notice_view != null:
+		notice_view.visible = false
+		notice_view.call("hide_notice")
 	title_label.visible = false
 	subtitle_label.visible = false
 	body.visible = false
@@ -1078,18 +1107,96 @@ func _finish_event() -> void:
 	# runs the EXP unlock table (CBruceLeeStoryMode::StoryCurrentEventComplete
 	# 0x1f4c24 -> CUnlocker::CheckStoryUnlocks(slot exp)). All calls are
 	# idempotent for replayed events.
+	var fresh_unlocks: Array = []
 	if progress != null:
-		progress.sync_story_exp(int(state.exp))
-		progress.note_story_event(chapter_id, maptitle)
+		var exp_fresh: Array = progress.sync_story_exp(int(state.exp))
+		var event_fresh: Array = progress.note_story_event(chapter_id, maptitle)
+		for id: Variant in exp_fresh:
+			fresh_unlocks.append(int(id))
+		for id: Variant in event_fresh:
+			if not fresh_unlocks.has(int(id)):
+				fresh_unlocks.append(int(id))
 		if chapter_completed_now or story_finished:
 			progress.note_story_chapter(chapter_id)
 		if story_finished:
 			progress.note_story_complete(String(state.difficulty_name))
+	# Recovered StoryLevelUp: while exp >= table[level] level advances, persisted
+	# in the save slot (native slot+0xa0). Capture the prior level so the notice
+	# only fires on a newly gained level (native StoryLevelUpPending 0x1e4684).
+	var level_before: int = int(state.level)
+	if notice_model != null and notice_model.is_loaded():
+		var level_now: int = notice_model.level_for_exp(int(state.exp))
+		if level_now > level_before:
+			state.level = level_now
 	state.save()
-	print("STORY_FLOW_EVENT_DONE %s/%s chapter_complete=%s story_complete=%s" % [
+	print("STORY_FLOW_EVENT_DONE %s/%s chapter_complete=%s story_complete=%s level=%d fresh_unlocks=%d" % [
 		chapter_id, maptitle, str(chapter_completed_now), str(story_finished),
+		int(state.level), fresh_unlocks.size(),
 	])
-	show_rewards(_events_unlock_rows(), already, maptitle)
+	# Queue the recovered LevelUpNotify / ExperienceUnlock notices before the
+	# text rewards screen (native: storycheckfirstunlock -> experienceunlock /
+	# levelupnotify -> storychecknextunlock -> ... -> launch).
+	pending_reward_rows = _events_unlock_rows()
+	pending_reward_already = already
+	pending_reward_map = maptitle
+	var notices: Array = []
+	if notice_model != null and notice_model.is_loaded():
+		var reg = null
+		if progress != null and progress.get("service") != null:
+			reg = progress.service.registry
+		var descr: Array = []
+		for id: Variant in fresh_unlocks:
+			var notice: Dictionary = notice_model.unlock_notice(int(id), reg, Callable(self, "_resolve_item_name"))
+			notices.append(notice)
+			descr.append(notice_model.describe(notice))
+		if int(state.level) > level_before:
+			var lv_notice: Dictionary = notice_model.levelup_notice(int(state.level))
+			notices.append(lv_notice)
+			descr.append(notice_model.describe(lv_notice))
+		if not notices.is_empty():
+			print("STORY_FLOW_NOTICE queue=%d %s" % [notices.size(), str(descr)])
+	if not notices.is_empty():
+		notice_queue = notices
+		_show_next_notice()
+		return
+	show_rewards(pending_reward_rows, pending_reward_already, pending_reward_map)
+
+
+func _resolve_item_name(item_type: String, item_id: Variant) -> Dictionary:
+	## Reuse the recovered unlock_item_names table (story_data.resolve_unlock).
+	return data.resolve_unlock(item_type, item_id)
+
+
+func _show_next_notice() -> void:
+	if notice_queue.is_empty():
+		notice_view.call("hide_notice")
+		show_rewards(pending_reward_rows, pending_reward_already, pending_reward_map)
+		return
+	var notice: Dictionary = notice_queue[0]
+	show_screen("notice")
+	notice_view.call("present", notice)
+	if notice_view.get("visible") != null:
+		notice_view.visible = true
+	_set_header("", "", "J / ENTER = " + String(notice.get("menu_label", "")))
+	title_label.visible = false
+	subtitle_label.visible = false
+	body.visible = false
+	footer_label.visible = false
+
+
+func _on_notice_dismissed() -> void:
+	if screen == "notice":
+		_advance_notice()
+
+
+func _advance_notice() -> void:
+	if not notice_queue.is_empty():
+		notice_queue.pop_front()
+	if notice_queue.is_empty():
+		notice_view.call("hide_notice")
+		show_rewards(pending_reward_rows, pending_reward_already, pending_reward_map)
+	else:
+		_show_next_notice()
 
 
 func _events_unlock_rows() -> Array:
@@ -1344,6 +1451,8 @@ func _accept() -> void:
 			_advance_picture()
 		"next_fight":
 			_launch_fight()
+		"notice":
+			_advance_notice()
 		"defeat", "rewards":
 			OS.set_environment(ENV_STORY_LAUNCH, "")
 			hide_all()
@@ -1379,6 +1488,8 @@ func _cancel() -> void:
 			_resume_from_pause()
 		"next_fight":
 			show_pause("next_fight")
+		"notice":
+			_advance_notice()
 		"defeat":
 			show_pause("defeat")
 		"rewards":
