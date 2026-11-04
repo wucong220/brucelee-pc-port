@@ -22,6 +22,9 @@ const CameraAnm = preload("res://scripts/camera_anm_player.gd")
 const StoryFlow = preload("res://scripts/story_flow.gd")
 ## Opt-in Arcade / Survival / Time Attack modes (recovered game.states / gui).
 const GameModes = preload("res://scripts/game_modes.gd")
+## Recovered CBeatEmUpGame states 1/2 (attract intros), 6 (replay), 9
+## (continue), 10 and 14.  States whose data is not recovered refuse to start.
+const NativeMatchStates = preload("res://scripts/native_match_states.gd")
 ## Opt-in progress/save subsystem bridge (inert unless BRUCELEE_PROGRESS=1).
 const ProgressHooks = preload("res://scripts/progress_hooks.gd")
 ## Opt-in Records/Achievements screen. It is only reachable through the RECORDS
@@ -177,14 +180,16 @@ const ROUND_TIME_DEFAULT: int = 60
 
 # Ported EGameState subset from krm::CBeatEmUpGame::SetState/Update
 # (ghidra-out5/SetState.c, ghidra-out5/Update.c).  States 1/2 (attract intro),
-# 6 (replay), 9 (continue), 10, 14 are not implemented because their
-# configuration and runtime semantics are not proven for this prototype.
+# 9 (continue) and the fail-closed 6/10/14 live in NativeMatchStates.
+const MATCH_STATE_ATTRACT_FIGHTER0: int = 1  # SetState(1): fighter 0 "Intro"
+const MATCH_STATE_ATTRACT_FIGHTER1: int = 2  # SetState(2): fighter 1 "Intro"
 const MATCH_STATE_INTRO: int = 3        # SetState(3): both idle, READY/FIGHT text
 const MATCH_STATE_FIGHT: int = 4        # SetState(4): control + round clock
 const MATCH_STATE_TIME_UP: int = 5      # SetState(5): LaunchGameTextAnimation(4)
 const MATCH_STATE_KO_WIN: int = 7       # SetState(7): player round win text
 const MATCH_STATE_KO_LOSE: int = 8      # SetState(8): computer round win text
 const MATCH_STATE_DRAW: int = 11        # SetState(11): draw round text
+const MATCH_STATE_CONTINUE: int = 9     # SetState(9): GREAT text + continue
 const MATCH_STATE_MATCH_WIN: int = 12   # SetState(12): winner-only victory pose
 const MATCH_STATE_MATCH_LOSE: int = 13  # SetState(13): winner-only victory pose
 const MATCH_STATE_ROUND_END: int = 15   # SetState(15): RoundEnded() -> NextRound
@@ -367,6 +372,31 @@ var records_screen: CanvasLayer = null
 var style_catalog: RefCounted = null
 var style_store: RefCounted = null
 var style_editor: CanvasLayer = null
+# Recovered attract/continue states (see native_match_states.gd).  Created in
+# _ready; null only before the scene is ready.
+var native_states: NativeMatchStates = null
+# characters.list intro pools, in archive order, keyed by the same opponent id
+# the menu uses.  The player is always a Bruce Lee skin, whose four intros are
+# shared by brucelee_jacket/base/tank/kimono.
+const INTRO_CLIPS_PLAYER: Array[String] = [
+    "m01_intro_01", "m01_intro_02", "m01_intro_03", "m01_intro_04",
+]
+const INTRO_CLIPS_BY_OPPONENT: Dictionary = {
+    "brick": ["m03_intro_02"],
+    "johnson": ["m03_intro_01"],
+    "smallboy": ["m03_intro_03"],
+    "chief": ["m02_e01_intro_01", "m02_e01_intro_02", "m02_intro_01"],
+    "ken": ["m02_intro_02", "m02_intro_03"],
+    "sinfu": ["m04_e02_intro_01"],
+    "shenlo": ["m04_e03_intro_01"],
+    "loming": ["m04_intro_01"],
+    "master": ["m04_e01_intro_01"],
+}
+# SetState(0) only plays the attract intros while the +0x82c counter is still
+# 0, i.e. once per match.  _reset_match() (a new match, which reaches this
+# through _reset_round) clears it; _start_next_round() goes straight to
+# _start_round_intro(), so later rounds do not re-enter the attract.
+var _attract_played: bool = false
 # Local port of the CBeatEmUpGame state machine. match_state is the native
 # EGameState value, match_state_time is GetStateTime() in seconds and
 # pending_round_winner is 0 (draw), 1 (player) or 2 (computer).
@@ -431,6 +461,8 @@ var _action_camera_mirror: bool = false
 var _action_camera_a: Vector3 = Vector3.ZERO
 var _action_camera_b: Vector3 = Vector3.ZERO
 var _action_camera_missing_json: Array[String] = []
+# Continue prompt drawn by state 9.  Null until the state is entered.
+var _continue_layer: CanvasLayer = null
 
 # AI-only prototype costs: the native AI decision is not recovered, so the
 # Brick AI uses these thresholds/costs. They are not part of the player action
@@ -527,6 +559,10 @@ func _ready() -> void:
         style_editor.closed.connect(_on_style_editor_closed)
         style_editor.try_requested.connect(_on_style_try)
         style_editor.selection_saved.connect(_on_style_selection_saved)
+    # Recovered attract/continue states.  The module is always created, but both
+    # flows stay opt-in through BRUCELEE_ATTRACT / BRUCELEE_CONTINUE.
+    native_states = NativeMatchStates.new()
+    _configure_attract_flags()
     main_menu_enabled = (
         false if (export_self_test or story_mode or game_mode)
         else _should_show_main_menu()
@@ -561,7 +597,9 @@ func _start_direct_intro() -> void:
         return
     await RenderingServer.frame_post_draw
     await RenderingServer.frame_post_draw
-    _start_round_intro()
+    # SetState(0) routing: the opt-in attract intros run before the round intro
+    # and fall through to it unchanged when the flag is off or a clip is absent.
+    _start_attract_or_intro()
 
 
 func _run_export_self_test() -> void:
@@ -1890,6 +1928,14 @@ func _reset_round() -> void:
     # CFighter::Restart -> RestartValues -> SetState(0): a fresh round enters
     # the round-intro path, not the result path. _reset_match is also used by
     # the R key and by validators, which expect a controllable fight at once.
+    # A new match (which reaches this through _reset_match) also re-arms the
+    # attract intros: the +0x82c counter restarts at 0.  The per-round path,
+    # _start_next_round -> _start_round_intro, never consults the attract flag.
+    _attract_played = false
+    if native_states != null:
+        native_states.reset()
+        _configure_attract_flags()
+    _hide_continue_prompt()
     match_state = MATCH_STATE_FIGHT
     match_state_time = 0.0
     pending_round_winner = 0
@@ -1914,6 +1960,8 @@ func _reset_round() -> void:
 func _start_next_round() -> void:
     round_number += 1
     _reset_round()
+    # RestartValues() increments the +0x82c counter, so later rounds of the
+    # same match skip the attract intros and go straight to SetState(3).
     _start_round_intro()
 
 func _should_show_main_menu() -> bool:
@@ -2067,7 +2115,7 @@ func _on_menu_command(command: String) -> void:
             training_mode = false
             _leave_menu()
             _reset_match()
-            _start_round_intro()
+            _start_attract_or_intro()
         "arcade", "survival", "timeattack":
             training_mode = false
             _leave_menu()
@@ -2469,6 +2517,200 @@ func _acquire_result_player() -> AudioStreamPlayer:
     _result_player_cursor += 1
     reused.stop()
     return reused
+
+
+func _configure_attract_flags() -> void:
+    ## SetState(0) plays the attract intros only while the per-fighter flags at
+    ## +0x830 / +0x831 are set.  The port treats "the candidate GLB carries the
+    ## character's characters.list intro clip" as that flag: a character whose
+    ## intro clip is absent can never enter state 1 or 2.
+    if native_states == null:
+        return
+    native_states.attract_fighter0_available = not _intro_clip_for(player).is_empty()
+    native_states.attract_fighter1_available = not _intro_clip_for(computer).is_empty()
+
+
+## characters.list intro pool for a fighter, in archive order.  The player is a
+## Bruce Lee skin (all four share one pool); the opponent follows the menu id.
+func _intro_pool_for(fighter: PortFighter) -> Array[String]:
+    if fighter == player:
+        return INTRO_CLIPS_PLAYER
+    var opponent_id: String = OS.get_environment("BRUCELEE_OPPONENT_NAME_KEY")
+    var pool: Variant = INTRO_CLIPS_BY_OPPONENT.get(opponent_id, [])
+    var names: Array[String] = []
+    for entry in pool:
+        names.append(String(entry))
+    return names
+
+
+## First pool clip the fighter's candidate GLB actually contains.  Empty when
+## the character's intro was not shipped with the candidate, which is a refusal,
+## not a cue to substitute another character's intro.
+func _intro_clip_for(fighter: PortFighter) -> String:
+    if fighter == null:
+        return ""
+    var clips: Dictionary = fighter.get("_candidate_clip_paths")
+    for clip_name in _intro_pool_for(fighter):
+        if clips.has(clip_name):
+            return clip_name
+    return ""
+
+
+func _intro_clip_seconds(fighter: PortFighter, clip_name: String) -> float:
+    var animation: AnimationPlayer = fighter.get("_candidate_animation")
+    var clips: Dictionary = fighter.get("_candidate_clip_paths")
+    if animation == null or not clips.has(clip_name):
+        return -1.0
+    var clip: Animation = animation.get_animation(String(clips[clip_name]))
+    if clip == null:
+        return -1.0
+    return clip.length
+
+
+func _play_intro_clip(fighter: PortFighter, clip_name: String) -> void:
+    var other: PortFighter = computer if fighter == player else player
+    fighter.visible = true
+    other.visible = false
+    fighter.global_position = Vector3(0.0, 1.20, 0.0)
+    other.global_position = Vector3(0.0, 1.20, 0.0)
+    fighter.move_axis = Vector2.ZERO
+    other.move_axis = Vector2.ZERO
+    # The candidate idle clips are frozen on their first frame; an intro must
+    # actually play, so drive the AnimationPlayer directly.
+    var animation: AnimationPlayer = fighter.get("_candidate_animation")
+    var clips: Dictionary = fighter.get("_candidate_clip_paths")
+    if animation == null or not clips.has(clip_name):
+        return
+    var clip: Animation = animation.get_animation(String(clips[clip_name]))
+    if clip != null:
+        clip.loop_mode = Animation.LOOP_NONE
+    animation.speed_scale = 1.0
+    animation.play(String(clips[clip_name]))
+    fighter.set("_candidate_action", clip_name)
+
+
+func _start_attract_or_intro() -> void:
+    ## SetState(0) with the +0x82c counter still at 0: state 1, else state 2,
+    ## else the round intro.  A missing candidate clip refuses the attract
+    ## state and the round intro plays instead.  Opt-in: BRUCELEE_ATTRACT=1,
+    ## because the port cannot prove which match configs set +0x830/+0x831.
+    if (OS.get_environment("BRUCELEE_ATTRACT") != "1"
+            or native_states == null or _attract_played or training_mode
+            or OS.get_environment("BRUCELEE_ROUND_INTRO") == "0"):
+        _start_round_intro()
+        return
+    _configure_attract_flags()
+    var target: int = native_states.set_state_zero_target(false)
+    if target == -1 or not _enter_attract_state(target):
+        _start_round_intro()
+
+
+func _enter_attract_state(target: int) -> bool:
+    var fighter: PortFighter = player if target == MATCH_STATE_ATTRACT_FIGHTER0 else computer
+    var clip_name: String = _intro_clip_for(fighter)
+    var clip_seconds: float = _intro_clip_seconds(fighter, clip_name)
+    if not native_states.enter(target, clip_name, clip_seconds):
+        print("NATIVE_STATE_REFUSED %s" % native_states.fail_reason)
+        return false
+    _enter_match_state(target)
+    _play_intro_clip(fighter, clip_name)
+    print("NATIVE_STATE_ENTER state=%d clip=%s seconds=%.3f" % [
+        target, clip_name, clip_seconds])
+    return true
+
+
+func _advance_attract(delta: float) -> void:
+    if native_states == null or not native_states.active:
+        _start_round_intro()
+        return
+    var skip_pressed: bool = Input.is_action_just_pressed(PrototypeControls.ATTACK_A)
+    var target: int = native_states.advance(delta, skip_pressed)
+    if target == -1:
+        return
+    _attract_played = true
+    if target == NativeMatchStates.NO_TARGET_EXIT:
+        _start_round_intro()
+        return
+    if target == MATCH_STATE_ATTRACT_FIGHTER1 and _enter_attract_state(target):
+        return
+    _start_round_intro()
+
+
+func _enter_continue_state() -> bool:
+    ## SetState(9): LaunchGameTextAnimation(10) (GREAT, low) and hand the
+    ## continue choice to the arcaderetryask UI state.  The countdown length at
+    ## +0x850 is unrecovered, so the prompt waits for YES / NO and shows the
+    ## gap instead of counting down.
+    if native_states == null:
+        return false
+    if not native_states.enter(MATCH_STATE_CONTINUE):
+        print("NATIVE_STATE_REFUSED %s" % native_states.fail_reason)
+        return false
+    _enter_match_state(MATCH_STATE_CONTINUE)
+    _show_game_text("GREAT", 0.0, GAME_TEXT_SEQ_GREAT_LOW)
+    _show_continue_prompt()
+    print("NATIVE_STATE_ENTER state=%d continue_countdown=UNRECOVERED timeout_action=%s (unit unrecovered)" % [
+        MATCH_STATE_CONTINUE, NativeMatchStates.CONTINUE_ACTION_TIMEOUT])
+    return true
+
+
+func _show_continue_prompt() -> void:
+    _hide_continue_prompt()
+    _continue_layer = CanvasLayer.new()
+    _continue_layer.layer = 30
+    var panel: ColorRect = ColorRect.new()
+    panel.color = Color(0.0, 0.0, 0.0, 0.6)
+    panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _continue_layer.add_child(panel)
+    var label: Label = Label.new()
+    label.name = "ContinuePrompt"
+    label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    label.set_anchors_preset(Control.PRESET_FULL_RECT)
+    label.add_theme_font_size_override("font_size", 28)
+    _continue_layer.add_child(label)
+    add_child(_continue_layer)
+    _refresh_continue_prompt()
+
+
+func _refresh_continue_prompt() -> void:
+    if _continue_layer == null:
+        return
+    var label: Label = _continue_layer.get_node_or_null("ContinuePrompt")
+    if label == null:
+        return
+    var yes_mark: String = ">" if native_states.continue_menu_index == 0 else " "
+    var no_mark: String = ">" if native_states.continue_menu_index == 1 else " "
+    # gui/continueask.ui binds its number to the "continuecountdown" query,
+    # whose source field (+0x850) was not recovered.  Say so rather than show a
+    # number that the game never stored.
+    label.text = "CONTINUE?\nCOUNTDOWN UNRECOVERED\n%s YES      %s NO" % [yes_mark, no_mark]
+
+
+func _hide_continue_prompt() -> void:
+    if _continue_layer != null and is_instance_valid(_continue_layer):
+        _continue_layer.queue_free()
+    _continue_layer = null
+
+
+func _resolve_continue(action: String) -> void:
+    if native_states == null:
+        return
+    var applied: String = native_states.choose_continue(action)
+    if applied.is_empty():
+        return
+    _hide_continue_prompt()
+    _hide_game_text_overlays()
+    print("NATIVE_STATE_CONTINUE choice=%s" % applied)
+    if applied == NativeMatchStates.CONTINUE_ACTION_YES:
+        # arcaderetryask "yes" -> "restartfight" -> "fightrestarted" -> "game":
+        # the same match starts again.
+        _attract_played = false
+        _reset_match()
+        _start_attract_or_intro()
+        return
+    # "no" and the "#10" timeout both leave towards the main menu.
+    _open_main_menu()
 
 
 func _start_round_intro() -> void:
@@ -3448,8 +3690,14 @@ func _update_match_state(delta: float) -> void:
         return
     match_state_time += delta
     match match_state:
+        MATCH_STATE_ATTRACT_FIGHTER0, MATCH_STATE_ATTRACT_FIGHTER1:
+            _advance_attract(delta)
         MATCH_STATE_INTRO:
             _advance_round_intro()
+        MATCH_STATE_CONTINUE:
+            # State 9 waits on the arcaderetryask choice; its countdown length
+            # (+0x850) is unrecovered, so nothing here expires it.
+            pass
         MATCH_STATE_TIME_UP:
             _advance_time_up()
         MATCH_STATE_KO_WIN, MATCH_STATE_KO_LOSE, MATCH_STATE_DRAW:
@@ -3639,6 +3887,18 @@ func _advance_round_end() -> void:
         match_over = true
         done = true
         var player_won: bool = player_rounds >= rounds_to_win
+        # SetState(9) is raised from the fight state when the recorded action
+        # list matches; the port has no such recording, so the recovered
+        # arcaderetryask prompt is offered at the one point the port knows the
+        # match is over.  BRUCELEE_CONTINUE unset keeps the plain result screen.
+        # Story mode and the arcade flow own their own post-match screens, so
+        # the versus continue prompt only applies to a plain match.
+        var story_active: bool = OS.get_environment("BRUCELEE_STORY_FLOW") == "1"
+        var mode_active: bool = not OS.get_environment("BRUCELEE_GAME_MODE").is_empty()
+        if (OS.get_environment("BRUCELEE_CONTINUE") == "1"
+                and not player_won and not training_mode and not story_active
+                and not mode_active and _enter_continue_state()):
+            return
         # Opt-in progress: a standalone 1v1 win (not story / arcade / training)
         # is the port's versus match, so it feeds the versus-win counter.
         if (progress != null and player_won and not training_mode
@@ -3757,6 +4017,9 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+    if match_state == MATCH_STATE_CONTINUE and _handle_continue_input(event):
+        get_viewport().set_input_as_handled()
+        return
     if records_screen != null and records_screen.is_open():
         # The records screen consumes its own keys in _input(); this guard keeps
         # any straggler press from reaching the menu or a fight behind it.
@@ -3840,6 +4103,28 @@ func _unhandled_input(event: InputEvent) -> void:
     else:
         return
     get_viewport().set_input_as_handled()
+
+func _handle_continue_input(event: InputEvent) -> bool:
+    ## arcaderetryask: UP/DOWN move between the two gui/continueask.ui options,
+    ## J confirms the highlighted one.  No countdown key exists because the
+    ## countdown length itself is unrecovered.
+    if not event is InputEventKey or not event.pressed or event.echo:
+        return false
+    var key_event: InputEventKey = event
+    if key_event.keycode == KEY_UP or key_event.keycode == KEY_W:
+        native_states.move_continue_cursor(-1)
+        _refresh_continue_prompt()
+        return true
+    if key_event.keycode == KEY_DOWN or key_event.keycode == KEY_S:
+        native_states.move_continue_cursor(1)
+        _refresh_continue_prompt()
+        return true
+    if key_event.keycode == KEY_J or key_event.keycode == KEY_ENTER:
+        var option: String = native_states.current_continue_option()
+        _resolve_continue(option)
+        return true
+    return false
+
 
 func _record_direction_press(event: InputEvent) -> void:
     # adreno_200/input.config fixedpad: an up press emits the "up" and "in"
