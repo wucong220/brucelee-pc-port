@@ -326,13 +326,14 @@ const ROUND_TIME_DEFAULT: int = 60
 
 # Ported EGameState subset from krm::CBeatEmUpGame::SetState/Update
 # (ghidra-out5/SetState.c, ghidra-out5/Update.c).  States 1/2 (attract intro),
-# 9 (continue) and 14 (story defeat) live in NativeMatchStates; 6 and 10 stay
-# fail-closed there.
+# 6 (replay), 9 (continue) and 14 (story defeat) live in NativeMatchStates;
+# 10 stays fail-closed there.
 const MATCH_STATE_ATTRACT_FIGHTER0: int = 1  # SetState(1): fighter 0 "Intro"
 const MATCH_STATE_ATTRACT_FIGHTER1: int = 2  # SetState(2): fighter 1 "Intro"
 const MATCH_STATE_INTRO: int = 3        # SetState(3): both idle, READY/FIGHT text
 const MATCH_STATE_FIGHT: int = 4        # SetState(4): control + round clock
 const MATCH_STATE_TIME_UP: int = 5      # SetState(5): LaunchGameTextAnimation(4)
+const MATCH_STATE_REPLAY: int = 6       # SetState(6): recovered slow-motion replay
 const MATCH_STATE_KO_WIN: int = 7       # SetState(7): player round win text
 const MATCH_STATE_KO_LOSE: int = 8      # SetState(8): computer round win text
 const MATCH_STATE_DRAW: int = 11        # SetState(11): draw round text
@@ -443,6 +444,14 @@ var _sfx_play_count: int = 0
 # start of the same action/group bumps its token, so every still-pending cue of
 # the previous instance becomes stale and never plays (no duplicate playback).
 var _sfx_schedule_token: Dictionary = {}
+## Same per-action generation contract for deferred VOICE cues.  Only actions
+## that pass a `group` use it (the endattack victim stage); the legacy voice
+## call sites keep their start-of-action behaviour unchanged.
+var _voice_schedule_token: Dictionary = {}
+## Fail-closed diagnostics for the recovered endattack stages: one entry per
+## stage/action that had no row to play, so a silent stage is reported instead
+## of being mistaken for "already correct".
+var _audio_skips: Array = []
 var _footstep_accum: Dictionary = {}
 var _footstep_index: Dictionary = {}
 var _music_player: AudioStreamPlayer = null
@@ -580,6 +589,21 @@ var _defeat_camera_map_path: String = DEFEAT_CAMERA_MAP_PATH
 var _defeat_camera_map: Dictionary = {}
 var _defeat_camera_map_loaded: bool = false
 var _countdown_handed_off: bool = false
+## State 6 (SetState(6), recovered replay).  PlayerLost's win_on_lose story
+## branch enters it (0x19023c -> 0x19025c SetState(6)); Update case 6 only drives
+## CFighter::RecordReplayUpdate, so the port locks the fighters' normal
+## simulation and applies the recorded 0x2c frames itself.  The native body also
+## calls StopCameraAnimation/Restart, SetReplayCurrentTime(fighter, game+0x838)
+## and SetPosToFightStartPos; the port's +0x838 equivalent is the earliest
+## recorded sample of the current round (the recorder resets in reset_fighter,
+## exactly like CFighter::Restart clears the +0x194 count) and the fight-start
+## pose is captured here.
+var _replay_handed_off: bool = false
+var _replay_message_seconds: int = -1
+var _fight_start_player: Vector3 = Vector3.ZERO
+var _fight_start_computer: Vector3 = Vector3.ZERO
+var _fight_start_player_yaw: float = 0.0
+var _fight_start_computer_yaw: float = 0.0
 
 # ---- Original camera .anm playback for the MATCH_WIN/MATCH_LOSE result state ----
 # Decoded from adreno_200/cameras/<clip>_camera.anm by the isolated
@@ -1966,6 +1990,10 @@ func _build_fighters() -> void:
     computer.combat_hit.connect(_on_hit)
     player.attack_started.connect(_on_player_attack_started)
     computer.attack_started.connect(_on_opponent_attack_started)
+    # Second stage of a recovered endattack: the victim's own endattackcomp
+    # clip carries its own sounds[] rows, timed from the moment the clip starts.
+    player.endattack_victim_started.connect(_on_endattack_victim_started.bind(player))
+    computer.endattack_victim_started.connect(_on_endattack_victim_started.bind(computer))
 
 func _opponent_attack_config() -> String:
     ## The opponent's fighting set decides the clip table and the move data.
@@ -2185,6 +2213,20 @@ func _reset_round() -> void:
     var computer_x: float = 0.25 if training_mode else (0.75 if demo_close else 2.0)
     player.reset_fighter(Vector3(player_x, 1.20, 0.0))
     computer.reset_fighter(Vector3(computer_x, 1.20, 0.0))
+    # CFighter::SetPosToFightStartPos (@0x1b0bc8) restores this fixed per-side
+    # start pose; state 6 (SetState case 6) re-applies it.  The port captures the
+    # exact pose its own round reset produced and the yaw each fighter uses to
+    # face the other from it.
+    _fight_start_player = player.global_position
+    _fight_start_computer = computer.global_position
+    _fight_start_player_yaw = atan2(
+        -(_fight_start_computer.z - _fight_start_player.z),
+        _fight_start_computer.x - _fight_start_player.x
+    )
+    _fight_start_computer_yaw = atan2(
+        -(_fight_start_player.z - _fight_start_computer.z),
+        _fight_start_player.x - _fight_start_computer.x
+    )
     # `player_starting_health` applies to the start of the fight (round 1); later
     # rounds keep the native RestartValues() behaviour.  The native semantics of
     # this recovered field were not recovered beyond its name.
@@ -3421,10 +3463,18 @@ func _play_attack_voice(action: String) -> void:
     )
 
 
-func _play_voice_cues(cues: Array, character_id: String, label: String) -> int:
+func _play_voice_cues(
+        cues: Array, character_id: String, label: String, group: String = ""
+) -> int:
     ## Schedules every recovered voice cue at its own frame/30 s offset.
     ## Returns the number of cues actually started (0 when the set has no cue
     ## for this action, for this character, or the package lacks the WAV).
+    ## A non-empty `group` opts into per-instance cancellation: a newer start of
+    ## the same group drops this instance's still-pending cues (`_spawn_voice_if_current`).
+    var token: int = 0
+    if not group.is_empty():
+        token = int(_voice_schedule_token.get(group, 0)) + 1
+        _voice_schedule_token[group] = token
     var played: int = 0
     var seen: Dictionary = {}
     for value: Variant in cues:
@@ -3450,14 +3500,16 @@ func _play_voice_cues(cues: Array, character_id: String, label: String) -> int:
         var stream: AudioStream = _load_voice_archive_file(file)
         if stream == null:
             continue
-        _schedule_voice_cue(stream, volume, label, file, frame_value, unique)
+        _schedule_voice_cue(
+            stream, volume, label, file, frame_value, unique, group, token
+        )
         played += 1
     return played
 
 
 func _schedule_voice_cue(
         stream: AudioStream, volume: float, label: String, file: String,
-        frame_value: Variant, unique: String
+        frame_value: Variant, unique: String, group: String = "", token: int = 0
 ) -> void:
     var delay: float = 0.0
     if frame_value != null:
@@ -3468,10 +3520,31 @@ func _schedule_voice_cue(
             stream, volume, label, file, frame_value, delay, scheduled_ms, unique
         )
         return
+    if not group.is_empty():
+        get_tree().create_timer(delay).timeout.connect(
+            _spawn_voice_if_current.bind(
+                token, group, stream, volume, label, file, frame_value, delay,
+                scheduled_ms, unique
+            )
+        )
+        return
     get_tree().create_timer(delay).timeout.connect(
         _spawn_voice.bind(
             stream, volume, label, file, frame_value, delay, scheduled_ms, unique
         )
+    )
+
+
+func _spawn_voice_if_current(
+        token: int, group: String, stream: AudioStream, volume: float,
+        label: String, file: String, frame_value: Variant, delay: float,
+        scheduled_ms: int, unique: String
+) -> void:
+    ## A newer start of the same group supersedes this pending voice cue.
+    if int(_voice_schedule_token.get(group, 0)) != token:
+        return
+    _spawn_voice(
+        stream, volume, label, file, frame_value, delay, scheduled_ms, unique
     )
 
 
@@ -3538,6 +3611,15 @@ func _on_opponent_attack_started(action: String) -> void:
     if not _sfx_ready():
         return
     var cues: Array = SfxMusicMap.set_cues(_opponent_set_family(), action)
+    if cues.is_empty() and SfxMusicMap.ENDATTACK_ATTACK_SLOTS.has(action):
+        # The recovered sets name the finisher rows by set character
+        # ("endattack ken", "endattack brick", ...).  The opponent attack
+        # config's own source_action is the authority; no row means no cue
+        # (never the concatenated ATTACK_SFX variant list, which mixes sets).
+        var source_action: String = String(
+            (computer.ATTACKS.get(action, {}) as Dictionary).get("source_action", "")
+        )
+        cues = SfxMusicMap.action_cues(source_action)
     if cues.is_empty():
         return
     # `unique` rows are fighting-set character variants; only this opponent's own
@@ -3552,6 +3634,70 @@ func _play_attack_sfx(action: String) -> void:
     if cues.is_empty():
         return
     _play_sfx_cues(cues, "attack:" + action, "brucelee")
+
+
+func _on_endattack_victim_started(
+        slot_key: String, _attacker_kind: String, victim: PortFighter
+) -> void:
+    _play_endattack_comp_audio(victim, slot_key)
+
+
+func _play_endattack_comp_audio(victim: PortFighter, slot_key: String) -> void:
+    ## Recovered second stage of an endattack.  The victim's endattackcomp clip
+    ## carries its own `sounds[]` rows (impact and, for the karate comp, one pain
+    ## take per fighting-set character), so they start at that clip's
+    ## `frame / 30` counted from the instant the victim clip started -- never at
+    ## the finisher start, and never copied from the attacker's rows.
+    ##
+    ## Fail closed: an unknown clip, an action with no recovered row, or a WAV
+    ## the package lacks plays nothing and is recorded in `_audio_skips`.
+    if victim == null or not is_instance_valid(victim):
+        return
+    var clip: String = victim.current_victim_animation()
+    var action: String = SfxMusicMap.endattack_comp_action(clip)
+    if action.is_empty():
+        _note_audio_skip(
+            "endattack_comp:" + slot_key, "no recovered action for clip", clip, ""
+        )
+        return
+    # The port keeps the set's row split in two recovered tables: non-voice
+    # impact rows in SfxMusicMap, voice takes in VoiceCueTiming.  Both come from
+    # the same `sounds[]` records of the endattackcomp action.
+    var rows: Array = SfxMusicMap.action_cues(action)
+    var voice_rows: Array = VoiceCueTiming.voice_cues(action)
+    if rows.is_empty() and voice_rows.is_empty():
+        _note_audio_skip(
+            "endattack_comp:" + slot_key, "no recovered sounds[] rows", clip, action
+        )
+        return
+    var character: String = _fighter_set_character(victim)
+    var label: String = "endattack_comp:" + slot_key
+    # One group per victim instance: a restarted finisher bumps it and drops the
+    # previous stage's still-pending impact cues and pain voice.
+    var group: String = "endattack_comp:%s:%d" % [
+        slot_key, victim.get_instance_id()
+    ]
+    _play_sfx_cues(rows, label, character, group)
+    if victim == player:
+        # Only Bruce's own takes resolve through the player voice root.  The
+        # opponents' comp takes belong to the opt-in opponent voice overlay, so
+        # this path stays silent for them instead of reading another character's
+        # WAV out of the player root.
+        _play_voice_cues(voice_rows, character, label, group)
+
+
+func _note_audio_skip(
+        label: String, reason: String, clip: String, action: String
+) -> void:
+    _audio_skips.append({
+        "label": label,
+        "reason": reason,
+        "clip": clip,
+        "action": action,
+        "at_ms": Time.get_ticks_msec(),
+    })
+    if _audio_skips.size() > 64:
+        _audio_skips.pop_front()
 
 
 ## Set reaction actions that carry a Bruce pain voice. Recovered from
@@ -3974,6 +4120,7 @@ func _stop_combat_audio() -> void:
     _sfx_play_log.clear()
     # Bumping every group keeps pending frame cues from firing after a stop.
     _sfx_schedule_token.clear()
+    _voice_schedule_token.clear()
     _voice_file_cache.clear()
     _music_streams.clear()
     _music_stream_paths.clear()
@@ -4710,6 +4857,8 @@ func _update_match_state(delta: float) -> void:
             # State 9 waits on the arcaderetryask choice; its countdown length
             # (+0x850) is unrecovered, so nothing here expires it.
             pass
+        MATCH_STATE_REPLAY:
+            _advance_replay_state(delta)
         MATCH_STATE_TIME_UP:
             _advance_time_up()
         MATCH_STATE_KO_WIN, MATCH_STATE_KO_LOSE, MATCH_STATE_DRAW:
@@ -4894,18 +5043,30 @@ func _begin_winner_result_pose() -> void:
     _enter_match_state(MATCH_STATE_MATCH_WIN if winner_is_player else MATCH_STATE_MATCH_LOSE)
 
 
-func _story_defeat_state_applies() -> bool:
-    ## PlayerLost() @0x190060: for game mode 1 (story) it calls
-    ## CBruceLeeStoryMode::StoryCurrentFightWinOnLose() (engine+0x2b8) and, when
-    ## that returns 0, enters SetState(14) (0x19022c -> 0x19049c).  The port's
-    ## recovered story rules evaluate the same battle `win_on_lose` flag.
+func _story_player_lost_match() -> bool:
+    ## PlayerLost() @0x190060 is raised when the local player has just lost the
+    ## match.  Only game mode 1 (story) has a recovered branch that replaces the
+    ## ordinary KO result chain; every other mode keeps its own retry/summary
+    ## screen.  The story mode object is engine+0x2b8 and the flag read there is
+    ## the same `win_on_lose` string the recovered story rules evaluate.
     if OS.get_environment("BRUCELEE_STORY_FLOW") != "1":
         return false
     if story_flow == null:
         return false
     if player_rounds >= rounds_to_win or computer_rounds < rounds_to_win:
         return false
-    return not bool(story_flow.call("current_battle_win_on_lose"))
+    return true
+
+
+func _story_replay_state_applies() -> bool:
+    ## PlayerLost story branch, true half: StoryCurrentFightWinOnLose() != 0 ->
+    ## 0x19023c SetState(6) replay (0x19025c) and, when the subevent has replay
+    ## data, gui/replayandstats (0x190288 -> "ReplayAndStats"); its "continue"
+    ## action is "replayend" in game.states, and ReplayEnd's mode-1 path is
+    ## StoryFightWon (ReplayEnd @0x190540).
+    if not _story_player_lost_match():
+        return false
+    return bool(story_flow.call("current_battle_win_on_lose"))
 
 
 func _enter_countdown_state() -> bool:
@@ -4974,6 +5135,184 @@ func _advance_countdown(delta: float) -> void:
     hud.show_message("YOU LOSE THE MATCH · R TO RESTART")
     if story_flow != null:
         story_flow.match_finished(false)
+
+
+func _enter_replay_state() -> bool:
+    ## SetState(6) body (@0x178960): SetSpeed(0.5), clear both fighters'
+    ## "+0x16f" record gates, SetVisible(true) on both, SetReplayCurrentTime
+    ## (fighter, game+0x838) on both, SetPosToFightStartPos on both, then
+    ## StopCameraAnimation + CBeatEmUpCamera::Restart.
+    ##
+    ## The native buffers are produced by CFighter::SetAnimation's 0x2c append
+    ## path; the port's ReplayRecorder is the recovered producer, and it is
+    ## opt-in (BRUCELEE_REPLAY_RECORD).  A missing recorder, a missing buffer or
+    ## a refused NativeMatchStates entry is reported and refused here; the
+    ## caller then falls back to state 14 as the task requires.  The native code
+    ## itself has no such fallback: an empty buffer simply makes ReplayEnded()
+    ## true on the first Update and loops SetState(6).
+    if native_states == null or not is_instance_valid(player) \
+            or not is_instance_valid(computer):
+        print("REPLAY_STATE_GAP state=6 reason=no-match-state")
+        return false
+    var player_recorder = player.replay_recorder
+    var computer_recorder = computer.replay_recorder
+    if player_recorder == null or computer_recorder == null:
+        print("REPLAY_STATE_GAP state=6 reason=recorder-disabled")
+        return false
+    # game+0x838 is the match clock captured when state 4 was entered.  The
+    # port's recorder starts at reset_fighter (CFighter::Restart clears the
+    # native +0x194 count in the same way), so the earliest recorded sample is
+    # the exact clock of the replay's first frame.  Using it also keeps
+    # SetReplayCurrentTime on an exact record, so the unrecovered in-between
+    # seek interpolation is never needed.
+    var base_ms: int = 0
+    if int(player_recorder.size()) > 0 and int(computer_recorder.size()) > 0:
+        base_ms = mini(
+            int(player_recorder.first_time_ms()), int(computer_recorder.first_time_ms())
+        )
+    native_states.set_replay_buffers(
+        player_recorder.buffer, computer_recorder.buffer, base_ms
+    )
+    if not bool(native_states.enter(MATCH_STATE_REPLAY)):
+        # Empty/missing buffers are refused here by the recovered driver with
+        # REASON_NO_REPLAY ("no-replay-buffer"); the caller then falls back to
+        # state 14 as the task requires.
+        print("REPLAY_STATE_GAP state=6 reason=%s" % native_states.fail_reason)
+        return false
+    # StopCameraAnimation (SetState case 6) and the restart below; the intro and
+    # action cameras are cleared by _enter_match_state.
+    _enter_match_state(MATCH_STATE_REPLAY)
+    player.set_replay_recording(false)
+    computer.set_replay_recording(false)
+    player.visible = true
+    computer.visible = true
+    player.replay_pose_lock = true
+    computer.replay_pose_lock = true
+    player.state = "replay"
+    computer.state = "replay"
+    player.replay_pose_reset()
+    computer.replay_pose_reset()
+    player.global_position = _fight_start_player
+    computer.global_position = _fight_start_computer
+    player.rotation.y = _fight_start_player_yaw
+    computer.rotation.y = _fight_start_computer_yaw
+    player.velocity = Vector3.ZERO
+    computer.velocity = Vector3.ZERO
+    player.move_axis = Vector2.ZERO
+    computer.move_axis = Vector2.ZERO
+    player.clear_result_pose()
+    computer.clear_result_pose()
+    _hide_game_text_overlays()
+    _replay_handed_off = false
+    _replay_message_seconds = -1
+    done = true
+    _restart_fight_camera()
+    _refresh_replay_message()
+    print("NATIVE_STATE_ENTER state=6 base_ms=%d player_records=%d computer_records=%d speed_scale=%.3f" % [
+        base_ms, int(player_recorder.size()), int(computer_recorder.size()),
+        NativeMatchStates.REPLAY_STATE_SPEED_SCALE,
+    ])
+    return true
+
+
+func _replay_restart_pose() -> void:
+    ## Update case 6 loops with SetState(6) when both fighters report
+    ## ReplayEnded(): re-run the recovered entry body's pose half.  The camera is
+    ## restarted (CBeatEmUpCamera::Restart) and the next Update applies record 0.
+    player.global_position = _fight_start_player
+    computer.global_position = _fight_start_computer
+    player.rotation.y = _fight_start_player_yaw
+    computer.rotation.y = _fight_start_computer_yaw
+    player.velocity = Vector3.ZERO
+    computer.velocity = Vector3.ZERO
+    player.replay_pose_reset()
+    computer.replay_pose_reset()
+    _restart_fight_camera()
+
+
+func _advance_replay_state(delta: float) -> void:
+    ## Update case 6 (@0x18d0ac): a sample of GetStateTime() + 2*game+0x838 is
+    ## passed to CFighter::RecordReplayUpdate for each fighter (at most one 0x2c
+    ## record per call), and when both report ReplayEnded() the state re-enters
+    ## itself.  CFighter::RecordReplayUpdate restores position, rotation and the
+    ## +0x135 selector and calls SetAnimation with the recorded clip; the port
+    ## consumer is PortFighter.apply_replay_record().
+    if native_states == null or not bool(native_states.active):
+        return
+    var buffers: Array = native_states.replay_buffers
+    if buffers.size() != 2:
+        return
+    var base_ms: int = int(native_states.replay_base_ms)
+    var loop_before: int = int(native_states.replay_loops)
+    var cursors_before: Array[int] = [
+        int(buffers[0].cursor), int(buffers[1].cursor),
+    ]
+    # Native Update advances GetStateTime() before the case body runs.
+    var sample_ms: int = (
+        int(round((native_states.state_time + delta) * 1000.0))
+        + NativeMatchStates.REPLAY_SPEED_FACTOR * base_ms
+    )
+    native_states.advance(delta)
+    if int(native_states.replay_loops) != loop_before:
+        _replay_restart_pose()
+    else:
+        var fighters: Array = [player, computer]
+        for side: int in 2:
+            var buffer = buffers[side]
+            var cursor: int = int(buffer.cursor)
+            if cursor > cursors_before[side]:
+                fighters[side].apply_replay_record(
+                    buffer.records[cursor - 1], sample_ms
+                )
+    _refresh_replay_message()
+
+
+func _refresh_replay_message() -> void:
+    ## QueryString (@0x171b08) answers the state-6 text with
+    ## (11000 - GetStateTime()) / 1000 clamped to 10.  gui/replayandstats.ui is
+    ## the story screen PlayerLost opens next to the replay; the port presents
+    ## the same continue prompt as its HUD line instead of that authored page.
+    if native_states == null or match_state != MATCH_STATE_REPLAY:
+        return
+    var seconds: int = int(native_states.replay_countdown_seconds())
+    if seconds == _replay_message_seconds:
+        return
+    _replay_message_seconds = seconds
+    hud.show_message("REPLAY · %d · J CONTINUE" % seconds)
+
+
+func _resolve_replay_end() -> void:
+    ## ReplayEnd() @0x190540: game mode 1 (story) calls StoryFightWon(), i.e. the
+    ## lost-but-win_on_lose fight completes its story event.  game.states routes
+    ## the replayandstats menu's only option, "continue", to the "replayend"
+    ## action; the port maps its confirm key to that recovered option.
+    if match_state != MATCH_STATE_REPLAY or _replay_handed_off:
+        return
+    _replay_handed_off = true
+    match_over = true
+    done = true
+    print("NATIVE_STATE_REPLAYEND state=6 elapsed_ms=%d action=storyfightwon" % (
+        int(round(native_states.state_time * 1000.0)) if native_states != null else -1
+    ))
+    hud.show_message("REPLAY END · STORY CONTINUES")
+    if story_flow != null:
+        story_flow.match_finished(true)
+
+
+func _handle_replay_input(event: InputEvent) -> bool:
+    ## replayandstats has one menu entry, "continue" -> "replayend" (decoded
+    ## gui/replaystats.ui + game.states).  The port's confirm key is J, the same
+    ## key every other recovered menu binds to its single "continue" option.
+    if match_state != MATCH_STATE_REPLAY or _replay_handed_off:
+        return false
+    if event.is_action_pressed(PrototypeControls.ATTACK_A):
+        _resolve_replay_end()
+        return true
+    if event is InputEventKey and event.pressed and not event.echo \
+            and (event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER):
+        _resolve_replay_end()
+        return true
+    return false
 
 
 func _advance_winner_result_pose() -> void:
@@ -5123,6 +5462,9 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
     if match_state == MATCH_STATE_CONTINUE and _handle_continue_input(event):
+        get_viewport().set_input_as_handled()
+        return
+    if match_state == MATCH_STATE_REPLAY and _handle_replay_input(event):
         get_viewport().set_input_as_handled()
         return
     if records_screen != null and records_screen.is_open():
@@ -5344,10 +5686,23 @@ func _on_ko(fighter: PortFighter) -> void:
         computer_rounds += 1
         pending_round_winner = 2
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
-    # SetState(14): a story-mode fight lost when the battle cannot be won by
-    # losing shows the defeat presentation instead of the KO result chain
-    # (PlayerLost -> mode 1 -> StoryCurrentFightWinOnLose()==false -> state 14).
-    if fighter == player and _story_defeat_state_applies():
+    # PlayerLost() mode 1: the recovered story branch reads
+    # StoryCurrentFightWinOnLose().  False -> SetState(14) defeat presentation
+    # (0x19022c -> 0x19049c); true -> SetState(6) replay (0x19023c -> 0x19025c).
+    # The replay is only available when the opt-in recovered recorder produced
+    # both 0x2c buffers; without them the port falls back to state 14 rather
+    # than looping an empty replay (a port fail-closed rule, not native
+    # branching).
+    if fighter == player and _story_player_lost_match():
+        if _story_replay_state_applies():
+            if _enter_replay_state():
+                return
+            var replay_gap: String = (
+                String(native_states.fail_reason) if native_states != null else ""
+            )
+            if replay_gap.is_empty():
+                replay_gap = "recorder-unavailable"
+            print("REPLAY_STATE_GAP state=6 reason=%s fallback=state14" % replay_gap)
         if _enter_countdown_state():
             return
     var player_won: bool = fighter == computer

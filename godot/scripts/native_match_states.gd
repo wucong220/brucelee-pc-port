@@ -2,11 +2,13 @@ extends RefCounted
 class_name NativeMatchStates
 
 const ReplayBufferScript = preload("res://scripts/replay_buffer.gd")
-## Recovered CBeatEmUpGame states that the port did not implement:
+## Recovered CBeatEmUpGame states implemented by this driver, with the
+## native evidence for each:
 ##   1  ATTRACT_FIGHTER0   SetState(1)  (ghidra-out5/SetState.c case 1,
 ##                         Update.c case 1)
 ##   2  ATTRACT_FIGHTER1   SetState(2)  (SetState.c case 2, Update.c case 2)
-##   6  REPLAY             SetState(6)  (SetState.c case 6, Update.c case 6)
+##   6  REPLAY             SetState(6)  (SetState.c case 6, Update.c case 6);
+##                         consumes the recovered CFighter 0x2c buffers.
 ##   9  CONTINUE           SetState(9)  (SetState.c case 9, Update.c case 9)
 ##   10 CONTINUE_WAIT      Update.c case 10 falls into the default DummyUpdate
 ##                         branch; no SetState case exists for it.
@@ -16,6 +18,7 @@ const ReplayBufferScript = preload("res://scripts/replay_buffer.gd")
 ##                         CBeatEmUpTriggers.cpp PlayerLost() @0x190060 when
 ##                         CBruceLeeStoryMode::StoryCurrentFightWinOnLose() is
 ##                         false (0x19022c -> 0x19049c -> SetState(14)).
+##                         Its true half enters state 6 (0x19025c) instead.
 ##
 ## Every constant below is taken from the decompiled functions or from the
 ## decoded archive resources (adreno_200/game.states, gui/*.ui,
@@ -41,8 +44,8 @@ const STATE_CONTINUE_WAIT: int = 10
 const STATE_COUNTDOWN: int = 14
 
 const IMPLEMENTED_STATES: Array[int] = [
-    STATE_ATTRACT_FIGHTER0, STATE_ATTRACT_FIGHTER1, STATE_CONTINUE,
-    STATE_COUNTDOWN,
+    STATE_ATTRACT_FIGHTER0, STATE_ATTRACT_FIGHTER1, STATE_REPLAY,
+    STATE_CONTINUE, STATE_COUNTDOWN,
 ]
 ## States whose recovered evidence is not sufficient to drive them.  The
 ## driver reports them and never enters them.

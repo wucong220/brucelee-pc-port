@@ -1577,6 +1577,33 @@ const ATTACK_SFX: Dictionary = {
        ],
 }
 
+## Recovered second stage of an endattack finisher: the victim's own
+## `endattackcomp` action.  brucelee.set stores one such action per attacker set
+## family (`endattackcomp1/2`, `endattackcompkarate 1/2`, `endattackcompthai
+## 1/2`) and every one of them carries its OWN `sounds[]` rows at that clip's
+## 30 fps frames.  `data/native_links.json` (generated from brucelee.set) gives
+## action -> clip, so the rows are selected from the clip the victim is really
+## playing.  A clip with no recovered action (kungfu has no endattackcomp at
+## all) maps to "" and therefore plays nothing: the table never borrows another
+## action's cue.
+const ENDATTACK_COMP_CLIP_ACTIONS: Dictionary = {
+    "all_end_attack_01_forset01": "endattackcomp1",
+    "all_end_attack_02_forset01": "endattackcomp2",
+    "all_end_attack_01_forset02": "endattackcompkarate 1",
+    "all_end_attack_02_forset02": "endattackcompkarate 2",
+    "all_end_attack_01_forset03": "endattackcompthai 1",
+    "all_end_attack_02_forset03": "endattackcompthai 2",
+}
+
+## Port attack slots whose attacker-side cues the recovered sets name
+## `<slot> <set character>` ("endattack ken", "endattack brick", ...).  The
+## opponent attack config's own `source_action` selects the row group, so a
+## missing row means no cue instead of a guessed one.
+const ENDATTACK_ATTACK_SLOTS: Dictionary = {
+    "endattack": true,
+    "endattack_brick": true,
+}
+
 ## Set-family movement cues (movefwd) for the footstep layer.
 const MOVE_SFX: Dictionary = {
     "brucelee": [
@@ -1626,6 +1653,14 @@ static func attack_cues(kind: String) -> Array:
     if ATTACK_SFX.has(kind):
         return ATTACK_SFX[kind]
     return action_cues(kind)
+
+
+## Recovered `sounds[]` rows of the victim clip that is actually playing.
+## "" when the clip has no recovered action (fail closed, no borrowed cue).
+static func endattack_comp_action(clip: String) -> String:
+    if clip.is_empty():
+        return ""
+    return String(ENDATTACK_COMP_CLIP_ACTIONS.get(clip, ""))
 
 
 static func set_cues(family: String, action: String) -> Array:

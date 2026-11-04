@@ -6,6 +6,11 @@ signal combat_hit(attacker: PortFighter, defender: PortFighter, action: String, 
 signal combat_ko(fighter: PortFighter)
 signal attack_started(action: String)
 signal parry_succeeded(action: String)
+## Emitted when this fighter (the victim) starts the recovered endattackcomp
+## stage of an endattack finisher.  `slot_key` is the victim state
+## (endattackcomp1/2), `attacker_kind` the finisher that consumed it.  The
+## stage's own recovered `sounds[]` rows are timed from this instant.
+signal endattack_victim_started(slot_key: String, attacker_kind: String)
 
 const BASE_SPEED: float = 3.6
 ## Recovered TFightResults counter classification (animation-category table).
@@ -2862,6 +2867,13 @@ var replay_record_error: String = ""
 # Headless/test hook: a value >= 0 replaces Time.get_ticks_msec() for the
 # record's +0x28 time, matching the native absolute GetCurrentMili() slot.
 var replay_record_clock_override_ms: int = -1
+# State 6 playback consumer (see apply_replay_record).  CBeatEmUpGame::Update
+# case 6 only calls CFighter::RecordReplayUpdate, so the recovered record is the
+# fighter's whole pose for that frame; replay_pose_lock keeps the ordinary
+# physics/control path from overwriting the restored position and rotation.
+var replay_pose_lock: bool = false
+var replay_playback_clip: String = ""
+var replay_playback_sample_ms: int = 0
 
 func configure(display_name: String, human: bool, tint: Color) -> void:
     character_name = display_name
@@ -6507,6 +6519,11 @@ func _polar_movement(speed: float) -> Vector3:
 
 
 func _physics_process(delta: float) -> void:
+    if replay_pose_lock:
+        # SetState(6) / CBeatEmUpGame::Update case 6 runs only
+        # CFighter::RecordReplayUpdate for this fighter; BasicUpdate, control
+        # and the recording append do not run while the replay owns the pose.
+        return
     _time += delta
     if opponent != null and is_instance_valid(opponent) and _facing_window_ok():
         var to_opponent: Vector3 = opponent.global_position - global_position
@@ -7219,6 +7236,10 @@ func begin_endattack_victim(attacker_kind: String = "") -> bool:
     attack_kind = ""
     _attack_connected = false
     _restart_candidate_action()
+    # The victim clip starts here, so its recovered `sounds[]` frames are
+    # relative to this instant.  Listeners schedule the frame cues; nothing is
+    # played when the set has no rows for the clip (see SfxMusicMap).
+    endattack_victim_started.emit(clip_key, attacker_kind)
     return true
 
 
@@ -7340,6 +7361,20 @@ func current_source_animation() -> String:
     return _owner_idle_animation()
 
 
+func current_victim_animation() -> String:
+    ## Archived clip the grabbed/endattackcomp victim slot is playing.  The
+    ## player victim resolves the per-attacker set clip through the native
+    ## links; a non-player victim plays the candidate's universal clip.  ""
+    ## when no victim slot is active, so callers fail closed instead of timing
+    ## cues from a guessed clip.
+    if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
+        var base: String = String(_victim_selected_animation.get(state, ""))
+        if base.is_empty():
+            base = String(candidate_clips.get(state, ""))
+        return base
+    return ""
+
+
 func current_camera_animation() -> String:
     ## Clip that owns an authored camera sub-animation for the current state.
     ## CBeatEmUpGame::CameraUpdate (@0x188d88) reads it from
@@ -7352,9 +7387,7 @@ func current_camera_animation() -> String:
     ## is reported here.
     var base: String = ""
     if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
-        base = String(_victim_selected_animation.get(state, ""))
-        if base.is_empty():
-            base = String(candidate_clips.get(state, ""))
+        base = current_victim_animation()
     else:
         base = current_source_animation()
     if base.is_empty():
@@ -8983,6 +9016,10 @@ func reset_fighter(start_position: Vector3) -> void:
     _reaction_return_action = ""
     result_clip = ""
     result_pose_active = false
+    # A restarted fighter is never left inside a state-6 replay pose.
+    replay_pose_lock = false
+    replay_playback_clip = ""
+    replay_playback_sample_ms = 0
     visible = true
     attack_kind = ""
     _attack_connected = false
@@ -9260,3 +9297,56 @@ func _record_replay_frame() -> void:
         replay_set_selector(),
         replay_record_now_ms(),
     )
+
+
+## ---------------------------------------------------------------------------
+## Recovered state 6 playback consumer (CFighter::RecordReplayUpdate).
+##
+## Every recorded 0x2c frame is applied to the fighter by main.gd's state-6
+## driver, exactly like the native Update case 6 loop:
+##   position   +0x00 -> global_position
+##   rotation   +0x0c -> global_transform basis (the port only yaws, so the
+##                       recorded quaternion is a Y rotation)
+##   animation  +0x1c -> the recorded clip is played.  The native call also
+##                       passes the replay sample as SetAnimation's time; the
+##                       exact anmRoot::SetToSample phase between recorded
+##                       frames is NOT recovered, so the port starts a clip on
+##                       its first record and lets the AnimationPlayer advance at
+##                       the recovered state-6 0.5x rate instead of synthesising
+##                       a phase.
+##   +0x24      internal fighting-set selector: the recorded clip already names
+##              the victim/set variant the port has to play, so no separate port
+##              table is selected here (see replay_recorder.gd for the mapping).
+##   +0x20      SetAnimation's blend float: no recovered port equivalent; it is
+##              ignored on playback, as documented by the recorder.
+## ---------------------------------------------------------------------------
+func apply_replay_record(record: Dictionary, sample_ms: int) -> void:
+    replay_playback_sample_ms = int(sample_ms)
+    var position: Variant = record.get("position", null)
+    if position is Vector3:
+        global_position = position
+    var rotation_value: Variant = record.get("rotation", null)
+    if rotation_value is Quaternion:
+        var posed: Transform3D = global_transform
+        posed.basis = Basis(rotation_value)
+        global_transform = posed
+    var animation_name: String = String(record.get("animation", ""))
+    if animation_name.is_empty() or _candidate_animation == null:
+        return
+    if animation_name == replay_playback_clip:
+        return
+    if _candidate_animation.get_animation_list().find(StringName(animation_name)) < 0:
+        return
+    replay_playback_clip = animation_name
+    candidate_animation_clip = animation_name
+    _candidate_action = ""
+    _candidate_animation.speed_scale = ReplayBuffer.STATE6_SPEED_SCALE
+    _candidate_animation.play(animation_name)
+    _candidate_animation.seek(0.0, true)
+
+
+func replay_pose_reset() -> void:
+    ## SetState(6) re-entry does not stop the current animation; it re-seeks the
+    ## buffers.  Clear the applied-clip identity so the next record starts its
+    ## recorded clip from the beginning again.
+    replay_playback_clip = ""

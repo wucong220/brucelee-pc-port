@@ -798,6 +798,13 @@ func apply_match_loader_env(spec: Dictionary) -> void:
 	var start_health: float = float(spec.get("start_health", -1.0))
 	OS.set_environment("BRUCELEE_PLAYER_START_HEALTH",
 		str(int(start_health)) if start_health > 0.0 else "")
+	# Native CFighter records the 0x2c replay from the match start, and
+	# PlayerLost's win_on_lose story branch enters SetState(6).  The port's
+	# recorder is opt-in for performance, so switch it on before the match scene
+	# reloads for exactly the battles whose lost fight takes the replay path.
+	# (No cleared value: an earlier opt-in stays in effect for later battles.)
+	if String(battle_run.get("win_on_lose", "")).to_lower() == "true":
+		OS.set_environment("BRUCELEE_REPLAY_RECORD", "1")
 
 
 func _reload_scene() -> void:
@@ -941,8 +948,8 @@ func _award_story_exp(won: bool, health: float, elapsed: float, outcome: String)
 func current_battle_win_on_lose() -> bool:
 	## The recovered krm::CBruceLeeStoryMode::StoryCurrentFightWinOnLose() flag
 	## for the battle that is running.  story_rules.gd reads the same
-	## `win_on_lose` field; main.gd uses this to decide whether a lost story
-	## fight enters SetState(14) (false) or keeps its win-on-lose advance (true).
+	## `win_on_lose` field; main.gd uses it to dispatch PlayerLost's story branch:
+	## false -> SetState(14) defeat, true -> SetState(6) replay (0x19022c/0x19023c).
 	return String(battle_run.get("win_on_lose", "")).to_lower() == "true"
 
 
