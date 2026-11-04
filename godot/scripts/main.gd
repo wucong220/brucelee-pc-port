@@ -11,6 +11,7 @@ const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
 const MenuArtMenu = preload("res://scripts/menu_art.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const MoveTraining = preload("res://scripts/move_training.gd")
+const RecoveredSettings = preload("res://scripts/recovered_settings.gd")
 const MoveGallery = preload("res://scripts/move_gallery.gd")
 const FxLanternPulse = preload("res://scripts/fx_lanterns_pulse.gd")
 const FxVapourReflector = preload("res://scripts/fx_vapour_reflector.gd")
@@ -3023,6 +3024,7 @@ func _load_music_library() -> void:
     _music_player.volume_db = -12.0
     _music_player.finished.connect(_music_player.play)
     combat_audio.add_child(_music_player)
+    RecoveredSettings.assign_player(_music_player, RecoveredSettings.BUS_MUSIC)
     _play_music("menu")
 
 
@@ -3134,6 +3136,7 @@ func _acquire_result_player() -> AudioStreamPlayer:
         var created: AudioStreamPlayer = AudioStreamPlayer.new()
         created.volume_db = 2.0
         combat_audio.add_child(created)
+        RecoveredSettings.assign_player(created, RecoveredSettings.BUS_SOUND)
         _result_players.append(created)
         if _result_player == null:
             _result_player = created
@@ -3586,6 +3589,7 @@ func _spawn_voice(
     var voice: AudioStreamPlayer = AudioStreamPlayer.new()
     voice.stream = stream
     voice.volume_db = linear_to_db(volume)
+    RecoveredSettings.assign_player(voice, RecoveredSettings.BUS_SOUND)
     voice.finished.connect(voice.queue_free)
     # The port has always run one Bruce voice at a time; keep that so a pain
     # grunt can interrupt a swing grunt instead of stacking them.
@@ -3901,6 +3905,7 @@ func _play_hit_audio(
         return
     var player: AudioStreamPlayer = AudioStreamPlayer.new()
     player.stream = _candidate_audio[event]
+    RecoveredSettings.assign_player(player, RecoveredSettings.BUS_SOUND)
     player.finished.connect(player.queue_free)
     combat_audio.add_child(player)
     player.play()
@@ -3992,6 +3997,7 @@ func _spawn_sfx(
     var player: AudioStreamPlayer = AudioStreamPlayer.new()
     player.stream = stream
     player.volume_db = linear_to_db(volume)
+    RecoveredSettings.assign_player(player, RecoveredSettings.BUS_SOUND)
     player.finished.connect(player.queue_free)
     combat_audio.add_child(player)
     player.play()

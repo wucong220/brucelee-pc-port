@@ -1,6 +1,8 @@
 extends CanvasLayer
 class_name PortPrototypeMenu
 
+const RecoveredSettings = preload("res://scripts/recovered_settings.gd")
+
 ## PC-only prototype menu. This does not claim parity with the Android game's UI.
 
 signal command_requested(command: String)
@@ -345,6 +347,7 @@ func _load_sfx(filename: String, label: String) -> AudioStreamPlayer:
     var player: AudioStreamPlayer = AudioStreamPlayer.new()
     player.stream = stream
     add_child(player)
+    RecoveredSettings.assign_player(player, RecoveredSettings.BUS_SOUND)
     return player
 
 func _build_ui() -> void:

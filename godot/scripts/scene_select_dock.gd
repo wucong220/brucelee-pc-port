@@ -1,5 +1,7 @@
 extends Control
 ## Opt-in recovered scene dock (`BRUCELEE_SCENE_SELECT=1`).
+
+const RecoveredSettings = preload("res://scripts/recovered_settings.gd")
 ##
 ## Draws the `selectscenery.ui` dock decoded from `data.zpak` instead of the
 ## text scene rows: ten 165x114 icon cards in the recovered order, the recovered
@@ -411,6 +413,7 @@ func _load_menu_sfx() -> void:
 	_sfx_player.name = "PageFlip"
 	_sfx_player.stream = stream
 	add_child(_sfx_player)
+	RecoveredSettings.assign_player(_sfx_player, RecoveredSettings.BUS_SOUND)
 
 
 func _play_sfx() -> void:

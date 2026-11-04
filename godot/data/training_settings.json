@@ -1,0 +1,1548 @@
+{
+ "schema": "brucelee-training-settings/1",
+ "reference": {
+  "width": 480,
+  "height": 320
+ },
+ "fonts": {
+  "title": 25,
+  "menu": 20,
+  "text": 16
+ },
+ "colors": {
+  "selected": [
+   255,
+   255,
+   0
+  ],
+  "text": [
+   255,
+   255,
+   255
+  ]
+ },
+ "provenance": {
+  "archive_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+  "libdefault_so_sha256": "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70",
+  "game_states": {
+   "path": "adreno_200/game.states",
+   "sha256": "152b5754c43fc92888ae54d678ceb0e57b9c650ad0a896133cda772ac10eb72b",
+   "resource_id": "35c082f4b0ad95353f85198d09476380",
+   "virtualui_base": "pause.ui",
+   "virtualui_variants": [
+    "pause.ui",
+    "storypause.ui",
+    "trainingpause.ui",
+    "trainingpausenoeditor.ui"
+   ],
+   "virtualui_selector": [
+    "gamemodes",
+    "pausescreenmode"
+   ]
+  },
+  "gui": {
+   "darkbg": {
+    "path": "adreno_200/gui/darkbg.ui",
+    "bytes": 592,
+    "sha256": "233a0e999ff532ea4d5e6ee035e05a6fbddf27bdd75d3e9dfceea7288cf6c06c",
+    "resource_id": "e165c7e9412160b5615c3f9c70356af7"
+   },
+   "settings": {
+    "path": "adreno_200/gui/settings.ui",
+    "bytes": 2140,
+    "sha256": "33a0e0d80eee3a56789aaab3f34f276911f64d8372bd6d3be82c37352e5bda7a",
+    "resource_id": "ee4cbd6a16a0decea55da8fa22b34819"
+   },
+   "audio": {
+    "path": "adreno_200/gui/settingsaudio.ui",
+    "bytes": 3470,
+    "sha256": "cc35139c4b4e211b659484838054aac65cb1d3fab736ae3c50bf4793b4d9cbfd",
+    "resource_id": "d43ea1af744df4c7f8b162e44dbaf5e0"
+   },
+   "language": {
+    "path": "adreno_200/gui/settingslanguage.ui",
+    "bytes": 1488,
+    "sha256": "500f03b09fa3f3960424676b1f3e576c5b5151561433a61de736b2513c6a9a5b",
+    "resource_id": "548ede3e3a9a0f2417a596676efa92bf"
+   },
+   "video": {
+    "path": "adreno_200/gui/settingsvideo.ui",
+    "bytes": 4022,
+    "sha256": "0f561f117e62d6372ff56f87a313a3179a4c0b3372b1e9ba5d56672b36a48c8d",
+    "resource_id": "3852f57caae4b6f8032a649cc126afdc"
+   },
+   "controls": {
+    "path": "adreno_200/gui/settingscontrols.ui",
+    "bytes": 1221,
+    "sha256": "a35c3cd77293d0cdaf3d0d64a3d3ecf43e71c6cf970b5196212e07c1d2658edf",
+    "resource_id": "5cffe16882ec730645ea5a9d280244d7"
+   }
+  },
+  "native_defaults": {
+   "input_layout": {
+    "vaddr": "0x154254",
+    "instruction_word": "0xe3a02000"
+   },
+   "input_gui_alpha": {
+    "vaddr": "0x1542d8",
+    "instruction_word": "0xe3a025fa"
+   },
+   "sound_volume": {
+    "vaddr": "0x154338",
+    "instruction_word": "0xe3a0243f"
+   },
+   "music_volume": {
+    "vaddr": "0x154398",
+    "instruction_word": "0xe3a0243f"
+   },
+   "camera_tilt": {
+    "vaddr": "0x154524",
+    "instruction_word": "0xe3a025fe"
+   }
+  },
+  "native_clamp": {
+   "function": "SettingsValue0to1Modify @0x185f50",
+   "rule": "clamp(current + delta, 0.0, 1.0)",
+   "words": {
+    "clamp_add": {
+     "vaddr": "0x185f84",
+     "word": "0xee378a88"
+    },
+    "clamp_cmp0": {
+     "vaddr": "0x185f88",
+     "word": "0xeeb58ac0"
+    },
+    "clamp_lit0": {
+     "vaddr": "0x185fcc",
+     "word": "0x00000000"
+    },
+    "clamp_cmp1": {
+     "vaddr": "0x185fbc",
+     "word": "0xeeb48a67"
+    },
+    "clamp_movgt": {
+     "vaddr": "0x185fc4",
+     "word": "0xceb08a67"
+    },
+    "clamp_lit1": {
+     "vaddr": "0x185fd0",
+     "word": "0x3f800000"
+    },
+    "music_inc_movw": {
+     "vaddr": "0x187014",
+     "word": "0xe30c1ccd"
+    },
+    "music_inc_movt": {
+     "vaddr": "0x187018",
+     "word": "0xe3431dcc"
+    },
+    "music_dec_movw": {
+     "vaddr": "0x1870a4",
+     "word": "0xe30c1ccd"
+    },
+    "music_dec_movt": {
+     "vaddr": "0x1870a8",
+     "word": "0xe34b1dcc"
+    }
+   }
+  }
+ },
+ "flow": {
+  "pause_state": "gamepause",
+  "settings_state": "ingamesettingsmain",
+  "settings_ui": [
+   "darkbg.ui",
+   "settings.ui"
+  ],
+  "pause_ui": "pause.ui",
+  "pause_virtual_ui": {
+   "base": "pause.ui",
+   "variants": [
+    "pause.ui",
+    "storypause.ui",
+    "trainingpause.ui",
+    "trainingpausenoeditor.ui"
+   ],
+   "selector": [
+    "gamemodes",
+    "pausescreenmode"
+   ]
+  },
+  "rows": [
+   {
+    "index": 0,
+    "label_key": "audio",
+    "action": "audio",
+    "destination": "ingamesettingsaudio",
+    "status": "recovered"
+   },
+   {
+    "index": 1,
+    "label_key": "languages",
+    "action": "lang",
+    "destination": "ingamesettingslanguage",
+    "status": "recovered"
+   }
+  ],
+  "exits": {
+   "rsk": {
+    "action": "updategamevariables",
+    "then": "updated",
+    "destination": "gamepause"
+   },
+   "backtomain": {
+    "action": "ingamesettingsbacktomain",
+    "then": "updated",
+    "destination": "gamepause"
+   }
+  },
+  "not_recovered_rows": [
+   {
+    "action": "video",
+    "destination": "ingamesettingsvideo",
+    "status": "NOT RECOVERED",
+    "reason": "game.states ingamesettingsmain knows this action/destination, but the shipped settings.ui has no row whose action is video"
+   },
+   {
+    "action": "controls",
+    "destination": "ingamesettingscontrols",
+    "status": "NOT RECOVERED",
+    "reason": "game.states ingamesettingsmain knows this action/destination, but the shipped settings.ui has no row whose action is controls"
+   }
+  ]
+ },
+ "defaults": {
+  "music_volume": 0.5,
+  "sound_volume": 0.5,
+  "input_layout": 0.0,
+  "camera_tilt": 1.0,
+  "input_gui_alpha": 0.25
+ },
+ "volume": {
+  "keys": {
+   "music": "music_volume",
+   "sound": "sound_volume"
+  },
+  "step": 0.1,
+  "min": 0.0,
+  "max": 1.0
+ },
+ "labels": {
+  "settings": {
+   "LangEnglish": "Settings",
+   "LangChineseSimpl": "设置",
+   "LangChineseTrad": "設置",
+   "LangFrench": "Paramètres",
+   "LangGerman": "Einstellungen",
+   "LangItalian": "Impostazioni",
+   "LangJapanese": "設定",
+   "LangKorean": "설정",
+   "LangRussian": "Настройки",
+   "LangSpanish": "Configuración"
+  },
+  "audio": {
+   "LangEnglish": "Audio",
+   "LangChineseSimpl": "音频",
+   "LangChineseTrad": "音頻",
+   "LangFrench": "Audio",
+   "LangGerman": "Audio",
+   "LangItalian": "Audio",
+   "LangJapanese": "オーディオ",
+   "LangKorean": "오디오",
+   "LangRussian": "Аудио",
+   "LangSpanish": "Audio"
+  },
+  "languages": {
+   "LangEnglish": "Languages",
+   "LangChineseSimpl": "语言",
+   "LangChineseTrad": "語言",
+   "LangFrench": "Langages",
+   "LangGerman": "Sprachen",
+   "LangItalian": "Lingue",
+   "LangJapanese": "言語",
+   "LangKorean": "언어",
+   "LangRussian": "Языки",
+   "LangSpanish": "Idioma"
+  },
+  "music": {
+   "LangEnglish": "Music",
+   "LangChineseSimpl": "音乐",
+   "LangChineseTrad": "音樂",
+   "LangFrench": "Musique",
+   "LangGerman": "Musik",
+   "LangItalian": "Musica",
+   "LangJapanese": "音楽",
+   "LangKorean": "음악",
+   "LangRussian": "Музыка",
+   "LangSpanish": "Música"
+  },
+  "sound": {
+   "LangEnglish": "Sound",
+   "LangChineseSimpl": "音效",
+   "LangChineseTrad": "音效",
+   "LangFrench": "Sons",
+   "LangGerman": "Sound",
+   "LangItalian": "Effetti",
+   "LangJapanese": "サウンド",
+   "LangKorean": "사운드",
+   "LangRussian": "Звук",
+   "LangSpanish": "Efectos"
+  },
+  "video": {
+   "LangEnglish": "Video",
+   "LangChineseSimpl": "视频",
+   "LangChineseTrad": "視訊",
+   "LangFrench": "Vidéo",
+   "LangGerman": "Video",
+   "LangItalian": "Video",
+   "LangJapanese": "ビデオ",
+   "LangKorean": "비디오",
+   "LangRussian": "Видео",
+   "LangSpanish": "Video"
+  },
+  "controls": {
+   "LangEnglish": "Controls",
+   "LangChineseSimpl": "控制",
+   "LangChineseTrad": "控制",
+   "LangFrench": "Contrôles",
+   "LangGerman": "Steuerung",
+   "LangItalian": "Comandi",
+   "LangJapanese": "コントロール",
+   "LangKorean": "컨트롤",
+   "LangRussian": "Управление",
+   "LangSpanish": "Controles"
+  },
+  "pause": {
+   "LangEnglish": "Pause",
+   "LangChineseSimpl": "暂停",
+   "LangChineseTrad": "暫停",
+   "LangFrench": "Pause",
+   "LangGerman": "Pause",
+   "LangItalian": "Pausa",
+   "LangJapanese": "ポーズ",
+   "LangKorean": "일시 중지",
+   "LangRussian": "Пауза",
+   "LangSpanish": "Pausa"
+  }
+ },
+ "screens": {
+  "darkbg": {
+   "source": {
+    "path": "adreno_200/gui/darkbg.ui",
+    "bytes": 592,
+    "sha256": "233a0e999ff532ea4d5e6ee035e05a6fbddf27bdd75d3e9dfceea7288cf6c06c",
+    "resource_id": "e165c7e9412160b5615c3f9c70356af7"
+   },
+   "coverage": {
+    "record_count": 34,
+    "reached_records": 34,
+    "unreached_records": [],
+    "fully_covered": true
+   },
+   "strings": [
+    "layout",
+    "type",
+    "staticrect",
+    "name",
+    "black_rect",
+    "x",
+    "y",
+    "width",
+    "height",
+    "border",
+    "bgcolor",
+    "hspring",
+    "soft",
+    "vspring",
+    "offscreen",
+    "alpha",
+    "springs"
+   ],
+   "layout": [
+    {
+     "type": "staticrect",
+     "name": "black_rect",
+     "x": 0,
+     "y": 0,
+     "width": 480,
+     "height": 320,
+     "border": 0,
+     "bgcolor": [
+      0,
+      0,
+      0,
+      128
+     ],
+     "hspring": "soft",
+     "vspring": "soft",
+     "offscreen": {
+      "alpha": 0
+     }
+    }
+   ],
+   "springs": []
+  },
+  "settings": {
+   "source": {
+    "path": "adreno_200/gui/settings.ui",
+    "bytes": 2140,
+    "sha256": "33a0e0d80eee3a56789aaab3f34f276911f64d8372bd6d3be82c37352e5bda7a",
+    "resource_id": "ee4cbd6a16a0decea55da8fa22b34819"
+   },
+   "coverage": {
+    "record_count": 145,
+    "reached_records": 145,
+    "unreached_records": [],
+    "fully_covered": true
+   },
+   "strings": [
+    "layout",
+    "type",
+    "bllabel",
+    "name",
+    "title",
+    "x",
+    "y",
+    "width",
+    "height",
+    "hspring",
+    "soft",
+    "vspring",
+    "datasources",
+    "text",
+    "translate",
+    "settings",
+    "offscreen",
+    "blmenu",
+    "menu",
+    "focused",
+    "true",
+    "valign",
+    "middle",
+    "font",
+    "progress",
+    "sound",
+    "options",
+    "audio",
+    "languages",
+    "lang",
+    "picture",
+    "box",
+    "alphablend",
+    "file",
+    "scale",
+    "subrect_x",
+    "subrect_y",
+    "subrect_width",
+    "subrect_height",
+    "blbutton",
+    "lsk",
+    "align",
+    "center",
+    "action",
+    "backtomain",
+    "alpha",
+    "springs",
+    "sounds/menu_sfx/",
+    "menu_punch_2",
+    "wav",
+    "gui/images/menu/",
+    "bl_textbox_tga7",
+    "tex",
+    "bl_gui_back_button_stand",
+    "back_bl_shout_short"
+   ],
+   "layout": [
+    {
+     "type": "bllabel",
+     "name": "title",
+     "x": 0,
+     "y": 5,
+     "width": 200,
+     "height": 40,
+     "hspring": "soft",
+     "vspring": "soft",
+     "datasources": {
+      "text": [
+       "translate",
+       "settings"
+      ]
+     },
+     "offscreen": {
+      "x": -200
+     }
+    },
+    {
+     "type": "blmenu",
+     "name": "menu",
+     "x": 80,
+     "y": 2,
+     "width": 400,
+     "height": 180,
+     "hspring": "soft",
+     "vspring": "soft",
+     "focused": "true",
+     "valign": "middle",
+     "font": 2,
+     "progress": 1.0,
+     "sound": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "sounds/menu_sfx/",
+       "basename": "menu_punch_2",
+       "extension": "wav"
+      }
+     },
+     "options": [
+      [
+       "audio",
+       "audio"
+      ],
+      [
+       "languages",
+       "lang"
+      ]
+     ],
+     "offscreen": {
+      "progress": 0.0
+     }
+    },
+    {
+     "type": "picture",
+     "name": "box",
+     "x": 0,
+     "y": 130,
+     "width": 480,
+     "height": 320,
+     "alphablend": "true",
+     "hspring": "soft",
+     "vspring": "soft",
+     "file": {
+      "$file": {
+       "ordinal": 1,
+       "directory": "gui/images/menu/",
+       "basename": "bl_textbox_tga7",
+       "extension": "tex"
+      }
+     },
+     "offscreen": {
+      "y": 320
+     },
+     "scale": "true",
+     "subrect_x": 0,
+     "subrect_y": 0,
+     "subrect_width": 480,
+     "subrect_height": 320
+    },
+    {
+     "type": "blbutton",
+     "name": "lsk",
+     "x": 2,
+     "y": 270,
+     "width": 48,
+     "height": 48,
+     "align": "center",
+     "valign": "middle",
+     "alphablend": "true",
+     "action": "backtomain",
+     "file": {
+      "file": {
+       "$file": {
+        "ordinal": 2,
+        "directory": "gui/images/menu/",
+        "basename": "bl_gui_back_button_stand",
+        "extension": "tex"
+       }
+      },
+      "subrect_x": 8,
+      "subrect_y": 8,
+      "subrect_width": 48,
+      "subrect_height": 48
+     },
+     "sound": {
+      "$file": {
+       "ordinal": 3,
+       "directory": "sounds/menu_sfx/",
+       "basename": "back_bl_shout_short",
+       "extension": "wav"
+      }
+     },
+     "offscreen": {
+      "alpha": 0.0
+     }
+    }
+   ],
+   "springs": []
+  },
+  "audio": {
+   "source": {
+    "path": "adreno_200/gui/settingsaudio.ui",
+    "bytes": 3470,
+    "sha256": "cc35139c4b4e211b659484838054aac65cb1d3fab736ae3c50bf4793b4d9cbfd",
+    "resource_id": "d43ea1af744df4c7f8b162e44dbaf5e0"
+   },
+   "coverage": {
+    "record_count": 300,
+    "reached_records": 300,
+    "unreached_records": [],
+    "fully_covered": true
+   },
+   "strings": [
+    "layout",
+    "type",
+    "label",
+    "name",
+    "musictitle",
+    "effect",
+    "none",
+    "align",
+    "center",
+    "valign",
+    "middle",
+    "x",
+    "y",
+    "width",
+    "height",
+    "hspring",
+    "soft",
+    "vspring",
+    "font",
+    "uppercase",
+    "true",
+    "textcolor",
+    "datasources",
+    "text",
+    "translate",
+    "music",
+    "offscreen",
+    "sliderbar",
+    "musicvolume",
+    "hard",
+    "focused",
+    "value",
+    "option",
+    "music_volume",
+    "blbutton",
+    "musicdec",
+    "file",
+    "action",
+    "musicvoldec",
+    "focusable",
+    "false",
+    "musicinc",
+    "musicvolinc",
+    "soundtitle",
+    "sound",
+    "soundvolume",
+    "sound_volume",
+    "sounddec",
+    "soundvoldec",
+    "soundinc",
+    "soundvolinc",
+    "springs",
+    "navigation",
+    "top",
+    "bottom",
+    "left",
+    "right",
+    "gui/images/menu/",
+    "bl_gui_slider_less",
+    "tex",
+    "bl_gui_slider_more"
+   ],
+   "layout": [
+    {
+     "type": "label",
+     "name": "musictitle",
+     "effect": "none",
+     "align": "center",
+     "valign": "middle",
+     "x": 150,
+     "y": 150,
+     "width": 180,
+     "height": 30,
+     "hspring": "soft",
+     "vspring": "soft",
+     "font": 2,
+     "uppercase": "true",
+     "textcolor": [
+      255,
+      255,
+      255
+     ],
+     "datasources": {
+      "text": [
+       "translate",
+       "music"
+      ]
+     },
+     "offscreen": {
+      "x": -330
+     }
+    },
+    {
+     "type": "sliderbar",
+     "name": "musicvolume",
+     "x": 120,
+     "y": 190,
+     "width": 240,
+     "height": 30,
+     "hspring": "soft",
+     "vspring": "hard",
+     "focused": "true",
+     "datasources": {
+      "value": [
+       "option",
+       "music_volume"
+      ]
+     },
+     "offscreen": {
+      "x": -400
+     }
+    },
+    {
+     "type": "blbutton",
+     "name": "musicdec",
+     "x": 70,
+     "y": 174,
+     "width": 64,
+     "height": 64,
+     "file": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_slider_less",
+       "extension": "tex"
+      }
+     },
+     "action": "musicvoldec",
+     "focusable": "false",
+     "offscreen": {
+      "x": -450
+     }
+    },
+    {
+     "type": "blbutton",
+     "name": "musicinc",
+     "x": 346,
+     "y": 174,
+     "width": 64,
+     "height": 64,
+     "file": {
+      "$file": {
+       "ordinal": 1,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_slider_more",
+       "extension": "tex"
+      }
+     },
+     "action": "musicvolinc",
+     "focusable": "false",
+     "offscreen": {
+      "x": -94
+     }
+    },
+    {
+     "type": "label",
+     "name": "soundtitle",
+     "effect": "none",
+     "align": "center",
+     "valign": "middle",
+     "x": 150,
+     "y": 220,
+     "width": 180,
+     "height": 30,
+     "hspring": "soft",
+     "vspring": "soft",
+     "font": 2,
+     "uppercase": "true",
+     "textcolor": [
+      255,
+      255,
+      255
+     ],
+     "datasources": {
+      "text": [
+       "translate",
+       "sound"
+      ]
+     },
+     "offscreen": {
+      "x": 610
+     }
+    },
+    {
+     "type": "sliderbar",
+     "name": "soundvolume",
+     "x": 120,
+     "y": 250,
+     "width": 240,
+     "height": 30,
+     "hspring": "soft",
+     "vspring": "hard",
+     "datasources": {
+      "value": [
+       "option",
+       "sound_volume"
+      ]
+     },
+     "offscreen": {
+      "x": 560
+     }
+    },
+    {
+     "type": "blbutton",
+     "name": "sounddec",
+     "x": 70,
+     "y": 234,
+     "width": 64,
+     "height": 64,
+     "file": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_slider_less",
+       "extension": "tex"
+      }
+     },
+     "action": "soundvoldec",
+     "focusable": "false",
+     "offscreen": {
+      "x": 490
+     }
+    },
+    {
+     "type": "blbutton",
+     "name": "soundinc",
+     "x": 346,
+     "y": 234,
+     "width": 64,
+     "height": 64,
+     "file": {
+      "$file": {
+       "ordinal": 1,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_slider_more",
+       "extension": "tex"
+      }
+     },
+     "action": "soundvolinc",
+     "focusable": "false",
+     "offscreen": {
+      "x": 846
+     }
+    }
+   ],
+   "springs": [
+    {
+     "type": "navigation",
+     "top": "musicvolume",
+     "bottom": "soundvolume"
+    },
+    {
+     "type": "hard",
+     "top": "musicvolume",
+     "bottom": "musicdec"
+    },
+    {
+     "type": "hard",
+     "top": "musicinc",
+     "bottom": "musicvolume"
+    },
+    {
+     "type": "hard",
+     "left": "musicdec",
+     "right": "musicvolume"
+    },
+    {
+     "type": "hard",
+     "left": "musicvolume",
+     "right": "musicinc"
+    },
+    {
+     "type": "hard",
+     "top": "soundvolume",
+     "bottom": "sounddec"
+    },
+    {
+     "type": "hard",
+     "top": "soundinc",
+     "bottom": "soundvolume"
+    },
+    {
+     "type": "hard",
+     "left": "sounddec",
+     "right": "soundvolume"
+    },
+    {
+     "type": "hard",
+     "left": "soundvolume",
+     "right": "soundinc"
+    }
+   ]
+  },
+  "language": {
+   "source": {
+    "path": "adreno_200/gui/settingslanguage.ui",
+    "bytes": 1488,
+    "sha256": "500f03b09fa3f3960424676b1f3e576c5b5151561433a61de736b2513c6a9a5b",
+    "resource_id": "548ede3e3a9a0f2417a596676efa92bf"
+   },
+   "coverage": {
+    "record_count": 77,
+    "reached_records": 77,
+    "unreached_records": [],
+    "fully_covered": true
+   },
+   "strings": [
+    "layout",
+    "type",
+    "bldock",
+    "name",
+    "languages",
+    "x",
+    "y",
+    "width",
+    "height",
+    "optionwidth",
+    "optionheight",
+    "hspring",
+    "soft",
+    "vspring",
+    "linerect",
+    "true",
+    "linerectcolor",
+    "wraparround",
+    "false",
+    "separation",
+    "valign",
+    "middle",
+    "onmoveaction",
+    "refresh",
+    "focused",
+    "items",
+    "datasources",
+    "validselectedoption",
+    "option",
+    "language",
+    "offscreen",
+    "springs",
+    "hard",
+    "left",
+    "border",
+    "right",
+    "gui/images/flags/",
+    "bl_english",
+    "tex",
+    "bl_spanish",
+    "bl_german",
+    "bl_italian",
+    "bl_french",
+    "bl_russian",
+    "bl_chinese_simp",
+    "bl_chinese_trad"
+   ],
+   "layout": [
+    {
+     "type": "bldock",
+     "name": "languages",
+     "x": 0,
+     "y": 180,
+     "width": 480,
+     "height": 70,
+     "optionwidth": 128,
+     "optionheight": 85,
+     "hspring": "soft",
+     "vspring": "soft",
+     "linerect": "true",
+     "linerectcolor": [
+      255,
+      255,
+      0
+     ],
+     "wraparround": "false",
+     "separation": 16,
+     "valign": "middle",
+     "onmoveaction": "refresh",
+     "focused": "true",
+     "items": [
+      {
+       "$file": {
+        "ordinal": 0,
+        "directory": "gui/images/flags/",
+        "basename": "bl_english",
+        "extension": "tex"
+       }
+      },
+      {
+       "$file": {
+        "ordinal": 1,
+        "directory": "gui/images/flags/",
+        "basename": "bl_spanish",
+        "extension": "tex"
+       }
+      },
+      {
+       "$file": {
+        "ordinal": 2,
+        "directory": "gui/images/flags/",
+        "basename": "bl_german",
+        "extension": "tex"
+       }
+      },
+      {
+       "$file": {
+        "ordinal": 3,
+        "directory": "gui/images/flags/",
+        "basename": "bl_italian",
+        "extension": "tex"
+       }
+      },
+      {
+       "$file": {
+        "ordinal": 4,
+        "directory": "gui/images/flags/",
+        "basename": "bl_french",
+        "extension": "tex"
+       }
+      },
+      {
+       "$file": {
+        "ordinal": 5,
+        "directory": "gui/images/flags/",
+        "basename": "bl_russian",
+        "extension": "tex"
+       }
+      },
+      {
+       "$file": {
+        "ordinal": 6,
+        "directory": "gui/images/flags/",
+        "basename": "bl_chinese_simp",
+        "extension": "tex"
+       }
+      },
+      {
+       "$file": {
+        "ordinal": 7,
+        "directory": "gui/images/flags/",
+        "basename": "bl_chinese_trad",
+        "extension": "tex"
+       }
+      }
+     ],
+     "datasources": {
+      "validselectedoption": [
+       "option",
+       "language"
+      ]
+     },
+     "offscreen": {
+      "y": 400
+     }
+    }
+   ],
+   "springs": [
+    {
+     "type": "hard",
+     "left": "border",
+     "right": "languages"
+    },
+    {
+     "type": "hard",
+     "left": "languages",
+     "right": "border"
+    }
+   ]
+  },
+  "video": {
+   "source": {
+    "path": "adreno_200/gui/settingsvideo.ui",
+    "bytes": 4022,
+    "sha256": "0f561f117e62d6372ff56f87a313a3179a4c0b3372b1e9ba5d56672b36a48c8d",
+    "resource_id": "3852f57caae4b6f8032a649cc126afdc"
+   },
+   "coverage": {
+    "record_count": 317,
+    "reached_records": 317,
+    "unreached_records": [],
+    "fully_covered": true
+   },
+   "strings": [
+    "layout",
+    "type",
+    "label",
+    "name",
+    "visibtitle",
+    "effect",
+    "none",
+    "align",
+    "center",
+    "valign",
+    "middle",
+    "x",
+    "y",
+    "width",
+    "height",
+    "hspring",
+    "soft",
+    "vspring",
+    "font",
+    "uppercase",
+    "true",
+    "textcolor",
+    "datasources",
+    "text",
+    "translate",
+    "control_visibility",
+    "offscreen",
+    "sliderbar",
+    "visibility",
+    "hard",
+    "focused",
+    "value",
+    "option",
+    "input_gui_alpha",
+    "blbutton",
+    "visibdec",
+    "file",
+    "action",
+    "visibilitydec",
+    "focusable",
+    "false",
+    "visibinc",
+    "visibilityinc",
+    "blpicture",
+    "samplebkg",
+    "alphablend",
+    "samplebutton",
+    "alpha",
+    "tilttitle",
+    "camera_tilt",
+    "labelmenu",
+    "cameratilt",
+    "horizontal",
+    "selectedtextcolor",
+    "backgroundimage",
+    "selectedbackgroundimage",
+    "options",
+    "ct_low",
+    "",
+    "ct_medium",
+    "ct_high",
+    "selectedoption",
+    "springs",
+    "navigation",
+    "top",
+    "bottom",
+    "left",
+    "right",
+    "gui/images/menu/",
+    "bl_gui_slider_less",
+    "tex",
+    "bl_gui_slider_more",
+    "bl_gui_visivibility_control_color_box",
+    "gui/images/hud/",
+    "bl_hud_hp_button_stand",
+    "bl_gui_dificultbutton_off",
+    "bl_gui_dificultbutton_on"
+   ],
+   "layout": [
+    {
+     "type": "label",
+     "name": "visibtitle",
+     "effect": "none",
+     "align": "center",
+     "valign": "middle",
+     "x": 60,
+     "y": 150,
+     "width": 240,
+     "height": 30,
+     "hspring": "soft",
+     "vspring": "soft",
+     "font": 1,
+     "uppercase": "true",
+     "textcolor": [
+      255,
+      255,
+      255
+     ],
+     "datasources": {
+      "text": [
+       "translate",
+       "control_visibility"
+      ]
+     },
+     "offscreen": {
+      "x": -330
+     }
+    },
+    {
+     "type": "sliderbar",
+     "name": "visibility",
+     "x": 60,
+     "y": 180,
+     "width": 240,
+     "height": 30,
+     "hspring": "soft",
+     "vspring": "hard",
+     "focused": "true",
+     "datasources": {
+      "value": [
+       "option",
+       "input_gui_alpha"
+      ]
+     },
+     "offscreen": {
+      "x": -400
+     }
+    },
+    {
+     "type": "blbutton",
+     "name": "visibdec",
+     "x": 10,
+     "y": 164,
+     "width": 64,
+     "height": 64,
+     "file": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_slider_less",
+       "extension": "tex"
+      }
+     },
+     "action": "visibilitydec",
+     "focusable": "false",
+     "offscreen": {
+      "x": -450
+     }
+    },
+    {
+     "type": "blbutton",
+     "name": "visibinc",
+     "x": 286,
+     "y": 164,
+     "width": 64,
+     "height": 64,
+     "file": {
+      "$file": {
+       "ordinal": 1,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_slider_more",
+       "extension": "tex"
+      }
+     },
+     "action": "visibilityinc",
+     "focusable": "false",
+     "offscreen": {
+      "x": -94
+     }
+    },
+    {
+     "type": "blpicture",
+     "name": "samplebkg",
+     "x": 340,
+     "y": 130,
+     "width": 128,
+     "height": 128,
+     "hspring": "soft",
+     "vspring": "soft",
+     "alphablend": "true",
+     "file": {
+      "$file": {
+       "ordinal": 2,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_visivibility_control_color_box",
+       "extension": "tex"
+      }
+     },
+     "offscreen": {
+      "x": 480
+     }
+    },
+    {
+     "type": "blpicture",
+     "name": "samplebutton",
+     "x": 372,
+     "y": 162,
+     "width": 64,
+     "height": 64,
+     "hspring": "soft",
+     "vspring": "soft",
+     "alphablend": "true",
+     "file": {
+      "$file": {
+       "ordinal": 3,
+       "directory": "gui/images/hud/",
+       "basename": "bl_hud_hp_button_stand",
+       "extension": "tex"
+      }
+     },
+     "datasources": {
+      "alpha": [
+       "option",
+       "input_gui_alpha"
+      ]
+     },
+     "offscreen": {
+      "x": 512
+     }
+    },
+    {
+     "type": "label",
+     "name": "tilttitle",
+     "effect": "none",
+     "align": "center",
+     "valign": "middle",
+     "x": 120,
+     "y": 220,
+     "width": 240,
+     "height": 30,
+     "hspring": "soft",
+     "vspring": "soft",
+     "font": 1,
+     "uppercase": "true",
+     "textcolor": [
+      255,
+      255,
+      255
+     ],
+     "datasources": {
+      "text": [
+       "translate",
+       "camera_tilt"
+      ]
+     },
+     "offscreen": {
+      "y": 460
+     }
+    },
+    {
+     "type": "labelmenu",
+     "name": "cameratilt",
+     "x": 40,
+     "y": 250,
+     "width": 400,
+     "height": 40,
+     "hspring": "soft",
+     "vspring": "soft",
+     "align": "center",
+     "valign": "middle",
+     "font": 0,
+     "horizontal": "true",
+     "uppercase": "true",
+     "textcolor": [
+      0,
+      0,
+      0
+     ],
+     "selectedtextcolor": [
+      0,
+      0,
+      0
+     ],
+     "backgroundimage": {
+      "$file": {
+       "ordinal": 4,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_dificultbutton_off",
+       "extension": "tex"
+      }
+     },
+     "selectedbackgroundimage": {
+      "$file": {
+       "ordinal": 5,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_dificultbutton_on",
+       "extension": "tex"
+      }
+     },
+     "options": [
+      [
+       "ct_low",
+       ""
+      ],
+      [
+       "ct_medium",
+       ""
+      ],
+      [
+       "ct_high",
+       ""
+      ]
+     ],
+     "datasources": {
+      "selectedoption": [
+       "option",
+       "camera_tilt"
+      ]
+     },
+     "offscreen": {
+      "y": 510
+     }
+    }
+   ],
+   "springs": [
+    {
+     "type": "navigation",
+     "top": "visibility",
+     "bottom": "cameratilt"
+    },
+    {
+     "type": "hard",
+     "top": "visibility",
+     "bottom": "visibdec"
+    },
+    {
+     "type": "hard",
+     "top": "visibinc",
+     "bottom": "visibility"
+    },
+    {
+     "type": "hard",
+     "left": "visibdec",
+     "right": "visibility"
+    },
+    {
+     "type": "hard",
+     "left": "visibility",
+     "right": "visibinc"
+    }
+   ]
+  },
+  "controls": {
+   "source": {
+    "path": "adreno_200/gui/settingscontrols.ui",
+    "bytes": 1221,
+    "sha256": "a35c3cd77293d0cdaf3d0d64a3d3ecf43e71c6cf970b5196212e07c1d2658edf",
+    "resource_id": "5cffe16882ec730645ea5a9d280244d7"
+   },
+   "coverage": {
+    "record_count": 57,
+    "reached_records": 57,
+    "unreached_records": [],
+    "fully_covered": true
+   },
+   "strings": [
+    "layout",
+    "type",
+    "bldock",
+    "name",
+    "controls_dock",
+    "x",
+    "y",
+    "width",
+    "height",
+    "hspring",
+    "soft",
+    "vspring",
+    "optionwidth",
+    "optionheight",
+    "linerect",
+    "true",
+    "linerectcolor",
+    "wraparround",
+    "false",
+    "separation",
+    "valign",
+    "middle",
+    "onmoveaction",
+    "refresh",
+    "sound",
+    "items",
+    "datasources",
+    "validselectedoption",
+    "option",
+    "input_layout",
+    "offscreen",
+    "springs",
+    "sounds/menu_sfx/",
+    "story_page_flip_short_version",
+    "wav",
+    "gui/images/mini/",
+    "bl_fixed_pad",
+    "tex",
+    "bl_floating_pad"
+   ],
+   "layout": [
+    {
+     "type": "bldock",
+     "name": "controls_dock",
+     "x": -50,
+     "y": 150,
+     "width": 580,
+     "height": 114,
+     "hspring": "soft",
+     "vspring": "soft",
+     "optionwidth": 165,
+     "optionheight": 114,
+     "linerect": "true",
+     "linerectcolor": [
+      255,
+      255,
+      0
+     ],
+     "wraparround": "false",
+     "separation": -16,
+     "valign": "middle",
+     "onmoveaction": "refresh",
+     "sound": {
+      "$file": {
+       "ordinal": 0,
+       "directory": "sounds/menu_sfx/",
+       "basename": "story_page_flip_short_version",
+       "extension": "wav"
+      }
+     },
+     "items": [
+      {
+       "$file": {
+        "ordinal": 1,
+        "directory": "gui/images/mini/",
+        "basename": "bl_fixed_pad",
+        "extension": "tex"
+       }
+      },
+      {
+       "$file": {
+        "ordinal": 2,
+        "directory": "gui/images/mini/",
+        "basename": "bl_floating_pad",
+        "extension": "tex"
+       }
+      }
+     ],
+     "datasources": {
+      "validselectedoption": [
+       "option",
+       "input_layout"
+      ]
+     },
+     "offscreen": {
+      "y": 400
+     }
+    }
+   ],
+   "springs": []
+  }
+ },
+ "unrecovered": {
+  "language_dock_items": {
+   "status": "NOT RECOVERED",
+   "reason": "settingslanguage.ui bldock carries no inline items; the dock is filled from a runtime CTranslate/CGameDataQuery \"oneof\" list that is not present in the decoded data, and the .lang universe has no language-name keys"
+  },
+  "video_row": {
+   "status": "NOT RECOVERED",
+   "reason": "game.states ingamesettingsmain maps a \"video\" action to ingamesettingsvideo, but the shipped settings.ui has only audio/languages rows"
+  },
+  "controls_row": {
+   "status": "NOT RECOVERED",
+   "reason": "game.states ingamesettingsmain maps a \"controls\" action to ingamesettingscontrols, but the shipped settings.ui has no controls row"
+  },
+  "audio_mixer_binding": {
+   "status": "PORT BINDING",
+   "note": "native CApplication::Update applies music_volume -> CFXManager::SetMusicVolume and sound_volume -> CFXManager::SetSoundVolume; the port binds the same two recovered values to Music/Sound AudioServer buses"
+  }
+ }
+}

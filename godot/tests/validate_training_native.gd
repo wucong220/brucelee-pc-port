@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 ## Recovered training integration: data, navigation, submenus and success
 ## detection.
 ##
@@ -315,8 +315,19 @@ func _run() -> void:
     training._pause_index = 4
     training._pause_status.text = ""
     training._pause_accept()
-    _check(training._pause_status.text.contains("NOT RECOVERED"),
-        "settings option did not fail closed")
+    _check(training.state == "settings",
+        "settings option did not open the recovered in-game settings (state=%s)"
+        % training.state)
+    _check(training._settings_items.size() == 2,
+        "recovered settings screen is not two rows")
+    if training._settings_items.size() == 2:
+        _check(training._settings_items[0].text == "Audio"
+            and training._settings_items[1].text == "Languages",
+            "recovered settings rows are " + str([
+                training._settings_items[0].text,
+                training._settings_items[1].text]))
+    training._settings_close_to_pause()
+    _check(training.state == "pause", "settings did not return to pause")
 
     var pause_style_requests := [0]
     training.style_editor_requested.connect(

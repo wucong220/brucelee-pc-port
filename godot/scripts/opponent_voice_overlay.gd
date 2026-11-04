@@ -1,5 +1,7 @@
 class_name OpponentVoiceOverlay
 extends RefCounted
+
+const RecoveredSettings = preload("res://scripts/recovered_settings.gd")
 ## Opt-in opponent voice overlay, scheduled at the recovered source frame.
 ##
 ## Data: `res://data/opponent_voice_cues.json` (schema 2), generated only from
@@ -452,6 +454,7 @@ func _spawn_cue(stream: AudioStream, cue: Dictionary, volume_scale: float,
     player.stream = stream
     var linear: float = clampf(float(cue.get("volume", 1.0)) * volume_scale, 0.001, 1.0)
     player.volume_db = linear_to_db(linear)
+    RecoveredSettings.assign_player(player, RecoveredSettings.BUS_SOUND)
     player.finished.connect(player.queue_free)
     _host.add_child(player)
     _active = player

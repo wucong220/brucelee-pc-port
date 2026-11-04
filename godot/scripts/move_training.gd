@@ -17,6 +17,10 @@ class_name PortMoveTraining
 ##     Style Editor   -> the existing opt-in Style Editor screen
 ##
 ##   ESC in a lesson -> pause (trainingpause.ui, all six recovered options)
+##   pause Settings  -> the recovered in-game Settings state
+##                      (ingamesettingsmain: darkbg.ui + settings.ui, two rows
+##                      AUDIO -> ingamesettingsaudio, LANGUAGES ->
+##                      ingamesettingslanguage).  See training_settings.json.
 ##
 ## No lesson text is invented.  The eighth training entry in training.list has
 ## no recovered menu binding (selecttraining.ui has exactly seven options), so it
@@ -33,6 +37,10 @@ const LEGACY_CATALOG_PATH := "res://data/move_training_catalog.json"
 const Controls := preload("res://scripts/prototype_controls.gd")
 const TrainingText := preload("res://scripts/training_text.gd")
 const TrainingAttackAI := preload("res://scripts/training_attack_ai.gd")
+const RecoveredSettings := preload("res://scripts/recovered_settings.gd")
+
+const SETTINGS_PATH := "res://data/training_settings.json"
+const SETTINGS_PATH_ENV := "BRUCELEE_TRAINING_SETTINGS_PATH"
 
 const REFERENCE_WIDTH := 480.0
 const REFERENCE_HEIGHT := 320.0
@@ -87,6 +95,7 @@ var _intro_page := 0
 var _intro_pages: Array = []
 var _pause_index := 0
 var _pause_previous := "active"
+var _settings_previous := "pause"
 var _last_tap: Dictionary = {}
 var _ui: Dictionary = {}
 
@@ -135,6 +144,21 @@ var _free_title: Label
 var _free_panel_label: Label
 var _notice: Label
 
+var _settings_data: Dictionary = {}
+var _settings_error := ""
+var _settings_items: Array[Label] = []
+var _settings_title: Label
+var _settings_status: Label
+var _settings_index := 0
+var _settings_box: TextureRect
+var _audio_items: Array[Label] = []
+var _audio_values: Array[float] = []
+var _audio_fills: Array[ColorRect] = []
+var _audio_tracks: Array[Control] = []
+var _audio_index := 0
+var _audio_status: Label
+var _language_status: Label
+
 var _dummy_ai: PortTrainingAttackAI
 
 
@@ -144,6 +168,7 @@ func configure(main_node: Node, player_node: PortFighter, computer_node: PortFig
     computer = computer_node
     _load_data()
     _load_ui()
+    _load_settings_data()
     _build_ui()
     if player != null:
         player.combat_hit.connect(_on_combat_hit)
@@ -224,6 +249,82 @@ func _load_ui() -> void:
     var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(UI_PATH))
     if typeof(parsed) == TYPE_DICTIONARY:
         _ui = parsed
+
+
+func _load_settings_data() -> void:
+    ## Recovered in-game Settings screens + flow (training_settings.json).  A
+    ## missing/invalid file is a fail-closed state: the pause Settings row will
+    ## report the reason and stay in pause; nothing is guessed here.
+    _settings_data = {}
+    _settings_error = ""
+    var path := OS.get_environment(SETTINGS_PATH_ENV)
+    if path.is_empty():
+        path = SETTINGS_PATH
+    if not FileAccess.file_exists(path):
+        _settings_error = "missing " + path
+        return
+    var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+    if typeof(parsed) != TYPE_DICTIONARY:
+        _settings_error = "invalid " + path
+        return
+    var data: Dictionary = parsed
+    var screens: Dictionary = data.get("screens", {})
+    for required: String in ["darkbg", "settings", "audio", "language"]:
+        if not screens.has(required):
+            _settings_error = "missing screen " + required
+            return
+    var flow: Dictionary = data.get("flow", {})
+    var rows: Array = Array(flow.get("rows", []))
+    if rows.is_empty():
+        _settings_error = "no recovered settings rows"
+        return
+    if not RecoveredSettings.is_configured():
+        RecoveredSettings.configure(Dictionary(data.get("defaults", {})))
+    RecoveredSettings.apply_audio()
+    _settings_data = data
+
+
+func settings_available() -> bool:
+    return not _settings_data.is_empty()
+
+
+func settings_row_count() -> int:
+    return Array(Dictionary(_settings_data.get("flow", {})).get("rows", [])).size()
+
+
+func settings_labels(key: String) -> Dictionary:
+    return Dictionary(Dictionary(_settings_data.get("labels", {})).get(key, {}))
+
+
+func settings_text(key: String) -> String:
+    ## Recovered label from the shipped .lang table for the active language.
+    var table := settings_labels(key)
+    if table.is_empty():
+        return TrainingText.text(key)
+    var lang := TrainingText.language()
+    if table.has(lang):
+        return String(table[lang])
+    return String(table.get("LangEnglish", TrainingText.text(key)))
+
+
+func settings_screen(name: String) -> Dictionary:
+    return Dictionary(Dictionary(_settings_data.get("screens", {})).get(name, {}))
+
+
+func settings_widget(screen: String, widget_name: String) -> Dictionary:
+    var data := settings_screen(screen)
+    for widget: Variant in Array(data.get("layout", [])):
+        if String((widget as Dictionary).get("name", "")) == widget_name:
+            return widget
+    return {}
+
+
+func settings_first(screen: String, widget_type: String) -> Dictionary:
+    var data := settings_screen(screen)
+    for widget: Variant in Array(data.get("layout", [])):
+        if String((widget as Dictionary).get("type", "")) == widget_type:
+            return widget
+    return {}
 
 
 func ui_widget(screen: String, widget_name: String) -> Dictionary:
@@ -347,6 +448,9 @@ func _build_ui() -> void:
     _build_select_fighter_screen()
     _build_command_list_screen()
     _build_free_screen()
+    _build_settings_screen()
+    _build_audio_screen()
+    _build_language_screen()
 
     _notice = _label(_frame, Rect2(30, 302, 420, 16), "", 16,
         Color(1.0, 0.86, 0.30), HORIZONTAL_ALIGNMENT_CENTER)
@@ -697,6 +801,162 @@ func _build_free_screen() -> void:
         HORIZONTAL_ALIGNMENT_CENTER)
 
 
+# ------------------------------------------------------- recovered settings
+
+func _ui_menu_texture(file_name: String) -> Texture2D:
+    var resource_path := "res://ui/menu_art/menu/" + file_name
+    if ResourceLoader.exists(resource_path):
+        return load(resource_path) as Texture2D
+    var loose := OS.get_executable_path().get_base_dir().path_join(
+        "ui/menu_art/menu").path_join(file_name)
+    if not FileAccess.file_exists(loose):
+        return null
+    var image := Image.load_from_file(loose)
+    if image == null or image.is_empty():
+        return null
+    return ImageTexture.create_from_image(image)
+
+
+func _settings_backdrop(screen: Control) -> void:
+    var dark := settings_first("darkbg", "staticrect")
+    if dark.is_empty():
+        dark = {"x": 0, "y": 0, "width": 480, "height": 320,
+                "bgcolor": [0, 0, 0, 128]}
+    var backdrop := ColorRect.new()
+    backdrop.position = Vector2(float(dark.get("x", 0)), float(dark.get("y", 0)))
+    backdrop.size = Vector2(float(dark.get("width", 480)),
+        float(dark.get("height", 320)))
+    backdrop.color = _color8(dark.get("bgcolor", [0, 0, 0, 128]),
+        Color(0.0, 0.0, 0.0, 0.5))
+    backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    screen.add_child(backdrop)
+    var box_widget := settings_widget("settings", "box")
+    if not box_widget.is_empty():
+        var box_rect := _rect(box_widget, Rect2(0, 130, 480, 320))
+        var box := TextureRect.new()
+        box.position = box_rect.position
+        box.size = box_rect.size
+        box.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        box.stretch_mode = TextureRect.STRETCH_SCALE
+        box.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+        box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        var texture := _ui_menu_texture("BL_TextBox_TGA7.png")
+        if texture != null:
+            box.texture = texture
+        screen.add_child(box)
+
+
+func _build_settings_screen() -> void:
+    var screen := _new_screen("settings")
+    _settings_backdrop(screen)
+    var title_widget := settings_widget("settings", "title")
+    _settings_title = _label(screen, _rect(title_widget, Rect2(0, 5, 200, 40)),
+        settings_text("settings"), _font_size("title", 25),
+        _color8(Dictionary(_settings_data.get("colors", {})).get("text",
+            [255, 255, 255]), Color.WHITE))
+    var menu_widget := settings_widget("settings", "menu")
+    var menu_rect := _rect(menu_widget, Rect2(80, 2, 400, 180))
+    var rows := Array(Dictionary(_settings_data.get("flow", {})).get("rows", []))
+    var count: int = maxi(rows.size(), 1)
+    var row_height: float = menu_rect.size.y / float(count)
+    for i: int in range(count):
+        _settings_items.append(_menu_row(screen, Rect2(
+            menu_rect.position.x, menu_rect.position.y + row_height * i,
+            menu_rect.size.x, row_height), "", i == 0, _font_size("menu", 20)))
+    _add_back_button(screen, "settings")
+    _settings_status = _label(screen, Rect2(16, 286, 448, 20), "", 15,
+        Color(1.0, 0.62, 0.30), HORIZONTAL_ALIGNMENT_CENTER)
+
+
+func _build_audio_screen() -> void:
+    var screen := _new_screen("settings_audio")
+    _settings_backdrop(screen)
+    var entries := [
+        {"title": "music", "title_name": "musictitle", "slider": "musicvolume",
+         "dec": "musicdec", "inc": "musicinc", "key": "music_volume"},
+        {"title": "sound", "title_name": "soundtitle", "slider": "soundvolume",
+         "dec": "sounddec", "inc": "soundinc", "key": "sound_volume"},
+    ]
+    for i: int in range(entries.size()):
+        var entry: Dictionary = entries[i]
+        var title_widget := settings_widget("audio", String(entry["title_name"]))
+        var title := _label(screen, _rect(title_widget, Rect2(150, 150, 180, 30)),
+            settings_text(String(entry["title"])), _font_size("menu", 20),
+            Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+        title.uppercase = true
+        _audio_items.append(title)
+        var slider_widget := settings_widget("audio", String(entry["slider"]))
+        var slider_rect := _rect(slider_widget, Rect2(120, 190, 240, 30))
+        var track := Panel.new()
+        track.position = slider_rect.position
+        track.size = slider_rect.size
+        track.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        var track_style := StyleBoxFlat.new()
+        track_style.bg_color = Color(0.0, 0.0, 0.0, 0.6)
+        track_style.border_color = _color8(
+            Dictionary(_settings_data.get("colors", {})).get("text",
+                [255, 255, 255]), Color.WHITE)
+        track_style.set_border_width_all(1)
+        track.add_theme_stylebox_override("panel", track_style)
+        screen.add_child(track)
+        _audio_tracks.append(track)
+        var fill := ColorRect.new()
+        fill.position = Vector2(slider_rect.position.x + 2,
+            slider_rect.position.y + 2)
+        fill.size = Vector2(0.0, slider_rect.size.y - 4)
+        fill.color = _color8(
+            Dictionary(_settings_data.get("colors", {})).get("selected",
+                [255, 255, 0]), Color(1.0, 1.0, 0.0))
+        fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        screen.add_child(fill)
+        _audio_fills.append(fill)
+        _audio_button(screen, _rect(settings_widget("audio", String(entry["dec"])),
+            Rect2(70, 174, 64, 64)), "BL_GUI_slider_less.png", "-")
+        _audio_button(screen, _rect(settings_widget("audio", String(entry["inc"])),
+            Rect2(346, 174, 64, 64)), "BL_GUI_slider_more.png", "+")
+    _audio_status = _label(screen, Rect2(16, 296, 448, 18), "", 14,
+        Color(1.0, 0.62, 0.30), HORIZONTAL_ALIGNMENT_CENTER)
+
+
+func _audio_button(screen: Control, rect: Rect2, file_name: String,
+        fallback_text: String) -> void:
+    var texture := _ui_menu_texture(file_name)
+    if texture != null:
+        var button := TextureRect.new()
+        button.position = rect.position
+        button.size = rect.size
+        button.texture = texture
+        button.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        button.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        screen.add_child(button)
+    else:
+        _label(screen, rect, fallback_text, 25, Color.WHITE,
+            HORIZONTAL_ALIGNMENT_CENTER)
+
+
+func _build_language_screen() -> void:
+    var screen := _new_screen("settings_language")
+    _settings_backdrop(screen)
+    var dock_widget := settings_first("language", "bldock")
+    var dock_rect := _rect(dock_widget, Rect2(0, 180, 480, 70))
+    var frame := Panel.new()
+    frame.position = dock_rect.position
+    frame.size = dock_rect.size
+    frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var style := StyleBoxFlat.new()
+    style.bg_color = Color(0.0, 0.0, 0.0, 0.35)
+    style.border_color = _color8(
+        Dictionary(_settings_data.get("colors", {})).get("selected",
+            [255, 255, 0]), Color(1.0, 1.0, 0.0))
+    style.set_border_width_all(1)
+    frame.add_theme_stylebox_override("panel", style)
+    screen.add_child(frame)
+    _language_status = _label(screen, Rect2(10, 196, 460, 38), "", 15,
+        Color(1.0, 0.62, 0.30), HORIZONTAL_ALIGNMENT_CENTER)
+    _language_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+
 # --------------------------------------------------------------- navigation
 
 func selectable_trainings() -> Array:
@@ -760,6 +1020,141 @@ func pause_options() -> Array:
                 var pair: Array = option
                 out.append({"label_key": String(pair[0]), "action": String(pair[1])})
     return out
+
+
+# ---------------------------------------------------- recovered settings flow
+
+func settings_rows() -> Array:
+    return Array(Dictionary(_settings_data.get("flow", {})).get("rows", []))
+
+
+func settings_not_recovered_rows() -> Array:
+    return Array(Dictionary(_settings_data.get("flow", {})).get(
+        "not_recovered_rows", []))
+
+
+func _open_settings() -> void:
+    ## gamepause.actions.settings = ingamesettingsmain (game.states).
+    if not settings_available():
+        _pause_status.text = "TRAINING SETTINGS LAYOUT NOT RECOVERED: " \
+            + _settings_error
+        state = "pause"
+        return
+    _settings_previous = state
+    state = "settings"
+    _settings_index = 0
+    _show_screen("settings")
+    _set_hud_visible(false)
+    _settings_status.text = ""
+    _refresh_settings()
+    if get_tree() != null:
+        get_tree().paused = true
+
+
+func _refresh_settings() -> void:
+    var rows := settings_rows()
+    for i: int in range(_settings_items.size()):
+        if i >= rows.size():
+            _settings_items[i].visible = false
+            continue
+        var row: Dictionary = rows[i]
+        _settings_items[i].visible = true
+        _settings_items[i].text = settings_text(String(row.get("label_key", "")))
+        _settings_items[i].add_theme_color_override("font_color",
+            _color8(Dictionary(_settings_data.get("colors", {})).get("selected",
+                [255, 255, 0]), Color(1.0, 1.0, 0.0)) if i == _settings_index
+            else _color8(Dictionary(_settings_data.get("colors", {})).get("text",
+                [255, 255, 255]), Color.WHITE))
+
+
+func _settings_accept() -> void:
+    var rows := settings_rows()
+    if _settings_index < 0 or _settings_index >= rows.size():
+        return
+    var action := String((rows[_settings_index] as Dictionary).get("action", ""))
+    match action:
+        "audio":
+            _open_audio_settings()
+        "lang":
+            _open_language_settings()
+        _:
+            # A decoded row whose destination was not proven would fail closed
+            # here; the generated flow only carries proven rows.
+            _settings_status.text = "SETTINGS ROW NOT RECOVERED"
+
+
+func _settings_close_to_pause() -> void:
+    ## Esc / right soft key: gamepause.actions.settings exits through
+    ## ingamesettingsmain "rsk" -> updategamevariables -> "updated" -> gamepause.
+    state = "pause"
+    _show_screen("pause")
+    _refresh_pause()
+    _pause_status.text = ""
+
+
+func clear_settings_notices() -> void:
+    if _settings_status != null:
+        _settings_status.text = ""
+    if _audio_status != null:
+        _audio_status.text = ""
+
+
+func _open_audio_settings() -> void:
+    ## ingamesettingsmain.actions.audio = ingamesettingsaudio,
+    ## rendered as settingsaudio.ui over darkbg + settings.
+    state = "settings_audio"
+    _audio_index = 0
+    _show_screen("settings_audio")
+    _audio_status.text = ""
+    _refresh_audio()
+
+
+func _refresh_audio() -> void:
+    for i: int in range(_audio_items.size()):
+        _audio_items[i].add_theme_color_override("font_color",
+            _color8(Dictionary(_settings_data.get("colors", {})).get("selected",
+                [255, 255, 0]), Color(1.0, 1.0, 0.0)) if i == _audio_index
+            else Color.WHITE)
+    var keys := ["music_volume", "sound_volume"]
+    for i: int in range(_audio_tracks.size()):
+        var value: float = RecoveredSettings.get_value(keys[i], 0.0)
+        var width: float = maxf(_audio_tracks[i].size.x - 4.0, 0.0) * value
+        _audio_fills[i].size = Vector2(width, _audio_tracks[i].size.y - 4.0)
+
+
+func _audio_adjust(delta: float) -> void:
+    var keys := ["music_volume", "sound_volume"]
+    if _audio_index < 0 or _audio_index >= keys.size():
+        return
+    var step := float(Dictionary(_settings_data.get("volume", {})).get(
+        "step", 0.1))
+    var value := RecoveredSettings.adjust(String(keys[_audio_index]),
+        delta * step)
+    RecoveredSettings.apply_audio()
+    _audio_status.text = "%s %.2f" % [settings_text(
+        "music" if _audio_index == 0 else "sound"), value]
+    _refresh_audio()
+
+
+func _audio_close() -> void:
+    state = "settings"
+    _show_screen("settings")
+    _refresh_settings()
+
+
+func _open_language_settings() -> void:
+    ## ingamesettingsmain.actions.lang = ingamesettingslanguage.  The dock's
+    ## item list is NOT RECOVERED, so the screen shows its recovered frame and
+    ## an explicit marker; it never invents a language order or labels.
+    state = "settings_language"
+    _show_screen("settings_language")
+    _language_status.text = "LANGUAGE LIST NOT RECOVERED"
+
+
+func _language_close() -> void:
+    state = "settings"
+    _show_screen("settings")
+    _refresh_settings()
 
 
 func fighter_dock_entries() -> Array:
@@ -849,7 +1244,8 @@ func explanation_text(training: Dictionary) -> String:
 func is_active() -> bool:
     return state in [
         "practice", "select", "free_config", "select_fighter", "intro",
-        "active", "pause", "complete", "command_list", "free"]
+        "active", "pause", "complete", "command_list", "free",
+        "settings", "settings_audio", "settings_language"]
 
 
 func is_lesson_active() -> bool:
@@ -859,7 +1255,8 @@ func is_lesson_active() -> bool:
 func freezes_world() -> bool:
     return state in [
         "practice", "select", "free_config", "select_fighter", "intro",
-        "complete", "pause", "command_list"]
+        "complete", "pause", "command_list",
+        "settings", "settings_audio", "settings_language"]
 
 
 func open() -> void:
@@ -1452,7 +1849,8 @@ func _pause_accept() -> void:
         "commands":
             _open_command_list()
         "settings":
-            _pause_status.text = "SETTINGS IS NOT RECOVERED FOR TRAINING"
+            clear_settings_notices()
+            _open_settings()
         "mainmenu":
             if get_tree() != null:
                 get_tree().paused = false
@@ -1572,6 +1970,12 @@ func handle_input_event(event: InputEvent) -> bool:
             return _handle_command_list_input(event)
         "complete":
             return _handle_complete_input(event)
+        "settings":
+            return _handle_settings_input(event)
+        "settings_audio":
+            return _handle_audio_settings_input(event)
+        "settings_language":
+            return _handle_language_settings_input(event)
         "free":
             if event.is_action_pressed(Controls.PAUSE) \
                     or event.is_action_pressed(Controls.MENU_CANCEL):
@@ -1722,6 +2126,62 @@ func _handle_pause_input(event: InputEvent) -> bool:
         state = _pause_previous
         _show_screen(state)
         _set_hud_visible(state == "active" or state == "free")
+        return true
+    return false
+
+
+func _handle_settings_input(event: InputEvent) -> bool:
+    if _is_up(event):
+        _settings_index = wrapi(_settings_index - 1, 0, _settings_items.size())
+        _settings_status.text = ""
+        _refresh_settings()
+        return true
+    if _is_down(event):
+        _settings_index = wrapi(_settings_index + 1, 0, _settings_items.size())
+        _settings_status.text = ""
+        _refresh_settings()
+        return true
+    if event.is_action_pressed(Controls.MENU_ACCEPT):
+        _settings_accept()
+        return true
+    if event.is_action_pressed(Controls.MENU_CANCEL) \
+            or event.is_action_pressed(Controls.PAUSE):
+        _settings_close_to_pause()
+        return true
+    return false
+
+
+func _handle_audio_settings_input(event: InputEvent) -> bool:
+    if _is_up(event):
+        _audio_index = maxi(_audio_index - 1, 0)
+        _audio_status.text = ""
+        _refresh_audio()
+        return true
+    if _is_down(event):
+        _audio_index = mini(_audio_index + 1, maxi(_audio_items.size() - 1, 0))
+        _audio_status.text = ""
+        _refresh_audio()
+        return true
+    if _is_left(event):
+        _audio_adjust(-1.0)
+        return true
+    if _is_right(event):
+        _audio_adjust(1.0)
+        return true
+    if event.is_action_pressed(Controls.MENU_CANCEL) \
+            or event.is_action_pressed(Controls.PAUSE):
+        _audio_close()
+        return true
+    return false
+
+
+func _handle_language_settings_input(event: InputEvent) -> bool:
+    if event.is_action_pressed(Controls.MENU_ACCEPT):
+        _language_status.text = "LANGUAGE LIST NOT RECOVERED"
+        return true
+    if event.is_action_pressed(Controls.MENU_CANCEL) \
+            or event.is_action_pressed(Controls.PAUSE):
+        _language_close()
         return true
     return false
 

@@ -1,6 +1,8 @@
 class_name StoryNoticeAudio
 extends Node
 
+const RecoveredSettings = preload("res://scripts/recovered_settings.gd")
+
 ## Plays the two recovered notice contexts, using only exact archive WAVs:
 ##
 ##   notice state start:  playlevelupsound -> Bonus_Jingle.wav
@@ -184,6 +186,7 @@ func play(cue: String) -> bool:
 		player.name = "Cue_" + cue
 		player.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(player)
+		RecoveredSettings.assign_player(player, RecoveredSettings.BUS_SOUND)
 		_players[cue] = player
 	player.stream = _streams[cue]
 	if player.playing:
