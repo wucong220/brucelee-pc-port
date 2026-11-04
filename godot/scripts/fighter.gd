@@ -6442,7 +6442,10 @@ func _begin_chained_attack(
         push_warning(character_name + " " + kind + " link refused: " + size_variant_error)
         return false
     attack_kind = kind
-    var rage_cost: float = _action_rage_value(kind)
+    var rage_action: String = String(
+        ATTACKS.get(kind, {}).get("source_action", kind)
+    )
+    var rage_cost: float = _action_rage_value(rage_action)
     if rage_cost < 0.0:
         # Recovered special-move cost (for example -66 on the miss actions).
         rage = maxf(0.0, rage + rage_cost)
