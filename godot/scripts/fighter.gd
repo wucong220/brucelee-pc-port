@@ -1311,6 +1311,7 @@ const VICTIM_OPPONENT_SUFFIX: Dictionary = {
     "res://data/fighting_set_m03_mapped_attacks.json": "brick",
     "res://data/attack_config_master.json": "master",
     "res://data/attack_config_sinfu.json": "sinfu",
+    "res://data/attack_config_shenlo.json": "shenlo",
     "res://data/attack_config_ken.json": "ken",
 }
 # endattackcomp names its per-attacker actions by set family: only thai and
