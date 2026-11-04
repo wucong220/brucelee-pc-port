@@ -1,5 +1,7 @@
 extends RefCounted
 class_name NativeMatchStates
+
+const ReplayBufferScript = preload("res://scripts/replay_buffer.gd")
 ## Recovered CBeatEmUpGame states that the port did not implement:
 ##   1  ATTRACT_FIGHTER0   SetState(1)  (ghidra-out5/SetState.c case 1,
 ##                         Update.c case 1)
@@ -36,7 +38,7 @@ const IMPLEMENTED_STATES: Array[int] = [
 ## States whose recovered evidence is not sufficient to drive them.  The
 ## driver reports them and never enters them.
 const UNRECOVERED_STATES: Array[int] = [
-    STATE_REPLAY, STATE_CONTINUE_WAIT, STATE_COUNTDOWN,
+    STATE_CONTINUE_WAIT, STATE_COUNTDOWN,
 ]
 
 # CBeatEmUpGame::SetState case 1/2 plays the free animation whose hash string
@@ -83,14 +85,16 @@ const CONTINUE_MENU_OPTIONS: Array[String] = ["yes", "no"]
 # observation threshold, not a transition.
 const COUNTDOWN_ENDED_AFTER_MS: int = 9999
 
-# Update case 6 plays the replay at double speed:
-#   vmov s16, [this+0x838]; vcvt.f32.u32; vadd.f32 s16, s16, s16; vcvt.u32.f32
-# i.e. the sample passed to RecordReplayUpdate is GetStateTime() + 2*replay_base,
-# so the recording advances twice as fast as real time.  The loop-back
-# SetState(6) at the end of the recording is also recovered, but the replay
-# buffer itself (RecordReplayUpdate) is not implemented in the port, so state
-# 6 stays fail-closed.
+# Update case 6 (@0x18d0ac) builds the sample as GetStateTime() + 2*replay_base
+# (vmov s16,[this+0x838]; vcvt.f32.u32; vadd.f32 s16,s16,s16; vcvt.u32.f32).
+# SetState case 6 also calls SetSpeed(0.5f) (@0x188968, mov r1,#0x3f000000),
+# which writes fighter +0x140 = 0.5.  RecordReplayUpdate compares
+#   record.time <= sample * fighter[+0x140]
+# so the reached record time is 0.5*(elapsed + 2*base) = base + 0.5*elapsed:
+# the replay starts at the state-4 fight-start time and advances at HALF speed
+# (0.5x).  The literal 2 is a base-offset compensation, NOT a 2x rate multiplier.
 const REPLAY_SPEED_FACTOR: int = 2
+const REPLAY_STATE_SPEED_SCALE: float = 0.5
 
 ## advance() returns this when the active state finished and there is no
 ## follow-up state; -1 stays "still running".
@@ -100,6 +104,8 @@ const REASON_OK: String = "ok"
 const REASON_UNRECOVERED: String = "unrecovered"
 const REASON_NO_CLIP: String = "no-candidate-clip"
 const REASON_ALREADY_PLAYED: String = "intro-already-played"
+const REASON_NO_REPLAY: String = "no-replay-buffer"
+const REASON_REPLAY_SCALE: String = "unrecovered-replay-scale"
 
 var state: int = -1
 var state_time: float = 0.0
@@ -119,6 +125,14 @@ var continue_resolved: bool = false
 ## Countdown observation (state 14).  Only meaningful if the state were
 ## entered, which the unrecovered gate prevents.
 var countdown_ended: bool = false
+## Replay (state 6).  `replay_buffers` must hold two ReplayBuffer objects whose
+## records were produced by the recovered 0x2c SetAnimation append path.
+## `replay_base_ms` is game +0x838 (the +0x7f8 match clock when state 4 was
+## entered).  `replay_speed_scale` is fighter +0x140 (0.5 in state 6).
+var replay_buffers: Array = []
+var replay_base_ms: int = 0
+var replay_speed_scale: float = REPLAY_STATE_SPEED_SCALE
+var replay_loops: int = 0
 ## Ordered trace of every transition attempt: {state, result, reason, detail}.
 var trace: Array = []
 
@@ -135,6 +149,10 @@ func reset() -> void:
     continue_choice = ""
     continue_resolved = false
     countdown_ended = false
+    replay_buffers.clear()
+    replay_base_ms = 0
+    replay_speed_scale = REPLAY_STATE_SPEED_SCALE
+    replay_loops = 0
     trace.clear()
 
 
@@ -164,6 +182,8 @@ func enter(next_state: int, clip_name: String = "", clip_seconds: float = -1.0) 
         return _enter_attract(next_state, clip_name, clip_seconds)
     if next_state == STATE_CONTINUE:
         return _enter_continue()
+    if next_state == STATE_REPLAY:
+        return _enter_replay()
     _fail(next_state, REASON_UNRECOVERED, "no recovered entry path")
     return false
 
@@ -228,6 +248,8 @@ func advance(delta: float, skip_pressed: bool = false) -> int:
             # itself.  The only exits are the two menu actions recovered from
             # game.states, applied through choose_continue().
             pass
+        STATE_REPLAY:
+            _advance_replay()
     return -1
 
 
@@ -290,6 +312,73 @@ func current_continue_option() -> String:
     return CONTINUE_MENU_OPTIONS[continue_menu_index]
 
 
+## Supply the two recorded buffers before entering state 6.  `base_ms` is game
+## +0x838: the +0x7f8 match clock captured when state 4 (FIGHT) was entered.
+func set_replay_buffers(player_buffer, computer_buffer, base_ms: int) -> void:
+    replay_buffers = [player_buffer, computer_buffer]
+    replay_base_ms = int(base_ms)
+    replay_speed_scale = REPLAY_STATE_SPEED_SCALE
+
+
+## SetState case 6: SetSpeed(0.5) on both fighters, disable their recording flag,
+## SetReplayCurrentTime(fighter, replay_base), SetVisible, SetPosToFightStartPos.
+## The port cannot synthesise a native buffer, so a missing/empty buffer fails
+## closed instead of inventing one.
+func _enter_replay() -> bool:
+    if replay_buffers.size() != 2:
+        _fail(STATE_REPLAY, REASON_NO_REPLAY, "two recorded fighter buffers are required")
+        return false
+    for i in 2:
+        var buffer = replay_buffers[i]
+        if buffer == null:
+            _fail(STATE_REPLAY, REASON_NO_REPLAY, "fighter %d buffer is null" % i)
+            return false
+        if int(buffer.size()) < 1:
+            _fail(STATE_REPLAY, REASON_NO_REPLAY, "fighter %d buffer is empty" % i)
+            return false
+    if not is_equal_approx(replay_speed_scale, REPLAY_STATE_SPEED_SCALE):
+        _fail(STATE_REPLAY, REASON_REPLAY_SCALE,
+            "fighter +0x140 must be the recovered 0.5, got %.3f" % replay_speed_scale)
+        return false
+    _begin(STATE_REPLAY)
+    for i in 2:
+        replay_buffers[i].set_replay_current_time(replay_base_ms)
+    replay_loops = 0
+    trace.append({
+        "state": STATE_REPLAY, "result": "entered", "reason": REASON_OK,
+        "detail": "replay_base=%d ms speed_scale=%.3f" % [replay_base_ms, replay_speed_scale],
+    })
+    return true
+
+
+## Update case 6: sample = GetStateTime() + 2*replay_base, then one
+## RecordReplayUpdate per fighter.  When both ReplayEnded, SetState(6) re-enters
+## the same state (native loop); emulate by resetting the state clock and cursor.
+func _advance_replay() -> void:
+    var elapsed_ms: int = int(round(state_time * 1000.0))
+    var sample_ms: int = elapsed_ms + REPLAY_SPEED_FACTOR * replay_base_ms
+    var all_ended: bool = true
+    for i in 2:
+        var buffer = replay_buffers[i]
+        buffer.record_replay_update(sample_ms, replay_speed_scale)
+        if not bool(buffer.replay_ended()):
+            all_ended = false
+    if all_ended:
+        replay_loops += 1
+        state_time = 0.0
+        for i in 2:
+            replay_buffers[i].set_replay_current_time(replay_base_ms)
+        trace.append({
+            "state": STATE_REPLAY, "result": "loop", "reason": REASON_OK,
+            "detail": "ReplayEnded both fighters -> SetState(6), loop=%d" % replay_loops,
+        })
+
+
+## QueryString state 6 text: (11000 - GetStateTime()) / 1000 capped to 10.
+func replay_countdown_seconds() -> int:
+    return ReplayBufferScript.replay_countdown_seconds(int(floor(state_time * 1000.0)))
+
+
 func describe() -> Dictionary:
     return {
         "state": state,
@@ -308,6 +397,11 @@ func describe() -> Dictionary:
         "continue_timeout_action": CONTINUE_ACTION_TIMEOUT,
         "replay_countdown_budget_ms": REPLAY_COUNTDOWN_BUDGET_MS,
         "replay_speed_factor": REPLAY_SPEED_FACTOR,
+        "replay_speed_scale": REPLAY_STATE_SPEED_SCALE,
+        "replay_buffers": replay_buffers.size(),
+        "replay_base_ms": replay_base_ms,
+        "replay_loops": replay_loops,
+        "replay_countdown_seconds": replay_countdown_seconds() if state == STATE_REPLAY else -1,
         "countdown_ended_after_ms": COUNTDOWN_ENDED_AFTER_MS,
         "unrecovered_states": UNRECOVERED_STATES,
         "trace": trace,
@@ -335,7 +429,7 @@ func _fail(next_state: int, reason: String, detail: String) -> void:
 func _unrecovered_detail(next_state: int) -> String:
     match next_state:
         STATE_REPLAY:
-            return "RecordReplayUpdate buffer is not recovered; only the 2x speed and the %d ms display budget are" % REPLAY_COUNTDOWN_BUDGET_MS
+            return "state 6 requires two recorded buffers; missing buffer data is refused, not invented"
         STATE_CONTINUE_WAIT:
             return "Update case 10 has no body; no entry path writes state 10"
         STATE_COUNTDOWN:
