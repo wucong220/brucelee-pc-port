@@ -326,7 +326,8 @@ const ROUND_TIME_DEFAULT: int = 60
 
 # Ported EGameState subset from krm::CBeatEmUpGame::SetState/Update
 # (ghidra-out5/SetState.c, ghidra-out5/Update.c).  States 1/2 (attract intro),
-# 9 (continue) and the fail-closed 6/10/14 live in NativeMatchStates.
+# 9 (continue) and 14 (story defeat) live in NativeMatchStates; 6 and 10 stay
+# fail-closed there.
 const MATCH_STATE_ATTRACT_FIGHTER0: int = 1  # SetState(1): fighter 0 "Intro"
 const MATCH_STATE_ATTRACT_FIGHTER1: int = 2  # SetState(2): fighter 1 "Intro"
 const MATCH_STATE_INTRO: int = 3        # SetState(3): both idle, READY/FIGHT text
@@ -338,6 +339,7 @@ const MATCH_STATE_DRAW: int = 11        # SetState(11): draw round text
 const MATCH_STATE_CONTINUE: int = 9     # SetState(9): GREAT text + continue
 const MATCH_STATE_MATCH_WIN: int = 12   # SetState(12): winner-only victory pose
 const MATCH_STATE_MATCH_LOSE: int = 13  # SetState(13): winner-only victory pose
+const MATCH_STATE_COUNTDOWN: int = 14   # SetState(14): story defeat presentation
 const MATCH_STATE_ROUND_END: int = 15   # SetState(15): RoundEnded() -> NextRound
 
 # Recovered ingamesprites.list game text animation indices
@@ -569,6 +571,15 @@ var _round_end_handled: bool = false
 var _intro_fight_shown: bool = false
 var _result_pose_seconds: float = 0.0
 var _result_camera_override: bool = false
+## State 14 (SetState(14), story defeat presentation).  The defeat camera is the
+## m01_defeat_01 camera sub-animation listed in defeat_camera_map.json for the
+## clip characters.list animations.defeat selects; the state itself never leaves
+## -- CBeatEmUpMatch::Update raises "COUNTDOWNEND" once GetStateTime() > 9999 ms.
+const DEFEAT_CAMERA_MAP_PATH: String = "res://data/camera_anm/defeat_camera_map.json"
+var _defeat_camera_map_path: String = DEFEAT_CAMERA_MAP_PATH
+var _defeat_camera_map: Dictionary = {}
+var _defeat_camera_map_loaded: bool = false
+var _countdown_handed_off: bool = false
 
 # ---- Original camera .anm playback for the MATCH_WIN/MATCH_LOSE result state ----
 # Decoded from adreno_200/cameras/<clip>_camera.anm by the isolated
@@ -4208,6 +4219,59 @@ func _camera_anm_end() -> void:
     _camera_anm_anchor = null
 
 
+func _defeat_camera_load_map() -> void:
+    ## Decoded defeat camera pool: characters.list animations.defeat + the
+    ## recovered "X_camera.anm belongs to action X" rule (defeat_camera_map.json,
+    ## one shared clip m01_defeat_01).  A missing/invalid map leaves it empty so
+    ## _enter_countdown_state() refuses instead of inventing a camera.
+    if _defeat_camera_map_loaded:
+        return
+    _defeat_camera_map_loaded = true
+    _defeat_camera_map = {}
+    var file: FileAccess = FileAccess.open(_defeat_camera_map_path, FileAccess.READ)
+    if file == null:
+        push_warning("defeat camera map missing: " + _defeat_camera_map_path)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if typeof(parsed) == TYPE_DICTIONARY:
+        var clips: Variant = Dictionary(parsed).get("camera_clips", {})
+        if typeof(clips) == TYPE_DICTIONARY:
+            _defeat_camera_map = clips
+
+
+func _defeat_camera_clip(clip: String) -> String:
+    _defeat_camera_load_map()
+    return _camera_map_clip(_defeat_camera_map, clip)
+
+
+func _countdown_camera_begin(clip: String) -> bool:
+    ## Arm the authored defeat camera for state 14.  CBeatEmUpGame::CameraUpdate
+    ## (@0x178d88) takes the `else` branch for state 14: the dummy is
+    ## this[0x7e0] (the local player, slot 0) and the swap flag is 0.  SetState
+    ## (14) has already moved BOTH fighters to the origin, so the dummy
+    ## direction is (0,0): C atan2(+0,+0) is +0 and the authored yaw is exactly
+    ## PI/2.  Passing both anchors at the origin reproduces that yaw in
+    ## CameraAnm.place_world(); mirror is false as native sets it.
+    if _camera_anm == null:
+        _camera_anm = CameraAnm.new()
+    if not _camera_anm.load_json(_camera_anm_dir + clip + ".json"):
+        return false
+    var origin: Vector3 = _camera_anm_fighter_point(player)
+    var other: Vector3 = _camera_anm_fighter_point(computer)
+    if (other - origin).length() >= 0.001:
+        # The fighters are not both at the origin yet (should not happen: the
+        # state body moves them before this call).  Do not silently invent a
+        # direction; refuse so the caller keeps the analytic camera.
+        return false
+    _camera_anm_clip = clip
+    _camera_anm_frame = 0.0
+    _camera_anm_anchor = player
+    _camera_anm_mirror = false
+    _camera_anm_a = origin
+    _camera_anm_b = origin
+    return true
+
+
 func _camera_anm_play_authored(delta: float) -> bool:
     ## Sample the decoded clip by frame (never interpolate: 34/70 clips contain
     ## real single-frame camera cuts). Holds the last frame until the state
@@ -4389,6 +4453,12 @@ func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
         fight_camera.global_position = target + Vector3(0.0, 1.4, 4.2)
         fight_camera.look_at(target, Vector3.UP)
         return
+    if match_state == MATCH_STATE_COUNTDOWN:
+        # State 14 keeps the authored defeat camera (CameraUpdate reads the
+        # movie's camera sub-animation from the playing clip).  Missing JSON was
+        # refused when the state was entered, so this normally succeeds.
+        if _camera_anm_play_authored(delta):
+            return
     if _action_camera_tick():
         # The player's current animation owns an authored camera; it overrides
         # both the intro tail and the analytic follow camera while it runs.
@@ -4646,6 +4716,8 @@ func _update_match_state(delta: float) -> void:
             _advance_result_text()
         MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE:
             _advance_winner_result_pose()
+        MATCH_STATE_COUNTDOWN:
+            _advance_countdown(delta)
         MATCH_STATE_ROUND_END:
             _advance_round_end()
 
@@ -4820,6 +4892,88 @@ func _begin_winner_result_pose() -> void:
     if victory_ok and clip_millis >= 100:
         _result_pose_seconds = float(clip_millis - 100) / 1000.0
     _enter_match_state(MATCH_STATE_MATCH_WIN if winner_is_player else MATCH_STATE_MATCH_LOSE)
+
+
+func _story_defeat_state_applies() -> bool:
+    ## PlayerLost() @0x190060: for game mode 1 (story) it calls
+    ## CBruceLeeStoryMode::StoryCurrentFightWinOnLose() (engine+0x2b8) and, when
+    ## that returns 0, enters SetState(14) (0x19022c -> 0x19049c).  The port's
+    ## recovered story rules evaluate the same battle `win_on_lose` flag.
+    if OS.get_environment("BRUCELEE_STORY_FLOW") != "1":
+        return false
+    if story_flow == null:
+        return false
+    if player_rounds >= rounds_to_win or computer_rounds < rounds_to_win:
+        return false
+    return not bool(story_flow.call("current_battle_win_on_lose"))
+
+
+func _enter_countdown_state() -> bool:
+    ## SetState(14) body (0x1785f8): fighter 0 visible, fighter 1 hidden, both to
+    ## the origin, StopCameraAnimation, then fighter 0 plays the "Defeat" free
+    ## animation.  Entering requires the candidate defeat clip and its recovered
+    ## camera; either missing is a refusal so the normal result flow still runs.
+    if native_states == null or not is_instance_valid(player) \
+            or not is_instance_valid(computer):
+        return false
+    if not player.enter_result_pose("defeat") or String(player.result_clip).is_empty():
+        player.clear_result_pose()
+        print("DEFEAT_STATE_GAP state=14 reason=no-candidate-defeat-clip")
+        return false
+    var clip: String = String(player.result_clip)
+    var camera_clip: String = _defeat_camera_clip(clip)
+    if camera_clip.is_empty():
+        player.clear_result_pose()
+        print("DEFEAT_STATE_GAP state=14 reason=no-defeat-camera clip=%s" % clip)
+        return false
+    var seconds: float = player.result_clip_duration()
+    if seconds <= 0.0:
+        player.clear_result_pose()
+        print("DEFEAT_STATE_GAP state=14 reason=zero-length-defeat-clip clip=%s" % clip)
+        return false
+    if not bool(native_states.enter(MATCH_STATE_COUNTDOWN, clip, seconds, camera_clip)):
+        player.clear_result_pose()
+        print("DEFEAT_STATE_GAP state=14 reason=%s" % native_states.fail_reason)
+        return false
+    # Native body order: _enter_match_state clears any intro/action camera first,
+    # then the countdown camera is started.
+    _enter_match_state(MATCH_STATE_COUNTDOWN)
+    player.visible = true
+    computer.visible = false
+    player.global_position = Vector3(0.0, PortFighter.PLAYER_ORIGIN_HEIGHT, 0.0)
+    computer.global_position = Vector3(0.0, PortFighter.PLAYER_ORIGIN_HEIGHT, 0.0)
+    player.move_axis = Vector2.ZERO
+    computer.move_axis = Vector2.ZERO
+    _hide_game_text_overlays()
+    _countdown_handed_off = false
+    done = true
+    if not _countdown_camera_begin(camera_clip):
+        print("DEFEAT_STATE_GAP state=14 reason=defeat-camera-json-missing clip=%s"
+            % camera_clip)
+    print("NATIVE_STATE_ENTER state=14 clip=%s seconds=%.3f camera=%s fighter=0 swap=0"
+        % [clip, seconds, camera_clip])
+    return true
+
+
+func _advance_countdown(delta: float) -> void:
+    ## Update case 14 is the default DummyUpdate branch; the state never leaves.
+    ## CountdownEnded() latches at GetStateTime() > 9999 ms, after which
+    ## CBeatEmUpMatch::Update raises "COUNTDOWNEND" instead of driving the fight.
+    if native_states != null:
+        native_states.advance(delta)
+    if _countdown_handed_off:
+        return
+    if native_states == null or not bool(native_states.countdown_ended):
+        return
+    _countdown_handed_off = true
+    match_over = true
+    done = true
+    print("NATIVE_STATE_COUNTDOWNEND state=14 elapsed_ms=%d action=%s" % [
+        int(round(native_states.state_time * 1000.0)), NativeMatchStates.COUNTDOWN_ACTION
+    ])
+    hud.show_message("YOU LOSE THE MATCH · R TO RESTART")
+    if story_flow != null:
+        story_flow.match_finished(false)
 
 
 func _advance_winner_result_pose() -> void:
@@ -5190,6 +5344,12 @@ func _on_ko(fighter: PortFighter) -> void:
         computer_rounds += 1
         pending_round_winner = 2
     hud.set_round(round_number, player_rounds, computer_rounds, training_mode)
+    # SetState(14): a story-mode fight lost when the battle cannot be won by
+    # losing shows the defeat presentation instead of the KO result chain
+    # (PlayerLost -> mode 1 -> StoryCurrentFightWinOnLose()==false -> state 14).
+    if fighter == player and _story_defeat_state_applies():
+        if _enter_countdown_state():
+            return
     var player_won: bool = fighter == computer
     _show_round_result_text(player if player_won else computer, player_won)
     hud.show_message(

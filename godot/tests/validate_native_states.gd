@@ -103,9 +103,9 @@ func _check_runtime(main: Node) -> void:
         "a skip event ends state 1 before the clip finishes")
     _expect(not bool(states.active), "the skip leaves the attract state")
 
-    # Replay needs two live buffers; states 10/14 remain unrecovered.
+    # Replay needs two live buffers; state 10 remains unrecovered.
     for unrecovered in [NativeMatchStates.STATE_REPLAY,
-            NativeMatchStates.STATE_CONTINUE_WAIT, NativeMatchStates.STATE_COUNTDOWN]:
+            NativeMatchStates.STATE_CONTINUE_WAIT]:
         states.reset()
         var started: bool = bool(states.enter(unrecovered))
         _expect(not started, "state %d refuses to start" % unrecovered)
@@ -114,6 +114,21 @@ func _check_runtime(main: Node) -> void:
                 or (unrecovered == NativeMatchStates.STATE_REPLAY
                     and reason.begins_with("no-replay-buffer")),
             "state %d reports why it refuses, got %s" % [unrecovered, reason])
+
+    # State 14 is implemented (SetState case 14 @0x1785f8).  It still fails
+    # closed when the defeat clip or its recovered camera is missing, and enters
+    # once both are supplied.
+    states.reset()
+    _expect(not bool(states.enter(NativeMatchStates.STATE_COUNTDOWN, "", -1.0, "")),
+        "state 14 refuses to start without its defeat clip")
+    _expect(String(states.fail_reason).begins_with("no-candidate-clip"),
+        "state 14 names the missing defeat clip, got %s" % states.fail_reason)
+    states.reset()
+    _expect(bool(states.enter(NativeMatchStates.STATE_COUNTDOWN,
+            "m01_defeat_01", 3.9, "m01_defeat_01")),
+        "state 14 enters with the recovered defeat clip and camera")
+    _expect(int(states.state) == 14, "state 14 is the entered state")
+    states.reset()
 
     # State 9 enters, remembers that its countdown is unrecovered, and only
     # leaves through the two actions decoded from game.states.

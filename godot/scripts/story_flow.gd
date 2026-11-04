@@ -938,6 +938,14 @@ func _award_story_exp(won: bool, health: float, elapsed: float, outcome: String)
 	])
 
 
+func current_battle_win_on_lose() -> bool:
+	## The recovered krm::CBruceLeeStoryMode::StoryCurrentFightWinOnLose() flag
+	## for the battle that is running.  story_rules.gd reads the same
+	## `win_on_lose` field; main.gd uses this to decide whether a lost story
+	## fight enters SetState(14) (false) or keeps its win-on-lose advance (true).
+	return String(battle_run.get("win_on_lose", "")).to_lower() == "true"
+
+
 func match_finished(won: bool) -> void:
 	if state == null or not state.has_pending():
 		return

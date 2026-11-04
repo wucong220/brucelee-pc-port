@@ -11,7 +11,11 @@ const ReplayBufferScript = preload("res://scripts/replay_buffer.gd")
 ##   10 CONTINUE_WAIT      Update.c case 10 falls into the default DummyUpdate
 ##                         branch; no SetState case exists for it.
 ##   14 COUNTDOWN          SetState(14) (SetState.c case 14, Update.c case 14
-##                         shares the default DummyUpdate branch)
+##                         shares the default DummyUpdate branch).  This is the
+##                         story-mode DEFEAT presentation, entered from
+##                         CBeatEmUpTriggers.cpp PlayerLost() @0x190060 when
+##                         CBruceLeeStoryMode::StoryCurrentFightWinOnLose() is
+##                         false (0x19022c -> 0x19049c -> SetState(14)).
 ##
 ## Every constant below is taken from the decompiled functions or from the
 ## decoded archive resources (adreno_200/game.states, gui/*.ui,
@@ -22,8 +26,12 @@ const ReplayBufferScript = preload("res://scripts/replay_buffer.gd")
 ## Sources (all read-only):
 ##   D:\BruceLeeWork\ghidra-out5\SetState.c, Update.c, CountdownEnded.c,
 ##   ghidra-out9\krm__CBeatEmUpMatch__QueryString.c,
-##   libdefault.so (sha256 1da7a30c...) PlayerLost @ 0x190060,
+##   libdefault.so (sha256 1da7a30c...): SetState @0x178508 (case 14 @0x1785f8),
+##   Update @0x17c2ac (case 14 -> 0x17d334 DummyUpdate), CountdownEnded @0x187e78,
+##   CameraUpdate @0x178d88, PlayerLost @0x190060, CBeatEmUpMatch::Update @0x162648,
 ##   adreno_200/game.states, gui/continueask.ui, gui/replaystats.ui.
+##   Verified byte-for-byte by work/setstate14_exact.py, work/cases_12_13.py,
+##   work/camera_and_modes.py and work/counters.py in the isolated output.
 
 const STATE_ATTRACT_FIGHTER0: int = 1
 const STATE_ATTRACT_FIGHTER1: int = 2
@@ -34,23 +42,56 @@ const STATE_COUNTDOWN: int = 14
 
 const IMPLEMENTED_STATES: Array[int] = [
     STATE_ATTRACT_FIGHTER0, STATE_ATTRACT_FIGHTER1, STATE_CONTINUE,
+    STATE_COUNTDOWN,
 ]
 ## States whose recovered evidence is not sufficient to drive them.  The
 ## driver reports them and never enters them.
 const UNRECOVERED_STATES: Array[int] = [
-    STATE_CONTINUE_WAIT, STATE_COUNTDOWN,
+    STATE_CONTINUE_WAIT,
 ]
 
 # CBeatEmUpGame::SetState case 1/2 plays the free animation whose hash string
 # sits at rodata 0x5b9440 ("Intro"); the same literal is the characters.list
 # animation category decoded in character-anim-inventory-20261103/characters.json.
 const INTRO_CATEGORY: String = "Intro"
-# SetState case 14 plays the free animation at rodata 0x5b9450 ("Defeat") when
-# the winner's round count is not strictly greater than the loser's, otherwise
-# 0x5b9448 ("Victory").  Both hashes were resolved from the literal pool of
-# SetState @ 0x178508 (libdefault.so).
+# SetState cases 12 (0x178ab0) and 13 (0x178b18) choose the result category by
+# comparing the per-fighter round counters with an unsigned compare:
+#   case 12 (fighter 0 visible): 0x81c > 0x820 -> "Victory" (0x5b9448),
+#                                else          -> "Defeat"  (0x5b9450)
+#   case 13 (fighter 1 visible): 0x820 > 0x81c -> "Victory",
+#                                else          -> "Defeat"
+# SetState case 14 does NOT branch: it always plays "Defeat" (see below).  The
+# literals were resolved from the SetState literal pool (work/cases_12_13.py).
 const DEFEAT_CATEGORY: String = "Defeat"
 const VICTORY_CATEGORY: String = "Victory"
+
+# SetState case 14 (@0x1785f8), the recovered body, in order:
+#   f0 = this + 0x24 (fighter 0);  f1 = this + 0x1dc (fighter 1)
+#   f0->SetVisible(true);          f1->SetVisible(false)
+#   f0->SetPosToOrigin();          f1->SetPosToOrigin()
+#   CBeatEmUpGame::StopCameraAnimation()
+#   HashString h("Defeat" @0x5b9450)
+#   f0->SetAnimation(h, this[0x7f8], 0, 1, 0.0f)   # 0x178634..0x178674
+# Update case 14 (@0x17c2ec -> 0x17d334) only DummyUpdates both fighters.
+# CountdownEnded() (@0x187e78) is true only in state 14 once GetStateTime() >
+# 9999; CBeatEmUpMatch::Update then raises the gui action "COUNTDOWNEND"
+# (0x162828..0x16282c) instead of calling CBeatEmUpGame::Update.
+const COUNTDOWN_CATEGORY: String = DEFEAT_CATEGORY
+const COUNTDOWN_ACTION: String = "COUNTDOWNEND"
+## CameraUpdate's state-14 path is the `else` branch: dummy fighter = this[0x7e0]
+## (the local player, slot 0) and the swap/mirror flag is 0.
+const COUNTDOWN_CAMERA_FIGHTER: int = 0
+const COUNTDOWN_CAMERA_SWAP: int = 0
+
+# The per-fighter round-win counters the earlier port claimed state 14 needed.
+# They live on CBeatEmUpGame as uint32: +0x81c = fighter 0, +0x820 = fighter 1.
+# Reset to 0 by CBeatEmUpMatch::OnEnter (0x161dc4/0x161dcc) and
+# CBeatEmUpMatch::Restart (0x161e0c/0x161e14); incremented in
+# CBeatEmUpGame::Update case 4 when a fighter is defeated (increment stores at
+# 0x17d1a8, 0x17d45c, 0x17d78c, 0x17d880, 0x17d8ac, 0x17d920).  They are read by
+# Update case 11, SetState 12/13 and CBeatEmUpMatch::Update -- never by 14.
+const ROUND_COUNTER_FIGHTER0_OFFSET: int = 0x81c
+const ROUND_COUNTER_FIGHTER1_OFFSET: int = 0x820
 
 # CBeatEmUpMatch::QueryString (ghidra-out9, verified against libdefault.so
 # @ 0x161b08): while the match is in state 6 the displayed text is
@@ -163,8 +204,12 @@ var continue_elapsed_ms: float = 0.0
 ## continue_native_timeout_enabled is true (training step flow).
 var continue_native_timeout_ms: int = CONTINUE_NATIVE_TIMEOUT_DEFAULT_MS
 var continue_native_timeout_enabled: bool = false
-## Countdown observation (state 14).  Only meaningful if the state were
-## entered, which the unrecovered gate prevents.
+## Countdown (state 14) bookkeeping.  SetState(14) records the defeat clip it
+## played and the camera sub-animation that belongs to that clip.  The state has
+## no exit of its own; `countdown_ended` mirrors CountdownEnded() (> 9999 ms).
+var countdown_clip: String = ""
+var countdown_seconds: float = 0.0
+var countdown_camera: String = ""
 var countdown_ended: bool = false
 ## Replay (state 6).  `replay_buffers` must hold two ReplayBuffer objects whose
 ## records were produced by the recovered 0x2c SetAnimation append path.
@@ -190,6 +235,9 @@ func reset() -> void:
     continue_choice = ""
     continue_resolved = false
     countdown_ended = false
+    countdown_clip = ""
+    countdown_seconds = 0.0
+    countdown_camera = ""
     replay_buffers.clear()
     replay_base_ms = 0
     replay_speed_scale = REPLAY_STATE_SPEED_SCALE
@@ -213,9 +261,11 @@ func set_state_zero_target(attract_already_played: bool) -> int:
 
 ## Try to enter `next_state`.  Returns false (and records the reason) instead
 ## of entering when the state is unrecovered or its required data is missing.
-## `clip_name` / `clip_seconds` describe the recovered free animation for the
-## attract intros; pass an empty name when the candidate GLB has no such clip.
-func enter(next_state: int, clip_name: String = "", clip_seconds: float = -1.0) -> bool:
+## `clip_name` / `clip_seconds` describe the recovered free animation: the
+## attract intro clip (states 1/2) or the defeat result clip (state 14).
+## `camera_clip` is the camera sub-animation the port plays for state 14.
+func enter(next_state: int, clip_name: String = "", clip_seconds: float = -1.0,
+        camera_clip: String = "") -> bool:
     if next_state in UNRECOVERED_STATES:
         _fail(next_state, REASON_UNRECOVERED, _unrecovered_detail(next_state))
         return false
@@ -225,8 +275,37 @@ func enter(next_state: int, clip_name: String = "", clip_seconds: float = -1.0) 
         return _enter_continue()
     if next_state == STATE_REPLAY:
         return _enter_replay()
+    if next_state == STATE_COUNTDOWN:
+        return _enter_countdown(clip_name, clip_seconds, camera_clip)
     _fail(next_state, REASON_UNRECOVERED, "no recovered entry path")
     return false
+
+
+## SetState(14): fighter 0 plays the "Defeat" free animation; fighter 1 is
+## hidden.  The driver keeps the clip and its camera sub-animation; either one
+## missing is refused rather than approximated.
+func _enter_countdown(defeat_clip: String, defeat_seconds: float,
+        camera_clip: String) -> bool:
+    if defeat_clip.is_empty() or defeat_seconds <= 0.0:
+        _fail(STATE_COUNTDOWN, REASON_NO_CLIP,
+            "candidate GLB has no %s result clip" % COUNTDOWN_CATEGORY)
+        return false
+    if camera_clip.is_empty():
+        _fail(STATE_COUNTDOWN, REASON_NO_CLIP,
+            "no recovered defeat camera for %s" % defeat_clip)
+        return false
+    _begin(STATE_COUNTDOWN)
+    countdown_clip = defeat_clip
+    countdown_seconds = defeat_seconds
+    countdown_camera = camera_clip
+    countdown_ended = false
+    trace.append({
+        "state": STATE_COUNTDOWN, "result": "entered", "reason": REASON_OK,
+        "detail": ("fighter 0 plays %s (%.3f s), camera %s; CountdownEnded at "
+                   + "%d ms, then %s") % [defeat_clip, defeat_seconds,
+                   camera_clip, COUNTDOWN_ENDED_AFTER_MS, COUNTDOWN_ACTION],
+    })
+    return true
 
 
 func _enter_attract(next_state: int, clip_name: String, clip_seconds: float) -> bool:
@@ -337,6 +416,11 @@ func advance(delta: float, skip_pressed: bool = false) -> int:
                 _stop()
         STATE_REPLAY:
             _advance_replay()
+        STATE_COUNTDOWN:
+            # Update case 14 is the default DummyUpdate branch: both fighters
+            # are dummy-updated and the state never leaves on its own.
+            # CountdownEnded() = (state == 14) && GetStateTime() > 9999 ms.
+            countdown_ended = int(floor(state_time * 1000.0)) > COUNTDOWN_ENDED_AFTER_MS
     return -1
 
 
@@ -498,6 +582,16 @@ func describe() -> Dictionary:
         "replay_base_ms": replay_base_ms,
         "replay_loops": replay_loops,
         "replay_countdown_seconds": replay_countdown_seconds() if state == STATE_REPLAY else -1,
+        "countdown_clip": countdown_clip,
+        "countdown_seconds": countdown_seconds,
+        "countdown_camera": countdown_camera,
+        "countdown_ended": countdown_ended,
+        "countdown_end_after_ms": COUNTDOWN_ENDED_AFTER_MS,
+        "countdown_end_action": COUNTDOWN_ACTION,
+        "countdown_camera_fighter": COUNTDOWN_CAMERA_FIGHTER,
+        "countdown_camera_swap": COUNTDOWN_CAMERA_SWAP,
+        "round_counter_fighter0_offset": ROUND_COUNTER_FIGHTER0_OFFSET,
+        "round_counter_fighter1_offset": ROUND_COUNTER_FIGHTER1_OFFSET,
         "countdown_ended_after_ms": COUNTDOWN_ENDED_AFTER_MS,
         "unrecovered_states": UNRECOVERED_STATES,
         "trace": trace,
@@ -528,6 +622,4 @@ func _unrecovered_detail(next_state: int) -> String:
             return "state 6 requires two recorded buffers; missing buffer data is refused, not invented"
         STATE_CONTINUE_WAIT:
             return "Update case 10 has no body; no entry path writes state 10"
-        STATE_COUNTDOWN:
-            return "SetState case 14 needs the per-fighter round counters at +0x81c/+0x820, which this port does not keep"
     return "no recovered implementation"
