@@ -10,8 +10,10 @@ const ReplayBufferScript = preload("res://scripts/replay_buffer.gd")
 ##   6  REPLAY             SetState(6)  (SetState.c case 6, Update.c case 6);
 ##                         consumes the recovered CFighter 0x2c buffers.
 ##   9  CONTINUE           SetState(9)  (SetState.c case 9, Update.c case 9)
-##   10 CONTINUE_WAIT      Update.c case 10 falls into the default DummyUpdate
-##                         branch; no SetState case exists for it.
+##   10 CONTINUE_WAIT      SetState(10) has an empty body; Update.c case 10
+##                         falls into the default DummyUpdate branch.  No
+##                         native call site writes state 10, so this driver
+##                         keeps it unrecovered/fail-closed.
 ##   14 COUNTDOWN          SetState(14) (SetState.c case 14, Update.c case 14
 ##                         shares the default DummyUpdate branch).  This is the
 ##                         story-mode DEFEAT presentation, entered from
