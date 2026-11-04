@@ -1158,6 +1158,9 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
 const LINK_EVENT_LIFETIME_MS: int = 500
 const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
 const BRICK_NATIVE_LINKS_PATH: String = "res://data/native_links_brick.json"
+# Complete recovered candobasicattacks group coverage (84 members, 21 links).
+# Built read-only from brucelee.set by tools/build_candobasicattacks_members.py.
+const CANDOBASICATTACKS_MEMBERS_PATH: String = "res://data/candobasicattacks_members.json"
 # Opt-in switch for the recovered reaction gate (NativeReactionState).
 const NATIVE_REACTION_ENV: String = "BRUCELEE_NATIVE_REACTION"
 # adreno_200/input.config: control_profile 0 is the touch layout (a/b only),
@@ -2792,6 +2795,16 @@ var last_native_reaction: Dictionary = {}
 var _native_pending_reaction: Dictionary = {}
 var _link_scan_action: String = ""
 var _link_scan_previous_frame: float = -1.0
+# Complete recovered candobasicattacks group coverage
+# (data/candobasicattacks_members.json, built by
+# tools/build_candobasicattacks_members.py).  Keyed by action name; each entry
+# carries the exact [start, end, third] member window and the ANM frame count.
+# Group links read these windows; when this table is missing or disagrees with
+# native_links.json every candobasicattacks group link fails closed.
+var _candobasicattacks_members: Dictionary = {}
+var _candobasicattacks_link_count: int = 0
+var _candobasicattacks_complete: bool = false
+var _candobasicattacks_error: String = ""
 var _action_to_attack: Dictionary = {}
 var _key_status: Dictionary = {}
 var last_reaction_group: String = ""
@@ -6035,6 +6048,11 @@ func _native_link_applies(link: Dictionary) -> bool:
         return false
     if _grab_finisher_link(link):
         return true
+    if group == "candobasicattacks" and _is_player_profile() \
+            and not _candobasicattacks_complete:
+        # The complete 84-member table failed to load or disagreed with the
+        # exported link metadata: run no group link on partial window data.
+        return false
     var action_row: Dictionary = _native_actions.get(action, {})
     var groups: Dictionary = action_row.get("groups", {})
     return groups.has(group)
@@ -6050,9 +6068,15 @@ func _native_link_window_for_action(link: Dictionary, action: String) -> Array:
         return Array(link.get("time", []))
     if action == _current_action_name() and _grab_finisher_link(link):
         return [0, int(ATTACKS[attack_kind].get("animation_frame_count", 0))]
+    var group: String = _link_text(link, "from_group")
+    if group == "candobasicattacks" and _is_player_profile():
+        # Authoritative recovered member window for the current action.
+        var member: Dictionary = _candobasicattacks_member(action)
+        if not member.is_empty():
+            return Array(member["window"])
+        return []
     var action_row: Dictionary = _native_actions.get(action, {})
     var groups: Dictionary = action_row.get("groups", {})
-    var group: String = _link_text(link, "from_group")
     if not groups.has(group):
         return []
     var entry: Variant = groups[group]
@@ -6140,7 +6164,17 @@ func link_requirements_for_target(target_kind: String) -> Dictionary:
 
 func _native_link_window_ok(link: Dictionary, previous_frame: float = -1.0) -> bool:
     if state in ["idle", "idle2", "idle3", "facedownidle", "faceupidle"]:
-        return true
+        # No attack frame clock runs in these states.  Direct links keep the
+        # previous behaviour; a candobasicattacks group link is only allowed
+        # when its recovered member window covers the whole action animation,
+        # which makes the native TimeWindowCheck equivalent to "always open".
+        # A member whose window is partial and has no computable frame fails
+        # closed instead of firing from an unknown frame.
+        if _link_text(link, "from_group") != "candobasicattacks" \
+                or not _is_player_profile():
+            return true
+        var member: Dictionary = _candobasicattacks_member(_current_action_name())
+        return _member_window_covers_animation(member)
     var window: Array = _native_link_window(link)
     if window.size() < 2:
         return false
@@ -6161,6 +6195,18 @@ func _native_link_window_ok(link: Dictionary, previous_frame: float = -1.0) -> b
         return (previous_frame <= end + 0.0001
                 and frame + 0.0001 >= start)
     return frame + 0.0001 >= start and frame <= end + 0.0001
+
+
+func _member_window_covers_animation(member: Dictionary) -> bool:
+    ## True when the recovered member window spans the whole ANM: a link
+    ## evaluated without a frame clock is then in-window for every frame.
+    if member.is_empty():
+        return false
+    var window: Array = Array(member.get("window", []))
+    var frames: int = int(member.get("frames", 0))
+    if window.size() < 2 or frames <= 0:
+        return false
+    return int(window[0]) == 0 and int(window[1]) >= frames - 1
 
 
 func link_source_action_for_target(target_kind: String) -> String:
@@ -6583,7 +6629,142 @@ func _load_native_links() -> void:
     for alias: String in ["facedownattack", "faceupattack", "attacktofloor"]:
         if ATTACKS.has(alias) and not _action_to_attack.has(alias):
             _action_to_attack[alias] = alias
+    _load_candobasicattacks_members()
     _build_native_reactions()
+
+
+func _load_candobasicattacks_members() -> void:
+    ## Load the complete recovered candobasicattacks table and prove it matches
+    ## the exported link metadata.  Any mismatch makes every candobasicattacks
+    ## group link fail closed instead of running on partial window data.
+    _candobasicattacks_members.clear()
+    _candobasicattacks_link_count = 0
+    _candobasicattacks_complete = false
+    _candobasicattacks_error = ""
+    var file: FileAccess = FileAccess.open(
+        CANDOBASICATTACKS_MEMBERS_PATH, FileAccess.READ
+    )
+    if file == null:
+        _candobasicattacks_error = "missing " + CANDOBASICATTACKS_MEMBERS_PATH
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        _candobasicattacks_error = "invalid JSON"
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    var document: Dictionary = parsed
+    if String(document.get("group", "")) != "candobasicattacks":
+        _candobasicattacks_error = "unexpected group name"
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    var source: Dictionary = document.get("source", {})
+    var link_source: Dictionary = _native_link_source()
+    if String(link_source.get("set_path", "")) != "adreno_200/set/brucelee.set":
+        # Only brucelee.set carries this recovered group table for the player.
+        # Opponent sets keep their own link data and are not gated here.
+        return
+    if (String(source.get("set_sha256", ""))
+            != String(link_source.get("set_sha256", ""))
+            or String(source.get("set_path", ""))
+            != String(link_source.get("set_path", ""))):
+        _candobasicattacks_error = "set identity does not match native_links.json"
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    var members: Array = document.get("members", [])
+    if members.size() != int(source.get("member_count", -1)):
+        _candobasicattacks_error = "member count disagrees with source"
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    for member_value: Variant in members:
+        if not member_value is Dictionary:
+            _candobasicattacks_error = "member row is not an object"
+            break
+        var member: Dictionary = member_value
+        var name: String = String(member.get("name", ""))
+        var window: Array = Array(member.get("window", []))
+        var frames: int = int(member.get("frames", 0))
+        if name.is_empty() or window.size() != 3 or frames <= 0:
+            _candobasicattacks_error = "invalid member row " + name
+            break
+        var action_row: Dictionary = _native_actions.get(name, {})
+        var native_window: Variant = action_row.get("groups", {}).get(
+            "candobasicattacks"
+        )
+        if not native_window is Array or Array(native_window).size() < 2:
+            _candobasicattacks_error = "native_links.json lacks the group window for " + name
+            break
+        if (int(Array(native_window)[0]) != int(window[0])
+                or int(Array(native_window)[1]) != int(window[1])):
+            _candobasicattacks_error = "window drift for " + name
+            break
+        _candobasicattacks_members[name] = {
+            "animation": String(member.get("animation", "")),
+            "frames": frames,
+            "pose": String(member.get("pose", "")),
+            "window": [int(window[0]), int(window[1]), int(window[2])],
+        }
+    var links: Array = document.get("links", [])
+    if _candobasicattacks_error.is_empty():
+        if links.size() != int(source.get("link_count", -1)):
+            _candobasicattacks_error = "link count disagrees with source"
+        else:
+            for link_value: Variant in links:
+                if not link_value is Dictionary:
+                    _candobasicattacks_error = "link row is not an object"
+                    break
+                var link: Dictionary = link_value
+                var index: int = int(link.get("source_index", -1))
+                var matched: bool = false
+                for native_link: Dictionary in _native_links:
+                    if int(native_link.get("order", -1)) != index:
+                        continue
+                    matched = String(native_link.get("to", "")) == String(link.get("to", ""))
+                    break
+                if not matched:
+                    _candobasicattacks_error = "link %d is missing from native_links.json" % index
+                    break
+            if _candobasicattacks_error.is_empty():
+                _candobasicattacks_link_count = links.size()
+    if not _candobasicattacks_error.is_empty():
+        _candobasicattacks_members.clear()
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    _candobasicattacks_complete = true
+
+
+func _native_link_source() -> Dictionary:
+    var path: String = String(
+        attack_set_profile.get("native_links", NATIVE_LINKS_PATH)
+    )
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        return {}
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        return {}
+    var source: Variant = Dictionary(parsed).get("source", {})
+    return source if source is Dictionary else {}
+
+
+func candobasicattacks_coverage() -> Dictionary:
+    ## Diagnostics for tests/tools: never fabricates coverage.
+    return {
+        "complete": _candobasicattacks_complete,
+        "error": _candobasicattacks_error,
+        "members": _candobasicattacks_members.size(),
+        "links": _candobasicattacks_link_count,
+    }
+
+
+func _candobasicattacks_member(action: String) -> Dictionary:
+    return _candobasicattacks_members.get(action, {})
+
+
+func _is_player_profile() -> bool:
+    # Bruce's own config is the only one with an empty fighting-set profile;
+    # every opponent config carries a SET_ATTACK_PROFILES entry.
+    return attack_set_profile.is_empty()
 
 
 func set_key_status(tokens: Dictionary) -> void:
@@ -7080,6 +7261,14 @@ func _begin_chained_attack(
     # a requested attack, otherwise the link would play the base clip.
     if not _prepare_size_variant(kind):
         push_warning(character_name + " " + kind + " link refused: " + size_variant_error)
+        return false
+    if candidate_loaded and not _candidate_clip_paths.has(kind):
+        # Fail closed exactly like request_attack(): a recovered link whose target
+        # clip the loaded candidate does not provide is refused outright.  Without
+        # this guard the state machine would run while _animate_candidate keeps the
+        # previous clip, i.e. silently play the wrong visual.
+        push_warning(character_name + " " + kind
+                + " link refused: candidate has no clip for this attack kind")
         return false
     attack_kind = kind
     note_animation_categories(kind)

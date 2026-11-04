@@ -1,0 +1,1269 @@
+{
+  "schema_version": 1,
+  "group": "candobasicattacks",
+  "source": {
+    "set_path": "adreno_200/set/brucelee.set",
+    "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+    "member_count": 84,
+    "link_count": 21
+  },
+  "members": [
+    {
+      "name": "movefwd",
+      "animation": "m02_movefwd",
+      "frames": 14,
+      "pose": "stand",
+      "window": [
+        0,
+        14,
+        0
+      ]
+    },
+    {
+      "name": "moveback",
+      "animation": "m01_movebck",
+      "frames": 17,
+      "pose": "stand",
+      "window": [
+        0,
+        17,
+        0
+      ]
+    },
+    {
+      "name": "stepback",
+      "animation": "m01_stepbck",
+      "frames": 19,
+      "pose": "stand",
+      "window": [
+        0,
+        19,
+        0
+      ]
+    },
+    {
+      "name": "stepfwd",
+      "animation": "m01_stepfwd",
+      "frames": 20,
+      "pose": "stand",
+      "window": [
+        0,
+        20,
+        0
+      ]
+    },
+    {
+      "name": "idle2",
+      "animation": "m01_idle_02",
+      "frames": 43,
+      "pose": "stand",
+      "window": [
+        0,
+        43,
+        0
+      ]
+    },
+    {
+      "name": "skipfwd",
+      "animation": "m01_skipfwd",
+      "frames": 44,
+      "pose": "stand",
+      "window": [
+        0,
+        44,
+        0
+      ]
+    },
+    {
+      "name": "moveleft",
+      "animation": "m01_moverht",
+      "frames": 50,
+      "pose": "stand",
+      "window": [
+        0,
+        50,
+        0
+      ]
+    },
+    {
+      "name": "moveright",
+      "animation": "m01_movelft",
+      "frames": 50,
+      "pose": "stand",
+      "window": [
+        0,
+        50,
+        0
+      ]
+    },
+    {
+      "name": "skipback",
+      "animation": "m01_skipbck",
+      "frames": 76,
+      "pose": "stand",
+      "window": [
+        0,
+        76,
+        0
+      ]
+    },
+    {
+      "name": "stepleft",
+      "animation": "m01_steplft",
+      "frames": 76,
+      "pose": "stand",
+      "window": [
+        0,
+        76,
+        0
+      ]
+    },
+    {
+      "name": "stepright",
+      "animation": "m01_steprht",
+      "frames": 124,
+      "pose": "stand",
+      "window": [
+        0,
+        124,
+        0
+      ]
+    },
+    {
+      "name": "idle",
+      "animation": "m01_idle_04",
+      "frames": 140,
+      "pose": "stand",
+      "window": [
+        0,
+        140,
+        0
+      ]
+    },
+    {
+      "name": "idle3",
+      "animation": "m01_idle_03",
+      "frames": 143,
+      "pose": "stand",
+      "window": [
+        0,
+        143,
+        0
+      ]
+    },
+    {
+      "name": "faceupgetup",
+      "animation": "all_getup_faceup",
+      "frames": 24,
+      "pose": "stand",
+      "window": [
+        9,
+        24,
+        0
+      ]
+    },
+    {
+      "name": "parrylow",
+      "animation": "m01_kick_low_02",
+      "frames": 27,
+      "pose": "stand",
+      "window": [
+        10,
+        27,
+        0
+      ]
+    },
+    {
+      "name": "parryhigh",
+      "animation": "m01_parry_high",
+      "frames": 62,
+      "pose": "stand",
+      "window": [
+        10,
+        62,
+        0
+      ]
+    },
+    {
+      "name": "impactlightfrontmid",
+      "animation": "all_impct_light_frnt_mid",
+      "frames": 16,
+      "pose": "stand",
+      "window": [
+        12,
+        16,
+        0
+      ]
+    },
+    {
+      "name": "facedowngetup",
+      "animation": "all_getup_facedwn",
+      "frames": 19,
+      "pose": "stand",
+      "window": [
+        12,
+        19,
+        0
+      ]
+    },
+    {
+      "name": "impactlightfronthigh",
+      "animation": "all_impct_light_frnt_high",
+      "frames": 17,
+      "pose": "stand",
+      "window": [
+        13,
+        17,
+        0
+      ]
+    },
+    {
+      "name": "impactlightfrontlow",
+      "animation": "all_impct_light_frnt_low",
+      "frames": 17,
+      "pose": "stand",
+      "window": [
+        13,
+        17,
+        0
+      ]
+    },
+    {
+      "name": "impactlightlefthigh",
+      "animation": "all_impct_light_lft_high",
+      "frames": 17,
+      "pose": "stand",
+      "window": [
+        13,
+        17,
+        0
+      ]
+    },
+    {
+      "name": "impactlightleftlow",
+      "animation": "all_impct_light_lft_low",
+      "frames": 17,
+      "pose": "stand",
+      "window": [
+        13,
+        17,
+        0
+      ]
+    },
+    {
+      "name": "impactlightrighthigh",
+      "animation": "all_impct_light_rht_high",
+      "frames": 17,
+      "pose": "stand",
+      "window": [
+        13,
+        17,
+        0
+      ]
+    },
+    {
+      "name": "impactlightrightlow",
+      "animation": "all_impct_light_rht_low",
+      "frames": 17,
+      "pose": "stand",
+      "window": [
+        13,
+        17,
+        0
+      ]
+    },
+    {
+      "name": "parryattack",
+      "animation": "m01_pnch_high_03",
+      "frames": 85,
+      "pose": "stand",
+      "window": [
+        15,
+        85,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhigh chief",
+      "animation": "m02_e01_pnch_high_03",
+      "frames": 24,
+      "pose": "stand",
+      "window": [
+        17,
+        24,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow chief",
+      "animation": "m02_e01_pnch_low_03",
+      "frames": 24,
+      "pose": "stand",
+      "window": [
+        17,
+        24,
+        0
+      ]
+    },
+    {
+      "name": "lowkick2",
+      "animation": "m01_kick_low_02",
+      "frames": 27,
+      "pose": "stand",
+      "window": [
+        17,
+        27,
+        0
+      ]
+    },
+    {
+      "name": "highpunch1",
+      "animation": "m01_pnch_high_01",
+      "frames": 101,
+      "pose": "stand",
+      "window": [
+        17,
+        101,
+        0
+      ]
+    },
+    {
+      "name": "impacthardfrontmid",
+      "animation": "all_impct_crotch",
+      "frames": 30,
+      "pose": "stand",
+      "window": [
+        18,
+        30,
+        0
+      ]
+    },
+    {
+      "name": "lowpunch2",
+      "animation": "m01_pnch_low_02",
+      "frames": 65,
+      "pose": "stand",
+      "window": [
+        20,
+        65,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhighmiss",
+      "animation": "m01_sp_pnch_high_fail",
+      "frames": 122,
+      "pose": "stand",
+      "window": [
+        20,
+        122,
+        0
+      ]
+    },
+    {
+      "name": "highpunch3",
+      "animation": "m01_pnch_high_03",
+      "frames": 85,
+      "pose": "stand",
+      "window": [
+        21,
+        85,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh chief",
+      "animation": "m02_e01_kck_high_03",
+      "frames": 32,
+      "pose": "stand",
+      "window": [
+        22,
+        32,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlowmiss",
+      "animation": "m01_sp_pnch_low_fail",
+      "frames": 33,
+      "pose": "crouch",
+      "window": [
+        22,
+        33,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh smallboy",
+      "animation": "m03_e01_sp_kck_high_02",
+      "frames": 38,
+      "pose": "jump",
+      "window": [
+        22,
+        38,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh",
+      "animation": "m01_kck_front_step",
+      "frames": 57,
+      "pose": "jump",
+      "window": [
+        22,
+        57,
+        0
+      ]
+    },
+    {
+      "name": "lowpunch1",
+      "animation": "m01_pnch_low_01",
+      "frames": 69,
+      "pose": "stand",
+      "window": [
+        22,
+        69,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh johnson",
+      "animation": "m03_e01_kck_high_03",
+      "frames": 30,
+      "pose": "stand",
+      "window": [
+        23,
+        30,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh ken",
+      "animation": "m02_sp_kck_high",
+      "frames": 48,
+      "pose": "stand",
+      "window": [
+        25,
+        48,
+        0
+      ]
+    },
+    {
+      "name": "facedownattack",
+      "animation": "all_getup_facedwn_attack",
+      "frames": 35,
+      "pose": "laying",
+      "window": [
+        26,
+        35,
+        0
+      ]
+    },
+    {
+      "name": "lowkick3",
+      "animation": "m01_kick_low_03",
+      "frames": 56,
+      "pose": "stand",
+      "window": [
+        26,
+        56,
+        0
+      ]
+    },
+    {
+      "name": "faceupattack",
+      "animation": "all_getup_faceup_attack",
+      "frames": 38,
+      "pose": "laying",
+      "window": [
+        27,
+        38,
+        0
+      ]
+    },
+    {
+      "name": "highkick2",
+      "animation": "m01_kick_high_02",
+      "frames": 95,
+      "pose": "stand",
+      "window": [
+        28,
+        95,
+        0
+      ]
+    },
+    {
+      "name": "highkick3",
+      "animation": "m01_sp_kick_jump_01",
+      "frames": 51,
+      "pose": "jump",
+      "window": [
+        30,
+        51,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhigh johnson",
+      "animation": "m03_e01_pnch_high_03",
+      "frames": 52,
+      "pose": "stand",
+      "window": [
+        30,
+        52,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh brick",
+      "animation": "m03_sp_kck_high",
+      "frames": 73,
+      "pose": "jump",
+      "window": [
+        30,
+        73,
+        0
+      ]
+    },
+    {
+      "name": "lowkick1",
+      "animation": "m01_kick_low_01",
+      "frames": 86,
+      "pose": "stand",
+      "window": [
+        31,
+        86,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhigh smallboy",
+      "animation": "m03_shoulder_charge",
+      "frames": 53,
+      "pose": "stand",
+      "window": [
+        32,
+        53,
+        0
+      ]
+    },
+    {
+      "name": "highpunch2",
+      "animation": "m01_pnch_high_02",
+      "frames": 81,
+      "pose": "stand",
+      "window": [
+        32,
+        81,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow chief",
+      "animation": "m02_e01_kck_low_03",
+      "frames": 40,
+      "pose": "stand",
+      "window": [
+        33,
+        40,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow ken",
+      "animation": "m02_sp_pnch_low",
+      "frames": 47,
+      "pose": "stand",
+      "window": [
+        33,
+        47,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhigh ken",
+      "animation": "m02_sp_pnch_high",
+      "frames": 58,
+      "pose": "stand",
+      "window": [
+        33,
+        58,
+        0
+      ]
+    },
+    {
+      "name": "highkick1",
+      "animation": "m01_kick_high_01",
+      "frames": 73,
+      "pose": "stand",
+      "window": [
+        33,
+        73,
+        0
+      ]
+    },
+    {
+      "name": "lowpunch3",
+      "animation": "m01_pnch_low_03",
+      "frames": 81,
+      "pose": "crouch",
+      "window": [
+        33,
+        81,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow master",
+      "animation": "m04_e01_pnch_low_03",
+      "frames": 82,
+      "pose": "stand",
+      "window": [
+        35,
+        82,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow brick",
+      "animation": "m03_sp_pnch_low",
+      "frames": 44,
+      "pose": "stand",
+      "window": [
+        36,
+        44,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow johnson",
+      "animation": "m03_sp_pnch_low",
+      "frames": 44,
+      "pose": "stand",
+      "window": [
+        36,
+        44,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow smallboy",
+      "animation": "m03_sp_pnch_low",
+      "frames": 44,
+      "pose": "stand",
+      "window": [
+        36,
+        44,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow brick",
+      "animation": "m03_sp_kck_low",
+      "frames": 56,
+      "pose": "stand",
+      "window": [
+        36,
+        56,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow johnson",
+      "animation": "m03_sp_kck_low",
+      "frames": 56,
+      "pose": "stand",
+      "window": [
+        36,
+        56,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow smallboy",
+      "animation": "m03_sp_kck_low",
+      "frames": 56,
+      "pose": "stand",
+      "window": [
+        36,
+        56,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow ken",
+      "animation": "m02_sp_kck_low",
+      "frames": 60,
+      "pose": "stand",
+      "window": [
+        37,
+        60,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhigh brick",
+      "animation": "m03_sp_pnch_high",
+      "frames": 54,
+      "pose": "stand",
+      "window": [
+        38,
+        54,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhigh master",
+      "animation": "m04_e01_pnch_high_03",
+      "frames": 62,
+      "pose": "stand",
+      "window": [
+        40,
+        62,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh loming",
+      "animation": "m04_e02_kck_high_03",
+      "frames": 85,
+      "pose": "stand",
+      "window": [
+        40,
+        85,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh sinfu",
+      "animation": "m04_e02_kck_high_03",
+      "frames": 85,
+      "pose": "stand",
+      "window": [
+        40,
+        85,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow sinfu",
+      "animation": "m04_e02_kck_low_03",
+      "frames": 76,
+      "pose": "crouch",
+      "window": [
+        42,
+        76,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhighmiss sinfu",
+      "animation": "m04_sp_pnch_high_fail",
+      "frames": 71,
+      "pose": "stand",
+      "window": [
+        44,
+        71,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow shenlo",
+      "animation": "m04_e03_pnch_low_03",
+      "frames": 83,
+      "pose": "stand",
+      "window": [
+        44,
+        83,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklowmiss",
+      "animation": "m01_sp_kick_low_fail",
+      "frames": 50,
+      "pose": "crouch",
+      "window": [
+        45,
+        50,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh master",
+      "animation": "m04_e01_kck_high_03",
+      "frames": 73,
+      "pose": "jump",
+      "window": [
+        45,
+        73,
+        0
+      ]
+    },
+    {
+      "name": "attacktofloor",
+      "animation": "m01_attack_to_floor",
+      "frames": 90,
+      "pose": "stand",
+      "window": [
+        45,
+        90,
+        0
+      ]
+    },
+    {
+      "name": "endattack shenlo",
+      "animation": "m04_end_attack_01",
+      "frames": 93,
+      "pose": "stand",
+      "window": [
+        49,
+        93,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhigh loming",
+      "animation": "m04_e02_pnch_high_03",
+      "frames": 96,
+      "pose": "stand",
+      "window": [
+        50,
+        96,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow loming",
+      "animation": "m04_e02_kck_low_03",
+      "frames": 76,
+      "pose": "crouch",
+      "window": [
+        51,
+        76,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchhigh shenlo",
+      "animation": "m04_e03_pnch_high_03",
+      "frames": 115,
+      "pose": "stand",
+      "window": [
+        53,
+        115,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow loming",
+      "animation": "m04_e02_pnch_low_03",
+      "frames": 104,
+      "pose": "stand",
+      "window": [
+        54,
+        104,
+        0
+      ]
+    },
+    {
+      "name": "specialpunchlow sinfu",
+      "animation": "m04_e02_pnch_low_03",
+      "frames": 104,
+      "pose": "stand",
+      "window": [
+        54,
+        104,
+        0
+      ]
+    },
+    {
+      "name": "endattack sinfu",
+      "animation": "m04_end_attack_02",
+      "frames": 75,
+      "pose": "stand",
+      "window": [
+        57,
+        75,
+        0
+      ]
+    },
+    {
+      "name": "endattack master",
+      "animation": "m04_end_attack_02",
+      "frames": 75,
+      "pose": "stand",
+      "window": [
+        60,
+        75,
+        0
+      ]
+    },
+    {
+      "name": "specialkickhigh shenlo",
+      "animation": "m04_e03_kck_high_03",
+      "frames": 169,
+      "pose": "stand",
+      "window": [
+        60,
+        169,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow master",
+      "animation": "m04_e01_kck_low_03",
+      "frames": 153,
+      "pose": "crouch",
+      "window": [
+        90,
+        153,
+        0
+      ]
+    },
+    {
+      "name": "specialkicklow shenlo",
+      "animation": "m04_e03_kck_low_03",
+      "frames": 194,
+      "pose": "stand",
+      "window": [
+        106,
+        194,
+        0
+      ]
+    }
+  ],
+  "links": [
+    {
+      "source_index": 32,
+      "to": "attacktofloor",
+      "keysequence_variant": [
+        "pressc"
+      ],
+      "conditions": [
+        "oppposelaying"
+      ],
+      "entry_frame": 9,
+      "blending": 6,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 33,
+      "to": "attacktofloor",
+      "keysequence_variant": [
+        "pressd"
+      ],
+      "conditions": [
+        "oppposelaying"
+      ],
+      "entry_frame": 9,
+      "blending": 6,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 34,
+      "to": "endattack1",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": null,
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 35,
+      "to": "endattack2",
+      "keysequence_variant": [
+        "pressc"
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": null,
+      "unique": [
+        "endbrucelee"
+      ],
+      "owner": "brucelee"
+    },
+    {
+      "source_index": 36,
+      "to": "endattack brick",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endbrickdavis"
+      ],
+      "owner": "brickdavis"
+    },
+    {
+      "source_index": 37,
+      "to": "endattack chief",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endchief"
+      ],
+      "owner": "chief"
+    },
+    {
+      "source_index": 38,
+      "to": "endattack johnson",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endjohnson"
+      ],
+      "owner": "johnson"
+    },
+    {
+      "source_index": 39,
+      "to": "endattack ken",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endkengodall"
+      ],
+      "owner": "kengodall"
+    },
+    {
+      "source_index": 40,
+      "to": "endattack loming",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endloming"
+      ],
+      "owner": "loming"
+    },
+    {
+      "source_index": 41,
+      "to": "endattack master",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endthemaster"
+      ],
+      "owner": "themaster"
+    },
+    {
+      "source_index": 42,
+      "to": "endattack shenlo",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endshenlo"
+      ],
+      "owner": "shenlo"
+    },
+    {
+      "source_index": 43,
+      "to": "endattack sinfu",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endsinfu"
+      ],
+      "owner": "sinfu"
+    },
+    {
+      "source_index": 44,
+      "to": "endattack smallboy",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [
+        "oppposestun",
+        "grabdistance"
+      ],
+      "entry_frame": 0,
+      "blending": 6,
+      "input_reset": null,
+      "unique": [
+        "endsmallboy"
+      ],
+      "owner": "smallboy"
+    },
+    {
+      "source_index": 83,
+      "to": "highkick3",
+      "keysequence_variant": [
+        "pressin",
+        "pressc"
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 84,
+      "to": "highpunch3",
+      "keysequence_variant": [
+        "pressin",
+        "pressa"
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 85,
+      "to": "lowpunch3",
+      "keysequence_variant": [
+        "pressout",
+        "pressb"
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 86,
+      "to": "lowkick3",
+      "keysequence_variant": [
+        "pressout",
+        "pressd"
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 87,
+      "to": "lowkick1",
+      "keysequence_variant": [
+        "pressd"
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 88,
+      "to": "lowpunch1",
+      "keysequence_variant": [
+        "pressb"
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 89,
+      "to": "highkick1",
+      "keysequence_variant": [
+        "pressc"
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    },
+    {
+      "source_index": 90,
+      "to": "highpunch1",
+      "keysequence_variant": [
+        "pressa"
+      ],
+      "conditions": [],
+      "entry_frame": 0,
+      "blending": 2,
+      "input_reset": "true",
+      "unique": [],
+      "owner": null
+    }
+  ],
+  "note": "Derived metadata only. Windows are the recovered group member [start,end] plus the member record third item; frames come from the decoded ANM inventory. owner is the recovered unique tag's character variant; a non-null owner other than this fighter means the link belongs to another character and must stay fail-closed."
+}
