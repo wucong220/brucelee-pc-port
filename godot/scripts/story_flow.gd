@@ -27,6 +27,7 @@ const StoryPictureView = preload("res://scripts/story_picture_view.gd")
 ## Recovered LevelUpNotify / ExperienceUnlock presentation (levelup.ui / unlock.ui).
 const StoryNoticeModelScript = preload("res://scripts/story_notice_model.gd")
 const StoryNoticeViewScript = preload("res://scripts/story_notice_view.gd")
+const StoryNoticeAudioScript = preload("res://scripts/story_notice_audio.gd")
 
 const ENV_STORY_FLOW: String = "BRUCELEE_STORY_FLOW"
 const ENV_STORY_LAUNCH: String = "BRUCELEE_STORY_LAUNCH"
@@ -48,6 +49,8 @@ var lang = null
 ## Recovered LevelUpNotify / ExperienceUnlock presentation.
 var notice_model = null
 var notice_view: Control = null
+var notice_audio: Node = null
+var notice_audio_error: String = ""
 var notice_queue: Array = []
 var pending_reward_rows: Array = []
 var pending_reward_already: bool = false
@@ -150,6 +153,11 @@ func _build_chrome() -> void:
 	notice_view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if notice_view.has_signal("dismissed"):
 		notice_view.dismissed.connect(_on_notice_dismissed)
+
+	notice_audio = StoryNoticeAudioScript.new()
+	notice_audio.name = "StoryNoticeAudio"
+	notice_audio.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(notice_audio)
 
 	var margin: MarginContainer = MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -1156,6 +1164,11 @@ func _finish_event() -> void:
 		if not notices.is_empty():
 			print("STORY_FLOW_NOTICE queue=%d %s" % [notices.size(), str(descr)])
 	if not notices.is_empty():
+		if not _prepare_notice_audio():
+			notice_queue.clear()
+			notice_audio_error = _notice_audio_error()
+			_show_error("STORY NOTICE AUDIO ERROR", notice_audio_error)
+			return
 		notice_queue = notices
 		_show_next_notice()
 		return
@@ -1167,12 +1180,49 @@ func _resolve_item_name(item_type: String, item_id: Variant) -> Dictionary:
 	return data.resolve_unlock(item_type, item_id)
 
 
+func _prepare_notice_audio() -> bool:
+	if notice_audio == null:
+		notice_audio_error = "notice audio node missing"
+		printerr("STORY_FLOW_NOTICE_AUDIO FAIL CLOSED: " + notice_audio_error)
+		return false
+	if bool(notice_audio.call("is_configured")):
+		return true
+	if bool(notice_audio.call("configure")):
+		return true
+	notice_audio_error = _notice_audio_error()
+	printerr("STORY_FLOW_NOTICE_AUDIO FAIL CLOSED: " + notice_audio_error)
+	return false
+
+
+func _notice_audio_error() -> String:
+	if notice_audio == null:
+		return "notice audio node missing"
+	var message: String = String(notice_audio.get("error"))
+	return message if not message.is_empty() else "notice audio unavailable"
+
+
+func _fail_notice_audio(context: String) -> void:
+	notice_audio_error = context + ": " + _notice_audio_error()
+	notice_queue.clear()
+	if notice_view != null:
+		notice_view.call("hide_notice")
+	push_error("story_flow: " + notice_audio_error)
+	printerr("STORY_FLOW_NOTICE_AUDIO FAIL CLOSED: " + notice_audio_error)
+	_show_error("STORY NOTICE AUDIO ERROR", notice_audio_error)
+
+
 func _show_next_notice() -> void:
 	if notice_queue.is_empty():
 		notice_view.call("hide_notice")
 		show_rewards(pending_reward_rows, pending_reward_already, pending_reward_map)
 		return
 	var notice: Dictionary = notice_queue[0]
+	if notice_audio == null:
+		_fail_notice_audio("cannot enter notice state")
+		return
+	if not bool(notice_audio.call("play_start_for_notice", notice)):
+		_fail_notice_audio("cannot play notice start")
+		return
 	show_screen("notice")
 	notice_view.call("present", notice)
 	if notice_view.get("visible") != null:
@@ -1190,8 +1240,17 @@ func _on_notice_dismissed() -> void:
 
 
 func _advance_notice() -> void:
-	if not notice_queue.is_empty():
-		notice_queue.pop_front()
+	if notice_queue.is_empty():
+		show_rewards(pending_reward_rows, pending_reward_already, pending_reward_map)
+		return
+	var notice: Dictionary = notice_queue[0]
+	if notice_audio == null:
+		_fail_notice_audio("cannot dismiss notice")
+		return
+	if not bool(notice_audio.call("play_menu_for_notice", notice)):
+		_fail_notice_audio("cannot play notice menu cue")
+		return
+	notice_queue.pop_front()
 	if notice_queue.is_empty():
 		notice_view.call("hide_notice")
 		show_rewards(pending_reward_rows, pending_reward_already, pending_reward_map)
