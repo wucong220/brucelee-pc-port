@@ -17,6 +17,11 @@ extends RefCounted
 ##   difficulty byte = trunc(2 * setting): easy 0 -> 0, medium 1 -> 2, hard 2 -> 4
 
 const DATA_PATH := "res://data/game_modes.json"
+## Byte-identical copy of the same original rules file shipped next to the
+## executable as data/game_modes.json (see build_windows.ps1). It is only a
+## fallback for packaged/mixed installs where res:// cannot hand out the packed
+## copy; the bytes are the original file, never regenerated or invented.
+const SIDECAR_PATH := "data/game_modes.json"
 
 ## GetNumRoundsFromSetting (index -> rounds)
 const ARCADE_ROUNDS_BY_INDEX: Array[int] = [1, 2, 3, 4]
@@ -32,8 +37,8 @@ const MODE_TIMEATTACK := "timeattack"
 const MODE_LABELS := {"arcade": "ARCADE", "survival": "SURVIVAL", "timeattack": "TIME ATTACK"}
 
 
-static func load_rules() -> Dictionary:
-	var file: FileAccess = FileAccess.open(DATA_PATH, FileAccess.READ)
+static func _parse_rules_file(path: String) -> Dictionary:
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return {}
 	var text: String = file.get_as_text()
@@ -42,6 +47,18 @@ static func load_rules() -> Dictionary:
 	if parsed is Dictionary:
 		return parsed
 	return {}
+
+
+static func load_rules() -> Dictionary:
+	var rules: Dictionary = _parse_rules_file(DATA_PATH)
+	if not rules.is_empty():
+		return rules
+	# Packaged / mixed installs: read the SAME original file from beside the
+	# executable. If neither location yields valid rules, stay fail-closed.
+	var exe_dir: String = OS.get_executable_path().get_base_dir()
+	if exe_dir.is_empty():
+		return {}
+	return _parse_rules_file(exe_dir.path_join(SIDECAR_PATH))
 
 
 static func difficulty_slot(ui_index: int) -> int:

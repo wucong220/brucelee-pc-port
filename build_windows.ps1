@@ -325,8 +325,62 @@ if (-not (Test-PckProjectSettings $exportedPck.FullName)) {
     throw 'Exported PCK lacks binary project settings; check GodotTempRoot.'
 }
 
+# Runtime data gate.  The game boots the Arcade/Survival/Time Attack overlay from
+# res://data/game_modes.json; if the PCK is missing it the player only sees
+# "MODE DATA ERROR", so a package like that must never leave the build script.
+function Get-PckEntryPaths([string]$path) {
+    $bytes = [System.IO.File]::ReadAllBytes($path)
+    if ($bytes.Length -lt 40 -or
+            [System.Text.Encoding]::ASCII.GetString($bytes, 0, 4) -ne 'GDPC') {
+        throw "Not a Godot PCK: $path"
+    }
+    $dirOffset = [BitConverter]::ToUInt64($bytes, 32)
+    if ($dirOffset + 4 -gt $bytes.Length) { throw "Truncated PCK directory: $path" }
+    $count = [BitConverter]::ToUInt32($bytes, [int]$dirOffset)
+    $position = [int]$dirOffset + 4
+    $paths = New-Object System.Collections.Generic.List[string]
+    for ($entry = 0; $entry -lt $count; $entry++) {
+        if ($position + 4 -gt $bytes.Length) { throw "Truncated PCK directory: $path" }
+        $pathLength = [BitConverter]::ToUInt32($bytes, $position)
+        $position += 4
+        $entryPath = [System.Text.Encoding]::UTF8.GetString(
+            $bytes, $position, [int]$pathLength
+        ).TrimEnd([char]0)
+        $position += [int]$pathLength + 36
+        $paths.Add($entryPath)
+    }
+    return $paths
+}
+$requiredRuntimeData = @('data/game_modes.json')
+$pckEntryPaths = Get-PckEntryPaths $exportedPck.FullName
+foreach ($requiredEntry in $requiredRuntimeData) {
+    if (-not ($pckEntryPaths -contains $requiredEntry)) {
+        throw ("Exported PCK is missing required runtime data file '{0}'. " +
+            'Refusing to ship a package that would show MODE DATA ERROR.') -f $requiredEntry
+    }
+}
+Write-Host ("Runtime data present in PCK: " + ($requiredRuntimeData -join ', '))
+
 Copy-Item -LiteralPath $exported.FullName -Destination $delivered -Force
 Copy-Item -LiteralPath $exportedPck.FullName -Destination (Join-Path $dist 'DragonWarrior_PC_Prototype.pck') -Force
+
+# Ship the original rules file beside the executable as a byte-identical sidecar.
+# GameModesRules.load_rules() falls back to it only when res:// is unreadable, so
+# a mixed or partially copied install still boots the real mode data.
+$sidecarSource = Join-Path $sourceProject 'data\game_modes.json'
+if (-not (Test-Path -LiteralPath $sidecarSource)) {
+    throw "Missing source runtime data file: $sidecarSource"
+}
+$sidecarDir = Join-Path $dist 'data'
+New-Item -ItemType Directory -Force -Path $sidecarDir | Out-Null
+$sidecarTarget = Join-Path $sidecarDir 'game_modes.json'
+Copy-Item -LiteralPath $sidecarSource -Destination $sidecarTarget -Force
+$sidecarSourceHash = (Get-FileHash -LiteralPath $sidecarSource -Algorithm SHA256).Hash
+$sidecarTargetHash = (Get-FileHash -LiteralPath $sidecarTarget -Algorithm SHA256).Hash
+if ($sidecarSourceHash -ne $sidecarTargetHash) {
+    throw "Runtime data sidecar is not byte-identical: $sidecarTarget"
+}
+Write-Host "Runtime data sidecar: $sidecarTarget (sha256 $sidecarTargetHash)"
 
 if (-not [string]::IsNullOrWhiteSpace($RuntimeAssetRoot)) {
     if (-not (Test-Path -LiteralPath $RuntimeAssetRoot -PathType Container)) {
