@@ -875,9 +875,12 @@ func _native_link_conditions_ok_for_ai(link: Dictionary) -> bool:
 
 
 func _native_condition_ok_for_ai(condition: String, link: Dictionary) -> bool:
-    if condition == "impact":
-        return _native_impact_condition_ok()
-    return bool(fighter._native_condition_ok(condition, link))
+    # One evaluator for every caller: the fighter's canonical CheckConditions
+    # probe models the live opponent impact record (+0x164/+0x168), IsAttacking,
+    # the distance formula and the processed-impact high-water.  prefer_next is
+    # the AI's pre-contact projection (BasicUpdate +0x168) so a guard can be
+    # selected before the impact frame; link/reaction paths stay exact.
+    return bool(fighter._native_condition_ok(condition, link, true))
 
 
 ## Native TimeWindowCheck projection for the AI link scan.  PortFighter's

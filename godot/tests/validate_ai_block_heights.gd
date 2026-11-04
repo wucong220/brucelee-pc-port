@@ -277,6 +277,12 @@ func _check_block_gate(player: PortFighter) -> void:
 
 func _check_reaction_matrix(player: PortFighter) -> void:
     player.reset_fighter(Vector3(0.0, 1.2, 0.0))
+    # A block link carries the CheckConditions `impact` token, which requires a
+    # live +0x164 record and the native reach formula.  Put the synthetic
+    # attacker inside that reach so the row selection, not the distance gate, is
+    # what this matrix measures.
+    if player.opponent != null and is_instance_valid(player.opponent):
+        player.opponent.position = player.position + Vector3(0.4, 0.0, 0.0)
     for entry: Array in MATRIX:
         var impact: Dictionary = {
             "strength": String(entry[0]),
@@ -409,9 +415,7 @@ func _check_ai_guard_decision(
         var mismatches: Array[String] = []
         for seed_value: int in range(1, 80):
             _reset(scene, player, brick, ai, seed_value)
-            player.state = "startup"
-            player.attack_kind = String(entry[0])
-            player.state_time = 0.05
+            _seed_impact_frame(player, String(entry[0]))
             brick.position = player.position + Vector3(0.5, 0.0, 0.0)
             var decision: Dictionary = ai.step(1.0 / 60.0)
             if String(decision.get("kind", "")) != "block":
@@ -475,6 +479,34 @@ func _reset(
     ai._repetition = 0
     ai._last_signature = ""
     ai._rng.seed = seed_value
+
+
+func _seed_impact_frame(fighter: PortFighter, kind: String) -> void:
+    ## Seed the attacker at the first frame whose native impact record is live.
+    ## CheckConditions reads opponent+0x164 (BasicUpdate), so the block links are
+    ## only meaningful inside that damage_time window.
+    if not fighter.ATTACKS.has(kind):
+        return
+    fighter.attack_kind = kind
+    var details: Dictionary = fighter.ATTACKS[kind]
+    var action: String = fighter._current_action_name()
+    var timing: Variant = fighter._native_actions.get(action, {}).get("impact", {}).get("damage_time")
+    var target: int = int(Array(timing)[0]) if timing is Array and Array(timing).size() >= 2 else 0
+    var rate: float = PortFighter.SOURCE_FRAME_RATE
+    var startup: int = int(round(float(details["startup"]) * rate))
+    var active: int = int(round(float(details["active"]) * rate))
+    var recovery: int = int(round(float(details["recovery"]) * rate))
+    var total: int = int(details["animation_frame_count"])
+    fighter._attack_clock_active = false
+    if target < startup:
+        fighter.state = "startup"
+        fighter.state_time = maxf(float(startup - target), 0.0) / rate
+    elif target < startup + active:
+        fighter.state = "active"
+        fighter.state_time = maxf(float(startup + active - target), 0.0) / rate
+    else:
+        fighter.state = "recovery"
+        fighter.state_time = maxf(float(total - target), 0.0) / rate
 
 
 func _finish() -> void:

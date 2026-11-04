@@ -18,6 +18,7 @@ const FightStats = preload("res://scripts/fight_stats.gd")
 # Additive opt-in reaction gate; instantiated in _ready only when
 # BRUCELEE_NATIVE_REACTION=1. The default path never references it.
 const NativeReactionGate = preload("res://scripts/native_reaction_state.gd")
+const NativeConditions = preload("res://scripts/native_conditions.gd")
 ## Authored canblock/canblock2 action time windows of the loaded fighting set.
 ## Data only: no frame number in this port is a substitute for a missing group.
 const CanBlockWindows = preload("res://scripts/canblock_windows.gd")
@@ -1158,6 +1159,8 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
 const LINK_EVENT_LIFETIME_MS: int = 500
 const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
 const BRICK_NATIVE_LINKS_PATH: String = "res://data/native_links_brick.json"
+# Derived action -> animation category table (CFighter::IsBlocking gid_block).
+const CATEGORY_TABLE_PATH: String = "res://data/native_action_categories.json"
 ## Recovered opponent-suffix actions of brucelee.set (endattack ken, grab1 brick,
 ## specialpunchhighhit sinfu, ...).  Only Bruce's own set carries these matchup
 ## variants; every row is derived from the native set/link records and the
@@ -2828,6 +2831,10 @@ var _link_events: Array[Dictionary] = []
 # Link metadata exported from brucelee.set (link order, group windows,
 # keysequence, keystatus, conditions, time, entry/linking frames).
 var _native_actions: Dictionary = {}
+## Derived action -> CAnimationDescr category list of the loaded set (used by
+## CFighter::IsBlocking gid_block).  Empty means the category table failed to
+## load and every block-category query fails closed.
+var _native_action_categories: Dictionary = {}
 var _native_reactions: Dictionary = {"hit": [], "block": []}
 var _native_links: Array = []
 ## Opponent-suffix attack kinds of the local player (recovered from brucelee.set).
@@ -2837,6 +2844,10 @@ var _opponent_suffix_variants: Dictionary = {}
 var _opponent_suffix_error: String = ""
 ## Last clip resolution per variant kind: {status, clip, source, reason}.
 var _variant_clip_status: Dictionary = {}
+## Structural specific-vs-generic link pairs, computed once: generic link order
+## -> opponent-tagged variant links sharing from/group/steps/status.  Keeps the
+## per-step link scan O(k) instead of O(n^2) (victim-timing regression cost).
+var _variant_precedence: Dictionary = {}
 ## Recovered canblock/canblock2 windows of `native_links*.json`, keyed by the
 ## action that owns the window.  Null when no usable set export is loaded: every
 ## block decision then fails closed.  Built from the same parsed JSON as
@@ -6346,35 +6357,60 @@ func _native_link_unique_ok(link: Dictionary) -> bool:
     return false
 
 
+func _build_variant_precedence() -> void:
+    ## Precompute the structural specific-vs-generic link pairs once.  The old
+    ## per-step scan compared every link with every other link (396^2) and made
+    ## validate_victim_hold_timings.gd crawl; the hot path now looks up one small
+    ## candidate list per flagged generic link and only re-checks conditions.
+    _variant_precedence.clear()
+    var groups: Dictionary = {}
+    for link: Dictionary in _native_links:
+        var signature: String = JSON.stringify([
+            _link_text(link, "from"),
+            _link_text(link, "from_group"),
+            Array(link.get("steps", [])),
+            Array(link.get("status", [])),
+        ])
+        if not groups.has(signature):
+            groups[signature] = []
+        groups[signature].append(link)
+    for signature: Variant in groups:
+        var group: Array = groups[signature]
+        var specific: Array = []
+        for link: Dictionary in group:
+            if Array(link.get("unique", [])).is_empty():
+                continue
+            if _is_variant_attack(_link_text(link, "to")):
+                specific.append(link)
+        if specific.is_empty():
+            continue
+        for link: Dictionary in group:
+            if not Array(link.get("unique", [])).is_empty():
+                continue
+            var order: int = int(link.get("order", -1))
+            if order >= 0:
+                _variant_precedence[order] = specific
+                # Cheap per-link flag: the hot scan must not build Arrays for the
+                # ~380 links that have no opponent-specific counterpart.
+                link["_has_variant_specific"] = true
+
+
 func _defer_generic_link_for_variant(link: Dictionary) -> bool:
     ## Specific-beats-generic ordering for the local player's matchup links.
-    ## The native data keeps a generic attack link and an opponent-tagged variant
-    ## link with identical input/status/conditions (brucelee.set link 34
-    ## candobasicattacks -> endattack1, link 39 -> endattack ken).  The generic
-    ## link is deferred to the end of the same scan so the recovered specific
-    ## link is evaluated first; it still fires when the specific one does not.
+    ## Only defer when the recovered specific link would really apply now;
+    ## otherwise the generic link keeps its native position.
+    if not bool(link.get("_has_variant_specific", false)):
+        return false
     if not is_player or not Array(link.get("unique", [])).is_empty():
+        return false
+    var specific: Variant = _variant_precedence.get(int(link.get("order", -1)), null)
+    if not specific is Array:
         return false
     if _opponent_suffix_token().is_empty():
         return false
-    var steps: Array = Array(link.get("steps", []))
-    var status: Array = Array(link.get("status", []))
-    for other: Dictionary in _native_links:
-        if other == link or Array(other.get("unique", [])).is_empty():
-            continue
+    for other: Dictionary in specific:
         if not _native_link_unique_ok(other):
             continue
-        if _link_text(other, "from") != _link_text(link, "from"):
-            continue
-        if _link_text(other, "from_group") != _link_text(link, "from_group"):
-            continue
-        if Array(other.get("steps", [])) != steps or Array(other.get("status", [])) != status:
-            continue
-        var target: String = _link_text(other, "to")
-        if not _is_variant_attack(target):
-            continue
-        # Only defer when the specific link would really apply now; otherwise the
-        # generic link keeps its native position.
         if not _native_link_conditions_ok(other):
             continue
         return true
@@ -6642,122 +6678,230 @@ func _opponent_distance() -> float:
         opponent.global_position.z - global_position.z).length()
 
 
+func _native_animation_action() -> String:
+    ## Native action whose CAnimationDescr is the fighter's current animation.
+    ## CFighter::GetCurrentAnimation 0x1b043c == GetActiveSetAnimation(this,
+    ## this+0x2c); the recovery uses the exported row for that action.  hitstun
+    ## and blockstun keep the reaction action that owns the animation.
+    if state in ["hitstun", "blockstun"]:
+        var reaction_action: String = _native_reaction_action()
+        if not reaction_action.is_empty():
+            return reaction_action
+    var action: String = _current_action_name()
+    if action.is_empty() and _native_actions.has(state):
+        action = state
+    return action
+
+
 func _fighter_pose() -> String:
-    # Recovered action pose: stand / laying / crouch / stun / jump.
-    # grabbed1/2 is the held victim: its grabcompl record says pose "stand",
-    # but it is the controlled "cannot act" party for oppposestun.
+    # CheckConditions pose tokens compare CFighter::GetCurrentAnimation()+0xac
+    # against gid_stand / gid_laying / gid_stun (sites 0x1a3f30/0x1a3eb4/
+    # 0x1a3e38).  The exported action row carries that exact animation pose, so
+    # it is authoritative whenever the action resolves.  The state map below is
+    # only the documented bridge for states whose animation has no exported
+    # action row (grabbed1/2 are played by the grabcompl clips, which the set
+    # exposes as grabcompl1/2, not as the victim's state name).
+    var action: String = _native_animation_action()
+    if not action.is_empty():
+        var pose: String = String(_native_actions.get(action, {}).get("pose", "")).to_lower()
+        if pose in ["stand", "laying", "stun", "crouch", "jump"]:
+            return pose
+    if state in ["grabbed1", "grabbed2"]:
+        return "stun"
     if state in ["hitstun", "blockstun", "stun", "stun2", "stunfall",
-            "stunimpact", "impactstun", "grabbed1", "grabbed2"]:
+            "stunimpact", "impactstun"]:
         return "stun"
     if state in ["facedownidle", "facedownko", "facedowngetup", "facedownattack",
             "impactfacedown", "impacttofloor", "faceupidle", "faceupko",
             "faceupgetup", "faceupattack", "impactfaceup", "attacktofloor"]:
         return "laying"
-    var action: String = _current_action_name()
-    var row: Dictionary = _native_actions.get(action, {})
-    var pose: String = String(row.get("pose", ""))
-    if not pose.is_empty():
-        return pose
     if state in ["idle", "idle2", "idle3"]:
         return "stand"
     return ""
 
 
-func _native_condition_ok(condition: String, link: Dictionary) -> bool:
-    match condition:
-        "oppposestun":
-            return opponent != null and is_instance_valid(opponent) \
-                and opponent._fighter_pose() == "stun"
-        "oppposelaying":
-            return opponent != null and is_instance_valid(opponent) \
-                and opponent._fighter_pose() == "laying"
-        "oppposestand":
-            return opponent != null and is_instance_valid(opponent) \
-                and opponent._fighter_pose() == "stand"
-        "oppnotblocking":
-            return opponent == null or not opponent.guard_held
-        "grabdistance":
-            # The action's attack record stores grab_distance in source units.
-            var to_action: String = _link_text(link, "to")
-            if to_action == "specialkicklowhit":
-                # SPECIAL LOW KICK's hit link is a kick, not a grab; the
-                # recovered grab_distance is too strict for the kick radius.
-                var low_kind: String = String(_action_to_attack.get(to_action, ""))
-                if not low_kind.is_empty() and ATTACKS.has(low_kind):
-                    return _opponent_distance() <= attack_reach_world(low_kind, opponent)
-            var raw_grab: Variant = _native_actions.get(
-                to_action, {}).get("grab_distance")
-            if raw_grab == null:
-                # No recovered grab_distance: fail closed rather than guess.
-                return false
-            return _opponent_distance() <= float(raw_grab) * source_units_to_world
-        "ragethird":
-            # CheckConditions @1b3db0 compares rage < 0x21(33) => false.
-            return rage >= float(int(RAGE_MAX / 3.0))
-        "rage2thirds":
-            # CheckConditions @1b3db0 compares rage < 0x42(66) => false.
-            return rage >= float(int(RAGE_MAX * 2.0 / 3.0))
-        "healthzero":
-            return opponent != null and is_instance_valid(opponent) and opponent.health <= 0.0
-        "impact":
-            return _attack_hit_landed
-        "countertime":
-            # IsInCounterTime: the opponent's animation frame must be inside the
-            # attack's counter_time window, which brucelee.set stores inside the
-            # action's attack record (for example [0,8] on lowpunch1/highpunch1).
-            if opponent == null or not is_instance_valid(opponent):
-                return false
-            var opponent_action: String = opponent._current_action_name()
-            var counter_window: Variant = _native_actions.get(
-                opponent_action, {}).get("counter_time")
-            if not counter_window is Array or Array(counter_window).size() < 2:
-                return false
-            var counter_frame: float = opponent._current_attack_source_frame()
-            if counter_frame < 0.0:
-                return false
-            return (counter_frame + 0.0001 >= float(counter_window[0])
-                    and counter_frame <= float(counter_window[1]) + 0.0001)
-        "oppattackheightlow":
-            return _opponent_impact_is("height", ["low"])
-        "oppattackheightmed":
-            return _opponent_impact_is("height", ["medium", "med"])
-        "oppattackheighthigh":
-            return _opponent_impact_is("height", ["high"])
-        "oppattackstrengthnormal":
-            return _opponent_impact_is("strength", ["normal"])
-        "oppattackstrengthmedium":
-            return _opponent_impact_is("strength", ["medium"])
-        "oppattackstrengthhard":
-            return _opponent_impact_is("strength", ["hard"])
-        "oppattackstrengthbrutal":
-            return _opponent_impact_is("strength", ["brutal"])
-        "oppattackdirfrontal":
-            return _opponent_impact_is("direction", ["frontal"])
-        "oppattackdirfromleft":
-            return _opponent_impact_is("direction", ["fromleft"])
-        "oppattackdirfromright":
-            return _opponent_impact_is("direction", ["fromright"])
-        "oppattackdirfromabove":
-            return _opponent_impact_is("direction", ["fromabove"])
-        _:
-            # Unknown condition: fail closed.
-            return false
+## Canonical probe for krm::CFighter::CheckConditions.  All values come from
+## recovered CFighter fields; the mapping is documented in
+## scripts/native_conditions.gd.  The evaluator is shared with the AI and the
+## reaction gate so a token can only have one meaning.
+func _native_condition_probe(prefer_next: bool = false) -> Dictionary:
+    var other: PortFighter = opponent
+    var probe: Dictionary = {
+        "self_pose": _fighter_pose(),
+        "self_radius": source_radius_for_current_animation(),
+        "self_health": health,
+        "self_rage": rage,
+        # Init clears +0x151/+0x152; no recovered writer sets them.
+        "self_rage_forced": false,
+        "self_dummy_health": false,
+        "distance": INF,
+        "incoming_damage": 0.0,
+        "counter_open": false,
+        "opponent_pose": "",
+        # Fail closed while the opponent is unknown: IsBlocking is true.
+        "opponent_blocking": true,
+        "opponent_scale": 1.0,
+        "opponent_radius": 0.0,
+        "opponent_attacking": false,
+        "opponent_active_impact": null,
+        "opponent_next_impact": null,
+        "opponent_processed": 0,
+        "opponent_about_to_grab": false,
+        "relative_facing_dot": _native_relative_facing_dot(),
+    }
+    if other == null or not is_instance_valid(other):
+        return probe
+    probe["distance"] = _opponent_distance() / maxf(source_units_to_world, 0.000001)
+    probe["opponent_pose"] = other._fighter_pose()
+    probe["opponent_blocking"] = other._native_is_blocking()
+    probe["opponent_radius"] = other.source_radius_for_current_animation()
+    probe["opponent_scale"] = other.radius_scale
+    probe["incoming_damage"] = other._native_attack_damage()
+    probe["counter_open"] = other._native_is_in_counter_time()
+    probe["opponent_about_to_grab"] = other._native_is_about_to_grab()
+    var frame: float = other._current_attack_source_frame()
+    var records: Array = other._native_attack_impact_records()
+    if frame >= 0.0 and not records.is_empty():
+        var selection: Dictionary = NativeConditions.impact_selection(records, frame)
+        var active_record: Variant = selection.get("active")
+        var next_record: Variant = selection.get("next")
+        if prefer_next and active_record == null:
+            # AIUpdate runs before the attacker's per-frame state advance in this
+            # port.  To choose a guard link before contact, the AI projection
+            # uses BasicUpdate's +0x168 record (first impact at/after this frame)
+            # when +0x164 is not active yet.  This is a port decision bridge, not
+            # a change to the link/reaction semantics.
+            active_record = next_record
+        probe["opponent_active_impact"] = active_record
+        probe["opponent_next_impact"] = next_record
+        probe["opponent_attacking"] = active_record != null
+        probe["opponent_processed"] = other._native_processed_impact_count()
+    return probe
 
 
-func _opponent_impact_is(field: String, accepted: Array) -> bool:
-    # oppattack* conditions compare the incoming attack's first impact, which
-    # brucelee.set stores as attack.impacts[0].{height,strength,direction}.
-    # Each fighter's own config carries this, so Brick attacks resolve too.
+func _native_condition_ok(
+        condition: String, _link: Dictionary, prefer_next: bool = false
+) -> bool:
+    # Every recovered token is evaluated by NativeConditions; an unknown token
+    # returns false (fail closed) there.  `prefer_next` is the AI-only
+    # pre-contact projection documented in _native_condition_probe().
+    return NativeConditions.evaluate(condition, _native_condition_probe(prefer_next))
+
+
+## The opponent's current animation impact records, from BasicUpdate 0x1a8330.
+## Multi-impact attacks use the port's per-impact table; a single-impact attack
+## uses the exported native action's damage_time window.  A code-defined ground
+## attack with no exported action row falls back to its phase window.
+func _native_attack_impact_records() -> Array:
+    if not ATTACKS.has(attack_kind):
+        return []
+    var details: Dictionary = ATTACKS[attack_kind]
+    var multi: Variant = details.get("multi_impacts", [])
+    if multi is Array and not Array(multi).is_empty():
+        var rows: Array = []
+        for index in range(Array(multi).size()):
+            var item: Dictionary = Array(multi)[index]
+            var timing: Variant = item.get("damage_time", [0, 0])
+            rows.append({
+                "id": index,
+                "start": int(Array(timing)[0]) if timing is Array and Array(timing).size() >= 2 else 0,
+                "end": int(Array(timing)[1]) if timing is Array and Array(timing).size() >= 2 else 0,
+                "radius": float(item.get("attack_radius", 0.0)),
+                "height": String(item.get("height", "")),
+                "strength": String(item.get("strength", "")),
+                "direction": String(item.get("direction", "")),
+            })
+        return rows
+    var source: Variant = details.get("source_impact")
+    if not source is Dictionary or Dictionary(source).is_empty():
+        return []
+    var impact: Dictionary = source
+    var action_impact: Variant = _native_actions.get(
+        _current_action_name(), {}).get("impact", {})
+    var start: int = -1
+    var end: int = -1
+    if action_impact is Dictionary:
+        var timing: Variant = Dictionary(action_impact).get("damage_time")
+        if (timing is Array and Array(timing).size() >= 2
+                and _is_number(Array(timing)[0]) and _is_number(Array(timing)[1])):
+            start = int(Array(timing)[0])
+            end = int(Array(timing)[1])
+    if start < 0:
+        # Code-defined ground attacks (facedownattack/faceupattack/attacktofloor)
+        # have no set action row; use their recovered phase window.
+        start = int(round(float(details.get("startup", 0.0)) * SOURCE_FRAME_RATE))
+        var active_frames: int = int(round(float(details.get("active", 0.0)) * SOURCE_FRAME_RATE))
+        end = start + maxi(active_frames - 1, 0)
+    return [{
+        "id": 0,
+        "start": start,
+        "end": end,
+        "radius": float(impact.get("attack_radius", 0.0)),
+        "height": String(impact.get("height", "")),
+        "strength": String(impact.get("strength", "")),
+        "direction": String(impact.get("direction", "")),
+    }]
+
+
+## DamageReceiveCheck 0x1a5614 writes impact.id+1 to attacker+0x16C.  The port's
+## equivalent high-water is the number of applied impacts.
+func _native_processed_impact_count() -> int:
+    if not _multi_impact_applied.is_empty():
+        return _multi_impact_applied.size()
+    return 1 if _attack_hit_landed else 0
+
+
+## AttackDamage 0x1b0358: u32(impact+0xC * fighter+0x154), zero when <= 0.
+func _native_attack_damage() -> float:
+    if not ATTACKS.has(attack_kind):
+        return 0.0
+    return maxf(float(ATTACKS[attack_kind].get("damage", 0.0)), 0.0)
+
+
+## IsInCounterTime 0x1b0380: current animation +0xd8 <= frame(+0x34) <= +0xdc.
+## The exported action carries that pair as counter_time.
+func _native_is_in_counter_time() -> bool:
+    var action: String = _current_action_name()
+    var window: Variant = _native_actions.get(action, {}).get("counter_time")
+    if not window is Array or Array(window).size() < 2:
+        return false
+    var frame: float = _current_attack_source_frame()
+    if frame < 0.0:
+        return false
+    return (frame + 0.0001 >= float(Array(window)[0])
+            and frame <= float(Array(window)[1]) + 0.0001)
+
+
+## IsBlocking 0x1b3204: the current CAnimationDescr belongs to category
+## "block" (gid_block).  Categories are exported per action by
+## tools/build_action_categories.py from the recovered set files.  With no
+## category table the check fails closed as "blocking" so a grab cannot be
+## granted by missing data.
+func _native_is_blocking() -> bool:
+    if _native_action_categories.is_empty():
+        return true
+    var action: String = _native_animation_action()
+    var categories: Variant = _native_action_categories.get(action, [])
+    return categories is Array and Array(categories).has("block")
+
+
+## IsAboutToGrab 0x1b0a80 reads the animation +0xa4..+0xa8 window.  No exported
+## link carries oppabouttograb and the port has no recovered per-action grab
+## window, so the probe deliberately reports false (fail closed) instead of
+## guessing from state.
+func _native_is_about_to_grab() -> bool:
+    return false
+
+
+## CFighter+0xc4 relative facing dot used by oppinfront/oppinback.
+func _native_relative_facing_dot() -> float:
     if opponent == null or not is_instance_valid(opponent):
-        return false
-    var details: Dictionary = opponent.ATTACKS.get(opponent.attack_kind, {})
-    var impact: Variant = details.get("source_impact")
-    if not impact is Dictionary or Dictionary(impact).is_empty():
-        impact = _native_actions.get(
-            opponent._current_action_name(), {}).get("impact")
-    if not impact is Dictionary:
-        return false
-    return String(Dictionary(impact).get(field, "")) in accepted
+        return 1.0
+    var dx: float = opponent.global_position.x - global_position.x
+    var dz: float = opponent.global_position.z - global_position.z
+    if absf(dx) + absf(dz) < 0.000001:
+        return 1.0
+    return dx * facing
 
 
 func _native_link_conditions_ok(link: Dictionary) -> bool:
@@ -6849,7 +6993,8 @@ func _try_follow_links() -> bool:
     var scan_links: Array = []
     var deferred_generic: Array = []
     for link: Dictionary in _native_links:
-        if _defer_generic_link_for_variant(link):
+        if bool(link.get("_has_variant_specific", false)) \
+                and _defer_generic_link_for_variant(link):
             deferred_generic.append(link)
         else:
             scan_links.append(link)
@@ -6957,6 +7102,30 @@ func _normalize_press_token(token: String) -> String:
     return token
 
 
+func _load_native_action_categories(link_path: String) -> void:
+    ## Derived action -> animation category table for CFighter::IsBlocking.
+    ## Keyed by the same native_links file basename.  Any problem leaves the
+    ## table empty, and _native_is_blocking() then fails closed as "blocking".
+    _native_action_categories.clear()
+    var file_value: FileAccess = FileAccess.open(CATEGORY_TABLE_PATH, FileAccess.READ)
+    if file_value == null:
+        push_error("Native action categories missing: " + CATEGORY_TABLE_PATH)
+        return
+    var parsed: Variant = JSON.parse_string(file_value.get_as_text())
+    if not parsed is Dictionary:
+        push_error("Native action categories invalid")
+        return
+    var tables: Variant = Dictionary(parsed).get("tables", {})
+    if not tables is Dictionary:
+        return
+    var key: String = link_path.get_file()
+    var table: Variant = Dictionary(tables).get(key, {})
+    if table is Dictionary:
+        _native_action_categories = (table as Dictionary).duplicate(true)
+    if _native_action_categories.is_empty():
+        push_error("Native action categories has no table for " + key)
+
+
 func _load_native_links() -> void:
     var path: String = String(
         attack_set_profile.get("native_links", NATIVE_LINKS_PATH)
@@ -6978,6 +7147,7 @@ func _load_native_links() -> void:
     else:
         _canblock_windows = null
         push_error("Native canblock windows failed closed: " + window_model.load_error)
+    _load_native_action_categories(path)
     for action: Variant in parsed.get("actions", []):
         if action is Dictionary:
             _native_actions[str(action.get("name", ""))] = action
@@ -7013,6 +7183,7 @@ func _load_native_links() -> void:
     for alias: String in ["facedownattack", "faceupattack", "attacktofloor"]:
         if ATTACKS.has(alias) and not _action_to_attack.has(alias):
             _action_to_attack[alias] = alias
+    _build_variant_precedence()
     _load_candobasicattacks_members()
     _build_native_reactions()
 
@@ -8567,10 +8738,19 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     if native_reaction_enabled and _native_reaction_gate != null:
         if impact.has("attack_radius"):
             # The recovered scan is authoritative for a contact that describes
-            # a native impact record: first match wins, and no match means no
-            # reaction (the native `impact` condition is also what deals
-            # damage). Unmapped targets and a parked FollowLink return {}.
-            return _native_reaction_for_incoming(impact, blocked)
+            # a native impact record: first match wins; no match means no
+            # reaction (fail closed).  The one exception is a synthetic blocked
+            # contact with no recovered strength/height: the held guard action
+            # supplies the block reaction (there is no native row to match).
+            var native_reaction: Dictionary = _native_reaction_for_incoming(impact, blocked)
+            if not native_reaction.is_empty():
+                return native_reaction
+            if (blocked and String(impact.get("strength", "")).is_empty()
+                    and not guard_block_action.is_empty()):
+                var held_block: Dictionary = _reaction_for_block_action(guard_block_action)
+                if not held_block.is_empty():
+                    return held_block
+            return {}
         # The recovered impact condition needs a native impact record radius.
         # Legacy/synthetic callers that do not describe one keep the heuristic;
         # every live contact path supplies attack_radius.
@@ -8704,38 +8884,28 @@ func _native_air_state() -> bool:
 
 
 func _native_air_condition_ok(condition: String, impact: Dictionary) -> bool:
-    # The recovered CheckConditions comparison for one air-row token.
-    var strength: String = String(impact.get("strength", ""))
-    var height: String = String(impact.get("height", ""))
-    var direction: String = String(impact.get("direction", ""))
-    match condition:
-        "impact":
-            return true
-        "oppattackstrengthnormal":
-            return strength == "normal"
-        "oppattackstrengthmedium":
-            return strength == "medium"
-        "oppattackstrengthhard":
-            return strength == "hard"
-        "oppattackstrengthbrutal":
-            return strength == "brutal"
-        "oppattackheighthigh":
-            return height == "high"
-        "oppattackheightmed":
-            return height in ["medium", "med"]
-        "oppattackheightlow":
-            return height == "low"
-        "oppattackdirfrontal":
-            return direction == "frontal"
-        "oppattackdirfromleft":
-            return direction == "fromleft"
-        "oppattackdirfromright":
-            return direction == "fromright"
-        "oppattackdirfromabove":
-            return direction == "fromabove"
-        "oppattackdirfromair":
-            return direction == "fromair"
-    return false
+    # The air rows carry only `impact` plus the opponent-record fields.  A live
+    # contact is exactly the +0x164 record the caller supplies, so the same
+    # NativeConditions evaluator is used with a single active/next record.
+    var record: Dictionary = {
+        "id": 0,
+        "start": 0,
+        "end": 0,
+        "radius": float(impact.get("attack_radius", 0.0)),
+        "height": String(impact.get("height", "")),
+        "strength": String(impact.get("strength", "")),
+        "direction": String(impact.get("direction", "")),
+    }
+    var probe: Dictionary = {
+        "opponent_active_impact": record,
+        "opponent_next_impact": record,
+        "opponent_attacking": true,
+        "opponent_processed": 0,
+        "self_radius": 0.0,
+        "opponent_scale": 1.0,
+        "distance": 0.0,
+    }
+    return NativeConditions.evaluate(condition, probe)
 
 
 func _native_air_hit_reaction(impact: Dictionary) -> Dictionary:
@@ -8863,6 +9033,48 @@ func _native_reaction_probe(impact: Dictionary, blocked: bool) -> Dictionary:
         "cursor": 0,
         "damage": incoming_damage,
     }
+    var canonical_impact: Dictionary = {
+        "id": 0,
+        "start": 0,
+        "end": 0,
+        "radius": float(impact.get("attack_radius", 0.0)),
+        "height": String(impact.get("height", "")),
+        "strength": String(impact.get("strength", "")),
+        "direction": String(impact.get("direction", "")),
+    }
+    var canonical: Dictionary = {
+        "self_pose": _fighter_pose(),
+        "self_radius": source_radius_for_current_animation(),
+        "self_health": health,
+        "self_rage": rage,
+        "self_rage_forced": false,
+        "self_dummy_health": false,
+        "distance": distance,
+        "incoming_damage": incoming_damage,
+        "counter_open": (
+            attacker._native_is_in_counter_time()
+            if attacker != null and is_instance_valid(attacker) else false
+        ),
+        "opponent_pose": (
+            attacker._fighter_pose()
+            if attacker != null and is_instance_valid(attacker) else ""
+        ),
+        "opponent_blocking": (
+            attacker._native_is_blocking()
+            if attacker != null and is_instance_valid(attacker) else true
+        ),
+        "opponent_scale": attacker_scale,
+        "opponent_radius": (
+            attacker.source_radius_for_current_animation()
+            if attacker != null and is_instance_valid(attacker) else 0.0
+        ),
+        "opponent_attacking": true,
+        "opponent_active_impact": canonical_impact,
+        "opponent_next_impact": canonical_impact,
+        "opponent_processed": 0,
+        "opponent_about_to_grab": false,
+        "relative_facing_dot": _native_relative_facing_dot(),
+    }
     return {
         "action": _native_reaction_action(),
         "frame": _native_reaction_frame(),
@@ -8876,6 +9088,7 @@ func _native_reaction_probe(impact: Dictionary, blocked: bool) -> Dictionary:
         # validation uses.
         "status": {"left": blocked},
         "attacker": record,
+        "native": canonical,
     }
 
 

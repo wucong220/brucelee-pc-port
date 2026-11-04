@@ -220,10 +220,10 @@ func _run() -> void:
             _probe({"action": "idle", "frame": 10.0})), false)
     # Delegated conditions only pass when the caller supplies an evaluator.
     gate.extra_condition_eval = func(condition: String, _probe_value: Dictionary) -> bool:
-        return condition == "countertime"
+        return condition == "totally_unknown_token"
     _check("delegated_condition_passes",
-        gate.condition_ok("countertime", _probe({"action": "idle", "frame": 10.0})), true)
-    _check("delegated_condition_other_refused",
+        gate.condition_ok("totally_unknown_token", _probe({"action": "idle", "frame": 10.0})), true)
+    _check("recovered_condition_ignores_delegate",
         gate.condition_ok("ragethird", _probe({"action": "idle", "frame": 10.0})), false)
     gate.extra_condition_eval = Callable()
 

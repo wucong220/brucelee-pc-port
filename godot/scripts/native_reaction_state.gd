@@ -1,5 +1,6 @@
 extends RefCounted
 class_name NativeReactionState
+const NativeConditions = preload("res://scripts/native_conditions.gd")
 ## Recovered reaction / stun / impact state gate for the PC port.
 ##
 ## This is an ADDITIVE module: it re-implements only the part of the native
@@ -44,14 +45,14 @@ class_name NativeReactionState
 ##     themselves (order, from/from_group, conditions, keystatus, time,
 ##     entry_frame, linking_frame, blending) and every action's group windows.
 ##
-## Unrecovered and therefore FAIL CLOSED (no reaction is chosen):
-##   * the `IsBlocking()` category literal and the `IsDefeated()` group literal
-##     are runtime-initialised global string handles; the compiled code never
-##     stores the literal, so no name is claimed here.
-##   * conditions outside the recovered set (ragethird, rage2thirds,
-##     oppposestun/stand/laying, oppnotblocking, grabdistance, countertime) are
-##     delegated to an optional caller-supplied evaluator; without one they make
-##     the link not match instead of being guessed.
+## Unrecovered / out-of-scope items:
+##   * the `IsDefeated()` group literal is a runtime-initialised global string
+##     handle; the compiled code never stores the literal, so no name is
+##     claimed here.
+##   * every CheckConditions token that the exported link tables use is now
+##     recovered (see scripts/native_conditions.gd).  A token outside that
+##     table is still delegated to an optional caller evaluator; without one it
+##     makes the link not match (fail closed), never assumed true.
 ##
 ## Native addresses are ELF virtual addresses; Ghidra's dumps are +0x10000.
 
@@ -66,14 +67,8 @@ const FIELD_IMPACT_CURSOR: int = 0x16C
 const FIELD_HEALTH: int = 0x144
 
 ## Conditions whose semantics were recovered from CheckConditions.
-const RECOVERED_CONDITIONS: Array[String] = [
-    "impact", "healthzero",
-    "oppattackheightlow", "oppattackheightmed", "oppattackheighthigh",
-    "oppattackstrengthnormal", "oppattackstrengthmedium",
-    "oppattackstrengthhard", "oppattackstrengthbrutal",
-    "oppattackdirfrontal", "oppattackdirfromleft", "oppattackdirfromright",
-    "oppattackdirfromabove", "oppattackdirfromair",
-]
+const RECOVERED_CONDITIONS: Array[String] = NativeConditions.IMPLEMENTED_TOKENS
+const RECOVERED_UNUSED_CONDITIONS: Array[String] = NativeConditions.RECOVERED_UNUSED_TOKENS
 
 ## Group checked by DamageReceiveCheck (ELF 0x1a5568 -> rodata 0x5bab9c).
 const DAMAGE_GROUP: String = "receivedamage"
@@ -285,55 +280,58 @@ func status_ok(link: Dictionary, status: Dictionary) -> bool:
     return true
 
 
-## CheckConditions for one recovered condition name.
-## `probe` carries the values the native code reads (see file header).
+## CheckConditions for one condition name.
+##
+## The semantics live in scripts/native_conditions.gd, the single evaluator the
+## fighter and AI also use.  A caller may pass the canonical probe under
+## probe["native"]; otherwise the historical probe shape (attacker record plus
+## victim fields) is projected onto it so the module API is unchanged.
 func condition_ok(condition: String, probe: Dictionary) -> bool:
-    var attacker: Dictionary = Dictionary(probe.get("attacker", {}))
-    match condition:
-        "impact":
-            if not bool(attacker.get("impact_active", false)):
-                return false
-            # 0x1a42e4: distance <= record.radius * opponent+0x15C + GetRadius()
-            var reach: float = (
-                float(attacker.get("radius", 0.0))
-                * float(attacker.get("scale", 1.0))
-                + float(probe.get("victim_radius", 0.0))
-            )
-            if float(probe.get("distance", INF)) > reach:
-                return false
-            # 0x1a4388: the record still has an unspent impact
-            return int(attacker.get("last_index", -1)) >= int(attacker.get("cursor", 0))
-        "healthzero":
-            # 0x1a43b4: AttackDamage(opponent) >= victim health
-            return float(probe.get("incoming_damage", 0.0)) >= float(probe.get("health", 0.0))
-        "oppattackheightlow":
-            return str(attacker.get("height", "")) == "low"
-        "oppattackheightmed":
-            return str(attacker.get("height", "")) in ["medium", "med"]
-        "oppattackheighthigh":
-            return str(attacker.get("height", "")) == "high"
-        "oppattackstrengthnormal":
-            return str(attacker.get("strength", "")) == "normal"
-        "oppattackstrengthmedium":
-            return str(attacker.get("strength", "")) == "medium"
-        "oppattackstrengthhard":
-            return str(attacker.get("strength", "")) == "hard"
-        "oppattackstrengthbrutal":
-            return str(attacker.get("strength", "")) == "brutal"
-        "oppattackdirfrontal":
-            return str(attacker.get("direction", "")) == "frontal"
-        "oppattackdirfromleft":
-            return str(attacker.get("direction", "")) == "fromleft"
-        "oppattackdirfromright":
-            return str(attacker.get("direction", "")) == "fromright"
-        "oppattackdirfromabove":
-            return str(attacker.get("direction", "")) == "fromabove"
-        "oppattackdirfromair":
-            # 0x1a4208 compares record+0x20 with OppAttackDirFromAir.
-            return str(attacker.get("direction", "")) == "fromair"
+    if NativeConditions.is_known(condition):
+        return NativeConditions.evaluate(condition, _canonical_probe(probe))
     if extra_condition_eval.is_valid():
         return bool(extra_condition_eval.call(condition, probe))
     return false
+
+
+func _canonical_probe(probe: Dictionary) -> Dictionary:
+    var canonical_value: Variant = probe.get("native")
+    if canonical_value is Dictionary:
+        return canonical_value
+    var attacker: Dictionary = Dictionary(probe.get("attacker", {}))
+    var impact_active: bool = bool(attacker.get("impact_active", true))
+    var record: Variant = null
+    if impact_active:
+        record = {
+            "id": int(attacker.get("last_index", 0)),
+            "start": 0,
+            "end": 0,
+            "radius": float(attacker.get("radius", 0.0)),
+            "height": String(attacker.get("height", "")),
+            "strength": String(attacker.get("strength", "")),
+            "direction": String(attacker.get("direction", "")),
+        }
+    return {
+        "self_pose": String(probe.get("self_pose", "")),
+        "self_radius": float(probe.get("victim_radius", 0.0)),
+        "self_health": float(probe.get("health", 0.0)),
+        "self_rage": float(probe.get("rage", 0.0)),
+        "self_rage_forced": bool(probe.get("rage_forced", false)),
+        "self_dummy_health": bool(probe.get("dummy_health", false)),
+        "distance": float(probe.get("distance", INF)),
+        "incoming_damage": float(probe.get("incoming_damage", 0.0)),
+        "counter_open": bool(probe.get("counter_open", false)),
+        "opponent_pose": String(probe.get("opponent_pose", "")),
+        "opponent_blocking": bool(probe.get("opponent_blocking", false)),
+        "opponent_scale": float(attacker.get("scale", 1.0)),
+        "opponent_radius": float(probe.get("opponent_radius", 0.0)),
+        "opponent_attacking": impact_active,
+        "opponent_active_impact": record,
+        "opponent_next_impact": record,
+        "opponent_processed": int(attacker.get("cursor", 0)),
+        "opponent_about_to_grab": bool(probe.get("opponent_about_to_grab", false)),
+        "relative_facing_dot": float(probe.get("relative_facing_dot", 1.0)),
+    }
 
 
 ## The recovered reaction link loop (UserControlUpdate).  Returns {} when no
