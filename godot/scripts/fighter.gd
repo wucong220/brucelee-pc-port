@@ -4870,6 +4870,14 @@ func _verified_post_hit_return_state() -> String:
             and return_action == "faceupidle"
             and _candidate_clip_paths.has(_faceup_idle_clip())):
         return "faceupidle"
+    if (reaction_clip_ready
+            and last_reaction_source_action == AIR_HIT_TARGET
+            and (return_action.is_empty() or return_action == "faceupidle")
+            and _candidate_clip_paths.has(_faceup_idle_clip())):
+        # Recovered row 317: impacthardair -> faceupidle at [25,25].  The
+        # non-frame-clock reaction path has no gate return_action, so the
+        # target is read from the recovered row instead of falling to idle.
+        return "faceupidle"
     return "idle"
 
 
@@ -7618,6 +7626,21 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
             "enabled": true,
             "result": "incomplete-impact-record",
         }
+    if not blocked:
+        # Recovered `impactablefromair` / air-hit branch.  The gate above owns
+        # every live contact that describes a native impact record; this is the
+        # same recovered row scan for the opt-out heuristic and for callers that
+        # supply no `attack_radius`.  It returns {} when the victim is not in a
+        # recovered airborne window or no recovered air row answers.
+        var air_hit: Dictionary = _native_air_hit_reaction(impact)
+        if not air_hit.is_empty():
+            last_native_reaction = {
+                "enabled": native_reaction_enabled,
+                "result": "air-branch",
+                "action": _native_reaction_action(),
+                "resolved": String(air_hit.get("source_action", "")),
+            }
+            return air_hit
     if blocked:
         # Recovered block selection: a block row exists for the five strength/
         # height combinations in CANBLOCK_ROWS, and _matching_exact_reaction
@@ -7689,6 +7712,102 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
 ## return link.  Unmapped targets fail closed.  The probe's port-side bridges
 ## are documented where they are built.
 ## ---------------------------------------------------------------------------
+
+## Recovered `impactablefromair` / air-hit branch.
+##
+## The shipped sets contain exactly one air reaction group: brucelee.set rows
+## 238-241 and thai.set rows 160-163, `from_group` `impactablefromair`, all
+## targeting `impacthardair` (`all_impct_hard_frnt_air`, pose `laying`, row 317
+## returns to `faceupidle` at [25,25]).  The group lives on the victim's
+## *current* action and its window is the airborne part of that action (for
+## example highkick3 `impactablefromair [0,16]` while its `impactable` window is
+## `[17,51]`).  The recovered gate already scans these rows in native order for
+## live contacts; this helper is the fallback selector's equivalent for the
+## opt-out path and for callers that do not describe a native impact record.
+##
+## Conditions are the recovered CheckConditions tokens the air rows carry
+## (`impact` and the opponent record's strength/height/direction fields); any
+## other token fails closed.  A matched row whose target has no recovered
+## animation also fails closed.
+const AIR_HIT_GROUP: String = "impactablefromair"
+const AIR_HIT_TARGET: String = "impacthardair"
+
+
+## True when the victim's current recovered action window says it is airborne.
+func _native_air_state() -> bool:
+    var action: String = _native_reaction_action()
+    if action.is_empty():
+        return false
+    var groups: Variant = _native_actions.get(action, {}).get("groups", {})
+    if not groups is Dictionary:
+        return false
+    var window: Variant = Dictionary(groups).get(AIR_HIT_GROUP)
+    if not window is Array or Array(window).size() < 2:
+        return false
+    var frame: float = _native_reaction_frame()
+    return (
+        frame + 0.0001 >= float(Array(window)[0])
+        and frame <= float(Array(window)[1]) + 0.0001
+    )
+
+
+func _native_air_condition_ok(condition: String, impact: Dictionary) -> bool:
+    # The recovered CheckConditions comparison for one air-row token.
+    var strength: String = String(impact.get("strength", ""))
+    var height: String = String(impact.get("height", ""))
+    var direction: String = String(impact.get("direction", ""))
+    match condition:
+        "impact":
+            return true
+        "oppattackstrengthnormal":
+            return strength == "normal"
+        "oppattackstrengthmedium":
+            return strength == "medium"
+        "oppattackstrengthhard":
+            return strength == "hard"
+        "oppattackstrengthbrutal":
+            return strength == "brutal"
+        "oppattackheighthigh":
+            return height == "high"
+        "oppattackheightmed":
+            return height in ["medium", "med"]
+        "oppattackheightlow":
+            return height == "low"
+        "oppattackdirfrontal":
+            return direction == "frontal"
+        "oppattackdirfromleft":
+            return direction == "fromleft"
+        "oppattackdirfromright":
+            return direction == "fromright"
+        "oppattackdirfromabove":
+            return direction == "fromabove"
+        "oppattackdirfromair":
+            return direction == "fromair"
+    return false
+
+
+func _native_air_hit_reaction(impact: Dictionary) -> Dictionary:
+    if not _native_air_state():
+        return {}
+    if String(impact.get("strength", "")).is_empty():
+        return {}
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from_group") != AIR_HIT_GROUP:
+            continue
+        var matched: bool = true
+        for condition: Variant in Array(link.get("conditions", [])):
+            if not _native_air_condition_ok(String(condition), impact):
+                matched = false
+                break
+        if not matched:
+            continue
+        var reaction: Dictionary = _native_gate_reaction(link, impact, false)
+        if reaction.is_empty():
+            return {}
+        reaction["air_branch"] = true
+        return reaction
+    return {}
+
 
 func _init_native_reaction_gate() -> void:
     # The recovered gate is the default reaction selector for every contact

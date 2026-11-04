@@ -72,7 +72,7 @@ const RECOVERED_CONDITIONS: Array[String] = [
     "oppattackstrengthnormal", "oppattackstrengthmedium",
     "oppattackstrengthhard", "oppattackstrengthbrutal",
     "oppattackdirfrontal", "oppattackdirfromleft", "oppattackdirfromright",
-    "oppattackdirfromabove",
+    "oppattackdirfromabove", "oppattackdirfromair",
 ]
 
 ## Group checked by DamageReceiveCheck (ELF 0x1a5568 -> rodata 0x5bab9c).
@@ -328,6 +328,9 @@ func condition_ok(condition: String, probe: Dictionary) -> bool:
             return str(attacker.get("direction", "")) == "fromright"
         "oppattackdirfromabove":
             return str(attacker.get("direction", "")) == "fromabove"
+        "oppattackdirfromair":
+            # 0x1a4208 compares record+0x20 with OppAttackDirFromAir.
+            return str(attacker.get("direction", "")) == "fromair"
     if extra_condition_eval.is_valid():
         return bool(extra_condition_eval.call(condition, probe))
     return false
