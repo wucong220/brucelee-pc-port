@@ -103,23 +103,26 @@ func _check_runtime(main: Node) -> void:
         "a skip event ends state 1 before the clip finishes")
     _expect(not bool(states.active), "the skip leaves the attract state")
 
-    # The unrecovered states never start.
+    # Replay needs two live buffers; states 10/14 remain unrecovered.
     for unrecovered in [NativeMatchStates.STATE_REPLAY,
             NativeMatchStates.STATE_CONTINUE_WAIT, NativeMatchStates.STATE_COUNTDOWN]:
         states.reset()
         var started: bool = bool(states.enter(unrecovered))
         _expect(not started, "state %d refuses to start" % unrecovered)
-        _expect(String(states.fail_reason).begins_with("unrecovered"),
-            "state %d names itself unrecovered, got %s" % [unrecovered, states.fail_reason])
+        var reason: String = String(states.fail_reason)
+        _expect(reason.begins_with("unrecovered")
+                or (unrecovered == NativeMatchStates.STATE_REPLAY
+                    and reason.begins_with("no-replay-buffer")),
+            "state %d reports why it refuses, got %s" % [unrecovered, reason])
 
     # State 9 enters, remembers that its countdown is unrecovered, and only
     # leaves through the two actions decoded from game.states.
     states.reset()
     _expect(bool(states.enter(NativeMatchStates.STATE_CONTINUE)), "state 9 enters")
-    _expect(bool(states.describe()["continue_countdown_unrecovered"]),
-        "state 9 records its countdown length as unrecovered")
-    _expect(int(states.advance(1000.0, false)) == -1,
-        "state 9 does not expire on its own")
+    _expect(not bool(states.describe()["continue_countdown_unrecovered"]),
+        "state 9 records that +0x850 is recovered (TrainingSetStep)")
+    _expect(int(states.advance(1.0, false)) == -1,
+        "state 9 does not expire before the 10 s clock tick")
     _expect(states.choose_continue("maybe") == "",
         "state 9 rejects an action that is not in arcaderetryask")
     states.move_continue_cursor(1)
@@ -212,8 +215,18 @@ func _check_live_continue(main: Node) -> void:
     _expect(layer != null, "live state 9 builds the continue prompt")
     if layer != null:
         var label: Label = layer.get_node_or_null("ContinuePrompt")
-        _expect(label != null and label.text.contains("UNRECOVERED"),
-            "the continue prompt states that the countdown is unrecovered")
+        _expect(label != null and label.text.contains("10"),
+            "the continue prompt shows the recovered 10 s countdown")
+        _expect(label != null and label.text.contains("YES"),
+            "the continue prompt still offers the recovered menu")
+        # Two seconds later the recovered QueryString curve shows 9, and the
+        # prompt is still open (the integer key 10 fires only at 10 s).
+        main.call("_update_continue_prompt", 2.0)
+        var counted: Label = layer.get_node_or_null("ContinuePrompt")
+        _expect(counted != null and counted.text.contains("9"),
+            "the live prompt counts down to 9 after 2 s")
+        _expect(not bool(states.continue_resolved),
+            "the live prompt is still open after 2 s")
     # The recovered game text launch for SetState(9) is animation 10.
     var launches: Array = main.get("game_text_launch_log")
     var found: bool = false

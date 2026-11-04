@@ -61,16 +61,48 @@ const REPLAY_COUNTDOWN_BUDGET_MS: int = 11000
 const REPLAY_COUNTDOWN_CAP_SECONDS: int = 10
 
 # CBeatEmUpGame::Update case 9 leaves the state when
-# GetStateTime() > *(this + 0x850).  No writer of +0x850 was recovered (the
-# field is never stored in any decompiled function), so the continue length is
-# fail-closed and state 9 cannot be timed out on its own.
-# What *is* recovered is the UI state that SetState(9) hands control to:
-# game.states "arcaderetryask" leaves on action "yes", "no", or on the trigger
-# key "#10".  The "#N" action keys are verbatim from game.states, but the unit
-# (seconds, ticks or an event id) was NOT recovered, so it is carried as a key
-# only and never converted into a timer.
-const CONTINUE_ACTIONS: Array[String] = ["yes", "no", "#10"]
-const CONTINUE_COUNTDOWN_UNRECOVERED: bool = true
+# GetStateTime() > *(this + 0x850).  The field IS recovered (2026-11-04):
+# krm::CBruceLeeTrainingMode::TrainingSetStep(CBeatEmUpMatch *) writes it on the
+# CBeatEmUpGame object (match + 0x14):
+#   * @0x1fa534  movw r3,#0xbb8 ; str r3,[game,#0x850]      -> 3000 ms
+#     (the branch with no step-animation descriptor, r8 == 0);
+#   * @0x1faedc  r3 = (uint)(duration_seconds * 1000.0)
+#                ; str r3,[game,#0x850]                       -> animation length
+#     taken from the step descriptor [sp+0x60]+4; the 1000.0f literal is at
+#     0x1fb200.
+# Unit: milliseconds (the same clock as GetStateTime()).  On expiry Update case
+# 9 calls SetState(15) and RaiseAction("NEXTTRAININGSTEP"): this is the training
+# step timer, not the arcade continue prompt.
+const CONTINUE_NATIVE_TIMEOUT_DEFAULT_MS: int = 3000
+const CONTINUE_NATIVE_TIMEOUT_SOURCE: String = (
+    "krm::CBruceLeeTrainingMode::TrainingSetStep @0x1fa534/0x1faedc"
+)
+const CONTINUE_ACTION_NEXT_TRAINING_STEP: String = "nexttrainingstep"
+
+# The arcade continue prompt is a different mechanism.  gui/continueask.ui binds
+# its "countdown" label to the datasource ["game","continuecountdown"], created
+# by CBeatEmUpMatch::CreateQuery (@0x162174, "continueCountDown" @0x5b8b18) and
+# answered by CBeatEmUpMatch::QueryString (@0x161b08): empty while the query id
+# is non-zero, a single space unless the native game is in state 6, and
+# (11000 - GetStateTime()) / 1000 clamped to 10 while it is.  PlayerLost
+# (@0x1902bc) starts state 6 and the UI state "ArcadeRetryAsk" together.
+const CONTINUE_COUNTDOWN_BUDGET_MS: int = 11000
+const CONTINUE_COUNTDOWN_CAP_SECONDS: int = 10
+
+# game.states "arcaderetryask" actions.  Its timeout is the INTEGER dictionary
+# key 10 (not a "#10" string): the CTX3 action maps mix string keys (named
+# events) with integer keys, and the state manager implements integer keys as
+# clock ticks.  SetState sets impl->seconds = -1 and clockStart = now
+# (@0x484674..0x484684); PreUpdate turns elapsed ms into seconds (/1000,
+# @0x4853dc..0x485450) and raises the action "clock" once per second;
+# RaiseAction's clock branch fires an entry only when entry->tick ==
+# impl->seconds (@0x484da4..0x484dbc).  Integer key 10 therefore fires 10 s
+# after the state becomes active (#0 fires on the first update).
+const CONTINUE_TIMEOUT_KEY: int = 10
+const CONTINUE_TIMEOUT_MS: int = CONTINUE_TIMEOUT_KEY * 1000
+const CONTINUE_ACTIONS: Array[String] = ["yes", "no", "#10",
+        CONTINUE_ACTION_NEXT_TRAINING_STEP]
+const CONTINUE_COUNTDOWN_UNRECOVERED: bool = false
 
 # game.states "arcaderetryask" actions, decoded verbatim.
 const CONTINUE_ACTION_YES: String = "yes"
@@ -122,6 +154,15 @@ var attract_clip_seconds: float = 0.0
 var continue_menu_index: int = 0
 var continue_choice: String = ""
 var continue_resolved: bool = false
+## Time spent in the continue prompt (drives the recovered UI countdown and the
+## game.states integer-key timeout).
+var continue_elapsed_ms: float = 0.0
+## The recovered +0x850 value.  Default 3000 ms mirrors TrainingSetStep's
+## no-animation branch; a training flow can pass round(seconds*1000) through
+## set_continue_native_timeout_ms().  It is only enforced when
+## continue_native_timeout_enabled is true (training step flow).
+var continue_native_timeout_ms: int = CONTINUE_NATIVE_TIMEOUT_DEFAULT_MS
+var continue_native_timeout_enabled: bool = false
 ## Countdown observation (state 14).  Only meaningful if the state were
 ## entered, which the unrecovered gate prevents.
 var countdown_ended: bool = false
@@ -220,11 +261,33 @@ func _enter_continue() -> bool:
     continue_menu_index = 0
     continue_choice = ""
     continue_resolved = false
+    continue_elapsed_ms = 0.0
+    continue_native_timeout_ms = CONTINUE_NATIVE_TIMEOUT_DEFAULT_MS
     trace.append({
         "state": STATE_CONTINUE, "result": "entered", "reason": REASON_OK,
-        "detail": "arcaderetryask; +0x850 unrecovered, #N trigger unit unrecovered",
+        "detail": ("arcaderetryask; native +0x850 timeout recovered from "
+                   + CONTINUE_NATIVE_TIMEOUT_SOURCE + " (3000 ms default), "
+                   + "UI countdown is CBeatEmUpMatch::QueryString (11000 ms, "
+                   + "cap 10 s), integer action key 10 fires after 10 s"),
     })
     return true
+
+
+## The number gui/continueask.ui displays, computed exactly as
+## CBeatEmUpMatch::QueryString does while the game is in the replay state:
+## (11000 - elapsed) / 1000, clamped to [0, 10].  Returns -1 outside state 9.
+func continue_countdown_seconds() -> int:
+    if state != STATE_CONTINUE:
+        return -1
+    var remaining_ms: float = float(CONTINUE_COUNTDOWN_BUDGET_MS) - continue_elapsed_ms
+    var seconds: int = int(floor(remaining_ms / 1000.0))
+    return clampi(seconds, 0, CONTINUE_COUNTDOWN_CAP_SECONDS)
+
+
+## Mirrors krm::CBruceLeeTrainingMode::TrainingSetStep: 3000 for the branch with
+## no step animation, or round(step_duration_seconds * 1000.0) otherwise.
+func set_continue_native_timeout_ms(milliseconds: int) -> void:
+    continue_native_timeout_ms = maxi(0, milliseconds)
 
 
 ## CBeatEmUpGame::Update for the active state.  `skip_pressed` is the port's
@@ -244,10 +307,34 @@ func advance(delta: float, skip_pressed: bool = false) -> int:
             if skip_pressed or state_time > attract_clip_seconds:
                 return _complete_attract()
         STATE_CONTINUE:
-            # No +0x850 value was recovered, so this state never times out by
-            # itself.  The only exits are the two menu actions recovered from
-            # game.states, applied through choose_continue().
-            pass
+            # Two recovered clocks.  The native +0x850 training-step timer
+            # (3000 ms default) is applied when a training flow enables it; the
+            # arcade ArcadeRetryAsk prompt uses the integer action key 10 (10 s)
+            # of game.states.
+            if continue_resolved:
+                return -1
+            continue_elapsed_ms += maxf(delta, 0.0) * 1000.0
+            if (continue_native_timeout_enabled
+                    and continue_elapsed_ms >= float(continue_native_timeout_ms)):
+                continue_choice = CONTINUE_ACTION_NEXT_TRAINING_STEP
+                continue_resolved = true
+                trace.append({
+                    "state": STATE_CONTINUE, "result": "resolved",
+                    "reason": REASON_OK,
+                    "detail": "+0x850 (TrainingSetStep) fired at %d ms"
+                              % continue_native_timeout_ms,
+                })
+                _stop()
+            elif continue_elapsed_ms >= float(CONTINUE_TIMEOUT_MS):
+                continue_choice = CONTINUE_ACTION_TIMEOUT
+                continue_resolved = true
+                trace.append({
+                    "state": STATE_CONTINUE, "result": "resolved",
+                    "reason": REASON_OK,
+                    "detail": "arcaderetryask integer action key %d fired after %.0f ms"
+                              % [CONTINUE_TIMEOUT_KEY, continue_elapsed_ms],
+                })
+                _stop()
         STATE_REPLAY:
             _advance_replay()
     return -1
@@ -394,6 +481,15 @@ func describe() -> Dictionary:
         "continue_choice": continue_choice,
         "continue_resolved": continue_resolved,
         "continue_countdown_unrecovered": CONTINUE_COUNTDOWN_UNRECOVERED,
+        "continue_native_timeout_ms": continue_native_timeout_ms,
+        "continue_native_timeout_enabled": continue_native_timeout_enabled,
+        "continue_native_timeout_source": CONTINUE_NATIVE_TIMEOUT_SOURCE,
+        "continue_countdown_budget_ms": CONTINUE_COUNTDOWN_BUDGET_MS,
+        "continue_countdown_cap_seconds": CONTINUE_COUNTDOWN_CAP_SECONDS,
+        "continue_elapsed_ms": continue_elapsed_ms,
+        "continue_countdown_seconds": continue_countdown_seconds(),
+        "continue_timeout_key": CONTINUE_TIMEOUT_KEY,
+        "continue_timeout_ms": CONTINUE_TIMEOUT_MS,
         "continue_timeout_action": CONTINUE_ACTION_TIMEOUT,
         "replay_countdown_budget_ms": REPLAY_COUNTDOWN_BUDGET_MS,
         "replay_speed_factor": REPLAY_SPEED_FACTOR,

@@ -2718,10 +2718,31 @@ func _refresh_continue_prompt() -> void:
         return
     var yes_mark: String = ">" if native_states.continue_menu_index == 0 else " "
     var no_mark: String = ">" if native_states.continue_menu_index == 1 else " "
-    # gui/continueask.ui binds its number to the "continuecountdown" query,
-    # whose source field (+0x850) was not recovered.  Say so rather than show a
-    # number that the game never stored.
-    label.text = "CONTINUE?\nCOUNTDOWN UNRECOVERED\n%s YES      %s NO" % [yes_mark, no_mark]
+    # gui/continueask.ui binds this number to the ["game","continuecountdown"]
+    # datasource, answered by CBeatEmUpMatch::QueryString:
+    # (11000 - GetStateTime()) / 1000 clamped to 10 while the native game runs
+    # the replay state, which PlayerLost starts together with ArcadeRetryAsk.
+    var seconds: int = native_states.continue_countdown_seconds()
+    label.text = "CONTINUE?\n%d\n%s YES      %s NO" % [seconds, yes_mark, no_mark]
+
+
+## Drives the continue prompt's clock.  game.states "arcaderetryask" holds its
+## timeout as the integer action key 10, and the state manager's per-state
+## clock fires integer keys at that many seconds, so the prompt resolves 10 s
+## after it opens with the "#10" action (the same destination as "no").
+func _update_continue_prompt(delta: float) -> void:
+    if match_state != MATCH_STATE_CONTINUE or native_states == null:
+        return
+    if not native_states.active:
+        return
+    if native_states.continue_resolved:
+        _resolve_continue(native_states.continue_choice)
+        return
+    native_states.advance(delta)
+    if native_states.continue_resolved:
+        _resolve_continue(native_states.continue_choice)
+        return
+    _refresh_continue_prompt()
 
 
 func _hide_continue_prompt() -> void:
@@ -2733,8 +2754,14 @@ func _hide_continue_prompt() -> void:
 func _resolve_continue(action: String) -> void:
     if native_states == null:
         return
-    var applied: String = native_states.choose_continue(action)
-    if applied.is_empty():
+    var applied: String = action
+    if not native_states.continue_resolved:
+        applied = native_states.choose_continue(action)
+        if applied.is_empty():
+            return
+    if applied == NativeMatchStates.CONTINUE_ACTION_NEXT_TRAINING_STEP:
+        # +0x850 (TrainingSetStep) expiry: the training driver advances the step
+        # itself; do not route to the main menu.
         return
     _hide_continue_prompt()
     _hide_game_text_overlays()
@@ -3197,11 +3224,12 @@ func _exit_tree() -> void:
     _stop_combat_audio()
     combat_audio = null
 
-func _process(_delta: float) -> void:
-    _update_game_text_sequence(_delta)
+func _process(delta: float) -> void:
+    _update_game_text_sequence(delta)
     _update_player_key_status()
-    _update_fight_camera(_delta)
-    _update_footsteps(_delta)
+    _update_fight_camera(delta)
+    _update_footsteps(delta)
+    _update_continue_prompt(delta)
 
 
 func _update_player_key_status() -> void:

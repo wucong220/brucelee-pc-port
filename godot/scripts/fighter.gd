@@ -10,6 +10,9 @@ signal parry_succeeded(action: String)
 const BASE_SPEED: float = 3.6
 ## Recovered TFightResults counter classification (animation-category table).
 const FightStats = preload("res://scripts/fight_stats.gd")
+# Additive opt-in reaction gate; instantiated in _ready only when
+# BRUCELEE_NATIVE_REACTION=1. The default path never references it.
+const NativeReactionGate = preload("res://scripts/native_reaction_state.gd")
 const MAX_HEALTH: float = 100.0
 const CANDIDATE_SOURCE_MIN_Y: float = -0.09393310546875
 const CANDIDATE_SOURCE_HEIGHT: float = 173.415954589844
@@ -1140,6 +1143,8 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
 const LINK_EVENT_LIFETIME_MS: int = 500
 const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
 const BRICK_NATIVE_LINKS_PATH: String = "res://data/native_links_brick.json"
+# Opt-in switch for the recovered reaction gate (NativeReactionState).
+const NATIVE_REACTION_ENV: String = "BRUCELEE_NATIVE_REACTION"
 # adreno_200/input.config: control_profile 0 is the touch layout (a/b only),
 # 1 is the ZDK keyboard layout (a/b/c/d). CBeatEmUpMatch::LoadFighter receives
 # the current input layout and writes it to fighter+0x1c, which
@@ -2698,6 +2703,13 @@ var _link_events: Array[Dictionary] = []
 var _native_actions: Dictionary = {}
 var _native_reactions: Dictionary = {"hit": [], "block": []}
 var _native_links: Array = []
+# Opt-in recovered reaction gate (see _init_native_reaction_gate). Off unless
+# BRUCELEE_NATIVE_REACTION=1, so the default reaction path is unaffected.
+var native_reaction_enabled: bool = false
+var _native_reaction_gate: NativeReactionGate = null
+var native_reaction_error: String = ""
+var last_native_reaction: Dictionary = {}
+var _native_pending_reaction: Dictionary = {}
 var _link_scan_action: String = ""
 var _link_scan_previous_frame: float = -1.0
 var _action_to_attack: Dictionary = {}
@@ -3284,6 +3296,7 @@ func _ready() -> void:
     if not _load_attack_definitions():
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
     _load_native_links()
+    _init_native_reaction_gate()
     _load_attack_root_motion()
     _load_movement_root_motion()
     _load_size_variants()
@@ -5891,6 +5904,11 @@ func _try_follow_links() -> bool:
     if state not in ["idle", "idle2", "idle3", "startup", "active", "recovery",
             "facedownidle", "faceupidle"]:
         return false
+    if (native_reaction_enabled and _native_reaction_gate != null
+            and not _native_reaction_gate.can_follow()):
+        # CFighter::UserControlUpdate returns before the link loop while a
+        # FollowLink result is parked in +0xF0/+0xF4.
+        return false
     _expire_link_events()
     var scan_action: String = _current_action_name()
     var scan_frame: float = _current_attack_source_frame()
@@ -6183,6 +6201,9 @@ func _physics_process(delta: float) -> void:
         _clear_link_state()
     _apply_attack_root_motion()
     _advance_timed_states(delta)
+    if native_reaction_enabled:
+        # BasicUpdate executes the link parked in +0xF0/+0xF4, then clears it.
+        _advance_native_reaction_parking()
     if ((attack_kind == "endattack_brick" or ENDATTACK_ATTACKS.has(attack_kind))
             and state == "active"
             and not _endattack_victim_started
@@ -7256,6 +7277,16 @@ func attack_reach_world(kind: String, target: PortFighter = null) -> float:
 
 
 func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
+    if native_reaction_enabled and _native_reaction_gate != null:
+        if impact.has("attack_radius"):
+            return _native_reaction_for_incoming(impact, blocked)
+        # The recovered impact condition needs a native impact record radius.
+        # Legacy/synthetic callers that do not describe one keep the heuristic;
+        # every live contact path supplies attack_radius.
+        last_native_reaction = {
+            "enabled": true,
+            "result": "incomplete-impact-record",
+        }
     if _is_brick_facedown_low_impact(impact, blocked):
         return BRICK_FACEDOWN_IMPACT_REACTION.duplicate(true)
     if (not blocked and String(impact.get("strength", "")) == "brutal"
@@ -7296,6 +7327,280 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     if not blocked and String(impact.get("strength", "")) != "normal":
         return {}
     return _reaction_profile_for_impact(impact, blocked)
+
+
+## ---------------------------------------------------------------------------
+## Opt-in recovered reaction gate (NativeReactionState).
+##
+## BRUCELEE_NATIVE_REACTION=1 routes incoming-hit reaction selection through the
+## recovered canblock/impact/KO link scan instead of the heuristic above.  The
+## flag defaults off, so the existing path is untouched unless a caller opts in.
+##
+## No reaction data is invented here: the gate decides the target action from
+## the recovered link table, and the animation / exit frames are taken from the
+## port's existing recovered tables (EXACT_REACTIONS, REACTION_PROFILES,
+## _native_reactions, native_links.json actions) or the target's own outgoing
+## return link.  Unmapped targets fail closed.  The probe's port-side bridges
+## are documented where they are built.
+## ---------------------------------------------------------------------------
+
+func _init_native_reaction_gate() -> void:
+    native_reaction_enabled = OS.get_environment(NATIVE_REACTION_ENV) == "1"
+    if not native_reaction_enabled:
+        return
+    var gate: NativeReactionGate = NativeReactionGate.new()
+    gate.sequence_index = LINK_SEQUENCE_INDEX
+    var path: String = String(
+        attack_set_profile.get("native_links", NATIVE_LINKS_PATH)
+    )
+    if not gate.load_native_links(path):
+        # The caller opted in, so fail closed instead of silently falling back
+        # to the heuristic. The error is surfaced for the caller/tests.
+        native_reaction_error = "native reaction gate failed closed: " + gate.load_error
+        push_error(native_reaction_error)
+        _native_reaction_gate = null
+        return
+    _native_reaction_gate = gate
+
+
+func _native_reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
+    if _native_reaction_gate == null:
+        return {}
+    var pending_before: bool = not _native_reaction_gate.can_follow()
+    var probe: Dictionary = _native_reaction_probe(impact, blocked)
+    var link: Dictionary = _native_reaction_gate.resolve(probe)
+    last_native_reaction = {
+        "enabled": true,
+        "action": String(probe.get("action", "")),
+        "frame": float(probe.get("frame", 0.0)),
+        "blocked": blocked,
+        "resolved": String(link.get("to", "")),
+        "order": int(link.get("order", -1)),
+        "result": (
+            "blocked-by-pending" if pending_before
+            else String(link.get("result", "no-matching-link"))
+        ),
+    }
+    if link.is_empty():
+        return {}
+    var follow: Dictionary = _native_reaction_gate.follow_link(
+        link,
+        float(probe.get("frame", 0.0))
+    )
+    var reaction: Dictionary = _native_gate_reaction(link, impact, blocked)
+    last_native_reaction["mapped"] = not reaction.is_empty()
+    if bool(follow.get("deferred", false)):
+        _native_pending_reaction = {
+            "reaction": reaction,
+            "blocked": blocked,
+            "link": link,
+        }
+        last_native_reaction["deferred"] = true
+        last_native_reaction["pending_frame"] = int(
+            _native_reaction_gate.pending_frame
+        )
+        # CFighter::FollowLink parked the link in +0xF0/+0xF4.  The port keeps
+        # applying damage at contact (its existing rule); the reaction clip is
+        # selected when BasicUpdate reaches the parked frame.
+        return {}
+    last_native_reaction["deferred"] = false
+    return reaction
+
+
+func _native_reaction_probe(impact: Dictionary, blocked: bool) -> Dictionary:
+    var attacker: PortFighter = opponent
+    var attacker_scale: float = radius_scale
+    var distance: float = 0.0
+    if attacker != null and is_instance_valid(attacker):
+        attacker_scale = attacker.radius_scale
+        var dx: float = attacker.global_position.x - global_position.x
+        var dz: float = attacker.global_position.z - global_position.z
+        distance = Vector2(dx, dz).length() / maxf(source_units_to_world, 0.000001)
+    # source_impact rows in the attack configs carry no "damage" field; the
+    # applied amount is the attacker's recovered ATTACKS entry for the action
+    # being played. Multi-impact rows already carry their own damage.
+    var incoming_damage: float = float(impact.get("damage", -1.0))
+    if incoming_damage < 0.0 and attacker != null and is_instance_valid(attacker):
+        if attacker.ATTACKS.has(attacker.attack_kind):
+            incoming_damage = float(
+                attacker.ATTACKS[attacker.attack_kind].get("damage", 0.0)
+            )
+    if incoming_damage < 0.0:
+        incoming_damage = 0.0
+    var record: Dictionary = {
+        "impact_active": true,
+        "height": String(impact.get("height", "")),
+        "strength": String(impact.get("strength", "")),
+        "direction": String(impact.get("direction", "")),
+        "radius": float(impact.get("attack_radius", 0.0)),
+        "scale": attacker_scale,
+        # The port resolves one contact per call and has no native +0x16C
+        # impact cursor; the record is modelled with one unspent impact.
+        "last_index": 0,
+        "cursor": 0,
+        "damage": incoming_damage,
+    }
+    return {
+        "action": _native_reaction_action(),
+        "frame": _native_reaction_frame(),
+        "health": health,
+        "incoming_damage": incoming_damage,
+        "distance": distance,
+        "victim_radius": source_radius_for_current_animation(),
+        # Every recovered block row carries the "left" status token.  The port's
+        # existing guard decision supplies that token; the original input.config
+        # mapping is not recovered, and this is the same bridge the module's own
+        # validation uses.
+        "status": {"left": blocked},
+        "attacker": record,
+    }
+
+
+func _native_reaction_action() -> String:
+    # Current animation action name for the recovery link scan.
+    if state in ["startup", "active", "recovery"] and ATTACKS.has(attack_kind):
+        return _current_action_name()
+    if state in ["hitstun", "blockstun"]:
+        if _native_actions.has(last_reaction_source_action):
+            return last_reaction_source_action
+        return ""
+    if state in ["idle", "idle2", "idle3", "facedownidle", "faceupidle",
+            "stun", "stun2", "stunfall"]:
+        var current: String = _current_action_name()
+        return current if not current.is_empty() else state
+    return ""
+
+
+func _native_reaction_frame() -> float:
+    if state in ["startup", "active", "recovery"] and ATTACKS.has(attack_kind):
+        return maxf(_current_attack_source_frame(), 0.0)
+    if state in ["hitstun", "blockstun"] and last_reaction_exit_frame >= 0:
+        return maxf(
+            float(last_reaction_exit_frame) - state_time * SOURCE_FRAME_RATE,
+            0.0
+        )
+    if state in ["stun", "stun2", "stunfall"]:
+        for target: String in ["stun2", "stunfall", "faceupko"]:
+            if _has_native_link(state, target):
+                var exit_frame: float = (
+                    _stun_step_seconds(state, target, STUN_DURATION_FRAMES)
+                    * SOURCE_FRAME_RATE
+                )
+                return maxf(exit_frame - state_time * SOURCE_FRAME_RATE, 0.0)
+        return maxf(state_time * SOURCE_FRAME_RATE, 0.0)
+    return maxf(state_time * SOURCE_FRAME_RATE, 0.0)
+
+
+func _native_gate_reaction(
+        link: Dictionary,
+        impact: Dictionary,
+        blocked: bool
+) -> Dictionary:
+    var target: String = String(link.get("to", ""))
+    if target.is_empty():
+        return {}
+    var group: String = "block" if target.contains("block") else "hit"
+    var entry: Dictionary = _native_reaction_entry_by_source(group, target)
+    if not entry.is_empty():
+        var mapped: Dictionary = entry.duplicate(true)
+        mapped["native_gate"] = true
+        mapped["native_link_order"] = int(link.get("order", -1))
+        return mapped
+    var row: Dictionary = _native_actions.get(target, {})
+    var animation: String = String(row.get("animation", ""))
+    if animation.is_empty():
+        return {}
+    var reaction: Dictionary = {
+        "source_action": target,
+        "animation": animation,
+        "entry_frame": int(link.get("entry_frame", 0)),
+        "linking_frame": int(link.get("linking_frame", 0)),
+        "native_gate": true,
+        "native_link_order": int(link.get("order", -1)),
+        "strength": String(impact.get("strength", "")),
+        "height": String(impact.get("height", "")),
+        "direction": String(impact.get("direction", "")),
+    }
+    var native_return: Dictionary = _native_reaction_return_data(target)
+    if not native_return.is_empty():
+        reaction["exit_start_frame"] = int(native_return["exit_start_frame"])
+        reaction["animation_duration_frames"] = int(
+            native_return.get("animation_duration_frames", 0)
+        )
+        reaction["return_action"] = String(native_return["return_action"])
+    return reaction
+
+
+func _native_reaction_entry_by_source(group: String, target: String) -> Dictionary:
+    var exact: Variant = EXACT_REACTIONS.get(group, [])
+    if exact is Array:
+        for entry: Variant in Array(exact):
+            if (entry is Dictionary
+                    and String(Dictionary(entry).get("source_action", "")) == target):
+                return Dictionary(entry)
+    var profiles: Variant = REACTION_PROFILES.get(group, {})
+    if profiles is Dictionary:
+        for key: Variant in Dictionary(profiles):
+            var profile: Variant = Dictionary(profiles)[key]
+            if (profile is Dictionary
+                    and String(Dictionary(profile).get("source_action", "")) == target):
+                return Dictionary(profile)
+    var native_entries: Variant = _native_reactions.get(group, [])
+    if native_entries is Array:
+        for entry: Variant in Array(native_entries):
+            if (entry is Dictionary
+                    and String(Dictionary(entry).get("source_action", "")) == target):
+                return Dictionary(entry)
+    return {}
+
+
+func _advance_native_reaction_parking(frame_override: float = -1.0) -> void:
+    if not native_reaction_enabled or _native_reaction_gate == null:
+        return
+    if _native_pending_reaction.is_empty():
+        return
+    var frame: float = (
+        frame_override if frame_override >= 0.0 else _native_reaction_frame()
+    )
+    var run: Dictionary = _native_reaction_gate.advance(frame)
+    if run.is_empty():
+        return
+    var pending: Dictionary = _native_pending_reaction
+    _native_pending_reaction = {}
+    last_native_reaction["executed_pending"] = true
+    last_native_reaction["executed_frame"] = frame
+    var reaction: Dictionary = Dictionary(pending.get("reaction", {}))
+    if reaction.is_empty():
+        return
+    _apply_native_parked_reaction(reaction, bool(pending.get("blocked", false)))
+
+
+func _apply_native_parked_reaction(reaction: Dictionary, blocked: bool) -> void:
+    # CFighter::BasicUpdate executes the parked animation change once the frame
+    # reaches +0xF4.  The port has no deferred animation queue, so executing the
+    # parked link updates the same reaction bookkeeping receive_hit() uses.
+    if state not in ["hitstun", "blockstun"]:
+        last_native_reaction["late_skipped_state"] = state
+        return
+    last_reaction_group = "block" if blocked else "hit"
+    last_reaction_source_action = String(reaction.get("source_action", ""))
+    last_reaction_animation = String(reaction.get("animation", ""))
+    last_reaction_exit_frame = int(reaction.get("exit_start_frame", -1))
+    last_reaction_entry_frame = int(reaction.get("entry_frame", 0))
+    var prepared: bool = _candidate_clip_paths.has(last_reaction_animation)
+    last_reaction_clip_implemented = (
+        bool(reaction.get("clip_implemented", false)) or prepared
+    )
+    if last_reaction_exit_frame >= 0:
+        state_time = float(maxi(
+            last_reaction_exit_frame - last_reaction_entry_frame,
+            0
+        )) / SOURCE_FRAME_RATE
+        if frame_state_machine_enabled and reaction.has("return_action"):
+            _reaction_clock_start_frame = last_reaction_entry_frame
+            _reaction_clock_ms = 0.0
+            _reaction_return_action = String(reaction["return_action"])
+            _reaction_clock_active = true
 
 
 func _is_brick_facedown_low_impact(impact: Dictionary, blocked: bool) -> bool:
@@ -8102,6 +8407,11 @@ func reset_fighter(start_position: Vector3) -> void:
     _attack_connected = false
     _parry_absorbed = false
     _clear_link_state()
+    _native_pending_reaction = {}
+    if _native_reaction_gate != null:
+        _native_reaction_gate.pending_link = {}
+        _native_reaction_gate.pending_frame = -1
+    last_native_reaction = {}
     last_reaction_group = ""
     last_reaction_source_action = ""
     last_reaction_animation = ""
