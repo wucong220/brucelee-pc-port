@@ -6491,6 +6491,11 @@ func _try_multi_impact_contacts() -> void:
         var blocked: bool = opponent.guard_held and (
             opponent._can_block_current_hit() or opponent.state == "blockstun")
         var reaction: Dictionary = opponent.reaction_for_incoming(impact, blocked)
+        if GRAB_ATTACKS.has(attack_kind):
+            # A grab pulls the victim into the hold; the generic reaction root
+            # push would displace them (Master grab1 measured ~2.1 m). The grab
+            # state owns positioning once begin_grabbed runs.
+            reaction["grab_contact"] = true
         var damage: float = float(impact["damage"])
         _multi_impact_applied.append(index)
         if not opponent.receive_hit(damage, blocked, 0.0, facing, reaction):
@@ -6933,6 +6938,9 @@ func _try_attack_contact() -> void:
     var reaction: Dictionary = {}
     if details.has("source_impact"):
         reaction = opponent.reaction_for_incoming(details["source_impact"], blocked)
+    if GRAB_ATTACKS.has(attack_kind):
+        # The hold owns victim placement; do not apply the generic hit push.
+        reaction["grab_contact"] = true
     var impact_height: String = ""
     if details.has("source_impact"):
         impact_height = String(details["source_impact"].get("height", ""))
@@ -7878,6 +7886,7 @@ func receive_hit(
     # A real hit/block cancels unconsumed link events. Parry/counter returns
     # above do not clear them, so their own follow-up inputs survive.
     _clear_link_state()
+    var grab_contact: bool = bool(reaction.get("grab_contact", false))
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
@@ -7920,7 +7929,7 @@ func receive_hit(
             # stun_brutal uses the spectacular-left source animation; use the
             # corresponding decoded reaction positions as a prototype input.
             stun_push_source = float(REACTION_ROOT_PUSH_SOURCE.get("impactbrutalleft", -1.0))
-        if stun_push_source >= 0.0:
+        if stun_push_source >= 0.0 and not grab_contact:
             position.x = clampf(
                 position.x + direction * stun_push_source * source_units_to_world,
                 -ARENA_HALF_X, ARENA_HALF_X
@@ -7961,7 +7970,10 @@ func receive_hit(
     var reaction_root_source: float = float(
         REACTION_ROOT_PUSH_SOURCE.get(String(reaction.get("source_action", "")), -1.0)
     )
-    if reaction_root_source >= 0.0:
+    if grab_contact:
+        # The grab state owns victim placement; no generic reaction push.
+        push = 0.0
+    elif reaction_root_source >= 0.0:
         # The reaction's decoded root position component is the push input.
         push = reaction_root_source * source_units_to_world
     else:
