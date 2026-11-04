@@ -1158,6 +1158,25 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
 const LINK_EVENT_LIFETIME_MS: int = 500
 const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
 const BRICK_NATIVE_LINKS_PATH: String = "res://data/native_links_brick.json"
+## Recovered opponent-suffix actions of brucelee.set (endattack ken, grab1 brick,
+## specialpunchhighhit sinfu, ...).  Only Bruce's own set carries these matchup
+## variants; every row is derived from the native set/link records and the
+## animation must be playable by an existing candidate or the row fails closed.
+const OPPONENT_SUFFIX_VARIANTS_PATH: String = "res://data/opponent_suffix_variants.json"
+## characters.list matchup identity behind `unique` link tags.  brucelee.set
+## names the OPPONENT on a variant action (grababrick, endkengodall, ...), so the
+## local player matches unique tags against this token, not against itself.
+const OPPONENT_SUFFIX_TOKEN: Dictionary = {
+    "res://data/fighting_set_m03_mapped_attacks.json": "brick",
+    "res://data/attack_config_smallboy.json": "smallboy",
+    "res://data/attack_config_johnson.json": "johnson",
+    "res://data/attack_config_chief.json": "chief",
+    "res://data/attack_config_loming.json": "loming",
+    "res://data/attack_config_ken.json": "ken",
+    "res://data/attack_config_master.json": "master",
+    "res://data/attack_config_sinfu.json": "sinfu",
+    "res://data/attack_config_shenlo.json": "shenlo",
+}
 # Complete recovered candobasicattacks group coverage (84 members, 21 links).
 # Built read-only from brucelee.set by tools/build_candobasicattacks_members.py.
 const CANDOBASICATTACKS_MEMBERS_PATH: String = "res://data/candobasicattacks_members.json"
@@ -2811,6 +2830,13 @@ var _link_events: Array[Dictionary] = []
 var _native_actions: Dictionary = {}
 var _native_reactions: Dictionary = {"hit": [], "block": []}
 var _native_links: Array = []
+## Opponent-suffix attack kinds of the local player (recovered from brucelee.set).
+## Keyed by the native action name; only rows proven by a native entry link and
+## an existing candidate animation are present.
+var _opponent_suffix_variants: Dictionary = {}
+var _opponent_suffix_error: String = ""
+## Last clip resolution per variant kind: {status, clip, source, reason}.
+var _variant_clip_status: Dictionary = {}
 ## Recovered canblock/canblock2 windows of `native_links*.json`, keyed by the
 ## action that owns the window.  Null when no usable set export is loaded: every
 ## block decision then fails closed.  Built from the same parsed JSON as
@@ -3495,7 +3521,237 @@ func _load_attack_definitions() -> bool:
     if loaded.is_empty():
         return false
     ATTACKS = loaded
+    _load_opponent_suffix_variants()
     return true
+
+
+
+## ---------------------------------------------------------------------------
+## Opponent-suffix variants (recovered from brucelee.set)
+##
+## The local player's own set carries conditional attack variants named for the
+## opponent (endattack ken, grab1 brick, specialpunchhighhit sinfu, ...).  Each
+## row is merged into ATTACKS as an attack kind whose source_action is the native
+## action name, so the existing native link scan / recovery / camera code treats
+## it exactly like any other attack.  A row is only playable when a native entry
+## link exists for this opponent and an existing candidate owns the animation;
+## otherwise request_attack/_begin_chained_attack fail closed.
+## ---------------------------------------------------------------------------
+
+func _load_opponent_suffix_variants() -> void:
+    _opponent_suffix_variants.clear()
+    _variant_clip_status.clear()
+    _opponent_suffix_error = ""
+    # Only Bruce's own fighting set carries these matchup variants.
+    if attack_config_path != ATTACK_CONFIG_PATH or not attack_set_profile.is_empty():
+        return
+    var file: FileAccess = FileAccess.open(OPPONENT_SUFFIX_VARIANTS_PATH, FileAccess.READ)
+    if file == null:
+        _opponent_suffix_error = "missing " + OPPONENT_SUFFIX_VARIANTS_PATH
+        push_error("Opponent-suffix variant table missing: " + OPPONENT_SUFFIX_VARIANTS_PATH)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        _opponent_suffix_error = "invalid JSON"
+        push_error("Opponent-suffix variant table is invalid")
+        return
+    var rows: Variant = Dictionary(parsed).get("variants", [])
+    if not rows is Array:
+        _opponent_suffix_error = "variants is not an array"
+        return
+    for row_value: Variant in rows:
+        if not row_value is Dictionary:
+            continue
+        var row: Dictionary = row_value
+        var kind: String = String(row.get("name", ""))
+        var family: String = String(row.get("family", ""))
+        if kind.is_empty() or family == "victim" or ATTACKS.has(kind):
+            # Victim rows are served by the per-attacker victim selector.
+            continue
+        if not bool(row.get("entry_proven", false)):
+            # No recovered native entry link for this opponent: never expose it
+            # as an enterable kind (fail closed).
+            continue
+        var animation: String = String(row.get("animation", ""))
+        var frames: int = int(row.get("frames", 0))
+        var startup: int = int(row.get("startup", 0))
+        var active: int = int(row.get("active", 0))
+        var recovery: int = int(row.get("recovery", 0))
+        if (animation.is_empty() or frames <= 0 or startup < 0 or active <= 0
+                or recovery < 0 or startup + active + recovery != frames):
+            _opponent_suffix_error = kind + ": invalid recovered phase frames"
+            push_error("Opponent-suffix variant " + kind + " rejected: " + _opponent_suffix_error)
+            continue
+        var source_impact: Variant = row.get("source_impact")
+        if not source_impact is Dictionary:
+            source_impact = {}
+        var multi: Array = []
+        for impact_value: Variant in Array(row.get("multi_impacts", [])):
+            if impact_value is Dictionary:
+                multi.append(Dictionary(impact_value))
+        ATTACKS[kind] = {
+            "source_action": kind,
+            "animation": animation,
+            "animation_frame_count": frames,
+            "startup": float(startup),
+            "active": float(active),
+            "recovery": float(recovery),
+            "damage": float(row.get("damage", 0.0)),
+            "source_impact": Dictionary(source_impact),
+            "multi_impacts": multi,
+            "animation_radius": float(row.get("radius", 0.0)),
+            "variant_family": family,
+            "variant_suffix": String(row.get("suffix", "")),
+            "variant_camera": String(row.get("camera", "")),
+            "variant_grab_family": String(row.get("grab_family", "")),
+            "variant_attack_config": String(row.get("attack_config", "")),
+        }
+        _opponent_suffix_variants[kind] = ATTACKS[kind]
+
+
+func _is_variant_attack(kind: String) -> bool:
+    return _opponent_suffix_variants.has(kind)
+
+
+func _opponent_suffix_token() -> String:
+    if opponent == null or not is_instance_valid(opponent):
+        return ""
+    return String(OPPONENT_SUFFIX_TOKEN.get(opponent.attack_config_path, ""))
+
+
+func _variant_opponent_ok(kind: String) -> bool:
+    if not _is_variant_attack(kind):
+        return false
+    var token: String = _opponent_suffix_token()
+    if token.is_empty():
+        return false
+    return String(ATTACKS[kind].get("variant_suffix", "")) == token
+
+
+func _variant_grab_family(kind: String) -> String:
+    if not _is_variant_attack(kind):
+        return ""
+    return String(ATTACKS[kind].get("variant_grab_family", ""))
+
+
+func _variant_size_resolved(base: String) -> Dictionary:
+    ## Recovered Animations.versions decision for a variant animation.  Unlike
+    ## size_variant_for(), availability is *not* checked against the player's
+    ## candidate here: a required version may live in the opponent candidate and
+    ## is borrowed later.  Only the class decision is made from the recovered
+    ## table.
+    var entry: Variant = _size_variants.get(base)
+    if not entry is Dictionary:
+        return {"status": "base", "clip": base, "class": "", "reason": ""}
+    var audience: String = String(Dictionary(entry).get("audience", ""))
+    var owner: PortFighter = opponent if audience == "opponent" else self
+    if owner == null or not is_instance_valid(owner):
+        return {"status": "base", "clip": base, "class": "",
+                "reason": "no owner for size version"}
+    var klass: String = owner.skeleton_class_name()
+    var versions: Dictionary = Dictionary(entry).get("versions", {})
+    if klass == SIZE_CLASS_MEDIUM or klass.is_empty() or not versions.has(klass):
+        return {"status": "base", "clip": base, "class": klass, "reason": ""}
+    return {"status": "variant", "clip": String(versions[klass]), "class": klass,
+            "reason": ""}
+
+
+func _grab_victim_kind(kind: String) -> String:
+    ## begin_grabbed() takes grab1/grab2 (or a base mapped slot); a variant grab
+    ## resolves through the same hold data.
+    var family: String = _variant_grab_family(kind)
+    return family if not family.is_empty() else kind
+
+
+func _is_grab_attack(kind: String) -> bool:
+    return GRAB_ATTACKS.has(kind) or not _variant_grab_family(kind).is_empty()
+
+
+func _is_endattack_attack(kind: String) -> bool:
+    if ENDATTACK_ATTACKS.has(kind):
+        return true
+    return _is_variant_attack(kind) and String(ATTACKS[kind].get(
+            "variant_family", "")) == "endattack"
+
+
+func _resolve_variant_clip(kind: String) -> bool:
+    ## Resolve the variant's archived animation against the loaded candidates and
+    ## cache the playable clip under `kind`.  Order: the player's own candidate
+    ## (base or recovered size version), then the opponent's already-loaded
+    ## candidate.  No clip -> fail closed.
+    if not _is_variant_attack(kind):
+        return false
+    var cached: Variant = _variant_clip_status.get(kind)
+    if cached is Dictionary and bool(Dictionary(cached).get("ok", false)):
+        if _candidate_clip_paths.has(kind):
+            return true
+        var cached_clip: String = String(Dictionary(cached).get("clip", ""))
+        if (not cached_clip.is_empty() and _candidate_animation != null
+                and _candidate_animation.has_animation(cached_clip)):
+            _candidate_clip_paths[kind] = cached_clip
+            return true
+    var row: Dictionary = ATTACKS[kind]
+    var base: String = String(row.get("animation", ""))
+    var status: Dictionary = {
+        "ok": false, "clip": "", "source": "", "reason": "", "base": base,
+    }
+    var resolved: String = base
+    var size: Dictionary = _variant_size_resolved(base)
+    if String(size.get("status", "")) == "unavailable":
+        status["reason"] = "size variant unavailable: " + String(size.get("reason", ""))
+        _variant_clip_status[kind] = status
+        return false
+    if String(size.get("status", "")) == "variant":
+        resolved = String(size.get("clip", base))
+    status["resolved"] = resolved
+    var matched: String = ""
+    if _candidate_animation != null:
+        matched = _find_animation_clip(_candidate_animation, resolved)
+    if not matched.is_empty() and _candidate_clip_paths.has(matched):
+        _candidate_clip_paths[kind] = matched
+        status["ok"] = true
+        status["clip"] = matched
+        status["source"] = "player"
+        _variant_clip_status[kind] = status
+        return true
+    # Borrow the same archived animation from the opponent candidate that the
+    # matchup already loads.  Both candidates use the same source skeleton; the
+    # borrowed copy drops only tracks whose nodes do not exist on the player rig.
+    if (opponent != null and is_instance_valid(opponent)
+            and opponent._candidate_animation != null):
+        var opponent_match: String = opponent._find_animation_clip(
+                opponent._candidate_animation, resolved)
+        if not opponent_match.is_empty():
+            var borrowed: Animation = opponent._candidate_animation.get_animation(opponent_match)
+            if borrowed != null and _candidate_animation != null:
+                var key: String = resolved if not resolved.is_empty() else base
+                if not _candidate_animation.has_animation(key):
+                    var copy: Animation = borrowed.duplicate(true)
+                    _disable_candidate_character_position_tracks(copy)
+                    _prune_unresolvable_tracks(copy)
+                    var library: AnimationLibrary = _candidate_animation.get_animation_library("")
+                    if library == null:
+                        library = AnimationLibrary.new()
+                        _candidate_animation.add_animation_library("", library)
+                    if library != null:
+                        library.add_animation(key, copy)
+                if _candidate_animation.has_animation(key):
+                    _candidate_clip_paths[kind] = key
+                    status["ok"] = true
+                    status["clip"] = key
+                    status["source"] = "opponent"
+                    _variant_clip_status[kind] = status
+                    return true
+        status["reason"] = "no player or opponent candidate clip for " + resolved
+    else:
+        status["reason"] = "no opponent candidate loaded for " + resolved
+    _variant_clip_status[kind] = status
+    return false
+
+
+func variant_clip_status(kind: String) -> Dictionary:
+    ## Test/HUD view of the last variant clip decision.
+    return Dictionary(_variant_clip_status.get(kind, {})).duplicate(true)
 
 
 func _is_number(value: Variant) -> bool:
@@ -4696,6 +4952,33 @@ func _disable_candidate_character_position_tracks(clip: Animation) -> void:
             clip.track_set_enabled(track, false)
 
 
+func _prune_unresolvable_tracks(clip: Animation) -> void:
+    ## A borrowed variant animation is authored on the same source skeleton, but
+    ## an opponent candidate may also carry tracks for its own mesh/accessory
+    ## nodes (for example bl_ken_goodall_01_body_hw_kinetic).  Those nodes do not
+    ## exist on the player rig; remove exactly those tracks so playback never
+    ## targets a missing node.  Skeleton bone tracks are kept.
+    if clip == null or _candidate_animation == null:
+        return
+    var animation_root: Node = _candidate_animation.get_node_or_null(
+        _candidate_animation.root_node
+    )
+    if animation_root == null:
+        return
+    for track: int in range(clip.get_track_count() - 1, -1, -1):
+        if clip.track_get_type(track) not in [
+                Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D,
+                Animation.TYPE_SCALE_3D]:
+            continue
+        var path: NodePath = clip.track_get_path(track)
+        if path.get_subname_count() > 0:
+            if _candidate_skeleton != null and _candidate_skeleton.find_bone(
+                    String(path.get_subname(0))) >= 0:
+                continue
+        if animation_root.get_node_or_null(path) == null:
+            clip.remove_track(track)
+
+
 func _align_candidate_attack_timings() -> void:
     if not candidate_scale_attack_timing:
         return
@@ -4809,6 +5092,12 @@ func _play_candidate_action(action: String, start_frame: int = 0) -> void:
 func supports_attack(kind: String) -> bool:
     if not ATTACKS.has(kind):
         return false
+    if _is_variant_attack(kind):
+        # A variant is enterable only for its recovered opponent and only when an
+        # existing candidate animation can play it (player or opponent clip).
+        if not _variant_opponent_ok(kind):
+            return false
+        return _resolve_variant_clip(kind)
     if candidate_loaded and not _candidate_clip_paths.has(kind):
         return false
     return true
@@ -6034,15 +6323,61 @@ func _link_text(link: Dictionary, key: String) -> String:
 
 
 func _native_link_unique_ok(link: Dictionary) -> bool:
-    # Recovered unique links name the character-specific action variant, for
-    # example grababrucelee / grababrick. Skip other characters' variants.
+    # Recovered unique links name the character-specific action variant
+    # (grababrucelee / grababrick / endkengodall).  In brucelee.set that tag is
+    # the OPPONENT of the matchup, so the local player filters against the
+    # opponent's recovered token.  Other fighting sets keep the self-tag rule:
+    # their unique tags name their own character and the AI requests its kinds
+    # directly, so this branch only matters for the local player.
     var unique: Array = Array(link.get("unique", []))
     if unique.is_empty():
         return true
+    if is_player:
+        var opponent_token: String = _opponent_suffix_token()
+        if not opponent_token.is_empty():
+            for value: Variant in unique:
+                if String(value).to_lower().contains(opponent_token):
+                    return true
+            return false
     var tag: String = String(attack_set_profile.get("link_tag", "brucelee"))
     for value: Variant in unique:
         if String(value).to_lower().contains(tag):
             return true
+    return false
+
+
+func _defer_generic_link_for_variant(link: Dictionary) -> bool:
+    ## Specific-beats-generic ordering for the local player's matchup links.
+    ## The native data keeps a generic attack link and an opponent-tagged variant
+    ## link with identical input/status/conditions (brucelee.set link 34
+    ## candobasicattacks -> endattack1, link 39 -> endattack ken).  The generic
+    ## link is deferred to the end of the same scan so the recovered specific
+    ## link is evaluated first; it still fires when the specific one does not.
+    if not is_player or not Array(link.get("unique", [])).is_empty():
+        return false
+    if _opponent_suffix_token().is_empty():
+        return false
+    var steps: Array = Array(link.get("steps", []))
+    var status: Array = Array(link.get("status", []))
+    for other: Dictionary in _native_links:
+        if other == link or Array(other.get("unique", [])).is_empty():
+            continue
+        if not _native_link_unique_ok(other):
+            continue
+        if _link_text(other, "from") != _link_text(link, "from"):
+            continue
+        if _link_text(other, "from_group") != _link_text(link, "from_group"):
+            continue
+        if Array(other.get("steps", [])) != steps or Array(other.get("status", [])) != status:
+            continue
+        var target: String = _link_text(other, "to")
+        if not _is_variant_attack(target):
+            continue
+        # Only defer when the specific link would really apply now; otherwise the
+        # generic link keeps its native position.
+        if not _native_link_conditions_ok(other):
+            continue
+        return true
     return false
 
 
@@ -6058,13 +6393,19 @@ func _grab_finisher_link(link: Dictionary) -> bool:
         return false
     if state not in ["startup", "active", "recovery"]:
         return false
-    if not GRAB_ATTACKS.has(attack_kind):
+    if not _is_grab_attack(attack_kind):
         return false
     if opponent == null or not is_instance_valid(opponent):
         return false
     if opponent.state not in ["grabbed1", "grabbed2"]:
         return false
-    return String(_link_text(link, "to")) in ["endattack1", "endattack2"]
+    var target: String = String(_link_text(link, "to"))
+    if target in ["endattack1", "endattack2"]:
+        return true
+    # Recovered opponent-suffix finishers (endattack ken/brick/...) are the same
+    # candobasicattacks links; only a proven variant may be followed.
+    return _is_variant_attack(target) and String(ATTACKS[target].get(
+            "variant_family", "")) == "endattack"
 
 
 func _native_link_applies(link: Dictionary) -> bool:
@@ -6502,7 +6843,19 @@ func _try_follow_links() -> bool:
     var previous_scan_frame: float = _link_scan_previous_frame
     _link_scan_action = scan_action
     _link_scan_previous_frame = scan_frame
+    # A generic (untagged) link and an opponent-tagged variant link can share the
+    # same input and conditions.  Defer the generic one so the specific recovered
+    # matchup link is evaluated first; it still runs in the same scan.
+    var scan_links: Array = []
+    var deferred_generic: Array = []
     for link: Dictionary in _native_links:
+        if _defer_generic_link_for_variant(link):
+            deferred_generic.append(link)
+        else:
+            scan_links.append(link)
+    for link: Dictionary in deferred_generic:
+        scan_links.append(link)
+    for link: Dictionary in scan_links:
         if not _native_link_applies(link):
             continue
         if not _native_link_unique_ok(link):
@@ -6866,6 +7219,17 @@ func _try_attack_to_floor_contact() -> void:
 func request_attack(kind: String) -> bool:
     if guard_held or not ATTACKS.has(kind):
         return false
+    if _is_variant_attack(kind):
+        # Variants are entered from their recovered native link, and only for the
+        # recovered opponent.  This guard also keeps direct callers honest.
+        if not _variant_opponent_ok(kind):
+            push_warning(character_name + " " + kind
+                    + " refused: opponent does not own this variant")
+            return false
+        if not _resolve_variant_clip(kind):
+            push_warning(character_name + " " + kind + " refused: "
+                    + String(_variant_clip_status.get(kind, {}).get("reason", "")))
+            return false
     if not _uses_standing_idle_rules():
         # The grab finisher starts from the tail of the grab attack while the
         # victim is still held; other attacks still require a standing idle,
@@ -6961,7 +7325,7 @@ func _physics_process(delta: float) -> void:
     if native_reaction_enabled:
         # BasicUpdate executes the link parked in +0xF0/+0xF4, then clears it.
         _advance_native_reaction_parking()
-    if ((attack_kind == "endattack_brick" or ENDATTACK_ATTACKS.has(attack_kind))
+    if ((attack_kind == "endattack_brick" or _is_endattack_attack(attack_kind))
             and state == "active"
             and not _endattack_victim_started
             and opponent != null and is_instance_valid(opponent)
@@ -7230,12 +7594,12 @@ func _try_multi_impact_contacts() -> void:
         if frame_state_machine_enabled:
             if distance > reach:
                 continue
-            if dx * facing < -0.1 and not GRAB_ATTACKS.has(attack_kind):
+            if dx * facing < -0.1 and not _is_grab_attack(attack_kind):
                 continue
         elif _multi_impact_applied.is_empty() and distance > reach:
             continue
         elif (_multi_impact_applied.is_empty() and dx * facing < -0.1
-                and not GRAB_ATTACKS.has(attack_kind)):
+                and not _is_grab_attack(attack_kind)):
             continue
         var blocked: bool = opponent.guard_held and (
             opponent._can_block_current_hit(impact)
@@ -7244,7 +7608,7 @@ func _try_multi_impact_contacts() -> void:
             # had no native window and blocked at every frame.
             or opponent.blockstun_window_open())
         var reaction: Dictionary = opponent.reaction_for_incoming(impact, blocked)
-        if GRAB_ATTACKS.has(attack_kind):
+        if _is_grab_attack(attack_kind):
             # A grab pulls the victim into the hold; the generic reaction root
             # push would displace them (Master grab1 measured ~2.1 m). The grab
             # state owns positioning once begin_grabbed runs.
@@ -7255,8 +7619,9 @@ func _try_multi_impact_contacts() -> void:
             continue
         _attack_connected = true
         if (not blocked and opponent.health > 0.0
-                and GRAB_VICTIM_DATA.has(attack_kind)):
-            opponent.begin_grabbed(attack_kind)
+                and (GRAB_VICTIM_DATA.has(attack_kind)
+                     or not _variant_grab_family(attack_kind).is_empty())):
+            opponent.begin_grabbed(_grab_victim_kind(attack_kind))
         _register_landed_hit(damage, blocked)
         combat_hit.emit(self, opponent, attack_kind, damage, blocked)
 
@@ -7295,6 +7660,36 @@ func _begin_chained_attack(
         var hit_kind: String = kind.replace("_miss", "_hit")
         if ATTACKS.has(hit_kind):
             kind = hit_kind
+    if _is_variant_attack(kind):
+        # Opponent-suffix variants resolve their clip from the player candidate or
+        # borrow the same archived animation from the opponent's already-loaded
+        # candidate.  A row whose clip is missing on both fails closed here.
+        if not _variant_opponent_ok(kind) or not _resolve_variant_clip(kind):
+            push_warning(character_name + " " + kind + " link refused: "
+                    + String(_variant_clip_status.get(kind, {}).get("reason", "")))
+            return false
+        attack_kind = kind
+        note_animation_categories(kind)
+        var variant_rage_action: String = String(
+            ATTACKS.get(kind, {}).get("source_action", kind)
+        )
+        var variant_rage_cost: float = _action_rage_value(variant_rage_action)
+        if variant_rage_cost < 0.0:
+            rage = maxf(0.0, rage + variant_rage_cost)
+        attack_sequence += 1
+        _attack_connected = false
+        _parry_absorbed = false
+        _attack_hit_landed = false
+        _grab_connected = false
+        _endattack_victim_started = false
+        _multi_impact_applied.clear()
+        _apply_attack_start_frame(kind, start_frame)
+        _seed_attack_root_motion()
+        _restart_candidate_action()
+        if blend_frames > 0:
+            _queue_candidate_visual_blend(float(blend_frames) / SOURCE_FRAME_RATE)
+        attack_started.emit(kind)
+        return true
     # A link target that is a grab/finisher must pass the same size-class gate as
     # a requested attack, otherwise the link would play the base clip.
     if not _prepare_size_variant(kind):
@@ -7521,7 +7916,7 @@ func _register_landed_hit(damage: float, blocked: bool) -> void:
     combo_hits += 1
     if damage > 0.0 and not blocked:
         _attack_hit_landed = true
-        if GRAB_ATTACKS.has(attack_kind):
+        if _is_grab_attack(attack_kind):
             _grab_connected = true
         var rage_gain: float = _action_rage_value(_current_action_name())
         if rage_gain > 0.0:
@@ -7786,7 +8181,7 @@ func _try_attack_contact() -> void:
     var reaction: Dictionary = {}
     if details.has("source_impact"):
         reaction = opponent.reaction_for_incoming(details["source_impact"], blocked)
-    if GRAB_ATTACKS.has(attack_kind):
+    if _is_grab_attack(attack_kind):
         # The hold owns victim placement; do not apply the generic hit push.
         reaction["grab_contact"] = true
     var impact_height: String = ""
@@ -7828,8 +8223,10 @@ func _try_attack_contact() -> void:
     _attack_connected = true
     _register_landed_hit(damage, blocked)
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
-    if not blocked and opponent.health > 0.0 and GRAB_VICTIM_DATA.has(attack_kind):
-        opponent.begin_grabbed(attack_kind)
+    if not blocked and opponent.health > 0.0 and (
+            GRAB_VICTIM_DATA.has(attack_kind)
+            or not _variant_grab_family(attack_kind).is_empty()):
+        opponent.begin_grabbed(_grab_victim_kind(attack_kind))
 
 
 func current_source_animation() -> String:
@@ -7901,6 +8298,12 @@ func current_camera_animation() -> String:
     ## clip that is actually played).  grabbed1/grabbed2 and endattackcomp1/2
     ## have no branch in current_source_animation(), so their victim slot clip
     ## is reported here.
+    # Opponent-suffix variants own their camera per ACTION record, not per clip:
+    # two actions can share one clip with different cameras (grab2 master vs
+    # grab2 sinfu both play m04_sp_kck_low).  Report a stable action key so the
+    # action camera map can carry the exact recovered camera.
+    if state in ["startup", "active", "recovery"] and _is_variant_attack(attack_kind):
+        return "variant_action:" + attack_kind
     var base: String = ""
     if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
         base = current_victim_animation()

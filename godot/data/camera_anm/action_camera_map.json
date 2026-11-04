@@ -229,6 +229,181 @@
     "grab2miss ken",
     "grab2miss smallboy"
    ]
+  },
+  "variant_action:specialpunchhighhit sinfu": {
+   "camera": "m04_sp_pnch_high",
+   "file": "m04_sp_pnch_high.json",
+   "frames": 50,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of specialpunchhighhit sinfu"
+  },
+  "variant_action:endattack smallboy": {
+   "camera": "m03_end_attack_01",
+   "file": "m03_end_attack_01.json",
+   "frames": 93,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of endattack smallboy"
+  },
+  "variant_action:endattack johnson": {
+   "camera": "m03_end_attack_02",
+   "file": "m03_end_attack_02.json",
+   "frames": 130,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of endattack johnson"
+  },
+  "variant_action:endattack chief": {
+   "camera": "m02_end_attack_02",
+   "file": "m02_end_attack_02.json",
+   "frames": 155,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of endattack chief"
+  },
+  "variant_action:endattack ken": {
+   "camera": "m02_end_attack_01",
+   "file": "m02_end_attack_01.json",
+   "frames": 132,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of endattack ken"
+  },
+  "variant_action:endattack brick": {
+   "camera": "m03_end_attack_01",
+   "file": "m03_end_attack_01.json",
+   "frames": 93,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of endattack brick"
+  },
+  "variant_action:grab1 shenlo": {
+   "camera": "m04_grab_01",
+   "file": "m04_grab_01.json",
+   "frames": 103,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 shenlo"
+  },
+  "variant_action:grab1 master": {
+   "camera": "m04_sp_pnch_low",
+   "file": "m04_sp_pnch_low.json",
+   "frames": 28,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 master"
+  },
+  "variant_action:grab1 loming": {
+   "camera": "m04_grab_01",
+   "file": "m04_grab_01.json",
+   "frames": 103,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 loming"
+  },
+  "variant_action:grab1 sinfu": {
+   "camera": "m04_grab_01",
+   "file": "m04_grab_01.json",
+   "frames": 103,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 sinfu"
+  },
+  "variant_action:grab1 smallboy": {
+   "camera": "m03_grab_01",
+   "file": "m03_grab_01.json",
+   "frames": 90,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 smallboy"
+  },
+  "variant_action:grab1 johnson": {
+   "camera": "m03_grab_01",
+   "file": "m03_grab_01.json",
+   "frames": 90,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 johnson"
+  },
+  "variant_action:grab1 chief": {
+   "camera": "m02_grab_01",
+   "file": "m02_grab_01.json",
+   "frames": 47,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 chief"
+  },
+  "variant_action:grab1 ken": {
+   "camera": "m02_grab_01",
+   "file": "m02_grab_01.json",
+   "frames": 47,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 ken"
+  },
+  "variant_action:grab1 brick": {
+   "camera": "m03_grab_01",
+   "file": "m03_grab_01.json",
+   "frames": 90,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab1 brick"
+  },
+  "variant_action:grab2 shenlo": {
+   "camera": "m04_grab_02",
+   "file": "m04_grab_02.json",
+   "frames": 45,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 shenlo"
+  },
+  "variant_action:grab2 master": {
+   "camera": "m04_sp_kck_low",
+   "file": "m04_sp_kck_low.json",
+   "frames": 55,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 master"
+  },
+  "variant_action:grab2 loming": {
+   "camera": "m04_grab_02",
+   "file": "m04_grab_02.json",
+   "frames": 45,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 loming"
+  },
+  "variant_action:grab2 sinfu": {
+   "camera": "m04_sp_pnch_low",
+   "file": "m04_sp_pnch_low.json",
+   "frames": 28,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 sinfu"
+  },
+  "variant_action:grab2 smallboy": {
+   "camera": "m03_grab_02",
+   "file": "m03_grab_02.json",
+   "frames": 78,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 smallboy"
+  },
+  "variant_action:grab2 johnson": {
+   "camera": "m03_grab_02",
+   "file": "m03_grab_02.json",
+   "frames": 78,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 johnson"
+  },
+  "variant_action:grab2 chief": {
+   "camera": "m02_grab_02",
+   "file": "m02_grab_02.json",
+   "frames": 98,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 chief"
+  },
+  "variant_action:grab2 ken": {
+   "camera": "m02_grab_02",
+   "file": "m02_grab_02.json",
+   "frames": 98,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 ken"
+  },
+  "variant_action:grab2 brick": {
+   "camera": "m03_grab_02",
+   "file": "m03_grab_02.json",
+   "frames": 78,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grab2 brick"
+  },
+  "all_grabbed_02_forset04": {
+   "camera": "all_grabbed_02_forset04",
+   "file": "all_grabbed_02_forset04.json",
+   "frames": 45,
+   "fps": 30.0,
+   "proof": "recovered animations[].camera of grabcompl2 loming"
   }
  }
 }

@@ -1,0 +1,6744 @@
+{
+ "schema": 1,
+ "source": {
+  "set": "adreno_200/set/brucelee.set",
+  "set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+  "action_count": 200,
+  "suffix_action_count": 101,
+  "note": "Derived metadata only; provenance in evidence/brucelee_opponent_suffix_recovery.json."
+ },
+ "player_class": "medium",
+ "opponent_token": {
+  "res://data/fighting_set_m03_mapped_attacks.json": "brick",
+  "res://data/attack_config_smallboy.json": "smallboy",
+  "res://data/attack_config_johnson.json": "johnson",
+  "res://data/attack_config_chief.json": "chief",
+  "res://data/attack_config_loming.json": "loming",
+  "res://data/attack_config_ken.json": "ken",
+  "res://data/attack_config_master.json": "master",
+  "res://data/attack_config_sinfu.json": "sinfu",
+  "res://data/attack_config_shenlo.json": "shenlo"
+ },
+ "variants": [
+  {
+   "name": "specialkickhigh shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_e03_kck_high_03",
+   "camera": "",
+   "frames": 169,
+   "radius": 45.0,
+   "startup": 9,
+   "active": 6,
+   "recovery": 154,
+   "damage": 10.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "lleg",
+    "attack_radius": 80.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 66,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh shenlo",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkickshenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkickhigh loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m04_e02_kck_high_03",
+   "camera": "",
+   "frames": 85,
+   "radius": 45.0,
+   "startup": 9,
+   "active": 6,
+   "recovery": 70,
+   "damage": 13.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "lleg",
+    "attack_radius": 80.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 64,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh loming",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkickloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkickhigh sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_e02_kck_high_03",
+   "camera": "",
+   "frames": 85,
+   "radius": 45.0,
+   "startup": 9,
+   "active": 6,
+   "recovery": 70,
+   "damage": 13.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "lleg",
+    "attack_radius": 80.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 67,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh sinfu",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 2,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkicksinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkickhigh master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "attack",
+   "animation": "m04_e01_kck_high_03",
+   "camera": "",
+   "frames": 73,
+   "radius": 45.0,
+   "startup": 9,
+   "active": 7,
+   "recovery": 57,
+   "damage": 12.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "brutal",
+    "direction": "fromright",
+    "body_part": "rleg",
+    "attack_radius": 100.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 65,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh master",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkickmaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkickhigh smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_e01_sp_kck_high_02",
+   "camera": "",
+   "frames": 38,
+   "radius": 25.0,
+   "startup": 8,
+   "active": 3,
+   "recovery": 27,
+   "damage": 10.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromabove",
+    "body_part": "rleg",
+    "attack_radius": 80.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 72,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh smallboy",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkicksmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkickhigh johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_e01_kck_high_03",
+   "camera": "",
+   "frames": 30,
+   "radius": 25.0,
+   "startup": 9,
+   "active": 3,
+   "recovery": 18,
+   "damage": 10.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "brutal",
+    "direction": "fromright",
+    "body_part": "lleg",
+    "attack_radius": 80.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 69,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh johnson",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkickjohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkickhigh chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m02_e01_kck_high_03",
+   "camera": "",
+   "frames": 32,
+   "radius": 45.0,
+   "startup": 9,
+   "active": 8,
+   "recovery": 15,
+   "damage": 12.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 68,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh chief",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkickchief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkickhigh ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m02_sp_kck_high",
+   "camera": "",
+   "frames": 48,
+   "radius": 50.0,
+   "startup": 20,
+   "active": 3,
+   "recovery": 25,
+   "damage": 13.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "special",
+    "attack"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 70,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh ken",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkickken"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkickhigh brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_sp_kck_high",
+   "camera": "",
+   "frames": 73,
+   "radius": 45.0,
+   "startup": 9,
+   "active": 7,
+   "recovery": 57,
+   "damage": 10.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "lleg",
+    "attack_radius": 55.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 71,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialkickhigh brick",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 2,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hkickbrick"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_sp_kck_low",
+   "camera": "",
+   "frames": 56,
+   "radius": 45.0,
+   "startup": 13,
+   "active": 4,
+   "recovery": 39,
+   "damage": 9.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 77,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow brick",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 3,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkickbrick"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m02_e01_kck_low_03",
+   "camera": "",
+   "frames": 40,
+   "radius": 40.0,
+   "startup": 11,
+   "active": 5,
+   "recovery": 24,
+   "damage": 10.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "lleg",
+    "attack_radius": 70.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 78,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow chief",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkickchief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_sp_kck_low",
+   "camera": "",
+   "frames": 56,
+   "radius": 25.0,
+   "startup": 13,
+   "active": 4,
+   "recovery": 39,
+   "damage": 9.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 79,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow johnson",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 8,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkickjohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m02_sp_kck_low",
+   "camera": "",
+   "frames": 60,
+   "radius": 45.0,
+   "startup": 14,
+   "active": 31,
+   "recovery": 15,
+   "damage": 28.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rleg",
+    "attack_radius": 65.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 12.0,
+     "damage_time": [
+      14,
+      17
+     ],
+     "attack_radius": 65.0,
+     "body_part": "rleg",
+     "height": "low",
+     "strength": "hard",
+     "direction": "frontal"
+    },
+    {
+     "damage": 8.0,
+     "damage_time": [
+      42,
+      44
+     ],
+     "attack_radius": 60.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    },
+    {
+     "damage": 8.0,
+     "damage_time": [
+      4,
+      6
+     ],
+     "attack_radius": 60.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "special",
+    "attack"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 80,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow ken",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkickken"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m04_e02_kck_low_03",
+   "camera": "",
+   "frames": 76,
+   "radius": 55.0,
+   "startup": 11,
+   "active": 15,
+   "recovery": 50,
+   "damage": 11.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "normal",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 5.0,
+     "damage_time": [
+      11,
+      13
+     ],
+     "attack_radius": 75.0,
+     "body_part": "rleg",
+     "height": "low",
+     "strength": "normal",
+     "direction": "fromleft"
+    },
+    {
+     "damage": 6.0,
+     "damage_time": [
+      23,
+      25
+     ],
+     "attack_radius": 75.0,
+     "body_part": "lleg",
+     "height": "low",
+     "strength": "hard",
+     "direction": "fromleft"
+    }
+   ],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 81,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow loming",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkickloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "attack",
+   "animation": "m04_e01_kck_low_03",
+   "camera": "",
+   "frames": 153,
+   "radius": 25.0,
+   "startup": 15,
+   "active": 4,
+   "recovery": 134,
+   "damage": 10.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "fromright",
+    "body_part": "rleg",
+    "attack_radius": 90.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 82,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow master",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkickmaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_e03_kck_low_03",
+   "camera": "",
+   "frames": 194,
+   "radius": 45.0,
+   "startup": 10,
+   "active": 23,
+   "recovery": 161,
+   "damage": 8.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "normal",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 70.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 4.0,
+     "damage_time": [
+      10,
+      12
+     ],
+     "attack_radius": 70.0,
+     "body_part": "rleg",
+     "height": "low",
+     "strength": "normal",
+     "direction": "fromleft"
+    },
+    {
+     "damage": 4.0,
+     "damage_time": [
+      30,
+      32
+     ],
+     "attack_radius": 75.0,
+     "body_part": "rleg",
+     "height": "low",
+     "strength": "hard",
+     "direction": "fromleft"
+    }
+   ],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 74,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow shenlo",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkickshenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_e02_kck_low_03",
+   "camera": "",
+   "frames": 76,
+   "radius": 55.0,
+   "startup": 11,
+   "active": 15,
+   "recovery": 50,
+   "damage": 11.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "normal",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 5.0,
+     "damage_time": [
+      11,
+      13
+     ],
+     "attack_radius": 75.0,
+     "body_part": "rleg",
+     "height": "low",
+     "strength": "normal",
+     "direction": "fromleft"
+    },
+    {
+     "damage": 6.0,
+     "damage_time": [
+      23,
+      25
+     ],
+     "attack_radius": 75.0,
+     "body_part": "lleg",
+     "height": "low",
+     "strength": "hard",
+     "direction": "fromleft"
+    }
+   ],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 75,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow sinfu",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkicksinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialkicklow smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_sp_kck_low",
+   "camera": "",
+   "frames": 56,
+   "radius": 45.0,
+   "startup": 13,
+   "active": 4,
+   "recovery": 39,
+   "damage": 9.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 76,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialkicklow smallboy",
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lkicksmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhigh brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_sp_pnch_high",
+   "camera": "",
+   "frames": 54,
+   "radius": 45.0,
+   "startup": 12,
+   "active": 1,
+   "recovery": 41,
+   "damage": 11.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromright",
+    "body_part": "rarm",
+    "attack_radius": 65.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 45,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialpunchhigh brick",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 2,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchbrick"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhigh chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m02_e01_pnch_high_03",
+   "camera": "",
+   "frames": 24,
+   "radius": 45.0,
+   "startup": 8,
+   "active": 4,
+   "recovery": 12,
+   "damage": 14.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rarm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 46,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialpunchhigh chief",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchchief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhigh johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_e01_pnch_high_03",
+   "camera": "",
+   "frames": 52,
+   "radius": 45.0,
+   "startup": 11,
+   "active": 3,
+   "recovery": 38,
+   "damage": 8.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rarm",
+    "attack_radius": 55.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 47,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialpunchhigh johnson",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 2,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchjohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhigh ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m02_sp_pnch_high",
+   "camera": "",
+   "frames": 58,
+   "radius": 30.0,
+   "startup": 9,
+   "active": 7,
+   "recovery": 42,
+   "damage": 15.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 80.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 48,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialpunchhigh ken",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchken"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhigh loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m04_e02_pnch_high_03",
+   "camera": "",
+   "frames": 96,
+   "radius": 25.0,
+   "startup": 7,
+   "active": 9,
+   "recovery": 80,
+   "damage": 15.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "fromleft",
+    "body_part": "larm",
+    "attack_radius": 80.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 6.0,
+     "damage_time": [
+      7,
+      9
+     ],
+     "attack_radius": 80.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "fromleft"
+    },
+    {
+     "damage": 9.0,
+     "damage_time": [
+      13,
+      15
+     ],
+     "attack_radius": 80.0,
+     "body_part": "rarm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 49,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialpunchhigh loming",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 2,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhigh master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "attack",
+   "animation": "m04_e01_pnch_high_03",
+   "camera": "",
+   "frames": 62,
+   "radius": 25.0,
+   "startup": 9,
+   "active": 3,
+   "recovery": 50,
+   "damage": 8.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 135.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 50,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialpunchhigh master",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchmaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhigh shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_e03_pnch_high_03",
+   "camera": "",
+   "frames": 115,
+   "radius": 45.0,
+   "startup": 14,
+   "active": 2,
+   "recovery": 99,
+   "damage": 7.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromleft",
+    "body_part": "larm",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 51,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialpunchhigh shenlo",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchshenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhighmiss sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_sp_pnch_high_fail",
+   "camera": "",
+   "frames": 71,
+   "radius": 25.0,
+   "startup": 47,
+   "active": 24,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 52,
+     "from": null,
+     "from_group": "combolevel3",
+     "to": "specialpunchhighmiss sinfu",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchsinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhighhit sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_sp_pnch_high",
+   "camera": "m04_sp_pnch_high",
+   "frames": 50,
+   "radius": 25.0,
+   "startup": 11,
+   "active": 5,
+   "recovery": 34,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 326,
+     "from": "specialpunchhighmiss sinfu",
+     "from_group": null,
+     "to": "specialpunchhighhit sinfu",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      12
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 0,
+     "conditions": [
+      "grabdistance",
+      "oppnotblocking",
+      "oppposestand"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchsinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchhighimpact sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_sp_pnch_high_impact",
+   "camera": "m04_sp_pnch_high_impact",
+   "frames": 45,
+   "radius": 25.0,
+   "startup": 38,
+   "active": 7,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "specialpunchhigh smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_shoulder_charge",
+   "camera": "",
+   "frames": 53,
+   "radius": 45.0,
+   "startup": 4,
+   "active": 3,
+   "recovery": 46,
+   "damage": 10.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 53,
+     "from": "stepback",
+     "from_group": null,
+     "to": "specialpunchhigh smallboy",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      19
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "hpunchsmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_sp_pnch_low",
+   "camera": "",
+   "frames": 44,
+   "radius": 45.0,
+   "startup": 13,
+   "active": 5,
+   "recovery": 26,
+   "damage": 8.0,
+   "source_impact": {
+    "height": "medium",
+    "strength": "brutal",
+    "direction": "frontal",
+    "body_part": "rarm",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 57,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow brick",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 2,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchbrick"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m02_e01_pnch_low_03",
+   "camera": "",
+   "frames": 24,
+   "radius": 45.0,
+   "startup": 9,
+   "active": 2,
+   "recovery": 13,
+   "damage": 10.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 58,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow chief",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchchief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_sp_pnch_low",
+   "camera": "",
+   "frames": 44,
+   "radius": 45.0,
+   "startup": 15,
+   "active": 3,
+   "recovery": 26,
+   "damage": 9.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rarm",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 61,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow johnson",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchjohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m02_sp_pnch_low",
+   "camera": "",
+   "frames": 47,
+   "radius": 45.0,
+   "startup": 8,
+   "active": 15,
+   "recovery": 24,
+   "damage": 14.0,
+   "source_impact": {
+    "height": "medium",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 60.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 5.0,
+     "damage_time": [
+      8,
+      9
+     ],
+     "attack_radius": 60.0,
+     "body_part": "larm",
+     "height": "medium",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 9.0,
+     "damage_time": [
+      14,
+      22
+     ],
+     "attack_radius": 65.0,
+     "body_part": "larm",
+     "height": "medium",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "special",
+    "attack"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 62,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow ken",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchken"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m04_e02_pnch_low_03",
+   "camera": "",
+   "frames": 104,
+   "radius": 25.0,
+   "startup": 11,
+   "active": 4,
+   "recovery": 89,
+   "damage": 7.0,
+   "source_impact": {
+    "height": "medium",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rarm",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 54,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow loming",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "attack",
+   "animation": "m04_e01_pnch_low_03",
+   "camera": "",
+   "frames": 82,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 25,
+   "recovery": 53,
+   "damage": 16.0,
+   "source_impact": {
+    "height": "medium",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 65.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 6.0,
+     "damage_time": [
+      4,
+      7
+     ],
+     "attack_radius": 65.0,
+     "body_part": "larm",
+     "height": "medium",
+     "strength": "hard",
+     "direction": "frontal"
+    },
+    {
+     "damage": 10.0,
+     "damage_time": [
+      23,
+      28
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "low",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 55,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow master",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 8,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchmaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_e03_pnch_low_03",
+   "camera": "",
+   "frames": 83,
+   "radius": 45.0,
+   "startup": 16,
+   "active": 5,
+   "recovery": 62,
+   "damage": 7.0,
+   "source_impact": {
+    "height": "medium",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rarm",
+    "attack_radius": 85.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 56,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow shenlo",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchshenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "attack",
+   "animation": "m04_e02_pnch_low_03",
+   "camera": "",
+   "frames": 104,
+   "radius": 25.0,
+   "startup": 11,
+   "active": 6,
+   "recovery": 87,
+   "damage": 7.0,
+   "source_impact": {
+    "height": "medium",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rarm",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 59,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow sinfu",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchsinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "specialpunchlow smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "attack",
+   "animation": "m03_sp_pnch_low",
+   "camera": "",
+   "frames": 44,
+   "radius": 45.0,
+   "startup": 15,
+   "active": 5,
+   "recovery": 24,
+   "damage": 9.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "rarm",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "special"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 60,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "specialpunchlow smallboy",
+     "keysequence": [
+      [
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 4,
+     "linking_frame": 0,
+     "blending": 3,
+     "conditions": [
+      "ragethird"
+     ],
+     "input_reset": null,
+     "unique": [
+      "lpunchsmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "endattack",
+   "animation": "m04_end_attack_01",
+   "camera": "",
+   "frames": 93,
+   "radius": 25.0,
+   "startup": 18,
+   "active": 1,
+   "recovery": 74,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 42,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack shenlo",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endshenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "endattack",
+   "animation": "m04_end_attack_02",
+   "camera": "",
+   "frames": 75,
+   "radius": 25.0,
+   "startup": 37,
+   "active": 4,
+   "recovery": 34,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "brutal",
+    "direction": "fromleft",
+    "body_part": "lleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 41,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack master",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endthemaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "endattack",
+   "animation": "m04_end_attack_01",
+   "camera": "",
+   "frames": 93,
+   "radius": 25.0,
+   "startup": 17,
+   "active": 3,
+   "recovery": 73,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "brutal",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 40,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack loming",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "endattack",
+   "animation": "m04_end_attack_02",
+   "camera": "",
+   "frames": 75,
+   "radius": 25.0,
+   "startup": 37,
+   "active": 3,
+   "recovery": 35,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 43,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack sinfu",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endsinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "endattack",
+   "animation": "m03_end_attack_01",
+   "camera": "m03_end_attack_01",
+   "frames": 93,
+   "radius": 25.0,
+   "startup": 15,
+   "active": 4,
+   "recovery": 74,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "brutal",
+    "direction": "fromleft",
+    "body_part": "lleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 44,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack smallboy",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun",
+      "grabdistance"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endsmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "endattack",
+   "animation": "m03_end_attack_02",
+   "camera": "m03_end_attack_02",
+   "frames": 130,
+   "radius": 25.0,
+   "startup": 18,
+   "active": 1,
+   "recovery": 111,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 38,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack johnson",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun",
+      "grabdistance"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endjohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "endattack",
+   "animation": "m02_end_attack_02",
+   "camera": "m02_end_attack_02",
+   "frames": 155,
+   "radius": 25.0,
+   "startup": 17,
+   "active": 3,
+   "recovery": 135,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "brutal",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 37,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack chief",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun",
+      "grabdistance"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endchief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "endattack",
+   "animation": "m02_end_attack_01",
+   "camera": "m02_end_attack_01",
+   "frames": 132,
+   "radius": 25.0,
+   "startup": 18,
+   "active": 1,
+   "recovery": 113,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 39,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack ken",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun",
+      "grabdistance"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endkengodall"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "endattack brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "endattack",
+   "animation": "m03_end_attack_01",
+   "camera": "m03_end_attack_01",
+   "frames": 93,
+   "radius": 25.0,
+   "startup": 17,
+   "active": 3,
+   "recovery": 73,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "brutal",
+    "direction": "fromleft",
+    "body_part": "rleg",
+    "attack_radius": 75.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "endmove"
+   ],
+   "grab_family": "",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 36,
+     "from": null,
+     "from_group": "candobasicattacks",
+     "to": "endattack brick",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "time": [
+      0,
+      0
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "oppposestun",
+      "grabdistance"
+     ],
+     "input_reset": null,
+     "unique": [
+      "endbrickdavis"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "grab",
+   "animation": "m04_grab_01",
+   "camera": "m04_grab_01",
+   "frames": 103,
+   "radius": 25.0,
+   "startup": 40,
+   "active": 7,
+   "recovery": 56,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 351,
+     "from": "grab1miss shenlo",
+     "from_group": null,
+     "to": "grab1 shenlo",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabashenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "grab",
+   "animation": "m04_sp_pnch_low",
+   "camera": "m04_sp_pnch_low",
+   "frames": 28,
+   "radius": 25.0,
+   "startup": 7,
+   "active": 2,
+   "recovery": 19,
+   "damage": 16.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 355,
+     "from": "grab1miss master",
+     "from_group": null,
+     "to": "grab1 master",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      6,
+      8
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabamaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m04_grab_01",
+   "camera": "m04_grab_01",
+   "frames": 103,
+   "radius": 25.0,
+   "startup": 38,
+   "active": 7,
+   "recovery": 58,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 359,
+     "from": "grab1miss loming",
+     "from_group": null,
+     "to": "grab1 loming",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabaloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "grab",
+   "animation": "m04_grab_01",
+   "camera": "m04_grab_01",
+   "frames": 103,
+   "radius": 25.0,
+   "startup": 41,
+   "active": 4,
+   "recovery": 58,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 363,
+     "from": "grab1miss sinfu",
+     "from_group": null,
+     "to": "grab1 sinfu",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabasinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m03_grab_01",
+   "camera": "m03_grab_01",
+   "frames": 90,
+   "radius": 25.0,
+   "startup": 19,
+   "active": 38,
+   "recovery": 33,
+   "damage": 22.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 6.0,
+     "damage_time": [
+      19,
+      20
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 6.0,
+     "damage_time": [
+      38,
+      39
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 10.0,
+     "damage_time": [
+      55,
+      56
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 367,
+     "from": "grab1miss smallboy",
+     "from_group": null,
+     "to": "grab1 smallboy",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabasmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m03_grab_01",
+   "camera": "m03_grab_01",
+   "frames": 90,
+   "radius": 25.0,
+   "startup": 19,
+   "active": 38,
+   "recovery": 33,
+   "damage": 22.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 6.0,
+     "damage_time": [
+      19,
+      20
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 6.0,
+     "damage_time": [
+      38,
+      39
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 10.0,
+     "damage_time": [
+      55,
+      56
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 371,
+     "from": "grab1miss johnson",
+     "from_group": null,
+     "to": "grab1 johnson",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabajohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m02_grab_01",
+   "camera": "m02_grab_01",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 32,
+   "active": 2,
+   "recovery": 13,
+   "damage": 16.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 375,
+     "from": "grab1miss chief",
+     "from_group": null,
+     "to": "grab1 chief",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      7,
+      8
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabachief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "grab",
+   "animation": "m02_grab_01",
+   "camera": "m02_grab_01",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 32,
+   "active": 2,
+   "recovery": 13,
+   "damage": 16.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 379,
+     "from": "grab1miss ken",
+     "from_group": null,
+     "to": "grab1 ken",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      7,
+      8
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabaken"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1 brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m03_grab_01",
+   "camera": "m03_grab_01",
+   "frames": 90,
+   "radius": 25.0,
+   "startup": 19,
+   "active": 38,
+   "recovery": 33,
+   "damage": 22.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 6.0,
+     "damage_time": [
+      19,
+      20
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 6.0,
+     "damage_time": [
+      38,
+      39
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "normal",
+     "direction": "frontal"
+    },
+    {
+     "damage": 10.0,
+     "damage_time": [
+      55,
+      56
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 383,
+     "from": "grab1miss brick",
+     "from_group": null,
+     "to": "grab1 brick",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grababrick"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "grab",
+   "animation": "m04_grab_02",
+   "camera": "m04_grab_02",
+   "frames": 45,
+   "radius": 25.0,
+   "startup": 7,
+   "active": 23,
+   "recovery": 15,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 5.0,
+     "damage_time": [
+      7,
+      9
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    },
+    {
+     "damage": 15.0,
+     "damage_time": [
+      24,
+      29
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 353,
+     "from": "grab2miss shenlo",
+     "from_group": null,
+     "to": "grab2 shenlo",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      5,
+      7
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbshenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "grab",
+   "animation": "m04_sp_kck_low",
+   "camera": "m04_sp_kck_low",
+   "frames": 55,
+   "radius": 25.0,
+   "startup": 12,
+   "active": 12,
+   "recovery": 31,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 5.0,
+     "damage_time": [
+      12,
+      13
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "low",
+     "strength": "hard",
+     "direction": "frontal"
+    },
+    {
+     "damage": 15.0,
+     "damage_time": [
+      21,
+      23
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "medium",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 357,
+     "from": "grab2miss master",
+     "from_group": null,
+     "to": "grab2 master",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      8,
+      10
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbmaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m04_grab_02",
+   "camera": "m04_grab_02",
+   "frames": 45,
+   "radius": 25.0,
+   "startup": 7,
+   "active": 21,
+   "recovery": 17,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 5.0,
+     "damage_time": [
+      7,
+      9
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    },
+    {
+     "damage": 15.0,
+     "damage_time": [
+      24,
+      27
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "high",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 361,
+     "from": "grab2miss loming",
+     "from_group": null,
+     "to": "grab2 loming",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      5,
+      7
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "grab",
+   "animation": "m04_sp_kck_low",
+   "camera": "m04_sp_pnch_low",
+   "frames": 55,
+   "radius": 25.0,
+   "startup": 12,
+   "active": 12,
+   "recovery": 31,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [
+    {
+     "damage": 5.0,
+     "damage_time": [
+      12,
+      13
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "low",
+     "strength": "hard",
+     "direction": "frontal"
+    },
+    {
+     "damage": 15.0,
+     "damage_time": [
+      22,
+      23
+     ],
+     "attack_radius": 45.0,
+     "body_part": "larm",
+     "height": "medium",
+     "strength": "hard",
+     "direction": "frontal"
+    }
+   ],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 365,
+     "from": "grab2miss sinfu",
+     "from_group": null,
+     "to": "grab2 sinfu",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      8,
+      10
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbsinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m03_grab_02",
+   "camera": "m03_grab_02",
+   "frames": 78,
+   "radius": 25.0,
+   "startup": 46,
+   "active": 3,
+   "recovery": 29,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 369,
+     "from": "grab2miss smallboy",
+     "from_group": null,
+     "to": "grab2 smallboy",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbsmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m03_grab_02",
+   "camera": "m03_grab_02",
+   "frames": 78,
+   "radius": 25.0,
+   "startup": 46,
+   "active": 3,
+   "recovery": 29,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 373,
+     "from": "grab2miss johnson",
+     "from_group": null,
+     "to": "grab2 johnson",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbjohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m02_grab_02",
+   "camera": "m02_grab_02",
+   "frames": 98,
+   "radius": 25.0,
+   "startup": 65,
+   "active": 3,
+   "recovery": 30,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 377,
+     "from": "grab2miss chief",
+     "from_group": null,
+     "to": "grab2 chief",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      7,
+      8
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbchief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "grab",
+   "animation": "m02_grab_02",
+   "camera": "m02_grab_02",
+   "frames": 98,
+   "radius": 25.0,
+   "startup": 65,
+   "active": 3,
+   "recovery": 30,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 381,
+     "from": "grab2miss ken",
+     "from_group": null,
+     "to": "grab2 ken",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      7,
+      8
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbken"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2 brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "grab",
+   "animation": "m03_grab_02",
+   "camera": "m03_grab_02",
+   "frames": 78,
+   "radius": 25.0,
+   "startup": 46,
+   "active": 3,
+   "recovery": 29,
+   "damage": 20.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "hard",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack",
+    "grab"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 385,
+     "from": "grab2miss brick",
+     "from_group": null,
+     "to": "grab2 brick",
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      10,
+      11
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 2,
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "input_reset": null,
+     "unique": [
+      "grabbbrick"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grabcompl1 shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "victim",
+   "animation": "all_grabbed_01_forset04",
+   "camera": "all_grabbed_01_forset04",
+   "frames": 103,
+   "radius": 25.0,
+   "startup": 102,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl1 master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "victim",
+   "animation": "all_sp_pnch_low_forset04",
+   "camera": "all_sp_pnch_low_forset04",
+   "frames": 28,
+   "radius": 25.0,
+   "startup": 27,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl1 loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_01_forset04",
+   "camera": "all_grabbed_01_forset04",
+   "frames": 103,
+   "radius": 25.0,
+   "startup": 100,
+   "active": 3,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl1 sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "victim",
+   "animation": "all_grabbed_01_forset04",
+   "camera": "all_grabbed_01_forset04",
+   "frames": 103,
+   "radius": 25.0,
+   "startup": 101,
+   "active": 2,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl1 smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_01_forset03",
+   "camera": "all_grabbed_01_forset03",
+   "frames": 90,
+   "radius": 25.0,
+   "startup": 86,
+   "active": 4,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl1 johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_01_forset03",
+   "camera": "all_grabbed_01_forset03",
+   "frames": 90,
+   "radius": 25.0,
+   "startup": 87,
+   "active": 3,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl1 chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_01_forset02",
+   "camera": "all_grabbed_01_forset02",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 46,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl1 ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "victim",
+   "animation": "all_grabbed_01_forset02",
+   "camera": "all_grabbed_01_forset02",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 46,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl1 brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_01_forset03",
+   "camera": "all_grabbed_01_forset03",
+   "frames": 90,
+   "radius": 25.0,
+   "startup": 87,
+   "active": 3,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "victim",
+   "animation": "all_grabbed_02_forset04",
+   "camera": "all_grabbed_02_forset04",
+   "frames": 45,
+   "radius": 25.0,
+   "startup": 44,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "victim",
+   "animation": "all_sp_kck_low_forset04",
+   "camera": "all_sp_kck_low_forset04",
+   "frames": 55,
+   "radius": 25.0,
+   "startup": 54,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_02_forset04",
+   "camera": "all_grabbed_02_forset04",
+   "frames": 45,
+   "radius": 25.0,
+   "startup": 44,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "victim",
+   "animation": "all_sp_kck_low_forset04",
+   "camera": "all_sp_kck_low_forset04",
+   "frames": 55,
+   "radius": 25.0,
+   "startup": 54,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_02_forset03",
+   "camera": "all_grabbed_02_forset03",
+   "frames": 78,
+   "radius": 25.0,
+   "startup": 77,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_02_forset03",
+   "camera": "all_grabbed_02_forset03",
+   "frames": 78,
+   "radius": 25.0,
+   "startup": 77,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_02_forset02",
+   "camera": "all_grabbed_02_forset02",
+   "frames": 98,
+   "radius": 25.0,
+   "startup": 97,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [
+    "grab"
+   ],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "victim",
+   "animation": "all_grabbed_02_forset02",
+   "camera": "all_grabbed_02_forset02",
+   "frames": 98,
+   "radius": 25.0,
+   "startup": 97,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grabcompl2 brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "victim",
+   "animation": "all_grabbed_02_forset03",
+   "camera": "all_grabbed_02_forset03",
+   "frames": 78,
+   "radius": 25.0,
+   "startup": 77,
+   "active": 1,
+   "recovery": 0,
+   "damage": 0.0,
+   "source_impact": null,
+   "multi_impacts": [],
+   "categories": [],
+   "grab_family": "",
+   "entry_proven": false,
+   "entry": []
+  },
+  {
+   "name": "grab1miss brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 8,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss brick",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grababrick"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss brick",
+   "suffix": "brick",
+   "attack_config": "res://data/fighting_set_m03_mapped_attacks.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 4,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 17,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss brick",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbbrick"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1miss smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 16,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss smallboy",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabasmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss smallboy",
+   "suffix": "smallboy",
+   "attack_config": "res://data/attack_config_smallboy.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 9,
+   "active": 3,
+   "recovery": 35,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "low",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 25,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss smallboy",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbsmallboy"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1miss johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 10,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss johnson",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabajohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss johnson",
+   "suffix": "johnson",
+   "attack_config": "res://data/attack_config_johnson.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 4,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 19,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss johnson",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbjohnson"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1miss ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 11,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss ken",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabaken"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss ken",
+   "suffix": "ken",
+   "attack_config": "res://data/attack_config_ken.json",
+   "skeleton_class": "medium",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 4,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 20,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss ken",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbken"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1miss chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 9,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss chief",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabachief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss chief",
+   "suffix": "chief",
+   "attack_config": "res://data/attack_config_chief.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 4,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 18,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss chief",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbchief"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1miss master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "grab_miss",
+   "animation": "m04_sp_pnch_low",
+   "camera": "",
+   "frames": 28,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 20,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 13,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss master",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabamaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss master",
+   "suffix": "master",
+   "attack_config": "res://data/attack_config_master.json",
+   "skeleton_class": "small",
+   "family": "grab_miss",
+   "animation": "m04_sp_kck_low",
+   "camera": "",
+   "frames": 55,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 4,
+   "recovery": 47,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 22,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss master",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbmaster"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1miss shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 14,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss shenlo",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabashenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss shenlo",
+   "suffix": "shenlo",
+   "attack_config": "res://data/attack_config_shenlo.json",
+   "skeleton_class": "medium",
+   "family": "grab_miss",
+   "animation": "m04_grab_02",
+   "camera": "",
+   "frames": 45,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 4,
+   "recovery": 37,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 23,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss shenlo",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbshenlo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1miss loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m04_grab_01",
+   "camera": "",
+   "frames": 103,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 95,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 12,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss loming",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabaloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss loming",
+   "suffix": "loming",
+   "attack_config": "res://data/attack_config_loming.json",
+   "skeleton_class": "large",
+   "family": "grab_miss",
+   "animation": "m04_grab_02",
+   "camera": "",
+   "frames": 45,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 4,
+   "recovery": 37,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 21,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss loming",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbloming"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab1miss sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "grab_miss",
+   "animation": "m02_grab_01",
+   "camera": "",
+   "frames": 47,
+   "radius": 25.0,
+   "startup": 5,
+   "active": 3,
+   "recovery": 39,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab1",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 15,
+     "from": "stepright",
+     "from_group": null,
+     "to": "grab1miss sinfu",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      124
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabasinfu"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "grab2miss sinfu",
+   "suffix": "sinfu",
+   "attack_config": "res://data/attack_config_sinfu.json",
+   "skeleton_class": "medium",
+   "family": "grab_miss",
+   "animation": "m04_sp_kck_low",
+   "camera": "",
+   "frames": 55,
+   "radius": 25.0,
+   "startup": 4,
+   "active": 4,
+   "recovery": 47,
+   "damage": 0.0,
+   "source_impact": {
+    "height": "high",
+    "strength": "normal",
+    "direction": "frontal",
+    "body_part": "larm",
+    "attack_radius": 45.0
+   },
+   "multi_impacts": [],
+   "categories": [
+    "attack"
+   ],
+   "grab_family": "grab2",
+   "entry_proven": true,
+   "entry": [
+    {
+     "order": 24,
+     "from": "stepleft",
+     "from_group": null,
+     "to": "grab2miss sinfu",
+     "keysequence": [
+      [
+       "pressleft",
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "time": [
+      0,
+      76
+     ],
+     "entry_frame": 0,
+     "linking_frame": 0,
+     "blending": 6,
+     "conditions": [
+      "rage2thirds"
+     ],
+     "input_reset": "true",
+     "unique": [
+      "grabbsinfu"
+     ]
+    }
+   ]
+  }
+ ]
+}

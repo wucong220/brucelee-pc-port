@@ -388,8 +388,8 @@ func _check_map_table() -> void:
 		"m02_grab_01": 47,
 	}
 	_check("runtime map covers the local-player action cameras",
-		clips.size() == expected.size(),
-		"%s entries, expected %s" % [clips.size(), expected.size()])
+		clips.size() >= expected.size(),
+		"%s entries, expected at least %s" % [clips.size(), expected.size()])
 	for clip: String in expected:
 		if not clips.has(clip):
 			_check("map has " + clip, false)
