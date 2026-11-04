@@ -29,6 +29,12 @@ const FRAME: float = 1.0 / 60.0
 const RECORD_BASE_MS: int = 100000
 const RECORD_STEP_MS: int = 16
 const PLAYER_HEALTH: float = 37.0
+## The strict state-6 replay camera preflight rejects clips without a recovered
+## camera ANM.  The live recorder emits idle/movement names in this harness, so
+## relabel its synthetic samples with one recovered camera clip while keeping
+## the real recorder timestamps/poses.  validate_replay_camera.gd covers the
+## strict refusal and authored per-clip playback separately.
+const REPLAY_CAMERA_CLIP: String = "m01_grab_01"
 
 var failures: Array[String] = []
 var checks: int = 0
@@ -176,6 +182,10 @@ func _check_true_branch() -> void:
     computer.set_physics_process(false)
     main.call("_reset_match")
     _fill_recorders(player, computer)
+    for record: Dictionary in player.replay_recorder.buffer.records:
+        record["animation"] = REPLAY_CAMERA_CLIP
+    for record: Dictionary in computer.replay_recorder.buffer.records:
+        record["animation"] = REPLAY_CAMERA_CLIP
     _check(int(player.replay_recorder.size()) == 60,
         "true branch has a recorded player buffer")
     _check(int(computer.replay_recorder.size()) == 60,

@@ -31,6 +31,12 @@ const ReplayBufferScript = preload("res://scripts/replay_buffer.gd")
 const FRAME: float = 1.0 / 60.0
 const RECORD_BASE_MS: int = 100000
 const RECORD_STEP_MS: int = 16
+## Strict replay-camera rule: every recorded clip must own a recovered camera
+## ANM.  The live recorder emits idle/movement names in this synthetic harness,
+## so the positive branch relabels its samples with one recovered camera clip;
+## the separate validate_replay_camera.gd covers strict refusal and authored
+## per-clip playback in detail.
+const REPLAY_CAMERA_CLIP: String = "m01_grab_01"
 
 var failures: Array[String] = []
 var checks: int = 0
@@ -229,6 +235,13 @@ func _check_replay_branch(main: Node, player: PortFighter, computer: PortFighter
     _fill_recorders(player, computer)
     var player_records: Array = player.replay_recorder.buffer.records
     var computer_records: Array = computer.replay_recorder.buffer.records
+    # The strict state-6 preflight rejects any clip without a recovered camera.
+    # Keep the real recorder timestamps/poses but relabel these synthetic
+    # samples so the story-loss positive branch can exercise ReplayEnd.
+    for record: Dictionary in player_records:
+        record["animation"] = REPLAY_CAMERA_CLIP
+    for record: Dictionary in computer_records:
+        record["animation"] = REPLAY_CAMERA_CLIP
     _check(player_records.size() == 60 and computer_records.size() == 60,
         "the recovered recorder produced 60 frames per fighter",
         "player=%d computer=%d" % [player_records.size(), computer_records.size()])

@@ -33,6 +33,7 @@ const GameModes = preload("res://scripts/game_modes.gd")
 ## Recovered CBeatEmUpGame states 1/2 (attract intros), 6 (replay), 9
 ## (continue), 10 and 14.  States whose data is not recovered refuse to start.
 const NativeMatchStates = preload("res://scripts/native_match_states.gd")
+const ReplayBufferScript = preload("res://scripts/replay_buffer.gd")
 ## Opt-in progress/save subsystem bridge (inert unless BRUCELEE_PROGRESS=1).
 const ProgressHooks = preload("res://scripts/progress_hooks.gd")
 ## Opt-in Records/Achievements screen. It is only reachable through the RECORDS
@@ -594,10 +595,13 @@ var _countdown_handed_off: bool = false
 ## CFighter::RecordReplayUpdate, so the port locks the fighters' normal
 ## simulation and applies the recorded 0x2c frames itself.  The native body also
 ## calls StopCameraAnimation/Restart, SetReplayCurrentTime(fighter, game+0x838)
-## and SetPosToFightStartPos; the port's +0x838 equivalent is the earliest
-## recorded sample of the current round (the recorder resets in reset_fighter,
-## exactly like CFighter::Restart clears the +0x194 count) and the fight-start
-## pose is captured here.
+## and SetPosToFightStartPos.  After the camera Restart, CameraUpdate reads the
+## camera sub-animation from the local player's recorded clip; the port now
+## resolves that clip against only the recovered camera ANM names and refuses
+## state 6 when any recorded clip has no authored camera.  The port's +0x838
+## equivalent is the earliest recorded sample of the current round (the recorder
+## resets in reset_fighter, exactly like CFighter::Restart clears the +0x194
+## count) and the fight-start pose is captured here.
 var _replay_handed_off: bool = false
 var _replay_message_seconds: int = -1
 var _fight_start_player: Vector3 = Vector3.ZERO
@@ -666,6 +670,30 @@ var _action_camera_mirror: bool = false
 var _action_camera_a: Vector3 = Vector3.ZERO
 var _action_camera_b: Vector3 = Vector3.ZERO
 var _action_camera_missing_json: Array[String] = []
+
+# ---- Authored per-clip camera for state 6 (SetState(6) replay) ----
+# replay_camera_map.json is generated mechanically from camera_catalog.json:
+# exactly 70 recovered <clip>_camera.anm rows, no aliases.  The preflight
+# checks every distinct clip in BOTH replay buffers; a missing camera refuses
+# state 6 (story-loss then falls back to state 14) rather than using the
+# analytic follow camera.  State 6 is the CameraUpdate else branch:
+# dummy = fighter[this+0x7e0] (local player, slot 0), mirror = false.
+const REPLAY_CAMERA_MAP_PATH: String = "res://data/camera_anm/replay_camera_map.json"
+const REPLAY_CAMERA_FAIL_REASON: String = "no-recovered-replay-camera"
+var _replay_camera_map_path: String = REPLAY_CAMERA_MAP_PATH
+var _replay_camera_map: Dictionary = {}
+var _replay_camera_map_loaded: bool = false
+var _replay_camera_anms: Dictionary = {}
+var _replay_camera_clip: String = ""
+var _replay_camera_camera: String = ""
+var _replay_camera_a: Vector3 = Vector3.ZERO
+var _replay_camera_b: Vector3 = Vector3.ZERO
+var _replay_camera_frame: int = 0
+var _replay_camera_clip_start_ms: int = 0
+var _replay_camera_sample_ms: int = 0
+var _replay_camera_active: bool = false
+var _replay_camera_fail_reason: String = ""
+
 # Continue prompt drawn by state 9.  Null until the state is entered.
 var _continue_layer: CanvasLayer = null
 
@@ -2239,6 +2267,7 @@ func _reset_round() -> void:
     computer.clear_result_pose()
     _camera_anm_end()
     _action_camera_end()
+    _replay_camera_end()
     # Native RestartValues() does not stop running game text animators, so a
     # round reset must not hide the result text either; only the per-side
     # COUNTER animation memory is cleared.
@@ -4581,9 +4610,248 @@ func _action_camera_tick() -> bool:
     return true
 
 
+func _replay_camera_load_map() -> bool:
+    ## Load the strict 70-camera map once.  A missing/invalid map is empty, so
+    ## preflight refuses state 6 instead of aliasing a camera or falling back.
+    if _replay_camera_map_loaded:
+        return not _replay_camera_map.is_empty()
+    _replay_camera_map_loaded = true
+    _replay_camera_map = {}
+    _replay_camera_anms.clear()
+    var file: FileAccess = FileAccess.open(_replay_camera_map_path, FileAccess.READ)
+    if file == null:
+        return false
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if typeof(parsed) != TYPE_DICTIONARY:
+        return false
+    var clips: Variant = Dictionary(parsed).get("camera_clips", {})
+    if typeof(clips) == TYPE_DICTIONARY:
+        _replay_camera_map = clips
+    return not _replay_camera_map.is_empty()
+
+
+func _replay_camera_row(clip: String) -> Dictionary:
+    if clip.is_empty() or not _replay_camera_load_map():
+        return {}
+    var row: Variant = _replay_camera_map.get(clip, null)
+    if row == null or typeof(row) != TYPE_DICTIONARY:
+        return {}
+    return Dictionary(row)
+
+
+func _replay_camera_player(clip: String, row: Dictionary):
+    ## Return a cached CameraAnm for one recovered clip, or null on any gap.
+    ## No name is derived here: both the ANM name and JSON file must match the
+    ## catalog's exact <clip> identity.
+    if _replay_camera_anms.has(clip):
+        return _replay_camera_anms[clip]
+    var expected_anm: String = clip + "_camera.anm"
+    var expected_file: String = clip + ".json"
+    if String(row.get("camera_anm", "")) != expected_anm:
+        return null
+    if String(row.get("file", "")) != expected_file:
+        return null
+    var frames: int = int(row.get("frames", 0))
+    if frames <= 0 or not is_equal_approx(float(row.get("fps", 0.0)), 30.0):
+        return null
+    var path: String = _camera_anm_dir + expected_file
+    if not FileAccess.file_exists(path):
+        return null
+    var anm = CameraAnm.new()
+    if not anm.load_json(path):
+        return null
+    if anm.frame_count() != frames:
+        return null
+    _replay_camera_anms[clip] = anm
+    return anm
+
+
+func _replay_camera_refuse(reason: String) -> bool:
+    _replay_camera_fail_reason = reason
+    _replay_camera_end()
+    if native_states != null:
+        # _fail() preserves the refusal in NativeMatchStates.trace even when the
+        # story-loss caller subsequently enters state 14 (which clears the
+        # transient fail_reason field).
+        native_states.call(
+            "_fail", MATCH_STATE_REPLAY, REPLAY_CAMERA_FAIL_REASON, reason
+        )
+    print("REPLAY_STATE_GAP state=6 reason=%s" % reason)
+    return false
+
+
+func _replay_camera_preflight(player_buffer, computer_buffer) -> bool:
+    ## Strict port rule: every distinct clip in BOTH buffers must own a
+    ## recovered camera ANM.  This is checked before NativeMatchStates.enter(6),
+    ## so a refused replay never consumes a cursor or enters an analytic view.
+    _replay_camera_fail_reason = ""
+    if not _replay_camera_load_map():
+        return _replay_camera_refuse("replay-camera-map-missing")
+    var seen: Dictionary = {}
+    var buffers: Array = [player_buffer, computer_buffer]
+    for buffer in buffers:
+        if buffer == null:
+            return _replay_camera_refuse("null-replay-buffer")
+        if buffer.records.is_empty():
+            return _replay_camera_refuse("empty-replay-buffer")
+        for record: Dictionary in buffer.records:
+            var clip: String = String(record.get("animation", ""))
+            if clip.is_empty():
+                return _replay_camera_refuse("empty-replay-clip")
+            if seen.has(clip):
+                continue
+            seen[clip] = true
+            var row: Dictionary = _replay_camera_row(clip)
+            if row.is_empty():
+                return _replay_camera_refuse("no-recovered-camera clip=%s" % clip)
+            if _replay_camera_player(clip, row) == null:
+                return _replay_camera_refuse("replay-camera-json-invalid clip=%s" % clip)
+    return true
+
+
+func _replay_camera_end() -> void:
+    _replay_camera_active = false
+    _replay_camera_clip = ""
+    _replay_camera_camera = ""
+    _replay_camera_a = Vector3.ZERO
+    _replay_camera_b = Vector3.ZERO
+    _replay_camera_frame = 0
+    _replay_camera_clip_start_ms = 0
+
+
+func _replay_camera_begin(clip: String, clip_start_ms: int) -> bool:
+    ## CBeatEmUpCamera::StartAnimation captures the dummy A/B reference frame
+    ## once.  State 6's dummy is the local player and mirror is false.
+    if not is_instance_valid(player) or not is_instance_valid(computer):
+        return false
+    var row: Dictionary = _replay_camera_row(clip)
+    var anm = _replay_camera_player(clip, row)
+    if anm == null:
+        return false
+    var a: Vector3 = _camera_anm_fighter_point(player)
+    var b: Vector3 = _camera_anm_fighter_point(computer)
+    if (b - a).length() < 0.001:
+        b = a + Vector3(player.facing, 0.0, 0.0)
+    _replay_camera_clip = clip
+    _replay_camera_camera = String(row.get("camera_anm", ""))
+    _replay_camera_a = a
+    _replay_camera_b = b
+    _replay_camera_frame = 0
+    _replay_camera_clip_start_ms = clip_start_ms
+    _replay_camera_active = true
+    return _replay_camera_apply(0)
+
+
+func _replay_camera_restart() -> bool:
+    ## SetState(6) / loop re-entry: StopCameraAnimation + CBeatEmUpCamera::Restart
+    ## are followed by CameraUpdate arming the camera of the player's first
+    ## recorded clip.  No _restart_fight_camera() analytic path is used.
+    _replay_camera_end()
+    if native_states == null:
+        return _replay_camera_refuse("no-match-state")
+    var buffers: Array = native_states.replay_buffers
+    if buffers.size() != 2 or buffers[0] == null:
+        return _replay_camera_refuse("no-player-buffer")
+    var player_buffer = buffers[0]
+    if player_buffer.records.is_empty():
+        return _replay_camera_refuse("empty-player-buffer")
+    var record: Dictionary = player_buffer.records[0]
+    var clip: String = String(record.get("animation", ""))
+    if clip.is_empty():
+        return _replay_camera_refuse("empty-player-clip")
+    # After SetState(6), GetStateTime()==0: sample = 0 + 2*base.
+    _replay_camera_sample_ms = (
+        NativeMatchStates.REPLAY_SPEED_FACTOR * int(native_states.replay_base_ms)
+    )
+    if not _replay_camera_begin(clip, int(record.get("time_ms", 0))):
+        return _replay_camera_refuse("replay-camera-begin-failed clip=%s" % clip)
+    return true
+
+
+func _replay_camera_frame_from_sample(sample_ms: int, last: int) -> int:
+    ## Recovered 0.5x replay clock: effective_ms = 0.5*(elapsed + 2*base).
+    ## TIME_TO_FRAME=0.03 is the recovered 30 fps frame step.  The exact
+    ## anmRoot::SetToSample phase between records remains unrecovered, so this
+    ## port bridge uses the clip's first record time and never interpolates.
+    var effective_ms: int = int(round(
+        float(sample_ms) * NativeMatchStates.REPLAY_STATE_SPEED_SCALE
+    ))
+    var delta_ms: int = maxi(0, effective_ms - _replay_camera_clip_start_ms)
+    var frame: int = int(floor(float(delta_ms) * ReplayBufferScript.TIME_TO_FRAME))
+    return clampi(frame, 0, last)
+
+
+func _replay_camera_apply(index: int) -> bool:
+    if (not _replay_camera_active or match_state != MATCH_STATE_REPLAY
+            or not is_instance_valid(fight_camera)):
+        return false
+    var row: Dictionary = _replay_camera_row(_replay_camera_clip)
+    var anm = _replay_camera_player(_replay_camera_clip, row)
+    if anm == null:
+        return false
+    var last: int = anm.frame_count() - 1
+    if last < 0:
+        return false
+    var i: int = clampi(index, 0, last)
+    var pose: Dictionary = anm.place_world(
+        i, _replay_camera_a, _replay_camera_b, false
+    )
+    fight_camera.fov = float(pose["fov_degrees"])
+    if bool(pose["has_target"]):
+        fight_camera.global_position = pose["camera_world"] as Vector3
+        fight_camera.look_at(pose["target_world"] as Vector3, Vector3.UP)
+    else:
+        anm.apply_to(
+            fight_camera, i, _replay_camera_a, _replay_camera_b, false
+        )
+    _replay_camera_frame = i
+    return true
+
+
+func _replay_camera_play_authored() -> bool:
+    if not _replay_camera_active or match_state != MATCH_STATE_REPLAY:
+        return false
+    var row: Dictionary = _replay_camera_row(_replay_camera_clip)
+    var anm = _replay_camera_player(_replay_camera_clip, row)
+    if anm == null:
+        return false
+    var last: int = anm.frame_count() - 1
+    if last < 0:
+        return false
+    var index: int = _replay_camera_frame_from_sample(_replay_camera_sample_ms, last)
+    return _replay_camera_apply(index)
+
+
+func _replay_camera_on_player_record(record: Dictionary, sample_ms: int) -> void:
+    _replay_camera_sample_ms = sample_ms
+    if not _replay_camera_active or match_state != MATCH_STATE_REPLAY:
+        return
+    var clip: String = String(record.get("animation", ""))
+    if clip.is_empty():
+        push_error("REPLAY_CAMERA_GAP state=6 reason=empty-player-clip")
+        _replay_camera_end()
+        return
+    if clip != _replay_camera_clip:
+        if not _replay_camera_begin(clip, int(record.get("time_ms", 0))):
+            push_error(
+                "REPLAY_CAMERA_GAP state=6 reason=clip-camera-unavailable clip=%s" % clip
+            )
+            _replay_camera_end()
+            return
+    _replay_camera_play_authored()
+
+
 func _update_fight_camera(delta: float = 1.0 / CAM_UPDATE_HZ) -> void:
     if (not is_instance_valid(fight_camera) or not is_instance_valid(player)
             or not is_instance_valid(computer)):
+        return
+    if match_state == MATCH_STATE_REPLAY:
+        # SetState(6) Restart must use the per-clip authored camera.  Preflight
+        # refuses state 6 when any recorded clip has no recovered camera, so
+        # this branch never falls through to the analytic follow camera.
+        if _replay_camera_play_authored():
+            return
+        push_error("REPLAY_CAMERA_GAP state=6 reason=no-authored-camera")
         return
     if not _cam_initialized:
         _restart_fight_camera()
@@ -4797,6 +5065,10 @@ func _on_time_up() -> void:
 
 
 func _enter_match_state(next_state: int) -> void:
+    if match_state == MATCH_STATE_REPLAY and next_state != MATCH_STATE_REPLAY:
+        # Leaving the recovered replay state ends its authored camera; no
+        # state-6 camera state may leak into the next presentation.
+        _replay_camera_end()
     if next_state == MATCH_STATE_FIGHT:
         # The recovered selectfighter/fightpreview art never survives into the
         # fight: entering MATCH_STATE_FIGHT always hides it.
@@ -5219,6 +5491,19 @@ func _enter_replay_state() -> bool:
     native_states.set_replay_buffers(
         player_recorder.buffer, computer_recorder.buffer, base_ms
     )
+    # Strict replay-camera gate: every distinct clip in both buffers must have
+    # one of the 70 recovered camera ANMs.  Empty buffers are left to the
+    # recovered NativeMatchStates driver so its existing no-replay-buffer
+    # refusal/trace is preserved; non-empty buffers are checked before enter(6),
+    # so a missing camera consumes no cursor and never uses the analytic camera.
+    native_states.fail_reason = ""
+    var buffers_nonempty: bool = (
+        int(player_recorder.size()) > 0 and int(computer_recorder.size()) > 0
+    )
+    if buffers_nonempty and not _replay_camera_preflight(
+            player_recorder.buffer, computer_recorder.buffer
+    ):
+        return false
     if not bool(native_states.enter(MATCH_STATE_REPLAY)):
         # Empty/missing buffers are refused here by the recovered driver with
         # REASON_NO_REPLAY ("no-replay-buffer"); the caller then falls back to
@@ -5252,10 +5537,13 @@ func _enter_replay_state() -> bool:
     _replay_handed_off = false
     _replay_message_seconds = -1
     done = true
-    _restart_fight_camera()
-    print("NATIVE_STATE_ENTER state=6 base_ms=%d player_records=%d computer_records=%d speed_scale=%.3f" % [
+    if not _replay_camera_restart():
+        player.replay_pose_lock = false
+        computer.replay_pose_lock = false
+        return false
+    print("NATIVE_STATE_ENTER state=6 base_ms=%d player_records=%d computer_records=%d speed_scale=%.3f camera=%s" % [
         base_ms, int(player_recorder.size()), int(computer_recorder.size()),
-        NativeMatchStates.REPLAY_STATE_SPEED_SCALE,
+        NativeMatchStates.REPLAY_STATE_SPEED_SCALE, _replay_camera_camera,
     ])
     return true
 
@@ -5263,7 +5551,8 @@ func _enter_replay_state() -> bool:
 func _replay_restart_pose() -> void:
     ## Update case 6 loops with SetState(6) when both fighters report
     ## ReplayEnded(): re-run the recovered entry body's pose half.  The camera is
-    ## restarted (CBeatEmUpCamera::Restart) and the next Update applies record 0.
+    ## restarted (CBeatEmUpCamera::Restart) from the player's first recorded
+    ## authored clip; the next Update applies record 0.
     player.global_position = _fight_start_player
     computer.global_position = _fight_start_computer
     player.rotation.y = _fight_start_player_yaw
@@ -5272,7 +5561,8 @@ func _replay_restart_pose() -> void:
     computer.velocity = Vector3.ZERO
     player.replay_pose_reset()
     computer.replay_pose_reset()
-    _restart_fight_camera()
+    if not _replay_camera_restart():
+        push_error("REPLAY_CAMERA_GAP state=6 reason=loop-restart-failed")
 
 
 func _advance_replay_state(delta: float) -> void:
@@ -5297,6 +5587,7 @@ func _advance_replay_state(delta: float) -> void:
         int(round((native_states.state_time + delta) * 1000.0))
         + NativeMatchStates.REPLAY_SPEED_FACTOR * base_ms
     )
+    _replay_camera_sample_ms = sample_ms
     native_states.advance(delta)
     if int(native_states.replay_loops) != loop_before:
         _replay_restart_pose()
@@ -5306,9 +5597,10 @@ func _advance_replay_state(delta: float) -> void:
             var buffer = buffers[side]
             var cursor: int = int(buffer.cursor)
             if cursor > cursors_before[side]:
-                fighters[side].apply_replay_record(
-                    buffer.records[cursor - 1], sample_ms
-                )
+                var record: Dictionary = buffer.records[cursor - 1]
+                fighters[side].apply_replay_record(record, sample_ms)
+                if side == 0:
+                    _replay_camera_on_player_record(record, sample_ms)
     _refresh_replay_message()
 
 
