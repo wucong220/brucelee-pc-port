@@ -26,6 +26,14 @@ var _report: Dictionary = {}
 var _shots: Array = []
 var _scene: Node = null
 var _menu: Node = null
+## Commands the menu emitted during this run.  The baseline `dock` mode also
+## emits its scene command to main.gd (which reloads); recording it here does not
+## change that path.
+var _commands: Array = []
+
+
+func _on_command(command: String) -> void:
+	_commands.append(command)
 
 
 func _initialize() -> void:
@@ -122,6 +130,7 @@ func _boot() -> bool:
 	if _menu == null:
 		printerr("capture: main.tscn has no menu")
 		return false
+	_menu.command_requested.connect(_on_command)
 	return true
 
 
@@ -158,6 +167,10 @@ func _run() -> void:
 			await _capture_zh()
 		"fallback", "off":
 			await _capture_text_rows()
+		"unlock_none", "unlock_partial", "unlock_full":
+			await _capture_unlock_dock()
+		"unlock_text", "unlock_text_full":
+			await _capture_unlock_text()
 		_:
 			printerr("capture: unknown mode " + _mode)
 			quit(2)
@@ -244,3 +257,81 @@ func _capture_text_rows() -> void:
 		await _capture("05_fail_closed_text_fallback")
 	else:
 		await _capture("06_text_scene_rows_flag_off")
+
+
+## Recovered scenery-unlock gate on the dock: one run with no save (all nine
+## gated cards draw the decoded lockedpicture), one with two story grants (mixed
+## locked/open cards) and one with all nine grants.
+func _capture_unlock_dock() -> void:
+	await _open_scene_menu_from_main()
+	_report["scene_select"] = String(OS.get_environment("BRUCELEE_SCENE_SELECT"))
+	_report["save_path"] = String(OS.get_environment("BRUCELEE_SCENE_UNLOCK_SAVE"))
+	_report["gate"] = _menu.scene_gate_summary()
+	_report["dock_visible"] = bool(_menu.scene_dock_visible())
+	_report["rows"] = Array(_menu.scene_dock_rows()).size()
+	_report["locked_rows"] = _menu.scene_dock_locked_rows()
+	_report["card_sources"] = _menu.scene_dock_card_sources()
+	_report["label_index0"] = String(_menu.scene_dock_label())
+	if _mode == "unlock_none":
+		await _capture("08_scene_unlock_nosave_market")
+		for _step: int in range(3):
+			_menu.handle_input_event(_key(KEY_RIGHT))
+		await _frames(2)
+		_report["selection"] = int(_menu.scene_dock_selection())
+		_report["selected_locked"] = bool(_menu.scene_dock.selected_locked())
+		_report["label_index3"] = String(_menu.scene_dock_label())
+		await _capture("09_scene_unlock_nosave_locked_card")
+		_menu.handle_input_event(_key(KEY_ENTER))
+		await _frames(2)
+		_report["locked_confirm_commands"] = _commands.duplicate()
+		_report["hint"] = String(_menu.scene_dock.hint_text())
+	elif _mode == "unlock_partial":
+		for _step: int in range(3):
+			_menu.handle_input_event(_key(KEY_RIGHT))
+		await _frames(2)
+		_report["selection"] = int(_menu.scene_dock_selection())
+		_report["selected_locked"] = bool(_menu.scene_dock.selected_locked())
+		_report["label_index3"] = String(_menu.scene_dock_label())
+		await _capture("10_scene_unlock_partial_unlocked_index3")
+		_menu.handle_input_event(_key(KEY_RIGHT))
+		await _frames(2)
+		_report["selection_4"] = int(_menu.scene_dock_selection())
+		_report["selected_locked_4"] = bool(_menu.scene_dock.selected_locked())
+		await _capture("11_scene_unlock_partial_locked_index4")
+		_menu.handle_input_event(_key(KEY_ENTER))
+		await _frames(2)
+		_report["locked_confirm_commands"] = _commands.duplicate()
+		_report["hint"] = String(_menu.scene_dock.hint_text())
+	else:
+		for _step: int in range(3):
+			_menu.handle_input_event(_key(KEY_RIGHT))
+		await _frames(2)
+		_report["selection"] = int(_menu.scene_dock_selection())
+		_report["selected_locked"] = bool(_menu.scene_dock.selected_locked())
+		await _capture("12_scene_unlock_full_index3")
+
+
+## Recovered scenery-unlock gate on the text scene submenu: no save (nine rows
+## with the port-chrome (LOCKED) suffix) and a full save (no suffix).
+func _capture_unlock_text() -> void:
+	await _open_scene_menu_from_main()
+	_report["dock_present"] = _menu.scene_dock != null
+	_report["gate"] = _menu.scene_gate_summary()
+	var texts: Array = []
+	var locked: int = 0
+	for item: Dictionary in (_menu.layout_report()["items"] as Array):
+		var text: String = String(item.get("text", ""))
+		texts.append(text)
+		if text.ends_with(" (LOCKED)"):
+			locked += 1
+	_report["text_rows"] = texts
+	_report["locked_labels"] = locked
+	_report["panel"] = (_menu.layout_report()["panel"] as Array)
+	if _mode == "unlock_text":
+		await _capture("13_scene_unlock_text_locked")
+		_menu.handle_input_event(_key(KEY_ENTER))
+		await _frames(2)
+		_report["locked_confirm_commands"] = _commands.duplicate()
+		_report["status"] = String(_menu.status_label.text)
+	else:
+		await _capture("14_scene_unlock_text_full")

@@ -4902,13 +4902,76 @@ func _advance_stun_state(delta: float) -> void:
             _begin_faceup_ko(0.0)
             return
         state = target
-        state_time = _stun_step_seconds(from_state, target, STUN_DURATION_FRAMES)
+        # SetAnimation restarts the animation at frame 0, so the remaining time
+        # belongs to the new state's own outgoing link, not to the link just
+        # followed. stunfall -> faceupko is [71,79]: stunfall lasts 71 frames
+        # even though stun2 -> stunfall starts at 55.
+        state_time = _stun_state_remaining_seconds(target)
         return
     _begin_faceup_ko(0.0)
 
 
+func _stun_state_remaining_seconds(source: String) -> float:
+    # Start of the state's own outgoing link window, in seconds. The stun chain
+    # is a sequence of links (284/285/286); the window start is the frame the
+    # next state becomes reachable, so it is the duration of the current one.
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != source:
+            continue
+        var target: String = _link_text(link, "to")
+        if target not in ["stun2", "stunfall", "faceupko", "facedownko"]:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() >= 2:
+            return float(window[0]) / SOURCE_FRAME_RATE
+    return float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+
+
 func _stun_impact_reaction(impact: Dictionary) -> Dictionary:
-    # Recovered stun-impact targets (pose "stun") and their outgoing links.
+    # Recovered stun-impact entry. krm::CFighter::UserControlUpdate scans the
+    # stun actions' links in native order; the five `impactsfromstun` rows are
+    # 126 (normal) -> stunlighthighimpact, 128 (hard) -> stunhardimpact,
+    # 130 (normal) -> stunlightlowimpact, 132 (heightmed) -> stunmediumimpact,
+    # 134 (brutal) -> stunbrutalimpact. First match wins, so a normal hit takes
+    # row 126 whatever its height, and a hard hit takes row 128 before row 132.
+    #
+    # The caller has already established that this blow lands (impact record
+    # active, in reach, cursor unspent), so the rows are selected by their
+    # recovered attack-attribute conditions; the recovered state machine then
+    # continues through the target's own outgoing link.
+    if native_reaction_enabled and _native_reaction_gate != null:
+        var attributes: Dictionary = _stun_impact_attributes(impact)
+        var strength: String = String(attributes.get("strength", ""))
+        var height: String = String(attributes.get("height", ""))
+        if not strength.is_empty() or not height.is_empty():
+            var probe: Dictionary = {
+                "health": health,
+                "incoming_damage": 0.0,
+                "distance": 0.0,
+                "victim_radius": 0.0,
+                "attacker": {
+                    "impact_active": true,
+                    "height": height,
+                    "strength": strength,
+                    "direction": String(attributes.get("direction", "")),
+                    "radius": 0.0,
+                    "scale": 1.0,
+                    "last_index": 0,
+                    "cursor": 0,
+                    "damage": 0.0,
+                },
+            }
+            for link: Dictionary in _native_reaction_gate.links:
+                if _link_text(link, "from_group") != "impactsfromstun":
+                    continue
+                if not _stun_impact_row_matches(link, probe):
+                    continue
+                return _stun_impact_result(link)
+            # The recovered rows do not answer this impact: let the caller keep
+            # its documented source-driven fallback / refusal.
+            return {}
+    # Opt-out path (BRUCELEE_NATIVE_REACTION=0) or a gate that failed to load:
+    # the pre-recovery strength/height mapping, unchanged.
     var strength: String = String(impact.get("strength", ""))
     var height: String = String(impact.get("height", ""))
     var wanted: String = ""
@@ -4942,6 +5005,82 @@ func _stun_impact_reaction(impact: Dictionary) -> Dictionary:
             "next_state": target,
         }
     return {}
+
+
+func _stun_impact_attributes(impact: Dictionary) -> Dictionary:
+    # Strength/height/direction of the impact record that selected `impact`
+    # (the incoming reaction). Live contacts and EXACT_REACTIONS entries carry
+    # them directly; a fixture that only names the reaction action gets them
+    # from the first recovered `impactable` row that targets that action.
+    var strength: String = String(impact.get("strength", ""))
+    var height: String = String(impact.get("height", ""))
+    var direction: String = String(impact.get("direction", ""))
+    if not strength.is_empty() or not height.is_empty():
+        return {"strength": strength, "height": height, "direction": direction}
+    var source: String = String(impact.get("source_action", ""))
+    if source.is_empty():
+        return {}
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != source:
+            continue
+        if _link_text(link, "from_group") != "impactable":
+            continue
+        var conditions: Array = Array(link.get("conditions", []))
+        if not conditions.has("impact"):
+            continue
+        return {
+            "strength": _condition_attribute(conditions, "oppattackstrength"),
+            "height": _condition_attribute(conditions, "oppattackheight"),
+            "direction": _condition_attribute(conditions, "oppattackdir"),
+        }
+    return {}
+
+
+func _stun_impact_row_matches(link: Dictionary, probe: Dictionary) -> bool:
+    for condition: Variant in Array(link.get("conditions", [])):
+        if not _native_reaction_gate.condition_ok(String(condition), probe):
+            return false
+    return true
+
+
+func _stun_impact_result(link: Dictionary) -> Dictionary:
+    # Target action plus the frame its own outgoing stun/KO link starts.
+    var target: String = _link_text(link, "to")
+    if target.is_empty():
+        return {}
+    var row: Dictionary = _native_actions.get(target, {})
+    var animation: String = String(row.get("animation", ""))
+    if animation.is_empty():
+        return {}
+    for out: Dictionary in _native_links:
+        if _link_text(out, "from") != target:
+            continue
+        var next_state: String = _link_text(out, "to")
+        if next_state not in ["faceupko", "facedownko", "stunfall", "stun", "stun2"]:
+            continue
+        var window: Array = Array(out.get("time", []))
+        if window.size() < 2:
+            continue
+        return {
+            "target": target,
+            "animation": animation,
+            "exit_frame": int(window[0]),
+            "next_state": next_state,
+        }
+    return {}
+
+
+func _stun_impact_clip_alias(target: String) -> String:
+    # Port clip-map keys that already name these two stun ANMs (`stun_hard` ->
+    # all_impct_hard_frnt_high, `stun_brutal` -> all_impct_spectacular_lft in
+    # every CANDIDATE_CLIPS table). They are used only when a candidate
+    # registered the ANM under the friendly key rather than under its file name.
+    match target:
+        "stunhardimpact":
+            return "stun_hard"
+        "stunbrutalimpact":
+            return "stun_brutal"
+    return ""
 
 
 func _has_native_link(source: String, target: String) -> bool:
@@ -5574,6 +5713,45 @@ func _native_reaction_return_data(source_action: String) -> Dictionary:
             "animation_duration_frames": int(window[1]),
             "return_action": target,
         }
+    return {}
+
+
+func _native_healthzero_impact_entry(source_action: String) -> Dictionary:
+    ## Recovered healthzero -> impactstun entry.
+    ##
+    ## Rows 209-211 are the impactable `healthzero` rows that land in
+    ## impactstunhigh / impactstunlow; rows 287/288 then continue to `stun` at
+    ## [14,17]. A lethal hard hit instead targets impacthardfronthigh /
+    ## impacthardfrontlow (rows 212-214), whose own `healthzero` rows continue to
+    ## faceupko / facedownko, so it is excluded here and keeps its existing
+    ## branch. Only the recovered data answers; nothing is hard-coded per action.
+    if not native_reaction_enabled or _native_reaction_gate == null:
+        return {}
+    for link: Dictionary in _native_reaction_gate.links:
+        if _link_text(link, "from_group") != "impactable":
+            continue
+        if _link_text(link, "to") != source_action:
+            continue
+        if not Array(link.get("conditions", [])).has("healthzero"):
+            continue
+        var row: Dictionary = _native_actions.get(source_action, {})
+        var animation: String = String(row.get("animation", ""))
+        if animation.is_empty():
+            return {}
+        for out: Dictionary in _native_reaction_gate.links:
+            if _link_text(out, "from") != source_action:
+                continue
+            if _link_text(out, "to") != "stun":
+                continue
+            var window: Array = Array(out.get("time", []))
+            if window.size() < 2:
+                continue
+            return {
+                "animation": animation,
+                "exit_frame": int(window[0]),
+                "next_state": "stun",
+            }
+        return {}
     return {}
 
 
@@ -7417,6 +7595,10 @@ func attack_reach_world(kind: String, target: PortFighter = null) -> float:
 func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     if native_reaction_enabled and _native_reaction_gate != null:
         if impact.has("attack_radius"):
+            # The recovered scan is authoritative for a contact that describes
+            # a native impact record: first match wins, and no match means no
+            # reaction (the native `impact` condition is also what deals
+            # damage). Unmapped targets and a parked FollowLink return {}.
             return _native_reaction_for_incoming(impact, blocked)
         # The recovered impact condition needs a native impact record radius.
         # Legacy/synthetic callers that do not describe one keep the heuristic;
@@ -7498,7 +7680,12 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
 ## ---------------------------------------------------------------------------
 
 func _init_native_reaction_gate() -> void:
-    native_reaction_enabled = OS.get_environment(NATIVE_REACTION_ENV) == "1"
+    # The recovered gate is the default reaction selector for every contact
+    # that describes a native impact record. BRUCELEE_NATIVE_REACTION=0 is the
+    # opt-out: it keeps the pre-recovery heuristic and the old stun-impact
+    # mapping so a caller can compare, or run a candidate whose exported link
+    # table is not the one the gate expects.
+    native_reaction_enabled = OS.get_environment(NATIVE_REACTION_ENV) != "0"
     if not native_reaction_enabled:
         return
     var gate: NativeReactionGate = NativeReactionGate.new()
@@ -7507,8 +7694,9 @@ func _init_native_reaction_gate() -> void:
         attack_set_profile.get("native_links", NATIVE_LINKS_PATH)
     )
     if not gate.load_native_links(path):
-        # The caller opted in, so fail closed instead of silently falling back
-        # to the heuristic. The error is surfaced for the caller/tests.
+        # The gate is the default now, so a load failure must not be silent:
+        # every caller below falls back to the port's documented heuristic path
+        # and `native_reaction_error` reports why.
         native_reaction_error = "native reaction gate failed closed: " + gate.load_error
         push_error(native_reaction_error)
         _native_reaction_gate = null
@@ -8058,9 +8246,24 @@ func receive_hit(
         var stun_exit_frame: int = 0
         var stun_next_state: String = "stunfall"
         var native_stun: Dictionary = _stun_impact_reaction(reaction)
-        if (not native_stun.is_empty()
-                and _candidate_clip_paths.has(String(native_stun["animation"]))):
-            stun_animation = String(native_stun["animation"])
+        if not native_stun.is_empty():
+            # A recovered `impactsfromstun` row matched. Its target owns the
+            # exit frame and the continuation. The clip is the recovered
+            # animation name; when a candidate registers that ANM under the
+            # port's friendly key instead (stun_hard / stun_brutal), that
+            # existing key is used. Neither present means the hit is refused
+            # instead of falling back to a different clip.
+            var recovered_animation: String = String(native_stun["animation"])
+            if _candidate_clip_paths.has(recovered_animation):
+                stun_animation = recovered_animation
+            else:
+                var animation_alias: String = _stun_impact_clip_alias(
+                    String(native_stun["target"])
+                )
+                if (animation_alias.is_empty()
+                        or not _candidate_clip_paths.has(animation_alias)):
+                    return false
+                stun_animation = animation_alias
             stun_exit_frame = int(native_stun["exit_frame"])
             stun_next_state = String(native_stun["next_state"])
         elif stun_source == "impactlightfronthigh":
@@ -8250,6 +8453,27 @@ func receive_hit(
         ]
         else "all_impct_light_frnt_high"
     )
+    var recovered_stun_entry: Dictionary = _native_healthzero_impact_entry(stun_entry_source)
+    if (health <= 0.0 and not blocked
+            and _candidate_clip_paths.has("stun")
+            and not recovered_stun_entry.is_empty()
+            and _candidate_clip_paths.has(String(recovered_stun_entry["animation"]))):
+        # Recovered rows 209-211: a lethal normal hit enters impactstunhigh /
+        # impactstunlow and rows 287/288 continue to stun at [14,17]. The entry
+        # frame and the continuing state come from those rows, not from a copy
+        # of the clip table.
+        state = "impactstun"
+        state_time = float(recovered_stun_entry["exit_frame"]) / SOURCE_FRAME_RATE
+        combo_hits = 0
+        last_reaction_group = "hit"
+        last_reaction_source_action = "impactstun"
+        last_reaction_animation = String(recovered_stun_entry["animation"])
+        last_reaction_exit_frame = int(recovered_stun_entry["exit_frame"])
+        last_reaction_entry_frame = 0
+        last_reaction_clip_implemented = true
+        _stun_impact_next_state = String(recovered_stun_entry["next_state"])
+        _restart_candidate_action()
+        return true
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("stun")
             and _candidate_clip_paths.has(stun_entry_clip)

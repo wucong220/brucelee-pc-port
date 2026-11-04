@@ -78,6 +78,18 @@ const STYLE_EDITOR_LABEL: String = "STYLE EDITOR"
 const ENV_SCENE_SELECT: String = "BRUCELEE_SCENE_SELECT"
 const SceneSelectDock = preload("res://scripts/scene_select_dock.gd")
 const SCENE_DOCK_UNAVAILABLE: String = "SCENE DOCK UNAVAILABLE - TEXT MENU"
+## Recovered scenery-unlock gate (scene_unlock_gate.gd).  It is ON unless
+## BRUCELEE_SCENE_UNLOCK is exactly "0"; when on, the SCENES submenu -- both the
+## text rows and the recovered dock -- reads the progress save and refuses the
+## nine story-gated sceneries while their recovered unlock id is missing.  With
+## no save (or an unreadable one, or a scenery id the recovered table cannot
+## resolve) the gate stays closed.  The always-available row keeps its decoded
+## `always_available` flag.  BRUCELEE_SCENE_UNLOCK=0 restores the pre-gating
+## scene menu unchanged and exists for the regression checks.
+const ENV_SCENE_UNLOCK: String = "BRUCELEE_SCENE_UNLOCK"
+const SceneUnlockGate = preload("res://scripts/scene_unlock_gate.gd")
+const SCENE_LOCKED: String = "SCENE LOCKED"
+const SCENE_UNLOCK_UNAVAILABLE: String = "SCENE UNLOCK UNAVAILABLE"
 
 var menu_state: String = "hidden"
 var selected_index: int = 0
@@ -104,6 +116,11 @@ var last_accept_was_attack: bool = false
 ## decoded layout, the sceneries.list rows and every icon all loaded.
 var scene_dock = null
 var scene_dock_error: String = ""
+## Recovered scenery-unlock gate shared by the text rows and the dock; null when
+## BRUCELEE_SCENE_UNLOCK=0.  It is kept even when its data failed to load so the
+## scene rows stay closed instead of silently becoming playable.
+var scene_gate = null
+var scene_gate_error: String = ""
 ## Last item index that mouse motion selected; -1 until the pointer moves.
 ## Hover is driven by real motion events only, so a cursor resting over an item
 ## when the menu opens cannot hijack the default keyboard focus.
@@ -117,8 +134,50 @@ func _ready() -> void:
     _build_ui()
     _load_background()
     _load_menu_sfx()
+    _build_scene_gate()
     _build_scene_dock()
     hide_menu()
+
+## True unless BRUCELEE_SCENE_UNLOCK is exactly "0".  Static and side-effect
+## free so a test can read the flag without a running tree.
+static func scene_unlock_enabled() -> bool:
+    return OS.get_environment(ENV_SCENE_UNLOCK) != "0"
+
+## Builds the recovered scenery-unlock gate.  A gate whose decoded data or save
+## cannot be read is still created with its error recorded: both the text rows
+## and the dock then treat every gated scenery as locked (fail closed).
+func _build_scene_gate() -> void:
+    scene_gate = null
+    scene_gate_error = ""
+    if not scene_unlock_enabled():
+        return
+    var gate = SceneUnlockGate.new()
+    scene_gate = gate
+    if not gate.refresh():
+        scene_gate_error = String(gate.error)
+        push_error("prototype_menu: scene unlock gate failed closed: " + scene_gate_error)
+        printerr("prototype_menu: scene unlock gate FAIL CLOSED: " + scene_gate_error)
+
+## Re-reads the save when the scene submenu opens, so a progress save written
+## during this session is honoured without restarting the game.
+func _refresh_scene_gate() -> void:
+    if scene_gate == null:
+        return
+    if not scene_gate.refresh():
+        scene_gate_error = String(scene_gate.error)
+
+## True only for the recovered scenery rows whose grant is unsatisfied.  BACK and
+## every non-scenery command are never gated here.  If the gate could not build
+## its ten rows at all, every recovered scene command is closed: without the
+## decoded table the always_available exception cannot be proven either.
+func scene_command_locked(command: String) -> bool:
+    if scene_gate == null:
+        return false
+    if command == "scenes_back" or not SCENE_COMMANDS.has(command):
+        return false
+    if Array(scene_gate.rows).is_empty():
+        return true
+    return scene_gate.is_locked_command(command)
 
 ## True only while the opt-in recovered scene dock is enabled. Static and
 ## side-effect free so a test can read the flag without a running tree.
@@ -136,7 +195,7 @@ func _build_scene_dock() -> void:
     var dock = SceneSelectDock.new()
     dock.name = "SceneSelectDock"
     add_child(dock)
-    if not dock.configure(Lang.language()):
+    if not dock.configure(Lang.language(), scene_gate):
         scene_dock_error = String(dock.error)
         push_error("prototype_menu: scene dock failed closed: " + scene_dock_error)
         printerr("prototype_menu: scene dock FAIL CLOSED: " + scene_dock_error)
@@ -343,6 +402,7 @@ func show_scene_menu() -> void:
         "UP/DOWN or D-PAD   ENTER/J/A load   ESC/B/START back"
     )
     hover_index = -1
+    _refresh_scene_gate()
     _refresh_items(SCENE_LABELS)
     _refresh_selection()
     _show_scene_dock()
@@ -354,6 +414,8 @@ func _show_scene_dock() -> void:
     if scene_dock == null:
         if scene_select_enabled() and not scene_dock_error.is_empty():
             status_label.text = SCENE_DOCK_UNAVAILABLE
+        elif scene_gate != null and Array(scene_gate.rows).is_empty():
+            status_label.text = SCENE_UNLOCK_UNAVAILABLE
         return
     scene_dock.select_index(0)
     scene_dock.show_dock()
@@ -384,7 +446,12 @@ func _move_scene_dock(delta: int) -> void:
 func _confirm_scene_dock() -> void:
     ## Emits the scene command main.gd already implements, exactly like the text
     ## scene rows; main.gd applies BRUCELEE_SCENE and reloads into that scene.
+    ## A card whose recovered story grant is unsatisfied is not applied: the
+    ## decoded dock declares a `lockedpicture` for exactly this state.
     if scene_dock == null:
+        return
+    if scene_dock.selected_locked():
+        scene_dock.set_hint(SCENE_LOCKED)
         return
     var row: Dictionary = scene_dock.selected_row()
     if row.is_empty():
@@ -554,6 +621,13 @@ func _accept_selected(was_attack: bool) -> void:
     var command: String = selected_command()
     if command.is_empty():
         return
+    if menu_state == "scenes" and scene_command_locked(command):
+        # Fail closed: a story-gated scenery whose recovered unlock id is not in
+        # the progress save emits no command and says so.  The text submenu has
+        # no recovered locked-row widget, so the message is port chrome.
+        status_label.text = SCENE_LOCKED
+        last_accept_was_attack = false
+        return
     _play_sfx(accept_sfx, "accept")
     last_accept_was_attack = was_attack
     if menu_state == "scenes":
@@ -643,12 +717,20 @@ func _refresh_items(labels: Array[String]) -> void:
 
 ## Recovered .lang labels for the current command list. A command with no
 ## recovered key keeps its original label (fallback, never invented text).
+## On the scene submenu a locked scenery row appends the port-chrome
+## `SceneUnlockGate.LOCKED_SUFFIX`; the recovered screen has no text variant of
+## the locked state (the dock uses the decoded `lockedpicture` instead).
 func _localized_labels(labels: Array[String]) -> Array[String]:
     var commands: Array[String] = _commands()
     var out: Array[String] = []
     for index: int in range(labels.size()):
         var command: String = commands[index] if index < commands.size() else ""
         out.append(Lang.command_label(command, labels[index]))
+    if menu_state == "scenes" and scene_gate != null:
+        for index: int in range(out.size()):
+            var command: String = commands[index] if index < commands.size() else ""
+            if scene_command_locked(command):
+                out[index] = out[index] + SceneUnlockGate.LOCKED_SUFFIX
     return out
 
 func _refresh_selection() -> void:
@@ -755,3 +837,31 @@ func scene_dock_visible() -> bool:
 ## reports whether the text panel is currently the visible scene menu.
 func scene_text_rows_visible() -> bool:
     return panel_box != null and panel_box.visible
+
+## ------------------------------------------------- scene unlock test hooks
+## Read-only accessors used by tests/validate_scene_unlock.gd.
+
+## Recovered unlock states for the ten sceneries rows (empty with the gate off).
+func scene_gate_rows() -> Array:
+    if scene_gate == null:
+        return []
+    return scene_gate.rows.duplicate(true)
+
+## Full gate summary: data/save status, grant ids, per-row reason.
+func scene_gate_summary() -> Dictionary:
+    if scene_gate == null:
+        return {"enabled": false}
+    return scene_gate.summary()
+
+## Docks rows whose decoded story grant is unsatisfied.
+func scene_dock_locked_rows() -> Array:
+    if scene_dock == null:
+        return []
+    return scene_dock.locked_rows()
+
+## Picture basename drawn for each dock card ("locked" rows draw the decoded
+## `lockedpicture` basename).
+func scene_dock_card_sources() -> Array:
+    if scene_dock == null:
+        return []
+    return scene_dock.card_sources()

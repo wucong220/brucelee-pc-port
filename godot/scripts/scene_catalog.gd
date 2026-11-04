@@ -264,6 +264,27 @@ func rows() -> Array:
 	return _rows.duplicate(true)
 
 
+## Decoded picture basename declared as the dock's `lockedpicture` (the recovered
+## `bl_scenelocked_icon.tex`, decoded to a PNG beside the ten scene icons).
+## Empty when the layout does not declare one.
+func locked_picture_basename() -> String:
+	var dock: Dictionary = dock_widget()
+	var picture: Variant = dock.get("lockedpicture", {})
+	if typeof(picture) != TYPE_DICTIONARY:
+		return ""
+	var reference: Variant = (picture as Dictionary).get("$file", {})
+	if typeof(reference) != TYPE_DICTIONARY:
+		return ""
+	return String((reference as Dictionary).get("basename", "")).to_lower()
+
+
+## Path of a decoded `gui/images/mini` picture by basename (case-insensitive,
+## no extension), or "" when the art directory does not carry it.  Used for the
+## dock's recovered `lockedpicture`; the ten row icons keep their own lookup.
+func picture_path(basename: String) -> String:
+	return String(_icon_paths.get(basename.to_lower(), ""))
+
+
 func row(index: int) -> Dictionary:
 	if index < 0 or index >= _rows.size():
 		return {}

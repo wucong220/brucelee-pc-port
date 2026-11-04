@@ -33,6 +33,8 @@ const DEFAULT_LABEL_COLOR := Color(1.0, 1.0, 0.0, 1.0)
 ## Port chrome (not recovered): controls line under the dock.
 const PORT_HINT_TEXT := "LEFT/RIGHT choose   ENTER apply   ESC back"
 const PORT_HINT_SIZE := 9
+## Port chrome (not recovered): shown while a locked card is selected.
+const LOCKED_HINT_TEXT := "SCENE LOCKED"
 
 const SFX_ROOT_ENV := "BRUCELEE_MENU_SFX_ROOT"
 const ART_ROOT_ENV := "BRUCELEE_SCENE_SELECT_ART"
@@ -44,6 +46,12 @@ var last_sfx: String = ""
 var sfx_missing: bool = false
 
 var catalog = null
+## Optional recovered scenery-unlock gate (scene_unlock_gate.gd).  When present,
+## a row whose recovered story grant is not satisfied draws the decoded dock
+## `lockedpicture` instead of its scene icon and cannot be confirmed.  When the
+## gate could not be built, every gated row is treated as locked (fail closed).
+var gate = null
+var _locked_icon: String = ""
 var _root: Control = null
 var _ui_space: Control = null
 var _stage: Control = null
@@ -52,6 +60,7 @@ var _hint: Label = null
 var _textures: Dictionary = {}
 var _icon_paths: Dictionary = {}
 var _built_rects: Dictionary = {}
+var _built_sources: Dictionary = {}
 var _sfx_player: AudioStreamPlayer = null
 
 
@@ -71,16 +80,33 @@ func _init() -> void:
 
 ## Loads the decoded layout + list and builds the canvas.  Returns false with
 ## `error` set when the dock cannot be drawn from recovered data.
-func configure(language: String = "") -> bool:
+##
+## `unlock_gate` is the shared scene_unlock_gate.gd instance (or null to draw
+## every card unlocked).  The decoded dock declares a `lockedpicture`; when a
+## gate is in use that picture is mandatory, so a missing one fails closed
+## instead of pretending a locked row is playable.
+func configure(language: String = "", unlock_gate = null) -> bool:
 	ready_ok = false
 	error = ""
+	gate = unlock_gate
 	if not catalog.load_catalog(language, OS.get_environment(ART_ROOT_ENV)):
 		error = String(catalog.error)
 		return false
 	_icon_paths = {}
 	_textures = {}
+	_built_sources = {}
 	for row: Dictionary in catalog.rows():
 		_icon_paths[String(row.get("icon", ""))] = String(row.get("icon_path", ""))
+	_locked_icon = catalog.locked_picture_basename()
+	if gate != null:
+		if _locked_icon.is_empty():
+			error = "decoded dock has no lockedpicture to draw locked sceneries"
+			return false
+		var locked_path: String = catalog.picture_path(_locked_icon)
+		if locked_path.is_empty():
+			error = "missing decoded lockedpicture texture '%s'" % _locked_icon
+			return false
+		_icon_paths[_locked_icon] = locked_path
 	_build()
 	_load_menu_sfx()
 	ready_ok = true
@@ -154,6 +180,7 @@ func _rebuild() -> void:
 		_stage.remove_child(child)
 		child.queue_free()
 	_built_rects.clear()
+	_built_sources.clear()
 	var dock: Dictionary = catalog.dock_widget()
 	var dock_rect: Rect2 = _rect_of(dock)
 	_built_rects["sceneries"] = dock_rect
@@ -181,11 +208,16 @@ func _rebuild() -> void:
 	# canvas, so that bleed is part of the recovered layout and is clipped here).
 	for index: int in range(total):
 		var row: Dictionary = catalog.row(index)
+		var locked: bool = is_locked(index)
 		var item_rect := Rect2(
 			centre_x + (float(index) - float(selection)) * cell - option_w * 0.5,
 			dock_rect.position.y + (dock_rect.size.y - option_h) * 0.5,
 			option_w, option_h)
-		var texture: Texture2D = _texture(String(row.get("icon", "")))
+		# A locked row draws the dock's own decoded `lockedpicture` (the recovered
+		# padlock icon), never the scene's card art; the option rect stays the
+		# decoded 165x114 crop.
+		var source: String = _locked_icon if locked else String(row.get("icon", ""))
+		var texture: Texture2D = _texture(source)
 		if texture == null:
 			return
 		# The card is the decoded option rect drawn 1:1 with the cropped artwork
@@ -197,6 +229,7 @@ func _rebuild() -> void:
 		# an inherited minimum size would silently change what is drawn, and the
 		# geometry test must be able to see that.
 		_built_rects["item_%02d" % index] = card.get_rect()
+		_built_sources["item_%02d" % index] = source
 		if index == selection and line:
 			var outline: RectOutline = RectOutline.new()
 			outline.name = "Selection"
@@ -207,6 +240,8 @@ func _rebuild() -> void:
 			outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			_stage.add_child(outline)
 	_label.text = _selected_text()
+	if _hint != null:
+		_hint.text = LOCKED_HINT_TEXT if is_locked(selection) else PORT_HINT_TEXT
 
 
 func _selected_text() -> String:
@@ -304,6 +339,30 @@ func move(delta: int) -> bool:
 
 func selected_row() -> Dictionary:
 	return catalog.row(selection)
+
+
+## True when the selected scenery row has no satisfied recovered story grant.
+func selected_locked() -> bool:
+	return is_locked(selection)
+
+
+## Per-row gate state from the shared gate.  With no gate every card is
+## unlocked; a gate that failed to build locks every row (fail closed).
+func is_locked(index: int) -> bool:
+	if gate == null:
+		return false
+	var state: Dictionary = gate.state_for_index(index)
+	if state.is_empty():
+		return true
+	return not bool(state.get("available", false))
+
+
+func locked_rows() -> Array:
+	var out: Array = []
+	for index: int in range(catalog.size()):
+		if is_locked(index):
+			out.append(index)
+	return out
 
 
 ## True while this node owns the screen (drawn, valid data).
@@ -428,6 +487,11 @@ func label_text() -> String:
 	return _label.text if _label != null else ""
 
 
+## Text currently drawn in the port-chrome hint line (locked state / errors).
+func hint_text() -> String:
+	return _hint.text if _hint != null else ""
+
+
 func label_color() -> Color:
 	return _label.get_theme_color("font_color") if _label != null else Color(0, 0, 0, 0)
 
@@ -456,4 +520,13 @@ func card_regions() -> Array:
 			out.append(Rect2(0, 0, texture.get_width(), texture.get_height()))
 		else:
 			out.append(Rect2())
+	return out
+
+
+## Picture basename actually drawn for each card, in dock order: the row icon
+## for an unlocked card, the decoded `lockedpicture` for a locked one.
+func card_sources() -> Array:
+	var out: Array = []
+	for index: int in range(catalog.size()):
+		out.append(String(_built_sources.get("item_%02d" % index, "")))
 	return out

@@ -1,16 +1,16 @@
 extends SceneTree
-## On/off comparison for the opt-in recovered reaction gate (NativeReactionState).
+## Default/opt-out comparison for the recovered reaction gate (NativeReactionState).
 ##
 ## The script instantiates the real res://scenes/main.tscn twice in one process:
-## first with BRUCELEE_NATIVE_REACTION unset (default: existing reaction path),
-## then with BRUCELEE_NATIVE_REACTION=1 (recovered canblock/impact/KO link scan
-## plus FollowLink +0xF0/+0xF4 parking).
+## first with BRUCELEE_NATIVE_REACTION=0 (opt-out: the pre-recovery heuristic),
+## then with BRUCELEE_NATIVE_REACTION unset (default: recovered
+## canblock/impact/KO link scan plus FollowLink +0xF0/+0xF4 parking).
 ##
 ##   godot --headless --path <project> --script res://tests/validate_native_reaction_gate.gd
 ##
-## Exit 0 = the default path is unchanged, the opt-in path selects the recovered
-## link targets, the two paths agree for the rows where they must, and the
-## FollowLink parking path defers/executes at the recorded frame.
+## Exit 0 = the opt-out path keeps the old selection, the default path selects the
+## recovered link targets, the two paths agree for the rows where they must, and
+## the FollowLink parking path defers/executes at the recorded frame.
 
 var checks: Dictionary = {}
 var failures: Array[String] = []
@@ -289,11 +289,22 @@ func _run_on(scene: Node, off_selected: Dictionary) -> Dictionary:
     _check("on_hit_state", computer.state, "hitstun")
     _check("on_hit_health", computer.health, 95.0)
     _check("on_hit_source", computer.last_reaction_source_action, "impactlightfrontmid")
+    # Lethal normal medium: recovered rows 210 -> impactstunlow, then 288
+    # [14,17] -> stun. That is the KO chain entry, not an immediate `ko` state.
     _contact(scene, false, 1.0)
     _check("on_lethal_health", computer.health, 0.0)
+    # This fixture loads no candidate GLB for the opponent, so the recovered
+    # impactstun entry has no clip to play and the port keeps its fail-closed
+    # `ko` state. validate_stun covers the loaded-candidate path (row 210 ->
+    # impactstunlow, then row 288 [14,17] -> stun).
     _check("on_lethal_state", computer.state, "ko")
     _check("on_lethal_resolved",
         String(computer.last_native_reaction.get("resolved", "")), "impactstunlow")
+    var lethal_entry: Dictionary = computer._native_healthzero_impact_entry("impactstunlow")
+    _check("on_lethal_entry_animation",
+        String(lethal_entry.get("animation", "")), "all_impct_light_frnt_low")
+    _check("on_lethal_entry_exit", int(lethal_entry.get("exit_frame", -1)), 14)
+    _check("on_lethal_entry_next", String(lethal_entry.get("next_state", "")), "stun")
 
     # FollowLink +0xF0/+0xF4 parking. A real recovered row is given a future
     # linking_frame so the recovery scan selects it first; this is a fixture for
@@ -356,14 +367,14 @@ func _run_on(scene: Node, off_selected: Dictionary) -> Dictionary:
 
 
 func _run() -> void:
-    # 1) Default: BRUCELEE_NATIVE_REACTION unset must leave the old path only.
-    OS.set_environment("BRUCELEE_NATIVE_REACTION", "")
+    # 1) Opt-out: BRUCELEE_NATIVE_REACTION=0 keeps the pre-recovery heuristic.
+    OS.set_environment("BRUCELEE_NATIVE_REACTION", "0")
     var off_scene: Node = await _instantiate_main()
     var off_selected: Dictionary = _run_off(off_scene)
     await _free_main(off_scene)
 
-    # 2) Opt-in: the recovered link scan and FollowLink parking.
-    OS.set_environment("BRUCELEE_NATIVE_REACTION", "1")
+    # 2) Default (env unset): the recovered link scan and FollowLink parking.
+    OS.set_environment("BRUCELEE_NATIVE_REACTION", "")
     var on_scene: Node = await _instantiate_main()
     var on_selected: Dictionary = _run_on(on_scene, off_selected)
     await _free_main(on_scene)

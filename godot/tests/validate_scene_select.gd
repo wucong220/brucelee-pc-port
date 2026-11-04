@@ -141,10 +141,15 @@ func _base_env(player_glb: String, opponent_glb: String, scene_select: String) -
 		"BRUCELEE_PROGRESS", "BRUCELEE_STYLE_EDITOR", "BRUCELEE_SCENE",
 		"BRUCELEE_SCENE_SELECT_LAYOUT", "BRUCELEE_SCENE_SELECT_ART",
 		"BRUCELEE_ROUND_INTRO", "BRUCELEE_MENU_ART",
+		"BRUCELEE_SCENE_UNLOCK_SAVE", "BRUCELEE_SCENE_UNLOCK_UNLOCKS",
 	]:
 		OS.set_environment(name, "")
 	OS.set_environment("BRUCELEE_MAIN_MENU", "1")
 	OS.set_environment("BRUCELEE_SCENE_SELECT", scene_select)
+	# This suite validates the pre-gating dock/list/navigation behaviour, so the
+	# recovered scenery-unlock gate is explicitly off here; the gate itself is
+	# covered by tests/validate_scene_unlock.gd.
+	OS.set_environment("BRUCELEE_SCENE_UNLOCK", "0")
 	OS.set_environment("BRUCELEE_PLAYER_GLB", player_glb)
 	OS.set_environment("BRUCELEE_OPPONENT_GLB", opponent_glb)
 	OS.set_environment("BRUCELEE_LANG", "en")
