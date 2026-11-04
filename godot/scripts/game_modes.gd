@@ -19,6 +19,8 @@ extends CanvasLayer
 
 const Rules = preload("res://scripts/game_modes_rules.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
+## Recovered .lang localization (display strings only; logic never reads it).
+const Lang = preload("res://scripts/menu_lang.gd")
 
 const ENV_GAME_MODE := "BRUCELEE_GAME_MODE"
 const ENV_MODE_LAUNCH := "BRUCELEE_MODE_LAUNCH"
@@ -145,8 +147,8 @@ func _mode_data(mode: String) -> Dictionary:
 func show_mode_menu() -> void:
 	_clear_body()
 	show_screen("mode")
-	_set_header("ARCADE MODES", "game.states: arcade / survival / timeattack", "UP/DOWN choose · J select · ESC quit")
-	var rows: Array = ["ARCADE", "SURVIVAL", "TIME ATTACK"]
+	_set_header(Lang.text("game_modes"), "game.states: arcade / survival / timeattack", "UP/DOWN choose · J select · ESC quit")
+	var rows: Array = [Lang.text("arcade"), Lang.text("survival"), Lang.text("time_attack")]
 	menu_cursor = clampi(menu_cursor, 0, rows.size() - 1)
 	_show_rows(rows, menu_cursor)
 
@@ -155,8 +157,8 @@ func show_settings() -> void:
 	_clear_body()
 	show_screen("settings")
 	var mode_data: Dictionary = _mode_data(current_mode)
-	var label: String = String(mode_data.get("label", current_mode.to_upper()))
-	_set_header(label + " · SETTINGS", "recovered gui/" + String(mode_data.get("gui_settings", "")), "UP/DOWN · LEFT/RIGHT change · J start · ESC back")
+	var label: String = Lang.mode_label(current_mode)
+	_set_header(label + " · " + Lang.text("settings"), "recovered gui/" + String(mode_data.get("gui_settings", "")), "UP/DOWN · LEFT/RIGHT change · J start · ESC back")
 	var schema: Array = _schema(current_mode)
 	var rows: Array = []
 	for entry: Variant in schema:
@@ -168,10 +170,10 @@ func show_settings() -> void:
 		var idx: int = options.find(value)
 		if idx < 0:
 			idx = 0
-		var shown: String = String(labels[idx]) if idx < labels.size() else str(value)
-		rows.append("%-11s  < %s >" % [String(row.get("label", key)), shown])
+		var shown: String = Lang.option_label(String(labels[idx])) if idx < labels.size() else str(value)
+		rows.append("%s   < %s >" % [Lang.setting_label(String(row.get("label", key))), shown])
 	rows.append("START")
-	rows.append("BACK")
+	rows.append(Lang.text("back"))
 	settings_cursor = clampi(settings_cursor, 0, rows.size() - 1)
 	_show_rows(rows, settings_cursor)
 	# Fail-closed disclosure under the choices.
@@ -188,16 +190,16 @@ func show_settings() -> void:
 func show_results(outcome: String) -> void:
 	_clear_body()
 	show_screen("results")
-	var label: String = String(_mode_data(current_mode).get("label", current_mode.to_upper()))
+	var label: String = Lang.mode_label(current_mode)
 	if outcome == "complete":
 		_set_header(label + " · RESULTS", "run complete", "UP/DOWN · J select · ESC main menu")
 	else:
 		_set_header(label + " · DEFEAT", String(last_result.get("reason", "match lost")), "UP/DOWN · J select · ESC main menu")
 	var rows: Array = _summary_rows()
 	rows.append("")
-	rows.append("PLAY AGAIN")
-	rows.append("CHANGE SETTINGS")
-	rows.append("MAIN MENU")
+	rows.append(Lang.text("play"))
+	rows.append(Lang.text("settings"))
+	rows.append(Lang.text("main_menu"))
 	result_cursor = clampi(result_cursor, 0, 2)
 	var base: int = rows.size() - 3
 	_show_rows(rows, -1)
@@ -209,57 +211,72 @@ func _summary_rows() -> Array:
 	var rows: Array = []
 	var resolved: Dictionary = run.get("resolved", {})
 	if current_mode == "arcade":
-		rows.append("SCORE            %d" % int(run.get("score", 0)))
-		rows.append("fights won       %d / %d" % [int(run.get("fights_done", 0)), int(run.get("opponent_count", 0))])
-		rows.append("score per fight  %d (100 + 25*%d)" % [int(resolved.get("score_per_fight", 0)), int(run.get("difficulty_index", 0))])
-		rows.append("rounds / time    %d bouts · %s" % [
-			int(resolved.get("rounds", 0)), _time_text(int(run.get("time_limit", 0)))])
+		rows.append(_kv(Lang.text("total_score"), str(int(run.get("score", 0)))))
+		rows.append(_kv(Lang.text("wins"), "%d / %d" % [
+			int(run.get("fights_done", 0)), int(run.get("opponent_count", 0))]))
+		rows.append(_kv("score per fight", "%d (100 + 25*%d)" % [
+			int(resolved.get("score_per_fight", 0)), int(run.get("difficulty_index", 0))]))
+		rows.append(_kv(Lang.text("round_number") + " / " + Lang.text("round_time"),
+			"%d · %s" % [int(resolved.get("rounds", 0)),
+			_time_text(int(run.get("time_limit", 0)))]))
 	elif current_mode == "survival":
-		rows.append("fights survived  %d" % int(run.get("fights_done", 0)))
-		rows.append("time per fight   %s" % _time_text(int(run.get("time_limit", 0))))
-		rows.append("max_fights       FAIL CLOSED (unrecovered standalone)")
-		rows.append("health_recovery  FAIL CLOSED (unrecovered standalone)")
+		rows.append(_kv("fights survived", str(int(run.get("fights_done", 0)))))
+		rows.append(_kv("time per fight", _time_text(int(run.get("time_limit", 0)))))
+		rows.append(_kv("max_fights", "FAIL CLOSED (unrecovered standalone)"))
+		rows.append(_kv("health_recovery", "FAIL CLOSED (unrecovered standalone)"))
 	else:
-		rows.append("opponents beaten %d" % int(run.get("fights_done", 0)))
-		rows.append("total time limit %s" % _time_text(int(run.get("run_time_limit", -1))))
-		rows.append("elapsed          %.1f s" % float(run.get("elapsed_seconds", 0.0)))
-	rows.append("difficulty       %s (ai slot %d)" % [
-		["EASY", "MEDIUM", "HARD"][clampi(int(run.get("difficulty_index", 1)), 0, 2)],
-		int(run.get("difficulty_slot", 2))])
+		rows.append(_kv(Lang.text("your_victories"), str(int(run.get("fights_done", 0)))))
+		rows.append(_kv("total time limit", _time_text(int(run.get("run_time_limit", -1)))))
+		rows.append(_kv(Lang.text("your_time"),
+			"%.1f s" % float(run.get("elapsed_seconds", 0.0))))
+	rows.append(_kv(Lang.text("difficulty_level"), "%s (ai slot %d)" % [
+		_difficulty_text(int(run.get("difficulty_index", 1))),
+		int(run.get("difficulty_slot", 2))]))
 	return rows
+
+
+## Localized difficulty word for a recovered difficulty index (0/1/2).
+func _difficulty_text(index: int) -> String:
+	var labels: Array = ["EASY", "MEDIUM", "HARD"]
+	return Lang.option_label(String(labels[clampi(index, 0, 2)]))
+
+
+## Aligned "label   value" row; the label may come from the .lang table.
+func _kv(label: String, value: String) -> String:
+	return "%s   %s" % [label, value]
 
 
 func _time_text(seconds: int) -> String:
 	if seconds <= 0:
-		return "inf (no countdown)"
+		return Lang.text("inf")
 	return str(seconds) + " s"
 
 
 func show_next_fight() -> void:
 	_clear_body()
 	show_screen("next")
-	_set_header("NEXT FIGHT", String(_mode_data(current_mode).get("label", current_mode.to_upper())), "J = NEXT FIGHT · ESC = PAUSE")
+	_set_header("NEXT FIGHT", Lang.mode_label(current_mode), "J = NEXT FIGHT · ESC = PAUSE")
 	var spec: Dictionary = Rules.next_fight_spec(run, opponent_config)
 	var rows: Array = [
-		"opponent   %s" % String(spec.get("opponent", "")).to_upper(),
-		"scene      %s" % String(spec.get("scene_variant", "")),
-		"time       %s" % _time_text(int(spec.get("time", 0))),
-		"difficulty %s (ai slot %d)" % [
-			["EASY", "MEDIUM", "HARD"][clampi(int(spec.get("difficulty_index", 1)), 0, 2)],
-			int(spec.get("difficulty_slot", 2))],
+		_kv("opponent", Lang.character(String(spec.get("opponent", "")))),
+		_kv("scene", String(spec.get("scene_variant", ""))),
+		_kv(Lang.text("round_time"), _time_text(int(spec.get("time", 0)))),
+		_kv(Lang.text("difficulty_level"), "%s (ai slot %d)" % [
+			_difficulty_text(int(spec.get("difficulty_index", 1))),
+			int(spec.get("difficulty_slot", 2))]),
 	]
 	if current_mode == "arcade":
-		rows.append("score      %d" % int(spec.get("score", 0)))
+		rows.append(_kv(Lang.text("your_score"), str(int(spec.get("score", 0)))))
 	_show_rows(rows, -1)
 
 
 func show_pause(return_screen: String = "battle") -> void:
 	_clear_body()
 	show_screen("pause")
-	_set_header("PAUSED", String(_mode_data(current_mode).get("label", current_mode.to_upper())), "UP/DOWN · J select · ESC resume")
-	var rows: Array = ["RESUME", "MAIN MENU"]
+	_set_header(Lang.text("pause"), Lang.mode_label(current_mode), "UP/DOWN · J select · ESC resume")
+	var rows: Array = [Lang.text("resume"), Lang.text("main_menu")]
 	result_cursor = 0
-	_show_rows(rows, result_cursor)
+	_show_rows(rows, -1)
 	_highlight_action_rows(0, result_cursor)
 
 
@@ -310,20 +327,20 @@ func _launch_fight() -> void:
 
 func show_battle_banner(spec: Dictionary) -> void:
 	show_screen("battle")
-	var label: String = String(_mode_data(current_mode).get("label", current_mode.to_upper()))
+	var label: String = Lang.mode_label(current_mode)
 	var line1: Array = [label]
 	if current_mode == "arcade":
 		line1.append("FIGHT %d/%d" % [int(spec.get("opponent_index", 0)) + 1, int(spec.get("opponent_count", 1))])
-		line1.append("score %d" % int(spec.get("score", 0)))
+		line1.append("%s %d" % [Lang.text("your_score"), int(spec.get("score", 0))])
 	elif current_mode == "survival":
 		line1.append("fight %d" % (int(spec.get("opponent_index", 0)) + 1))
 	else:
 		line1.append("opponent %d" % (int(spec.get("opponent_index", 0)) + 1))
-	line1.append("VS " + String(spec.get("opponent", "")).to_upper())
+	line1.append("VS " + Lang.character(String(spec.get("opponent", ""))))
 	var line2: Array = [
 		String(spec.get("scene_variant", "")),
 		_time_text(int(spec.get("time", 0))),
-		"difficulty " + ["EASY", "MEDIUM", "HARD"][clampi(int(spec.get("difficulty_index", 1)), 0, 2)],
+		Lang.text("difficulty_level") + " " + _difficulty_text(int(spec.get("difficulty_index", 1))),
 	]
 	banner.text = " · ".join(_pack(line1)) + "\n" + " · ".join(_pack(line2))
 
@@ -533,6 +550,7 @@ func _make_label(text: String, size: int, color: Color) -> Label:
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Lang.apply_font(label)
 	return label
 
 
@@ -628,7 +646,7 @@ func _show_error(title: String, message: String) -> void:
 	_clear_body()
 	show_screen("error")
 	_set_header(title, message, "J / ESC = BACK")
-	_show_rows(["back"], 0)
+	_show_rows([Lang.text("back")], 0)
 
 
 # ----------------------------------------------------------------------- input

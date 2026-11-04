@@ -1,0 +1,1323 @@
+{
+ "schema": "arcade-menu-lang/1",
+ "generated_by": "tools/build_lang_data.py",
+ "note": "Recovered .lang values only. Every value is copied verbatim from the decoded 10-language lookup; keys absent from the table fall back to the key name at runtime (menu_lang.gd::text).",
+ "source": {
+  "lookup": "D:\\BruceLeeWork\\story-lang-20261104\\lang_lookup_full.json",
+  "lookup_sha256": "cbd4d9234eb1ee48b499efb32385051e94c60e74d611f9722c6976fab119ef9b",
+  "coverage": "D:\\BruceLeeWork\\story-lang-20261104\\lang_key_coverage.json",
+  "lang_files": {
+   "LangChineseSimpl.lang": {
+    "sha256": "81fcd925c0f3ab9b583a8953da2062a8ca0859b508097f1aebb91f1aa9134751",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangChineseTrad.lang": {
+    "sha256": "cbe227fde21aaf69faad4d8b60262b877cbb1b69b321002b1987f3a19083809d",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangEnglish.lang": {
+    "sha256": "93df59d357eb83bfdb4118245e202e086653147cb7f37dd6217bdc69ed33ae22",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangFrench.lang": {
+    "sha256": "62e87ad8ce1c2c001c58c0ab15cb330b4f6a4ac97286481006fc33d1189c0c7b",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangGerman.lang": {
+    "sha256": "396ed4fd8d135653127700e71d305c5c2d94f23d68351904496a9384e5b93775",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangItalian.lang": {
+    "sha256": "7d01b71c9d718591d2606ea2d1c975bd1303606b816d1567264cf771975c9f6f",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangJapanese.lang": {
+    "sha256": "329bdd31b4544b05b3f7a62b1b9b331cf6c759ad54b2fd359c40322fbe964a11",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangKorean.lang": {
+    "sha256": "729b6cd43fb111e5f0b1a215473c43a20586e3dcfc8339c0b4f6450cdffa1c70",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangRussian.lang": {
+    "sha256": "b5b7907d09e47f49d4085ce6e9394c874393728a45855d71b1d5a967d10a0074",
+    "total_strings": 890,
+    "mapped_keys": 887
+   },
+   "LangSpanish.lang": {
+    "sha256": "0688ab079c1cfd97a4512ad53933ea66bbc8d0687528a206b8bfd1909292ab7c",
+    "total_strings": 890,
+    "mapped_keys": 887
+   }
+  },
+  "key_universe_size": 887,
+  "langs": [
+   "LangEnglish",
+   "LangChineseSimpl",
+   "LangChineseTrad",
+   "LangFrench",
+   "LangGerman",
+   "LangItalian",
+   "LangJapanese",
+   "LangKorean",
+   "LangRussian",
+   "LangSpanish"
+  ]
+ },
+ "default_language": "LangEnglish",
+ "languages": [
+  "LangEnglish",
+  "LangChineseSimpl",
+  "LangChineseTrad",
+  "LangFrench",
+  "LangGerman",
+  "LangItalian",
+  "LangJapanese",
+  "LangKorean",
+  "LangRussian",
+  "LangSpanish"
+ ],
+ "command_keys": {
+  "fight": "versus",
+  "arcade": "arcade",
+  "survival": "survival",
+  "timeattack": "time_attack",
+  "training": "training",
+  "quit": "quit",
+  "resume": "resume",
+  "main_menu": "main_menu",
+  "brick": "brickdavis",
+  "sinfu": "sinfu",
+  "master": "themaster",
+  "ken": "kengodall",
+  "shenlo": "shenlo",
+  "smallboy": "smallboy",
+  "johnson": "johnson",
+  "chief": "chief",
+  "loming": "loming",
+  "scenes_back": "back",
+  "opponents_back": "back"
+ },
+ "setting_keys": {
+  "ROUNDS": "round_number",
+  "TIME": "round_time",
+  "DIFFICULTY": "difficulty_level"
+ },
+ "option_keys": {
+  "EASY": "easy",
+  "MEDIUM": "medium",
+  "HARD": "hard",
+  "inf": "inf"
+ },
+ "mode_keys": {
+  "arcade": "arcade",
+  "survival": "survival",
+  "timeattack": "time_attack"
+ },
+ "character_keys": {
+  "bruce": "brucelee",
+  "brick": "brickdavis",
+  "brickdavis": "brickdavis",
+  "sinfu": "sinfu",
+  "master": "themaster",
+  "themaster": "themaster",
+  "ken": "kengodall",
+  "kengodall": "kengodall",
+  "shenlo": "shenlo",
+  "smallboy": "smallboy",
+  "johnson": "johnson",
+  "chief": "chief",
+  "loming": "loming"
+ },
+ "keys": {
+  "arcade": {
+   "LangEnglish": "Arcade",
+   "LangChineseSimpl": "街机模式",
+   "LangChineseTrad": "街機模式",
+   "LangFrench": "Arcade",
+   "LangGerman": "Arcade",
+   "LangItalian": "Arcade",
+   "LangJapanese": "アーケード",
+   "LangKorean": "아케이드",
+   "LangRussian": "Аркада",
+   "LangSpanish": "Arcade"
+  },
+  "back": {
+   "LangEnglish": "Back",
+   "LangChineseSimpl": "后退",
+   "LangChineseTrad": "後退",
+   "LangFrench": "Précédent",
+   "LangGerman": "Zurück",
+   "LangItalian": "Indietro",
+   "LangJapanese": "戻る",
+   "LangKorean": "뒤로",
+   "LangRussian": "Назад",
+   "LangSpanish": "Volver"
+  },
+  "brickdavis": {
+   "LangEnglish": "Brick Davis",
+   "LangChineseSimpl": "铁骨戴维斯",
+   "LangChineseTrad": "鐵骨戴維斯",
+   "LangFrench": "Brick Davis",
+   "LangGerman": "Brick Davis",
+   "LangItalian": "Brick Davis",
+   "LangJapanese": "Brick Davis",
+   "LangKorean": "브릭 데이비스",
+   "LangRussian": "Брик Дэвис",
+   "LangSpanish": "Brick Davis"
+  },
+  "brucelee": {
+   "LangEnglish": "Bruce Lee",
+   "LangChineseSimpl": "李小龙",
+   "LangChineseTrad": "李小龍",
+   "LangFrench": "Bruce Lee",
+   "LangGerman": "Bruce Lee",
+   "LangItalian": "Bruce Lee",
+   "LangJapanese": "Bruce Lee ",
+   "LangKorean": "브루스 리",
+   "LangRussian": "Брюс Ли",
+   "LangSpanish": "Bruce Lee"
+  },
+  "chief": {
+   "LangEnglish": "The Chief",
+   "LangChineseSimpl": "老大",
+   "LangChineseTrad": "老大",
+   "LangFrench": "Le Chef",
+   "LangGerman": "Der Chef",
+   "LangItalian": "Il capo",
+   "LangJapanese": "The Chief",
+   "LangKorean": "치프",
+   "LangRussian": "Босс",
+   "LangSpanish": "El Jefe"
+  },
+  "difficulty_level": {
+   "LangEnglish": "Difficulty",
+   "LangChineseSimpl": "难度",
+   "LangChineseTrad": "難度",
+   "LangFrench": "Difficulté",
+   "LangGerman": "Schwierigkeit",
+   "LangItalian": "Difficoltà",
+   "LangJapanese": "難易度",
+   "LangKorean": "난이도",
+   "LangRussian": "Уровень сложности",
+   "LangSpanish": "Dificultad"
+  },
+  "easy": {
+   "LangEnglish": "Easy",
+   "LangChineseSimpl": "低难",
+   "LangChineseTrad": "低難",
+   "LangFrench": "Facile",
+   "LangGerman": "Einfach",
+   "LangItalian": "Facile",
+   "LangJapanese": "かんたん",
+   "LangKorean": "하",
+   "LangRussian": "Новичок",
+   "LangSpanish": "Fácil"
+  },
+  "game_modes": {
+   "LangEnglish": "Game Modes",
+   "LangChineseSimpl": "游戏模式",
+   "LangChineseTrad": "遊戲模式",
+   "LangFrench": "Modes de jeu",
+   "LangGerman": "Spielmodi",
+   "LangItalian": "Modalità di gioco",
+   "LangJapanese": "ゲームモード",
+   "LangKorean": "게임 모드",
+   "LangRussian": "Режимы игры",
+   "LangSpanish": "Modos de juego"
+  },
+  "hard": {
+   "LangEnglish": "Hard",
+   "LangChineseSimpl": "高难",
+   "LangChineseTrad": "高難",
+   "LangFrench": "Difficile",
+   "LangGerman": "Schwierig",
+   "LangItalian": "Difficile",
+   "LangJapanese": "難しい",
+   "LangKorean": "상",
+   "LangRussian": "Мастер",
+   "LangSpanish": "Difícil"
+  },
+  "inf": {
+   "LangEnglish": "∞",
+   "LangChineseSimpl": "∞",
+   "LangChineseTrad": "∞",
+   "LangFrench": "∞",
+   "LangGerman": "∞",
+   "LangItalian": "∞",
+   "LangJapanese": "∞",
+   "LangKorean": "∞",
+   "LangRussian": "∞",
+   "LangSpanish": "∞"
+  },
+  "johnson": {
+   "LangEnglish": "Johnson",
+   "LangChineseSimpl": "强森",
+   "LangChineseTrad": "強森",
+   "LangFrench": "Johnson",
+   "LangGerman": "Johnson",
+   "LangItalian": "Johnson",
+   "LangJapanese": "Johnson ",
+   "LangKorean": "존슨",
+   "LangRussian": "Джонсон",
+   "LangSpanish": "Johnson"
+  },
+  "kengodall": {
+   "LangEnglish": "Ken Goodall",
+   "LangChineseSimpl": "康古道",
+   "LangChineseTrad": "康古道",
+   "LangFrench": "Ken Goodall",
+   "LangGerman": "Ken Goodall",
+   "LangItalian": "Ken Goodall",
+   "LangJapanese": "Ken Goodall ",
+   "LangKorean": "켄 구달",
+   "LangRussian": "Кен Гудол",
+   "LangSpanish": "Ken Goodall"
+  },
+  "loming": {
+   "LangEnglish": "Lo Ming",
+   "LangChineseSimpl": "罗明",
+   "LangChineseTrad": "羅明",
+   "LangFrench": "Lo Ming",
+   "LangGerman": "Lo Ming",
+   "LangItalian": "Lo Ming",
+   "LangJapanese": "Lo Ming",
+   "LangKorean": "로 밍",
+   "LangRussian": "Ло Минг",
+   "LangSpanish": "Lo Ming"
+  },
+  "main_menu": {
+   "LangEnglish": "Main Menu",
+   "LangChineseSimpl": "主菜单",
+   "LangChineseTrad": "主目錄",
+   "LangFrench": "Menu principal",
+   "LangGerman": "Hauptmenü",
+   "LangItalian": "Menu principale",
+   "LangJapanese": "メインスクリーン",
+   "LangKorean": "주 메뉴",
+   "LangRussian": "Главное меню",
+   "LangSpanish": "Menú Principal"
+  },
+  "medium": {
+   "LangEnglish": "Medium",
+   "LangChineseSimpl": "中难",
+   "LangChineseTrad": "中難",
+   "LangFrench": "Moyen",
+   "LangGerman": "Mittel",
+   "LangItalian": "Media",
+   "LangJapanese": "ふつう",
+   "LangKorean": "중",
+   "LangRussian": "Опытный боец",
+   "LangSpanish": "Medio"
+  },
+  "pause": {
+   "LangEnglish": "Pause",
+   "LangChineseSimpl": "暂停",
+   "LangChineseTrad": "暫停",
+   "LangFrench": "Pause",
+   "LangGerman": "Pause",
+   "LangItalian": "Pausa",
+   "LangJapanese": "ポーズ",
+   "LangKorean": "일시 중지",
+   "LangRussian": "Пауза",
+   "LangSpanish": "Pausa"
+  },
+  "play": {
+   "LangEnglish": "Play",
+   "LangChineseSimpl": "开始游戏",
+   "LangChineseTrad": "開始遊戲",
+   "LangFrench": "Jouer",
+   "LangGerman": "Spielen",
+   "LangItalian": "Gioca",
+   "LangJapanese": "プレイ",
+   "LangKorean": "플레이",
+   "LangRussian": "Играть",
+   "LangSpanish": "Jugar"
+  },
+  "quit": {
+   "LangEnglish": "Quit",
+   "LangChineseSimpl": "退出",
+   "LangChineseTrad": "退出",
+   "LangFrench": "Quitter",
+   "LangGerman": "Beenden",
+   "LangItalian": "Abbandona",
+   "LangJapanese": "やめる",
+   "LangKorean": "끝내기",
+   "LangRussian": "Выход",
+   "LangSpanish": "Salir"
+  },
+  "resume": {
+   "LangEnglish": "Resume",
+   "LangChineseSimpl": "恢复",
+   "LangChineseTrad": "恢復",
+   "LangFrench": "Reprendre",
+   "LangGerman": "Fortsetzen",
+   "LangItalian": "Riprendi",
+   "LangJapanese": "ポーズ解除",
+   "LangKorean": "다시 시작",
+   "LangRussian": "Возобновить игру",
+   "LangSpanish": "Reanudar"
+  },
+  "round_number": {
+   "LangEnglish": "Rounds",
+   "LangChineseSimpl": "局数",
+   "LangChineseTrad": "局數",
+   "LangFrench": "Rounds",
+   "LangGerman": "Runden",
+   "LangItalian": "Round",
+   "LangJapanese": "ラウンド",
+   "LangKorean": "라운드",
+   "LangRussian": "Раунды",
+   "LangSpanish": "Rounds"
+  },
+  "round_time": {
+   "LangEnglish": "Time",
+   "LangChineseSimpl": "时间",
+   "LangChineseTrad": "時間",
+   "LangFrench": "Durée",
+   "LangGerman": "Zeit",
+   "LangItalian": "Tempo",
+   "LangJapanese": "タイム",
+   "LangKorean": "시간",
+   "LangRussian": "Время",
+   "LangSpanish": "Tiempo"
+  },
+  "select_fighter": {
+   "LangEnglish": "Select Fighter",
+   "LangChineseSimpl": "选择武师",
+   "LangChineseTrad": "選擇武師",
+   "LangFrench": "Choisissez un combattant",
+   "LangGerman": "Kämpfer wählen",
+   "LangItalian": "Seleziona lottatore",
+   "LangJapanese": "ファイターセレクト",
+   "LangKorean": "파이터 선택",
+   "LangRussian": "Выбор бойца",
+   "LangSpanish": "Escoger Luchador"
+  },
+  "select_scenery": {
+   "LangEnglish": "Select Scenery",
+   "LangChineseSimpl": "选择场景",
+   "LangChineseTrad": "選擇場景",
+   "LangFrench": "Choisissez un lieu",
+   "LangGerman": "Szenerie wählen",
+   "LangItalian": "Seleziona scenario",
+   "LangJapanese": "エリアセレクト",
+   "LangKorean": "배경 선택",
+   "LangRussian": "Выбор местности",
+   "LangSpanish": "Escoger Escenario"
+  },
+  "settings": {
+   "LangEnglish": "Settings",
+   "LangChineseSimpl": "设置",
+   "LangChineseTrad": "設置",
+   "LangFrench": "Paramètres",
+   "LangGerman": "Einstellungen",
+   "LangItalian": "Impostazioni",
+   "LangJapanese": "設定",
+   "LangKorean": "설정",
+   "LangRussian": "Настройки",
+   "LangSpanish": "Configuración"
+  },
+  "shenlo": {
+   "LangEnglish": "Shen Lo",
+   "LangChineseSimpl": "沈龙",
+   "LangChineseTrad": "沈龍",
+   "LangFrench": "Shen Lo",
+   "LangGerman": "Shen Lo",
+   "LangItalian": "Shen Lo",
+   "LangJapanese": "Shen Lo ",
+   "LangKorean": "셴 로",
+   "LangRussian": "Шень Ло",
+   "LangSpanish": "Shen Lo"
+  },
+  "sinfu": {
+   "LangEnglish": "Sin Fu",
+   "LangChineseSimpl": "秦福",
+   "LangChineseTrad": "秦福",
+   "LangFrench": "Sin Fu",
+   "LangGerman": "Sin Fu",
+   "LangItalian": "Sin Fu",
+   "LangJapanese": "Sin Fu ",
+   "LangKorean": "신 후",
+   "LangRussian": "Син Фу",
+   "LangSpanish": "Sin Fu"
+  },
+  "smallboy": {
+   "LangEnglish": "Smallboy",
+   "LangChineseSimpl": "小男孩",
+   "LangChineseTrad": "小男孩",
+   "LangFrench": "Smallboy",
+   "LangGerman": "Smallboy",
+   "LangItalian": "Smallboy",
+   "LangJapanese": "Smallboy ",
+   "LangKorean": "스몰보이",
+   "LangRussian": "Малыш",
+   "LangSpanish": "Smallboy"
+  },
+  "survival": {
+   "LangEnglish": "Survival",
+   "LangChineseSimpl": "生存模式",
+   "LangChineseTrad": "生存模式",
+   "LangFrench": "Survie",
+   "LangGerman": "Überleben",
+   "LangItalian": "Sopravvivenza",
+   "LangJapanese": "サバイバル",
+   "LangKorean": "서바이벌",
+   "LangRussian": "Бой на выживание",
+   "LangSpanish": "Supervivencia"
+  },
+  "themaster": {
+   "LangEnglish": "The Master",
+   "LangChineseSimpl": "师父",
+   "LangChineseTrad": "師父",
+   "LangFrench": "Le Maître",
+   "LangGerman": "Der Meister",
+   "LangItalian": "Il Maestro",
+   "LangJapanese": "The Master",
+   "LangKorean": "마스터",
+   "LangRussian": "Учитель",
+   "LangSpanish": "El Maestro"
+  },
+  "time_attack": {
+   "LangEnglish": "Time Attack",
+   "LangChineseSimpl": "计时模式",
+   "LangChineseTrad": "計時模式",
+   "LangFrench": "Chrono",
+   "LangGerman": "Zeitangriff",
+   "LangItalian": "Sfida a tempo",
+   "LangJapanese": "タイムアタック",
+   "LangKorean": "타임 어택",
+   "LangRussian": "Бой на время",
+   "LangSpanish": "Contrarreloj"
+  },
+  "total_score": {
+   "LangEnglish": "TOTAL SCORE",
+   "LangChineseSimpl": "合计得分",
+   "LangChineseTrad": "合計得分",
+   "LangFrench": "SCORE TOTAL",
+   "LangGerman": "GESAMTPUNKTZAHL",
+   "LangItalian": "PUNTI TOTALI",
+   "LangJapanese": "合計スコア",
+   "LangKorean": "총 점수",
+   "LangRussian": "Общая сумма очков",
+   "LangSpanish": "PUNTUACIÓN TOTAL"
+  },
+  "training": {
+   "LangEnglish": "Training",
+   "LangChineseSimpl": "训练",
+   "LangChineseTrad": "訓練",
+   "LangFrench": "Entraînement",
+   "LangGerman": "Training",
+   "LangItalian": "Allenamento",
+   "LangJapanese": "トレーニング",
+   "LangKorean": "훈련",
+   "LangRussian": "Обучение",
+   "LangSpanish": "Entrenamiento"
+  },
+  "versus": {
+   "LangEnglish": "Versus",
+   "LangChineseSimpl": "挑战模式",
+   "LangChineseTrad": "挑戰模式",
+   "LangFrench": "Versus",
+   "LangGerman": "Versus",
+   "LangItalian": "Testa a testa",
+   "LangJapanese": "VS",
+   "LangKorean": "대전",
+   "LangRussian": "Спарринг",
+   "LangSpanish": "Versus"
+  },
+  "wins": {
+   "LangEnglish": "Wins",
+   "LangChineseSimpl": "获胜",
+   "LangChineseTrad": "獲勝",
+   "LangFrench": "Victoires",
+   "LangGerman": "Siege",
+   "LangItalian": "Vittorie",
+   "LangJapanese": "勝利",
+   "LangKorean": "승리",
+   "LangRussian": "Победы",
+   "LangSpanish": "Victorias"
+  },
+  "your_score": {
+   "LangEnglish": "Your Score",
+   "LangChineseSimpl": "你的得分",
+   "LangChineseTrad": "你的得分",
+   "LangFrench": "Votre score",
+   "LangGerman": "Deine Punktzahl",
+   "LangItalian": "I tuoi punti",
+   "LangJapanese": "あなたのスコア",
+   "LangKorean": "귀하의 점수",
+   "LangRussian": "Ваш результат",
+   "LangSpanish": "Tu puntuación"
+  },
+  "your_time": {
+   "LangEnglish": "Your Time",
+   "LangChineseSimpl": "你的时间",
+   "LangChineseTrad": "你的時間",
+   "LangFrench": "Votre temps",
+   "LangGerman": "Deine Zeit",
+   "LangItalian": "Il tuo tempo",
+   "LangJapanese": "あなたのタイム",
+   "LangKorean": "귀하의 시간",
+   "LangRussian": "Ваше время",
+   "LangSpanish": "Tu tiempo"
+  },
+  "your_victories": {
+   "LangEnglish": "Your victories",
+   "LangChineseSimpl": "你的获胜",
+   "LangChineseTrad": "你的獲勝",
+   "LangFrench": "Vos victoires",
+   "LangGerman": "Deine Siege",
+   "LangItalian": "Le tue vittorie",
+   "LangJapanese": "あなたの勝利",
+   "LangKorean": "귀하의 승리 횟수",
+   "LangRussian": "Ваше число побед",
+   "LangSpanish": "Tus victorias"
+  }
+ },
+ "sites": [
+  {
+   "id": "gm.mode_menu.title",
+   "file": "scripts/game_modes.gd",
+   "where": "show_mode_menu",
+   "original": "ARCADE MODES",
+   "key": "game_modes",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.mode_menu.row.arcade",
+   "file": "scripts/game_modes.gd",
+   "where": "show_mode_menu",
+   "original": "ARCADE",
+   "key": "arcade",
+   "class": "exact"
+  },
+  {
+   "id": "gm.mode_menu.row.survival",
+   "file": "scripts/game_modes.gd",
+   "where": "show_mode_menu",
+   "original": "SURVIVAL",
+   "key": "survival",
+   "class": "exact"
+  },
+  {
+   "id": "gm.mode_menu.row.timeattack",
+   "file": "scripts/game_modes.gd",
+   "where": "show_mode_menu",
+   "original": "TIME ATTACK",
+   "key": "time_attack",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.title.mode",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings / show_results / show_next_fight / show_pause / show_battle_banner",
+   "original": "ARCADE / SURVIVAL / TIME ATTACK",
+   "key": "mode_keys",
+   "class": "mode"
+  },
+  {
+   "id": "gm.settings.title.suffix",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings",
+   "original": "SETTINGS",
+   "key": "settings",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.row.rounds",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (schema label)",
+   "original": "ROUNDS",
+   "key": "round_number",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.row.time",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (schema label)",
+   "original": "TIME",
+   "key": "round_time",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.row.difficulty",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (schema label)",
+   "original": "DIFFICULTY",
+   "key": "difficulty_level",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.option.easy",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (option label)",
+   "original": "EASY",
+   "key": "easy",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.option.medium",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (option label)",
+   "original": "MEDIUM",
+   "key": "medium",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.option.hard",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (option label)",
+   "original": "HARD",
+   "key": "hard",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.option.inf",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (option label)",
+   "original": "inf",
+   "key": "inf",
+   "class": "exact"
+  },
+  {
+   "id": "gm.settings.row.back",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings",
+   "original": "BACK",
+   "key": "back",
+   "class": "exact"
+  },
+  {
+   "id": "gm.results.action.play_again",
+   "file": "scripts/game_modes.gd",
+   "where": "show_results",
+   "original": "PLAY AGAIN",
+   "key": "play",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.results.action.settings",
+   "file": "scripts/game_modes.gd",
+   "where": "show_results",
+   "original": "CHANGE SETTINGS",
+   "key": "settings",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.results.action.main_menu",
+   "file": "scripts/game_modes.gd",
+   "where": "show_results",
+   "original": "MAIN MENU",
+   "key": "main_menu",
+   "class": "exact"
+  },
+  {
+   "id": "gm.results.arcade.score",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (arcade)",
+   "original": "SCORE",
+   "key": "total_score",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.results.arcade.fights",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (arcade)",
+   "original": "fights won",
+   "key": "wins",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.results.arcade.rounds",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (arcade)",
+   "original": "rounds / time",
+   "key": "round_number",
+   "class": "composed"
+  },
+  {
+   "id": "gm.results.arcade.time",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (arcade)",
+   "original": "rounds / time",
+   "key": "round_time",
+   "class": "composed"
+  },
+  {
+   "id": "gm.results.timeattack.beaten",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (timeattack)",
+   "original": "opponents beaten",
+   "key": "your_victories",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.results.timeattack.elapsed",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (timeattack)",
+   "original": "elapsed",
+   "key": "your_time",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.results.difficulty",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows / show_next_fight / show_battle_banner",
+   "original": "difficulty",
+   "key": "difficulty_level",
+   "class": "exact"
+  },
+  {
+   "id": "gm.next.row.time",
+   "file": "scripts/game_modes.gd",
+   "where": "show_next_fight",
+   "original": "time",
+   "key": "round_time",
+   "class": "exact"
+  },
+  {
+   "id": "gm.next.row.score",
+   "file": "scripts/game_modes.gd",
+   "where": "show_next_fight",
+   "original": "score",
+   "key": "your_score",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.pause.title",
+   "file": "scripts/game_modes.gd",
+   "where": "show_pause",
+   "original": "PAUSED",
+   "key": "pause",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.pause.row.resume",
+   "file": "scripts/game_modes.gd",
+   "where": "show_pause",
+   "original": "RESUME",
+   "key": "resume",
+   "class": "exact"
+  },
+  {
+   "id": "gm.pause.row.main_menu",
+   "file": "scripts/game_modes.gd",
+   "where": "show_pause",
+   "original": "MAIN MENU",
+   "key": "main_menu",
+   "class": "exact"
+  },
+  {
+   "id": "gm.banner.mode",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner",
+   "original": "mode label",
+   "key": "mode_keys",
+   "class": "mode"
+  },
+  {
+   "id": "gm.banner.opponent_name",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner",
+   "original": "VS MASTER",
+   "key": "character_keys",
+   "class": "name"
+  },
+  {
+   "id": "gm.banner.time_inf",
+   "file": "scripts/game_modes.gd",
+   "where": "_time_text",
+   "original": "inf (no countdown)",
+   "key": "inf",
+   "class": "exact"
+  },
+  {
+   "id": "gm.banner.difficulty",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner",
+   "original": "difficulty",
+   "key": "difficulty_level",
+   "class": "exact"
+  },
+  {
+   "id": "gm.banner.difficulty_value",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner / _summary_rows / show_next_fight",
+   "original": "EASY / MEDIUM / HARD",
+   "key": "option_keys",
+   "class": "option"
+  },
+  {
+   "id": "gm.banner.score",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner",
+   "original": "score",
+   "key": "your_score",
+   "class": "recovered_label"
+  },
+  {
+   "id": "gm.next.opponent_name",
+   "file": "scripts/game_modes.gd",
+   "where": "show_next_fight",
+   "original": "opponent   MASTER",
+   "key": "character_keys",
+   "class": "name"
+  },
+  {
+   "id": "gm.error.back",
+   "file": "scripts/game_modes.gd",
+   "where": "_show_error",
+   "original": "back",
+   "key": "back",
+   "class": "exact"
+  },
+  {
+   "id": "pm.main.fight",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command fight",
+   "original": "VS FIGHT",
+   "key": "versus",
+   "class": "recovered_label"
+  },
+  {
+   "id": "pm.main.arcade",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command arcade",
+   "original": "ARCADE",
+   "key": "arcade",
+   "class": "exact"
+  },
+  {
+   "id": "pm.main.survival",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command survival",
+   "original": "SURVIVAL",
+   "key": "survival",
+   "class": "exact"
+  },
+  {
+   "id": "pm.main.timeattack",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command timeattack",
+   "original": "TIME ATTACK",
+   "key": "time_attack",
+   "class": "exact"
+  },
+  {
+   "id": "pm.main.training",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command training",
+   "original": "GROUND TRAINING",
+   "key": "training",
+   "class": "recovered_label"
+  },
+  {
+   "id": "pm.main.quit",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command quit",
+   "original": "QUIT GAME",
+   "key": "quit",
+   "class": "recovered_label"
+  },
+  {
+   "id": "pm.pause.resume",
+   "file": "scripts/prototype_menu.gd",
+   "where": "PAUSE_LABELS / command resume",
+   "original": "RESUME",
+   "key": "resume",
+   "class": "exact"
+  },
+  {
+   "id": "pm.pause.main_menu",
+   "file": "scripts/prototype_menu.gd",
+   "where": "PAUSE_LABELS / command main_menu",
+   "original": "MAIN MENU",
+   "key": "main_menu",
+   "class": "exact"
+  },
+  {
+   "id": "pm.pause.quit",
+   "file": "scripts/prototype_menu.gd",
+   "where": "PAUSE_LABELS / command quit",
+   "original": "QUIT GAME",
+   "key": "quit",
+   "class": "recovered_label"
+  },
+  {
+   "id": "pm.scenes.back",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command scenes_back",
+   "original": "BACK",
+   "key": "back",
+   "class": "exact"
+  },
+  {
+   "id": "pm.opponents.back",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command opponents_back",
+   "original": "BACK",
+   "key": "back",
+   "class": "exact"
+  },
+  {
+   "id": "pm.opponent.brick",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command brick",
+   "original": "BRICK",
+   "key": "brickdavis",
+   "class": "name"
+  },
+  {
+   "id": "pm.opponent.sinfu",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command sinfu",
+   "original": "SIN FU",
+   "key": "sinfu",
+   "class": "name"
+  },
+  {
+   "id": "pm.opponent.master",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command master",
+   "original": "MASTER",
+   "key": "themaster",
+   "class": "name"
+  },
+  {
+   "id": "pm.opponent.ken",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command ken",
+   "original": "KEN",
+   "key": "kengodall",
+   "class": "name"
+  },
+  {
+   "id": "pm.opponent.shenlo",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command shenlo",
+   "original": "SHEN LO",
+   "key": "shenlo",
+   "class": "name"
+  },
+  {
+   "id": "pm.opponent.smallboy",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command smallboy",
+   "original": "SMALL BOY",
+   "key": "smallboy",
+   "class": "name"
+  },
+  {
+   "id": "pm.opponent.johnson",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command johnson",
+   "original": "JOHNSON",
+   "key": "johnson",
+   "class": "name"
+  },
+  {
+   "id": "pm.opponent.chief",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command chief",
+   "original": "THE CHIEF",
+   "key": "chief",
+   "class": "name"
+  },
+  {
+   "id": "pm.opponent.loming",
+   "file": "scripts/prototype_menu.gd",
+   "where": "OPPONENT_LABELS / command loming",
+   "original": "LO MING",
+   "key": "loming",
+   "class": "name"
+  },
+  {
+   "id": "pm.title.main",
+   "file": "scripts/prototype_menu.gd",
+   "where": "show_main_menu / _return_to_main_menu",
+   "original": "MAIN MENU",
+   "key": "main_menu",
+   "class": "exact"
+  },
+  {
+   "id": "pm.title.pause",
+   "file": "scripts/prototype_menu.gd",
+   "where": "show_pause_menu",
+   "original": "PAUSED",
+   "key": "pause",
+   "class": "recovered_label"
+  },
+  {
+   "id": "pm.title.scenes",
+   "file": "scripts/prototype_menu.gd",
+   "where": "show_scene_menu",
+   "original": "SELECT SCENE",
+   "key": "select_scenery",
+   "class": "recovered_label"
+  },
+  {
+   "id": "pm.title.opponents",
+   "file": "scripts/prototype_menu.gd",
+   "where": "show_opponent_menu",
+   "original": "SELECT OPPONENT",
+   "key": "select_fighter",
+   "class": "recovered_label"
+  }
+ ],
+ "unmapped": [
+  {
+   "id": "gm.settings.row.start",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings",
+   "original": "START",
+   "reason": "no .lang key or value for a bare start/confirm action label"
+  },
+  {
+   "id": "gm.settings.row.time_limit",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (timeattack schema label)",
+   "original": "TIME LIMIT",
+   "reason": "no .lang key; round_time is only 'Time' and time_left is 'Time Left'"
+  },
+  {
+   "id": "gm.settings.option.unrecovered",
+   "file": "scripts/game_modes.gd",
+   "where": "show_settings (timeattack option label)",
+   "original": "(unrecovered)",
+   "reason": "fail-closed marker, not a game label"
+  },
+  {
+   "id": "gm.results.title.results",
+   "file": "scripts/game_modes.gd",
+   "where": "show_results",
+   "original": "RESULTS",
+   "reason": "no .lang key or value 'Results'"
+  },
+  {
+   "id": "gm.results.title.defeat",
+   "file": "scripts/game_modes.gd",
+   "where": "show_results",
+   "original": "DEFEAT",
+   "reason": "no .lang key or value 'Defeat'"
+  },
+  {
+   "id": "gm.results.arcade.score_per_fight",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (arcade)",
+   "original": "score per fight",
+   "reason": "no .lang key; base_event_score/completion_bonus are different concepts"
+  },
+  {
+   "id": "gm.results.survival.fights",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (survival)",
+   "original": "fights survived",
+   "reason": "no .lang key; 'fights' alone would drop 'survived'"
+  },
+  {
+   "id": "gm.results.survival.time",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (survival)",
+   "original": "time per fight",
+   "reason": "no .lang key; composing 'per fight' would invent text"
+  },
+  {
+   "id": "gm.results.survival.max_fights",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (survival)",
+   "original": "max_fights",
+   "reason": "fail-closed field name, not a localisable label"
+  },
+  {
+   "id": "gm.results.survival.health_recovery",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (survival)",
+   "original": "health_recovery",
+   "reason": "fail-closed field name, not a localisable label"
+  },
+  {
+   "id": "gm.results.timeattack.time_limit",
+   "file": "scripts/game_modes.gd",
+   "where": "_summary_rows (timeattack)",
+   "original": "total time limit",
+   "reason": "no .lang key"
+  },
+  {
+   "id": "gm.next.title",
+   "file": "scripts/game_modes.gd",
+   "where": "show_next_fight",
+   "original": "NEXT FIGHT",
+   "reason": "no .lang key or value 'Next Fight'; 'next' alone is not the same label"
+  },
+  {
+   "id": "gm.next.row.opponent",
+   "file": "scripts/game_modes.gd",
+   "where": "show_next_fight",
+   "original": "opponent",
+   "reason": "no .lang key; the opponent NAME is localised, the field word is not"
+  },
+  {
+   "id": "gm.next.row.scene",
+   "file": "scripts/game_modes.gd",
+   "where": "show_next_fight",
+   "original": "scene",
+   "reason": "no .lang key; scene variant ids are not mapped to day/dusk keys"
+  },
+  {
+   "id": "gm.banner.fight",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner",
+   "original": "FIGHT %d/%d",
+   "reason": "structural counter; the only .lang value is 'Fight!' (exclamation) and it would misstate the counter"
+  },
+  {
+   "id": "gm.banner.survival_fight",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner",
+   "original": "fight %d",
+   "reason": "structural counter"
+  },
+  {
+   "id": "gm.banner.ta_opponent",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner",
+   "original": "opponent %d",
+   "reason": "structural counter"
+  },
+  {
+   "id": "gm.banner.vs_prefix",
+   "file": "scripts/game_modes.gd",
+   "where": "show_battle_banner",
+   "original": "VS",
+   "reason": "no .lang key 'VS' for a versus prefix; the name after it IS localised"
+  },
+  {
+   "id": "pm.main.move_training",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command move_training",
+   "original": "MOVE TRAINING",
+   "reason": "no .lang key or value 'Move Training'"
+  },
+  {
+   "id": "pm.main.gallery",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command gallery",
+   "original": "MOVE GALLERY",
+   "reason": "no .lang key or value 'Move Gallery'"
+  },
+  {
+   "id": "pm.main.scenes",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command scenes",
+   "original": "SCENES",
+   "reason": "no .lang key or value 'Scenes'"
+  },
+  {
+   "id": "pm.main.opponents",
+   "file": "scripts/prototype_menu.gd",
+   "where": "MAIN_LABELS / command opponents",
+   "original": "OPPONENTS",
+   "reason": "no .lang key or value 'Opponents'; 'select_fighter' is the submenu title only"
+  },
+  {
+   "id": "pm.pause.restart",
+   "file": "scripts/prototype_menu.gd",
+   "where": "PAUSE_LABELS / command restart",
+   "original": "RESTART MATCH",
+   "reason": "no .lang key; retry_battleq is a question, not this action"
+  },
+  {
+   "id": "pm.scene.temple_a",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command temple_a",
+   "original": "TEMPLE YARD A",
+   "reason": "the recovered scenery keys are Day/Dusk, the A/B variant mapping is not proven"
+  },
+  {
+   "id": "pm.scene.temple_b",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command temple_b",
+   "original": "TEMPLE YARD B",
+   "reason": "same as temple_a"
+  },
+  {
+   "id": "pm.scene.halla",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command halla",
+   "original": "TOURNAMENT HALL A",
+   "reason": "the recovered scenery keys are Day/Night, the A/B variant mapping is not proven"
+  },
+  {
+   "id": "pm.scene.squarea",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command squarea",
+   "original": "SQUARE A",
+   "reason": "no .lang key or value for the square scenery"
+  },
+  {
+   "id": "pm.scene.squareb",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command squareb",
+   "original": "SQUARE B",
+   "reason": "no .lang key or value for the square scenery"
+  },
+  {
+   "id": "pm.scene.harboura",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command harboura",
+   "original": "HARBOUR A",
+   "reason": "the recovered scenery keys are Day/Dawn, the A/B variant mapping is not proven"
+  },
+  {
+   "id": "pm.scene.harbourb",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command harbourb",
+   "original": "HARBOUR B",
+   "reason": "same as harboura"
+  },
+  {
+   "id": "pm.scene.rooftopsa",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command rooftopsa",
+   "original": "ROOFTOPS A",
+   "reason": "the recovered scenery keys are Day/Dusk, the A/B variant mapping is not proven"
+  },
+  {
+   "id": "pm.scene.rooftopsb",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command rooftopsb",
+   "original": "ROOFTOPS B",
+   "reason": "same as rooftopsa"
+  },
+  {
+   "id": "pm.scene.tournamenthallb",
+   "file": "scripts/prototype_menu.gd",
+   "where": "SCENE_LABELS / command tournamenthallb",
+   "original": "TOURNAMENT HALL B",
+   "reason": "same as halla"
+  },
+  {
+   "id": "pm.title.game",
+   "file": "scripts/prototype_menu.gd",
+   "where": "_build_ui",
+   "original": "DRAGON WARRIOR",
+   "reason": "game title; the only .lang title key is 'version' with a %s placeholder"
+  },
+  {
+   "id": "pm.subtitle",
+   "file": "scripts/prototype_menu.gd",
+   "where": "_build_ui",
+   "original": "PC COMBAT PROTOTYPE",
+   "reason": "prototype-only chrome, not part of the original UI"
+  }
+ ]
+}

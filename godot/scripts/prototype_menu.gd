@@ -7,6 +7,8 @@ signal command_requested(command: String)
 
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
+## Recovered .lang localization for the shared main/pause/scene/opponent menus.
+const Lang = preload("res://scripts/menu_lang.gd")
 ## Scene entries are handled by main.gd, which reloads main.tscn with a different
 ## BRUCELEE_SCENE variant. "scenes_back" and "scenes" never leave this script.
 const SCENE_COMMANDS: Array[String] = [
@@ -216,6 +218,11 @@ func _build_ui() -> void:
     disclaimer.add_theme_font_size_override("font_size", 10)
     disclaimer.add_theme_color_override("font_color", Color(0.64, 0.67, 0.74))
     panel.add_child(disclaimer)
+    # Recovered-language font for CJK scripts (no-op for Latin/Cyrillic).
+    for label: Label in [title, subtitle, mode_label, status_label, controls_label, disclaimer]:
+        Lang.apply_font(label)
+    for label: Label in item_labels:
+        Lang.apply_font(label)
 
 func _load_background() -> void:
     background_path = OS.get_environment("BRUCELEE_MAINMENU_PATH")
@@ -264,7 +271,7 @@ func show_main_menu() -> void:
     menu_state = "main"
     selected_index = 0
     visible = true
-    mode_label.text = "MAIN MENU"
+    mode_label.text = Lang.text("main_menu")
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"
     hover_index = -1
@@ -278,7 +285,7 @@ func show_scene_menu() -> void:
     menu_state = "scenes"
     selected_index = 0
     visible = true
-    mode_label.text = "SELECT SCENE"
+    mode_label.text = Lang.text("select_scenery")
     status_label.text = ""
     controls_label.text = (
         "UP/DOWN or D-PAD   ENTER/J/A load   ESC/B/START back"
@@ -295,7 +302,7 @@ func show_opponent_menu() -> void:
     menu_state = "opponents"
     selected_index = 0
     visible = true
-    mode_label.text = "SELECT OPPONENT"
+    mode_label.text = Lang.text("select_fighter")
     status_label.text = ""
     controls_label.text = (
         "UP/DOWN or D-PAD   ENTER/J/A apply   ESC/B/START back"
@@ -308,7 +315,7 @@ func show_pause_menu() -> void:
     menu_state = "pause"
     selected_index = 0
     visible = true
-    mode_label.text = "PAUSED"
+    mode_label.text = Lang.text("pause")
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm   ESC/B/START resume"
     hover_index = -1
@@ -433,7 +440,7 @@ func _return_to_main_menu() -> void:
     menu_state = "main"
     var commands: Array[String] = main_commands()
     selected_index = clampi(main_index_before_submenu, 0, maxi(commands.size() - 1, 0))
-    mode_label.text = "MAIN MENU"
+    mode_label.text = Lang.text("main_menu")
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"
     hover_index = -1
@@ -473,11 +480,23 @@ func _on_item_gui_input(event: InputEvent, index: int) -> void:
     get_viewport().set_input_as_handled()
 
 func _refresh_items(labels: Array[String]) -> void:
+    var shown: Array[String] = _localized_labels(labels)
     for index: int in range(item_labels.size()):
-        item_labels[index].visible = index < labels.size()
-        if index < labels.size():
-            item_labels[index].set_meta("base_text", labels[index])
+        item_labels[index].visible = index < shown.size()
+        if index < shown.size():
+            item_labels[index].set_meta("base_text", shown[index])
     _refresh_selection()
+
+
+## Recovered .lang labels for the current command list. A command with no
+## recovered key keeps its original label (fallback, never invented text).
+func _localized_labels(labels: Array[String]) -> Array[String]:
+    var commands: Array[String] = _commands()
+    var out: Array[String] = []
+    for index: int in range(labels.size()):
+        var command: String = commands[index] if index < commands.size() else ""
+        out.append(Lang.command_label(command, labels[index]))
+    return out
 
 func _refresh_selection() -> void:
     for index: int in range(item_labels.size()):
