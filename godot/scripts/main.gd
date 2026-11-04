@@ -45,6 +45,44 @@ const StyleEditorScreen = preload("res://scripts/style_editor_screen.gd")
 ## inert unless BRUCELEE_OPPONENT_VOICE=1, and it never replaces the Bruce
 ## cue table; see overlay/opponent_voice_cues.json for the recovered cues.
 const OpponentVoiceOverlayScript = preload("res://scripts/opponent_voice_overlay.gd")
+## Opt-in recovered character-select art (BRUCELEE_HUD_ART=1). The overlay class
+## is the one already shipped as godot/scripts/hud_art_overlay.gd; this file only
+## drives its selectfighter.ui dock and fightpreview.ui VS screen from the real
+## menu selection. With the flag unset nothing is created and no node changes.
+const HudArtOverlayScript = preload("res://scripts/hud_art_overlay.gd")
+const HUD_ART_ENV := "BRUCELEE_HUD_ART"
+## How long the fightpreview.ui VS screen is held before the opponent reload.
+## The recovered layout fixes positions; this duration is only the transition.
+const HUD_ART_VS_HOLD_SECONDS := 1.6
+const HUD_ART_PLAYER_KEY := "BRUCE LEE"
+## opponent-menu command -> selectfighter.ui dock index. The dock order is the
+## decoded `items` array of selectfighter.ui (see hud_art_overlay.gd
+## SELECT_ITEMS); each index below is the recovered icon whose basename matches
+## the opponent's name. Nothing is invented: the mapping is a name lookup.
+const HUD_ART_OPPONENT_DOCK: Dictionary = {
+    "brick": 11,      # bl_brickdavis_icon
+    "sinfu": 7,       # bl_sinfu_icon
+    "master": 5,      # bl_themaster_icon
+    "ken": 10,        # bl_kengodall_icon
+    "shenlo": 4,      # bl_shenlo_icon
+    "smallboy": 6,    # bl_smallboy_icon
+    "johnson": 12,    # bl_johnson_icon
+    "chief": 8,       # bl_thechief01_icon
+    "loming": 13,     # bl_loming01_icon
+}
+## opponent-menu command -> the display name _opponent_display_name() returns
+## for that selected set (the keys of hud_art_overlay.gd VS_PORTRAITS).
+const HUD_ART_OPPONENT_NAMES: Dictionary = {
+    "brick": "BRICK DAVIS",
+    "sinfu": "SIN FU",
+    "master": "THE MASTER",
+    "ken": "KEN GODALL",
+    "shenlo": "SHEN LO",
+    "smallboy": "SMALL BOY",
+    "johnson": "JOHNSON",
+    "chief": "CHIEF",
+    "loming": "LO MING",
+}
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -286,6 +324,11 @@ var _active_voice: AudioStreamPlayer = null
 ## Opponent voice overlay instance (lazily created on the first opponent cue).
 var _opponent_voice = null
 var _opponent_voice_error: String = ""
+## Opted-in recovered selectfighter/fightpreview overlay (BRUCELEE_HUD_ART=1).
+## It lives on its own CanvasLayer above the menu so neither the menu nor the
+## existing in-fight HUD is modified; both stay null with the flag off.
+var hud_art_menu_layer: CanvasLayer = null
+var hud_art_menu_overlay = null
 # Recovered adreno_200/sounds/sfx library (38 WAVs).  Distinct from the three
 # legacy candidate-audio streams: the package copy is self-contained and is
 # read without CandidatePathGuard (music/commentator already use the same
@@ -532,6 +575,7 @@ func _ready() -> void:
     hud = PortHUD.new()
     add_child(hud)
     hud.set_fighter_names("BRUCE LEE", _opponent_display_name())
+    _setup_hud_art_menu()
     _build_game_text_overlay()
 
     if not OS.get_environment("BRUCELEE_DEMO_RAGE").is_empty():
@@ -542,6 +586,7 @@ func _ready() -> void:
     prototype_menu = PortPrototypeMenu.new()
     add_child(prototype_menu)
     prototype_menu.command_requested.connect(_on_menu_command)
+    prototype_menu.selection_changed.connect(_on_menu_selection_changed)
     move_training = MoveTraining.new()
     add_child(move_training)
     move_training.configure(self, player, computer)
@@ -1995,6 +2040,54 @@ func _should_show_main_menu() -> bool:
         return false
     return not OS.has_feature("editor")
 
+# ------------------------------------------------ opt-in recovered art menu
+
+func _setup_hud_art_menu() -> void:
+    ## BRUCELEE_HUD_ART=1 creates the recovered selectfighter/fightpreview
+    ## overlay on its own CanvasLayer (31), above the menu CanvasLayer (30).
+    ## It never touches the in-fight HUD, which keeps drawing exactly what it
+    ## drew before. With the flag off this function returns immediately and no
+    ## extra node exists.
+    if hud == null or not hud.hud_art_enabled():
+        return
+    hud_art_menu_layer = CanvasLayer.new()
+    hud_art_menu_layer.name = "HudArtMenuLayer"
+    hud_art_menu_layer.layer = 31
+    add_child(hud_art_menu_layer)
+    hud_art_menu_overlay = HudArtOverlayScript.new()
+    hud_art_menu_overlay.name = "HudArtMenuOverlay"
+    hud_art_menu_overlay.visible = false
+    hud_art_menu_layer.add_child(hud_art_menu_overlay)
+
+
+func _on_menu_selection_changed(state: String, _index: int, command: String) -> void:
+    ## Drives the decoded selectfighter.ui dock from the menu's real OPPONENTS
+    ## submenu. While the dock owns the screen the text panel is hidden (the
+    ## recovered dock draws its own name label and has no text rows); every
+    ## other menu state restores the panel and hides the dock.
+    if hud_art_menu_overlay == null:
+        return
+    var dock_mode: bool = state == "opponents"
+    if prototype_menu != null and prototype_menu.panel_box != null:
+        prototype_menu.panel_box.visible = not dock_mode
+    if not dock_mode:
+        hud_art_menu_overlay.visible = false
+        return
+    if command == "opponents_back":
+        # BACK is not a fighter, so keep the last fighter highlight rather than
+        # inventing a dock index for it.
+        return
+    var dock_index: int = int(HUD_ART_OPPONENT_DOCK.get(command, 0))
+    var display_name: String = String(HUD_ART_OPPONENT_NAMES.get(command, ""))
+    hud_art_menu_overlay.show_select_fighter(dock_index, 15, display_name)
+    hud_art_menu_overlay.visible = true
+
+
+func _hide_hud_art_menu() -> void:
+    if hud_art_menu_overlay != null:
+        hud_art_menu_overlay.visible = false
+
+
 func _open_main_menu() -> void:
     _play_music("menu")
     main_menu_active = true
@@ -2002,6 +2095,7 @@ func _open_main_menu() -> void:
     player.move_axis = Vector2.ZERO
     computer.move_axis = Vector2.ZERO
     hud.visible = false
+    _hide_hud_art_menu()
     prototype_menu.show_main_menu()
     get_tree().paused = true
 
@@ -2018,6 +2112,7 @@ func _open_pause_menu() -> void:
     player.move_axis = Vector2.ZERO
     computer.move_axis = Vector2.ZERO
     hud.visible = true
+    _hide_hud_art_menu()
     prototype_menu.show_pause_menu()
     get_tree().paused = true
 
@@ -2025,6 +2120,7 @@ func _leave_menu() -> void:
     main_menu_active = false
     menu_paused = false
     hud.visible = true
+    _hide_hud_art_menu()
     if records_screen != null and records_screen.is_open():
         # Defensive: any path that leaves the menu also dismisses the records
         # screen, so its input layer can never survive into a fight.
@@ -2230,6 +2326,20 @@ func _request_opponent_switch(command: String) -> void:
     ##  2. defer the reload, because this runs inside the menu's input/signal
     ##     callback and the menu being freed is the node currently dispatching
     ##     the event.
+    if hud_art_menu_overlay != null:
+        # BRUCELEE_HUD_ART=1: show the decoded fightpreview.ui VS screen for the
+        # actual selected opponent. The menu paused the tree, so the fight runs
+        # frozen underneath while the screen is held; it is hidden again before
+        # the reload enters the fight.
+        var display_name: String = String(
+            HUD_ART_OPPONENT_NAMES.get(command, "BRICK DAVIS")
+        )
+        hud_art_menu_overlay.show_vs_preview(HUD_ART_PLAYER_KEY, display_name)
+        hud_art_menu_overlay.visible = true
+        if prototype_menu != null:
+            prototype_menu.hide_menu()
+        await get_tree().create_timer(HUD_ART_VS_HOLD_SECONDS, true).timeout
+        hud_art_menu_overlay.visible = false
     _leave_menu()
     call_deferred("_apply_opponent_switch", command)
 
@@ -4010,6 +4120,10 @@ func _on_time_up() -> void:
 
 
 func _enter_match_state(next_state: int) -> void:
+    if next_state == MATCH_STATE_FIGHT:
+        # The recovered selectfighter/fightpreview art never survives into the
+        # fight: entering MATCH_STATE_FIGHT always hides it.
+        _hide_hud_art_menu()
     if next_state in [MATCH_STATE_MATCH_WIN, MATCH_STATE_MATCH_LOSE]:
         # Result states own a separate authored camera begun after the state
         # switch; only clear any intro camera that was still active.
