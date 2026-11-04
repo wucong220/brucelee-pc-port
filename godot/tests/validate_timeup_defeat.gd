@@ -14,12 +14,13 @@ extends SceneTree
 ##     -> compare +0x81c / +0x820 with [match+0x48] (TMatchConfig rounds-to-win)
 ##     -> RaiseAction("FIGHTER1WON") @0x162bf0 -> trigger Fighter1Won @0x190d5c
 ##     -> PlayerLost @0x190060, mode 1 -> StoryCurrentFightWinOnLose()==false
-##     -> 0x19049c -> GetCurrentTimer -> SetState(14) @0x1904c8.
+##     -> 0x19049c -> GetCurrentTimer -> SetState(14) @0x1904c8
+##     win_on_lose true -> SetState(6) @0x19025c -> CurrentGameModeFightWon
+##       -> StoryModeSubEventFightHasReplay: replay | StopMusic+StoryFightWon
 ##
 ## The +0x81c / +0x820 counters are the same ones state 5 bumps on a time-up,
 ## so a round-timeout match loss reaches state 14 through the recovered
-## match-loss trigger.  This validator proves that full chain and its
-## fail-closed controls.
+## match-loss trigger, in the recovered 13 -> 15 -> 14 order.
 ##
 ##   godot --headless --path <godot> --script res://tests/validate_timeup_defeat.gd \
 ##       -- <bruce_candidate.glb> <brick_candidate.glb>
@@ -98,6 +99,8 @@ func _run() -> void:
     _check_constants()
     _check_negative_control(main, player, computer, states)
     _check_story_timeup_defeat(main, player, computer, states)
+    _check_story_timeup_winonlose_replay_unavailable(main, player, computer, states)
+    _check_story_timeup_winonlose_no_replay(main, player, computer, states)
     _check_fail_closed(main, player, computer, states)
 
     main.queue_free()
@@ -133,13 +136,13 @@ func _check_constants() -> void:
 
 # --------------------------------------------------------------- fixtures
 
-func _attach_flow(main: Node, win_on_lose: bool) -> Node:
+func _attach_flow(main: Node, win_on_lose: bool, kind: String = "vsbattle") -> Node:
     var flow = StoryFlowScript.new()
     root.add_child(flow)
     flow.set("main", main)
     var run: Dictionary = {
-        "kind": "vsbattle", "chapter": "chapter1", "event": "timeup_defeat_test",
-        "event_type": "vsbattle", "sub_index": 9999, "opponents": ["brick"],
+        "kind": kind, "chapter": "chapter1", "event": "timeup_defeat_test",
+        "event_type": kind, "sub_index": 9999, "opponents": ["brick"],
         "opponent_index": 0, "player": "brucelee", "scenery": "",
         "difficulty_slot": 0, "difficulty_value": 0, "fights_done": 0,
         "elapsed_seconds": 0.0, "fight_results": [], "carried_health": -1.0,
@@ -190,6 +193,9 @@ func _force_time_up_frame(main: Node, player: PortFighter, computer: PortFighter
     main.set("round_time_active", true)
     main.set("round_time_max", 1)
     main.set("round_time_left", 0)
+    var gm: Variant = main.get("game_modes")
+    if gm != null:
+        gm.set("current_fight_won", false)
     # State 5 compares fighter0 health < fighter1 health -> computer scores.
     player.health = 20.0
     computer.health = 80.0
@@ -201,20 +207,16 @@ func _drive_time_up_to_round_end(main: Node) -> int:
     main.call("_on_time_up")
     if int(main.get("match_state")) != STATE_TIME_UP:
         return int(main.get("match_state"))
-    # Update case 5 waits 3000 ms.
-    main.call("_update_match_state", 3.1)
+    main.call("_update_match_state", 3.1)   # state 5 waits 3000 ms
     if int(main.get("match_state")) != STATE_KO_LOSE:
         return int(main.get("match_state"))
-    # Update states 7/8/11 wait another 3000 ms then pick 12/13 or 15.
-    main.call("_update_match_state", 3.1)
+    main.call("_update_match_state", 3.1)   # states 7/8/11 wait 3000 ms
     if int(main.get("match_state")) != STATE_MATCH_LOSE:
         return int(main.get("match_state"))
-    # Update state 13 leaves after the victory clip (duration - 100 ms).
     main.call("_update_match_state", float(main.get("_result_pose_seconds")) + 0.2)
     if int(main.get("match_state")) != STATE_ROUND_END:
         return int(main.get("match_state"))
-    # RoundEnded(): CBeatEmUpMatch::Update compares the counters here.
-    main.call("_update_match_state", 0.1)
+    main.call("_update_match_state", 0.1)   # RoundEnded -> CBeatEmUpMatch::Update
     return int(main.get("match_state"))
 
 
@@ -243,7 +245,6 @@ func _check_story_timeup_defeat(main: Node, player: PortFighter, computer: PortF
     var flow: Node = _attach_flow(main, false)
     states.reset()
     _force_time_up_frame(main, player, computer)
-    # The candidate must carry the characters.list defeat clip + camera.
     var clips: Dictionary = player.get("_candidate_clip_paths")
     _check(clips.has("m01_defeat_01"),
         "player candidate carries m01_defeat_01 (characters.list defeat)")
@@ -271,7 +272,6 @@ func _check_story_timeup_defeat(main: Node, player: PortFighter, computer: PortF
         "match_state=%d" % int(main.get("match_state")))
     main.call("_update_match_state", 0.1)
 
-    # The recovered match-loss trigger: PlayerLost -> SetState(14).
     _check(int(main.get("match_state")) == STATE_COUNTDOWN,
         "RoundEnded + FIGHTER1WON + PlayerLost enters SetState(14)",
         "match_state=%d" % int(main.get("match_state")))
@@ -282,10 +282,8 @@ func _check_story_timeup_defeat(main: Node, player: PortFighter, computer: PortF
     _check(String(player.result_clip) == "m01_defeat_01",
         "SetState(14) plays the recovered Defeat clip",
         "clip=%s" % player.result_clip)
-    _check(not bool(main.get("done")) == false,
-        "SetState(14) keeps the match marked done")
+    _check(bool(main.get("done")), "SetState(14) marks the match done")
 
-    # CountdownEnded() == state 14 && GetStateTime() > 9999 ms -> COUNTDOWNEND.
     _check(not bool(main.get("_countdown_handed_off")),
         "no COUNTDOWNEND hand-off before 9.999 s")
     for _i in 19:
@@ -298,6 +296,56 @@ func _check_story_timeup_defeat(main: Node, player: PortFighter, computer: PortF
         "COUNTDOWNEND fires past the recovered 9.999 s")
     _check(int(main.get("match_state")) == STATE_COUNTDOWN,
         "state 14 keeps the defeat presentation after the hand-off")
+    _detach_flow(main, flow)
+
+
+func _check_story_timeup_winonlose_replay_unavailable(main: Node, player: PortFighter,
+        computer: PortFighter, states) -> void:
+    ## win_on_lose == true, vsbattle subevent (has replay) but the opt-in recorder
+    ## has no buffers: PlayerLost records CurrentGameModeFightWon, then falls
+    ## back to the state-14 presentation (the port fail-closed rule).
+    var flow: Node = _attach_flow(main, true, "vsbattle")
+    states.reset()
+    _force_time_up_frame(main, player, computer)
+    if player.replay_recorder != null:
+        player.replay_recorder.buffer.clear()
+    if computer.replay_recorder != null:
+        computer.replay_recorder.buffer.clear()
+    var reached: int = _drive_time_up_to_round_end(main)
+    var gm: Variant = main.get("game_modes")
+    _check(int(main.get("computer_rounds")) == 1, "win_on_lose replay-unavailable: round lost")
+    _check(int(reached) == STATE_COUNTDOWN,
+        "win_on_lose replay-unavailable falls back to SetState(14)",
+        "match_state=%d" % reached)
+    _check(gm != null and bool(gm.get("current_fight_won")),
+        "CurrentGameModeFightWon ran before the state-14 fallback")
+    _detach_flow(main, flow)
+
+
+func _check_story_timeup_winonlose_no_replay(main: Node, player: PortFighter,
+        computer: PortFighter, states) -> void:
+    ## win_on_lose == true, non-replay subevent kind: PlayerLost records
+    ## CurrentGameModeFightWon, then StopMusic -> StoryFightWon (no state 14).
+    var flow: Node = _attach_flow(main, true, "picture")
+    states.reset()
+    _force_time_up_frame(main, player, computer)
+    var reached: int = _drive_time_up_to_round_end(main)
+    var gm: Variant = main.get("game_modes")
+    _check(int(reached) != STATE_COUNTDOWN,
+        "win_on_lose no-replay does not enter state 14",
+        "match_state=%d" % reached)
+    _check(bool(main.get("match_over")),
+        "win_on_lose no-replay StoryFightWon closes the match")
+    _check(gm != null and bool(gm.get("current_fight_won")),
+        "CurrentGameModeFightWon ran on the no-replay branch")
+    # _resolve_story_fight_won_without_replay() begins with
+    # `if match_over: return`.  It can only complete the story event when the
+    # PlayerLost branch runs before match_over is set.  Reading the story flow's
+    # last_advanced is the observable proof that StoryFightWon actually ran.
+    var advanced: Dictionary = flow.get("last_advanced")
+    _check(String(advanced.get("outcome", "")) == "complete",
+        "win_on_lose no-replay StoryFightWon completes the story event",
+        "last_advanced=%s" % str(advanced))
     _detach_flow(main, flow)
 
 
