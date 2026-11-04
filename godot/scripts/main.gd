@@ -29,6 +29,11 @@ const ProgressHooks = preload("res://scripts/progress_hooks.gd")
 ## live progress service state (38 achievements, unlock list, story EXP/events,
 ## versus/combat counters, save status). With the flag off it is never created.
 const RecordsScreen = preload("res://scripts/progress_records_screen.gd")
+## Opt-in Style Editor (BRUCELEE_STYLE_EDITOR=1). The menu row, the decoded
+## catalog and the user:// selection file are inert unless the flag is on.
+const StyleCatalog = preload("res://scripts/style_catalog.gd")
+const StyleSelectionStore = preload("res://scripts/style_selection_store.gd")
+const StyleEditorScreen = preload("res://scripts/style_editor_screen.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -358,6 +363,10 @@ var progress: Node = null
 ## Records/Achievements screen (CanvasLayer). Created lazily on first open, only
 ## while BRUCELEE_PROGRESS=1 owns a live progress service.
 var records_screen: CanvasLayer = null
+## Opt-in Style Editor state. Created only while BRUCELEE_STYLE_EDITOR=1.
+var style_catalog: RefCounted = null
+var style_store: RefCounted = null
+var style_editor: CanvasLayer = null
 # Local port of the CBeatEmUpGame state machine. match_state is the native
 # EGameState value, match_state_time is GetStateTime() in seconds and
 # pending_round_winner is 0 (draw), 1 (player) or 2 (computer).
@@ -504,6 +513,20 @@ func _ready() -> void:
     add_child(game_modes)
     game_modes.configure(self, MENU_OPPONENT_CONFIG)
     game_modes.progress = progress
+    # Opt-in Style Editor: decoded catalog + user:// selection file + screen.
+    # With the flag off nothing is created and the menu has no extra row.
+    if OS.get_environment("BRUCELEE_STYLE_EDITOR") == "1":
+        style_catalog = StyleCatalog.new()
+        if not style_catalog.load_catalog():
+            push_warning("Style Editor catalog failed closed: " + style_catalog.error)
+        style_store = StyleSelectionStore.new()
+        style_store.load_selections(style_catalog)
+        style_editor = StyleEditorScreen.new()
+        add_child(style_editor)
+        style_editor.configure(self, player, style_catalog, style_store)
+        style_editor.closed.connect(_on_style_editor_closed)
+        style_editor.try_requested.connect(_on_style_try)
+        style_editor.selection_saved.connect(_on_style_selection_saved)
     main_menu_enabled = (
         false if (export_self_test or story_mode or game_mode)
         else _should_show_main_menu()
@@ -1822,6 +1845,9 @@ func _reset_match() -> void:
     # result clips are re-drawn here and not in _reset_round().
     _select_match_result_clips()
     _result_camera_override = false
+    # Re-apply the opt-in style selections after the fighter's clips/clip table
+    # exist; a no-op unless BRUCELEE_STYLE_EDITOR=1 created the screen.
+    _apply_style_editor()
     _reset_round()
 
 
@@ -1932,6 +1958,10 @@ func _leave_menu() -> void:
         # Defensive: any path that leaves the menu also dismisses the records
         # screen, so its input layer can never survive into a fight.
         records_screen.close()
+    if style_editor != null and style_editor.is_open():
+        # Same guard for the Style Editor: closing it re-enables the menu's
+        # input, and the caller then hides the menu below.
+        style_editor.close()
     prototype_menu.hide_menu()
     get_tree().paused = false
 
@@ -1962,6 +1992,67 @@ func _on_records_closed() -> void:
     if main_menu_active:
         hud.visible = false
         get_tree().paused = true
+
+func _open_style_editor() -> void:
+    ## STYLE EDITOR row (only present while BRUCELEE_STYLE_EDITOR=1).
+    if style_editor == null or style_store == null or style_catalog == null:
+        prototype_menu.show_error("STYLE EDITOR NEEDS BRUCELEE_STYLE_EDITOR=1")
+        return
+    _apply_style_editor()
+    style_editor.open()
+    if prototype_menu != null:
+        prototype_menu.set_process_input(false)
+        prototype_menu.visible = false
+    hud.visible = false
+    get_tree().paused = true
+
+func _on_style_editor_closed() -> void:
+    if prototype_menu != null:
+        prototype_menu.set_process_input(true)
+        if main_menu_active:
+            prototype_menu.visible = true
+    if main_menu_active:
+        hud.visible = false
+        get_tree().paused = true
+
+func _on_style_selection_saved(_group_key: String, _entry_id: String) -> void:
+    _apply_style_editor()
+
+func _apply_style_editor() -> void:
+    ## Push the saved selections into the player. apply_style_selections()
+    ## itself fails closed and reports every group it did not apply.
+    if style_editor == null or style_store == null or style_catalog == null or player == null:
+        return
+    var report: Dictionary = player.apply_style_selections(
+        style_store.selections, style_catalog
+    )
+    report["file"] = style_store.save_path
+    report["file_loaded"] = style_store.loaded_ok
+    report["file_error"] = style_store.last_error
+    style_editor.set_apply_report(report)
+
+func _on_style_try() -> void:
+    ## try_style is the recovered "training" command: enter training only when
+    ## at least one style actually applied a direct clip; otherwise stay in the
+    ## editor and explain why nothing can be tried.
+    if style_editor == null:
+        return
+    _apply_style_editor()
+    var report: Dictionary = style_editor.apply_report()
+    if not bool(report.get("animations_loaded", false)):
+        style_editor.show_status("TRY STYLE NEEDS A LOADED FIGHTER CANDIDATE", true)
+        return
+    var applied: Array = report.get("applied", [])
+    if applied.is_empty():
+        style_editor.show_status("NO DIRECT CLIP APPLIED · NOTHING TO TRY", true)
+        return
+    if not _training_available():
+        style_editor.show_status("TRAINING NEEDS CANDIDATE ANIMATIONS", true)
+        return
+    training_mode = true
+    _leave_menu()
+    _reset_match()
+    _start_round_intro()
 
 func _on_menu_command(command: String) -> void:
     var confirm_attack: bool = (
@@ -2004,6 +2095,8 @@ func _on_menu_command(command: String) -> void:
             _leave_menu()
         "records":
             _open_records_screen()
+        "style_editor":
+            _open_style_editor()
         "restart":
             _leave_menu()
             _reset_match()

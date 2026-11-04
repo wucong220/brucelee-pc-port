@@ -57,6 +57,12 @@ const PAUSE_LABELS: Array[String] = [
 const ENV_PROGRESS: String = "BRUCELEE_PROGRESS"
 const RECORDS_COMMAND: String = "records"
 const RECORDS_LABEL: String = "RECORDS"
+## Opt-in Style Editor row. It exists ONLY while BRUCELEE_STYLE_EDITOR=1 and is
+## inserted just before QUIT GAME (after RECORDS when that row is also on), so
+## the flag-off command list and every index-based binding stay identical.
+const ENV_STYLE_EDITOR: String = "BRUCELEE_STYLE_EDITOR"
+const STYLE_EDITOR_COMMAND: String = "style_editor"
+const STYLE_EDITOR_LABEL: String = "STYLE EDITOR"
 
 var menu_state: String = "hidden"
 var selected_index: int = 0
@@ -361,18 +367,28 @@ func handle_input_event(event: InputEvent) -> bool:
 static func progress_enabled() -> bool:
     return OS.get_environment(ENV_PROGRESS) == "1"
 
-## Main-menu rows actually shown. With the flag off this is exactly the const
-## baseline; with it on, RECORDS is inserted before QUIT GAME.
+## True only while the opt-in Style Editor is enabled. Static and side-effect
+## free so the flag can be read from tests without a running tree.
+static func style_editor_enabled() -> bool:
+    return OS.get_environment(ENV_STYLE_EDITOR) == "1"
+
+## Main-menu rows actually shown. With the flags off this is exactly the const
+## baseline; with them on, RECORDS and/or STYLE EDITOR are inserted before
+## QUIT GAME, in that order.
 func main_commands() -> Array[String]:
     var out: Array[String] = MAIN_COMMANDS.duplicate()
     if progress_enabled():
         out.insert(maxi(out.size() - 1, 0), RECORDS_COMMAND)
+    if style_editor_enabled():
+        out.insert(maxi(out.size() - 1, 0), STYLE_EDITOR_COMMAND)
     return out
 
 func main_labels() -> Array[String]:
     var out: Array[String] = MAIN_LABELS.duplicate()
     if progress_enabled():
         out.insert(maxi(out.size() - 1, 0), RECORDS_LABEL)
+    if style_editor_enabled():
+        out.insert(maxi(out.size() - 1, 0), STYLE_EDITOR_LABEL)
     return out
 
 func _commands() -> Array[String]:

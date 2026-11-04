@@ -564,6 +564,9 @@ const WORLD_CHARACTER_HEIGHT: float = CANDIDATE_HEIGHT
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
+## Direct-clip rules shared with the opt-in Style Editor. Nothing here is
+## applied unless apply_style_selections() is called with a saved selection.
+const StyleClipMap = preload("res://scripts/style_clip_map.gd")
 # SMALL BOY candidate clip table (generated from the set).
 const SMALLBOY_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -2615,6 +2618,9 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
     ],
 }
 var ATTACKS: Dictionary = {}
+## Clips captured before the first Style Editor override, so every re-apply
+## starts from the character's own table instead of stacking swaps.
+var _style_base_clips: Dictionary = {}
 var REACTION_PROFILES: Dictionary = {}
 var EXACT_REACTIONS: Dictionary = {}
 var attack_config_path: String = ATTACK_CONFIG_PATH
@@ -7943,6 +7949,83 @@ func clear_result_pose() -> void:
     if state == "result":
         state = "idle"
         state_time = 0.0
+
+
+func style_runtime_snapshot() -> Dictionary:
+    ## Read-only view for the Style Editor's live status line. It never
+    ## changes a clip: the screen uses it to decide APPLIED vs NOT APPLIED.
+    var animations: Dictionary = {}
+    if _candidate_animation != null:
+        for animation_name in _candidate_animation.get_animation_list():
+            animations[String(animation_name)] = true
+    return {
+        "loaded": _candidate_animation != null,
+        "slots": _candidate_clip_paths.duplicate(),
+        "animations": animations,
+    }
+
+
+func apply_style_selections(selections: Dictionary, catalog) -> Dictionary:
+    ## Apply the opt-in Style Editor selections to THIS fighter.
+    ##
+    ## Only direct clip mappings (StyleClipMap.resolve) are applied; a style
+    ## without one, whose clip is not loaded, whose slot belongs to the
+    ## size-variant resolver, or whose character row is ambiguous is reported
+    ## and left untouched. The untouched clips are snapshotted on the first
+    ## call, so re-applying always starts from the character's own table.
+    var report: Dictionary = {
+        "results": {},
+        "applied": [],
+        "failed": [],
+        "error": "",
+        "animations_loaded": _candidate_animation != null,
+    }
+    if _candidate_animation == null:
+        report["error"] = "candidate animation library is not loaded"
+        return report
+    if catalog == null:
+        report["error"] = "style catalog is unavailable"
+        return report
+    for slot: String in StyleClipMap.ALL_PLAYER_SLOTS:
+        if _candidate_clip_paths.has(slot) and not _style_base_clips.has(slot):
+            _style_base_clips[slot] = _candidate_clip_paths[slot]
+    for slot: String in _style_base_clips:
+        _candidate_clip_paths[slot] = _style_base_clips[slot]
+    var snapshot: Dictionary = style_runtime_snapshot()
+    for group_key in StyleClipMap.GROUP_PLAYER_SLOTS.keys():
+        var entry_id: String = String(selections.get(group_key, ""))
+        if entry_id.is_empty():
+            continue
+        var entry: Dictionary = catalog.entry(group_key, entry_id)
+        if entry.is_empty():
+            var missing: Dictionary = {
+                "status": "unknown_entry",
+                "applied": false,
+                "clip": "",
+                "slot": "",
+                "reason": "style entry is not in the decoded catalog",
+            }
+            report["results"][group_key] = missing
+            report["failed"].append({"group": group_key, "status": "unknown_entry"})
+            continue
+        var result: Dictionary = StyleClipMap.resolve(
+            entry, snapshot["slots"], snapshot["animations"]
+        )
+        report["results"][group_key] = result
+        if bool(result.get("applied", false)):
+            var slot: String = String(result["slot"])
+            var clip: String = String(result["clip"])
+            _candidate_clip_paths[slot] = clip
+            if ATTACKS.has(slot) and typeof(ATTACKS[slot]) == TYPE_DICTIONARY:
+                ATTACKS[slot]["animation"] = clip
+            report["applied"].append(group_key)
+        else:
+            report["failed"].append({
+                "group": group_key,
+                "status": String(result.get("status", "")),
+                "reason": String(result.get("reason", "")),
+            })
+    return report
 
 
 func reset_fighter(start_position: Vector3) -> void:
