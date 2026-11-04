@@ -108,6 +108,10 @@ const CHI_RATE := 50.0
 
 const HUD_TEXTURE_ROOT_ENV := "BRUCELEE_HUD_TEXTURE_ROOT"
 const HUD_NAME_ROOT_ENV := "BRUCELEE_HUD_NAME_ROOT"
+# Opt-in recovered character-select / HUD art plate. When unset the HUD is
+# byte-for-byte the original reconstruction above and no extra node is created.
+const HUD_ART_ENV := "BRUCELEE_HUD_ART"
+const HUD_ART_OVERLAY := preload("res://scripts/hud_art_overlay.gd")
 
 # The bar widgets are data holders for the existing test/API contract; the
 # visible bars are the original sprites below.
@@ -139,6 +143,7 @@ var _chi_rects: Array[TextureRect] = []
 var _dot_rects: Array[TextureRect] = []
 var _bar_atlases: Dictionary = {}
 var _name_sprites: Array[TextureRect] = []
+var _art_overlay = null
 
 var _life_target: Array[float] = [100.0, 100.0]
 var _life_display: Array[float] = [100.0, 100.0]
@@ -156,6 +161,7 @@ func _ready() -> void:
     _apply_layout()
     if not get_viewport().size_changed.is_connected(_apply_layout):
         get_viewport().size_changed.connect(_apply_layout)
+    _setup_hud_art()
     set_process(true)
 
 
@@ -662,3 +668,61 @@ func show_message(value: String) -> void:
 
 func set_context_hint(value: String) -> void:
     context_hint.text = value
+
+
+# ------------------------------------------------------- opt-in recovered art
+
+func hud_art_enabled() -> bool:
+    var value: String = OS.get_environment(HUD_ART_ENV).strip_edges().to_lower()
+    return value == "1" or value == "true" or value == "on"
+
+
+func _setup_hud_art() -> void:
+    if not hud_art_enabled():
+        return
+    _art_overlay = HUD_ART_OVERLAY.new()
+    _art_overlay.visible = false
+    add_child(_art_overlay)
+
+
+## Return the recovered-art overlay, creating it on demand when the flag is on.
+func art_overlay() -> Control:
+    if not hud_art_enabled():
+        return null
+    if _art_overlay == null:
+        _setup_hud_art()
+    return _art_overlay
+
+
+## Show the recovered HUD art plate (backdrop/frame, round+time panel, life/chi
+## bar frames) composited from the decoded sprites.
+func show_hud_art_plate() -> void:
+    var overlay = art_overlay()
+    if overlay == null:
+        return
+    overlay.show_hud_plate()
+    overlay.visible = true
+
+
+## Show the decoded selectfighter.ui icon dock + name label.
+func show_hud_art_select_fighter(selected_index: int, unlocked: int, name_hint: String = "") -> void:
+    var overlay = art_overlay()
+    if overlay == null:
+        return
+    overlay.show_select_fighter(selected_index, unlocked, name_hint)
+    overlay.visible = true
+
+
+## Show the decoded fightpreview.ui versus character-select screen.
+func show_hud_art_vs_preview(left_key: String, right_key: String) -> void:
+    var overlay = art_overlay()
+    if overlay == null:
+        return
+    overlay.show_vs_preview(left_key, right_key)
+    overlay.visible = true
+
+
+func hide_hud_art() -> void:
+    if _art_overlay != null:
+        _art_overlay.visible = false
+        _art_overlay.clear_mode()
