@@ -89,6 +89,10 @@ func configure(main_node: Node, player_node: PortFighter, computer_node: PortFig
         player.combat_hit.connect(_on_combat_hit)
         player.parry_succeeded.connect(_on_parry_succeeded)
         player.attack_started.connect(_on_attack_started)
+    if computer != null:
+        # The dummy's attacks emit combat_hit on the attacker; block steps are
+        # satisfied by the player being the defender.
+        computer.combat_hit.connect(_on_combat_hit)
 
 
 # --------------------------------------------------------------- data load
