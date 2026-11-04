@@ -86,12 +86,20 @@ const HUD_ART_OPPONENT_NAMES: Dictionary = {
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
+##   glb_package      stable package-relative model (see PACKAGE_MODELS_DIR).
+##                    Used when the file exists and its sha256 matches; absent
+##                    files fall back to "glb", hash mismatches fail closed.
+##   sha256           expected SHA-256 of glb_package (identity pin)
+##   skins            optional named variant table for the same character/set,
+##                    selected with BRUCELEE_OPPONENT_SKIN
 ##   texture_root     directory holding <kind>_diffuse/normal/material.png
 ##   clip_prefix      candidate clip prefix, e.g. "m04" ("" means m03/Brick)
 ##   master           "1" selects the Master m04_e01_* clip table
 ##   material_profile CandidateMaterialLoader profile ("body" or "body_hair")
 ##   attack_config    mapped fighting-set config ("" means the Brick default)
 ## Paths are the locally tested candidates; they are not shipped with the repo.
+## Package models are a local layout next to the app; "glb" keeps the previous
+## absolute path so old launchers keep working when the package model is absent.
 const MENU_OPPONENT_CONFIG: Dictionary = {
     "brick": {
         "glb": "D:\\BruceLeeWork\\brick-full-20261103\\candidate\\brick_full_94_20261103.glb",
@@ -110,6 +118,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
             "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
             + "sinfu_hair_two-skin_81_result_20261103.glb"
         ),
+        "glb_package": "models\\sinfu_full_hair_intro.glb",
+        "sha256": "c493296417a2e67248699ac7420b47581d29908fe26590bc351453ddd324c58f",
         "texture_root": "D:\\BruceLeeWork\\sinfu-tex",
         "clip_prefix": "m04",
         "master": "",
@@ -122,6 +132,8 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
             "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
             + "master_full_hair_80_result_20261103.glb"
         ),
+        "glb_package": "models\\master_full_hair_intro.glb",
+        "sha256": "0a958ee2e56f349a97e01a8febcac6c9c9fd351552e084d212e14a1fa3891b66",
         "texture_root": "D:\\BruceLeeWork\\master-candidate-20261103\\textures",
         "clip_prefix": "",
         "master": "1",
@@ -176,23 +188,107 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
     },
     "chief": {
         "glb": "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\chief01_full_body_hair_86_groundidle_20261103.glb",
+        "glb_package": "models\\chief01_body_hair.glb",
+        "sha256": "df61ef3e906b5cd91b3fd3425ac57de879cd5e407dc185a2b98eb46a4101aa21",
         "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\chief01",
         "clip_prefix": "",
         "master": "",
         "material_profile": "body_hair",
         "attack_config": "res://data/attack_config_chief.json",
         "skeleton": "large",
+        ## Both Chief variants use characters.list "chief a/b" (karate set) and
+        ## the same source skeleton; chief02 is body-only ("body" profile), so it
+        ## declares no external texture root rather than borrowing chief01 art.
+        "skins": {
+            "chief01_body_hair": {
+                "glb_package": "models\\chief01_body_hair.glb",
+                "sha256": "df61ef3e906b5cd91b3fd3425ac57de879cd5e407dc185a2b98eb46a4101aa21",
+                "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\chief01",
+                "material_profile": "body_hair",
+            },
+            "chief02_body": {
+                "glb_package": "models\\chief02_body.glb",
+                "sha256": "42070f9299369c92be6cde453246ee43f929adaf3d5f99482113b9a17f1eceee",
+                "texture_root": "",
+                "material_profile": "body",
+            },
+        },
     },
     "loming": {
         "glb": "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\loming01_full_body_hair_84_groundidle_20261103.glb",
+        "glb_package": "models\\loming01_body_hair.glb",
+        "sha256": "76f13c2a82b55d164d8944396e1dc8f69883e15422df4fa4dae2169f37782117",
         "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\loming01",
         "clip_prefix": "",
         "master": "",
         "material_profile": "body_hair",
         "attack_config": "res://data/attack_config_loming.json",
         "skeleton": "large",
+        ## characters.list "lo ming a/b" (kungfu set), same source skeleton;
+        ## loming02 is body-only, so no external texture root is declared.
+        "skins": {
+            "loming01_body_hair": {
+                "glb_package": "models\\loming01_body_hair.glb",
+                "sha256": "76f13c2a82b55d164d8944396e1dc8f69883e15422df4fa4dae2169f37782117",
+                "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\loming01",
+                "material_profile": "body_hair",
+            },
+            "loming02_body": {
+                "glb_package": "models\\loming02_body.glb",
+                "sha256": "402ae5e844673456b2497f81edc97bfe7dc761d59090d0ce5dbe61a109086554",
+                "texture_root": "",
+                "material_profile": "body",
+            },
+        },
     },
 }
+## Stable package model layout.  Values in "glb_package" are relative to this
+## directory under the package root (the EXE directory).  BRUCELEE_PACKAGE_ROOT
+## overrides the package root so a validator can exercise the same files from
+## the editor without copying the app.  The directory sits beside the EXE and is
+## never imported into the project or packed into the PCK.
+const PACKAGE_MODELS_DIR: String = "models"
+## Local packages may opt in to loading their own first-party models/ subtree.
+## The default candidate-path guard still rejects every application-internal
+## path; only this explicit flag, a path under <package root>/models/ and a
+## verified sha256 let a packaged model through (see candidate_path_guard.gd).
+const PACKAGE_MODELS_OPT_IN_ENV: String = "BRUCELEE_ALLOW_PACKAGE_MODELS"
+## Verified player skins.  Only Bruce Lee's four body+hair variants qualify:
+## they share the characters.list "bruce lee a..d" / m01 clip table and one
+## source skeleton, and the packaged files are the verified candidates.  An
+## opponent id (chief, loming, master, sinfu, ...) is NOT a player skin and is
+## rejected: an unknown BRUCELEE_PLAYER_SKIN leaves the placeholder fighter in
+## place instead of silently loading a different character.
+## A declared skin whose package file is absent or whose sha256 differs also
+## fails closed (placeholder fighter).  With no skin requested, the previous
+## absolute BRUCELEE_PLAYER_GLB path (launch.ps1's default) is used unchanged.
+const PLAYER_SKIN_CONFIG: Dictionary = {
+    "skin01": {
+        "glb_package": "models\\bruce_skin01.glb",
+        "sha256": "128782fa257712972ee2e1f846dff9892af2d945f2e10bda5beb1a908468da06",
+        "material_profile": "body_hair",
+    },
+    "skin02": {
+        "glb_package": "models\\bruce_skin02.glb",
+        "sha256": "df9ff7b67aef757129c9330bdef0ac9568f242b637a05434eb0d5606a567485e",
+        "material_profile": "body_hair",
+    },
+    "skin03": {
+        "glb_package": "models\\bruce_skin03.glb",
+        "sha256": "7551a98c23255415bfefc9634693c43afae2d99a8ce679b5e8e62230dd3b4561",
+        "material_profile": "body_hair",
+    },
+    "skin04": {
+        "glb_package": "models\\bruce_skin04.glb",
+        "sha256": "1db5406f75d0f5759b6111bc130fa7381e485bb70ac53bddb67832ebb970d508",
+        "material_profile": "body_hair",
+    },
+}
+## Shared verified texture root for the four Bruce skins (body+hair PNGs).
+const PLAYER_SKIN_TEXTURE_ROOT: String = (
+    "D:\\BaiduSyncdisk\\AI项目\\李小龙\\private_assets\\appdata-msix\\"
+    + "BruceLee-PC-Port\\candidate-textures-verified-20261029"
+)
 # characters.list "skeleton" per fighting set, used for the size-class clip
 # versions (adreno_200/Animations.versions). Keyed by the same config path the
 # opponent already uses to identify its character, so a launcher that only sets
@@ -1709,13 +1805,115 @@ func _hide_game_text_overlays() -> void:
         rect.visible = false
 
 
+func _package_root() -> String:
+    ## Directory that holds the stable models/ layout: BRUCELEE_PACKAGE_ROOT for
+    ## validators running from the editor, otherwise the EXE directory.
+    var configured: String = OS.get_environment("BRUCELEE_PACKAGE_ROOT").strip_edges()
+    if not configured.is_empty():
+        return CandidatePathGuard.normalize_absolute_path(configured).trim_suffix("/")
+    return CandidatePathGuard.normalize_absolute_path(
+        OS.get_executable_path().get_base_dir()
+    ).trim_suffix("/")
+
+
+func _sha256_file(path: String) -> String:
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        return ""
+    var hashing: HashingContext = HashingContext.new()
+    hashing.start(HashingContext.HASH_SHA256)
+    var remaining: int = file.get_length()
+    while remaining > 0:
+        var chunk: PackedByteArray = file.get_buffer(mini(remaining, 1 << 20))
+        if chunk.is_empty():
+            break
+        hashing.update(chunk)
+        remaining -= chunk.size()
+    file.close()
+    return hashing.finish().hex_encode()
+
+
+func _resolve_package_model(relative: String, expected_sha256: String) -> Dictionary:
+    ## Returns {"path": absolute, "error": ""} only when the declared package
+    ## model exists and matches its pinned hash.  An absent file returns an empty
+    ## path with no error so the caller keeps the previous absolute fallback; a
+    ## present file that does not match returns an error and the caller must fail
+    ## closed instead of loading a different character/set.
+    var relative_path: String = relative.strip_edges().replace("\\", "/")
+    if relative_path.is_empty():
+        return {"path": "", "error": ""}
+    if (relative_path.is_absolute_path() or relative_path.begins_with("res://")
+            or relative_path.begins_with("../") or relative_path.contains("/../")):
+        return {"path": "", "error": "package model must be relative: " + relative}
+    var absolute: String = _package_root().path_join(relative_path)
+    if not FileAccess.file_exists(absolute):
+        return {"path": "", "error": ""}
+    if expected_sha256.strip_edges().is_empty():
+        return {"path": "", "error": "package model has no pinned sha256: " + relative}
+    var actual: String = _sha256_file(absolute)
+    if actual != expected_sha256.strip_edges().to_lower():
+        return {"path": "", "error": (
+            "package model sha256 mismatch: " + absolute
+            + " actual=" + actual + " expected=" + expected_sha256
+        )}
+    return {"path": absolute, "error": ""}
+
+
+func _is_package_model_path(path: String) -> bool:
+    var normalized: String = CandidatePathGuard.normalize_absolute_path(path).to_lower()
+    var models_root: String = (
+        _package_root().path_join(PACKAGE_MODELS_DIR).to_lower()
+    )
+    if not normalized.begins_with(models_root + "/"):
+        return false
+    return normalized.get_extension().to_lower() == "glb"
+
+
+func _player_candidate_glb() -> String:
+    ## An explicit, verified BRUCELEE_PLAYER_SKIN wins over the legacy
+    ## BRUCELEE_PLAYER_GLB default that launch.ps1 still exports, so a package
+    ## launcher can just set the skin name.  An unknown skin, a missing package
+    ## model or a sha256 mismatch fails closed (placeholder fighter) instead of
+    ## silently loading a different character.  With no skin set, the previous
+    ## absolute-BR GLB path is used unchanged.
+    var skin_id: String = OS.get_environment("BRUCELEE_PLAYER_SKIN").strip_edges()
+    if skin_id.is_empty():
+        return OS.get_environment("BRUCELEE_PLAYER_GLB")
+    var entry: Variant = PLAYER_SKIN_CONFIG.get(skin_id)
+    if not entry is Dictionary:
+        push_error("BRUCELEE_PLAYER_SKIN=%s is not a verified player skin" % skin_id)
+        return ""
+    var resolved: Dictionary = _resolve_package_model(
+        String(Dictionary(entry).get("glb_package", "")),
+        String(Dictionary(entry).get("sha256", ""))
+    )
+    if not String(resolved["error"]).is_empty():
+        push_error("player skin " + skin_id + ": " + String(resolved["error"]))
+        return ""
+    var path: String = String(resolved["path"])
+    if path.is_empty():
+        push_error("player skin " + skin_id + " package model is missing")
+        return ""
+    OS.set_environment(PACKAGE_MODELS_OPT_IN_ENV, "1" if _is_package_model_path(path) else "")
+    return path
+
+
+func _player_candidate_texture_root() -> String:
+    var explicit: String = OS.get_environment("BRUCELEE_PLAYER_TEXTURE_ROOT")
+    if not explicit.is_empty():
+        return explicit
+    if not OS.get_environment("BRUCELEE_PLAYER_SKIN").strip_edges().is_empty():
+        return PLAYER_SKIN_TEXTURE_ROOT
+    return ""
+
+
 func _build_fighters() -> void:
     player = PortFighter.new()
     player.configure("Bruce (placeholder)", true, Color(0.85, 0.56, 0.18))
     player.polar_movement_enabled = true
     player.configure_candidate_asset(
-        OS.get_environment("BRUCELEE_PLAYER_GLB"),
-        OS.get_environment("BRUCELEE_PLAYER_TEXTURE_ROOT"),
+        _player_candidate_glb(),
+        _player_candidate_texture_root(),
         PortFighter.CANDIDATE_CLIPS,
         "body_hair"
     )
@@ -2348,12 +2546,68 @@ func _request_opponent_switch(command: String) -> void:
     call_deferred("_apply_opponent_switch", command)
 
 
-func _apply_opponent_switch(command: String) -> void:
-    var config_value: Variant = MENU_OPPONENT_CONFIG.get(command)
-    if not config_value is Dictionary:
-        return
-    var config: Dictionary = config_value
-    OS.set_environment("BRUCELEE_OPPONENT_GLB", String(config.get("glb", "")))
+func _selected_opponent_config(config: Dictionary) -> Dictionary:
+    ## Applies the optional BRUCELEE_OPPONENT_SKIN variant on top of the entry.
+    ## A named variant must exist under "skins" and must belong to the entry's
+    ## fighting set; anything else fails closed (empty result) so the current
+    ## match keeps its already-loaded candidate instead of switching silently.
+    var merged: Dictionary = config.duplicate(true)
+    var skin_id: String = OS.get_environment("BRUCELEE_OPPONENT_SKIN").strip_edges()
+    if skin_id.is_empty():
+        return merged
+    var variants: Variant = merged.get("skins")
+    if not variants is Dictionary:
+        push_error("BRUCELEE_OPPONENT_SKIN=%s but this opponent has no variants" % skin_id)
+        return {}
+    var variant: Variant = Dictionary(variants).get(skin_id)
+    if not variant is Dictionary:
+        push_error("BRUCELEE_OPPONENT_SKIN=%s is not a verified variant" % skin_id)
+        return {}
+    var variant_config: Dictionary = variant
+    var variant_set: String = String(
+        variant_config.get("attack_config", merged.get("attack_config", ""))
+    )
+    if variant_set != String(merged.get("attack_config", "")):
+        push_error("variant %s does not belong to %s" % [
+            skin_id, String(merged.get("attack_config", "")),
+        ])
+        return {}
+    for key: Variant in variant_config:
+        merged[key] = variant_config[key]
+    merged["skin"] = skin_id
+    return merged
+
+
+func _resolved_opponent_glb(config: Dictionary) -> Dictionary:
+    ## Prefers the verified package model, keeps the previous absolute "glb" as
+    ## the fallback when the package file is absent, and returns a non-empty
+    ## error (fail closed) when a present package model fails its hash pin.
+    var packaged: String = String(config.get("glb_package", ""))
+    if not packaged.is_empty():
+        var resolved: Dictionary = _resolve_package_model(
+            packaged, String(config.get("sha256", ""))
+        )
+        if not String(resolved["error"]).is_empty():
+            return {"glb": "", "error": String(resolved["error"])}
+        if not String(resolved["path"]).is_empty():
+            return {"glb": String(resolved["path"]), "error": ""}
+    return {"glb": String(config.get("glb", "")), "error": ""}
+
+
+func _stage_opponent_environment(command: String, config: Dictionary) -> bool:
+    ## Writes the BRUCELEE_OPPONENT_* environment for an already merged config.
+    ## Returns false without touching any variable when a present package model
+    ## fails its identity pin.  Shared by the menu switch and the load validator
+    ## so both use exactly the same resolution path.
+    var selection: Dictionary = _resolved_opponent_glb(config)
+    if not String(selection["error"]).is_empty():
+        push_error("opponent " + command + ": " + String(selection["error"]))
+        return false
+    var chosen_glb: String = String(selection["glb"])
+    OS.set_environment(
+        PACKAGE_MODELS_OPT_IN_ENV, "1" if _is_package_model_path(chosen_glb) else ""
+    )
+    OS.set_environment("BRUCELEE_OPPONENT_GLB", chosen_glb)
     OS.set_environment(
         "BRUCELEE_OPPONENT_TEXTURE_ROOT", String(config.get("texture_root", ""))
     )
@@ -2374,6 +2628,18 @@ func _apply_opponent_switch(command: String) -> void:
         "BRUCELEE_OPPONENT_SKELETON", String(config.get("skeleton", ""))
     )
     OS.set_environment("BRUCELEE_OPPONENT_NAME_KEY", command)
+    return true
+
+
+func _apply_opponent_switch(command: String) -> void:
+    var config_value: Variant = MENU_OPPONENT_CONFIG.get(command)
+    if not config_value is Dictionary:
+        return
+    var config: Dictionary = _selected_opponent_config(Dictionary(config_value))
+    if config.is_empty():
+        return
+    if not _stage_opponent_environment(command, config):
+        return
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
     get_tree().reload_current_scene()
 

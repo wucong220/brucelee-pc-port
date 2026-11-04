@@ -137,12 +137,32 @@ static func canonical_path(path: String) -> Dictionary:
     return {"path": resolved_path, "error": ""}
 
 
+static func packaged_models_opt_in(path: String) -> bool:
+    ## Narrow, explicit exception for a local package that deliberately ships a
+    ## first-party models/ directory next to the executable.  It requires
+    ## BRUCELEE_ALLOW_PACKAGE_MODELS=1, a path under <root>/models/ with a .glb
+    ## extension and an existing file; the caller still pins the sha256.  With
+    ## the flag off (the default, and every existing validator/PCK build) every
+    ## application-internal candidate path stays rejected.
+    if OS.get_environment("BRUCELEE_ALLOW_PACKAGE_MODELS") != "1":
+        return false
+    var normalized_path: String = normalize_absolute_path(path).to_lower()
+    var models_root: String = repository_root().path_join("models").to_lower()
+    if not normalized_path.begins_with(models_root + "/"):
+        return false
+    if normalized_path.get_extension().to_lower() != "glb":
+        return false
+    return FileAccess.file_exists(normalized_path)
+
+
 static func external_path_error(path: String, label: String) -> String:
     var normalized_path: String = normalize_absolute_path(path)
     if (not normalized_path.is_absolute_path()
             or normalized_path.begins_with("//")
             or normalized_path.contains("://")):
         return label + " must be an absolute local path"
+    if packaged_models_opt_in(normalized_path):
+        return ""
     var lexical_root: String = repository_root().to_lower()
     var lexical_path: String = normalized_path.to_lower()
     if (lexical_path == lexical_root
