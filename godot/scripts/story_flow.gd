@@ -835,6 +835,79 @@ func _resume_pending_battle() -> bool:
 	return true
 
 
+# --------------------------------------------------------------- story EXP
+# Exact native model: FightBaseScore 0x1e46b4, FightWon 0x1e73bc,
+# StoryEventCompletionBonus 0x1e47a8.  D = 0 easy / 1 medium / 2 hard.
+
+
+func _story_exp_fight_base(kind: String, difficulty: int) -> int:
+	match kind:
+		"vsbattle", "timeattack":
+			return 25 * difficulty + 100
+		"survival":
+			return 15 * difficulty + 125
+		"arcade":
+			return 25 * difficulty + 75
+		_:
+			return 0
+
+
+func _story_exp_completion_bonus(kind: String, difficulty: int) -> int:
+	# Native HasStoryModeSubEventScoreSummary 0x1e45c0 returns false for
+	# vsbattle, so only these three kinds reach StorySubEventComplete.
+	match kind:
+		"survival":
+			return 25 * difficulty + 150
+		"timeattack":
+			return 25 * difficulty + 125
+		"arcade":
+			return 25 * difficulty + 250
+		_:
+			return 0
+
+
+func _story_exp_move_stats() -> Dictionary:
+	# Native TFightResults +0x04..+0x10 (counter / special / endmove / perfect).
+	# The port does not tally these per fight yet, so this returns an empty
+	# dictionary (= "not measured") and the award below is logged as partial.
+	return {}
+
+
+func _award_story_exp(won: bool, health: float, elapsed: float, outcome: String) -> void:
+	if state == null:
+		return
+	var kind: String = String(battle_run.get("kind", ""))
+	var win_on_lose: bool = String(battle_run.get("win_on_lose", "")).to_lower() == "true"
+	var difficulty: int = clampi(int(state.difficulty_slot), 0, 2)
+	var amount: int = 0
+	var partial: bool = false
+	if won or win_on_lose:
+		var base: int = _story_exp_fight_base(kind, difficulty)
+		var hp: int = int(round(health))
+		var stats: Dictionary = _story_exp_move_stats()
+		match kind:
+			"vsbattle", "arcade":
+				amount = base + (difficulty + 1) * hp \
+					+ 10 * (int(stats.get("counters", 0)) + int(stats.get("special_moves", 0))) \
+					+ 15 * int(stats.get("ending_moves", 0)) \
+					+ 20 * int(stats.get("perfects", 0))
+				partial = stats.is_empty()
+			"survival":
+				amount = base + (difficulty + 1) * hp
+			"timeattack":
+				var limit: int = int(battle_run.get("time_limit", 0))
+				var remaining: int = maxi(0, limit - int(round(elapsed)))
+				amount = base + (difficulty + 2) * remaining
+	if outcome == "complete":
+		amount += _story_exp_completion_bonus(kind, difficulty)
+	if amount <= 0:
+		return
+	var total: int = state.add_exp(amount)
+	print("STORY_FLOW_EXP +%d kind=%s difficulty=%d health=%d outcome=%s total=%d partial=%s" % [
+		amount, kind, difficulty, int(round(health)), outcome, total, str(partial),
+	])
+
+
 func match_finished(won: bool) -> void:
 	if state == null or not state.has_pending():
 		return
@@ -863,6 +936,7 @@ func match_finished(won: bool) -> void:
 	print("STORY_FLOW_RESULT outcome=%s won=%s event=%s" % [
 		outcome, str(won), String(battle_run.get("event", "")),
 	])
+	_award_story_exp(won, health, elapsed, outcome)
 	if outcome == "next":
 		state.set_pending({
 			"run": battle_run,
@@ -955,9 +1029,10 @@ func _finish_event() -> void:
 	# Opt-in progress hooks (no-op when BRUCELEE_PROGRESS is off): grant the
 	# recovered event unlocks, count the chapter on its chapter_end event, and
 	# record full-story difficulty completion on the final chapter. EXP is synced
-	# from the story save, whose decoded subevents carry no EXP reward, so the
-	# recovered EXP-gated table never fires in normal play (fail closed, not
-	# invented). All calls are idempotent for replayed events.
+	# after the per-fight accrual above, which is also where the native engine
+	# runs the EXP unlock table (CBruceLeeStoryMode::StoryCurrentEventComplete
+	# 0x1f4c24 -> CUnlocker::CheckStoryUnlocks(slot exp)). All calls are
+	# idempotent for replayed events.
 	if progress != null:
 		progress.sync_story_exp(int(state.exp))
 		progress.note_story_event(chapter_id, maptitle)
@@ -1073,8 +1148,7 @@ func show_records() -> void:
 			int(entry.get("difficulty_value", -1)),
 		])
 	rows.append("")
-	rows.append("exp accrual is not among the recovered story fields (the 40-row")
-	rows.append("unlocks.list exp table is documented but not driven by this flow).")
+	rows.append("exp %d · native accrual: FightWon per won fight + StorySubEventComplete" % state.exp)
 	_show_rows(rows, -1)
 
 

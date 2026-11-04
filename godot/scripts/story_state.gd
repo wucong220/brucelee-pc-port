@@ -91,6 +91,12 @@ func new_story(slot: int, difficulty_index: int, difficulty_label: String) -> bo
 	return save()
 
 
+func add_exp(amount: int) -> int:
+	## Cumulative story EXP for this save slot (native slot+0x9c, reset on new game).
+	exp = maxi(0, exp + int(amount))
+	return exp
+
+
 func load_slot(slot: int) -> bool:
 	if not slot_exists(slot):
 		error_msg = "slot %d is empty" % slot
