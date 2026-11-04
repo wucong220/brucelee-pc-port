@@ -13,6 +13,10 @@ const FightStats = preload("res://scripts/fight_stats.gd")
 # Additive opt-in reaction gate; instantiated in _ready only when
 # BRUCELEE_NATIVE_REACTION=1. The default path never references it.
 const NativeReactionGate = preload("res://scripts/native_reaction_state.gd")
+# Opt-in producer for the recovered 0x2c CFighter replay record. _ready only
+# instantiates it when BRUCELEE_REPLAY_RECORD=1; the default path never does.
+const ReplayRecorderScript = preload("res://scripts/replay_recorder.gd")
+const REPLAY_RECORD_ENV: String = "BRUCELEE_REPLAY_RECORD"
 const MAX_HEALTH: float = 100.0
 const CANDIDATE_SOURCE_MIN_Y: float = -0.09393310546875
 const CANDIDATE_SOURCE_HEIGHT: float = 173.415954589844
@@ -2801,6 +2805,14 @@ var _candidate_skeleton: Skeleton3D
 var _candidate_skeleton_parent: Node
 var _candidate_source_min_y: float = CANDIDATE_SOURCE_MIN_Y
 var _candidate_visual_scale: float = 1.0
+# Opt-in replay recorder (see _init_replay_recorder).  Off unless
+# BRUCELEE_REPLAY_RECORD=1, so the default path never records or allocates.
+var replay_record_enabled: bool = false
+var replay_recorder: ReplayRecorderScript = null
+var replay_record_error: String = ""
+# Headless/test hook: a value >= 0 replaces Time.get_ticks_msec() for the
+# record's +0x28 time, matching the native absolute GetCurrentMili() slot.
+var replay_record_clock_override_ms: int = -1
 
 func configure(display_name: String, human: bool, tint: Color) -> void:
     character_name = display_name
@@ -3325,6 +3337,7 @@ func _ready() -> void:
     _add_mesh(foot, Vector3(-0.20, -0.86, 0.0), Color(0.16, 0.16, 0.16))
     _add_mesh(foot, Vector3(0.20, -0.86, 0.0), Color(0.16, 0.16, 0.16))
     _try_load_candidate_visual()
+    _init_replay_recorder()
 
 func _load_attack_definitions() -> bool:
     ATTACKS = {}
@@ -6253,6 +6266,7 @@ func _physics_process(delta: float) -> void:
         position.z = clampf(position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
     _animate_visuals()
     _animate_candidate()
+    _record_replay_frame()
 
 func _advance_locomotion_visual(delta: float) -> void:
     if not _uses_standing_idle_rules():
@@ -8464,6 +8478,10 @@ func reset_fighter(start_position: Vector3) -> void:
     _grab_connected = false
     _endattack_victim_started = false
     _multi_impact_applied.clear()
+    if replay_recorder != null:
+        # A restarted fighter starts a new recording; the recovered 0x2c
+        # container held only the previous match.
+        replay_recorder.reset()
     if candidate_loaded:
         if _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
@@ -8581,3 +8599,134 @@ func _animate_candidate() -> void:
     if requested == FACEUP_IMPACT_TO_FLOOR_CLIP:
         start_frame = int(state_time * SOURCE_FRAME_RATE + 0.0001)
     _play_candidate_action(requested, start_frame)
+
+
+## ---------------------------------------------------------------------------
+## Opt-in replay recorder (recovered CFighter 0x2c record producer).
+##
+## BRUCELEE_REPLAY_RECORD=1 attaches one ReplayRecorder to this fighter and
+## samples it at the end of every _physics_process, so the recovered state 6
+## consumer (NativeMatchStates.set_replay_buffers) can replay live data.
+## Flag off: _init_replay_recorder returns immediately, replay_recorder stays
+## null, and _record_replay_frame is a single false branch - no state changes.
+##
+## Native anchors: SetAnimation @ 0x1b6e94 (append + +0x16f gate),
+## GetActiveSetAnimation @ 0x1b00d0 and FollowLink @ 0x1b80dc (+0x135).
+## Nothing about the native TItem pointer or the +0x20 blend float is
+## reproduced; those fields are handled exactly as documented in
+## scripts/replay_recorder.gd (proven handle table, unknown handles refused).
+## ---------------------------------------------------------------------------
+
+## Handle table: every native animation name this fighter can play, taken from
+## its recovered clip tables (candidate slots + every reaction/impact animation
+## the state machine can request).  Sorted and de-duplicated, so the handle
+## values the recorder writes are stable for a given fighter configuration.
+func replay_animation_table() -> Array[String]:
+    var names: Dictionary = {}
+    for action: Variant in candidate_clips:
+        _note_clip_name(names, candidate_clips[action])
+    for slot: Variant in _candidate_clip_paths:
+        _note_clip_name(names, _candidate_clip_paths[slot])
+    _collect_animation_names(names, REACTION_PROFILES)
+    _collect_animation_names(names, EXACT_REACTIONS)
+    _collect_animation_names(names, _native_reactions)
+    # Recovered ground/stun/result clips the state machine can also request.
+    for clip: String in [
+        IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP,
+        FACEDOWN_GETUP_CLIP, FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
+        FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP, FACEUP_GETUP_CLIP,
+        FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP, ATTACK_TO_FLOOR_CLIP,
+        STUN_CLIP, STUN_FALL_CLIP, BRICK_FRONT_LOW_CLIP,
+    ]:
+        _note_clip_name(names, clip)
+    return ReplayRecorderScript.table_from_names(names.keys())
+
+
+func _note_clip_name(names: Dictionary, value: Variant) -> void:
+    if typeof(value) == TYPE_STRING and not String(value).is_empty():
+        names[String(value)] = true
+
+
+## Recovered reaction tables are nested dictionaries/lists keyed by group; the
+## only clip-carrying keys are "animation" and "clip".
+func _collect_animation_names(names: Dictionary, value: Variant) -> void:
+    if typeof(value) == TYPE_DICTIONARY:
+        for key: Variant in value:
+            if String(key) == "animation" or String(key) == "clip":
+                _note_clip_name(names, value[key])
+            else:
+                _collect_animation_names(names, value[key])
+    elif typeof(value) == TYPE_ARRAY:
+        for entry: Variant in value:
+            _collect_animation_names(names, entry)
+
+
+## Animation identity written to record+0x1c.  The candidate AnimationPlayer
+## reports the clip it actually plays (a native name, possibly a recovered size
+## variant); without a loaded candidate the state's recovered source animation
+## is the only identity the port has.  An empty result fails closed.
+func replay_animation_name() -> String:
+    if not candidate_animation_clip.is_empty():
+        return candidate_animation_clip
+    if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
+        # current_source_animation() has no victim branch; the recovered victim
+        # clip for these states is the clip-table entry keyed by the state name.
+        return String(candidate_clips.get(state, ""))
+    return current_source_animation()
+
+
+## Record+0x24: CFighter+0x135 selects the internal fighting-set animation
+## table (the grabbing partner's, fighter+0x7c) when non-zero.  FollowLink sets
+## it on the victim right before the victim SetAnimation, and the port plays
+## exactly those victim clips in these states.
+func replay_set_selector() -> int:
+    return 1 if state in [
+        "grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2",
+    ] else 0
+
+
+## Record+0x28: the native slot is SetAnimation's absolute GetCurrentMili() ms.
+func replay_record_now_ms() -> int:
+    if replay_record_clock_override_ms >= 0:
+        return replay_record_clock_override_ms
+    return Time.get_ticks_msec()
+
+
+## SetState case 6 clears +0x16f on both fighters; callers entering the port's
+## replay state stop the append path with this.  Disabling never deletes the
+## records already captured.
+func set_replay_recording(value: bool) -> void:
+    if replay_recorder == null:
+        replay_record_enabled = false
+        return
+    replay_record_enabled = value
+    replay_recorder.enabled = value
+
+
+func _init_replay_recorder() -> void:
+    replay_record_enabled = OS.get_environment(REPLAY_RECORD_ENV) == "1"
+    if not replay_record_enabled:
+        return
+    var table: Array[String] = replay_animation_table()
+    if table.is_empty():
+        # The caller opted in, so fail closed and surface it instead of
+        # silently recording nothing.
+        replay_record_enabled = false
+        replay_record_error = "replay recorder has no recovered clip table"
+        push_error(replay_record_error)
+        return
+    replay_recorder = ReplayRecorderScript.new()
+    replay_recorder.configure(table)
+    replay_recorder.enabled = true
+
+
+func _record_replay_frame() -> void:
+    if not replay_record_enabled or replay_recorder == null:
+        return
+    replay_recorder.append_sample(
+        global_position,
+        global_transform.basis.get_rotation_quaternion(),
+        replay_animation_name(),
+        replay_set_selector(),
+        replay_record_now_ms(),
+    )
