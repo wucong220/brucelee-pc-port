@@ -47,6 +47,14 @@ const PAUSE_LABELS: Array[String] = [
     "MAIN MENU",
     "QUIT GAME",
 ]
+## Opt-in Records/Achievements row. It exists ONLY while BRUCELEE_PROGRESS=1 --
+## the same gate main.gd uses to create the progress service. The const baseline
+## above is untouched, so the flag-off menu and every index-based binding stay
+## exactly as they were; RECORDS is inserted just before QUIT GAME and main.gd
+## opens the screen (the row is a plain command, never a submenu of this script).
+const ENV_PROGRESS: String = "BRUCELEE_PROGRESS"
+const RECORDS_COMMAND: String = "records"
+const RECORDS_LABEL: String = "RECORDS"
 
 var menu_state: String = "hidden"
 var selected_index: int = 0
@@ -172,7 +180,10 @@ func _build_ui() -> void:
     mode_label.add_theme_font_size_override("font_size", 16)
     mode_label.add_theme_color_override("font_color", Color(0.70, 0.78, 0.90))
     panel.add_child(mode_label)
-    for index: int in range(maxi(MAIN_LABELS.size(), PAUSE_LABELS.size())):
+    # Size the row pool from the rows actually shown: main_labels() is one row
+    # longer than the const baseline while BRUCELEE_PROGRESS=1, and a fixed pool
+    # would silently drop QUIT GAME.
+    for index: int in range(maxi(main_labels().size(), PAUSE_LABELS.size())):
         var label: Label = Label.new()
         label.custom_minimum_size = Vector2(0.0, 26.0)
         label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -257,7 +268,7 @@ func show_main_menu() -> void:
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"
     hover_index = -1
-    _refresh_items(MAIN_LABELS)
+    _refresh_items(main_labels())
     _refresh_selection()
 
 func show_scene_menu() -> void:
@@ -338,10 +349,29 @@ func handle_input_event(event: InputEvent) -> bool:
         return false
     return true
 
+## True only while the opt-in progress service is enabled. Kept static and
+## side-effect free so the flag can be read from tests without a running tree.
+static func progress_enabled() -> bool:
+    return OS.get_environment(ENV_PROGRESS) == "1"
+
+## Main-menu rows actually shown. With the flag off this is exactly the const
+## baseline; with it on, RECORDS is inserted before QUIT GAME.
+func main_commands() -> Array[String]:
+    var out: Array[String] = MAIN_COMMANDS.duplicate()
+    if progress_enabled():
+        out.insert(maxi(out.size() - 1, 0), RECORDS_COMMAND)
+    return out
+
+func main_labels() -> Array[String]:
+    var out: Array[String] = MAIN_LABELS.duplicate()
+    if progress_enabled():
+        out.insert(maxi(out.size() - 1, 0), RECORDS_LABEL)
+    return out
+
 func _commands() -> Array[String]:
     match menu_state:
         "main":
-            return MAIN_COMMANDS
+            return main_commands()
         "scenes":
             return SCENE_COMMANDS
         "opponents":
@@ -401,12 +431,13 @@ func _cancel() -> void:
 
 func _return_to_main_menu() -> void:
     menu_state = "main"
-    selected_index = clampi(main_index_before_submenu, 0, MAIN_COMMANDS.size() - 1)
+    var commands: Array[String] = main_commands()
+    selected_index = clampi(main_index_before_submenu, 0, maxi(commands.size() - 1, 0))
     mode_label.text = "MAIN MENU"
     status_label.text = ""
     controls_label.text = "UP/DOWN or D-PAD choose   ENTER/J/A confirm"
     hover_index = -1
-    _refresh_items(MAIN_LABELS)
+    _refresh_items(main_labels())
     _refresh_selection()
 
 func _play_sfx(player: AudioStreamPlayer, label: String) -> void:

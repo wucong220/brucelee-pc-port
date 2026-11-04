@@ -21,6 +21,11 @@ const StoryFlow = preload("res://scripts/story_flow.gd")
 const GameModes = preload("res://scripts/game_modes.gd")
 ## Opt-in progress/save subsystem bridge (inert unless BRUCELEE_PROGRESS=1).
 const ProgressHooks = preload("res://scripts/progress_hooks.gd")
+## Opt-in Records/Achievements screen. It is only reachable through the RECORDS
+## row that prototype_menu.gd adds while BRUCELEE_PROGRESS=1, and it renders the
+## live progress service state (38 achievements, unlock list, story EXP/events,
+## versus/combat counters, save status). With the flag off it is never created.
+const RecordsScreen = preload("res://scripts/progress_records_screen.gd")
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -338,6 +343,9 @@ var player_start_health_override: float = -1.0
 var story_flow: Node = null
 var game_modes: Node = null
 var progress: Node = null
+## Records/Achievements screen (CanvasLayer). Created lazily on first open, only
+## while BRUCELEE_PROGRESS=1 owns a live progress service.
+var records_screen: CanvasLayer = null
 # Local port of the CBeatEmUpGame state machine. match_state is the native
 # EGameState value, match_state_time is GetStateTime() in seconds and
 # pending_round_winner is 0 (draw), 1 (player) or 2 (computer).
@@ -1890,8 +1898,40 @@ func _leave_menu() -> void:
     main_menu_active = false
     menu_paused = false
     hud.visible = true
+    if records_screen != null and records_screen.is_open():
+        # Defensive: any path that leaves the menu also dismisses the records
+        # screen, so its input layer can never survive into a fight.
+        records_screen.close()
     prototype_menu.hide_menu()
     get_tree().paused = false
+
+func _open_records_screen() -> void:
+    ## RECORDS row (only present while BRUCELEE_PROGRESS=1). The screen renders
+    ## the live service state; the menu stays alive behind its opaque backdrop so
+    ## closing it restores the exact selection and the paused main menu.
+    ## Opening it is read-only: it never flushes the save, so browsing RECORDS
+    ## cannot rewrite (or "repair") a player's save file.
+    if progress == null:
+        prototype_menu.show_error("RECORDS NEEDS BRUCELEE_PROGRESS=1")
+        return
+    if records_screen == null:
+        records_screen = RecordsScreen.new()
+        records_screen.name = "ProgressRecords"
+        add_child(records_screen)
+        records_screen.configure(progress)
+        records_screen.closed.connect(_on_records_closed)
+    records_screen.open()
+    if prototype_menu != null:
+        # The records layer owns keyboard/joypad input while it is up.
+        prototype_menu.set_process_input(false)
+    hud.visible = false
+
+func _on_records_closed() -> void:
+    if prototype_menu != null:
+        prototype_menu.set_process_input(true)
+    if main_menu_active:
+        hud.visible = false
+        get_tree().paused = true
 
 func _on_menu_command(command: String) -> void:
     var confirm_attack: bool = (
@@ -1932,6 +1972,8 @@ func _on_menu_command(command: String) -> void:
                 prototype_menu.show_error("TRAINING NEEDS CANDIDATE ANIMATIONS")
         "resume":
             _leave_menu()
+        "records":
+            _open_records_screen()
         "restart":
             _leave_menu()
             _reset_match()
@@ -3561,6 +3603,12 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+    if records_screen != null and records_screen.is_open():
+        # The records screen consumes its own keys in _input(); this guard keeps
+        # any straggler press from reaching the menu or a fight behind it.
+        records_screen.handle_input_event(event)
+        get_viewport().set_input_as_handled()
+        return
     if prototype_menu != null:
         # J is both a menu confirm and the punch key. Capture the command
         # before handling, then let the confirming press throw a real punch
