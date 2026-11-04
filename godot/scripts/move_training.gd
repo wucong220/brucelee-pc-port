@@ -215,6 +215,24 @@ func practice_background_path() -> String:
     return path.get_base_dir().path_join("practice_default.png")
 
 
+func _training_texture(filename: String) -> Texture2D:
+    ## Local-only original training UI art.  A packaged build keeps it loose
+    ## beside the executable, so fall back to that directory when res:// has
+    ## no imported copy.
+    var resource_path := "res://ui/training/" + filename
+    if ResourceLoader.exists(resource_path):
+        return load(resource_path) as Texture2D
+    var loose := OS.get_executable_path().get_base_dir().path_join(
+        "ui/training").path_join(filename)
+    if not FileAccess.file_exists(loose):
+        return null
+    var image := Image.load_from_file(loose)
+    if image == null or image.is_empty():
+        return null
+    return ImageTexture.create_from_image(image)
+
+
+
 # ------------------------------------------------------------------- UI build
 
 func _build_ui() -> void:
@@ -321,8 +339,9 @@ func _build_select_screen() -> void:
     back.size = back_rect.size
     back.stretch_mode = TextureButton.STRETCH_SCALE
     back.ignore_texture_size = true
-    if ResourceLoader.exists("res://ui/training/back_button.png"):
-        back.texture_normal = load("res://ui/training/back_button.png")
+    var back_texture := _training_texture("back_button.png")
+    if back_texture != null:
+        back.texture_normal = back_texture
     back.mouse_filter = Control.MOUSE_FILTER_IGNORE
     screen.add_child(back)
 
@@ -354,8 +373,9 @@ func _build_intro_screen() -> void:
     _intro_page_icon.position = Vector2(400 - 16 - 8, 200 - 16 - 8)
     _intro_page_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     _intro_page_icon.stretch_mode = TextureRect.STRETCH_SCALE
-    if ResourceLoader.exists("res://ui/training/page_icon.png"):
-        _intro_page_icon.texture = load("res://ui/training/page_icon.png")
+    var page_icon := _training_texture("page_icon.png")
+    if page_icon != null:
+        _intro_page_icon.texture = page_icon
     _intro_page_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _intro_panel.add_child(_intro_page_icon)
 
@@ -1146,3 +1166,4 @@ func _on_parry_succeeded(action: String) -> void:
     var animations: Array = current_step.get("success_animations", [])
     if source in animations or action in animations:
         _success()
+
