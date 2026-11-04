@@ -704,12 +704,13 @@ func show_hud_art_plate() -> void:
     overlay.visible = true
 
 
-## Show the decoded selectfighter.ui icon dock + name label.
-func show_hud_art_select_fighter(selected_index: int, unlocked: int, name_hint: String = "") -> void:
+## Show the decoded selectfighter.ui icon dock + name label.  `gate` is the
+## recovered character unlock gate (null draws every card open).
+func show_hud_art_select_fighter(selected_index: int, gate = null, name_hint: String = "") -> void:
     var overlay = art_overlay()
     if overlay == null:
         return
-    overlay.show_select_fighter(selected_index, unlocked, name_hint)
+    overlay.show_select_fighter(selected_index, gate, name_hint)
     overlay.visible = true
 
 

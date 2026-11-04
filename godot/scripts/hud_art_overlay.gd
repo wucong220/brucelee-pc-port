@@ -11,7 +11,10 @@ class_name HudArtOverlay
 ##   show_hud_plate()                      in-fight HUD backdrop/frame, round +
 ##                                         time panel and life/chi bar frames,
 ##                                         composited from the 9 HUD sprites.
-##   show_select_fighter(index, unlocked)  selectfighter.ui icon dock + name.
+##   show_select_fighter(index, gate)      selectfighter.ui icon dock + name.
+##                                         `gate` is the recovered character
+##                                         unlock gate; null draws every card
+##                                         open (the pre-gating behaviour).
 ##   show_vs_preview(left_key, right)      fightpreview.ui versus screen.
 ##
 ## The widget lives in a 480x320 reference frame (the original canvas).  It is
@@ -89,6 +92,11 @@ var _hud_textures: Dictionary = {}
 var _art_textures: Dictionary = {}
 var _assets_bottom_up := false
 var _mode := ""
+## Last selectfighter dock state, for tests: the picture basename drawn for every
+## card in decoded dock order, its locked flag, and the fail-closed cause.
+var _select_sources: Array = []
+var _select_locked: Array = []
+var _select_error := ""
 
 
 class BorderRect extends Control:
@@ -298,7 +306,43 @@ func _add_bar(stem: String, src: Rect2, x: float, y: float, fraction: float,
     _frame.add_child(_region_sprite(texture, region, Rect2(x, y, visible_w, height)))
 
 
-func show_select_fighter(selected_index: int, unlocked: int, name_hint: String = "") -> void:
+## Decoded selectfighter.ui icon dock + name label.
+##
+## `gate` is the shared character_unlock_gate.gd instance (or null to draw every
+## card open).  For a gate, a card whose recovered unlock id is not in the
+## progress save draws the dock's own decoded `lockedpicture`
+## (`bl_fighterlocked_icon`) instead of its character icon.  The int form is the
+## legacy count API used by the standalone HUD-art capture (all cards from
+## `unlocked` on draw the locked picture); the menu always passes the gate.
+##
+## Returns false -- after clearing the frame and recording
+## `select_fighter_error()` -- when the gate's decoded dock cannot be trusted, so
+## the caller can fall back to the text opponent rows instead of drawing a card
+## that might look playable.
+func show_select_fighter(selected_index: int, gate = null, name_hint: String = "") -> bool:
+    _select_sources = []
+    _select_locked = []
+    _select_error = ""
+    var count: int = SELECT_ITEMS.size()
+    var locked_flags: Array = []
+    var locked_basename: String = SELECT_LOCKED
+    if gate is int:
+        # Legacy count form: the first `gate` cards are open.
+        for i: int in range(count):
+            locked_flags.append(i >= int(gate))
+    elif gate != null:
+        if not bool(gate.get("dock_ok")):
+            return _fail_select("decoded selectfighter dock cannot be matched to characters: "
+                + String(gate.get("dock_error")))
+        locked_basename = String(gate.get("locked_picture"))
+        if locked_basename.is_empty():
+            return _fail_select("decoded selectfighter dock has no lockedpicture")
+        for i: int in range(count):
+            locked_flags.append(not bool(
+                (gate.call("state_for_dock", i) as Dictionary).get("available", false)))
+    else:
+        for i: int in range(count):
+            locked_flags.append(false)
     _mode = "select_fighter"
     _clear()
     var dock: Control = Control.new()
@@ -308,14 +352,22 @@ func show_select_fighter(selected_index: int, unlocked: int, name_hint: String =
     dock.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _frame.add_child(dock)
     var step: float = SEL_OPTION_W + SEL_SEP
-    var count: int = SELECT_ITEMS.size()
     var sel: int = clampi(selected_index, 0, count - 1)
     var scroll: float = SEL_DOCK.size.x * 0.5 - (float(sel) * step + SEL_OPTION_W * 0.5)
-    var locked: Texture2D = _art_texture("mini", SELECT_LOCKED)
+    var locked_texture: Texture2D = _art_texture("mini", locked_basename)
+    if locked_flags.has(true) and locked_texture == null:
+        # Fail closed: without the decoded lockedpicture a closed card would have
+        # to draw its character art, which would look playable.
+        return _fail_select("missing decoded lockedpicture texture '%s'" % locked_basename)
+    _select_sources.resize(count)
+    _select_locked = locked_flags.duplicate()
     for i: int in range(count):
-        var tex: Texture2D = locked if i >= unlocked else _art_texture("mini", SELECT_ITEMS[i])
+        var is_locked: bool = bool(locked_flags[i])
+        var source: String = locked_basename if is_locked else SELECT_ITEMS[i]
+        var tex: Texture2D = locked_texture if is_locked else _art_texture("mini", source)
         if tex == null:
             continue
+        _select_sources[i] = source
         var rect := Rect2(float(i) * step + scroll, 0.0, SEL_OPTION_W, SEL_OPTION_H)
         dock.add_child(_sprite(tex, rect, true))
     _border_layer.border_rect = Rect2(SEL_DOCK.position.x + float(sel) * step + scroll, SEL_DOCK.position.y,
@@ -323,8 +375,37 @@ func show_select_fighter(selected_index: int, unlocked: int, name_hint: String =
     _border_layer.border_color = Color(1.0, 0.85, 0.1, 0.95)
     _border_layer.queue_redraw()
     _border_layer.move_to_front()
+    # The decoded name label is `selectedfightername`; a closed card keeps the
+    # name (the recovered locked state is carried by the card picture).
     var text: String = name_hint if not name_hint.is_empty() else SELECT_ITEMS[sel]
     _frame.add_child(_label(text.to_upper(), SEL_NAME, 15, Color(1.0, 1.0, 0.0)))
+    return true
+
+
+func _fail_select(message: String) -> bool:
+    _mode = ""
+    _select_sources = []
+    _select_locked = []
+    _select_error = message
+    _clear()
+    push_error("hud_art_overlay: " + message)
+    printerr("hud_art_overlay: FAIL CLOSED: " + message)
+    return false
+
+
+## Picture basename drawn for every dock card, in decoded dock order ("" when a
+## texture could not be loaded, or when the dock failed closed).
+func select_fighter_sources() -> Array:
+    return _select_sources.duplicate()
+
+
+## Per-card locked flag for the last dock draw (decoded dock order).
+func select_fighter_locked_flags() -> Array:
+    return _select_locked.duplicate()
+
+
+func select_fighter_error() -> String:
+    return _select_error
 
 
 func show_vs_preview(left_key: String, right_key: String) -> void:

@@ -92,6 +92,18 @@ const ENV_SCENE_UNLOCK: String = "BRUCELEE_SCENE_UNLOCK"
 const SceneUnlockGate = preload("res://scripts/scene_unlock_gate.gd")
 const SCENE_LOCKED: String = "SCENE LOCKED"
 const SCENE_UNLOCK_UNAVAILABLE: String = "SCENE UNLOCK UNAVAILABLE"
+## Recovered character-unlock gate (character_unlock_gate.gd).  It is ON unless
+## BRUCELEE_CHARACTER_UNLOCK is exactly "0"; when on, the OPPONENTS submenu and
+## the recovered selectfighter.ui dock both read the progress save and refuse a
+## character while its recovered unlock id is missing.  With no save (or an
+## unreadable one, or a character id the recovered table cannot resolve) the gate
+## stays closed.  The two always-available characters keep their decoded flag.
+## BRUCELEE_CHARACTER_UNLOCK=0 restores the pre-gating opponent menu unchanged and
+## exists for the regression checks.
+const ENV_CHARACTER_UNLOCK: String = "BRUCELEE_CHARACTER_UNLOCK"
+const CharacterUnlockGate = preload("res://scripts/character_unlock_gate.gd")
+const FIGHTER_LOCKED: String = "FIGHTER LOCKED"
+const FIGHTER_UNLOCK_UNAVAILABLE: String = "FIGHTER UNLOCK UNAVAILABLE"
 
 var menu_state: String = "hidden"
 var selected_index: int = 0
@@ -127,6 +139,12 @@ var scene_dock_error: String = ""
 ## scene rows stay closed instead of silently becoming playable.
 var scene_gate = null
 var scene_gate_error: String = ""
+## Recovered character-unlock gate shared by the text opponent rows and the
+## recovered selectfighter dock; null when BRUCELEE_CHARACTER_UNLOCK=0.  It is
+## kept even when its data failed to load so the opponent rows stay closed
+## instead of silently becoming playable.
+var fighter_gate = null
+var fighter_gate_error: String = ""
 ## Last item index that mouse motion selected; -1 until the pointer moves.
 ## Hover is driven by real motion events only, so a cursor resting over an item
 ## when the menu opens cannot hijack the default keyboard focus.
@@ -142,6 +160,7 @@ func _ready() -> void:
     _load_menu_sfx()
     _build_scene_gate()
     _build_scene_dock()
+    _build_fighter_gate()
     hide_menu()
 
 ## True unless BRUCELEE_SCENE_UNLOCK is exactly "0".  Static and side-effect
@@ -184,6 +203,59 @@ func scene_command_locked(command: String) -> bool:
     if Array(scene_gate.rows).is_empty():
         return true
     return scene_gate.is_locked_command(command)
+
+## True unless BRUCELEE_CHARACTER_UNLOCK is exactly "0".  Static and side-effect
+## free so a test can read the flag without a running tree.
+static func character_unlock_enabled() -> bool:
+    return OS.get_environment(ENV_CHARACTER_UNLOCK) != "0"
+
+## Builds the recovered character-unlock gate.  A gate whose decoded data or save
+## cannot be read is still created with its error recorded: the text opponent rows
+## and the dock then treat every gated character as locked (fail closed).
+func _build_fighter_gate() -> void:
+    fighter_gate = null
+    fighter_gate_error = ""
+    if not character_unlock_enabled():
+        return
+    var gate = CharacterUnlockGate.new()
+    fighter_gate = gate
+    if not gate.refresh():
+        fighter_gate_error = String(gate.error)
+        push_error("prototype_menu: character unlock gate failed closed: " + fighter_gate_error)
+        printerr("prototype_menu: character unlock gate FAIL CLOSED: " + fighter_gate_error)
+
+## Re-reads the save when the opponent submenu opens, so a progress save written
+## during this session is honoured without restarting the game.
+func _refresh_fighter_gate() -> void:
+    if fighter_gate == null:
+        return
+    if not fighter_gate.refresh():
+        fighter_gate_error = String(fighter_gate.error)
+
+## True only for the nine OPPONENTS entries whose recovered character grant is
+## unsatisfied.  BACK and non-opponent commands are never gated here.  If the
+## gate could not build its fifteen rows at all, every opponent entry is closed:
+## without the decoded tables the always-available exception cannot be proven.
+func fighter_command_locked(command: String) -> bool:
+    if fighter_gate == null:
+        return false
+    if command == "opponents_back" or not OPPONENT_COMMANDS.has(command):
+        return false
+    if Array(fighter_gate.rows).is_empty():
+        return true
+    return fighter_gate.is_locked_command(command)
+
+## The text OPPONENTS labels with the port-chrome (LOCKED) suffix on closed rows.
+## The recovered screen has no text variant of the locked state (the dock draws the
+## decoded `lockedpicture` instead).
+func opponent_labels() -> Array[String]:
+    var out: Array[String] = OPPONENT_LABELS.duplicate()
+    if fighter_gate != null:
+        for index: int in range(out.size()):
+            var command: String = OPPONENT_COMMANDS[index] if index < OPPONENT_COMMANDS.size() else ""
+            if fighter_command_locked(command):
+                out[index] = out[index] + CharacterUnlockGate.LOCKED_SUFFIX
+    return out
 
 ## True only while the opt-in recovered scene dock is enabled. Static and
 ## side-effect free so a test can read the flag without a running tree.
@@ -520,7 +592,10 @@ func show_opponent_menu() -> void:
         "UP/DOWN or D-PAD   ENTER/J/A apply   ESC/B/START back"
     )
     hover_index = -1
-    _refresh_items(OPPONENT_LABELS)
+    _refresh_fighter_gate()
+    _refresh_items(opponent_labels())
+    if fighter_gate != null and Array(fighter_gate.rows).is_empty():
+        status_label.text = FIGHTER_UNLOCK_UNAVAILABLE
     _refresh_selection()
 
 func show_pause_menu() -> void:
@@ -669,6 +744,14 @@ func _accept_selected(was_attack: bool) -> void:
         _play_denied()
         last_accept_was_attack = false
         return
+    if menu_state == "opponents" and fighter_command_locked(command):
+        # Same rule for a recovered character: the text row and the dock card
+        # cannot select a fighter whose unlock id is absent from the save.  The
+        # message is port chrome for the text menu; the dock already carries the
+        # decoded lockedpicture on the card.
+        status_label.text = FIGHTER_LOCKED
+        last_accept_was_attack = false
+        return
     _play_sfx(accept_sfx, "accept")
     last_accept_was_attack = was_attack
     if menu_state == "scenes":
@@ -779,6 +862,11 @@ func _localized_labels(labels: Array[String]) -> Array[String]:
             var command: String = commands[index] if index < commands.size() else ""
             if scene_command_locked(command):
                 out[index] = out[index] + SceneUnlockGate.LOCKED_SUFFIX
+    if menu_state == "opponents" and fighter_gate != null:
+        for index: int in range(out.size()):
+            var command: String = commands[index] if index < commands.size() else ""
+            if fighter_command_locked(command):
+                out[index] = out[index] + CharacterUnlockGate.LOCKED_SUFFIX
     return out
 
 func _refresh_selection() -> void:
@@ -913,3 +1001,31 @@ func scene_dock_card_sources() -> Array:
     if scene_dock == null:
         return []
     return scene_dock.card_sources()
+
+## ---------------------------------------------- character unlock test hooks
+## Read-only accessors used by tests/validate_character_locks.gd.
+
+## Recovered unlock states for the fifteen characters rows (empty with the gate
+## off).
+func fighter_gate_rows() -> Array:
+    if fighter_gate == null:
+        return []
+    return fighter_gate.rows.duplicate(true)
+
+## Full gate summary: data/save status, decoded dock mapping, per-row reason.
+func fighter_gate_summary() -> Dictionary:
+    if fighter_gate == null:
+        return {"enabled": false}
+    return fighter_gate.summary()
+
+## True only while the gate's decoded selectfighter dock validated.
+func fighter_dock_ok() -> bool:
+    return fighter_gate != null and bool(fighter_gate.dock_ok)
+
+## The text OPPONENTS labels as currently shown (with the port-chrome suffix on
+## closed rows).
+func opponent_row_labels() -> Array:
+    var out: Array = []
+    for item: Dictionary in (layout_report()["items"] as Array):
+        out.append(String(item.get("text", "")))
+    return out

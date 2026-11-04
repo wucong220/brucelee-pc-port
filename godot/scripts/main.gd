@@ -2284,14 +2284,37 @@ func _on_menu_selection_changed(state: String, _index: int, command: String) -> 
     if not dock_mode:
         hud_art_menu_overlay.visible = false
         return
+    # The recovered character-unlock gate also owns the dock: it validates that
+    # the decoded selectfighter dock maps item -> character.  When that cannot be
+    # proven, keep the text opponent rows (which carry the same lock state) rather
+    # than draw a dock whose cards cannot be trusted.
+    var gate = prototype_menu.fighter_gate if prototype_menu != null else null
+    if gate != null and not bool(gate.dock_ok):
+        _fighter_dock_fallback()
+        return
     if command == "opponents_back":
         # BACK is not a fighter, so keep the last fighter highlight rather than
         # inventing a dock index for it.
         return
     var dock_index: int = int(HUD_ART_OPPONENT_DOCK.get(command, 0))
     var display_name: String = String(HUD_ART_OPPONENT_NAMES.get(command, ""))
-    hud_art_menu_overlay.show_select_fighter(dock_index, 15, display_name)
+    var drawn: bool = bool(hud_art_menu_overlay.show_select_fighter(
+        dock_index, gate, display_name))
+    if not drawn:
+        _fighter_dock_fallback()
+        return
     hud_art_menu_overlay.visible = true
+
+
+## Fail-closed fallback for the recovered dock: hide the art layer and restore
+## the text OPPONENTS panel, whose rows carry the same recovered lock state.
+func _fighter_dock_fallback() -> void:
+    hud_art_menu_overlay.visible = false
+    if prototype_menu == null:
+        return
+    if prototype_menu.panel_box != null:
+        prototype_menu.panel_box.visible = true
+    prototype_menu.show_error("FIGHTER DOCK UNAVAILABLE - TEXT MENU")
 
 
 func _hide_hud_art_menu() -> void:

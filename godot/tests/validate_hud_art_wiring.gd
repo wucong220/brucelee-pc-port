@@ -44,13 +44,18 @@ func _clear_flags() -> void:
 		"BRUCELEE_STORY_LAUNCH", "BRUCELEE_GAME_MODE", "BRUCELEE_MODE_LAUNCH",
 		"BRUCELEE_PROGRESS", "BRUCELEE_STYLE_EDITOR", "BRUCELEE_ATTRACT",
 		"BRUCELEE_CONTINUE", "BRUCELEE_SCENE", "BRUCELEE_OPPONENT_NAME_KEY",
-		"BRUCELEE_OPPONENT_ATTACK_CONFIG",
+		"BRUCELEE_OPPONENT_ATTACK_CONFIG", "BRUCELEE_CHARACTER_UNLOCK",
 	]:
 		OS.set_environment(name, "")
 
 
 func _boot(player_glb: String, opponent_glb: String) -> Node:
 	OS.set_environment("BRUCELEE_MAIN_MENU", "1")
+	# This suite is the HUD-art wiring regression, not a gating test: run it with
+	# the recovered character gate off so the real OPPONENTS navigation can still
+	# confirm its opponent.  The gate itself is covered by
+	# tests/validate_character_locks.gd.
+	OS.set_environment("BRUCELEE_CHARACTER_UNLOCK", "0")
 	OS.set_environment("BRUCELEE_PLAYER_GLB", player_glb)
 	OS.set_environment("BRUCELEE_OPPONENT_GLB", opponent_glb)
 	var scene: Node = load("res://scenes/main.tscn").instantiate()

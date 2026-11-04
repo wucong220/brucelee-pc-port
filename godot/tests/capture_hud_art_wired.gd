@@ -64,6 +64,10 @@ func _freeze(scene: Node) -> void:
 func _boot() -> Node:
 	OS.set_environment("BRUCELEE_MAIN_MENU", "1")
 	OS.set_environment("BRUCELEE_HUD_ART", "1" if _mode == "on" else "0")
+	# Wiring capture, not a gating capture: keep the recovered character gate off
+	# so confirming SIN FU still reaches the fightpreview VS screen and the reload.
+	# The gated dock is captured by tests/capture_character_locks.gd instead.
+	OS.set_environment("BRUCELEE_CHARACTER_UNLOCK", "0")
 	OS.set_environment("BRUCELEE_ROUND_INTRO", "0")
 	OS.set_environment("BRUCELEE_PLAYER_GLB", _player)
 	OS.set_environment("BRUCELEE_PLAYER_TEXTURE_ROOT",
