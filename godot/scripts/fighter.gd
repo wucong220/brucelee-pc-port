@@ -64,6 +64,11 @@ const CANDIDATE_CLIPS: Dictionary = {
     "stepback": "m01_stepbck",
     "stepleft": "m01_steplft",
     "stepright": "m01_steprht",
+    # Native fast advance/retreat (training: "double tap left/right"). The
+    # candidate GLB ships m01_skipfwd/m01_skipbck; state is a real candidate
+    # clip, never a synthesised pose.
+    "skipfwd": "m01_skipfwd",
+    "skipback": "m01_skipbck",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -2639,6 +2644,14 @@ var health: float = MAX_HEALTH
 var move_axis: Vector2 = Vector2.ZERO
 var _locomotion_action: String = ""
 var _locomotion_time: float = 0.0
+# Native fast advance/retreat (skipfwd/skipback) is a one-shot locomotion
+# action requested by training; it has no recovered root-motion track, so the
+# body is driven at a fixed speed for its short duration.
+var _skip_action: String = ""
+var _skip_time: float = 0.0
+var _skip_direction: Vector3 = Vector3.ZERO
+const SKIP_DURATION: float = 0.55
+const SKIP_SPEED_SCALE: float = 1.8
 var _movement_root_tracks: Dictionary = {}
 var _locomotion_root_prev: Vector3 = Vector3.ZERO
 var _locomotion_root_ready: bool = false
@@ -4197,7 +4210,7 @@ func _try_load_candidate_visual() -> void:
             "endattack1", "endattack2", "stun", "stun_fall",
             "stun_hard", "stun_brutal",
             "move", "movefwd", "moveback", "moveleft", "moveright", "stepfwd", "stepback",
-            "stepleft", "stepright"]:
+            "stepleft", "stepright", "skipfwd", "skipback"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -5267,6 +5280,8 @@ func _current_action_name() -> String:
             return source_action
     if state in ["facedownidle", "faceupidle"]:
         return state
+    if _skip_time > 0.0 and not _skip_action.is_empty():
+        return _skip_action
     if state in ["idle", "idle2", "idle3"]:
         # Movement animations are native actions too: special_kick_high is a
         # direct link from stepback, so the current action must report it.
@@ -6196,7 +6211,9 @@ func _physics_process(delta: float) -> void:
         global_position.z = clampf(global_position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
         velocity = root_delta / maxf(delta, 0.0001)
     else:
-        if _uses_standing_idle_rules() and not guard_held:
+        if _skip_time > 0.0:
+            motion = _skip_direction * BASE_SPEED * SKIP_SPEED_SCALE
+        elif _uses_standing_idle_rules() and not guard_held:
             motion = (_polar_movement(BASE_SPEED) if polar_movement_enabled
                     else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED)
         elif _uses_standing_idle_rules() and guard_held:
@@ -6219,6 +6236,14 @@ func _advance_locomotion_visual(delta: float) -> void:
         _locomotion_action = ""
         _locomotion_time = 0.0
         return
+    if _skip_time > 0.0:
+        _skip_time = maxf(_skip_time - delta, 0.0)
+        if _skip_time > 0.0:
+            _locomotion_action = _skip_action
+            _locomotion_time += delta
+            _locomotion_root_ready = false
+            return
+        _skip_action = ""
     var base: String = _native_movement_action()
     if base.is_empty():
         _locomotion_action = ""
@@ -7025,6 +7050,28 @@ func current_source_pose() -> String:
 
 func set_held_directions(directions: Dictionary) -> void:
     held_directions = directions.duplicate()
+
+
+func request_skip(action: String) -> bool:
+    ## Native fast advance/retreat from the training "double tap left/right"
+    ## instruction. Fail closed when the candidate GLB has no clip for it.
+    if action != "skipfwd" and action != "skipback":
+        return false
+    if state not in ["idle", "idle2", "idle3"]:
+        return false
+    if not _candidate_clip_paths.has(action):
+        return false
+    var toward: float = 1.0
+    if opponent != null and is_instance_valid(opponent):
+        toward = 1.0 if opponent.global_position.x >= global_position.x else -1.0
+    _skip_direction = Vector3(toward if action == "skipfwd" else -toward, 0.0, 0.0)
+    _skip_action = action
+    _skip_time = SKIP_DURATION
+    _locomotion_action = action
+    _locomotion_time = 0.0
+    _locomotion_root_ready = false
+    _animate_candidate()
+    return true
 
 
 func _native_movement_action() -> String:
@@ -8035,6 +8082,9 @@ func reset_fighter(start_position: Vector3) -> void:
     _locomotion_action = ""
     _locomotion_time = 0.0
     _locomotion_root_ready = false
+    _skip_action = ""
+    _skip_time = 0.0
+    _skip_direction = Vector3.ZERO
     health = MAX_HEALTH
     state = "idle"
     state_time = 0.0

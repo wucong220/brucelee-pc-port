@@ -9,6 +9,20 @@ func _initialize() -> void:
     call_deferred("_run")
 
 
+func _start_action(training, native_action: String) -> bool:
+    for entry_value: Variant in training.selectable_trainings():
+        var entry: Dictionary = entry_value
+        for step_value: Variant in Array(entry["steps"]):
+            var step: Dictionary = step_value
+            if native_action in Array(step["success_animations"]):
+                training.current_training = entry
+                training.steps = entry["steps"]
+                training.state = "active"
+                training._start_step(int(step["index"]))
+                return true
+    return false
+
+
 func _run() -> void:
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if args.size() != 2:
@@ -25,16 +39,16 @@ func _run() -> void:
     await process_frame
     var training = scene.get("move_training")
     var player: PortFighter = scene.get("player")
-    var index: int = -1
-    for i: int in range(training.entries.size()):
-        if String(training.entries[i].get("id", "")) == "special_kick_high":
-            index = i
-    if index < 0:
+    if not _start_action(training, "specialkickhigh"):
         push_error("special_kick_high lesson is missing")
         quit(1)
         return
-    training._start_at(index)
     Input.action_press(Controls.MOVE_LEFT)
+    # Establish the native stepback action first, then press D + L while the
+    # recovered input keeps left held (training.list: left, right, hkick).
+    for _hold: int in range(10):
+        scene._physics_process(1.0 / 60.0)
+        player._physics_process(1.0 / 60.0)
     Input.action_press(Controls.MOVE_RIGHT)
     player.record_standing_combo_press("right")
     player.record_standing_combo_press("c")

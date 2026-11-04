@@ -1,0 +1,1821 @@
+{
+ "schema": "brucelee-training-native/1",
+ "provenance": {
+  "archive": "data.zpak",
+  "archive_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+  "resource_path": "adreno_200/training.list",
+  "resource_sha256": "3025552f95108ad513ec138bd9a072a385e964a8117413c6aba1d9fbade2830a",
+  "resource_id": "9bbf57076f77a12071ae5d5ca83fb2eb",
+  "pakd_offset": 7632688,
+  "decoded_bytes": 12629,
+  "records": 1301,
+  "strings": 114,
+  "fully_covered": true
+ },
+ "ui_binding": {
+  "screen": "adreno_200/gui/selecttraining.ui",
+  "sha256": "0f4d01e3978ffa534b77da931da4dfdc6cdda95ee6d15b585fc283adf8437741",
+  "menu_options": [
+   "free_training",
+   "movements",
+   "attacks",
+   "defense",
+   "grabs",
+   "special_moves",
+   "end_moves"
+  ]
+ },
+ "trainings": [
+  {
+   "index": 0,
+   "title_key": "free_training",
+   "explanation_key": "attack_training_1_help",
+   "tip_key": "loading1",
+   "use_custom_style": true,
+   "menu_option": "free_training",
+   "steps": [
+    {
+     "index": 0,
+     "input_title_key": null,
+     "input_sample": null,
+     "input_sequences": [],
+     "success_animations": [],
+     "success_duration": null,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": []
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "title_key": "movements",
+   "explanation_key": "movement_training_1_help",
+   "tip_key": "loading6",
+   "use_custom_style": false,
+   "menu_option": "movements",
+   "steps": [
+    {
+     "index": 0,
+     "input_title_key": "stepfwd",
+     "input_sample": [
+      "right"
+     ],
+     "input_sequences": [
+      [
+       "right"
+      ]
+     ],
+     "success_animations": [
+      "stepfwd"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 1,
+     "input_title_key": "stepback",
+     "input_sample": [
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "stepback"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 2,
+     "input_title_key": "stepleft",
+     "input_sample": [
+      "up"
+     ],
+     "input_sequences": [
+      [
+       "up"
+      ]
+     ],
+     "success_animations": [
+      "stepright"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 3,
+     "input_title_key": "stepright",
+     "input_sample": [
+      "down"
+     ],
+     "input_sequences": [
+      [
+       "down"
+      ]
+     ],
+     "success_animations": [
+      "stepleft"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 4,
+     "input_title_key": "moveforward",
+     "input_sample": [
+      "hold",
+      "right"
+     ],
+     "input_sequences": [
+      [
+       "hold",
+       "right"
+      ]
+     ],
+     "success_animations": [
+      "movefwd"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 5,
+     "input_title_key": "moveback",
+     "input_sample": [
+      "hold",
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "hold",
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "moveback"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 6,
+     "input_title_key": "moveleft",
+     "input_sample": [
+      "hold",
+      "up"
+     ],
+     "input_sequences": [
+      [
+       "hold",
+       "up"
+      ]
+     ],
+     "success_animations": [
+      "moveright"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 7,
+     "input_title_key": "moveright",
+     "input_sample": [
+      "hold",
+      "down"
+     ],
+     "input_sequences": [
+      [
+       "hold",
+       "down"
+      ]
+     ],
+     "success_animations": [
+      "moveleft"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 8,
+     "input_title_key": "skipforward",
+     "input_sample": [
+      "right",
+      "+",
+      "right"
+     ],
+     "input_sequences": [
+      [
+       "right",
+       "+",
+       "right"
+      ]
+     ],
+     "success_animations": [
+      "skipfwd"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 9,
+     "input_title_key": "skipback",
+     "input_sample": [
+      "left",
+      "+",
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "left",
+       "+",
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "skipback"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "title_key": "attacks",
+   "explanation_key": "attack_training_1_help",
+   "tip_key": "loading1",
+   "use_custom_style": false,
+   "menu_option": "attacks",
+   "steps": [
+    {
+     "index": 0,
+     "input_title_key": "high_punch",
+     "input_sample": [
+      "hpunch"
+     ],
+     "input_sequences": [
+      [
+       "hpunch"
+      ]
+     ],
+     "success_animations": [
+      "highpunch1"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 1,
+     "input_title_key": "low_punch",
+     "input_sample": [
+      [
+       "down",
+       "+",
+       "hpunch"
+      ],
+      [
+       "lpunch"
+      ],
+      [
+       "lpunch"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "down",
+       "+",
+       "hpunch"
+      ],
+      [
+       "lpunch"
+      ],
+      [
+       "lpunch"
+      ]
+     ],
+     "success_animations": [
+      "lowpunch1"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 2,
+     "input_title_key": "high_kick",
+     "input_sample": [
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "highkick1"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 3,
+     "input_title_key": "low_kick",
+     "input_sample": [
+      [
+       "down",
+       "+",
+       "hkick"
+      ],
+      [
+       "lkick"
+      ],
+      [
+       "lkick"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "down",
+       "+",
+       "hkick"
+      ],
+      [
+       "lkick"
+      ],
+      [
+       "lkick"
+      ]
+     ],
+     "success_animations": [
+      "lowkick1"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 4,
+     "input_title_key": "highpunch3",
+     "input_sample": [
+      "up",
+      ",",
+      "hpunch"
+     ],
+     "input_sequences": [
+      [
+       "up",
+       ",",
+       "hpunch"
+      ]
+     ],
+     "success_animations": [
+      "highpunch3"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 5,
+     "input_title_key": "lowpunch3",
+     "input_sample": [
+      [
+       "down",
+       ",",
+       "hpunch"
+      ],
+      [
+       "down",
+       ",",
+       "lpunch"
+      ],
+      [
+       "down",
+       ",",
+       "lpunch"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "down",
+       ",",
+       "hpunch"
+      ],
+      [
+       "down",
+       ",",
+       "lpunch"
+      ],
+      [
+       "down",
+       ",",
+       "lpunch"
+      ]
+     ],
+     "success_animations": [
+      "lowpunch3"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 6,
+     "input_title_key": "highkick3",
+     "input_sample": [
+      "up",
+      ",",
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "up",
+       ",",
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "highkick3"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 7,
+     "input_title_key": "lowkick3",
+     "input_sample": [
+      [
+       "down",
+       ",",
+       "hkick"
+      ],
+      [
+       "down",
+       ",",
+       "lkick"
+      ],
+      [
+       "down",
+       ",",
+       "lkick"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "down",
+       ",",
+       "hkick"
+      ],
+      [
+       "down",
+       ",",
+       "lkick"
+      ],
+      [
+       "down",
+       ",",
+       "lkick"
+      ]
+     ],
+     "success_animations": [
+      "lowkick3"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 8,
+     "input_title_key": "2hitcomboa",
+     "input_sample": [
+      [
+       "hpunch",
+       "hkick",
+       ",",
+       "hpunch",
+       "hkick"
+      ],
+      [
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick",
+       ",",
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick"
+      ],
+      [
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick",
+       ",",
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "hpunch",
+       "hkick",
+       ",",
+       "hpunch",
+       "hkick"
+      ],
+      [
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick",
+       ",",
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick"
+      ],
+      [
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick",
+       ",",
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick"
+      ]
+     ],
+     "success_animations": [
+      "highpunch2",
+      "lowpunch2",
+      "highkick2",
+      "lowkick2"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 9,
+     "input_title_key": "tryanothercombo",
+     "input_sample": [
+      "hpunch",
+      "hkick",
+      ",",
+      "hpunch",
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "hpunch",
+       "hkick",
+       ",",
+       "hpunch",
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "highpunch2",
+      "lowpunch2",
+      "highkick2",
+      "lowkick2"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "title_key": "defense",
+   "explanation_key": "defense_training_1_help",
+   "tip_key": "loading4",
+   "use_custom_style": false,
+   "menu_option": "defense",
+   "steps": [
+    {
+     "index": 0,
+     "input_title_key": "block",
+     "input_sample": [
+      "hold",
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "hold",
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "highblock",
+      "lowblock",
+      "midblock"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_attack.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "movement"
+     ]
+    },
+    {
+     "index": 1,
+     "input_title_key": "blockagain",
+     "input_sample": [
+      "hold",
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "hold",
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "highblock",
+      "lowblock",
+      "midblock"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_attack.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "movement"
+     ]
+    },
+    {
+     "index": 2,
+     "input_title_key": "counter",
+     "input_sample": [
+      "down",
+      "right"
+     ],
+     "input_sequences": [
+      [
+       "down",
+       "right"
+      ]
+     ],
+     "success_animations": [
+      "parryattack"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_attack.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "movement"
+     ]
+    },
+    {
+     "index": 3,
+     "input_title_key": "counteragain",
+     "input_sample": [
+      "down",
+      "right"
+     ],
+     "input_sequences": [
+      [
+       "down",
+       "right"
+      ]
+     ],
+     "success_animations": [
+      "parryattack"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_attack.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "movement"
+     ]
+    }
+   ]
+  },
+  {
+   "index": 4,
+   "title_key": "grabs",
+   "explanation_key": "grab_training_1_help",
+   "tip_key": "loading5",
+   "use_custom_style": false,
+   "menu_option": "grabs",
+   "steps": [
+    {
+     "index": 0,
+     "input_title_key": "grab1bruce",
+     "input_sample": [
+      "up",
+      "left",
+      ",",
+      "hpunch"
+     ],
+     "input_sequences": [
+      [
+       "up",
+       "left",
+       ",",
+       "hpunch"
+      ]
+     ],
+     "success_animations": [
+      "grab1"
+     ],
+     "success_duration": 6.0,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove"
+     ]
+    },
+    {
+     "index": 1,
+     "input_title_key": "grab2bruce",
+     "input_sample": [
+      "down",
+      "left",
+      ",",
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "down",
+       "left",
+       ",",
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "grab2"
+     ],
+     "success_duration": 6.0,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove"
+     ]
+    },
+    {
+     "index": 2,
+     "input_title_key": "grabagain",
+     "input_sample": [
+      "up",
+      "down",
+      ",",
+      "left",
+      ",",
+      "hpunch",
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "up",
+       "down",
+       ",",
+       "left",
+       ",",
+       "hpunch",
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "grab1",
+      "grab2"
+     ],
+     "success_duration": 6.0,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove"
+     ]
+    }
+   ]
+  },
+  {
+   "index": 5,
+   "title_key": "special_moves",
+   "explanation_key": "special_move_training_help",
+   "tip_key": "loading3",
+   "use_custom_style": false,
+   "menu_option": "special_moves",
+   "steps": [
+    {
+     "index": 0,
+     "input_title_key": "specialkhbruce",
+     "input_sample": [
+      "left",
+      "right",
+      ",",
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "left",
+       "right",
+       ",",
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "specialkickhigh"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove"
+     ]
+    },
+    {
+     "index": 1,
+     "input_title_key": "specialklbruce",
+     "input_sample": [
+      [
+       "down",
+       "right",
+       ",",
+       "hkick"
+      ],
+      [
+       "down",
+       "right",
+       ",",
+       "lkick"
+      ],
+      [
+       "down",
+       "right",
+       ",",
+       "lkick"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "down",
+       "right",
+       ",",
+       "hkick"
+      ],
+      [
+       "down",
+       "right",
+       ",",
+       "lkick"
+      ],
+      [
+       "down",
+       "right",
+       ",",
+       "lkick"
+      ]
+     ],
+     "success_animations": [
+      "specialkicklowhit"
+     ],
+     "success_duration": 4.0,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove"
+     ]
+    },
+    {
+     "index": 2,
+     "input_title_key": "specialphbruce",
+     "input_sample": [
+      "hpunch",
+      "hpunch",
+      ",",
+      "left",
+      "right",
+      ",",
+      "hpunch"
+     ],
+     "input_sequences": [
+      [
+       "hpunch",
+       "hpunch",
+       ",",
+       "left",
+       "right",
+       ",",
+       "hpunch"
+      ]
+     ],
+     "success_animations": [
+      "specialpunchhighhit"
+     ],
+     "success_duration": null,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove"
+     ]
+    },
+    {
+     "index": 3,
+     "input_title_key": "specialplbruce",
+     "input_sample": [
+      [
+       "hpunch",
+       "hpunch",
+       ",",
+       "down",
+       "right",
+       ",",
+       "hpunch"
+      ],
+      [
+       "down",
+       "right",
+       ",",
+       "hpunch"
+      ],
+      [
+       "down",
+       "right",
+       ",",
+       "lpunch"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "hpunch",
+       "hpunch",
+       ",",
+       "down",
+       "right",
+       ",",
+       "hpunch"
+      ],
+      [
+       "down",
+       "right",
+       ",",
+       "hpunch"
+      ],
+      [
+       "down",
+       "right",
+       ",",
+       "lpunch"
+      ]
+     ],
+     "success_animations": [
+      "specialpunchlowhit"
+     ],
+     "success_duration": 6.5,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove"
+     ]
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "title_key": "end_moves",
+   "explanation_key": "end_move_training_help",
+   "tip_key": "loading7",
+   "use_custom_style": false,
+   "menu_option": "end_moves",
+   "steps": [
+    {
+     "index": 0,
+     "input_title_key": "endbruce2",
+     "input_sample": [
+      "up",
+      "right",
+      ",",
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "up",
+       "right",
+       ",",
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "endattack2"
+     ],
+     "success_duration": 9.0,
+     "dummy_ai": "ai/training_stun.tree",
+     "dummy_start_anim": "stun",
+     "dummy_health": 0,
+     "infinite_rage": false,
+     "inmortal_dummy": false,
+     "disabled_categories": [
+      "block",
+      "counter"
+     ]
+    },
+    {
+     "index": 1,
+     "input_title_key": "endbruce1",
+     "input_sample": [
+      "up",
+      "right",
+      ",",
+      "hpunch"
+     ],
+     "input_sequences": [
+      [
+       "up",
+       "right",
+       ",",
+       "hpunch"
+      ]
+     ],
+     "success_animations": [
+      "endattack1"
+     ],
+     "success_duration": 12.5,
+     "dummy_ai": "ai/training_stun.tree",
+     "dummy_start_anim": "stun",
+     "dummy_health": 0,
+     "infinite_rage": false,
+     "inmortal_dummy": false,
+     "disabled_categories": [
+      "block",
+      "counter"
+     ]
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "title_key": "movements",
+   "explanation_key": "movement_training_1_help",
+   "tip_key": "loading2",
+   "use_custom_style": false,
+   "menu_option": null,
+   "steps": [
+    {
+     "index": 0,
+     "input_title_key": "stepfwd",
+     "input_sample": [
+      "right"
+     ],
+     "input_sequences": [
+      [
+       "right"
+      ]
+     ],
+     "success_animations": [
+      "stepfwd"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 1,
+     "input_title_key": "stepback",
+     "input_sample": [
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "stepback"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 2,
+     "input_title_key": "stepleft",
+     "input_sample": [
+      "up"
+     ],
+     "input_sequences": [
+      [
+       "up"
+      ]
+     ],
+     "success_animations": [
+      "stepright"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 3,
+     "input_title_key": "stepright",
+     "input_sample": [
+      "down"
+     ],
+     "input_sequences": [
+      [
+       "down"
+      ]
+     ],
+     "success_animations": [
+      "stepleft"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 4,
+     "input_title_key": "skipforward",
+     "input_sample": [
+      "right",
+      ",",
+      "right"
+     ],
+     "input_sequences": [
+      [
+       "right",
+       ",",
+       "right"
+      ]
+     ],
+     "success_animations": [
+      "skipfwd"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 5,
+     "input_title_key": "skipback",
+     "input_sample": [
+      "left",
+      ",",
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "left",
+       ",",
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "skipback"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "attack",
+      "block",
+      "counter",
+      "endmove",
+      "grab",
+      "special"
+     ]
+    },
+    {
+     "index": 6,
+     "input_title_key": "high_punch",
+     "input_sample": [
+      "hpunch"
+     ],
+     "input_sequences": [
+      [
+       "hpunch"
+      ]
+     ],
+     "success_animations": [
+      "highpunch1"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 7,
+     "input_title_key": "high_kick",
+     "input_sample": [
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "highkick1"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 8,
+     "input_title_key": "highkick3",
+     "input_sample": [
+      "up",
+      ",",
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "up",
+       ",",
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "highkick3"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 9,
+     "input_title_key": "lowpunch3",
+     "input_sample": [
+      [
+       "down",
+       ",",
+       "hpunch"
+      ],
+      [
+       "down",
+       ",",
+       "lpunch"
+      ],
+      [
+       "down",
+       ",",
+       "lpunch"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "down",
+       ",",
+       "hpunch"
+      ],
+      [
+       "down",
+       ",",
+       "lpunch"
+      ],
+      [
+       "down",
+       ",",
+       "lpunch"
+      ]
+     ],
+     "success_animations": [
+      "lowpunch3"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 10,
+     "input_title_key": "2hitcomboa",
+     "input_sample": [
+      [
+       "hpunch",
+       "hkick",
+       ",",
+       "hpunch",
+       "hkick"
+      ],
+      [
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick",
+       ",",
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick"
+      ],
+      [
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick",
+       ",",
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick"
+      ]
+     ],
+     "input_sequences": [
+      [
+       "hpunch",
+       "hkick",
+       ",",
+       "hpunch",
+       "hkick"
+      ],
+      [
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick",
+       ",",
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick"
+      ],
+      [
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick",
+       ",",
+       "hpunch",
+       "lpunch",
+       "hkick",
+       "lkick"
+      ]
+     ],
+     "success_animations": [
+      "highpunch2",
+      "lowpunch2",
+      "highkick2",
+      "lowkick2"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove",
+      "grab"
+     ]
+    },
+    {
+     "index": 11,
+     "input_title_key": "specialkhbruce",
+     "input_sample": [
+      "left",
+      "right",
+      ",",
+      "hkick"
+     ],
+     "input_sequences": [
+      [
+       "left",
+       "right",
+       ",",
+       "hkick"
+      ]
+     ],
+     "success_animations": [
+      "specialkickhigh"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_stand.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": true,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "block",
+      "counter",
+      "endmove"
+     ]
+    },
+    {
+     "index": 12,
+     "input_title_key": "block",
+     "input_sample": [
+      "hold",
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "hold",
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "highblock",
+      "lowblock",
+      "midblock"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_attack.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "movement"
+     ]
+    },
+    {
+     "index": 13,
+     "input_title_key": "blockagain",
+     "input_sample": [
+      "hold",
+      "left"
+     ],
+     "input_sequences": [
+      [
+       "hold",
+       "left"
+      ]
+     ],
+     "success_animations": [
+      "highblock",
+      "lowblock",
+      "midblock"
+     ],
+     "success_duration": 2.0999999046325684,
+     "dummy_ai": "ai/training_attack.tree",
+     "dummy_start_anim": null,
+     "dummy_health": null,
+     "infinite_rage": false,
+     "inmortal_dummy": true,
+     "disabled_categories": [
+      "movement"
+     ]
+    }
+   ]
+  }
+ ]
+}

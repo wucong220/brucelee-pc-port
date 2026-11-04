@@ -39,7 +39,7 @@ const MAIN_COMMANDS: Array[String] = [
 ]
 const MAIN_LABELS: Array[String] = [
     "VS FIGHT", "ARCADE", "SURVIVAL", "TIME ATTACK",
-    "GROUND TRAINING", "MOVE TRAINING", "MOVE GALLERY",
+    "GROUND TRAINING", "TRAINING", "MOVE GALLERY",
     "TEMPLE YARD A", "TEMPLE YARD B", "SCENES", "OPPONENTS", "QUIT GAME",
 ]
 const PAUSE_COMMANDS: Array[String] = ["resume", "restart", "main_menu", "quit"]

@@ -54,32 +54,13 @@ func _run() -> void:
         quit(1)
         return
 
-    # 2. Move-training selector: J starts the lesson and must still punch.
-    scene._on_menu_command("move_training")
-    await process_frame
-    var training = scene.get("move_training")
-    if training == null or training.state != "select":
-        push_error("Move training did not open its selector")
-        quit(1)
-        return
-    started.clear()
-    # Select the HIGH PUNCH lesson (input J) so this checks the J-confirm
-    # contract without expecting a K lesson to throw a J attack.
-    training.selected_index = 2
-    scene._unhandled_input(_key(KEY_J))
-    if training.state != "active":
-        push_error("J did not start the training lesson")
-        quit(1)
-        return
-    if started != ["high_punch"]:
-        push_error("Training-start J presses produced: " + str(started))
-        quit(1)
-        return
-
+    # 2. The recovered training screen opens its own select page with an
+    # introduction step, so menu-confirm J no longer starts a fight directly.
+    # That contract now lives in validate_training_native.gd.
     print("MENU_CONFIRM_ATTACK_VALIDATION=" + JSON.stringify({
         "menu_attacks": menu_attacks,
         "menu_presses": 3,
-        "training_start_punch": true,
+        "training_start_punch": "moved to validate_training_native",
     }))
     scene.queue_free()
     await process_frame

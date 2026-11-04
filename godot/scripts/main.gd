@@ -5,10 +5,6 @@ extends Node3D
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const PrototypeMenu = preload("res://scripts/prototype_menu.gd")
-## Opt-in original-art front menu (BRUCELEE_MENU_ART=1). It is a subclass of
-## PortPrototypeMenu, so with the flag unset the text menu keeps its existing
-## path and every pause / records / style-editor hook still works.
-const MenuArtMenu = preload("res://scripts/menu_art.gd")
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const MoveTraining = preload("res://scripts/move_training.gd")
 const MoveGallery = preload("res://scripts/move_gallery.gd")
@@ -527,11 +523,7 @@ func _ready() -> void:
             "J J J | J K K | K L L | K U U | "
             + "Back+K -> Toward+L -> Toward+L = special (rage 100)"
         )
-    # BRUCELEE_MENU_ART=1 swaps in the recovered-art front menu; unset keeps the
-    # existing text menu. Both are PortPrototypeMenu instances, so the pause /
-    # records / style-editor calls below are untouched.
-    var menu_art_enabled: bool = OS.get_environment("BRUCELEE_MENU_ART") == "1"
-    prototype_menu = MenuArtMenu.new() if menu_art_enabled else PortPrototypeMenu.new()
+    prototype_menu = PortPrototypeMenu.new()
     add_child(prototype_menu)
     prototype_menu.command_requested.connect(_on_menu_command)
     move_training = MoveTraining.new()
@@ -2270,8 +2262,38 @@ func _apply_menu_confirm_attack() -> void:
 
 
 func _on_move_training_exit() -> void:
+    training_mode = false
     hud.visible = true
     _open_main_menu()
+
+
+## Called by the recovered training screen when a lesson training starts.
+## The fight loop is the normal training_mode loop (no AI); the screen drives
+## the dummy and observes the player's real native actions.
+func begin_training_session() -> void:
+    training_mode = true
+    _leave_menu()
+    _reset_match()
+    hud.visible = true
+    if player != null:
+        player.set_physics_process(true)
+    if computer != null:
+        computer.set_physics_process(true)
+
+
+## Called by the training screen when it returns to the select list or leaves.
+func end_training_session() -> void:
+    training_mode = false
+    done = false
+    training_completed = false
+    hud.visible = false
+    if get_tree() != null:
+        get_tree().paused = false
+    if player != null:
+        player.attack_root_motion_enabled = true
+        player.set_physics_process(true)
+    if computer != null:
+        computer.set_physics_process(true)
 
 
 func _on_move_gallery_exit() -> void:
@@ -3584,6 +3606,13 @@ func _physics_process(delta: float) -> void:
         player.move_axis = Vector2.ZERO
         computer.move_axis = Vector2.ZERO
         return
+    if (move_training != null and move_training.visible
+            and move_training.freezes_world()):
+        # The training select / introduction / completion screens own the
+        # frame; nothing behind them may run AI or accept movement.
+        player.move_axis = Vector2.ZERO
+        computer.move_axis = Vector2.ZERO
+        return
     if (move_training != null and move_training.is_active()):
         # Training setups such as SPECIAL HIGH KICK are entered by holding
         # S (step back), so keep the live movement axis during lessons instead
@@ -4066,12 +4095,11 @@ func _player_attack_poses_guard_threat() -> bool:
 
 
 func _input(event: InputEvent) -> void:
-    # Training select is a plain list UI without focusable controls; handle its
-    # arrow/W/S navigation before GUI focus decides the key is unhandled.
-    if (move_training != null and move_training.visible
-            and String(move_training.state) == "select"):
-        if move_training.handle_input_event(event):
-            get_viewport().set_input_as_handled()
+    # The recovered training screen owns its own input (its CanvasLayer is
+    # PROCESS_MODE_ALWAYS so it still receives keys while paused). Everything
+    # else is routed through _unhandled_input / the fighter input path.
+    if event == null:
+        return
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -4103,9 +4131,6 @@ func _unhandled_input(event: InputEvent) -> void:
                 )
             get_viewport().set_input_as_handled()
             return
-    if move_training != null and move_training.handle_input_event(event):
-        get_viewport().set_input_as_handled()
-        return
     if move_gallery != null and move_gallery.handle_input_event(event):
         get_viewport().set_input_as_handled()
         return
@@ -4213,23 +4238,6 @@ func _handle_fighter_attack_input(
     # directions are separate key presses (see _record_direction_press) and
     # native link conditions read held state via InputStatusCheck, so they must
     # not be folded into the attack event.
-    # Move Training may start the documented move directly from its final
-    # key.  Normal VS must use the recovered native link tables; the direct
-    # step+key path would bypass link sequences and rage gates there.
-    if fighter.is_player and fighter.state == "idle" \
-            and move_training != null and move_training.is_active():
-        var step_action: String = fighter._native_movement_action()
-        var direct_target: String = ""
-        if step_action == "stepleft" and event.is_action_pressed(action_d):
-            direct_target = "special_kick_low_hit"
-        elif step_action == "stepleft" and event.is_action_pressed(action_c):
-            direct_target = "grab2"
-        elif step_action == "stepback" and event.is_action_pressed(action_c):
-            direct_target = "special_kick_high"
-        elif step_action == "stepright" and event.is_action_pressed(action_a):
-            direct_target = "grab1"
-        if not direct_target.is_empty() and fighter.request_attack(direct_target):
-            return true
     if event.is_action_pressed(action_a):
         fighter.record_standing_combo_press("a")
     elif event.is_action_pressed(action_b):
