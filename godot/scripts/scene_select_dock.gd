@@ -40,12 +40,15 @@ const LOCKED_HINT_TEXT := "SCENE LOCKED"
 
 const SFX_ROOT_ENV := "BRUCELEE_MENU_SFX_ROOT"
 const ART_ROOT_ENV := "BRUCELEE_SCENE_SELECT_ART"
+## Recovered locked-card cursor rule (CBruceLeeDock::OnKeyPress/SetLocked).
+const DockCursor = preload("res://scripts/dock_cursor.gd")
 
 var ready_ok: bool = false
 var error: String = ""
 var selection: int = 0
 var last_sfx: String = ""
 var sfx_missing: bool = false
+var last_cursor_rule: Dictionary = {}
 
 var catalog = null
 ## Optional recovered scenery-unlock gate (scene_unlock_gate.gd).  When present,
@@ -325,18 +328,35 @@ func hide_dock() -> void:
 
 
 ## Moves the selection by `delta` inside the recovered list.  The decoded dock
-## declares `wraparround=false`, so both ends clamp; returns true when the
-## selection changed (the caller then plays the navigation sound).
+## declares `wraparround=false`, so both ends clamp.  The RECOVERED
+## `CBruceLeeDock::OnKeyPress`/`SetLocked` rule also SKIPS locked cards: the
+## cursor never lands on a locked option; if no unlocked option remains in the
+## move direction it restores the previous selection.  Returns true only when
+## the selection actually changed (the caller then plays the navigation sound).
 func move(delta: int) -> bool:
 	if not ready_ok or catalog.size() <= 0:
 		return false
-	var next_index: int = clampi(selection + delta, 0, catalog.size() - 1)
-	if next_index == selection:
+	var locked_flags: Array = []
+	for index: int in range(catalog.size()):
+		locked_flags.append(is_locked(index))
+	var resolution: Dictionary = DockCursor.move(
+		selection, delta, catalog.size(), locked_flags)
+	last_cursor_rule = resolution.duplicate(true)
+	if not bool(resolution.get("moved", false)):
 		return false
-	selection = next_index
+	selection = int(resolution.get("index", selection))
 	_rebuild()
 	_play_sfx()
 	return true
+
+
+## Read-only hook for the headless validator.
+func cursor_rule_report() -> Dictionary:
+	return {
+		"rule": DockCursor.RULE,
+		"last": last_cursor_rule.duplicate(true),
+		"locked_rows": locked_rows(),
+	}
 
 
 func selected_row() -> Dictionary:
