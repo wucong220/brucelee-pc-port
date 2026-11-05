@@ -132,8 +132,9 @@ func _press(keycode: Key) -> void:
 func _check_session() -> void:
 	_check(LanguageDock.available(), "language dock artifact loads")
 	_check(LanguageDock.error() == "", "language dock artifact has no error")
-	_check(LanguageDock.persistence().get("original_format") == NOT_RECOVERED,
-		"native persistence format stays NOT RECOVERED")
+	_check(String(LanguageDock.persistence().get("signature", "")) == "1FDKENONCTX3"
+			and LanguageDock.native_format_status() == "RECOVERED",
+		"native persistence format is RECOVERED (1FDKENONCTX3 settings.dat)")
 	_check(LanguageDock.labels_status() == NOT_RECOVERED,
 		"language display names stay NOT RECOVERED")
 	var items: Array = LanguageDock.items()
@@ -185,8 +186,12 @@ func _check_session() -> void:
 	var payload: String = LanguageDock.save_payload(6)
 	_check(payload.contains("\"language_index\":6"), "save payload carries index 6")
 	_check(payload.contains("LangChineseSimpl"), "save payload carries the Lang table")
-	_check(payload.contains(NOT_RECOVERED), "save payload marks the format NOT RECOVERED")
+	_check(payload.contains("RECOVERED"), "save payload records the recovered native format")
+	_check(payload.contains("1FDKENONCTX3"), "save payload names the native 1FDKENONCTX3 container")
 	print("LANGUAGE_SAVE_PAYLOAD=" + payload)
+	# Native bytes (hex) so the runner can materialise the exact settings.dat even
+	# where the harness denies the Godot child any file write.
+	print("LANGUAGE_SAVE_HEX=" + LanguageDock.save_bytes(6).hex_encode())
 	print("LANGUAGE_SAVE_PATH=" + save_path)
 	if FileAccess.file_exists(save_path):
 		_check(int(LanguageDock.load_saved_index()) == 6,

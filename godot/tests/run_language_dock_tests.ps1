@@ -1,19 +1,23 @@
-# Headless runner for the recovered 8-item language dock.
-# session (input -> select -> apply -> payload) then restart (persisted restore).
-# The harness denies the Godot child any file write, so this runner materialises
-# the exact payload the game produced for the restart run (disclosed workaround).
+# Headless runner for the recovered 8-item language dock (native persistence).
+# session (input -> select -> apply -> write native settings.dat) then restart.
+# The native bytes are also printed as hex so this runner can materialise the
+# exact settings.dat when the harness denies the Godot child any file write.
 param(
     [string] $PlayerGlb = 'D:\BruceLeeWork\bruce-full-20261103\out\bruce_full_121_20261103.glb',
-    [string] $OpponentGlb = 'D:\BruceLeeWork\brick-full-20261103\candidate\brick_full_94_20261103.glb'
+    [string] $OpponentGlb = 'D:\BruceLeeWork\brick-full-20261103\candidate\brick_full_94_20261103.glb',
+    [string] $GodotExe = 'D:\BruceLeeWork\tmp\gdstage\Godot_v4.7.2-stable_win64.exe'
 )
 $ErrorActionPreference = 'Continue'
-$root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$project = Join-Path $root 'godot'
+$root = Split-Path -Parent $PSScriptRoot
+$project = $root
 $logs = Join-Path (Split-Path -Parent $root) 'logs'
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
-$godot = Join-Path $env:LOCALAPPDATA 'BruceLee-PC-Port\godot-portable-773280yg\Godot_v4.7.2-stable_win64_console.exe'
+$godot = $GodotExe
+if (-not (Test-Path $godot)) {
+    $godot = Join-Path $env:LOCALAPPDATA 'BruceLee-PC-Port\godot-portable-773280yg\Godot_v4.7.2-stable_win64_console.exe'
+}
 if (-not (Test-Path $godot)) { Write-Error "Godot not found: $godot"; exit 1 }
-$save = Join-Path $logs 'language_dock_save.json'
+$save = Join-Path $logs 'language_dock_save.dat'
 Remove-Item $save -ErrorAction SilentlyContinue
 $failures = @()
 
@@ -26,12 +30,16 @@ $out1 | Out-File (Join-Path $logs 'language_session.log') -Encoding UTF8
 $out1 | Select-String -Pattern '^(PASS|FAIL|NOTE|LANGUAGE_DOCK_VALIDATION)' | ForEach-Object { $_.Line }
 if ($code1 -ne 0) { $failures += "session (exit $code1)" }
 
-$payloadLine = ($out1 | Select-String -Pattern '^LANGUAGE_SAVE_PAYLOAD=' | Select-Object -Last 1)
-if (-not $payloadLine) { $failures += 'session produced no save payload' }
-else {
-    $json = $payloadLine.Line.Substring('LANGUAGE_SAVE_PAYLOAD='.Length)
-    [System.IO.File]::WriteAllText($save, $json, [System.Text.UTF8Encoding]::new($false))
-    Write-Host ("materialised save payload -> {0} ({1} bytes)" -f $save, (Get-Item $save).Length)
+if (-not (Test-Path $save)) {
+    $hexLine = ($out1 | Select-String -Pattern '^LANGUAGE_SAVE_HEX=' | Select-Object -Last 1)
+    if (-not $hexLine) { $failures += 'session produced no native save bytes' }
+    else {
+        $hex = $hexLine.Line.Substring('LANGUAGE_SAVE_HEX='.Length).Trim()
+        [System.IO.File]::WriteAllBytes($save, [System.Convert]::FromHexString($hex))
+        Write-Host ("materialised native settings.dat -> {0} ({1} bytes)" -f $save, (Get-Item $save).Length)
+    }
+} else {
+    Write-Host ("game wrote native settings.dat directly -> {0} ({1} bytes)" -f $save, (Get-Item $save).Length)
 }
 
 $args2 = @('--headless', '--path', $project, '--script',
