@@ -46,6 +46,9 @@ const UI_DIR := "res://data/menu_art/ui/"
 const ART_ROOT := "res://ui/menu_art/"
 const ART_DIRS := ["menu", "menu_zdk", "mini", "background", "versus", "other"]
 const Controls = preload("res://scripts/prototype_controls.gd")
+## Recovered eight-item language dock (settingslanguage.ui + CApplication::Init
+## AddLanguageTable index order).  Fail-closed if its artifact is missing.
+const LanguageDock = preload("res://scripts/language_dock.gd")
 
 const DESIGN_W := 480.0
 const DESIGN_H := 320.0
@@ -152,7 +155,7 @@ const PROFILE_ROWS := [
 ## the rows fail closed with the explicit status.
 const SETTINGS_ROWS := [
 	{"key": "audio", "action": "unavailable"},
-	{"key": "languages", "action": "unavailable"},
+	{"key": "languages", "action": "language"},
 ]
 
 ## Recovered creditsselect.ui options. The select page is the two logo buttons
@@ -192,6 +195,10 @@ var selection: int = 0
 var status_text: String = ""
 var last_error: String = ""
 var art_ready: bool = false
+## Recovered language dock state (only used on the language_dock screen).
+var language_index: int = 0
+var language_applied: String = ""
+var language_status: String = ""
 
 var _art_root: Control
 var _ui_space: Control
@@ -214,6 +221,10 @@ class RectOutline extends Control:
 # The base _ready builds the text menu (kept for pause / errors); the art
 # overlay is built afterwards and shown only while an art screen owns the menu.
 func _ready() -> void:
+	# Restore the persisted language BEFORE any recovered label is built, so a
+	# restart shows the last selected language.  A missing/invalid save leaves
+	# the existing BRUCELEE_LANG default untouched.
+	LanguageDock.apply_saved()
 	super._ready()
 	_texture_paths = _index_textures()
 	if _texture_paths.is_empty():
@@ -293,6 +304,20 @@ func _handle_art_input(event: InputEvent) -> bool:
 	if not Controls.is_press_edge(event):
 		return false
 	var was_attack: bool = event.is_action_pressed(Controls.ATTACK_A)
+	if screen_id == "language_dock":
+		if event.is_action_pressed(Controls.MOVE_LEFT):
+			_move_language(-1)
+			return true
+		if event.is_action_pressed(Controls.MOVE_RIGHT):
+			_move_language(1)
+			return true
+		if event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
+			_confirm_language()
+			return true
+		if event.is_action_pressed(Controls.MENU_CANCEL) or _is_backspace(event):
+			_back_art()
+			return true
+		return false
 	if event.is_action_pressed(Controls.MENU_UP):
 		_move_art_selection(-1)
 	elif event.is_action_pressed(Controls.MENU_DOWN):
@@ -356,6 +381,18 @@ func _confirm_art(was_attack: bool) -> void:
 			command_requested.emit(String(row.get("command", "")))
 		"story":
 			_launch_story()
+		"language":
+			# Recovered settingsmain.actions.lang -> settingslanguage; the dock's
+			# eight items are decoded and its selection persists (PORT binding).
+			if not LanguageDock.available():
+				status_text = STATUS_NOT_RECOVERED
+				_refresh_status()
+			else:
+				status_text = ""
+				language_index = LanguageDock.current_index()
+				language_status = ""
+				menu_state = "art_page"
+				_show_art_screen("language_dock")
 		"unavailable":
 			status_text = STATUS_NOT_RECOVERED
 			_refresh_status()
@@ -363,6 +400,11 @@ func _confirm_art(was_attack: bool) -> void:
 
 func _back_art() -> void:
 	status_text = ""
+	if screen_id == "language_dock":
+		selection = 1  # settings.ui Languages row
+		menu_state = "art_page"
+		_show_art_screen("settings")
+		return
 	match screen_id:
 		"playmenu":
 			selection = 0
@@ -690,6 +732,12 @@ func _background_texture(screen: String) -> Texture2D:
 
 
 func _show_art_screen(screen: String) -> void:
+	if screen == "language_dock":
+		screen_id = screen
+		_clear_stage()
+		_build_language_dock_screen()
+		_refresh_status()
+		return
 	if not SCREENS.has(screen):
 		_fail("unknown screen " + screen)
 		return
@@ -714,6 +762,86 @@ func _show_art_screen(screen: String) -> void:
 	if screen == "credits":
 		_add_credits_selection()
 	_refresh_status()
+
+
+## ------------------------------------------------------- language dock screen
+## Draws the recovered eight-item settingslanguage.ui dock as a port grid (the
+## decoded optionwidth/optionheight/separation/wraparround are recorded in the
+## artifact; the original flag art was not decoded locally, so each cell is
+## labelled with its recovered Lang table id, never an invented display name).
+func _build_language_dock_screen() -> void:
+	var backdrop: Texture2D = _background_texture("settings")
+	if backdrop != null:
+		var picture: TextureRect = _make_texture_rect(
+			backdrop, Rect2(0, 0, DESIGN_W, DESIGN_H), false)
+		picture.name = "LanguageBackdrop"
+		_stage.add_child(picture)
+	var items: Array = LanguageDock.items()
+	if items.is_empty():
+		var fail_label: Label = _make_label(
+			"LANGUAGE DOCK " + STATUS_NOT_RECOVERED,
+			Rect2(12, 120, DESIGN_W - 24, 40), 12, Color(1.0, 0.6, 0.3, 1.0), true)
+		fail_label.name = "LanguageFailClosed"
+		_stage.add_child(fail_label)
+		return
+	language_index = clampi(language_index, 0, items.size() - 1)
+	var title: Label = _make_label(
+		"LANGUAGES", Rect2(0, 8, DESIGN_W, 24), 16, Color(1.0, 0.85, 0.3, 1.0), true)
+	title.name = "LanguageTitle"
+	_stage.add_child(title)
+	# Recovered dock cell geometry is recorded in the artifact; the flag art was
+	# not decoded locally, so cells use compact port widths.
+	var cell_w: float = 108.0
+	var cell_h: float = 28.0
+	var gap: float = 6.0
+	var total_w: float = float(items.size()) * cell_w + float(items.size() - 1) * gap
+	var start_x: float = (DESIGN_W - total_w) * 0.5
+	var row_y: float = 130.0
+	for index: int in range(items.size()):
+		var item: Dictionary = items[index] as Dictionary
+		var rect: Rect2 = Rect2(start_x + float(index) * (cell_w + gap), row_y,
+			cell_w, cell_h)
+		var selected: bool = index == language_index
+		var text: String = String(item.get("lang_table", ""))
+		if selected:
+			text = "> " + text + " <"
+		var cell: Label = _make_label(text, rect, 9,
+			Color(1.0, 1.0, 0.0, 1.0) if selected else Color(0.9, 0.9, 0.9, 1.0), true)
+		cell.name = "LanguageCell_%d" % index
+		_stage.add_child(cell)
+	var detail: String = "%d/%d  %s" % [language_index + 1, items.size(),
+		String(Dictionary(items[language_index]).get("lang_table", ""))]
+	detail += "\nLEFT/RIGHT choose   ENTER apply+save   ESC back"
+	detail += "\nDISPLAY NAMES " + LanguageDock.labels_status()
+	if not language_status.is_empty():
+		detail += "\n" + language_status
+	var status: Label = _make_label(detail, Rect2(8, 190, DESIGN_W - 16, 90),
+		10, Color(0.95, 0.9, 0.75, 1.0), true)
+	status.name = "LanguageStatus"
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_stage.add_child(status)
+
+
+func _move_language(delta: int) -> void:
+	var count: int = LanguageDock.items().size()
+	if count <= 0:
+		return
+	# Recovered wraparround=false: clamp at both ends (never wrap).
+	language_index = clampi(language_index + delta, 0, count - 1)
+	language_status = ""
+	_show_art_screen("language_dock")
+
+
+func _confirm_language() -> void:
+	var table: String = LanguageDock.apply_index(language_index)
+	if table.is_empty():
+		language_status = "LANGUAGE APPLY " + STATUS_NOT_RECOVERED
+		_show_art_screen("language_dock")
+		return
+	var saved: bool = LanguageDock.save_index(language_index)
+	language_applied = table
+	language_status = "APPLIED " + table + (" (SAVED)" if saved else " (SAVE FAILED)")
+	_show_art_screen("language_dock")
 
 
 ## creditsselect.ui has no blmenu: the recovered focus is one of the two logo
@@ -906,3 +1034,37 @@ func label_texts() -> Array:
 		if child is Label:
 			out.append((child as Label).text)
 	return out
+
+
+## --------------------------------------------------- language dock test hooks
+func language_dock_items() -> Array:
+	return LanguageDock.items()
+
+
+func language_selection() -> int:
+	return language_index
+
+
+func language_applied_table() -> String:
+	return language_applied
+
+
+func language_status_text() -> String:
+	return language_status
+
+
+func language_save_path() -> String:
+	return LanguageDock.save_path()
+
+
+## Explicitly opens the recovered language dock (validator hook; the user reaches
+## it through main menu -> Settings -> Languages).
+func show_language_dock() -> void:
+	if not LanguageDock.available():
+		status_text = STATUS_NOT_RECOVERED
+		_refresh_status()
+		return
+	language_index = LanguageDock.current_index()
+	language_status = ""
+	menu_state = "art_page"
+	_show_art_screen("language_dock")

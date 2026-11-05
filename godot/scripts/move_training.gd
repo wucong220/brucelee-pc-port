@@ -38,6 +38,8 @@ const Controls := preload("res://scripts/prototype_controls.gd")
 const TrainingText := preload("res://scripts/training_text.gd")
 const TrainingAttackAI := preload("res://scripts/training_attack_ai.gd")
 const RecoveredSettings := preload("res://scripts/recovered_settings.gd")
+## Recovered eight-item language dock (shared with the main-menu Settings page).
+const LanguageDock := preload("res://scripts/language_dock.gd")
 
 const SETTINGS_PATH := "res://data/training_settings.json"
 const SETTINGS_PATH_ENV := "BRUCELEE_TRAINING_SETTINGS_PATH"
@@ -158,6 +160,8 @@ var _audio_tracks: Array[Control] = []
 var _audio_index := 0
 var _audio_status: Label
 var _language_status: Label
+var _language_labels: Array[Label] = []
+var _language_index: int = 0
 
 var _dummy_ai: PortTrainingAttackAI
 
@@ -952,9 +956,25 @@ func _build_language_screen() -> void:
     style.set_border_width_all(1)
     frame.add_theme_stylebox_override("panel", style)
     screen.add_child(frame)
-    _language_status = _label(screen, Rect2(10, 196, 460, 38), "", 15,
+    _language_status = _label(screen, Rect2(10, 252, 460, 30), "", 13,
         Color(1.0, 0.62, 0.30), HORIZONTAL_ALIGNMENT_CENTER)
     _language_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    # settingslanguage.ui bldock DOES carry eight inline flag items.  Their
+    # recovered Lang table ids are drawn in a compact port grid; display NAMES
+    # stay NOT RECOVERED (the .lang universe has no language-name keys).
+    _language_labels = []
+    var items: Array = LanguageDock.items()
+    for index: int in range(items.size()):
+        var col: int = index % 4
+        var row: int = int(index / 4)
+        var cell := Rect2(12.0 + float(col) * 112.0, 184.0 + float(row) * 24.0,
+            108.0, 20.0)
+        var item_label := _label(screen, cell,
+            String(Dictionary(items[index]).get("lang_table", "")), 9,
+            Color(0.9, 0.9, 0.9, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+        item_label.name = "LanguageItem_%d" % index
+        _language_labels.append(item_label)
+    _refresh_language_screen()
 
 
 # --------------------------------------------------------------- navigation
@@ -1144,17 +1164,48 @@ func _audio_close() -> void:
 
 func _open_language_settings() -> void:
     ## ingamesettingsmain.actions.lang = ingamesettingslanguage.  The dock's
-    ## item list is NOT RECOVERED, so the screen shows its recovered frame and
-    ## an explicit marker; it never invents a language order or labels.
+    ## eight inline flag items are recovered; their display NAMES are not.
     state = "settings_language"
     _show_screen("settings_language")
-    _language_status.text = "LANGUAGE LIST NOT RECOVERED"
+    _language_index = LanguageDock.current_index()
+    _refresh_language_screen()
 
 
 func _language_close() -> void:
     state = "settings"
     _show_screen("settings")
     _refresh_settings()
+
+
+func _refresh_language_screen() -> void:
+    var items: Array = LanguageDock.items()
+    if _language_labels.is_empty() or items.is_empty():
+        if _language_status != null:
+            _language_status.text = "LANGUAGE LIST NOT RECOVERED"
+        return
+    _language_index = clampi(_language_index, 0, items.size() - 1)
+    for index: int in range(_language_labels.size()):
+        var table: String = String(Dictionary(items[index]).get("lang_table", ""))
+        var selected: bool = index == _language_index
+        _language_labels[index].text = ("> " + table + " <") if selected else table
+        _language_labels[index].add_theme_color_override(
+            "font_color", Color(1.0, 1.0, 0.0, 1.0) if selected else Color(0.9, 0.9, 0.9, 1.0))
+    var current: String = String(Dictionary(items[_language_index]).get("lang_table", ""))
+    _language_status.text = "LANGUAGE NAMES " + LanguageDock.labels_status() \
+        + "  -  %d/%d  %s" % [_language_index + 1, items.size(), current]
+
+
+## ------------------------------------------------ language dock test hooks
+func language_dock_items() -> Array:
+    return LanguageDock.items()
+
+
+func language_selection() -> int:
+    return _language_index
+
+
+func language_status_text() -> String:
+    return _language_status.text if _language_status != null else ""
 
 
 func fighter_dock_entries() -> Array:
@@ -2176,8 +2227,33 @@ func _handle_audio_settings_input(event: InputEvent) -> bool:
 
 
 func _handle_language_settings_input(event: InputEvent) -> bool:
+    if not LanguageDock.available():
+        if event.is_action_pressed(Controls.MENU_ACCEPT):
+            _language_status.text = "LANGUAGE LIST NOT RECOVERED"
+            return true
+        if event.is_action_pressed(Controls.MENU_CANCEL) \
+                or event.is_action_pressed(Controls.PAUSE):
+            _language_close()
+            return true
+        return false
+    if event.is_action_pressed(Controls.MOVE_LEFT) \
+            or event.is_action_pressed(Controls.MENU_UP):
+        _language_index = maxi(_language_index - 1, 0)
+        _refresh_language_screen()
+        return true
+    if event.is_action_pressed(Controls.MOVE_RIGHT) \
+            or event.is_action_pressed(Controls.MENU_DOWN):
+        _language_index = mini(_language_index + 1, _language_labels.size() - 1)
+        _refresh_language_screen()
+        return true
     if event.is_action_pressed(Controls.MENU_ACCEPT):
-        _language_status.text = "LANGUAGE LIST NOT RECOVERED"
+        var table: String = LanguageDock.apply_index(_language_index)
+        if table.is_empty():
+            _language_status.text = "LANGUAGE APPLY NOT RECOVERED"
+            return true
+        var saved: bool = LanguageDock.save_index(_language_index)
+        _language_status.text = "APPLIED " + table \
+            + (" (SAVED)" if saved else " (SAVE FAILED)")
         return true
     if event.is_action_pressed(Controls.MENU_CANCEL) \
             or event.is_action_pressed(Controls.PAUSE):
