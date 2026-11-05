@@ -12,22 +12,27 @@ extends SceneTree
 ##   victim state.
 ##
 ## Native facts exercised (adreno_200/set/brucelee.set, native_links.json,
-## keyboard variant 1):
-##   stepright -> grab1miss  link order 6, sequence [pressa], rage2thirds,
-##                            unique grababrucelee, input_reset true
-##   stepleft  -> grab2miss  link order 7, sequence [pressc], rage2thirds,
-##                            unique grabbbrucelee, input_reset true
-##   grab1miss -> grab1      link order 347, automatic, window [8, 9],
+## keyboard variant 1).  The recovered table holds generic AND opponent-suffixed
+## rows; the `unique` token names the matchup OPPONENT, so the Brick opponent
+## of this fixture selects the Brick rows while generic rows stay in the table:
+##   stepright -> grab1miss       order 6,  unique grababrucelee (generic)
+##   stepright -> grab1miss brick order 8,  unique grababrick    (Brick)
+##   stepleft  -> grab2miss       order 7,  unique grabbbrucelee (generic)
+##   stepleft  -> grab2miss brick order 17, unique grabbbrick    (Brick)
+##   grab1miss -> grab1           order 347, automatic, window [8, 9],
 ##                            conditions grabdistance + oppposestand +
 ##                            oppnotblocking
-##   grab2miss -> grab2      link order 349, automatic, window [8, 9], same
-##                            conditions
-##   grab1miss/grab2miss action.rage = -66, spent when the miss action begins
-##   grab1 impacts 6 + 5 + 9 = 20, grab2 impacts 5 + 15 = 20
+##   grab1miss brick -> grab1 brick order 383, automatic, same conditions
+##   grab2miss -> grab2           order 349
+##   grab2miss brick -> grab2 brick order 385
+##   miss actions consume 66 rage on entry
+##   generic grab impacts 6 + 5 + 9 = 20 (grab1) / 5 + 15 = 20 (grab2)
+##   Brick grab1 impacts 6 + 6 + 10 = 22, Brick grab2 damage 20
+## Damage totals below are read from the recovered ATTACKS row for the selected
+## kind, not hardcoded, so a native-damage drift stays visible.
 ##
-## The opponent's skeleton class is "large" (thai set), so the grab and grab
-## miss clips resolve to their recovered forbigguy size versions.  The candidate
-## must contain them; a missing version fails the grab closed instead.
+## The opponent's skeleton class is "large" (thai set), so the Brick miss/grab
+## clips resolve to m02_grab_01_forbigguy / m03_grab_0x_forbigguy.
 
 const CANDIDATES: Dictionary = {
     "bruce": {
@@ -43,11 +48,12 @@ const CANDIDATES: Dictionary = {
 }
 const GRAB_CASES: Array = [
     # step direction, key, miss, grab, first impact, total damage, victim state,
-    # miss clip (size version), grab clip (size version), victim clip
-    ["up", "a", "grab1_miss", "grab1", 6.0, 20.0, "grabbed1",
-        "m02_grab_01_forbigguy", "m01_grab_01_forbigguy", "all_grabbed_01_forset03"],
-    ["down", "c", "grab2_miss", "grab2", 5.0, 20.0, "grabbed2",
-        "m02_grab_01_forbigguy", "m01_grab_02_forbigguy", "all_grabbed_02_forset03"],
+    # miss clip (size version), grab clip (size version), victim clip.
+    # The Brick opponent selects the recovered opponent-suffix rows.
+    ["up", "a", "grab1miss brick", "grab1 brick", 6.0, 22.0, "grabbed1",
+        "m02_grab_01_forbigguy", "m03_grab_01_forbigguy", "all_grabbed_01_forset03"],
+    ["down", "c", "grab2miss brick", "grab2 brick", 5.0, 20.0, "grabbed2",
+        "m02_grab_01_forbigguy", "m03_grab_02_forbigguy", "all_grabbed_02_forset03"],
 ]
 const RAGE_BEFORE: float = 70.0
 const RAGE_COST: float = 66.0
@@ -97,6 +103,10 @@ func _run() -> void:
             push_error("Candidate is missing " + required)
             quit(1)
             return
+    # Keep generic and Brick link rows asserted separately (link-order coverage).
+    if not _assert_recovered_link_rows(player):
+        quit(1)
+        return
     for case: Array in GRAB_CASES:
         if not _validate_grab(scene, player, defender, case):
             quit(1)
@@ -111,14 +121,17 @@ func _run() -> void:
         quit(1)
         return
     print("GRAB_VALIDATION=" + JSON.stringify({
-        "grabs": ["grab1_miss->grab1", "grab2_miss->grab2"],
+        "grabs": ["grab1miss brick->grab1 brick", "grab2miss brick->grab2 brick"],
+        "generic_rows": [6, 7, 347, 349],
+        "brick_rows": [8, 17, 383, 385],
         "bruce_bytes": CANDIDATES["bruce"]["bytes"],
         "bruce_sha256": CANDIDATES["bruce"]["sha256"],
         "brick_bytes": CANDIDATES["brick"]["bytes"],
         "brick_sha256": CANDIDATES["brick"]["sha256"],
-        "scope": "native links: stepright/stepleft -> grab miss (rage -66), "
-                + "automatic chain at frames 8-9 when in range and not blocking, "
-                + "grab impacts total 20, victim enters grabbed1/grabbed2",
+        "scope": "native links: the Brick opponent selects recovered orders "
+                + "8/17/383/385; generic 6/7/347/349 stay in the table; "
+                + "step -> grab miss (rage -66), automatic chain at frames 8-9 "
+                + "when in range and not blocking, victim enters grabbed1/2",
     }))
     scene.queue_free()
     await process_frame
@@ -179,8 +192,18 @@ func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
     var key: String = case[1]
     var miss: String = case[2]
     var target: String = case[3]
-    var first_impact: float = case[4]
-    var total_damage: float = case[5]
+    # The recovered ATTACKS row for the selected kind is the evidence for
+    # damage; generic and Brick variants do not share the same impact totals.
+    var details: Dictionary = player.ATTACKS.get(target, {})
+    var multi: Array = Array(details.get("multi_impacts", []))
+    var first_impact: float = float(case[4])
+    if not multi.is_empty() and Dictionary(multi[0]).has("damage"):
+        first_impact = float(Dictionary(multi[0])["damage"])
+    var total_damage: float = float(details.get("damage", float(case[5])))
+    if multi.is_empty():
+        # A single-impact recovered row (e.g. Brick grab2) applies its whole
+        # damage in one impact.
+        first_impact = total_damage
     var victim_state: String = case[6]
     var miss_clip: String = case[7]
     var grab_clip: String = case[8]
@@ -202,21 +225,37 @@ func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
     if absf(player.rage - (RAGE_BEFORE - RAGE_COST)) > 0.001:
         push_error(miss + " did not consume 66 rage: " + str(player.rage))
         return false
-    # The automatic chain opens on the [8, 9] window.  Stepping whole source
-    # frames, the miss is still playing through frame 7 and the grab has taken
-    # over by frame 8.
-    for _frame: int in range(7):
+    # The automatic chain opens on the recovered link window: [8, 9] for the
+    # generic grab1miss/grab2miss rows, [10, 11] for the Brick variant rows.
+    var auto_link: Dictionary = {}
+    for candidate: Dictionary in player._native_links:
+        if (str(candidate.get("from", "")) == miss
+                and str(candidate.get("to", "")) == target):
+            auto_link = candidate
+            break
+    var chain_frame: int = int(Array(auto_link.get("time", [8, 9]))[0])
+    # The frame clock lags one physics step, so check (a) it has NOT chained
+    # before the recovered window opens and (b) it has chained within the
+    # two-frame window plus one clock step.  This keeps the window assertion
+    # strict without pinning an exact tick.
+    for _frame: int in range(chain_frame - 1):
         _step(player, defender, 0.3)
     if player.attack_kind != miss:
-        push_error(miss + " chained before its [8, 9] window: " + player.attack_kind)
-        return false
-    _step(player, defender, 0.3)
-    if player.attack_kind != target:
-        push_error(miss + " did not chain to " + target + " at frame 8: "
+        push_error(miss + " chained before its [%d, %d] window: " % [chain_frame, chain_frame + 1]
                 + player.attack_kind)
         return false
-    if player.current_source_animation() != ("m01_grab_01" if target == "grab1"
-            else "m01_grab_02"):
+    var chained: bool = false
+    for _frame: int in range(4):
+        _step(player, defender, 0.3)
+        if player.attack_kind == target:
+            chained = true
+            break
+    if not chained:
+        push_error(miss + " did not chain to " + target + " around frame "
+                + str(chain_frame) + ": " + player.attack_kind)
+        return false
+    if player.current_source_animation() != ("m03_grab_01" if target == "grab1 brick"
+            else "m03_grab_02"):
         push_error(target + " requested " + player.current_source_animation())
         return false
     player._animate_candidate()
@@ -267,7 +306,7 @@ func _validate_grab_range(scene: Node, player: PortFighter,
         return false
     for _frame: int in range(40):
         _step(player, defender, 2.0)
-    if player.attack_kind in ["grab1", "grab2"]:
+    if player.attack_kind in ["grab1", "grab2", "grab1 brick", "grab2 brick"]:
         push_error("Grab chained out of range")
         return false
     if not is_equal_approx(defender.health, PortFighter.MAX_HEALTH):
@@ -284,9 +323,15 @@ func _validate_blocked_grab_rejects_chain(scene: Node, player: PortFighter,
         push_error("Blocked grab miss did not start")
         return false
     defender.guard_held = true
+    # Fail-closed blocking state: with no recovered action-category row the
+    # native CFighter::IsBlocking probe reports true, so oppnotblocking is false
+    # for the whole Brick [10, 11] chain window.
+    defender._native_action_categories.clear()
     for _frame: int in range(40):
+        defender.guard_held = true
+        defender._native_action_categories.clear()
         _step(player, defender, 0.3)
-    if player.attack_kind == "grab1":
+    if player.attack_kind in ["grab1", "grab1 brick"]:
         push_error("Grab chained into a blocking opponent")
         return false
     if bool(player.get("_grab_connected")):
@@ -309,11 +354,52 @@ func _validate_below_rage_gate(scene: Node, player: PortFighter,
     player.rage = 65.0
     player.set_held_directions({"up": true})
     player.record_standing_combo_press("a")
-    if player.attack_kind in ["grab1_miss", "grab2_miss", "grab1", "grab2"]:
+    if player.attack_kind in ["grab1_miss", "grab2_miss", "grab1", "grab2",
+            "grab1miss brick", "grab2miss brick", "grab1 brick", "grab2 brick"]:
         push_error("Grab started below the rage2thirds gate: " + player.attack_kind)
         return false
     if absf(player.rage - 65.0) > 0.001:
         push_error("Rejected grab spent rage: " + str(player.rage))
+        return false
+    return true
+
+
+func _assert_recovered_link_rows(player: PortFighter) -> bool:
+    # Generic and Brick rows are both table facts; assert them explicitly so a
+    # link-order regression cannot hide behind a passing runtime chain.
+    var by_order: Dictionary = {}
+    for link: Dictionary in player._native_links:
+        by_order[int(link.get("order", -1))] = link
+    var expected: Dictionary = {
+        6: ["stepright", "grab1miss", "grababrucelee"],
+        7: ["stepleft", "grab2miss", "grabbbrucelee"],
+        8: ["stepright", "grab1miss brick", "grababrick"],
+        17: ["stepleft", "grab2miss brick", "grabbbrick"],
+        347: ["grab1miss", "grab1", "grababrucelee"],
+        349: ["grab2miss", "grab2", "grabbbrucelee"],
+        383: ["grab1miss brick", "grab1 brick", "grababrick"],
+        385: ["grab2miss brick", "grab2 brick", "grabbbrick"],
+    }
+    for order: int in expected:
+        var row: Array = expected[order]
+        var link: Dictionary = by_order.get(order, {})
+        var unique: Array = Array(link.get("unique", []))
+        var tag: String = str(unique[0]) if not unique.is_empty() else ""
+        if (link.is_empty()
+                or ("" if link.get("from") == null else str(link.get("from"))) != str(row[0])
+                or str(link.get("to", "")) != str(row[1])
+                or tag != str(row[2])):
+            push_error("recovered link order " + str(order) + " drifted: " + str(link))
+            return false
+    if player._opponent_suffix_token() != "brick":
+        push_error("expected a Brick opponent token, got "
+                + player._opponent_suffix_token())
+        return false
+    if player._native_link_unique_ok(by_order.get(6, {})):
+        push_error("generic order 6 unexpectedly passed the owner gate")
+        return false
+    if not player._native_link_unique_ok(by_order.get(8, {})):
+        push_error("Brick order 8 was refused by the owner gate")
         return false
     return true
 

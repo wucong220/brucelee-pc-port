@@ -8,29 +8,32 @@ extends SceneTree
 
 const FPS: float = 30.0
 
-# order, target action, variant-1 key tokens, conditions, expected port kind
+# order, target action, variant-1 key tokens, conditions, expectation mode,
+# expected kind.  The `unique` token names the matchup OPPONENT, so against a
+# Brick opponent order 36 is the native finisher, generic order 34 is deferred,
+# order 35 (endbrucelee) and orders 37-44 are refused by the owner gate.
 const LINKS: Array = [
-    [32, "attacktofloor", ["c"], ["oppposelaying"], "attacktofloor"],
-    [33, "attacktofloor", ["d"], ["oppposelaying"], "attacktofloor"],
-    [34, "endattack1", ["a"], ["oppposestun", "grabdistance"], "endattack1"],
-    [35, "endattack2", ["c"], ["oppposestun", "grabdistance"], "endattack2"],
-    [36, "endattack brick", ["a"], ["oppposestun", "grabdistance"], ""],
-    [37, "endattack chief", ["a"], ["oppposestun", "grabdistance"], ""],
-    [38, "endattack johnson", ["a"], ["oppposestun", "grabdistance"], ""],
-    [39, "endattack ken", ["a"], ["oppposestun", "grabdistance"], ""],
-    [40, "endattack loming", ["a"], ["oppposestun"], ""],
-    [41, "endattack master", ["a"], ["oppposestun"], ""],
-    [42, "endattack shenlo", ["a"], ["oppposestun"], ""],
-    [43, "endattack sinfu", ["a"], ["oppposestun"], ""],
-    [44, "endattack smallboy", ["a"], ["oppposestun", "grabdistance"], ""],
-    [83, "highkick3", ["in", "c"], [], "high_kick3"],
-    [84, "highpunch3", ["in", "a"], [], "high_punch3"],
-    [85, "lowpunch3", ["out", "b"], [], "low_punch3"],
-    [86, "lowkick3", ["out", "d"], [], "low_kick3"],
-    [87, "lowkick1", ["d"], [], "kick"],
-    [88, "lowpunch1", ["b"], [], "punch"],
-    [89, "highkick1", ["c"], [], "high_kick"],
-    [90, "highpunch1", ["a"], [], "high_punch"],
+    [32, "attacktofloor", ["c"], ["oppposelaying"], "plays", "attacktofloor"],
+    [33, "attacktofloor", ["d"], ["oppposelaying"], "plays", "attacktofloor"],
+    [34, "endattack1", ["a"], ["oppposestun", "grabdistance"], "deferred", "endattack1"],
+    [35, "endattack2", ["c"], ["oppposestun", "grabdistance"], "refused", "endattack2"],
+    [36, "endattack brick", ["a"], ["oppposestun", "grabdistance"], "plays", "endattack brick"],
+    [37, "endattack chief", ["a"], ["oppposestun", "grabdistance"], "refused", "endattack chief"],
+    [38, "endattack johnson", ["a"], ["oppposestun", "grabdistance"], "refused", "endattack johnson"],
+    [39, "endattack ken", ["a"], ["oppposestun", "grabdistance"], "refused", "endattack ken"],
+    [40, "endattack loming", ["a"], ["oppposestun"], "refused", "endattack loming"],
+    [41, "endattack master", ["a"], ["oppposestun"], "refused", "endattack master"],
+    [42, "endattack shenlo", ["a"], ["oppposestun"], "refused", "endattack shenlo"],
+    [43, "endattack sinfu", ["a"], ["oppposestun"], "refused", "endattack sinfu"],
+    [44, "endattack smallboy", ["a"], ["oppposestun", "grabdistance"], "refused", "endattack smallboy"],
+    [83, "highkick3", ["in", "c"], [], "plays", "high_kick3"],
+    [84, "highpunch3", ["in", "a"], [], "plays", "high_punch3"],
+    [85, "lowpunch3", ["out", "b"], [], "plays", "low_punch3"],
+    [86, "lowkick3", ["out", "d"], [], "plays", "low_kick3"],
+    [87, "lowkick1", ["d"], [], "plays", "kick"],
+    [88, "lowpunch1", ["b"], [], "plays", "punch"],
+    [89, "highkick1", ["c"], [], "plays", "high_kick"],
+    [90, "highpunch1", ["a"], [], "plays", "high_punch"],
 ]
 
 var player: PortFighter
@@ -80,7 +83,8 @@ func _run() -> void:
         var target: String = row[1]
         var keys: Array = row[2]
         var conditions: Array = row[3]
-        var expected: String = row[4]
+        var mode: String = row[4]
+        var expected: String = row[5]
         var link: Dictionary = by_order.get(order, {})
         if link.is_empty() or String(link.get("to", "")) != target:
             results.append({"order": order, "target": target, "status": "MISSING_LINK"})
@@ -106,31 +110,45 @@ func _run() -> void:
         var after_kind: String = player.attack_kind
         var after_state: String = player.state
         var status: String
-        if expected.is_empty():
-            # Owner-filtered link: the unique gate must refuse it, and it must
-            # never resolve to a port attack kind.
-            if unique_ok:
-                status = "OWNER_NOT_FILTERED"
-            elif not target_kind.is_empty():
-                status = "OWNER_HAS_KIND"
-            else:
-                status = "OWNER_REFUSED"
-        else:
-            if not applies:
-                status = "NOT_APPLICABLE"
-            elif not window_ok:
-                status = "WINDOW_CLOSED"
-            elif not status_ok:
-                status = "STATUS_GATE"
-            elif not conditions_ok:
-                status = "CONDITIONS_GATE"
-            elif after_kind == expected:
-                status = "PASS"
-            else:
-                status = "FAILED"
+        match mode:
+            "plays":
+                if not applies:
+                    status = "NOT_APPLICABLE"
+                elif not unique_ok:
+                    status = "OWNER_GATE"
+                elif not window_ok:
+                    status = "WINDOW_CLOSED"
+                elif not status_ok:
+                    status = "STATUS_GATE"
+                elif not conditions_ok:
+                    status = "CONDITIONS_GATE"
+                elif after_kind == expected:
+                    status = "PASS"
+                else:
+                    status = "FAILED"
+            "deferred":
+                if not applies:
+                    status = "NOT_APPLICABLE"
+                elif not player._defer_generic_link_for_variant(link):
+                    status = "NOT_DEFERRED"
+                elif after_kind == expected:
+                    status = "GENERIC_STILL_PLAYED"
+                else:
+                    status = "DEFERRED"
+            "refused":
+                if not applies:
+                    status = "NOT_APPLICABLE"
+                elif unique_ok:
+                    status = "OWNER_NOT_FILTERED"
+                elif after_kind == expected:
+                    status = "OWNER_HAS_KIND"
+                else:
+                    status = "OWNER_REFUSED"
+            _:
+                status = "UNKNOWN_MODE"
         results.append({
             "order": order, "target": target, "expected": expected,
-            "applies": applies, "unique_ok": unique_ok, "window_ok": window_ok,
+            "mode": mode, "applies": applies, "unique_ok": unique_ok,
             "sequence_ok": sequence_ok, "status_ok": status_ok,
             "conditions_ok": conditions_ok, "target_kind": target_kind,
             "before": {"kind": before_kind, "state": before_state},

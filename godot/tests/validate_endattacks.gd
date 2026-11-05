@@ -12,26 +12,32 @@ extends SceneTree
 ##   endattackcomp1/endattackcomp2 that begin_endattack_victim enters.
 ##
 ## Native facts exercised (adreno_200/set/brucelee.set, native_links.json,
-## keyboard variant 1):
-##   candobasicattacks -> endattack1  link order 34, sequence [pressa],
-##       keystatus right pressed, conditions oppposestun + grabdistance (150)
-##   candobasicattacks -> endattack2  link order 35, sequence [pressc],
-##       keystatus right pressed, conditions oppposestun + grabdistance (90),
-##       unique endbrucelee
-##   endattack1/endattack2 source damage is 0; the finisher converts the victim
-##   into endattackcomp1 (all_end_attack_01_forset03, 93 frames) or
-##   endattackcomp2 (all_end_attack_02_forset03, 130 frames) and then faceupko
-##   without dealing damage of its own
+## keyboard variant 1).  The recovered table holds BOTH generic and
+## opponent-suffixed links; the `unique` token names the matchup OPPONENT:
+##   stepright -> grab1miss       order 6,  unique grababrucelee (generic)
+##   stepright -> grab1miss brick order 8,  unique grababrick    (Brick)
+##   grab1miss -> grab1           order 347, unique grababrucelee (generic)
+##   grab1miss brick -> grab1 brick order 383, unique grababrick (Brick)
+##   candobasicattacks -> endattack1       order 34, empty unique (generic)
+##   candobasicattacks -> endattack2       order 35, unique endbrucelee (mirror)
+##   candobasicattacks -> endattack brick  order 36, unique endbrickdavis
+## All finisher links use sequence [pressa]/[pressc], keystatus right pressed
+## and conditions oppposestun + grabdistance.  Against the Brick opponent of
+## this fixture only order 36 may fire: order 34 is deferred while the proven
+## specific variant applies, and order 35 is the mirror-only endbrucelee link,
+## so the c-key path must fail closed (no recovered endattack2 variant exists).
+## The finisher's own source damage is 0; it converts the victim into
+## endattackcomp1 (all_end_attack_01_forset03, 93 frames) and then faceupko.
 ##
-## The finisher links require oppposestun.  A grabbed victim reads as stun, and
-## so does a victim held in hitstun, which is how a normal landed hit (the old
-## "normal-hit endmove" path) reaches the same links.  endattack1 becomes active
-## immediately and consumes the stunned victim; endattack2 activates 20 frames
-## later, after a normal hit's stun has ended, so it correctly plays and whiffs
-## without damage.  Both cases are covered.
+## A grabbed victim reads as stun, and so does a victim held in hitstun, which is
+## how a normal landed hit (the old "normal-hit endmove" path) reaches the same
+## link.  Both the grab chain and the normal-hit path are covered for the Brick
+## variant; the mirror-only endattack2 path is asserted fail-closed in both.
 ##
-## The opponent's skeleton class is "large" (thai set), so the endattack clips
-## resolve to their recovered forbigguy size versions.
+## The opponent's skeleton class is "large" (thai set), so the recovered Brick
+## variant clips resolve to their forbigguy size versions:
+## m02_grab_01_forbigguy (miss), m03_grab_01_forbigguy (grab) and
+## m03_end_attack_01_forbigguy (finisher).
 
 const CANDIDATES: Dictionary = {
     "bruce": {
@@ -93,16 +99,22 @@ func _run() -> void:
             push_error("Candidate is missing " + required)
             quit(1)
             return
-    if not _validate_endattack_from_grab(scene, player, defender, "up", "a",
-            "grab1_miss", "grab1", "a", "endattack1", "m01_end_attack_01",
-            "m01_end_attack_01_forbigguy", "grabbed1", "endattackcomp1",
-            "all_end_attack_01_forset03", 93):
+    # Generic and Brick-variant rows are asserted separately from the recovered
+    # table, so a link-order regression cannot hide behind a runtime result.
+    if not _assert_recovered_link_rows(player):
         quit(1)
         return
-    if not _validate_endattack_from_grab(scene, player, defender, "down", "c",
-            "grab2_miss", "grab2", "c", "endattack2", "m01_end_attack_02",
-            "m01_end_attack_02_forbigguy", "grabbed2", "endattackcomp2",
-            "all_end_attack_02_forset03", 130):
+    # Brick variant chain: stepright -> grab1miss brick -> grab1 brick ->
+    # endattack brick -> endattackcomp1.
+    if not _validate_endattack_from_grab(scene, player, defender, "up", "a",
+            "grab1miss brick", "grab1 brick", "a", "endattack brick",
+            "m03_end_attack_01", "m03_end_attack_01_forbigguy", "grabbed1",
+            "endattackcomp1", "all_end_attack_01_forset03", 93):
+        quit(1)
+        return
+    # The c-key finisher (order 35, unique endbrucelee) has no recovered Brick
+    # variant: grab2 brick must hold the victim but refuse the finisher.
+    if not _validate_brick_grab2_finisher_refused(scene, player, defender):
         quit(1)
         return
     if not _validate_grab_flag_reset(scene, player, defender):
@@ -111,32 +123,32 @@ func _run() -> void:
     if not _validate_blocked_grab_rejects_endattack(scene, player, defender):
         quit(1)
         return
-    if not _validate_normal_hit_endmove(scene, player, defender, "endattack1",
-            "a", "m01_end_attack_01", "endattackcomp1",
-            "all_end_attack_01_forset03", 93, true):
+    if not _validate_normal_hit_finisher_refused(scene, player, defender):
         quit(1)
         return
-    if not _validate_normal_hit_endmove(scene, player, defender, "endattack2",
-            "c", "m01_end_attack_02", "endattackcomp2",
-            "all_end_attack_02_forset03", 130, false):
+    if not _validate_mirror_finisher_refused_normal_hit(scene, player, defender):
         quit(1)
         return
     print("ENDATTACK_VALIDATION=" + JSON.stringify({
-        "endattack1": "m01_end_attack_01",
-        "endattack2": "m01_end_attack_02",
-        "source_record_indexes": {"endattack1": 34, "endattack2": 35},
+        "brick_finisher": "endattack brick",
+        "brick_source_animation": "m03_end_attack_01",
+        "brick_finisher_clip": "m03_end_attack_01_forbigguy",
+        "generic_rows": [6, 34, 35, 347],
+        "brick_rows": [8, 17, 36, 383, 385],
+        "mirror_finisher_refused": "endattack2 / endbrucelee",
         "source_damage": 0.0,
         "victim": {
             "endattackcomp1": ["all_end_attack_01_forset03", 93],
-            "endattackcomp2": ["all_end_attack_02_forset03", 130],
         },
         "bruce_bytes": CANDIDATES["bruce"]["bytes"],
         "bruce_sha256": CANDIDATES["bruce"]["sha256"],
         "brick_bytes": CANDIDATES["brick"]["bytes"],
         "brick_sha256": CANDIDATES["brick"]["sha256"],
-        "scope": "native links: grab holds the opponent (grabbed1/2 reads as "
-                + "stun) and the candobasicattacks finisher link converts it "
-                + "through begin_endattack_victim; original impact damage is zero",
+        "scope": "native links: the Brick opponent selects recovered orders "
+                + "8/383/36; generic 6/34/347 stay in the table and are deferred, "
+                + "mirror-only order 35 (endbrucelee) fails closed; grab holds "
+                + "the victim and the finisher converts it through "
+                + "begin_endattack_victim with zero source damage",
     }))
     scene.queue_free()
     await process_frame
@@ -266,8 +278,8 @@ func _validate_grab_flag_reset(scene: Node, player: PortFighter,
     # endattack property: starting any chained attack begins a new action and
     # clears it, so the old "still set after the finisher" check moved to the
     # moment the grab lands, and reset_fighter must still clear it.
-    if not _start_grab(scene, player, defender, "up", "a", "grab1_miss",
-            "grab1", "grabbed1"):
+    if not _start_grab(scene, player, defender, "up", "a", "grab1miss brick",
+            "grab1 brick", "grabbed1"):
         return false
     if not bool(player.get("_grab_connected")):
         push_error("Successful grab did not set the grab-connected flag")
@@ -287,15 +299,22 @@ func _validate_blocked_grab_rejects_endattack(scene: Node, player: PortFighter,
     _reset(scene, player, defender)
     player.set_held_directions({"up": true})
     defender.guard_held = true
+    defender._native_action_categories.clear()
     if not player.record_standing_combo_press("a"):
-        push_error("Blocked-grab setup did not start grab1")
+        push_error("Blocked-grab setup did not start grab1miss brick")
         return false
-    if player.attack_kind != "grab1_miss":
-        push_error("Blocked-grab setup expected grab1_miss, got " + player.attack_kind)
+    if player.attack_kind != "grab1miss brick":
+        push_error("Blocked-grab setup expected grab1miss brick, got " + player.attack_kind)
         return false
+    # Fail-closed blocking state: with no recovered action-category row the
+    # native CFighter::IsBlocking probe reports true, so oppnotblocking is false
+    # for the whole Brick [10, 11] chain window.
+    defender._native_action_categories.clear()
     for _frame: int in range(40):
+        defender.guard_held = true
+        defender._native_action_categories.clear()
         _step(player, defender, true)
-    if player.attack_kind == "grab1":
+    if player.attack_kind == "grab1 brick":
         push_error("Grab chained into a blocking opponent")
         return false
     if bool(player.get("_grab_connected")):
@@ -304,7 +323,8 @@ func _validate_blocked_grab_rejects_endattack(scene: Node, player: PortFighter,
     player.set_held_directions({"right": true})
     player.set_key_status({"right": true, "a": true})
     player.record_standing_combo_press("a")
-    if player.attack_kind in ["endattack1", "endattack2"]:
+    if (player.attack_kind in ["endattack1", "endattack2"]
+            or String(player.attack_kind).begins_with("endattack ")):
         push_error("Endattack started after a blocked grab")
         return false
     return true
@@ -418,6 +438,168 @@ func _validate_normal_hit_endmove(scene: Node, player: PortFighter,
     if absf(defender.health - health_before) > 0.001:
         push_error("Normal-hit " + finisher + " invented damage")
         return false
+    return true
+
+
+func _assert_recovered_link_rows(player: PortFighter) -> bool:
+    # Both the generic rows and the Brick-specific rows are native table facts.
+    # Keeping them explicit preserves link-order coverage while the runtime
+    # expectations below follow the recovered opponent-suffix selection.
+    var by_order: Dictionary = {}
+    for link: Dictionary in player._native_links:
+        by_order[int(link.get("order", -1))] = link
+    var expected: Dictionary = {
+        6: ["stepright", "grab1miss", "grababrucelee"],
+        8: ["stepright", "grab1miss brick", "grababrick"],
+        17: ["stepleft", "grab2miss brick", "grabbbrick"],
+        34: ["", "endattack1", ""],
+        35: ["", "endattack2", "endbrucelee"],
+        36: ["", "endattack brick", "endbrickdavis"],
+        347: ["grab1miss", "grab1", "grababrucelee"],
+        383: ["grab1miss brick", "grab1 brick", "grababrick"],
+        385: ["grab2miss brick", "grab2 brick", "grabbbrick"],
+    }
+    for order: int in expected:
+        var row: Array = expected[order]
+        var link: Dictionary = by_order.get(order, {})
+        var unique: Array = Array(link.get("unique", []))
+        var tag: String = str(unique[0]) if not unique.is_empty() else ""
+        if (link.is_empty()
+                or ("" if link.get("from") == null else str(link.get("from"))) != str(row[0])
+                or str(link.get("to", "")) != str(row[1])
+                or tag != str(row[2])):
+            push_error("recovered link order " + str(order) + " drifted: " + str(link))
+            return false
+    # Opponent-token gate: the fixture is a Brick opponent.
+    if player._opponent_suffix_token() != "brick":
+        push_error("expected a Brick opponent token, got "
+                + player._opponent_suffix_token())
+        return false
+    var generic35: Dictionary = by_order.get(35, {})
+    if player._native_link_unique_ok(generic35):
+        push_error("mirror-only order 35 unexpectedly passed the owner gate")
+        return false
+    var brick36: Dictionary = by_order.get(36, {})
+    if not player._native_link_unique_ok(brick36):
+        push_error("Brick order 36 was refused by the owner gate")
+        return false
+    return true
+
+
+func _endattack_kind(kind: String) -> bool:
+    return (kind in ["endattack1", "endattack2"]
+            or kind.begins_with("endattack "))
+
+
+func _validate_brick_grab2_finisher_refused(scene: Node, player: PortFighter,
+        defender: PortFighter) -> bool:
+    # brucelee.set has no "endattack2 brick" row: order 35 is the mirror-only
+    # endbrucelee link.  Against Brick the grab2 chain must hold the victim but
+    # the c-key finisher must fail closed.
+    if not _start_grab(scene, player, defender, "down", "c",
+            "grab2miss brick", "grab2 brick", "grabbed2"):
+        return false
+    var held_before: String = player.attack_kind
+    player.set_held_directions({"right": true})
+    player.set_key_status({"right": true, "c": true})
+    player.record_standing_combo_press("c")
+    if _endattack_kind(player.attack_kind):
+        push_error("mirror-only c finisher fired against Brick: " + player.attack_kind)
+        return false
+    if player.attack_kind != held_before:
+        push_error("c press changed the Brick grab unexpectedly: "
+                + held_before + " -> " + player.attack_kind)
+        return false
+    for _frame: int in range(40):
+        _step(player, defender, true)
+    if defender.state.begins_with("endattackcomp"):
+        push_error("refused c finisher still consumed the victim: " + defender.state)
+        return false
+    return true
+
+
+func _validate_normal_hit_finisher_refused(scene: Node, player: PortFighter,
+        defender: PortFighter) -> bool:
+    # A normal hit on the Brick victim leaves its reaction pose "laying", not
+    # "stun"; the recovered oppposestun precondition is therefore false while
+    # the order-36 window is open, so the A finisher must fail closed.  This is
+    # the native evidence for keeping the normal-hit endmove path refused on a
+    # Brick victim (the grab path above is the one that truly reads as stun).
+    _reset(scene, player, defender)
+    if not player.request_attack("high_punch3"):
+        push_error("Normal base hit did not start before the Brick refusal check")
+        return false
+    var link: Dictionary = _finisher_link(player, "endattack brick")
+    if link.is_empty():
+        push_error("Native link table lost the recovered endattack brick row")
+        return false
+    if not player._native_link_unique_ok(link):
+        push_error("Brick order 36 was refused by the owner gate")
+        return false
+    var open_window_seen: bool = false
+    for _frame: int in range(160):
+        _step(player, defender, true)
+        if not bool(player.get("_attack_hit_landed")):
+            continue
+        if not player._native_link_window_ok(link):
+            continue
+        open_window_seen = true
+        if player._native_link_conditions_ok(link):
+            push_error("oppposestun unexpectedly true for a Brick hitstun victim")
+            return false
+        if _endattack_kind(player.attack_kind):
+            push_error("normal-hit finisher fired against a Brick victim: "
+                    + player.attack_kind)
+            return false
+        if defender.state.begins_with("endattackcomp"):
+            push_error("normal-hit finisher consumed a Brick victim")
+            return false
+    if not open_window_seen:
+        push_error("normal hit never reached the recovered endattack brick window")
+        return false
+    return true
+
+
+func _validate_mirror_finisher_refused_normal_hit(scene: Node,
+        player: PortFighter, defender: PortFighter) -> bool:
+    # Same fail-closed property after an ordinary landed hit: no recovered c-key
+    # endattack variant exists for this opponent, so no endattack may start and
+    # no victim comp state may be entered.
+    _reset(scene, player, defender)
+    if not player.request_attack("high_punch3"):
+        push_error("Normal base hit did not start before the mirror check")
+        return false
+    var link: Dictionary = _finisher_link(player, "endattack2")
+    if link.is_empty():
+        push_error("Native link table lost the mirror-only endattack2 row")
+        return false
+    if player._native_link_unique_ok(link):
+        push_error("mirror-only endattack2 link passed the owner gate")
+        return false
+    var pressed: bool = false
+    for _frame: int in range(120):
+        _step(player, defender, true)
+        if not bool(player.get("_attack_hit_landed")):
+            continue
+        if defender.state != "hitstun":
+            continue
+        player.set_held_directions({"right": true})
+        player.set_key_status({"right": true, "c": true})
+        player.record_standing_combo_press("c")
+        pressed = true
+        break
+    if not pressed:
+        push_error("Normal hit never opened a stunned window")
+        return false
+    if _endattack_kind(player.attack_kind):
+        push_error("mirror-only c finisher fired after a normal hit: "
+                + player.attack_kind)
+        return false
+    for _frame: int in range(120):
+        _step(player, defender, true)
+        if defender.state.begins_with("endattackcomp"):
+            push_error("refused c finisher consumed the victim after a normal hit")
+            return false
     return true
 
 

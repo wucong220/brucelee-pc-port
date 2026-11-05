@@ -1,22 +1,29 @@
-﻿extends SceneTree
-## Verify the recovered brucelee.set candobasicattacks -> endattack1/endattack2
-## links end to end on the real main.tscn, and that everything else fails
-## closed.
+extends SceneTree
+## Verify the recovered brucelee.set candobasicattacks finisher links end to end
+## on the real main.tscn, and that everything else fails closed.
 ##
-## Native facts being exercised (adreno_200/set/brucelee.set, links order
-## 34/35, keyboard variant 1):
-##   endattack1  sequence [pressa]          keystatus right pressed
-##   endattack2  sequence [pressc]          keystatus right pressed
-##   conditions  oppposestun + grabdistance (endattack1 = 150, endattack2 = 90)
+## Native facts being exercised (adreno_200/set/brucelee.set, keyboard variant 1):
+##   order 34 candobasicattacks -> endattack1, [pressa], empty unique (generic)
+##   order 35 candobasicattacks -> endattack2, [pressc], unique endbrucelee
+##   order 36 candobasicattacks -> endattack brick, [pressa], unique endbrickdavis
+##   keystatus right pressed; conditions oppposestun + grabdistance
 ##   entry_frame 0, no time window; the window is the current action's
 ##   candobasicattacks group membership.
 ##
+## The `unique` token names the matchup OPPONENT.  Against the Brick opponent of
+## this fixture, order 36 is the native finisher: order 34 is deferred while the
+## specific variant applies, and order 35 is the mirror-only endbrucelee link.
+## brucelee.set contains no "endattack2 brick" row, so the c-key path must fail
+## closed.  Generic rows are still asserted from the native table (link order,
+## sequence, keystatus, conditions) so their coverage is retained.
+##
 ## Successful path: grab1/grab2 puts the victim in grabbed1/2 (its pose reads
-## stun), the attacker returns to a candobasicattacks action, and the
-## documented attack key while holding toward starts endattack1/2 and turns the
-## victim into endattackcomp1/2.
+## stun), the attacker returns to a candobasicattacks action, and the documented
+## A key while holding toward starts endattack brick and turns the victim into
+## endattackcomp1.
 
 const BRUCE_ACTIONS: Array[String] = ["endattack1", "endattack2"]
+const BRICK_FINISHER: String = "endattack brick"
 const FAILURE_MARK: String = "FAIL"
 
 var match_scene: Node = null
@@ -29,6 +36,71 @@ func _initialize() -> void:
 func _fail(message: String) -> void:
     push_error(FAILURE_MARK + ": " + message)
     quit(1)
+
+
+func _endattack_kind(kind: String) -> bool:
+    return (kind in ["endattack1", "endattack2"]
+            or kind.begins_with("endattack "))
+
+
+func _assert_recovered_link_rows(player: PortFighter) -> bool:
+    # Keep the generic rows AND the Brick row asserted from the native table.
+    var by_order: Dictionary = {}
+    for link: Dictionary in player._native_links:
+        by_order[int(link.get("order", -1))] = link
+    var expected: Dictionary = {
+        34: ["endattack1", ""],
+        35: ["endattack2", "endbrucelee"],
+        36: ["endattack brick", "endbrickdavis"],
+    }
+    for order: int in expected:
+        var row: Array = expected[order]
+        var link: Dictionary = by_order.get(order, {})
+        var unique: Array = Array(link.get("unique", []))
+        var tag: String = str(unique[0]) if not unique.is_empty() else ""
+        if (link.is_empty()
+                or str(link.get("to", "")) != str(row[0])
+                or str(link.get("from_group", "")) != "candobasicattacks"
+                or tag != str(row[1])):
+            _fail("recovered link order " + str(order) + " drifted: " + str(link))
+            return false
+    if player._opponent_suffix_token() != "brick":
+        _fail("expected a Brick opponent token, got " + player._opponent_suffix_token())
+        return false
+    if player._native_link_unique_ok(by_order.get(35, {})):
+        _fail("mirror-only order 35 unexpectedly passed the owner gate")
+        return false
+    if not player._native_link_unique_ok(by_order.get(36, {})):
+        _fail("Brick order 36 was refused by the owner gate")
+        return false
+    return true
+
+
+func _press_refused_finisher(player: PortFighter, victim: PortFighter,
+        key: String) -> bool:
+    # No recovered c-key endattack variant exists for a Brick opponent.  The
+    # press must not start any endattack and must not consume the victim.
+    if victim.state not in ["grabbed1", "grabbed2"]:
+        push_error("Victim was not held before the refused finisher press")
+        return false
+    var before: String = player.attack_kind
+    player.set_key_status({"right": true, key: true})
+    player.set_held_directions({"right": true})
+    player.record_standing_combo_press(key)
+    if _endattack_kind(player.attack_kind):
+        push_error("mirror-only finisher fired against Brick: " + player.attack_kind)
+        return false
+    if player.attack_kind != before:
+        push_error("refused finisher press changed the grab: " + before
+                + " -> " + player.attack_kind)
+        return false
+    for _step: int in range(120):
+        player.position = Vector3(0.0, 1.2, 0.0)
+        player._physics_process(1.0 / 60.0)
+        if victim.state.begins_with("endattackcomp"):
+            push_error("refused finisher consumed the victim: " + victim.state)
+            return false
+    return true
 
 
 func _grab_victim(player: PortFighter, victim: PortFighter, kind: String,
@@ -128,13 +200,16 @@ func _run() -> void:
     victim.set_physics_process(false)
     player.rage = 100.0
 
-    # 1. Native link sanity: the two finisher links keep their recovered
-    #    keysequences, keystatus and conditions.
+    # 1. Native link sanity: generic and Brick finisher links keep their
+    #    recovered keysequences, keystatus, conditions and unique owner tags.
+    if not _assert_recovered_link_rows(player):
+        return
     var wanted: Dictionary = {
         "endattack1": {"step": "a", "conditions": ["oppposestun", "grabdistance"]},
         "endattack2": {"step": "c", "conditions": ["oppposestun", "grabdistance"]},
+        "endattack brick": {"step": "a", "conditions": ["oppposestun", "grabdistance"]},
     }
-    for finisher: String in BRUCE_ACTIONS:
+    for finisher: String in wanted:
         var link: Dictionary = {}
         for candidate: Dictionary in player._native_links:
             if (String(candidate.get("to", "")) == finisher
@@ -163,34 +238,33 @@ func _run() -> void:
                 _fail(finisher + " lost condition " + condition)
                 return
 
-    # 2. grab1 -> endattack1 by the documented key while holding toward.
+    # 2. grab1 -> endattack brick by the documented A key while holding toward.
     if not _grab_victim(player, victim, "grab1", 0.35):
         _fail("grab1 chain setup")
         return
-    if not _press_finisher(player, victim, "a", "endattack1", "endattackcomp1"):
-        _fail("endattack1 via grab1")
+    if not _press_finisher(player, victim, "a", BRICK_FINISHER, "endattackcomp1"):
+        _fail(BRICK_FINISHER + " via grab1")
         return
-    print("PASS endattack1 from grab1: victim=" + victim.state)
+    print("PASS " + BRICK_FINISHER + " from grab1: victim=" + victim.state)
 
-    # 2b. Same link from the idle action after the grab animation finished.
+    # 2b. Same recovered link from the idle action after the grab finished.
     if not _grab_victim(player, victim, "grab1", 0.35):
         _fail("grab1 idle-path setup")
         return
-    if not _press_after_grab_idle(player, victim, "a", "endattack1"):
-        _fail("endattack1 from idle after grab")
+    if not _press_after_grab_idle(player, victim, "a", BRICK_FINISHER):
+        _fail(BRICK_FINISHER + " from idle after grab")
         return
-    print("PASS endattack1 from idle after grab1")
+    print("PASS " + BRICK_FINISHER + " from idle after grab1")
 
-    # 3. grab2 -> endattack2 by the documented key while holding toward.
-    #    The previous victim is down (faceupko after endattackcomp), so reset
-    #    into a fresh round first; the reset also rebuilds both fighters.
+    # 3. There is no "endattack2 brick" row: order 35 is the mirror-only
+    #    endbrucelee link, so the c-key path must fail closed against Brick.
     if not _grab_victim(player, victim, "grab2", 0.35):
         _fail("grab2 chain setup")
         return
-    if not _press_finisher(player, victim, "c", "endattack2", "endattackcomp2"):
-        _fail("endattack2 via grab2")
+    if not _press_refused_finisher(player, victim, "c"):
+        _fail("mirror-only c finisher was not refused")
         return
-    print("PASS endattack2 from grab2: victim=" + victim.state)
+    print("PASS mirror-only c finisher refused: victim=" + victim.state)
 
     # 4. Fail closed: the same A press without the held toward key must not
     #    fire the finisher (keystatus right pressed is required).
@@ -202,12 +276,12 @@ func _run() -> void:
     player.set_key_status({"a": true})
     player.set_held_directions({})
     player.record_standing_combo_press("a")
-    if player.attack_kind == "endattack1":
-        _fail("endattack1 fired without holding the toward key")
+    if _endattack_kind(player.attack_kind):
+        _fail("finisher fired without holding the toward key: " + player.attack_kind)
         return
     print("PASS no-held-toward rejected: attack=" + player.attack_kind)
 
-    # 5. Fail closed: out of grabdistance (endattack1 limit 150 source units).
+    # 5. Fail closed: out of grabdistance (order 36 limit 150 source units).
     if not _grab_victim(player, victim, "grab1", 0.35):
         _fail("grab1 far chain setup")
         return
@@ -215,8 +289,8 @@ func _run() -> void:
     player.set_key_status({"right": true, "a": true})
     player.set_held_directions({"right": true})
     var far_key_ok: bool = player.record_standing_combo_press("a")
-    if player.attack_kind == "endattack1":
-        _fail("endattack1 fired out of grabdistance")
+    if _endattack_kind(player.attack_kind):
+        _fail("finisher fired out of grabdistance: " + player.attack_kind)
         return
     print("PASS out-of-range rejected: accepted_press=", far_key_ok,
             " attack=", player.attack_kind)
@@ -236,15 +310,18 @@ func _run() -> void:
     player.set_key_status({"right": true, "a": true})
     player.set_held_directions({"right": true})
     player.record_standing_combo_press("a")
-    if player.attack_kind == "endattack1" and victim.state not in ["grabbed1", "grabbed2"]:
-        _fail("endattack1 fired after the hold window closed")
+    if _endattack_kind(player.attack_kind) and victim.state not in ["grabbed1", "grabbed2"]:
+        _fail("finisher fired after the hold window closed: " + player.attack_kind)
         return
     print("PASS window-closed rejected: victim=", victim.state)
 
     print("GRAB_FINISHER_INPUT_VALIDATION=" + JSON.stringify({
-        "endattack1": "endattackcomp1",
-        "endattack2": "endattackcomp2",
-        "fail_closed": ["no_held_toward", "out_of_range", "window_closed"],
-        "source": "brucelee.set links order 34/35, keyboard variant 1",
+        "brick_finisher": BRICK_FINISHER,
+        "brick_victim": "endattackcomp1",
+        "generic_rows": [34, 35],
+        "brick_row": 36,
+        "mirror_finisher_refused": "endattack2 / endbrucelee",
+        "fail_closed": ["no_held_toward", "out_of_range", "window_closed", "mirror_c"],
+        "source": "brucelee.set links order 34/35/36, keyboard variant 1",
     }))
     quit(0)
