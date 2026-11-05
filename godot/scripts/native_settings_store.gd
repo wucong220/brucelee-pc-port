@@ -592,6 +592,295 @@ static func _dict_get(node: Dictionary, key: String) -> Variant:
 	return null
 
 
+static func _dict_value_index(doc: Dictionary, dict_idx: int, key_name: String) -> int:
+	var recs: Array = doc["recs"]
+	var strings: Array = doc["strings"]
+	if dict_idx < 0 or dict_idx >= recs.size():
+		_last_error = "dict index out of range"
+		return -1
+	var desc: int = int(recs[dict_idx][0])
+	if (desc & 0xf0000000) != 0x30000000:
+		_last_error = "node is not a dictionary"
+		return -1
+	var base: int = dict_idx + int(recs[dict_idx][1])
+	var count: int = desc & 0x1fffff
+	var found: int = -1
+	for j: int in range(count):
+		var k_idx: int = base + 2 * j
+		var v_idx: int = k_idx + 1
+		if k_idx < 0 or k_idx >= recs.size() or v_idx >= recs.size():
+			_last_error = "dictionary out of bounds"
+			return -1
+		var kd: int = int(recs[k_idx][0])
+		if (kd & 0xf0000000) != 0x60000000:
+			continue
+		var ordv: int = int(recs[k_idx][1])
+		if ordv < 0 or ordv >= strings.size():
+			_last_error = "key ordinal out of range"
+			return -1
+		if String(strings[ordv]) == key_name:
+			if found >= 0:
+				_last_error = "duplicate key: " + key_name
+				return -1
+			found = v_idx
+	return found
+
+
+static func root_provider_names(bytes: PackedByteArray) -> Array:
+	_last_error = ""
+	var doc: Dictionary = _parse(bytes)
+	if doc.is_empty():
+		return []
+	var recs: Array = doc["recs"]
+	var strings: Array = doc["strings"]
+	if recs.is_empty():
+		_last_error = "empty record table"
+		return []
+	var desc: int = int(recs[0][0])
+	if (desc & 0xf0000000) != 0x30000000:
+		_last_error = "settings root is not a dictionary"
+		return []
+	var base: int = int(recs[0][1])
+	var count: int = desc & 0x1fffff
+	var names: Array = []
+	for j: int in range(count):
+		var k_idx: int = base + 2 * j
+		if k_idx < 0 or k_idx >= recs.size():
+			_last_error = "root dictionary out of bounds"
+			return []
+		var kd: int = int(recs[k_idx][0])
+		if (kd & 0xf0000000) != 0x60000000:
+			continue
+		var ordv: int = int(recs[k_idx][1])
+		if ordv < 0 or ordv >= strings.size():
+			_last_error = "root key ordinal out of range"
+			return []
+		names.append(String(strings[ordv]))
+	return names
+
+
+static func provider_array_from_bytes(bytes: PackedByteArray, provider: String,
+		cell: String, expected_count: int = -1) -> Array:
+	_last_error = ""
+	var doc: Dictionary = _parse(bytes)
+	if doc.is_empty():
+		return []
+	var recs: Array = doc["recs"]
+	var provider_idx: int = _dict_value_index(doc, 0, provider)
+	if provider_idx < 0:
+		if _last_error.is_empty():
+			_last_error = "provider missing: " + provider
+		return []
+	var cell_idx: int = _dict_value_index(doc, provider_idx, cell)
+	if cell_idx < 0:
+		if _last_error.is_empty():
+			_last_error = "cell missing: " + provider + "." + cell
+		return []
+	var desc: int = int(recs[cell_idx][0])
+	if (desc & 0xf0000000) != 0x40000000:
+		_last_error = "cell is not an array: " + provider + "." + cell
+		return []
+	var count: int = desc & 0x1fffff
+	if expected_count >= 0 and count != expected_count:
+		_last_error = "array length mismatch: %s.%s (%d != %d)" % [provider, cell, count, expected_count]
+		return []
+	var base: int = cell_idx + int(recs[cell_idx][1])
+	var out: Array = []
+	for j: int in range(count):
+		var rec_idx: int = base + j
+		if rec_idx < 0 or rec_idx >= recs.size():
+			_last_error = "array element out of bounds: " + provider + "." + cell
+			return []
+		if int(recs[rec_idx][0]) != 0x00000000:
+			_last_error = "array element is not an integer flag: " + provider + "." + cell
+			return []
+		out.append(int(recs[rec_idx][1]))
+	return out
+
+
+static func float_dict_from_bytes(bytes: PackedByteArray, provider: String,
+		dict_name: String) -> Dictionary:
+	_last_error = ""
+	var doc: Dictionary = _parse(bytes)
+	if doc.is_empty():
+		return {}
+	var recs: Array = doc["recs"]
+	var strings: Array = doc["strings"]
+	var provider_idx: int = _dict_value_index(doc, 0, provider)
+	if provider_idx < 0:
+		if _last_error.is_empty():
+			_last_error = "provider missing: " + provider
+		return {}
+	var dict_idx: int = _dict_value_index(doc, provider_idx, dict_name)
+	if dict_idx < 0:
+		if _last_error.is_empty():
+			_last_error = "dict missing: " + provider + "." + dict_name
+		return {}
+	var desc: int = int(recs[dict_idx][0])
+	if (desc & 0xf0000000) != 0x30000000:
+		_last_error = "cell is not a dictionary: " + provider + "." + dict_name
+		return {}
+	var base: int = dict_idx + int(recs[dict_idx][1])
+	var count: int = desc & 0x1fffff
+	var out: Dictionary = {}
+	for j: int in range(count):
+		var k_idx: int = base + 2 * j
+		var v_idx: int = k_idx + 1
+		if k_idx < 0 or k_idx >= recs.size() or v_idx >= recs.size():
+			_last_error = "float dict out of bounds: " + provider + "." + dict_name
+			return {}
+		var kd: int = int(recs[k_idx][0])
+		if (kd & 0xf0000000) != 0x60000000:
+			_last_error = "float dict key is not a string"
+			return {}
+		var ordv: int = int(recs[k_idx][1])
+		if ordv < 0 or ordv >= strings.size():
+			_last_error = "float dict key ordinal out of range"
+			return {}
+		var vd: int = int(recs[v_idx][0])
+		var tag: int = vd & 0xf0000000
+		if tag == 0x20000000 and (vd & 0x1fffff) == 0:
+			out[String(strings[ordv])] = _bits_float(int(recs[v_idx][1]))
+		elif vd == 0x00000000:
+			out[String(strings[ordv])] = float(int(recs[v_idx][1]))
+		else:
+			_last_error = "float dict value is not a scalar: " + String(strings[ordv])
+			return {}
+	return out
+
+
+static func patch_provider_cells(path: String, array_patches: Array,
+		float_patches: Array) -> bool:
+	_last_error = ""
+	if not FileAccess.file_exists(path):
+		_last_error = "settings.dat missing"
+		return false
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		_last_error = "cannot open settings.dat"
+		return false
+	var bytes: PackedByteArray = f.get_buffer(f.get_length())
+	f.close()
+	var doc: Dictionary = _parse(bytes)
+	if doc.is_empty():
+		_last_error = "unparseable settings.dat: " + _last_error
+		return false
+	var recs: Array = doc["recs"]
+	var strings: Array = doc["strings"]
+	var record_start: int = int(doc["rec_start"])
+	var patched: PackedByteArray = bytes.duplicate()
+
+	for patch_value: Variant in array_patches:
+		var patch: Dictionary = patch_value
+		var provider: String = String(patch["provider"])
+		var cell: String = String(patch["cell"])
+		var values: Array = patch["values"]
+		var provider_idx: int = _dict_value_index(doc, 0, provider)
+		if provider_idx < 0:
+			if _last_error.is_empty():
+				_last_error = "provider missing: " + provider
+			return false
+		var cell_idx: int = _dict_value_index(doc, provider_idx, cell)
+		if cell_idx < 0:
+			if _last_error.is_empty():
+				_last_error = "cell missing: " + provider + "." + cell
+			return false
+		var desc: int = int(recs[cell_idx][0])
+		if (desc & 0xf0000000) != 0x40000000:
+			_last_error = "cell is not an array: " + provider + "." + cell
+			return false
+		var count: int = desc & 0x1fffff
+		if count != values.size():
+			_last_error = "array length mismatch: %s.%s (%d != %d)" % [provider, cell, count, values.size()]
+			return false
+		var base: int = cell_idx + int(recs[cell_idx][1])
+		for j: int in range(count):
+			var rec_idx: int = base + j
+			if rec_idx < 0 or rec_idx >= recs.size() or int(recs[rec_idx][0]) != 0x00000000:
+				_last_error = "array element is not an integer flag: " + provider + "." + cell
+				return false
+			var raw: Variant = values[j]
+			if typeof(raw) != TYPE_BOOL and typeof(raw) != TYPE_INT:
+				_last_error = "array patch value is not boolean: " + provider + "." + cell
+				return false
+			if typeof(raw) == TYPE_INT and int(raw) != 0 and int(raw) != 1:
+				_last_error = "array patch integer is not 0/1: " + provider + "." + cell
+				return false
+			var flag: int = 1 if bool(raw) else 0
+			patched.encode_u32(record_start + rec_idx * 8 + 4, flag)
+
+	for patch_value: Variant in float_patches:
+		var patch: Dictionary = patch_value
+		var provider: String = String(patch["provider"])
+		var dict_name: String = String(patch["dict"])
+		var values: Dictionary = patch["values"]
+		var provider_idx: int = _dict_value_index(doc, 0, provider)
+		if provider_idx < 0:
+			if _last_error.is_empty():
+				_last_error = "provider missing: " + provider
+			return false
+		var dict_idx: int = _dict_value_index(doc, provider_idx, dict_name)
+		if dict_idx < 0:
+			if _last_error.is_empty():
+				_last_error = "dict missing: " + provider + "." + dict_name
+			return false
+		var desc: int = int(recs[dict_idx][0])
+		if (desc & 0xf0000000) != 0x30000000:
+			_last_error = "cell is not a dictionary: " + provider + "." + dict_name
+			return false
+		for key_value: Variant in values.keys():
+			var key: String = String(key_value)
+			var v_idx: int = _dict_value_index(doc, dict_idx, key)
+			if v_idx < 0:
+				if _last_error.is_empty():
+					_last_error = "float key missing: %s.%s.%s" % [provider, dict_name, key]
+				return false
+			var vd: int = int(recs[v_idx][0])
+			var tag: int = vd & 0xf0000000
+			if tag != 0x20000000 and vd != 0x00000000:
+				_last_error = "float key is not a scalar: " + key
+				return false
+			var value: float = float(values[key_value])
+			if not is_finite(value):
+				_last_error = "non-finite float patch: " + key
+				return false
+			patched.encode_u32(record_start + v_idx * 8, 0x20000000)
+			patched.encode_u32(record_start + v_idx * 8 + 4, _float_bits(value))
+
+	var body_end: int = patched.size() - 16
+	var digest: PackedByteArray = _md5(patched.slice(0, body_end))
+	for i: int in range(16):
+		patched[body_end + i] = digest[i]
+	if _parse(patched).is_empty():
+		_last_error = "patched container is unparseable: " + _last_error
+		return false
+
+	# Verify every requested value before touching the real file.
+	for patch_value: Variant in array_patches:
+		var patch: Dictionary = patch_value
+		var check: Array = provider_array_from_bytes(patched, String(patch["provider"]),
+				String(patch["cell"]), (patch["values"] as Array).size())
+		if check.is_empty() and not _last_error.is_empty():
+			return false
+		var expected: Array = []
+		for raw_value: Variant in (patch["values"] as Array):
+			expected.append(1 if bool(raw_value) else 0)
+		if check != expected:
+			_last_error = "array patch did not read back"
+			return false
+	for patch_value: Variant in float_patches:
+		var patch: Dictionary = patch_value
+		var check2: Dictionary = float_dict_from_bytes(patched, String(patch["provider"]),
+				String(patch["dict"]))
+		if check2.is_empty() and not _last_error.is_empty():
+			return false
+		for k: Variant in (patch["values"] as Dictionary).keys():
+			if absf(float(check2.get(k, INF)) - float(patch["values"][k])) > 0.000001:
+				_last_error = "float patch did not read back: " + String(k)
+				return false
+	return _write_bytes(path, patched)
+
+
 static func _write_bytes(path: String, bytes: PackedByteArray) -> bool:
 	var out := FileAccess.open(path, FileAccess.WRITE)
 	if out == null:

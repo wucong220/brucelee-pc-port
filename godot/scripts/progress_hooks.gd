@@ -15,10 +15,15 @@ extends Node
 ## left to the service's fail-closed evaluation; nothing is invented here.
 
 const ProgressServiceScript = preload("res://scripts/progress_service.gd")
+const NativeProgressStoreScript = preload("res://scripts/native_progress_store.gd")
 
 var service = null
 var active: bool = false
 var save_path: String = SaveManager.SAVE_PATH
+var native_store = null
+var native_path: String = ""
+var native_ok: bool = true
+var native_error: String = ""
 
 var _last_grab_seq: int = -1
 var _last_endmove_seq: int = -1
@@ -26,16 +31,35 @@ var _last_synced_exp: int = 0
 var event_log: Array = []
 
 
-func configure(path: String = SaveManager.SAVE_PATH) -> void:
+func configure(path: String = SaveManager.SAVE_PATH, native_path_override: String = "") -> void:
 	service = ProgressServiceScript.new()
 	save_path = path
 	var loaded: bool = service.load_or_default(save_path)
+	native_store = null
+	native_path = native_path_override
+	if native_path.is_empty():
+		native_path = OS.get_environment("BRUCELEE_NATIVE_SETTINGS")
+	native_ok = true
+	native_error = ""
+	if not native_path.is_empty():
+		native_store = NativeProgressStoreScript.new()
+		if not native_store.configure(native_path):
+			native_ok = false
+			native_error = native_store.error
+		elif not native_store.load_into(service):
+			native_ok = false
+			native_error = native_store.error
+		elif not service.save(save_path):
+			native_ok = false
+			native_error = "failed to mirror native state to the JSON save"
 	_last_synced_exp = int(service.state["story"]["exp"])
-	active = service.registry.loaded and service.achievements.loaded
-	print("PROGRESS_SERVICE active=%s loaded=%s unlocked=%d achievements=%d" % [
+	active = service.registry.loaded and service.achievements.loaded and native_ok
+	print("PROGRESS_SERVICE active=%s loaded=%s unlocked=%d achievements=%d native=%s native_ok=%s" % [
 		str(active), str(loaded), service.unlocked_ids().size(),
-		service.state["achievements"]["reached"].size(),
+		service.state["achievements"]["reached"].size(), native_path, str(native_ok),
 	])
+	if not native_ok:
+		push_error("NATIVE_PROGRESS_DISABLED: " + native_error)
 
 
 func is_active() -> bool:
@@ -47,7 +71,14 @@ func _flush(tag: String) -> Array:
 	if service == null:
 		return []
 	var fresh: Array = service.refresh_achievements()
-	service.save(save_path)
+	if native_store != null:
+		if not native_store.save_from(service):
+			native_ok = false
+			native_error = native_store.error
+			push_error("NATIVE_PROGRESS_SAVE_FAILED: " + native_error)
+			return []
+	if not service.save(save_path):
+		return []
 	event_log.append({"tag": tag, "fresh": fresh.duplicate()})
 	if not fresh.is_empty():
 		print("PROGRESS_ACHIEVEMENT %s %s" % [tag, JSON.stringify(fresh)])
@@ -166,7 +197,14 @@ func note_grade(grade: String) -> Array:
 # ------------------------------------------------------- persistence / introspect
 
 func flush() -> bool:
-	return service != null and service.save(save_path)
+	if service == null:
+		return false
+	if native_store != null and not native_store.save_from(service):
+		native_ok = false
+		native_error = native_store.error
+		push_error("NATIVE_PROGRESS_SAVE_FAILED: " + native_error)
+		return false
+	return service.save(save_path)
 
 
 func state() -> Dictionary:
@@ -187,6 +225,9 @@ func summary() -> Dictionary:
 		"chapters_completed": (s["story"]["chapters_completed"] as Array).duplicate(),
 		"completed_difficulties": (s["story"]["completed_difficulties"] as Array).duplicate(),
 		"events_completed": (s["story"]["events_completed"] as Array).size(),
+		"native_path": native_path,
+		"native_ok": native_ok,
+		"native_error": native_error,
 	}
 
 
