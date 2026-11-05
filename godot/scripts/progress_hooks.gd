@@ -24,6 +24,25 @@ var native_store = null
 var native_path: String = ""
 var native_ok: bool = true
 var native_error: String = ""
+var native_migrated: bool = false
+var native_created_default: bool = false
+
+
+static func _native_opt_out() -> bool:
+	var value := OS.get_environment("BRUCELEE_NATIVE_PROGRESS").strip_edges().to_lower()
+	return value in ["0", "false", "no", "off"]
+
+
+static func _resolve_native_path(override: String) -> String:
+	if not override.is_empty():
+		return override
+	var explicit := OS.get_environment("BRUCELEE_NATIVE_SETTINGS").strip_edges()
+	if not explicit.is_empty():
+		return explicit
+	var language_path := OS.get_environment("BRUCELEE_LANGUAGE_SAVE_PATH").strip_edges()
+	if not language_path.is_empty():
+		return language_path
+	return NativeProgressStoreScript.DEFAULT_PATH
 
 var _last_grab_seq: int = -1
 var _last_endmove_seq: int = -1
@@ -34,29 +53,52 @@ var event_log: Array = []
 func configure(path: String = SaveManager.SAVE_PATH, native_path_override: String = "") -> void:
 	service = ProgressServiceScript.new()
 	save_path = path
+	var json_present: bool = FileAccess.file_exists(save_path)
 	var loaded: bool = service.load_or_default(save_path)
 	native_store = null
-	native_path = native_path_override
-	if native_path.is_empty():
-		native_path = OS.get_environment("BRUCELEE_NATIVE_SETTINGS")
 	native_ok = true
 	native_error = ""
+	native_migrated = false
+	native_created_default = false
+	var native_target: String = native_path_override
+	if native_target.is_empty():
+		var env_native := OS.get_environment("BRUCELEE_NATIVE_SETTINGS").strip_edges()
+		if not env_native.is_empty():
+			native_target = env_native
+		elif path != SaveManager.SAVE_PATH:
+			# Direct callers/tests with a custom JSON path keep the legacy
+			# JSON-only behavior unless they explicitly name a native path.
+			native_target = ""
+		elif _native_opt_out():
+			native_target = ""
+		else:
+			native_target = _resolve_native_path("")
+	native_path = native_target
 	if not native_path.is_empty():
-		native_store = NativeProgressStoreScript.new()
-		if not native_store.configure(native_path):
+		var native_existed: bool = FileAccess.file_exists(native_path)
+		if not native_existed and json_present and not loaded:
 			native_ok = false
-			native_error = native_store.error
-		elif not native_store.load_into(service):
-			native_ok = false
-			native_error = native_store.error
-		elif not service.save(save_path):
-			native_ok = false
-			native_error = "failed to mirror native state to the JSON save"
+			native_error = "legacy JSON progress save is invalid; refusing migration"
+		else:
+			native_store = NativeProgressStoreScript.new()
+			if not native_store.configure(native_path):
+				native_ok = false
+				native_error = native_store.error
+			elif not native_store.load_into(service):
+				native_ok = false
+				native_error = native_store.error
+			elif not service.save(save_path):
+				native_ok = false
+				native_error = "failed to mirror native state to the JSON save"
+			else:
+				native_migrated = not native_existed and json_present and loaded
+				native_created_default = not native_existed and not json_present
 	_last_synced_exp = int(service.state["story"]["exp"])
 	active = service.registry.loaded and service.achievements.loaded and native_ok
-	print("PROGRESS_SERVICE active=%s loaded=%s unlocked=%d achievements=%d native=%s native_ok=%s" % [
+	print("PROGRESS_SERVICE active=%s loaded=%s unlocked=%d achievements=%d native=%s native_ok=%s migrated=%s" % [
 		str(active), str(loaded), service.unlocked_ids().size(),
 		service.state["achievements"]["reached"].size(), native_path, str(native_ok),
+		str(native_migrated),
 	])
 	if not native_ok:
 		push_error("NATIVE_PROGRESS_DISABLED: " + native_error)
@@ -228,6 +270,8 @@ func summary() -> Dictionary:
 		"native_path": native_path,
 		"native_ok": native_ok,
 		"native_error": native_error,
+		"native_migrated": native_migrated,
+		"native_created_default": native_created_default,
 	}
 
 

@@ -60,6 +60,8 @@ const LanguageDock = preload("res://scripts/language_dock.gd")
 ## real CCreditsView-equivalent scrolling view.
 const CreditsText = preload("res://scripts/credits_text.gd")
 const CreditsRollView = preload("res://scripts/credits_roll_view.gd")
+## Guard for the optional LOCAL-ONLY artwork roots (never inside the repository).
+const PathGuard = preload("res://scripts/candidate_path_guard.gd")
 
 const DESIGN_W := 480.0
 const DESIGN_H := 320.0
@@ -219,6 +221,9 @@ var profile_sub: String = ""
 ## fighter cell).
 var profile_index: int = 0
 var profile_record: Dictionary = {}
+## Keyed page reset: entering a different Profile body starts at index 0 so a
+## book/fighter cursor can never leak into another page's selection.
+var _profile_key_seen: String = ""
 
 var _art_root: Control
 var _ui_space: Control
@@ -388,13 +393,23 @@ func _move_credits_selection(delta: int) -> void:
 
 
 ## ------------------------------------------------- recovered Profile body input
-## Only the PROVEN body navigation takes extra keys: the statistics sub-menu
-## (statsmenu.ui blmenu options game_modes/battles/moves -> stats1/2/3) is the
-## only recovered body with declared options, so UP/DOWN + ENTER operate it.
-## Achievements / art / fighters bodies have no proven widget action beyond the
-## back button, so they take BACK only.
+## Proven body navigation only:
+##   * statistics — statsmenu.ui blmenu options game_modes/battles/moves -> ENTER opens
+##     stats1/2/3;
+##   * art — the pictureslider is a 1-D cursor; LEFT/RIGHT step one picture
+##     (CPictureSlider::LoadPicture(n) is per-index; the original key codes are not
+##     decoded, so UP/DOWN are a documented PORT alias for the same step);
+##   * fighters — CBruceLeeFighterGrid::OnKeyPress moves cell 0x10 by +/-1 and by
+##     +/-numcolumns and clamps to [0, GetNumUniques()-1]; ENTER raises the grid's
+##     `profile` action and opens the fightergalleryprofile.ui body for that cell.
+## Achievements still has no proven body action beyond BACK.
 func _handle_profile_input(event: InputEvent) -> bool:
 	if event.is_action_pressed(Controls.MENU_CANCEL) or _is_backspace(event):
+		if profile_key == "fighters" and not profile_sub.is_empty():
+			profile_sub = ""
+			status_text = ""
+			_show_art_screen("profile_page:fighters")
+			return true
 		_back_art()
 		return true
 	if profile_key == "statistics":
@@ -407,7 +422,66 @@ func _handle_profile_input(event: InputEvent) -> bool:
 		if event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
 			_open_selected_stats_page()
 			return true
+		return false
+	if profile_key == "art":
+		if event.is_action_pressed(Controls.MOVE_LEFT) or event.is_action_pressed(Controls.MENU_UP):
+			_profile_move_art(-1)
+			return true
+		if event.is_action_pressed(Controls.MOVE_RIGHT) or event.is_action_pressed(Controls.MENU_DOWN):
+			_profile_move_art(1)
+			return true
+		return false
+	if profile_key == "fighters" and profile_sub.is_empty():
+		var columns: int = maxi(1, ProfileBodies.grid_columns())
+		if event.is_action_pressed(Controls.MOVE_LEFT):
+			_profile_move_fighter(-1)
+			return true
+		if event.is_action_pressed(Controls.MOVE_RIGHT):
+			_profile_move_fighter(1)
+			return true
+		if event.is_action_pressed(Controls.MENU_UP):
+			_profile_move_fighter(-columns)
+			return true
+		if event.is_action_pressed(Controls.MENU_DOWN):
+			_profile_move_fighter(columns)
+			return true
+		if event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
+			_open_selected_fighter_profile()
+			return true
+		return false
 	return false
+
+
+func _profile_move_art(delta: int) -> void:
+	var count: int = ProfileBodies.art_items().size()
+	if count <= 0:
+		return
+	status_text = ""
+	profile_index = clampi(profile_index + delta, 0, count - 1)
+	_show_art_screen(screen_id)
+
+
+func _profile_move_fighter(delta: int) -> void:
+	var count: int = ProfileBodies.fighter_items().size()
+	if count <= 0:
+		return
+	status_text = ""
+	profile_index = clampi(profile_index + delta, 0, count - 1)
+	_show_art_screen(screen_id)
+
+
+## Raises the grid's decoded `profile` action for the selected cell.  The original
+## gates this on CCharacterList::IsUniqueProfileAvailable(index); the per-unique
+## availability table lives in the save file and is NOT recovered here, so the
+## page opens and states that limitation instead of inventing availability.
+func _open_selected_fighter_profile() -> void:
+	var count: int = ProfileBodies.fighter_items().size()
+	if count <= 0:
+		return
+	profile_index = clampi(profile_index, 0, count - 1)
+	status_text = ""
+	menu_state = "art_page"
+	_show_art_screen("profile_page:fighters:%d" % profile_index)
 
 
 func _profile_move(delta: int) -> void:
@@ -846,6 +920,9 @@ func _show_art_screen(screen: String) -> void:
 		var parts: PackedStringArray = rest.split(":", false, 1)
 		profile_key = String(parts[0])
 		profile_sub = String(parts[1]) if parts.size() > 1 else ""
+		if profile_key != _profile_key_seen:
+			profile_index = 0
+			_profile_key_seen = profile_key
 		screen_id = screen
 		_clear_stage()
 		_build_profile_page(profile_key)
@@ -906,7 +983,10 @@ func _build_profile_page(key: String) -> void:
 		"art":
 			_build_art_album_body()
 		"fighters":
-			_build_fighter_grid()
+			if profile_sub.is_empty():
+				_build_fighter_grid()
+			else:
+				_build_fighter_profile_body()
 		_:
 			_add_page_line("PROFILE PAGE " + STATUS_NOT_RECOVERED, 40)
 
@@ -1036,9 +1116,13 @@ func _stats_row_for_value(page: Dictionary, widget_name: String) -> Dictionary:
 
 
 ## ------------------------------------------------------------ art album body
-## artpicture.ui's pictureslider declares NO items and neither the .ui nor
-## game.states binds a picture list to it; the 18 artpictures.list refs are kept
-## as an evidence inventory only and are not drawn.
+## PROVEN binding (2026-11-06): CUnlocker::SetArtPicturesToSlider (ELF 0x16f130)
+## walks artpictures.list index 0..17 and calls CPictureSlider::AddPicture
+## (0x219038, append), so album index == artpictures.list array position; the
+## runtime artwork is loaded per index by CPictureSlider::LoadPicture (0x218798).
+## SetArtPictures (0x19d268) addresses the slider as artpicture.ui's "album".
+## What is NOT recovered: the per-index unlock state (CUnlocker save flags) and
+## the original artwork pixels (local-only, never shipped).
 func _build_art_album_body() -> void:
 	var data: Dictionary = ProfileBodies.artpictures()
 	for widget: Variant in Array(data.get("layout", [])):
@@ -1054,20 +1138,51 @@ func _build_art_album_body() -> void:
 				black.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				_stage.add_child(black)
 			"pictureslider", "picture":
-				_add_frame(w)
+				var album_rect: Rect2 = _widget_rect_dict(
+					Dictionary(data.get("album_widget", w)))
+				var item: Dictionary = ProfileBodies.art_item(profile_index)
+				var texture: Texture2D = _art_picture_texture(
+					String(item.get("basename", "")))
+				if texture != null:
+					var picture: TextureRect = _make_texture_rect(
+						texture, album_rect, true)
+					picture.name = "ArtAlbumPicture"
+					_stage.add_child(picture)
+				else:
+					_add_frame(w)
+					_add_page_line("PICTURE " + STATUS_NOT_RECOVERED, 150, 12)
 			"blbutton":
 				_add_profile_back(rect)
-	_add_page_line("PICTURE " + STATUS_NOT_RECOVERED, 150, 12)
-	_add_page_line("PICTURESLIDER BINDING " + STATUS_NOT_RECOVERED, 172, 9)
-	_add_page_line("%d decoded artpictures.list refs (inventory only)" %
-		int(data.get("item_count", 0)), 190, 9)
-	_add_page_line("ESC/BACK: RETURN", 306, 8)
+	var items: Array = ProfileBodies.art_items()
+	if items.is_empty():
+		_add_page_line("ALBUM " + STATUS_NOT_RECOVERED, 150, 12)
+		_add_page_line("profile bodies failed closed: " + ProfileBodies.error(), 172, 9)
+		return
+	profile_index = clampi(profile_index, 0, items.size() - 1)
+	var current: Dictionary = Dictionary(items[profile_index])
+	var index_text: String = "%d/%d  %s.%s" % [profile_index + 1, items.size(),
+		String(current.get("basename", "")), String(current.get("extension", ""))]
+	_add_label_in_rect("ALBUM " + index_text, Rect2(12, 148, DESIGN_W - 24, 18),
+		10, COLOR_SELECTED, HORIZONTAL_ALIGNMENT_LEFT, "ArtAlbumIndex")
+	_add_page_line("PICTURE %d OF %d  (artpictures.list order, PROVEN)" % [
+		profile_index + 1, items.size()], 168, 9)
+	_add_page_line("SLIDER: CUnlocker::SetArtPicturesToSlider -> AddPicture", 186, 8)
+	_add_page_line("ARTWORK PIXELS LOCAL-ONLY; UNLOCK STATE " + STATUS_NOT_RECOVERED,
+		204, 8)
+	_add_page_line("LEFT/RIGHT: PICTURE   ESC/BACK: RETURN", 306, 8)
 
 
 ## --------------------------------------------------------- fighter gallery
-## blfightergrid binds selectedcell to the runtime fighters_gallery_current
-## option; no decoded resource binds characters.list uniques to the grid cells,
-## so the grid body stays NOT RECOVERED and the 10 uniques are an inventory only.
+## PROVEN bindings (2026-11-06):
+##   * membership/order: CBruceLeeFighterGrid::Redraw (0x247b90) draws
+##     CCharacterList::GetUniqueName(i) for i in 0..GetNumUniques()-1, i.e. the
+##     characters.list `uniques` array in array order (10 entries);
+##   * layout: cell i at (col = i % numcolumns, row = i / numcolumns) with the
+##     control property defaults numcolumns 2.0 / columnseparation 32 / rowheight 0
+##     that the decoded fightergalleryselect.ui does not override;
+##   * cursor: selectedcell == the `fighters_gallery_current` option
+##     (blfightergrid datasources); Confirm raises the grid's "profile" action.
+## What is NOT recovered: per-unique profile availability from the save file.
 func _build_fighter_grid() -> void:
 	var data: Dictionary = ProfileBodies.fighters()
 	for widget: Variant in Array(data.get("layout", [])):
@@ -1079,16 +1194,136 @@ func _build_fighter_grid() -> void:
 					data.get("title_labels", {}), Lang.language()),
 					Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
 					12, COLOR_IDLE, HORIZONTAL_ALIGNMENT_LEFT, "FightersTitle")
-			"blfightergrid", "picture":
+			"blfightergrid":
 				_add_frame(w)
 			"blbutton":
 				_add_profile_back(rect)
-	_add_page_line("FIGHTER GRID " + STATUS_NOT_RECOVERED, 150, 12)
-	_add_page_line("GRID MEMBERSHIP / ORDER " + STATUS_NOT_RECOVERED
-		+ " (fighters_gallery_current)", 172, 9)
-	_add_page_line("%d decoded characters.list uniques (inventory only)" %
-		int(data.get("item_count", 0)), 190, 9)
-	_add_page_line("ESC/BACK: RETURN", 306, 8)
+	var items: Array = ProfileBodies.fighter_items()
+	if items.is_empty():
+		_add_page_line("FIGHTER GRID " + STATUS_NOT_RECOVERED, 150, 12)
+		_add_page_line("profile bodies failed closed: " + ProfileBodies.error(), 172, 9)
+		return
+	var grid_rect: Rect2 = _widget_rect_dict(
+		Dictionary(data.get("grid_widget", {})))
+	var columns: int = maxi(1, ProfileBodies.grid_columns())
+	profile_index = clampi(profile_index, 0, items.size() - 1)
+	var rows: int = maxi(1, items.size() / columns)
+	var hsep: float = ProfileBodies.grid_columnseparation()
+	var vsep: float = ProfileBodies.grid_rowheight()
+	var cell_w: float = (grid_rect.size.x - hsep * (columns - 1)) / float(columns)
+	var cell_h: float = (grid_rect.size.y - vsep * (rows - 1)) / float(rows)
+	for index: int in range(items.size()):
+		var item: Dictionary = Dictionary(items[index])
+		var col: int = index % columns
+		var row: int = index / columns
+		var cell: Rect2 = Rect2(
+			grid_rect.position + Vector2(col * (cell_w + hsep), row * (cell_h + vsep)),
+			Vector2(cell_w, cell_h))
+		var outline: Control = RectOutline.new()
+		outline.name = "FighterCell%d" % index
+		outline.position = cell.position
+		outline.size = cell.size
+		outline.line_color = (COLOR_SELECTED if index == profile_index
+			else Color(1.0, 1.0, 1.0, 0.35))
+		outline.line_width = (2.0 if index == profile_index else 1.0)
+		outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_stage.add_child(outline)
+		_add_label_in_rect(ProfileBodies.localized(
+			item.get("name_labels", {}), Lang.language()), cell,
+			10, (COLOR_SELECTED if index == profile_index else COLOR_IDLE),
+			HORIZONTAL_ALIGNMENT_CENTER, "FighterCellLabel%d" % index)
+	_add_page_line("CELL %d/%d  %s  (characters.list uniques, PROVEN)" % [
+		profile_index + 1, items.size(),
+		String(Dictionary(items[profile_index]).get("name", ""))], 276, 9)
+	_add_page_line("COLUMNS %d (property default)  ESC/BACK: RETURN" % columns,
+		306, 8)
+
+
+## fightergalleryprofile.ui body: the SAME unique index as the grid selection.
+## CCharacterList::QueryString (0x1aef28) resolves name / profile_text_tag /
+## profile_picture for the unique at `fighters_gallery_current`.
+func _build_fighter_profile_body() -> void:
+	var data: Dictionary = ProfileBodies.fighters()
+	var items: Array = ProfileBodies.fighter_items()
+	var index: int = profile_sub.to_int()
+	if items.is_empty() or index < 0 or index >= items.size():
+		_add_page_line("FIGHTER PROFILE " + STATUS_NOT_RECOVERED, 150, 12)
+		return
+	var item: Dictionary = Dictionary(items[index])
+	for widget: Variant in Array(data.get("profile_layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		match String(w.get("type", "")):
+			"staticrect":
+				var back: ColorRect = ColorRect.new()
+				back.name = "FighterPhotoBackground"
+				back.color = Color(1, 1, 1, 1)
+				back.position = rect.position
+				back.size = rect.size
+				back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				_stage.add_child(back)
+			"blpicture":
+				var picture_ref: Dictionary = Dictionary(item.get("profile_picture", {}))
+				var texture: Texture2D = _profile_picture_texture(
+					String(picture_ref.get("basename", "")))
+				if texture != null:
+					var photo: TextureRect = _make_texture_rect(texture, rect, true)
+					photo.name = "FighterProfilePhoto"
+					_stage.add_child(photo)
+				else:
+					_add_frame(w)
+					_add_page_line_in_rect("PHOTO " + STATUS_NOT_RECOVERED, rect, 9)
+			"bllabel":
+				_add_label_in_rect(ProfileBodies.localized(
+					item.get("name_labels", {}), Lang.language()),
+					rect, 16, COLOR_SELECTED, HORIZONTAL_ALIGNMENT_RIGHT,
+					"FighterProfileName")
+			"textbox":
+				var text: String = ProfileBodies.localized(
+					item.get("profile_text_labels", {}), Lang.language())
+				var label: Label = _make_label(text, rect, 9, COLOR_IDLE, false)
+				label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				label.name = "FighterProfileText"
+				_stage.add_child(label)
+			"blbutton":
+				_add_profile_back(rect)
+	_add_page_line("PROFILE PICTURE PIXELS LOCAL-ONLY; UNLOCK STATE "
+		+ STATUS_NOT_RECOVERED, 306, 8)
+
+
+func _add_page_line_in_rect(text: String, rect: Rect2, size: int) -> void:
+	var label: Label = _make_label(text, rect, size, Color(1.0, 0.6, 0.3, 1.0), true)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.name = "ProfileLineInRect"
+	_stage.add_child(label)
+
+
+## Optional LOCAL-ONLY artwork: `BRUCELEE_ART_PREVIEW_ROOT` must point at a
+## directory outside the repository that holds `<basename>.png` files decoded from
+## the user's own .tex (format proven: 512x512 r8g8b8).  Nothing is bundled.
+func _art_picture_texture(basename: String) -> Texture2D:
+	return _local_png_texture("BRUCELEE_ART_PREVIEW_ROOT", basename)
+
+
+func _profile_picture_texture(basename: String) -> Texture2D:
+	return _local_png_texture("BRUCELEE_PROFILE_PICTURE_ROOT", basename)
+
+
+func _local_png_texture(env_name: String, basename: String) -> Texture2D:
+	if basename.is_empty():
+		return null
+	var root: String = OS.get_environment(env_name)
+	if root.is_empty():
+		return null
+	var path: String = root.path_join(basename + ".png")
+	if not PathGuard.external_path_error(path, env_name).is_empty():
+		return null
+	if not FileAccess.file_exists(path):
+		return null
+	var image: Image = Image.new()
+	if image.load(path) != OK:
+		return null
+	return ImageTexture.create_from_image(image)
 
 
 
@@ -1582,9 +1817,13 @@ func art_album_info() -> Dictionary:
 	var names: Array = []
 	for item: Variant in Array(data.get("items", [])):
 		names.append(String(Dictionary(item).get("basename", "")))
+	var current: Dictionary = ProfileBodies.art_item(profile_index)
 	return {"item_count": names.size(), "basenames": names,
+		"selection": profile_index,
+		"current": String(current.get("basename", "")),
 		"picture_texture": String(data.get("picture_texture", "")),
-		"slider_binding": String(data.get("slider_binding", ""))}
+		"slider_binding": String(data.get("slider_binding", "")),
+		"slider_evidence": String(data.get("slider_binding_evidence", ""))}
 
 
 func fighter_gallery_info() -> Dictionary:
@@ -1595,10 +1834,30 @@ func fighter_gallery_info() -> Dictionary:
 		var f: Dictionary = item as Dictionary
 		names.append(ProfileBodies.localized(f.get("name_labels", {}), Lang.language()))
 		keys.append(String(f.get("profile_text_key", "")))
+	var current: Dictionary = ProfileBodies.fighter_item(profile_index)
 	return {"item_count": names.size(), "names": names,
 		"profile_text_keys": keys,
-		"selection": String(data.get("selection", "")),
-		"grid_binding": String(data.get("grid_binding", ""))}
+		"selection": profile_index,
+		"selected_name_key": String(current.get("name", "")),
+		"columns": ProfileBodies.grid_columns(),
+		"selectedcell_option": String(data.get("selectedcell_option", "")),
+		"selection_binding": String(data.get("selection", "")),
+		"grid_binding": String(data.get("grid_binding", "")),
+		"grid_evidence": String(data.get("grid_binding_evidence", ""))}
+
+
+func fighter_profile_info() -> Dictionary:
+	var index: int = profile_sub.to_int()
+	var item: Dictionary = ProfileBodies.fighter_item(index)
+	return {"index": index,
+		"name_key": String(item.get("name", "")),
+		"display_name": ProfileBodies.localized(item.get("name_labels", {}),
+			Lang.language()),
+		"profile_text_key": String(item.get("profile_text_key", "")),
+		"profile_text": ProfileBodies.localized(item.get("profile_text_labels", {}),
+			Lang.language()),
+		"profile_picture": Dictionary(item.get("profile_picture", {})),
+		"profile_binding": String(ProfileBodies.fighters().get("profile_binding", ""))}
 
 
 func about_version_display() -> String:

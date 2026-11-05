@@ -1,7 +1,16 @@
 {
  "schema": "brucelee-profile-bodies/1",
- "base_head": "af8b587730c2252974d62d266004fb26459dc39a",
+ "base_head": "546ed2ec2abab82a8d13f3bf7def5094f6157b78",
  "generated_by": "tools/build_profile_bodies.py (read-only local evidence)",
+ "gallery_bindings_phase": {
+  "head": "546ed2ec2abab82a8d13f3bf7def5094f6157b78",
+  "native_evidence": [
+   "evidence/native.txt (Ghidra 12.2 decompilation of CUnlocker/CPictureSlider/CBruceLeeFighterGrid)",
+   "evidence/native2.txt (CCharacterList API + grid property names)",
+   "evidence/binding_evidence.json (addresses, keys, defaults)"
+  ],
+  "art_texture_probe": "evidence/art_textures.json (18/18 local .tex decode as 512x512 r8g8b8; not shipped)"
+ },
  "not_recovered_marker": "NOT RECOVERED",
  "languages": [
   "LangEnglish",
@@ -3693,10 +3702,11 @@
    }
   ],
   "item_count": 18,
-  "slider_binding": "NOT RECOVERED",
-  "slider_binding_reason": "artpicture.ui pictureslider carries no item datasource and game.states binds no picture list to it; the 18 artpictures.list rows are an inventory only",
+  "slider_binding": "PROVEN",
+  "slider_binding_evidence": "CUnlocker::SetArtPicturesToSlider(CPictureSlider*, bool) ELF 0x16f130 loops index 0..(artpictures.list `pictures` count)-1, tests the per-index unlocked byte (or the force flag from the `unlockall` setting) and calls CPictureSlider::AddPicture(slider, file_i); CPictureSlider::AddPicture ELF 0x219038 appends to the slider picture array, so slider item order == artpictures.list array order. CPictureSlider::LoadPicture(index) ELF 0x218798 resolves the appended file id. SetArtPictures() ELF 0x19d268 is the only caller and does FindControl(\"album\"); artpicture.ui names its pictureslider \"album\".",
+  "slider_last_index": 17,
   "picture_texture": "NOT RECOVERED",
-  "picture_texture_reason": "the original gui/images/art/*.tex artwork is not decoded to PNG in this repository (original art stays local-only), so no picture is drawn"
+  "picture_texture_reason": "the local gui/images/art/*.tex bytes exist and decode as 512x512 r8g8b8 (evidence/art_textures.json), but original artwork is not shipped in this repository; the port draws a locally decoded PNG only when BRUCELEE_ART_PREVIEW_ROOT points at it"
  },
  "fighters": {
   "screen": "fightergalleryselect.ui",
@@ -4258,9 +4268,18 @@
    }
   ],
   "item_count": 10,
-  "grid_binding": "NOT RECOVERED",
-  "grid_binding_reason": "blfightergrid selectedcell binds the runtime option fighters_gallery_current and no decoded resource binds characters.list uniques to the cells, so the 10 entries are an inventory only",
-  "selection": "NOT RECOVERED",
-  "selection_reason": "fighters_gallery_current is a runtime option/cursor, not stored in the .ui or any decoded list"
+  "grid_binding": "PROVEN",
+  "grid_binding_evidence": "CBruceLeeFighterGrid::Redraw ELF 0x247b90 iterates index 0..CCharacterList::GetNumUniques()-1, takes CCharacterList::GetUniqueName(index) (0x1ad5ac) as the cell text and places cell i at (col = i % numcolumns, row = i / numcolumns). CCharacterList::GetNumUniques (0x1a6958) is the count of the characters.list `uniques` array (CCharacterList::Init 0x1a76b0 DictFind \"uniques\" -> this+0x24).",
+  "grid_numcolumns": 2,
+  "grid_columnseparation": 32,
+  "grid_rowheight": 0,
+  "grid_geometry_evidence": "CBruceLeeFighterGrid::RegisterProperties ELF 0x247fe0 registers numcolumns (property 0xd, default 2.0 at image 0x2483f0), columnseparation (0xe, default 32.0), rowheight (0xf, default 0.0) and selectedcell (0x10); the decoded fightergalleryselect.ui does not override them, so the defaults apply.",
+  "selectedcell_option": "fighters_gallery_current",
+  "selection": "PROVEN",
+  "selection_evidence": "fightergalleryselect.ui blfightergrid datasources selectedcell = [\"option\",\"fighters_gallery_current\"]; CBruceLeeFighterGrid::OnKeyPress (0x247918) and OnMouseClick (0x247db4) move/write property 0x10, clamp to 0..GetNumUniques()-1 and require CCharacterList::IsUniqueProfileAvailable(index) before RaiseAction(\"profile\").",
+  "profile_binding": "PROVEN",
+  "profile_binding_evidence": "CCharacterList::QueryString ELF 0x1aef28 reads CSettings \"fighters_gallery_current\" as the unique index and returns that entry name / profile_text_tag / profile_picture, matching fightergalleryprofile.ui datasources characterlist profilename/profiletext/profilepicture.",
+  "profile_picture_binding": "NOT RECOVERED",
+  "profile_picture_binding_reason": "original story/*.tex portraits stay local-only and are not shipped"
  }
 }

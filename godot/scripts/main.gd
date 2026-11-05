@@ -808,9 +808,8 @@ func _ready() -> void:
     var export_self_test: bool = OS.get_environment("BRUCELEE_EXPORT_SELF_TEST") == "1"
     var story_mode: bool = OS.get_environment("BRUCELEE_STORY_FLOW") == "1"
     var game_mode: bool = not OS.get_environment("BRUCELEE_GAME_MODE").is_empty()
-    # Opt-in progress/save subsystem: created only when BRUCELEE_PROGRESS=1, so
-    # every existing prototype path is untouched when the flag is absent.
-    if OS.get_environment("BRUCELEE_PROGRESS") == "1":
+    # Progress is enabled by default; explicitly set BRUCELEE_PROGRESS=0 to disable it.
+    if OS.get_environment("BRUCELEE_PROGRESS").strip_edges().to_lower() not in ["0", "false", "no", "off"]:
         progress = ProgressHooks.new()
         add_child(progress)
         progress.configure()

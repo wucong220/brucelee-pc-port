@@ -256,9 +256,9 @@ func _is_default(cell_key: String, index: int) -> bool:
 
 
 func _apply_native(service, flags: Dictionary, stats: Dictionary) -> bool:
+	## Native providers are authoritative for unlocks and achievements. Story and
+	## mode state (not represented in these native providers) remains in JSON.
 	var ids: Dictionary = {}
-	for id_value: Variant in service.state["unlocks"]["unlocked_ids"]:
-		ids[int(id_value)] = true
 	var unlocked: Array = flags["Unlocker.unlocked"]
 	for i: int in range(unlocked.size()):
 		if int(unlocked[i]) != 0:
@@ -302,8 +302,6 @@ func _apply_native(service, flags: Dictionary, stats: Dictionary) -> bool:
 	service.state["unlocks"]["unlocked_ids"] = sorted_ids
 
 	var reached: Dictionary = {}
-	for id_value: Variant in service.state["achievements"]["reached"]:
-		reached[String(id_value)] = true
 	var ach_flags: Array = flags["Unlocker.achievements"]
 	if ach_flags.size() != service.achievements.rows.size():
 		error = "native achievements array length does not match recovered rows"

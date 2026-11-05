@@ -153,14 +153,26 @@ func _check_artifact() -> void:
 	_check(Array(Dictionary(pages.get("stats3", {})).get("rows", [])).size() == 7,
 		"stats3 has the 7 decoded rows")
 	var art: Dictionary = ProfileBodies.artpictures()
-	_check(Array(art.get("items", [])).size() == 18, "18 artpictures inventory rows decoded")
-	_check(String(art.get("slider_binding", "")) == NR,
-		"art pictureslider binding is NOT RECOVERED")
+	_check(Array(art.get("items", [])).size() == 18, "18 artpictures album rows decoded")
+	_check(String(art.get("slider_binding", "")) == "PROVEN",
+		"art pictureslider binding is PROVEN (native AddPicture order)")
+	_check(String(art.get("slider_binding_evidence", "")).contains("0x16f130"),
+		"art binding cites CUnlocker::SetArtPicturesToSlider")
+	_check(String(Dictionary(Array(art.get("items", []))[0]).get("basename", ""))
+		== "galeryart2_1", "art order starts at the decoded galeryart2_1")
 	var fighters: Dictionary = ProfileBodies.fighters()
 	_check(Array(fighters.get("items", [])).size() == 10,
 		"10 characters.list uniques decoded")
-	_check(String(fighters.get("grid_binding", "")) == NR,
-		"fighter grid binding is NOT RECOVERED")
+	_check(String(fighters.get("grid_binding", "")) == "PROVEN",
+		"fighter grid binding is PROVEN")
+	_check(String(fighters.get("selection", "")) == "PROVEN",
+		"fighters_gallery_current selectedcell binding is PROVEN")
+	_check(String(fighters.get("profile_binding", "")) == "PROVEN",
+		"fighter profile page binding is PROVEN")
+	_check(int(fighters.get("grid_numcolumns", 0)) == 2,
+		"grid numcolumns is the proven property default 2")
+	_check(String(Dictionary(Array(fighters.get("items", []))[9]).get("name", ""))
+		== "loming", "fighter order ends at the decoded loming")
 
 
 func _check_achievements_flow() -> void:
@@ -229,16 +241,28 @@ func _check_art_flow() -> void:
 	_check(String(menu.get("screen_id")) == "profile_page:art",
 		"art row opens the recovered album shell")
 	var info: Dictionary = menu.call("art_album_info")
-	_check(int(info.get("item_count", 0)) == 18, "art inventory has 18 decoded refs")
-	_check(String(info.get("slider_binding", "")) == NR,
-		"art slider binding is NOT RECOVERED")
+	_check(int(info.get("item_count", 0)) == 18, "album has 18 decoded pictures")
+	_check(String(info.get("slider_binding", "")) == "PROVEN",
+		"art slider binding is PROVEN")
+	_check(String(info.get("current", "")) == "galeryart2_1",
+		"album opens on the first decoded artpictures.list entry")
 	var texts: Array = menu.call("label_texts")
-	_check(_any_contains(texts, "PICTURESLIDER BINDING " + NR),
-		"art body marks the slider binding NOT RECOVERED")
-	_check(_any_contains(texts, "18 decoded artpictures.list refs"),
-		"art body reports the inventory count")
-	_check(not _any_contains(texts, "galeryart2_1"),
-		"unbound album items are NOT drawn")
+	_check(_any_contains(texts, "1/18  galeryart2_1.tex"),
+		"album shows the decoded picture index and file name")
+	_check(_any_contains(texts, "artpictures.list order, PROVEN"),
+		"album states the proven list order")
+	_check(_any_contains(texts, "UNLOCK STATE " + "NOT RECOVERED IN THIS BUILD"),
+		"album keeps the runtime unlock state explicitly NOT RECOVERED")
+	await _press(KEY_RIGHT)
+	_check(int(menu.call("profile_selection")) == 1,
+		"RIGHT advances the pictureslider by one")
+	_check(String(Dictionary(menu.call("art_album_info")).get("current", ""))
+		== "galeryart2-c6", "picture 2 is the decoded galeryart2-c6")
+	await _press(KEY_DOWN)
+	_check(int(menu.call("profile_selection")) == 2,
+		"DOWN is the documented PORT alias for the next picture")
+	await _press(KEY_LEFT)
+	_check(int(menu.call("profile_selection")) == 1, "LEFT steps back one picture")
 	await _press(KEY_ESCAPE)
 	_check(String(menu.get("screen_id")) == "player_profile",
 		"BACK from art returns to Player Profile")
@@ -247,21 +271,44 @@ func _check_art_flow() -> void:
 func _check_fighters_flow() -> void:
 	await _open_profile_row(3)
 	_check(String(menu.get("screen_id")) == "profile_page:fighters",
-		"fighters row opens the recovered gallery shell")
+		"fighters row opens the recovered gallery grid")
 	var info: Dictionary = menu.call("fighter_gallery_info")
-	_check(int(info.get("item_count", 0)) == 10, "fighter inventory has 10 decoded uniques")
-	_check(String(info.get("grid_binding", "")) == NR,
-		"fighter grid binding is NOT RECOVERED")
+	_check(int(info.get("item_count", 0)) == 10, "gallery has 10 decoded uniques")
+	_check(String(info.get("grid_binding", "")) == "PROVEN",
+		"fighter grid binding is PROVEN")
+	_check(String(info.get("selectedcell_option", "")) == "fighters_gallery_current",
+		"grid selectedcell is bound to fighters_gallery_current")
+	_check(int(info.get("columns", 0)) == 2, "grid uses the proven 2-column default")
 	var texts: Array = menu.call("label_texts")
-	_check(_any_contains(texts, "GRID MEMBERSHIP / ORDER " + NR),
-		"fighter body marks the grid binding NOT RECOVERED")
-	_check(_any_contains(texts, "10 decoded characters.list uniques"),
-		"fighter body reports the inventory count")
-	_check(not _any_contains(texts, "Bruce Lee"),
-		"unbound fighter cells are NOT drawn")
+	_check(_any_contains(texts, "Bruce Lee"), "cell 0 draws the decoded Bruce Lee")
+	_check(_any_contains(texts, "Lo Ming"), "cell 9 draws the decoded Lo Ming")
+	_check(_any_contains(texts, "characters.list uniques, PROVEN"),
+		"grid states the proven membership/order")
+	await _press(KEY_RIGHT)
+	_check(int(menu.call("profile_selection")) == 1, "RIGHT moves one cell")
+	await _press(KEY_DOWN)
+	_check(int(menu.call("profile_selection")) == 3,
+		"DOWN moves one ROW (+numcolumns = 2 cells)")
+	await _press(KEY_ENTER)
+	_check(String(menu.get("screen_id")) == "profile_page:fighters:3",
+		"ENTER raises the grid's profile action for cell 3")
+	var pinfo: Dictionary = menu.call("fighter_profile_info")
+	_check(String(pinfo.get("name_key", "")) == "smallboy",
+		"profile page resolves the same unique index (smallboy)")
+	_check(String(pinfo.get("profile_binding", "")) == "PROVEN",
+		"profile page binding is PROVEN")
+	_check(String(pinfo.get("profile_text_key", "")) == "smallboy_profile",
+		"profile page uses the decoded profile_text_tag key")
+	var texts2: Array = menu.call("label_texts")
+	_check(_any_contains(texts2, "Smallboy"), "profile page shows the decoded name")
+	_check(_any_contains(texts2, "PHOTO " + "NOT RECOVERED IN THIS BUILD"),
+		"profile photo pixels are explicitly NOT RECOVERED")
+	await _press(KEY_ESCAPE)
+	_check(String(menu.get("screen_id")) == "profile_page:fighters",
+		"BACK from the fighter profile returns to the grid")
 	await _press(KEY_ESCAPE)
 	_check(String(menu.get("screen_id")) == "player_profile",
-		"BACK from fighters returns to Player Profile")
+		"BACK from the grid returns to Player Profile")
 
 
 func _check_failclosed() -> void:

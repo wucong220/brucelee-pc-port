@@ -176,8 +176,13 @@ func _check_profile() -> void:
 		_check(String(Dictionary(info.get("destination", {})).get("state", "")) == String(pair[1]),
 			"profile row " + String(pair[0]) + " destination = " + String(pair[1]))
 		var texts: Array = menu.call("label_texts")
-		_check(_any_contains(texts, "NOT RECOVERED"),
-			"profile row " + String(pair[0]) + " labels its unrecovered content")
+		# Achievements / statistics / art still carry an explicit NOT RECOVERED
+		# field; the fighters grid is now bound to characters.list `uniques`
+		# (proven order), so its body states the proven membership instead.
+		var needle: String = ("PROVEN" if String(pair[0]) == "fighters"
+			else "NOT RECOVERED")
+		_check(_any_contains(texts, needle),
+			"profile row " + String(pair[0]) + " labels its recovered/unrecovered content")
 		await _back()
 		_check(String(menu.get("screen_id")) == "player_profile",
 			"BACK from profile destination returns to Player Profile")
