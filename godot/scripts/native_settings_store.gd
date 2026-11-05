@@ -149,6 +149,7 @@ static func _parse(bytes: PackedByteArray) -> Dictionary:
 	var typed_off: Array = []
 	for i: int in range(typed_count):
 		typed_off.append(_u32(bytes, pos)); pos += 4
+	var rec_start: int = pos
 	var recs: Array = []
 	for i: int in range(rec_count):
 		recs.append([_u32(bytes, pos), _u32(bytes, pos + 4)])
@@ -163,7 +164,8 @@ static func _parse(bytes: PackedByteArray) -> Dictionary:
 		_last_error = "MD5 tail mismatch"
 		return {}
 	return {"strings": strings, "file_refs": file_refs, "func_refs": func_refs,
-			"retained": retained, "recs": recs, "bin_off": bin_off, "typed_off": typed_off,
+			"retained": retained, "recs": recs, "rec_start": rec_start,
+			"bin_off": bin_off, "typed_off": typed_off,
 			"bin_payload": bytes.slice(payload_start, payload_start + bin_bytes),
 			"typed_payload": bytes.slice(payload_start + bin_bytes, pos)}
 
@@ -484,25 +486,98 @@ static func read_language(path: String) -> int:
 	return language_from_bytes(bytes)
 
 
+static func _find_option_language(doc: Dictionary) -> Dictionary:
+	## Walk only the root -> option -> language path. Unknown providers and
+	## unknown cells elsewhere are deliberately not decoded: language writes patch
+	## this cell in place and must leave every other byte untouched.
+	var recs: Array = doc["recs"]
+	var strings: Array = doc["strings"]
+	if recs.is_empty():
+		_last_error = "empty record table"
+		return {}
+	var root_desc: int = int(recs[0][0])
+	if (root_desc & 0xf0000000) != 0x30000000:
+		_last_error = "settings root is not a dictionary"
+		return {}
+	var root_base: int = int(recs[0][1])
+	var root_count: int = root_desc & 0x1fffff
+	var option_idx: int = -1
+	for j: int in range(root_count):
+		var key_idx: int = root_base + 2 * j
+		var val_idx: int = key_idx + 1
+		if key_idx < 0 or key_idx >= recs.size() or val_idx >= recs.size():
+			_last_error = "root dictionary out of bounds"
+			return {}
+		var key_desc: int = int(recs[key_idx][0])
+		if (key_desc & 0xf0000000) != 0x60000000:
+			continue
+		var ordv: int = int(recs[key_idx][1])
+		if ordv < 0 or ordv >= strings.size():
+			_last_error = "root key ordinal out of range"
+			return {}
+		if String(strings[ordv]) == "option":
+			if option_idx >= 0:
+				_last_error = "duplicate option provider"
+				return {}
+			option_idx = val_idx
+	if option_idx < 0:
+		_last_error = "option provider missing (refusing to rewrite)"
+		return {}
+	var opt_desc: int = int(recs[option_idx][0])
+	if (opt_desc & 0xf0000000) != 0x30000000:
+		_last_error = "option provider is not a dictionary"
+		return {}
+	var opt_base: int = option_idx + int(recs[option_idx][1])
+	var opt_count: int = opt_desc & 0x1fffff
+	var lang_idx: int = -1
+	for j: int in range(opt_count):
+		var k_idx: int = opt_base + 2 * j
+		var v_idx: int = k_idx + 1
+		if k_idx < 0 or k_idx >= recs.size() or v_idx >= recs.size():
+			_last_error = "option dictionary out of bounds"
+			return {}
+		var kd: int = int(recs[k_idx][0])
+		if (kd & 0xf0000000) != 0x60000000:
+			continue
+		var ko: int = int(recs[k_idx][1])
+		if ko < 0 or ko >= strings.size():
+			_last_error = "option key ordinal out of range"
+			return {}
+		if String(strings[ko]) == "language":
+			if lang_idx >= 0:
+				_last_error = "duplicate language cell"
+				return {}
+			lang_idx = v_idx
+	if lang_idx < 0:
+		_last_error = "language cell missing (refusing to rewrite)"
+		return {}
+	var ld: int = int(recs[lang_idx][0])
+	var tag: int = ld & 0xf0000000
+	var cnt: int = ld & 0x1fffff
+	if tag != 0x20000000 and tag != 0x00000000:
+		_last_error = "language cell is not a scalar"
+		return {}
+	if tag == 0x20000000 and cnt != 0:
+		_last_error = "language cell is a counted float array (unsupported)"
+		return {}
+	return {"option_idx": option_idx, "language_idx": lang_idx, "tag": tag,
+			"bits": int(recs[lang_idx][1]), "rec_start": int(doc["rec_start"])}
+
+
 static func language_from_bytes(bytes: PackedByteArray) -> int:
-	var tree: Dictionary = decode(bytes)
-	if tree.is_empty():
+	var doc: Dictionary = _parse(bytes)
+	if doc.is_empty():
 		return -1
-	var option: Variant = _dict_get(tree, "option")
-	if option == null:
-		return -1
-	var lang: Variant = _dict_get(option, "language")
-	if lang == null:
+	var found: Dictionary = _find_option_language(doc)
+	if found.is_empty():
 		return -1
 	var idx: int = -1
-	match String(lang.get("k", "")):
-		"float":
-			idx = int(round(_bits_float(int(lang["bits"]))))
-		"int":
-			idx = int(lang["v"])
-		_:
-			return -1
+	if int(found["tag"]) == 0x20000000:
+		idx = int(round(_bits_float(int(found["bits"]))))
+	else:
+		idx = int(found["bits"])
 	if idx < 0 or idx > 7:
+		_last_error = "language index outside 0..7"
 		return -1
 	return idx
 
@@ -517,54 +592,74 @@ static func _dict_get(node: Dictionary, key: String) -> Variant:
 	return null
 
 
+static func _write_bytes(path: String, bytes: PackedByteArray) -> bool:
+	var out := FileAccess.open(path, FileAccess.WRITE)
+	if out == null:
+		_last_error = "cannot open settings.dat for write"
+		return false
+	out.store_buffer(bytes)
+	out.close()
+	return true
+
+
 static func write_language(path: String, language_index: int) -> bool:
 	_last_error = ""
 	if language_index < 0 or language_index > 7:
 		_last_error = "language index outside 0..7"
 		return false
-	var tree: Dictionary = {}
-	if FileAccess.file_exists(path):
-		var f := FileAccess.open(path, FileAccess.READ)
-		if f == null:
-			_last_error = "cannot open existing settings.dat"
+	if not FileAccess.file_exists(path):
+		var fresh: PackedByteArray = encode(default_tree(language_index))
+		if fresh.is_empty():
+			_last_error = "encode failed: " + _last_error
 			return false
-		var bytes: PackedByteArray = f.get_buffer(f.get_length())
-		f.close()
-		tree = decode(bytes)
-		if tree.is_empty():
-			_last_error = "refusing to overwrite unparseable settings.dat: " + _last_error
+		if language_from_bytes(fresh) != language_index:
+			_last_error = "encoded blob does not read back the requested language"
 			return false
-		var option: Variant = _dict_get(tree, "option")
-		if option == null:
-			tree = default_tree(language_index)
-		else:
-			var lang: Variant = _dict_get(option, "language")
-			if lang == null:
-				option["items"].append([_str_node("language"), _float_node(float(language_index))])
-			else:
-				lang["k"] = "float"
-				lang["bits"] = _float_bits(float(language_index))
-				if lang.has("v"):
-					lang.erase("v")
-	else:
-		tree = default_tree(language_index)
-	var encoded: PackedByteArray = encode(tree)
-	if encoded.is_empty():
-		_last_error = "encode failed: " + _last_error
+		return _write_bytes(path, fresh)
+
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		_last_error = "cannot open existing settings.dat"
 		return false
-	if language_from_bytes(encoded) != language_index:
-		_last_error = "encoded blob does not read back the requested language"
+	var bytes: PackedByteArray = f.get_buffer(f.get_length())
+	f.close()
+	var doc: Dictionary = _parse(bytes)
+	if doc.is_empty():
+		_last_error = "refusing to overwrite unparseable settings.dat: " + _last_error
 		return false
-	var out := FileAccess.open(path, FileAccess.WRITE)
-	if out == null:
-		_last_error = "cannot open settings.dat for write"
+	var found: Dictionary = _find_option_language(doc)
+	if found.is_empty():
+		_last_error = "refusing to rewrite settings.dat: " + _last_error
 		return false
-	out.store_buffer(encoded)
-	out.close()
-	if read_language(path) != language_index:
-		_last_error = "written settings.dat does not read back the requested language"
+	var tag: int = int(found["tag"])
+	var want_bits: int = _float_bits(float(language_index))
+	if tag == 0x20000000 and int(found["bits"]) == want_bits:
+		return language_from_bytes(bytes) == language_index
+
+	## Patch the one known scalar cell in place. This keeps every unknown
+	## provider/cell and every original record/string/payload byte intact; only
+	## the language value (and, for an integer-typed cell, its descriptor tag)
+	## plus the MD5 tail may change.
+	var patched: PackedByteArray = bytes.duplicate()
+	var rec_start: int = int(found["rec_start"])
+	var lang_idx: int = int(found["language_idx"])
+	var desc_at: int = rec_start + lang_idx * 8
+	var second_at: int = desc_at + 4
+	if tag == 0x00000000:
+		patched.encode_u32(desc_at, 0x20000000)
+	patched.encode_u32(second_at, want_bits)
+	var body_end: int = patched.size() - 16
+	var digest: PackedByteArray = _md5(patched.slice(0, body_end))
+	for i: int in range(16):
+		patched[body_end + i] = digest[i]
+	var check: Dictionary = _parse(patched)
+	if check.is_empty():
+		_last_error = "in-place patch produced an unparseable container: " + _last_error
 		return false
-	return true
+	if language_from_bytes(patched) != language_index:
+		_last_error = "in-place patch does not read back the requested language"
+		return false
+	return _write_bytes(path, patched)
 
 
 static func inspect(path: String) -> Dictionary:
