@@ -1,0 +1,4266 @@
+{
+ "schema": "brucelee-profile-bodies/1",
+ "base_head": "af8b587730c2252974d62d266004fb26459dc39a",
+ "generated_by": "tools/build_profile_bodies.py (read-only local evidence)",
+ "not_recovered_marker": "NOT RECOVERED",
+ "languages": [
+  "LangEnglish",
+  "LangChineseSimpl",
+  "LangChineseTrad",
+  "LangFrench",
+  "LangGerman",
+  "LangItalian",
+  "LangJapanese",
+  "LangKorean",
+  "LangRussian",
+  "LangSpanish"
+ ],
+ "provenance": {
+  "data_zpak": {
+   "path": "D:\\BaiduSyncdisk\\AI项目\\李小龙\\private_assets\\source_packages\\BaiduNetdiskDownload\\data.zpak",
+   "sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c"
+  },
+  "lang_lookup": {
+   "path": "D:\\BruceLeeWork\\story-lang-20261104\\lang_lookup_full.json",
+   "sha256": "cbd4d9234eb1ee48b499efb32385051e94c60e74d611f9722c6976fab119ef9b"
+  },
+  "resources": {
+   "adreno_200/achievements.list": {
+    "sha256": "456eeba2ab422ff36aa586ed9156c3d6da2ec75d291a180eeeddc5d75223f62e",
+    "resource_id": "3ce4f04c2582296d3570d10297c41383",
+    "bytes": 6880,
+    "records": 269,
+    "format_count": 0,
+    "format_strings": []
+   },
+   "adreno_200/artpictures.list": {
+    "sha256": "0c64ae95905f3e58a09d1674f0c1b3030cd3332d75017ff35a2fe777d930af6c",
+    "resource_id": "6a5c49c9ec1fc3905a78b7527fb3e5af",
+    "bytes": 1098,
+    "records": 61,
+    "format_count": 0,
+    "format_strings": []
+   },
+   "adreno_200/characters.list": {
+    "sha256": "e41f46952e85f9257c3c3418f0c3eecaa111c22ea54633f62942f15f4d51f5b3",
+    "resource_id": "5220519f19273793e213a4a1fe6ca5bc",
+    "bytes": 24346,
+    "records": 2361,
+    "format_count": 0,
+    "format_strings": []
+   },
+   "adreno_200/gui/achievementstable.ui": {
+    "sha256": "6829f428c9f9492a3d25f87cb1897759acfaa6b91cff9c84acef289e13eb770a",
+    "resource_id": "e79ba5913b350667e829672c66b5f729",
+    "bytes": 3107,
+    "records": 226,
+    "format_count": 1,
+    "format_strings": [
+     "%d/%d"
+    ]
+   },
+   "adreno_200/gui/artpicture.ui": {
+    "sha256": "18fd190f689e735cf9f4a34ff5d7992478c2754f63661d234acf55c4d98d0a6b",
+    "resource_id": "2031c1f0fcf694a0446dd3ecf1a95142",
+    "bytes": 1662,
+    "records": 104,
+    "format_count": 0,
+    "format_strings": []
+   },
+   "adreno_200/gui/fightergalleryprofile.ui": {
+    "sha256": "cfbd636f09cc38bb97a24c21ca7632048c49a90f941d5423025a1d6f042fd0b8",
+    "resource_id": "ac95c772b4c2a99c826e079256fc8354",
+    "bytes": 2613,
+    "records": 189,
+    "format_count": 0,
+    "format_strings": []
+   },
+   "adreno_200/gui/fightergalleryselect.ui": {
+    "sha256": "8c8bd3c2ee4dbdf597505696512dabfe71e79355afa39f92beed77e6911db2e8",
+    "resource_id": "bc37ee02b36572148665cb98590059f0",
+    "bytes": 1688,
+    "records": 102,
+    "format_count": 0,
+    "format_strings": []
+   },
+   "adreno_200/gui/stats1.ui": {
+    "sha256": "7e8fe1bbcdd4d2e4752cd952a4c5a73ab217ce67d1bbfa36349adbbc9eb8a41c",
+    "resource_id": "7ca094a8fc3d722df6b056d7f698b633",
+    "bytes": 5551,
+    "records": 564,
+    "format_count": 3,
+    "format_strings": [
+     "%d",
+     "%d",
+     "%d"
+    ]
+   },
+   "adreno_200/gui/stats2.ui": {
+    "sha256": "9e901afb5c71dceacb8412f77fe2864401e04749e70c2e40c40ffe1601bce8d6",
+    "resource_id": "1fedd5e1a045b56e587993ec3226021a",
+    "bytes": 7483,
+    "records": 782,
+    "format_count": 7,
+    "format_strings": [
+     "%d",
+     "%d",
+     "%d",
+     "%d",
+     "%d",
+     "%d",
+     "%d"
+    ]
+   },
+   "adreno_200/gui/stats3.ui": {
+    "sha256": "3af6a77758be9d820a9c97ee791ef1ec80ffcc4b197d849dd6b7bd0b0f6b6539",
+    "resource_id": "ead4c5e3e57da50b6004881363aba625",
+    "bytes": 7227,
+    "records": 754,
+    "format_count": 7,
+    "format_strings": [
+     "%g %%",
+     "%g %%",
+     "%d",
+     "%d",
+     "%d",
+     "%d",
+     "%d"
+    ]
+   },
+   "adreno_200/gui/statsback.ui": {
+    "sha256": "947bc2debd26be85eef5d4fd501db6ac69a4382f50bb96af0ce657a0ef717857",
+    "resource_id": "585b706bb1a0cb209fa732a86d066053",
+    "bytes": 1375,
+    "records": 81,
+    "format_count": 0,
+    "format_strings": []
+   },
+   "adreno_200/gui/statsmenu.ui": {
+    "sha256": "bd1ec658e690db4e1506067bed6e42986650d8818e05c7ee56f99c960dba1388",
+    "resource_id": "0cae622d17cc14b6c15c0226e2917323",
+    "bytes": 1249,
+    "records": 74,
+    "format_count": 0,
+    "format_strings": []
+   }
+  }
+ },
+ "previous_blocker_resolved": {
+  "gap": "CTX3 DATA reserved-word variant (achievementstable=1, stats1=3, stats2=7, stats3=7)",
+  "resolution": "the third DATA header word is a count of format values hoisted out of the record table; header layout is record_count, section_count, format_count, payload=0, (section_count+1) offsets, format_count u32 values, records, NUL-terminated format strings (total bytes = offset[0]), 16-byte tail; descriptor 0x50000000|length with second=index references them",
+  "proof": "full record coverage on all four resources; byte identity len == data_offset + 20 + 4*(sections+1) + 4*format_count + 8*records + string_bytes + 16",
+  "decoder": "tools/ctx3_variant.py"
+ },
+ "achievements": {
+  "screen": "achievementstable.ui",
+  "state": "achievements",
+  "layout": [
+   {
+    "type": "bllabel",
+    "name": "title",
+    "x": 0,
+    "y": 5,
+    "width": 210,
+    "height": 20,
+    "uppercase": "true",
+    "font": 0,
+    "effect": "none",
+    "textcolor": [
+     255,
+     255,
+     255
+    ],
+    "datasources": {
+     "text": [
+      "translate",
+      "achievements"
+     ]
+    }
+   },
+   {
+    "type": "picture",
+    "name": "box",
+    "x": 0,
+    "y": 25,
+    "width": 480,
+    "height": 320,
+    "subrect_x": 0,
+    "subrect_y": 0,
+    "subrect_width": 480,
+    "subrect_height": 320,
+    "file": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_textbox_tga7",
+     "extension": "tex"
+    }
+   },
+   {
+    "type": "statsview",
+    "name": "title2",
+    "x": 60,
+    "y": 40,
+    "width": 360,
+    "height": 260,
+    "uppercase": "true",
+    "font": 1,
+    "bgcolor": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "focused": "true",
+    "datasources": {
+     "pagecount": [
+      "option",
+      "achievements_num_pages"
+     ],
+     "selectedpage": [
+      "option",
+      "achievements_selected_page"
+     ],
+     "visiblepage": [
+      "option",
+      "achievements_page"
+     ]
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "back",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "action": "rsk",
+    "align": "center",
+    "valign": "middle",
+    "file": null
+   },
+   {
+    "type": "label",
+    "name": "pages",
+    "x": 190,
+    "y": 285,
+    "width": 100,
+    "height": 30,
+    "align": "center",
+    "uppercase": "true",
+    "font": 1,
+    "effect": "none",
+    "textcolor": [
+     255,
+     255,
+     255
+    ],
+    "datasources": {
+     "text": [
+      "format",
+      {
+       "$format": {
+        "index": 0,
+        "length": 5,
+        "text": "%d/%d"
+       }
+      },
+      [
+       "option",
+       "achievements_page"
+      ],
+      [
+       "option",
+       "achievements_num_pages"
+      ]
+     ]
+    }
+   }
+  ],
+  "title_key": "achievements",
+  "title_labels": {
+   "LangEnglish": "Achievements",
+   "LangChineseSimpl": "成就",
+   "LangChineseTrad": "成就",
+   "LangFrench": "Succès",
+   "LangGerman": "Auszeichnungen",
+   "LangItalian": "Obiettivi",
+   "LangJapanese": "実績",
+   "LangKorean": "클리어 내역",
+   "LangRussian": "Поощрения",
+   "LangSpanish": "Logros"
+  },
+  "page_format": "%d/%d",
+  "page_datasources": {
+   "text": [
+    "format",
+    {
+     "$format": {
+      "index": 0,
+      "length": 5,
+      "text": "%d/%d"
+     }
+    },
+    [
+     "option",
+     "achievements_page"
+    ],
+    [
+     "option",
+     "achievements_num_pages"
+    ]
+   ]
+  },
+  "statsview": {
+   "type": "statsview",
+   "name": "title2",
+   "x": 60,
+   "y": 40,
+   "width": 360,
+   "height": 260,
+   "uppercase": "true",
+   "font": 1,
+   "bgcolor": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "focused": "true",
+   "datasources": {
+    "pagecount": [
+     "option",
+     "achievements_num_pages"
+    ],
+    "selectedpage": [
+     "option",
+     "achievements_selected_page"
+    ],
+    "visiblepage": [
+     "option",
+     "achievements_page"
+    ]
+   }
+  },
+  "rows": [
+   {
+    "index": 0,
+    "description_key": "achv_arcade_easy",
+    "labels": {
+     "LangEnglish": "Finish arcade (Easy)",
+     "LangChineseSimpl": "完成街机模式（低难）",
+     "LangChineseTrad": "完成街機模式（低難）",
+     "LangFrench": "Terminer en arcade (Facile)",
+     "LangGerman": "Absolviere Arcade (einfach).",
+     "LangItalian": "Finisci la modalità Arcade (facile)",
+     "LangJapanese": "アーケード(かんたん)をクリア",
+     "LangKorean": "아케이드(하) 완료",
+     "LangRussian": "Завершить аркаду (Новичок)",
+     "LangSpanish": "Termina arcade (Fácil)"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_arcade_easy_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_arcade_easy_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 1,
+    "description_key": "achv_arcade_medium",
+    "labels": {
+     "LangEnglish": "Finish arcade (Medium)",
+     "LangChineseSimpl": "完成街机模式（中难）",
+     "LangChineseTrad": "完成街機模式（中難）",
+     "LangFrench": "Terminer en arcade (Moyen)",
+     "LangGerman": "Absolviere Arcade (mittel).",
+     "LangItalian": "Finisci la modalità Arcade (media)",
+     "LangJapanese": "アーケード(ふつう)クリア",
+     "LangKorean": "아케이드(중) 완료",
+     "LangRussian": "Завершить аркаду (Опытный боец)",
+     "LangSpanish": "Termina arcade (Medio)"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_arcade_medium_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_arcade_medium_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 2,
+    "description_key": "achv_arcade_hard",
+    "labels": {
+     "LangEnglish": "Finish arcade (Hard)",
+     "LangChineseSimpl": "完成街机模式（高难）",
+     "LangChineseTrad": "完成街機模式（高難）",
+     "LangFrench": "Terminer en arcade (Difficile)",
+     "LangGerman": "Absolviere Arcade (schwierig).",
+     "LangItalian": "Finisci la modalità Arcade (difficile)",
+     "LangJapanese": "アーケード(難しい)をクリア",
+     "LangKorean": "아케이드(상) 완료",
+     "LangRussian": "Завершить аркаду (Мастер)",
+     "LangSpanish": "Termina arcade (Difícil)"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_arcade_hard_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_arcade_hard_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 3,
+    "description_key": "achv_events_5",
+    "labels": {
+     "LangEnglish": "Complete 5 story events",
+     "LangChineseSimpl": "完成5个故事赛事",
+     "LangChineseTrad": "完成5個故事賽事",
+     "LangFrench": "Terminer 5 évènements d'histoire",
+     "LangGerman": "Absolviere 5 Story-Events.",
+     "LangItalian": "Completa 5 eventi della storia",
+     "LangJapanese": "５ストーリーイベントを完成",
+     "LangKorean": "5개 스토리 이벤트 완료",
+     "LangRussian": "Завершить 5 эпизодов истории",
+     "LangSpanish": "Completa 5 eventos del modo Historia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_events_5_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_events_5_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 4,
+    "description_key": "achv_events_10",
+    "labels": {
+     "LangEnglish": "Complete 10 story events",
+     "LangChineseSimpl": "完成10个故事赛事",
+     "LangChineseTrad": "完成10個故事賽事",
+     "LangFrench": "Terminer 10 évènements d'histoire",
+     "LangGerman": "Absolviere 10 Story-Events.",
+     "LangItalian": "Completa 10 eventi della storia",
+     "LangJapanese": "１０ストーリーイベントを完成",
+     "LangKorean": "10개 스토리 이벤트 완료",
+     "LangRussian": "Завершить 10 эпизодов истории",
+     "LangSpanish": "Completa 10 eventos del modo Historia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_events_10_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_events_10_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 5,
+    "description_key": "achv_events_25",
+    "labels": {
+     "LangEnglish": "Complete 25 story events",
+     "LangChineseSimpl": "完成25个故事赛事",
+     "LangChineseTrad": "完成25個故事賽事",
+     "LangFrench": "Terminer 25 évènements d'histoire",
+     "LangGerman": "Absolviere 25 Story-Events.",
+     "LangItalian": "Completa 25 eventi della storia",
+     "LangJapanese": "２５ストーリーイベントを完成",
+     "LangKorean": "25개 스토리 이벤트 완료",
+     "LangRussian": "Завершить 25 эпизодов истории",
+     "LangSpanish": "Completa 25 eventos del modo Historia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_events_25_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_events_25_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 6,
+    "description_key": "achv_final_attacks_5",
+    "labels": {
+     "LangEnglish": "Do 5 End Attacks",
+     "LangChineseSimpl": "完成5个致命攻击",
+     "LangChineseTrad": "完成5個致命攻擊",
+     "LangFrench": "Effectuer 5 coups finaux",
+     "LangGerman": "Vollführe 5 Finalangriffe.",
+     "LangItalian": "Esegui 5 attacchi finali",
+     "LangJapanese": "フィニッシュアタック５回達成",
+     "LangKorean": "5가지 최종 공격 수행",
+     "LangRussian": "Произвести 5 финальных атак",
+     "LangSpanish": "Haz 5 Ataques finales"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_final_attacks_5_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_final_attacks_5_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 7,
+    "description_key": "achv_final_attacks_15",
+    "labels": {
+     "LangEnglish": "Do 15 End Attacks",
+     "LangChineseSimpl": "完成15个致命攻击",
+     "LangChineseTrad": "完成15個致命攻擊",
+     "LangFrench": "Effectuer 15 coups finaux",
+     "LangGerman": "Vollführe 15 Finalangriffe.",
+     "LangItalian": "Esegui 15 attacchi finali",
+     "LangJapanese": "フィニッシュアタック１５回達成",
+     "LangKorean": "15가지 최종 공격 수행",
+     "LangRussian": "Произвести 15 финальных атак",
+     "LangSpanish": "Haz 15 Ataques finales"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_final_attacks_15_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_final_attacks_15_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 8,
+    "description_key": "achv_final_attacks_25",
+    "labels": {
+     "LangEnglish": "Do 25 End Attacks",
+     "LangChineseSimpl": "完成25个致命攻击",
+     "LangChineseTrad": "完成25個致命攻擊",
+     "LangFrench": "Effectuer 25 coups finaux",
+     "LangGerman": "Vollführe 25 Finalangriffe.",
+     "LangItalian": "Esegui 25 attacchi finali",
+     "LangJapanese": "フィニッシュアタック２５回達成",
+     "LangKorean": "25가지 최종 공격 수행",
+     "LangRussian": "Произвести 25 финальных атак",
+     "LangSpanish": "Haz 25 Ataques finales"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_final_attacks_25_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_final_attacks_25_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 9,
+    "description_key": "achv_finish_chapter_1",
+    "labels": {
+     "LangEnglish": "Finish story chapter 1",
+     "LangChineseSimpl": "完成故事第1章",
+     "LangChineseTrad": "完成故事第1章",
+     "LangFrench": "Finir le chapitre 1 de l'histoire",
+     "LangGerman": "Beende Story, Kapitel 1.",
+     "LangItalian": "Completa il capitolo 1 della storia",
+     "LangJapanese": "ストーリー第１章クリア",
+     "LangKorean": "스토리 챕터 1 완료",
+     "LangRussian": "Завершить 1 главу истории",
+     "LangSpanish": "Termina el capítulo 1 del modo Historia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_1_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_1_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 10,
+    "description_key": "achv_finish_chapter_2",
+    "labels": {
+     "LangEnglish": "Finish story chapter 2",
+     "LangChineseSimpl": "完成故事第2章",
+     "LangChineseTrad": "完成故事第2章",
+     "LangFrench": "Finir le chapitre 2 de l'histoire",
+     "LangGerman": "Beende Story, Kapitel 2.",
+     "LangItalian": "Completa il capitolo 2 della storia",
+     "LangJapanese": "ストーリー第２章クリア",
+     "LangKorean": "스토리 챕터 2 완료",
+     "LangRussian": "Завершить 2 главу истории",
+     "LangSpanish": "Termina el capítulo 2 del modo Historia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_2_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_2_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 11,
+    "description_key": "achv_finish_chapter_3",
+    "labels": {
+     "LangEnglish": "Finish story chapter 3",
+     "LangChineseSimpl": "完成故事第3章",
+     "LangChineseTrad": "完成故事第3章",
+     "LangFrench": "Finir le chapitre 3 de l'histoire",
+     "LangGerman": "Beende Story, Kapitel 3.",
+     "LangItalian": "Completa il capitolo 3 della storia",
+     "LangJapanese": "ストーリー第３章クリア",
+     "LangKorean": "스토리 챕터 3 완료",
+     "LangRussian": "Завершить 3 главу истории",
+     "LangSpanish": "Termina el capítulo 3 del modo Historia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_3_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_3_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 12,
+    "description_key": "achv_finish_chapter_4",
+    "labels": {
+     "LangEnglish": "Finish story chapter 4",
+     "LangChineseSimpl": "完成故事第4章",
+     "LangChineseTrad": "完成故事第4章",
+     "LangFrench": "Finir le chapitre 4 de l'histoire",
+     "LangGerman": "Beende Story, Kapitel 4.",
+     "LangItalian": "Completa il capitolo 4 della storia",
+     "LangJapanese": "ストーリー第４章クリア",
+     "LangKorean": "스토리 챕터 4 완료",
+     "LangRussian": "Завершить 4 главу истории",
+     "LangSpanish": "Termina el capítulo 4 del modo Historia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_4_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_4_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 13,
+    "description_key": "achv_finish_chapter_5",
+    "labels": {
+     "LangEnglish": "Finish story chapter 5",
+     "LangChineseSimpl": "完成故事第5章",
+     "LangChineseTrad": "完成故事第5章",
+     "LangFrench": "Finir le chapitre 5 de l'histoire",
+     "LangGerman": "Beende Story, Kapitel 5.",
+     "LangItalian": "Completa il capitolo 5 della storia",
+     "LangJapanese": "ストーリー第５章クリア",
+     "LangKorean": "스토리 챕터 5 완료",
+     "LangRussian": "Завершить 5 главу истории",
+     "LangSpanish": "Termina el capítulo 5 del modo Historia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_5_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_finish_chapter_5_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 14,
+    "description_key": "achv_grabs_5",
+    "labels": {
+     "LangEnglish": "Do 5 grabs",
+     "LangChineseSimpl": "完成5个抓击",
+     "LangChineseTrad": "完成5個抓擊",
+     "LangFrench": "Faire 5 prises",
+     "LangGerman": "Führe 5 Griffe aus.",
+     "LangItalian": "Esegui 5 prese",
+     "LangJapanese": "つかみ技５回達成",
+     "LangKorean": "5회 매치기 수행",
+     "LangRussian": "Выполнить 5 захватов",
+     "LangSpanish": "Realiza 5 agarres"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_grabs_5_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_grabs_5_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 15,
+    "description_key": "achv_grabs_15",
+    "labels": {
+     "LangEnglish": "Do 15 grabs",
+     "LangChineseSimpl": "完成15个抓击",
+     "LangChineseTrad": "完成15個抓擊",
+     "LangFrench": "Faire 15 prises",
+     "LangGerman": "Führe 15 Griffe aus.",
+     "LangItalian": "Esegui 15 prese",
+     "LangJapanese": "つかみ技１５回達成",
+     "LangKorean": "15회 매치기 수행",
+     "LangRussian": "Выполнить 15 захватов",
+     "LangSpanish": "Realiza 15 agarres"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_grabs_15_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_grabs_15_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 16,
+    "description_key": "achv_grabs_25",
+    "labels": {
+     "LangEnglish": "Do 25 grabs",
+     "LangChineseSimpl": "完成25个抓击",
+     "LangChineseTrad": "完成25個抓擊",
+     "LangFrench": "Faire 25 prises",
+     "LangGerman": "Führe 25 Griffe aus.",
+     "LangItalian": "Esegui 25 prese",
+     "LangJapanese": "つかみ技２５回達成",
+     "LangKorean": "25회 매치기 수행",
+     "LangRussian": "Выполнить 25 захватов",
+     "LangSpanish": "Realiza 25 agarres"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_grabs_25_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_grabs_25_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 17,
+    "description_key": "achv_greats_5",
+    "labels": {
+     "LangEnglish": "Finish 5 rounds with 'Great'",
+     "LangChineseSimpl": "完成5局格斗，得到“棒极了”评价",
+     "LangChineseTrad": "完成5局格鬥，得到「棒極了」評價",
+     "LangFrench": "Finir 5 rounds en 'Formidable'",
+     "LangGerman": "Beende 5 Runden mit \"Großartig\".",
+     "LangItalian": "Termina 5 round con un \"Grande!\"",
+     "LangJapanese": "５ラウンドを“最高！”でクリア",
+     "LangKorean": "'우수' 점수로 5라운드 완료",
+     "LangRussian": "Завершить 5 боев с оценкой \"Отлично\"",
+     "LangSpanish": "Termina 5 asaltos con 'Great'"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_greats_5_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_greats_5_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 18,
+    "description_key": "achv_greats_15",
+    "labels": {
+     "LangEnglish": "Finish 15 rounds with 'Great'",
+     "LangChineseSimpl": "完成15局格斗，得到“棒极了”评价",
+     "LangChineseTrad": "完成15局格鬥，得到「棒極了」評價",
+     "LangFrench": "Finir 15 rounds en 'Formidable'",
+     "LangGerman": "Beende 15 Runden mit \"Großartig\".",
+     "LangItalian": "Termina 15 round con un \"Grande!\"",
+     "LangJapanese": "１５ラウンドを“最高！”でクリア",
+     "LangKorean": "'우수' 점수로 15라운드 완료",
+     "LangRussian": "Завершить 15 боев с оценкой \"Отлично\"",
+     "LangSpanish": "Termina 15 asaltos con 'Great'"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_greats_15_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_greats_15_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 19,
+    "description_key": "achv_greats_25",
+    "labels": {
+     "LangEnglish": "Finish 25 rounds with 'Great'",
+     "LangChineseSimpl": "完成25局格斗，得到“棒极了”评价",
+     "LangChineseTrad": "完成25局格鬥，得到「棒極了」評價",
+     "LangFrench": "Finir 25 rounds en 'Formidable'",
+     "LangGerman": "Beende 25 Runden mit \"Großartig\".",
+     "LangItalian": "Termina 25 round con un \"Grande!\"",
+     "LangJapanese": "２５ラウンドを“最高！”でクリア",
+     "LangKorean": "'우수' 점수로 25라운드 완료",
+     "LangRussian": "Завершить 25 боев с оценкой \"Отлично\"",
+     "LangSpanish": "Termina 25 asaltos con 'Great'"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_greats_25_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_greats_25_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 20,
+    "description_key": "achv_perfects_5",
+    "labels": {
+     "LangEnglish": "Do 5 perfects",
+     "LangChineseSimpl": "完成5次完美攻击",
+     "LangChineseTrad": "完成5次完美攻擊",
+     "LangFrench": "Faire 5 victoires parfaites",
+     "LangGerman": "Führe 5 Vollendete aus.",
+     "LangItalian": "Esegui 5 incontri perfetti",
+     "LangJapanese": "パーフェクトを５回達成",
+     "LangKorean": "5회의 퍼펙트 수행",
+     "LangRussian": "Завоевать 5 чистых побед",
+     "LangSpanish": "Realiza 5 Perfects"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_perfects_5_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_perfects_5_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 21,
+    "description_key": "achv_perfects_15",
+    "labels": {
+     "LangEnglish": "Do 15 perfects",
+     "LangChineseSimpl": "完成15次完美攻击",
+     "LangChineseTrad": "完成15次完美攻擊",
+     "LangFrench": "Faire 15 victoires parfaites",
+     "LangGerman": "Führe 15 Vollendete aus.",
+     "LangItalian": "Esegui 15 incontri perfetti",
+     "LangJapanese": "パーフェクトを１５回達成",
+     "LangKorean": "15회의 퍼펙트 수행",
+     "LangRussian": "Завоевать 15 чистых побед",
+     "LangSpanish": "Realiza 15 Perfects"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_perfects_15_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_perfects_15_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 22,
+    "description_key": "achv_perfects_25",
+    "labels": {
+     "LangEnglish": "Do 25 perfects",
+     "LangChineseSimpl": "完成25次完美攻击",
+     "LangChineseTrad": "完成25次完美攻擊",
+     "LangFrench": "Faire 25 victoires parfaites",
+     "LangGerman": "Führe 25 Vollendete aus.",
+     "LangItalian": "Esegui 25 incontri perfetti",
+     "LangJapanese": "パーフェクトを２５回達成",
+     "LangKorean": "25회의 퍼펙트 수행",
+     "LangRussian": "Завоевать 25 чистых побед",
+     "LangSpanish": "Realiza 25 Perfects"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_perfects_25_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_perfects_25_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 23,
+    "description_key": "achv_story_completed_easy",
+    "labels": {
+     "LangEnglish": "Complete story mode (Easy)",
+     "LangChineseSimpl": "完成故事模式（低难）",
+     "LangChineseTrad": "完成故事模式（低難）",
+     "LangFrench": "Terminer le mode histoire (Facile)",
+     "LangGerman": "Absolviere Story-Modus (einfach).",
+     "LangItalian": "Finisci la modalità Storia (facile)",
+     "LangJapanese": "ストーリーモード(かんたん)をクリア",
+     "LangKorean": "스토리 모드(하) 완료",
+     "LangRussian": "Завершить режим истории (Новичок)",
+     "LangSpanish": "Termina el modo Historia (Fácil)"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_story_completed_easy_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_story_completed_easy_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 24,
+    "description_key": "achv_story_completed_medium",
+    "labels": {
+     "LangEnglish": "Complete story mode (Medium)",
+     "LangChineseSimpl": "完成故事模式（中难）",
+     "LangChineseTrad": "完成故事模式（中難）",
+     "LangFrench": "Terminer le mode histoire (Moyen)",
+     "LangGerman": "Absolviere Story-Modus (mittel).",
+     "LangItalian": "Finisci la modalità Storia (media)",
+     "LangJapanese": "ストーリーモード(ふつう)をクリア",
+     "LangKorean": "스토리 모드(중) 완료",
+     "LangRussian": "Завершить режим истории (Опытный боец)",
+     "LangSpanish": "Termina el modo Historia (Medio)"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_story_completed_medium_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_story_completed_medium_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 25,
+    "description_key": "achv_story_completed_hard",
+    "labels": {
+     "LangEnglish": "Complete story mode (Hard)",
+     "LangChineseSimpl": "完成故事模式（高难）",
+     "LangChineseTrad": "完成故事模式（高難）",
+     "LangFrench": "Terminer le mode histoire (Difficile)",
+     "LangGerman": "Absolviere Story-Modus (schwierig).",
+     "LangItalian": "Finisci la modalità Storia (difficile)",
+     "LangJapanese": "ストーリーモード(難しい)をクリア",
+     "LangKorean": "스토리 모드(상) 완료",
+     "LangRussian": "Завершить режим истории (Мастер)",
+     "LangSpanish": "Termina el modo Historia (Difícil)"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_story_completed_hard_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_story_completed_hard_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 26,
+    "description_key": "achv_survival_5",
+    "labels": {
+     "LangEnglish": "Beat 5 opponents in Survival",
+     "LangChineseSimpl": "在生存模式中击败5个对手",
+     "LangChineseTrad": "在生存模式中擊敗5個對手",
+     "LangFrench": "Battre 5 adversaires en Survie",
+     "LangGerman": "Besiege 5 Gegner in \"Überleben\".",
+     "LangItalian": "Batti 5 avversari in Sopravvivenza",
+     "LangJapanese": "サバイバルで５人の相手を倒せ",
+     "LangKorean": "서바이벌에서 5명의 상대 제압",
+     "LangRussian": "Одолеть 5 соперников в бою на выживание",
+     "LangSpanish": "Derrota a 5 oponentes en Supervivencia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_survival_5_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_survival_5_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 27,
+    "description_key": "achv_survival_10",
+    "labels": {
+     "LangEnglish": "Beat 10 opponents in Survival",
+     "LangChineseSimpl": "在生存模式中击败10个对手",
+     "LangChineseTrad": "在生存模式中擊敗10個對手",
+     "LangFrench": "Battre 10 adversaires en Survie",
+     "LangGerman": "Besiege 10 Gegner in \"Überleben\".",
+     "LangItalian": "Batti 10 avversari in Sopravvivenza",
+     "LangJapanese": "サバイバルで１０人の相手を倒せ",
+     "LangKorean": "서바이벌에서 10명의 상대 제압",
+     "LangRussian": "Одолеть 10 соперников в бою на выживание",
+     "LangSpanish": "Derrota a 10 oponentes en Supervivencia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_survival_10_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_survival_10_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 28,
+    "description_key": "achv_survival_20",
+    "labels": {
+     "LangEnglish": "Beat 20 opponents in Survival",
+     "LangChineseSimpl": "在生存模式中击败20个对手",
+     "LangChineseTrad": "在生存模式中擊敗20個對手",
+     "LangFrench": "Battre 20 adversaires en Survie",
+     "LangGerman": "Besiege 20 Gegner in \"Überleben\".",
+     "LangItalian": "Batti 20 avversari in Sopravvivenza",
+     "LangJapanese": "サバイバルで２０人の相手を倒せ",
+     "LangKorean": "서바이벌에서 20명의 상대 제압",
+     "LangRussian": "Одолеть 20 соперников в бою на выживание",
+     "LangSpanish": "Derrota a 20 oponentes en Supervivencia"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_survival_20_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_survival_20_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 29,
+    "description_key": "achv_time_attack_beginner",
+    "labels": {
+     "LangEnglish": "Complete Time Attack in less than 6'30''",
+     "LangChineseSimpl": "在 6'30''之内完成计时攻击",
+     "LangChineseTrad": "在 6'30''之內完成計時攻擊",
+     "LangFrench": "Terminer le Chrono en moins de 6'30''",
+     "LangGerman": "Absolviere Zeitangriff in weniger als 6'30''.",
+     "LangItalian": "Finisci una sfida a tempo in meno di 6'30''",
+     "LangJapanese": "6'30''以内にタイムアタックを達成",
+     "LangKorean": "6분 30초 내에 타임 어택 완료",
+     "LangRussian": "Провести атаку менее, чем за 6'30''",
+     "LangSpanish": "Completa la Contrarreloj en menos de 6'30''"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_time_attack_beginer_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_time_attack_beginer_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 30,
+    "description_key": "achv_time_attack_easy",
+    "labels": {
+     "LangEnglish": "Complete Time Attack in less than 5'30''",
+     "LangChineseSimpl": "在 5'30''之内完成计时攻击",
+     "LangChineseTrad": "在 5'30''之內完成計時攻擊",
+     "LangFrench": "Terminer le Chrono en moins de 5'30''",
+     "LangGerman": "Absolviere Zeitangriff in weniger als 5'30''.",
+     "LangItalian": "Finisci una sfida a tempo in meno di 5'30''",
+     "LangJapanese": "5'30''以内にタイムアタックを達成",
+     "LangKorean": "5분 30초 내에 타임 어택 완료",
+     "LangRussian": "Провести атаку менее, чем за 5'30''",
+     "LangSpanish": "Completa la Contrarreloj en menos de 5'30''"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_time_attack_easy_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_time_attack_easy_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 31,
+    "description_key": "achv_time_attack_medium",
+    "labels": {
+     "LangEnglish": "Complete Time Attack in less than 4'30''",
+     "LangChineseSimpl": "在 4'30''之内完成计时攻击",
+     "LangChineseTrad": "在 4'30''之內完成計時攻擊",
+     "LangFrench": "Terminer le Chrono en moins de 4'30''",
+     "LangGerman": "Absolviere Zeitangriff in weniger als 4'30''.",
+     "LangItalian": "Finisci una sfida a tempo in meno di 4'30''",
+     "LangJapanese": "4'30''以内にタイムアタックを達成",
+     "LangKorean": "4분 30초 내에 타임 어택 완료",
+     "LangRussian": "Провести атаку менее, чем за 4'30''",
+     "LangSpanish": "Completa la Contrarreloj en menos de 4'30''"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_time_attack_medium_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_time_attack_medium_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 32,
+    "description_key": "achv_time_attack_hard",
+    "labels": {
+     "LangEnglish": "Complete Time Attack in less than 3'30''",
+     "LangChineseSimpl": "在 3'30''之内完成计时攻击",
+     "LangChineseTrad": "在 3'30''之內完成計時攻擊",
+     "LangFrench": "Terminer le Chrono en moins de 3'30''",
+     "LangGerman": "Absolviere Zeitangriff in weniger als 3'30''.",
+     "LangItalian": "Finisci una sfida a tempo in meno di 3'30''",
+     "LangJapanese": "3'30''以内にタイムアタックを達成",
+     "LangKorean": "3분 30초 내에 타임 어택 완료",
+     "LangRussian": "Провести атаку менее, чем за 3'30''",
+     "LangSpanish": "Completa la Contrarreloj en menos de 3'30''"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_time_attack_hard_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_time_attack_hard_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 33,
+    "description_key": "achv_versus_1",
+    "labels": {
+     "LangEnglish": "Win 1 battle in Versus",
+     "LangChineseSimpl": "在挑战模式中获得1场胜利",
+     "LangChineseTrad": "在挑戰模式中獲得1場勝利",
+     "LangFrench": "Gagner 1 bataille en Versus",
+     "LangGerman": "Gewinne 1 Kampf in \"Versus\".",
+     "LangItalian": "Vinci 1 testa a testa",
+     "LangJapanese": "VS で１試合勝て",
+     "LangKorean": "대전 모드에서 1개 전투 승리 ",
+     "LangRussian": "Одержать победу в 1 спарринге",
+     "LangSpanish": "Gana 1 combate en Versus"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_1_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_1_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 34,
+    "description_key": "achv_versus_5",
+    "labels": {
+     "LangEnglish": "Win 5 battles in Versus",
+     "LangChineseSimpl": "在挑战模式中获得5场胜利",
+     "LangChineseTrad": "在挑戰模式中獲得5場勝利",
+     "LangFrench": "Gagner 5 batailles en Versus",
+     "LangGerman": "Gewinne 5 Kämpfe in \"Versus\".",
+     "LangItalian": "Vinci 5 testa a testa",
+     "LangJapanese": "VSで５試合勝て",
+     "LangKorean": "대전 모드에서 5개 전투 승리",
+     "LangRussian": "Одержать победу в 5 спаррингах",
+     "LangSpanish": "Gana 5 combate en Versus"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_5_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_5_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 35,
+    "description_key": "achv_versus_15",
+    "labels": {
+     "LangEnglish": "Win 15 battles in Versus",
+     "LangChineseSimpl": "在挑战模式中获得15场胜利",
+     "LangChineseTrad": "在挑戰模式中獲得15場勝利",
+     "LangFrench": "Gagner 15 batailles en Versus",
+     "LangGerman": "Gewinne 15 Kämpfe in \"Versus\".",
+     "LangItalian": "Vinci 15 testa a testa",
+     "LangJapanese": "VSで１５試合勝て",
+     "LangKorean": "대전 모드에서 15개 전투 승리",
+     "LangRussian": "Одержать победу в 15 спаррингах",
+     "LangSpanish": "Gana 15 combate en Versus"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_15_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_15_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 36,
+    "description_key": "achv_versus_25",
+    "labels": {
+     "LangEnglish": "Win 25 battles in Versus",
+     "LangChineseSimpl": "在挑战模式中获得25场胜利",
+     "LangChineseTrad": "在挑戰模式中獲得25場勝利",
+     "LangFrench": "Gagner 25 batailles en Versus",
+     "LangGerman": "Gewinne 25 Kämpfe in \"Versus\".",
+     "LangItalian": "Vinci 25 testa a testa",
+     "LangJapanese": "VSで２５試合勝て",
+     "LangKorean": "대전 모드에서 25개 전투 승리",
+     "LangRussian": "Одержать победу в 25 спаррингах",
+     "LangSpanish": "Gana 25 combate en Versus"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_25_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_25_on",
+     "extension": "tex"
+    }
+   },
+   {
+    "index": 37,
+    "description_key": "achv_versus_50",
+    "labels": {
+     "LangEnglish": "Win 50 battles in Versus",
+     "LangChineseSimpl": "在挑战模式中获得50场胜利",
+     "LangChineseTrad": "在挑戰模式中獲得50場勝利",
+     "LangFrench": "Gagner 50 batailles en Versus",
+     "LangGerman": "Gewinne 50 Kämpfe in \"Versus\".",
+     "LangItalian": "Vinci 50 testa a testa",
+     "LangJapanese": "VSで５０試合勝て",
+     "LangKorean": "대전 모드에서 50개 전투 승리",
+     "LangRussian": "Одержать победу в 50 спаррингах",
+     "LangSpanish": "Gana 50 combate en Versus"
+    },
+    "pending_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_50_off",
+     "extension": "tex"
+    },
+    "reached_icon": {
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_achievement_vs_50_on",
+     "extension": "tex"
+    }
+   }
+  ],
+  "row_count": 38,
+  "row_binding": "NOT RECOVERED",
+  "row_binding_reason": "achievementstable.ui statsview declares only pagecount/selectedpage/visiblepage; neither the .ui nor game.states references achievements.list, so the 38 rows are an evidence inventory, not a proven body",
+  "reached_state": "NOT RECOVERED",
+  "reached_state_reason": "achievements.list names the pending_icon / reached_icon pair but the per-row reached flag is runtime achievement progress, not a resource value",
+  "page_capacity": "NOT RECOVERED",
+  "page_capacity_reason": "achievements_num_pages / achievements_page are runtime options; no decoded .ui or .list value gives the rows-per-page capacity"
+ },
+ "stats": {
+  "submenu": {
+   "screen": "statsmenu.ui",
+   "state": "statsmain",
+   "layout": [
+    {
+     "type": "bllabel",
+     "name": "title",
+     "x": 0,
+     "y": 5,
+     "width": 200,
+     "height": 40,
+     "datasources": {
+      "text": [
+       "translate",
+       "statistics"
+      ]
+     }
+    },
+    {
+     "type": "blmenu",
+     "name": "menu",
+     "x": 80,
+     "y": 2,
+     "width": 400,
+     "height": 180,
+     "options": [
+      [
+       "game_modes",
+       "stats1"
+      ],
+      [
+       "battles",
+       "stats2"
+      ],
+      [
+       "moves",
+       "stats3"
+      ]
+     ],
+     "valign": "middle",
+     "font": 2,
+     "focused": "true"
+    }
+   ],
+   "rows": [
+    {
+     "label_key": "game_modes",
+     "labels": {
+      "LangEnglish": "Game Modes",
+      "LangChineseSimpl": "游戏模式",
+      "LangChineseTrad": "遊戲模式",
+      "LangFrench": "Modes de jeu",
+      "LangGerman": "Spielmodi",
+      "LangItalian": "Modalità di gioco",
+      "LangJapanese": "ゲームモード",
+      "LangKorean": "게임 모드",
+      "LangRussian": "Режимы игры",
+      "LangSpanish": "Modos de juego"
+     },
+     "state": "stats1",
+     "destination": {
+      "ui_files": [
+       "gui/stats1.ui"
+      ]
+     }
+    },
+    {
+     "label_key": "battles",
+     "labels": {
+      "LangEnglish": "Battles",
+      "LangChineseSimpl": "搏斗",
+      "LangChineseTrad": "搏鬥",
+      "LangFrench": "Combats",
+      "LangGerman": "Schlachten",
+      "LangItalian": "Incontri",
+      "LangJapanese": "バトル",
+      "LangKorean": "전투",
+      "LangRussian": "Бои",
+      "LangSpanish": "Luchas"
+     },
+     "state": "stats2",
+     "destination": {
+      "ui_files": [
+       "gui/stats2.ui"
+      ]
+     }
+    },
+    {
+     "label_key": "moves",
+     "labels": {
+      "LangEnglish": "Moves",
+      "LangChineseSimpl": "移动",
+      "LangChineseTrad": "移動",
+      "LangFrench": "Coups",
+      "LangGerman": "Bewegungen",
+      "LangItalian": "Mosse",
+      "LangJapanese": "動作",
+      "LangKorean": "동작",
+      "LangRussian": "Движения",
+      "LangSpanish": "Movimientos"
+     },
+     "state": "stats3",
+     "destination": {
+      "ui_files": [
+       "gui/stats3.ui"
+      ]
+     }
+    }
+   ],
+   "back": {
+    "screen": "statsback.ui",
+    "layout": [
+     {
+      "type": "picture",
+      "name": "box",
+      "x": 0,
+      "y": 110,
+      "width": 480,
+      "height": 320,
+      "subrect_x": 0,
+      "subrect_y": 0,
+      "subrect_width": 480,
+      "subrect_height": 320,
+      "file": {
+       "directory": "gui/images/menu/",
+       "basename": "bl_textbox_tga7",
+       "extension": "tex"
+      }
+     },
+     {
+      "type": "blbutton",
+      "name": "back",
+      "x": 2,
+      "y": 270,
+      "width": 48,
+      "height": 48,
+      "action": "backtomain",
+      "align": "center",
+      "valign": "middle",
+      "file": null
+     }
+    ]
+   }
+  },
+  "pages": {
+   "stats1": {
+    "screen": "stats1.ui",
+    "state": "stats1",
+    "layout": [
+     {
+      "type": "label",
+      "name": "title1",
+      "x": 60,
+      "y": 150,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "best_story"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value1",
+      "x": 240,
+      "y": 150,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        [
+         "translate",
+         "level_and_xp"
+        ],
+        [
+         "stats",
+         "story_top_level"
+        ],
+        [
+         "stats",
+         "story_top_xp"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line1",
+      "x": 60,
+      "y": 170,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title2",
+      "x": 60,
+      "y": 175,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "best_versus"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value2",
+      "x": 240,
+      "y": 175,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 0,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "versus_top"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line2",
+      "x": 60,
+      "y": 195,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title3",
+      "x": 60,
+      "y": 200,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "arcade_top"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value3",
+      "x": 240,
+      "y": 200,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 1,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "arcade_top"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line3",
+      "x": 60,
+      "y": 220,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title4",
+      "x": 60,
+      "y": 225,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "best_survival"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value4",
+      "x": 240,
+      "y": 225,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 2,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "survival_top"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line4",
+      "x": 60,
+      "y": 245,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title5",
+      "x": 60,
+      "y": 250,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "best_timeattack"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value5",
+      "x": 240,
+      "y": 250,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "stats",
+        "timeattacktop"
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line5",
+      "x": 60,
+      "y": 270,
+      "width": 420,
+      "height": 1
+     }
+    ],
+    "rows": [
+     {
+      "index": 0,
+      "title_widget": "title1",
+      "title_key": "best_story",
+      "title_labels": {
+       "LangEnglish": "Best Story",
+       "LangChineseSimpl": "最佳故事模式",
+       "LangChineseTrad": "最佳故事模式",
+       "LangFrench": "Meilleure Histoire",
+       "LangGerman": "Beste Story",
+       "LangItalian": "Record storia",
+       "LangJapanese": "ベストストーリー",
+       "LangKorean": "최고의 스토리",
+       "LangRussian": "Лучшая история",
+       "LangSpanish": "Record historia"
+      },
+      "value_widget": "value1",
+      "value_datasources": {
+       "text": [
+        "format",
+        [
+         "translate",
+         "level_and_xp"
+        ],
+        [
+         "stats",
+         "story_top_level"
+        ],
+        [
+         "stats",
+         "story_top_xp"
+        ]
+       ]
+      },
+      "value_format": null,
+      "value_format_key": "level_and_xp",
+      "value_format_labels": {
+       "LangEnglish": "Level %d / %d XP",
+       "LangChineseSimpl": "等级 %d / %d XP",
+       "LangChineseTrad": "等級 %d / %d XP",
+       "LangFrench": "Niveau %d / %d PX",
+       "LangGerman": "Level %d / %d EP",
+       "LangItalian": "Livello %d / %d ESP",
+       "LangJapanese": "レベル %d / %d EXP",
+       "LangKorean": "레벨 %d / %d XP",
+       "LangRussian": "Уровень %d / %d Опыт",
+       "LangSpanish": "Nivel %d / %d EP"
+      },
+      "value_stat_keys": [
+       "story_top_level",
+       "story_top_xp"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 1,
+      "title_widget": "title2",
+      "title_key": "best_versus",
+      "title_labels": {
+       "LangEnglish": "Best Versus",
+       "LangChineseSimpl": "最佳挑战模式",
+       "LangChineseTrad": "最佳挑戰模式",
+       "LangFrench": "Meilleur Versus",
+       "LangGerman": "Beste Versus",
+       "LangItalian": "Record testa a testa",
+       "LangJapanese": "ベストVS",
+       "LangKorean": "최고의 대전",
+       "LangRussian": "Лучший спарринг",
+       "LangSpanish": "Récord Versus"
+      },
+      "value_widget": "value2",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 0,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "versus_top"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "versus_top"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 2,
+      "title_widget": "title3",
+      "title_key": "arcade_top",
+      "title_labels": {
+       "LangEnglish": "Best Arcade",
+       "LangChineseSimpl": "最佳街机模式",
+       "LangChineseTrad": "最佳街機模式",
+       "LangFrench": "Meilleur Arcade",
+       "LangGerman": "Beste Arcade",
+       "LangItalian": "Record arcade",
+       "LangJapanese": "ベストアーケード",
+       "LangKorean": "최고의 아케이드",
+       "LangRussian": "Лучшая аркада",
+       "LangSpanish": "Récord arcade"
+      },
+      "value_widget": "value3",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 1,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "arcade_top"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "arcade_top"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 3,
+      "title_widget": "title4",
+      "title_key": "best_survival",
+      "title_labels": {
+       "LangEnglish": "Best Survival",
+       "LangChineseSimpl": "最佳生存模式",
+       "LangChineseTrad": "最佳生存模式",
+       "LangFrench": "Meilleure Survie",
+       "LangGerman": "Beste Überleben",
+       "LangItalian": "Sopravvivenza",
+       "LangJapanese": "ベストサバイバル",
+       "LangKorean": "최고의 서바이벌",
+       "LangRussian": "Лучший бой на выживание",
+       "LangSpanish": "Récord supervivencia"
+      },
+      "value_widget": "value4",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 2,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "survival_top"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "survival_top"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 4,
+      "title_widget": "title5",
+      "title_key": "best_timeattack",
+      "title_labels": {
+       "LangEnglish": "Best Time Attack",
+       "LangChineseSimpl": "最佳计时模式",
+       "LangChineseTrad": "最佳計時模式",
+       "LangFrench": "Meilleur Chrono",
+       "LangGerman": "Beste Zeitangriff",
+       "LangItalian": "Sfida a tempo",
+       "LangJapanese": "ベストタイムアタック",
+       "LangKorean": "최고의 타임 어택",
+       "LangRussian": "Лучшее время атаки",
+       "LangSpanish": "Récord contrarreloj"
+      },
+      "value_widget": "value5",
+      "value_datasources": {
+       "text": [
+        "stats",
+        "timeattacktop"
+       ]
+      },
+      "value_format": null,
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     }
+    ],
+    "row_count": 5,
+    "values": "NOT RECOVERED",
+    "values_reason": "every value widget binds [\"stats\", <key>] runtime data; neither the .ui nor any decoded list carries the numbers"
+   },
+   "stats2": {
+    "screen": "stats2.ui",
+    "state": "stats2",
+    "layout": [
+     {
+      "type": "label",
+      "name": "title1",
+      "x": 60,
+      "y": 130,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "fights"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value1",
+      "x": 240,
+      "y": 130,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 0,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_fights"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line1",
+      "x": 60,
+      "y": 150,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title2",
+      "x": 60,
+      "y": 155,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "wins"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value2",
+      "x": 240,
+      "y": 155,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 1,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_victories"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line2",
+      "x": 60,
+      "y": 175,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title3",
+      "x": 60,
+      "y": 180,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "wins_in_a_row"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value3",
+      "x": 240,
+      "y": 180,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 2,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "max_wins_in_a_row"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line3",
+      "x": 60,
+      "y": 200,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title4",
+      "x": 60,
+      "y": 205,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "loses"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value4",
+      "x": 240,
+      "y": 205,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 3,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_defeats"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line4",
+      "x": 60,
+      "y": 225,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title5",
+      "x": 60,
+      "y": 230,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "draws"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value5",
+      "x": 240,
+      "y": 230,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 4,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_draws"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line5",
+      "x": 60,
+      "y": 250,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title6",
+      "x": 60,
+      "y": 255,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "perfects"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value6",
+      "x": 240,
+      "y": 255,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 5,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_perfects"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line6",
+      "x": 60,
+      "y": 275,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title7",
+      "x": 60,
+      "y": 280,
+      "width": 180,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "great"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value7",
+      "x": 240,
+      "y": 280,
+      "width": 200,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 6,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_greats"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line7",
+      "x": 60,
+      "y": 300,
+      "width": 420,
+      "height": 1
+     }
+    ],
+    "rows": [
+     {
+      "index": 0,
+      "title_widget": "title1",
+      "title_key": "fights",
+      "title_labels": {
+       "LangEnglish": "Fights",
+       "LangChineseSimpl": "格斗",
+       "LangChineseTrad": "格鬥",
+       "LangFrench": "Combats",
+       "LangGerman": "Kämpfe",
+       "LangItalian": "Incontri",
+       "LangJapanese": "試合",
+       "LangKorean": "파이트",
+       "LangRussian": "Бои",
+       "LangSpanish": "Combates"
+      },
+      "value_widget": "value1",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 0,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_fights"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_fights"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 1,
+      "title_widget": "title2",
+      "title_key": "wins",
+      "title_labels": {
+       "LangEnglish": "Wins",
+       "LangChineseSimpl": "获胜",
+       "LangChineseTrad": "獲勝",
+       "LangFrench": "Victoires",
+       "LangGerman": "Siege",
+       "LangItalian": "Vittorie",
+       "LangJapanese": "勝利",
+       "LangKorean": "승리",
+       "LangRussian": "Победы",
+       "LangSpanish": "Victorias"
+      },
+      "value_widget": "value2",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 1,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_victories"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_victories"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 2,
+      "title_widget": "title3",
+      "title_key": "wins_in_a_row",
+      "title_labels": {
+       "LangEnglish": "Wins in a row",
+       "LangChineseSimpl": "连续获胜",
+       "LangChineseTrad": "連續獲勝",
+       "LangFrench": "Victoires à la suite",
+       "LangGerman": "Siege in Folge",
+       "LangItalian": "Vittorie consecutive",
+       "LangJapanese": "連続勝利",
+       "LangKorean": "연속 승리",
+       "LangRussian": "Победы подряд",
+       "LangSpanish": "Racha de victorias"
+      },
+      "value_widget": "value3",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 2,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "max_wins_in_a_row"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "max_wins_in_a_row"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 3,
+      "title_widget": "title4",
+      "title_key": "loses",
+      "title_labels": {
+       "LangEnglish": "Losses",
+       "LangChineseSimpl": "失败",
+       "LangChineseTrad": "失敗",
+       "LangFrench": "Défaites",
+       "LangGerman": "Niederlagen",
+       "LangItalian": "Sconfitte",
+       "LangJapanese": "負け",
+       "LangKorean": "패배",
+       "LangRussian": "Поражения",
+       "LangSpanish": "Derrotas"
+      },
+      "value_widget": "value4",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 3,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_defeats"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_defeats"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 4,
+      "title_widget": "title5",
+      "title_key": "draws",
+      "title_labels": {
+       "LangEnglish": "Draws",
+       "LangChineseSimpl": "平手",
+       "LangChineseTrad": "平手",
+       "LangFrench": "Egalités",
+       "LangGerman": "Unentschieden",
+       "LangItalian": "Parità",
+       "LangJapanese": "引き分け",
+       "LangKorean": "드로",
+       "LangRussian": "Бои в ничью",
+       "LangSpanish": "Empates"
+      },
+      "value_widget": "value5",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 4,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_draws"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_draws"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 5,
+      "title_widget": "title6",
+      "title_key": "perfects",
+      "title_labels": {
+       "LangEnglish": "Perfects",
+       "LangChineseSimpl": "完美攻击",
+       "LangChineseTrad": "完美攻擊",
+       "LangFrench": "Victoires parfaites",
+       "LangGerman": "Vollendet",
+       "LangItalian": "Perfette",
+       "LangJapanese": "パーフェクト",
+       "LangKorean": "퍼펙트",
+       "LangRussian": "Чистые победы",
+       "LangSpanish": "Perfecto"
+      },
+      "value_widget": "value6",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 5,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_perfects"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_perfects"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 6,
+      "title_widget": "title7",
+      "title_key": "great",
+      "title_labels": {
+       "LangEnglish": "Great!",
+       "LangChineseSimpl": "棒极了！",
+       "LangChineseTrad": "棒極了！",
+       "LangFrench": "Formidable !",
+       "LangGerman": "Großartig!",
+       "LangItalian": "Grande!",
+       "LangJapanese": "最高！",
+       "LangKorean": "대단하네요!",
+       "LangRussian": "Отлично!",
+       "LangSpanish": "¡Genial!"
+      },
+      "value_widget": "value7",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 6,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_greats"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_greats"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     }
+    ],
+    "row_count": 7,
+    "values": "NOT RECOVERED",
+    "values_reason": "every value widget binds [\"stats\", <key>] runtime data; neither the .ui nor any decoded list carries the numbers"
+   },
+   "stats3": {
+    "screen": "stats3.ui",
+    "state": "stats3",
+    "layout": [
+     {
+      "type": "label",
+      "name": "title1",
+      "x": 60,
+      "y": 130,
+      "width": 230,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "attack_avg"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value1",
+      "x": 290,
+      "y": 130,
+      "width": 100,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 0,
+          "length": 5,
+          "text": "%g %%"
+         }
+        },
+        [
+         "stats",
+         "attacksavg"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line1",
+      "x": 60,
+      "y": 150,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title2",
+      "x": 60,
+      "y": 155,
+      "width": 230,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "block_avg"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value2",
+      "x": 290,
+      "y": 155,
+      "width": 100,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 1,
+          "length": 5,
+          "text": "%g %%"
+         }
+        },
+        [
+         "stats",
+         "blocksavg"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line2",
+      "x": 60,
+      "y": 175,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title3",
+      "x": 60,
+      "y": 180,
+      "width": 230,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "counters"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value3",
+      "x": 290,
+      "y": 180,
+      "width": 100,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 2,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_counters"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line3",
+      "x": 60,
+      "y": 200,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title4",
+      "x": 60,
+      "y": 205,
+      "width": 230,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "grabs"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value4",
+      "x": 290,
+      "y": 205,
+      "width": 100,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 3,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_grabs"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line4",
+      "x": 60,
+      "y": 225,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title5",
+      "x": 60,
+      "y": 230,
+      "width": 230,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "stuns"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value5",
+      "x": 290,
+      "y": 230,
+      "width": 100,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 4,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_stuns"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line5",
+      "x": 60,
+      "y": 250,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title6",
+      "x": 60,
+      "y": 255,
+      "width": 230,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "special_moves"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value6",
+      "x": 290,
+      "y": 255,
+      "width": 100,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 5,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_specials"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line6",
+      "x": 60,
+      "y": 275,
+      "width": 420,
+      "height": 1
+     },
+     {
+      "type": "label",
+      "name": "title7",
+      "x": 60,
+      "y": 280,
+      "width": 230,
+      "height": 30,
+      "align": "left",
+      "uppercase": "true",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       255
+      ],
+      "datasources": {
+       "text": [
+        "translate",
+        "end_moves"
+       ]
+      }
+     },
+     {
+      "type": "label",
+      "name": "value7",
+      "x": 290,
+      "y": 280,
+      "width": 100,
+      "height": 30,
+      "align": "center",
+      "font": 0,
+      "effect": "none",
+      "textcolor": [
+       255,
+       255,
+       0
+      ],
+      "datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 6,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_endmoves"
+        ]
+       ]
+      }
+     },
+     {
+      "type": "staticrect",
+      "name": "white_line7",
+      "x": 60,
+      "y": 300,
+      "width": 420,
+      "height": 1
+     }
+    ],
+    "rows": [
+     {
+      "index": 0,
+      "title_widget": "title1",
+      "title_key": "attack_avg",
+      "title_labels": {
+       "LangEnglish": "Attack Average",
+       "LangChineseSimpl": "平均攻击",
+       "LangChineseTrad": "平均攻擊",
+       "LangFrench": "Moyenne d'attaques",
+       "LangGerman": "Angriffsdurchschnitt",
+       "LangItalian": "Media attacchi",
+       "LangJapanese": "平均アタック",
+       "LangKorean": "공격 평균",
+       "LangRussian": "Среднее количество атак",
+       "LangSpanish": "Media de ataques"
+      },
+      "value_widget": "value1",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 0,
+          "length": 5,
+          "text": "%g %%"
+         }
+        },
+        [
+         "stats",
+         "attacksavg"
+        ]
+       ]
+      },
+      "value_format": "%g %%",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "attacksavg"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 1,
+      "title_widget": "title2",
+      "title_key": "block_avg",
+      "title_labels": {
+       "LangEnglish": "Block Average",
+       "LangChineseSimpl": "平均防守",
+       "LangChineseTrad": "平均防守",
+       "LangFrench": "Moyenne de blocages",
+       "LangGerman": "Blockdurchschnitt",
+       "LangItalian": "Media parate",
+       "LangJapanese": "平均ガード",
+       "LangKorean": "수비 평균",
+       "LangRussian": "Среднее количество блоков",
+       "LangSpanish": "Media de bloqueos"
+      },
+      "value_widget": "value2",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 1,
+          "length": 5,
+          "text": "%g %%"
+         }
+        },
+        [
+         "stats",
+         "blocksavg"
+        ]
+       ]
+      },
+      "value_format": "%g %%",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "blocksavg"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 2,
+      "title_widget": "title3",
+      "title_key": "counters",
+      "title_labels": {
+       "LangEnglish": "Counters",
+       "LangChineseSimpl": "抵挡值",
+       "LangChineseTrad": "抵擋值",
+       "LangFrench": "Contres",
+       "LangGerman": "Konter",
+       "LangItalian": "Contatori",
+       "LangJapanese": "カウンター",
+       "LangKorean": "카운터",
+       "LangRussian": "Счетчики",
+       "LangSpanish": "Contras"
+      },
+      "value_widget": "value3",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 2,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_counters"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_counters"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 3,
+      "title_widget": "title4",
+      "title_key": "grabs",
+      "title_labels": {
+       "LangEnglish": "Grabs",
+       "LangChineseSimpl": "抓击",
+       "LangChineseTrad": "抓擊",
+       "LangFrench": "Prises",
+       "LangGerman": "Griffe",
+       "LangItalian": "Prese",
+       "LangJapanese": "つかみ技",
+       "LangKorean": "매치기",
+       "LangRussian": "Захваты",
+       "LangSpanish": "Agarres"
+      },
+      "value_widget": "value4",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 3,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_grabs"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_grabs"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 4,
+      "title_widget": "title5",
+      "title_key": "stuns",
+      "title_labels": {
+       "LangEnglish": "Stuns",
+       "LangChineseSimpl": "特技",
+       "LangChineseTrad": "特技",
+       "LangFrench": "Etourdissements",
+       "LangGerman": "Ohnmächtig",
+       "LangItalian": "Stordimenti",
+       "LangJapanese": "スタン",
+       "LangKorean": "기절",
+       "LangRussian": "Оглушение",
+       "LangSpanish": "Aturdimientos"
+      },
+      "value_widget": "value5",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 4,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_stuns"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_stuns"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 5,
+      "title_widget": "title6",
+      "title_key": "special_moves",
+      "title_labels": {
+       "LangEnglish": "Special Moves",
+       "LangChineseSimpl": "特殊动作",
+       "LangChineseTrad": "特殊動作",
+       "LangFrench": "Coups spéciaux",
+       "LangGerman": "Spezialbewegungen",
+       "LangItalian": "Mosse speciali",
+       "LangJapanese": "必殺技",
+       "LangKorean": "특수 동작",
+       "LangRussian": "Специальные движения",
+       "LangSpanish": "Ataques especiales"
+      },
+      "value_widget": "value6",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 5,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_specials"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_specials"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     },
+     {
+      "index": 6,
+      "title_widget": "title7",
+      "title_key": "end_moves",
+      "title_labels": {
+       "LangEnglish": "End Attacks",
+       "LangChineseSimpl": "致命攻击",
+       "LangChineseTrad": "致命攻擊",
+       "LangFrench": "Coups finaux",
+       "LangGerman": "Finalangriffe",
+       "LangItalian": "Attacchi finali",
+       "LangJapanese": "フィニッシュアタック",
+       "LangKorean": "마무리 일격",
+       "LangRussian": "Финальные атаки",
+       "LangSpanish": "Ataques finales"
+      },
+      "value_widget": "value7",
+      "value_datasources": {
+       "text": [
+        "format",
+        {
+         "$format": {
+          "index": 6,
+          "length": 2,
+          "text": "%d"
+         }
+        },
+        [
+         "stats",
+         "number_of_endmoves"
+        ]
+       ]
+      },
+      "value_format": "%d",
+      "value_format_key": null,
+      "value_format_labels": {},
+      "value_stat_keys": [
+       "number_of_endmoves"
+      ],
+      "value": "NOT RECOVERED",
+      "value_reason": "the value is a live `stats` datasource (native CStats provider), not a UI resource"
+     }
+    ],
+    "row_count": 7,
+    "values": "NOT RECOVERED",
+    "values_reason": "every value widget binds [\"stats\", <key>] runtime data; neither the .ui nor any decoded list carries the numbers"
+   }
+  }
+ },
+ "artpictures": {
+  "screen": "artpicture.ui",
+  "state": "artpictures",
+  "layout": [
+   {
+    "type": "staticrect",
+    "name": "black_rect",
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 320,
+    "border": 0,
+    "bgcolor": [
+     0,
+     0,
+     0,
+     256
+    ]
+   },
+   {
+    "type": "pictureslider",
+    "name": "album",
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 320,
+    "picturewidth": 480,
+    "pictureheight": 320,
+    "focusable": "true",
+    "focused": "true"
+   },
+   {
+    "type": "blbutton",
+    "name": "back",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "action": "rsk",
+    "align": "center",
+    "valign": "middle",
+    "file": null
+   }
+  ],
+  "album_widget": {
+   "type": "pictureslider",
+   "name": "album",
+   "x": 0,
+   "y": 0,
+   "width": 480,
+   "height": 320,
+   "picturewidth": 480,
+   "pictureheight": 320,
+   "focusable": "true",
+   "focused": "true"
+  },
+  "album_datasources_note": "artpicture.ui pictureslider carries NO inline items; the 18 items below are the decoded artpictures.list pictures array",
+  "items": [
+   {
+    "index": 0,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2_1",
+    "extension": "tex",
+    "always_available": "true"
+   },
+   {
+    "index": 1,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2-c6",
+    "extension": "tex",
+    "always_available": "true"
+   },
+   {
+    "index": 2,
+    "directory": "gui/images/art/",
+    "basename": "galeryart1_2",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 3,
+    "directory": "gui/images/art/",
+    "basename": "galeryart1_3",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 4,
+    "directory": "gui/images/art/",
+    "basename": "galeryart1_4",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 5,
+    "directory": "gui/images/art/",
+    "basename": "galeryart1_5",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 6,
+    "directory": "gui/images/art/",
+    "basename": "galeryart1_6",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 7,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2-c1",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 8,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2-c3",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 9,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2-c4",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 10,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2-c5",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 11,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2_3",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 12,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2_5",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 13,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2_6",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 14,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2_7",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 15,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2_8",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 16,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2_9",
+    "extension": "tex",
+    "always_available": null
+   },
+   {
+    "index": 17,
+    "directory": "gui/images/art/",
+    "basename": "galeryart2_c2",
+    "extension": "tex",
+    "always_available": null
+   }
+  ],
+  "item_count": 18,
+  "slider_binding": "NOT RECOVERED",
+  "slider_binding_reason": "artpicture.ui pictureslider carries no item datasource and game.states binds no picture list to it; the 18 artpictures.list rows are an inventory only",
+  "picture_texture": "NOT RECOVERED",
+  "picture_texture_reason": "the original gui/images/art/*.tex artwork is not decoded to PNG in this repository (original art stays local-only), so no picture is drawn"
+ },
+ "fighters": {
+  "screen": "fightergalleryselect.ui",
+  "state": "fightersgallery",
+  "layout": [
+   {
+    "type": "bllabel",
+    "name": "title",
+    "x": 0,
+    "y": 5,
+    "width": 300,
+    "height": 40,
+    "datasources": {
+     "text": [
+      "translate",
+      "fighters"
+     ]
+    }
+   },
+   {
+    "type": "blfightergrid",
+    "name": "grid",
+    "x": 20,
+    "y": 50,
+    "width": 440,
+    "height": 220,
+    "action": "profile",
+    "focused": "true",
+    "datasources": {
+     "selectedcell": [
+      "option",
+      "fighters_gallery_current"
+     ]
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "rsk",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "action": "rsk",
+    "align": "center",
+    "valign": "middle",
+    "file": null
+   }
+  ],
+  "title_key": "fighters",
+  "title_labels": {
+   "LangEnglish": "Fighters",
+   "LangChineseSimpl": "武师",
+   "LangChineseTrad": "武師",
+   "LangFrench": "Combattants",
+   "LangGerman": "Kämpfer",
+   "LangItalian": "Lottatori",
+   "LangJapanese": "ファイター",
+   "LangKorean": "파이터",
+   "LangRussian": "Бойцы",
+   "LangSpanish": "Luchadores"
+  },
+  "grid_widget": {
+   "type": "blfightergrid",
+   "name": "grid",
+   "x": 20,
+   "y": 50,
+   "width": 440,
+   "height": 220,
+   "action": "profile",
+   "focused": "true",
+   "datasources": {
+    "selectedcell": [
+     "option",
+     "fighters_gallery_current"
+    ]
+   }
+  },
+  "grid_datasources_note": "blfightergrid selectedcell binds the runtime option fighters_gallery_current; the 10 cells below are the decoded characters.list `uniques` array, the only rows that carry profile_picture / profile_text_tag used by fightergalleryprofile.ui",
+  "profile_screen": "fightergalleryprofile.ui",
+  "profile_layout": [
+   {
+    "type": "staticrect",
+    "name": "background",
+    "x": 20,
+    "y": 70,
+    "width": 192,
+    "height": 192,
+    "bgcolor": [
+     255,
+     255,
+     255,
+     255
+    ]
+   },
+   {
+    "type": "blpicture",
+    "name": "photo",
+    "x": 20,
+    "y": 70,
+    "width": 192,
+    "height": 192,
+    "datasources": {
+     "file": [
+      "characterlist",
+      "profilepicture"
+     ]
+    }
+   },
+   {
+    "type": "bllabel",
+    "name": "name",
+    "x": 140,
+    "y": 20,
+    "width": 340,
+    "height": 40,
+    "align": "right",
+    "font": 0,
+    "textcolor": [
+     255,
+     255,
+     0
+    ],
+    "datasources": {
+     "text": [
+      "characterlist",
+      "profilename"
+     ]
+    }
+   },
+   {
+    "type": "textbox",
+    "name": "text",
+    "x": 230,
+    "y": 50,
+    "width": 230,
+    "height": 230,
+    "font": 0,
+    "effect": "none",
+    "textcolor": [
+     255,
+     255,
+     255
+    ],
+    "datasources": {
+     "text": [
+      "characterlist",
+      "profiletext"
+     ]
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "rsk",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "action": "rsk",
+    "align": "center",
+    "valign": "middle",
+    "file": null
+   }
+  ],
+  "items": [
+   {
+    "index": 0,
+    "name": "brucelee",
+    "name_key": "brucelee",
+    "name_labels": {
+     "LangEnglish": "Bruce Lee",
+     "LangChineseSimpl": "李小龙",
+     "LangChineseTrad": "李小龍",
+     "LangFrench": "Bruce Lee",
+     "LangGerman": "Bruce Lee",
+     "LangItalian": "Bruce Lee",
+     "LangJapanese": "Bruce Lee ",
+     "LangKorean": "브루스 리",
+     "LangRussian": "Брюс Ли",
+     "LangSpanish": "Bruce Lee"
+    },
+    "skins": [
+     "bruce lee a",
+     "bruce lee b",
+     "bruce lee c",
+     "bruce lee d"
+    ],
+    "profile_text_key": "brucelee_profile",
+    "profile_text_labels": {
+     "LangEnglish": "18 years old. \nBruce Lee is a young and talented fighter, trying to make himself a name in the street fights of Hong Kong. \nSkillfull and bold, he tends to get into problems easily, but as a man proud of his land, he will not doubt to fight for what he cares for most.",
+     "LangChineseSimpl": "18岁。李小龙是天资过人的年轻武师，努力通过香港的街头比武赢得声望。他技巧高超，胆大过人，容易惹麻烦，但充满自豪感，会为自己关心的人或事毫不犹豫地出手。",
+     "LangChineseTrad": "18歲。李小龍是天資過人的年輕武師，努力透過香港的街頭比武贏得聲望。他技巧高超，膽大過人，容易惹麻煩，但充滿自豪感，會為自己關心的人或事毫不猶豫地出手。",
+     "LangFrench": "18 ans. Bruce Lee est un jeune combattant talentueux, qui essaie de se faire une réputation dans les combats de rue de Hong Kong. \nTalentueux et intrépide, il a tendance à s'attirer facilement des ennuis, mais en tant qu'homme fier de son pays il n'hésitera pas à se battre pour ce qui est important à ses yeux.",
+     "LangGerman": "18 Jahre alt.\nBruce Lee ist ein junger, talentierter Kämpfer, der sich mit Straßenkämpfen einen Namen in Hongkong zu machen versucht. \nKunstfertig und stark gerät er schnell in Schwierigkeiten, aber als Mann, der stolz auf sein Land ist, zögert er nicht, für das zu kämpfen, was ihm am meisten bedeutet.",
+     "LangItalian": "Bruce Lee, 18 anni, è un giovane lottatore di talento, che cerca di farsi un nome nei combattimenti illegali di Hong Kong. \nAbile e sicuro di sé, tende a cacciarsi facilmente nei guai, ma è orgoglioso della sua nazione e non esiterà a combattere per ciò che gli è più caro.",
+     "LangJapanese": "１８歳。若くて才能豊富なBruce Lee は香港でストリートファイターとして名を上げようとしている。故郷を誇りに思い、技と勇気なら誰にも負けない彼はトラブルに巻き込まれやすいみたいだが、大切なものを守るために戦い続けるであろう。",
+     "LangKorean": "18세. \n브루스 리는 홍콩의 길거리 싸움에서 유명세를 얻으려 하는 젊고 유능한 파이터입니다. \n실력도 좋고 대담하여 문제에 쉽게 휘말리는 경향이 있지만, 자부심이 높은 남자답게 아끼는 것을 위해 싸우기를 마다하지 않습니다. ",
+     "LangRussian": "18 лет. Брюс Ли молодой талантливый боец, он пытается заработать себе имя, участвуя в боях на улицах Гонконга. \nУмелый и храбрый, он легко попадает в передряги, Брюс гордится своей родиной и без сомнений борется за то, что беспокоит его больше всего.",
+     "LangSpanish": "Edad: 18 años.\nBruce Lee es un luchador dotado y joven, intentando hacerse un nombre en las luchas callejeras de Hong Kong. \nHabilidoso y atrevido, tiende a meterse en problemas fácilmente, pero como un hombre orgulloso de su tierra, no dudará en luchar por lo que más le importa."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_brucelee_kimono02",
+     "extension": "tex"
+    },
+    "always_available": "true"
+   },
+   {
+    "index": 1,
+    "name": "shenlo",
+    "name_key": "shenlo",
+    "name_labels": {
+     "LangEnglish": "Shen Lo",
+     "LangChineseSimpl": "沈龙",
+     "LangChineseTrad": "沈龍",
+     "LangFrench": "Shen Lo",
+     "LangGerman": "Shen Lo",
+     "LangItalian": "Shen Lo",
+     "LangJapanese": "Shen Lo ",
+     "LangKorean": "셴 로",
+     "LangRussian": "Шень Ло",
+     "LangSpanish": "Shen Lo"
+    },
+    "skins": [
+     "shen lo"
+    ],
+    "profile_text_key": "shenlo_profile",
+    "profile_text_labels": {
+     "LangEnglish": "18 years old. \nShen Lo is one of the disciples of the Master. Under his disciplined, calm behaviour he hides a flaw: he is a gambler.\nFights outside of the school are forbidden, but the thrill of the money changing hands is too much for him, organizing illegal fights on the rooftops of Hong Kong. \nThis has caused Shen Lo many problems, as he doesn't always have the money to cover the bets.",
+     "LangChineseSimpl": "18岁。沈龙是师父的徒弟之一。在师父的管教下，他处事冷静，但有一个隐藏的缺点：嗜赌。师父不允许参与门派以外的比武，但他渴望金钱，违背师父意愿，组织香港的屋顶非法比武。这给沈龙带来很多麻烦，他总是手头拮据，无法偿还赌债",
+     "LangChineseTrad": "18歲。沈龍是師父的徒弟之一。在師父的管教下，他處事冷靜，但有一個隱藏的缺點：嗜賭。師父不允許參與門派以外的比武，但他渴望金錢，違背師父意願，組織香港的屋頂非法比武。這給沈龍帶來很多麻煩，他總是手頭拮据，無法償還賭債",
+     "LangFrench": "18 ans. Shen Lo est un des disciples du Maître. Derrière son comportement calme et discipliné, il dissimule un défaut : il aime parier. Les combats en dehors de l'école sont interdits, mais l'argent a trop d'attrait pour lui, et il organise des combats illégaux sur les toits de Hong Kong. Cela a causé beaucoup de problèmes à Shen Lo, car il n'a pas toujours l'argent pour couvrir ses dettes.",
+     "LangGerman": "18 Jahre alt.\nShen Lo ist einer der Schüler des Meisters. Hinter seinem diszipliniertem, ruhigem Verhalten versteckt er eine Schwäche: Er ist ein Spieler. Kämpfe außerhalb der Schule sind verboten, aber der Nervenkitzel, wenn das Geld die Hände wechselt, berauscht ihn. Er organisiert illegale Kämpfe auf Hongkongs Dächern. Das hat Shen Lo viele Probleme bereitet, denn er hat nicht immer das Geld, um die Wetten abzudecken.",
+     "LangItalian": "Shen Lo, 18 anni, è uno dei discepoli del Maestro. Dietro il suo atteggiamento pacato e disciplinato, si nasconde però un difetto. I combattimenti clandestini sono proibiti, ma la tentazione del denaro è troppo forte per lui, così organizza combattimenti illegali sui tetti di Hong Kong. Ciò gli ha causato molti problemi e spesso gli mancano i soldi per coprire le scommesse.",
+     "LangJapanese": "１８歳。Shen Lo はThe Masterの弟子の一人。一見落ち着いて見える彼だがギャンブラーであることが玉に瑕。道場認定の試合以外は違法だがギャンブルのスリルには勝てなく香港の屋上で違法な試合を行う。何度も金を払えない始末になり問題をおこしてる。",
+     "LangKorean": "18세. \n셴 로는 마스터의 제자 중 한 명입니다. 절제되고 침착한 행동 속에, 그는 숨은 결점이 있습니다. 그는 도박꾼입니다.\n수련장 밖에서의 싸움은 금지되어 있지만, 홍콩에서 공공연히 벌어지는 불법 격투 도박의 전율은 그에게 너무 큰 유혹입니다. \n셴 로가 항상 충분한 돈을 가지고 있는 것은 아니기 때문에, 도박으로 인해 자주 문제를 일으킵니다.",
+     "LangRussian": "18 лет. Шень Ло один из учеников школы кунг-фу. Под личиной покорного и спокойного ученика скрывается один недостаток: Шень Ло игрок. Драки за пределами школы запрещены, но возможность легкой наживы подстегивает его к участию в незаконных боях на крышах Гонконга. Из-за этого у Шень Ло много проблем, у него не всегда хватает денег, чтобы оплатить свои ставки",
+     "LangSpanish": "Edad: 18 años.\nShen Lo es uno de los discípulos del Maestro. Bajo su tranquilo y disciplinado comportamiento esconde un defecto: es un apostador. \nLas luchas fuera de la escuela están prohibidas, pero la emoción del dinero cambiando de manos es demasiado para él, organizando peleas ilegales en los tejados de Hong Kong. \nEsto le ha causado varios problemas a Shen Lo, ya que no siempre tiene dinero para cubrir las apuestas."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_shenlo02",
+     "extension": "tex"
+    },
+    "always_available": null
+   },
+   {
+    "index": 2,
+    "name": "themaster",
+    "name_key": "themaster",
+    "name_labels": {
+     "LangEnglish": "The Master",
+     "LangChineseSimpl": "师父",
+     "LangChineseTrad": "師父",
+     "LangFrench": "Le Maître",
+     "LangGerman": "Der Meister",
+     "LangItalian": "Il Maestro",
+     "LangJapanese": "The Master",
+     "LangKorean": "마스터",
+     "LangRussian": "Учитель",
+     "LangSpanish": "El Maestro"
+    },
+    "skins": [
+     "the master"
+    ],
+    "profile_text_key": "master_profile",
+    "profile_text_labels": {
+     "LangEnglish": "Age unknown.\nNothing can hit The Master. Not words, emotions or even fists. He is the sifu of a legendary kung fu school, and has been teaching his ancient style.  He has no children of his own, so he thinks of the students as his own children. He is a strict but caring Master.",
+     "LangChineseSimpl": "年龄不详。任何事都无法伤及师父，无论言语、情绪还是拳头。他是传奇功夫门派的宗师，按照传统方式教导徒弟，他没有子女，将徒弟当成自己的孩子。他对徒弟要求严格，但关怀备至。",
+     "LangChineseTrad": "年齡不詳。任何事都無法傷及師父，無論言語、情緒還是拳頭。他是傳奇功夫門派的宗師，按照傳統方式教導徒弟，他沒有子女，將徒弟當成自己的孩子。他對徒弟要求嚴格，但關懷備至。",
+     "LangFrench": "Age inconnu. Rien ne peut atteindre le Maître. Ni les mots, ni les émotions ni même les poings. Il est le Sifu d'une école de kung fu légendaire et il y enseigne son style ancien. Il n'a pas d'enfants, alors il considère les étudiants comme ses propres enfants. C'est un Maître strict mais bienveillant.   ",
+     "LangGerman": "Alter unbekannt.\nNichts kann den Meister treffen. Keine Worte, Gefühle oder Fäuste. Er ist der Sifu einer legendären Kung-Fu-Schule, an der er seinen uralten Stil lehrt. Er hat keine leiblichen Kinder. Deshalb sieht er seine Schüler als seine Kinder an. Er ist ein strenger, aber fürsorglicher Meister.",
+     "LangItalian": "Nessuno può colpire questo Maestro dall'età ignota. Né le parole, né le emozioni e nemmeno i pugni. È il sifu di una leggendaria scuola di Kung Fu e insegna il suo stile antico. Non ha figli, quindi considera i propri discepoli come tali. È un maestro severo ma si preoccupa per i propri discepoli.",
+     "LangJapanese": "年齢不詳。伝説的な龍神道場の師匠は心技体ともに優れた武術家。自分の子供はいないが弟子達をまるで自分の子供のように思っている。心優しいが師匠としては厳しい。",
+     "LangKorean": "연령 미상\n마스터를 이길 수 있는 것은 존재하지 않습니다. 말, 감정 또는 주먹이라 할 지라도 말입니다. 그는 전설적인 쿵푸 수련장의 사부이며, 자신의 오래 된 방식대로 쿵푸를 가르쳐 왔습니다.  자식이 없어 제자들을 자식처럼 여깁니다. 엄격하지만 자상한 마스터입니다.\n",
+     "LangRussian": "Возраст неизвестен Ничто не способно навредить ему. Без слов, эмоций и даже кулаков. Учитель тренирует бойцов легендарной школы кунг-фу и обучает их древнему стилю. У учителя нету своих детей, поэтому он относится к ученикам, как к своим детям. Он строгий, но заботливый учитель.     ",
+     "LangSpanish": "Edad desconocida.\nNada puede golpear al Maestro. Ni palabras, ni emociones, ni mucho menos puñetazos. El es el Sifu de una escuela de Kung Fu legendaria, donde enseña su viejo estilo.\nNo tiene hijos propios, pero piensa en sus estudiantes como sus propios hijos. Es un Maestro estricto pero afectuoso."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_themaster01",
+     "extension": "tex"
+    },
+    "always_available": null
+   },
+   {
+    "index": 3,
+    "name": "smallboy",
+    "name_key": "smallboy",
+    "name_labels": {
+     "LangEnglish": "Smallboy",
+     "LangChineseSimpl": "小男孩",
+     "LangChineseTrad": "小男孩",
+     "LangFrench": "Smallboy",
+     "LangGerman": "Smallboy",
+     "LangItalian": "Smallboy",
+     "LangJapanese": "Smallboy ",
+     "LangKorean": "스몰보이",
+     "LangRussian": "Малыш",
+     "LangSpanish": "Smallboy"
+    },
+    "skins": [
+     "smallboy"
+    ],
+    "profile_text_key": "smallboy_profile",
+    "profile_text_labels": {
+     "LangEnglish": "35 years old. \nSmallboy is a simple man. Drinking, partying and drinking again, that's all he cares about. He is a thug working at the docks under the orders of his younger brother, the Chief. \nHe tends to attract trouble, bringing unwanted attention to the business,  but his brother is always there to clean up his mess.",
+     "LangChineseSimpl": "小男孩35岁，性格单纯。喝酒、聚会，再喝酒是他的兴趣所在。他听命于做老大的弟弟，无恶不作。他容易惹麻烦，常给生意添乱，但他的弟弟总是为他处理烂摊子。",
+     "LangChineseTrad": "小男孩35歲，性格單純。喝酒、聚會，再喝酒是他的興趣所在。他聽命於做老大的弟弟，無惡不作。他容易惹麻煩，常給生意添亂，但他的弟弟總是為他處理爛攤子。",
+     "LangFrench": "35 ans. Smallboy est un homme simple. Boire, faire la fête et boire encore, c'est tout ce qui lui plaît. C'est une brute qui travaille aux docks sous les ordres de son plus jeune frère, le Chef.\nIl a tendance à s'attirer les ennuis, ce qui amène un peu trop d'attention sur les affaires, mais son frère est toujours là pour arranger les choses. ",
+     "LangGerman": "35 Jahre alt.\nSmallboy ist ein einfacher Mann. Trinken, feiern und wieder trinken, ist alles, was ihn interessiert. Er ist ein Schläger, der in den Docks für seinen jüngeren Bruder, den Chef, arbeitet. \nEr zieht Ärger an und somit auch ungewollte Aufmerksamkeit auf die Geschäfte, aber sein Bruder ist immer da, um hinter ihm aufzuräumen.",
+     "LangItalian": "Smallboy, 35 anni, è una persona semplice. Si preoccupa soltanto di bere, di fare festa e di continuare a bere. È un teppista che lavora al porto, al servizio di suo fratello minore, il capo. \nTende a cacciarsi nei guai, attirando fin troppa attenzione sulle attività illegali che svolge, ma suo fratello è sempre pronto a dargli una mano.",
+     "LangJapanese": "３５歳。Smallboy は単純な男、人生は飲んで遊んでまた飲む。港で働くチンピラの彼は弟の命令に従う。トラブルに巻き込まれることが多いが弟がいつも尻拭いしてくれる。",
+     "LangKorean": "35세. \n스몰보이는 단순한 사람입니다. 술을 마시고, 파티를 하고 또 술을 마시는 것이 그의 일상입니다. 부두의 책임자인 동생의 지시에 따라 선착장에서 일하는 그는 불한당입니다.  \n문제를 일으키거나 동생의 사업을 어렵게 만들지만, 그가 일으킨 말썽은 언제나 동생이 처리합니다.\n",
+     "LangRussian": "Малыш - 35-летний простак. Он пьет, веселится и снова пьет, это все, что его интересует. Он головорез, который работает в доках под началом своего младшего брата, Босса. Малыш просто притягивает к себе неприятности и привлекает лишнее внимание к бизнесу, но брат всегда помогает ему выйти сухим из воды. ",
+     "LangSpanish": "Edad: 35 años.\nSmallboy es un hombre sencillo. Beber, ir de farra y beber de nuevo, eso es lo único que le importa. Trabaja como matón en los muelles, bajo las ordenes de su hermano pequeño, el Jefe. \nTiende a atraer problemas, trayendo atención no deseada al negocio, pero su hermano siempre está allí para sacarle del lio."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_smallboy01",
+     "extension": "tex"
+    },
+    "always_available": null
+   },
+   {
+    "index": 4,
+    "name": "sinfu",
+    "name_key": "sinfu",
+    "name_labels": {
+     "LangEnglish": "Sin Fu",
+     "LangChineseSimpl": "秦福",
+     "LangChineseTrad": "秦福",
+     "LangFrench": "Sin Fu",
+     "LangGerman": "Sin Fu",
+     "LangItalian": "Sin Fu",
+     "LangJapanese": "Sin Fu ",
+     "LangKorean": "신 후",
+     "LangRussian": "Син Фу",
+     "LangSpanish": "Sin Fu"
+    },
+    "skins": [
+     "sin fu"
+    ],
+    "profile_text_key": "sinfu_profile",
+    "profile_text_labels": {
+     "LangEnglish": "21 years old.\nThe son of a triad boss, Sin Fu is not used to people confronting him. Trained under the discipline of the Burning Tiger School, he is calm and meditative in his fights but notoriously unforgiving. \nHe has won several kung fu championships, frequently ending his fights in KO.",
+     "LangChineseSimpl": "21岁。秦福是三合会老大的之子，容不下敢挑衅自己的人。他在火焰虎门派学习武功，做事冷静沉着，但心胸狭窄。他曾赢得多个功夫冠军，经常将对手一击出局。",
+     "LangChineseTrad": "21歲。秦福是三合會老大的之子，容不下敢挑釁自己的人。他在火焰虎門派學習武功，做事冷靜沉著，但心胸狹窄。他曾贏得多個功夫冠軍，經常將對手一擊出局。",
+     "LangFrench": "21 ans. Le fils d'un chef des triades, Sin Fu n'est pas habitué à ce qu'on s'oppose à lui. Entraîné à la discipline de l'école du Tigre Brûlant, il est calme et contemplatif dans ses combats mais il est également connu pour être impitoyable.\nIl a gagné plusieurs tournois de kung fu, terminant souvent ses combats par un KO. ",
+     "LangGerman": "21 Jahre alt.\nSohn eines Triadenbosses. Sin Fu ist es nicht gewöhnt, dass man ihm die Stirn bietet. In der Disziplin der Schule des brennenden Tigers trainiert, ist er ruhig und meditativ in seinen Kämpfen, aber auch notorisch nachtragend.\nEr hat mehrere Kung-Fu-Meisterschaften gewonnen und seine Kämpfe enden oft mit einem Knockout.",
+     "LangItalian": "Sin Fu, 21 anni, figlio di un boss della Triade, non è abituato alle sfide. Si è addestrato secondo le regole della scuola delle Tigri di Fuoco, è un tipo calmo e di indole meditativa, ma non sa perdonare. \nHa vinto svariati campionati di Kung Fu, mandando spesso al tappeto l'avversario.",
+     "LangJapanese": "２１歳。Sin Fu は香港ヤクザボスの息子だから自分に逆らうものに慣れていない。炎虎道場で武術に励む彼は戦いにおいて冷静だが冷酷な一面もある。いくつかの功夫大会で優勝していてよくKO勝ちで試合を終らせる。",
+     "LangKorean": "21세.\n삼합회 보스의 아들인 신 후에게 맞서는 사람은 거의 없습니다. 버닝 타이거 학교의 규율 아래 훈련을 받은 그는 격투 시 침착하고 생각이 깊지만 가차없기로 악명이 높습니다. \n여러 차례 쿵푸 챔피언십에서 우승하였으며, 그의 시합은 대부분 KO로 끝이 납니다.\n",
+     "LangRussian": "21 лет. Син Фу сын главаря мафии. Он не привык, когда ему перечат. Син Фу воспитанник школы \"Огненного тигра\", он дерется спокойно и обдуманно. О его мстительности ходят легенды. Он выиграл несколько чемпионатов по кунг-фу и завершил несколько поединков нокаутами. ",
+     "LangSpanish": "Edad: 21 años.\nHijo de un jefe de las Triadas, Sin Fu no está acostumbrado a que se le cuestione. Entrenado bajo la disciplina de la escuela Tigre Ardiente, es tranquilo y pausado en sus peleas, pero jamás perdona. \nHa ganado varios campeonatos de Kung Fu, acabando frecuentemente sus combates en KO."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_sinfu01",
+     "extension": "tex"
+    },
+    "always_available": null
+   },
+   {
+    "index": 5,
+    "name": "chief",
+    "name_key": "chief",
+    "name_labels": {
+     "LangEnglish": "The Chief",
+     "LangChineseSimpl": "老大",
+     "LangChineseTrad": "老大",
+     "LangFrench": "Le Chef",
+     "LangGerman": "Der Chef",
+     "LangItalian": "Il capo",
+     "LangJapanese": "The Chief",
+     "LangKorean": "치프",
+     "LangRussian": "Босс",
+     "LangSpanish": "El Jefe"
+    },
+    "skins": [
+     "chief a",
+     "chief b"
+    ],
+    "profile_text_key": "chief_profile",
+    "profile_text_labels": {
+     "LangEnglish": "28 years old.\nAt an early age he became a pirate in Thailand along with his brother. After some dangerous brushes with the Law, he ended running a smuggling business in the Hong Kong docks. \nHe is the head of the gang, and likes to stay under the radar, leaving the \"public\" side of his operations to Smallboy and Johnson. He is a dangerous man hidden by a quiet and smooth facade.",
+     "LangChineseSimpl": "28岁。老大年轻时与哥哥在泰国当海盗。犯下数宗要案后，他结束在香港的走私生意。他是帮派大哥，行事低调，做事多安排小男孩和强森出面。他平静的外表下隐藏致命杀气。",
+     "LangChineseTrad": "28歲。老大年輕時與哥哥在泰國當海盜。犯下數宗要案後，他結束在香港的走私生意。他是幫派大哥，行事低調，做事多安排小男孩和強森出面。他平靜的外表下隱藏致命殺氣。",
+     "LangFrench": "28 ans. A un très jeune âge il est devenu pirate en Thaïlande avec son frère. Après avoir eu maille à partir avec la justice, il a fini par gérer un commerce de contrebande sur les docks de Hong Kong. \nIl est le chef du gang, et aime se faire discret, laissant la partie \"publique\" des opérations à Smallboy et Johnson. C'est un homme dangereux derrière une façade discrète et calme.",
+     "LangGerman": "28 Jahre alt.\nIn jungem Alter wurde er, gemeinsam mit seinem Bruder, Pirat in Thailand. Nach einigen gefährlichen Zusammenstößen mit dem Gesetz betreibt er nun Schmugglergeschäfte in den Docks von Hongkong. \nEr ist der Kopf der Bande und hält sich lieber im Hintergrund. Den \"öffentlichen\" Teil seiner Geschäfte überlässt er Smallboy und Johnson. Hinter seiner ruhigen und sanften Maske verbirgt sich ein gefährlicher Mann.",
+     "LangItalian": "Il capo, 28 anni, faceva il pirata in Tailandia sin da piccolo, con suo fratello. Dopo essere finito in guai seri con la legge, si è dato al contrabbando nel porto di Hong Kong.\nÈ il capo della gang e preferisce non dare nell'occhio; lascia le questioni \"pubbliche\" in mano a Smallboy e a Johnson. È un tipo pericoloso, nonostante il suo atteggiamento tranquillo e pacato.",
+     "LangJapanese": "２８歳。若い頃から兄と共にタイ周辺で海賊になった。何度も捕まりそうになりながらも香港の港で密輸グループのお頭に伸し上がる。あまり表に顔を出すことを好まず、目立つ仕事はSmallboy やJohnson に任せ裏で糸を引く危険な人物。",
+     "LangKorean": "28세.\n어린 나이에 형과 함께 타일랜드의 해적이 되었습니다. 수 차례 구속될 뻔한 위기를 겪은 뒤로, 홍콩 선착장에서 해오던 밀수 사업을 그만뒀습니다. \n갱단의 두목이며, 스몰보이와 존슨을 얼굴 마담으로 삼아 눈에 띄지 않고 평범하게 보이는 것을 좋아합니다. 겉모습은 조용하고 부드럽지만, 위험한 사람입니다.\n",
+     "LangRussian": "28 лет В детстве вместе с братом стал пиратом в Таиланде. У него были серьёзные проблемы с законом. Позже он стал заниматься контрабандой в доках Гонконга. Он главарь банды, но предпочитает оставаться в тени, поручая \"публичную\" часть операций Малышу и Джонсону. Это волк в овечьей шкуре",
+     "LangSpanish": "Edad: 28 años.\nA una edad temprana, fue pirata en Tailandia junto a su hermano. Después de algunos serios roces con la ley, acabó llevando un negocio de contrabando en los muelles de Hong Kong. \nEs el jefe de la banda, y prefiere mantenerse oculto, dejando la parte \"pública\" de sus operaciones a Smallboy y Johnson. \nEs un hombre peligroso, oculto bajo una fachada tranquila y elegante."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_thechief03",
+     "extension": "tex"
+    },
+    "always_available": null
+   },
+   {
+    "index": 6,
+    "name": "kengodall",
+    "name_key": "kengodall",
+    "name_labels": {
+     "LangEnglish": "Ken Goodall",
+     "LangChineseSimpl": "康古道",
+     "LangChineseTrad": "康古道",
+     "LangFrench": "Ken Goodall",
+     "LangGerman": "Ken Goodall",
+     "LangItalian": "Ken Goodall",
+     "LangJapanese": "Ken Goodall ",
+     "LangKorean": "켄 구달",
+     "LangRussian": "Кен Гудол",
+     "LangSpanish": "Ken Goodall"
+    },
+    "skins": [
+     "ken godall"
+    ],
+    "profile_text_key": "kengodall_profile",
+    "profile_text_labels": {
+     "LangEnglish": "25 years old.\nSon of a boxing legend, Ken Goodall has been a fighter since he was a kid. Born in Ireland, he became a US citizen at 12. \nHe enlisted himself in the Navy, organising fights in all the ports he docked. A nasty incident in one of the fights closed all doors to a promotion, and he ended up working as a intendency supplier for the Navy, and makes a living by smuggling and taking part in ilegal fights.",
+     "LangChineseSimpl": "康古道25岁，小时候就成为武师，是拳击传奇人物之子。他出生于爱尔兰，12岁成为美国公民。他曾在海军服役，每到一处港口都会组织比武。一次比武活动出现严重事故，他在海军没有了生存空间，不再是海军供应商，通过走私和参加非法比武过活。",
+     "LangChineseTrad": "康古道25歲，小時候就成為武師，是拳擊傳奇人物之子。他出生於愛爾蘭，12歲成為美國公民。他曾在海軍服役，每到一處港口都會組織比武。一次比武活動出現嚴重事故，他在海軍沒有了生存空間，不再是海軍供應商，透過走私和參加非法比武過活。",
+     "LangFrench": "Fils d'une légende de la boxe, Ken Goodall, âgé de 25 ans, a toujours été un bon combattant depuis son enfance. Né en Irlande, il devint citoyen américain à l'âge de 12 ans. Il s'engagea dans la Marine, organisant des combats dans tous les ports où il accostait. Suite à un sale accident lors d'un des combats qu'il avait organisé, il perdit toute chance de promotion et finit par travailler comme intendant pour la Marine, gagnant sa vie en faisant de la contrebande et en prenant part à des combats illégaux. ",
+     "LangGerman": "Sohn einer Boxerlegende. Der 25 Jahre alte Ken Goodall ist schon seit seiner Kindheit ein Kämpfer. Geboren in Irland, wurde er mit 12 Jahren US-Staatsbürger. Er ging zur Marine und organisierte Kämpfe in allen Häfen, in denen sie anlegten. Ein übler Zwischenfall bei einem der Kämpfe versperrte alle Türen zu einer Karriere und so arbeitete er als Lieferant für die Marine. Sein Lebensunterhalt verdient er sich mit Schmuggeln und der Teilnahme an illegalen Kämpfen.",
+     "LangItalian": "Ken Goodall, 25 anni, figlio di una leggenda della boxe, era un lottatore sin da piccolo. Nato in Irlanda, ha ottenuto la cittadinanza negli Stati Uniti all'età di dodici anni. Si è arruolato nella marina e organizzava combattimenti nei porti in cui sostava. Un grave incidente in uno dei combattimenti gli precluse ogni possibilità di ricevere una promozione, così fini per fare la spia per la marina, guadagnandosi da vivere con il contrabbando e partecipando a combattimenti clandestini.",
+     "LangJapanese": "２５歳。伝説のボクサーの息子、Ken Goodall は子供の頃からファイターだった。アイルランドで生まれて１２歳でアメリカに渡りアメリカ国籍に得る。海軍に入隊し、港に着くたび違法な試合を開催する。事件をおこし昇格できる見込みがなくなり海軍の物資管理人として働き密輸や違法試合で金を稼ぐ。",
+     "LangKorean": "25세.\n전설적인 권투선수의 아들 켄 구달은 꼬마때부터 파이터였습니다.  아일랜드에서 태어났고 12살에 미국 시민이 되었습니다. 해군에 지원한 후에는 배를 대는 부두에서마다 싸움을 일으킵니다. 싸움 때문에 승진 길이 막히고, 해군 납품업을 그만 둔 후 밀수와 불법 격투로 돈을 벌고 있습니다.\n",
+     "LangRussian": "Сын легендарного боксера, 25-летний Кен Гудол, занимается боевыми искусствами с детства. Он родился в Ирландии, а в 12 лет перебрался в Штаты. Потом Кен служил на флоте и затевал драки во всех портах, где причаливало его судно. В результате происшествия, которое случилось во время одной из драк, Кен лишился возможности получить продвижение по службе. Он стал управляющим поставками морского флота и зарабатывает на жизнь контрабандой и участием в незаконных боях. ",
+     "LangSpanish": "Edad: 25 años.\nHijo de una leyenda del boxeo, Ken Goodall ha sido un luchador desde que era un crio. Nacido en Irlanda, se convirtió en ciudadano americano a los 12. \nSe alistó en la Marina, organizando peleas en todos los puertos en los que fondeaba. Un feo asunto en una de las peleas cerró cualquier posibilidad de promoción, y acabó trabajando como un intendente de suministros para la Marina.\nSe  ganan la vida con el contrabando y participando en peleas ilegales."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_kengoodall01",
+     "extension": "tex"
+    },
+    "always_available": null
+   },
+   {
+    "index": 7,
+    "name": "brickdavis",
+    "name_key": "brickdavis",
+    "name_labels": {
+     "LangEnglish": "Brick Davis",
+     "LangChineseSimpl": "铁骨戴维斯",
+     "LangChineseTrad": "鐵骨戴維斯",
+     "LangFrench": "Brick Davis",
+     "LangGerman": "Brick Davis",
+     "LangItalian": "Brick Davis",
+     "LangJapanese": "Brick Davis",
+     "LangKorean": "브릭 데이비스",
+     "LangRussian": "Брик Дэвис",
+     "LangSpanish": "Brick Davis"
+    },
+    "skins": [
+     "brick davis"
+    ],
+    "profile_text_key": "brickdavies_profile",
+    "profile_text_labels": {
+     "LangEnglish": "27 years old.\nCarl Davies is a hero on his ship. He fights whoever dares to insult the honor of the navy, and soon the offender discovers why his fellow marines call him \"Brick\". \nHe is disciplined and incredibly resilient, something proven in all the championships he has participated and won.",
+     "LangChineseSimpl": "27岁。卡尔戴维斯是船上的英雄。任何人敢侮辱海军的名誉，都会被他痛扁，对手们很快就明白海军陆战队的人为何称其为“铁骨”戴维斯。他行为规矩，能屈能伸，他参与并获胜的所有比武都能证明这一点。",
+     "LangChineseTrad": "27歲。卡爾戴維斯是船上的英雄。任何人敢侮辱海軍的名譽，都會被他痛扁，對手們很快就明白海軍陸戰隊的人為何稱其為「鐵骨」戴維斯。他行為規矩，能屈能伸，他參與並獲勝的所有比武都能證明這一點。",
+     "LangFrench": "27 ans. \nCarl Davies est un héros sur ses bateaux. Il combat quiconque ose insulter l'honneur de la Marine, et bien vite son adversaire comprend que Brick rime avec \"Brique\".\nIl est discipliné et incroyablement résistant, ce qu'il a prouvé dans tous les championnats auxquels il a participé et qu'il a remportés. ",
+     "LangGerman": "27 Jahre alt.\nCarl Davies ist ein Held auf seinem Schiff. Er kämpft gegen jeden, der die Ehre der Marine in den Schmutz zieht, wobei der Gegner schnell herausfindet, warum seine Marinekameraden ihn \"Brick\" (Backstein) nennen.\nEr ist diszipliniert und unglaublich robust, was er in allen Meisterschaften, an denen er teilgenommen und die er gewonnen hat, bewiesen hat.",
+     "LangItalian": "Carl Davies, 27 anni, è un eroe sulla sua nave. Combatte chiunque osi infangare l'onore della marina e chi lo offende scopre presto perché lo chiamino \"Brick\".\nÈ un tipo disciplinato e incredibilmente resistente, cosa che ha dimostrato in tutti i campionati a cui a preso parte e ha vinto.",
+     "LangJapanese": "２７歳。カール・「ブリック」・デイビスは乗船してる戦艦のヒーロー。海軍を侮辱する者には容赦しないし、なんで「ブリック」と仲間から呼ばれてるかを思い知らせる。今まで出場した大会では持ち前の経験とタフさで幾度も優勝してる。",
+     "LangKorean": "27세.\n칼 데이비드는 소속 선박의 영웅입니다. 해군의 명예를 훼손하는 사람은 누구든지 때려 눕히며, 해군 동료들이 그를 왜 벽돌이라 부르는지를 상대들이 깨닫는 데는 오랜 시간이 걸리지 않습니다. \n고도의 훈련을 받았으며 믿을 수 없을 정도로 회복력이 빠른데, 과거에 우승했던 챔피언십에서 그 점을 입증해 보였습니다.\n",
+     "LangRussian": "27 лет. Карл Дэвис настоящий герой на своем корабле. Он дерется со всеми, кто осмелится оскорбить честь морского флота. Вскоре после начала драки соперники узнают, почему кличка Карла - Кирпич. Карл тренированный и крепкий боец, он проявил себя во всех чемпионатах, в которых он участвовал и победил. ",
+     "LangSpanish": "Edad: 27 años.\nCarl Davies es un héroe en su nave. Pelea contra cualquiera que se atreva a insultar el honor de la Marina, y enseguida el infractor descubre por qué sus compañeros marines le apodan \"Brick\" (ladrillo).\n\nEs disciplinado y extremadamente resistente, algo que ha demostrado en todos los campeonatos en los que ha participado, ganándolos."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_brickdavis01",
+     "extension": "tex"
+    },
+    "always_available": null
+   },
+   {
+    "index": 8,
+    "name": "johnson",
+    "name_key": "johnson",
+    "name_labels": {
+     "LangEnglish": "Johnson",
+     "LangChineseSimpl": "强森",
+     "LangChineseTrad": "強森",
+     "LangFrench": "Johnson",
+     "LangGerman": "Johnson",
+     "LangItalian": "Johnson",
+     "LangJapanese": "Johnson ",
+     "LangKorean": "존슨",
+     "LangRussian": "Джонсон",
+     "LangSpanish": "Johnson"
+    },
+    "skins": [
+     "johnson"
+    ],
+    "profile_text_key": "johnson_profile",
+    "profile_text_labels": {
+     "LangEnglish": "28 years old.\nA small time american criminal working as a thug in the Hong Kong docks. The Chief kicked his ass in a barfight when they first met in Thailand, and since then they have been business partners. \nHe has a violent personality, and will do whatever his boss commands.",
+     "LangChineseSimpl": "28岁。强森是美国人，在香港黑社会当帮凶。他与老大第一次见面是在泰国，两人在酒吧大打出手，但随后成为生意伙伴。他性格暴戾，对老大惟命是从",
+     "LangChineseTrad": "28歲。強森是美國人，在香港黑社會當幫兇。他與老大第一次見面是在泰國，兩人在酒吧大打出手，但隨後成為生意夥伴。他性格暴戾，對老大惟命是從",
+     "LangFrench": "28 ans. Un américain, criminel occasionnel qui travaille sur les docks de Hong Kong. Le Chef l'a battu dans d'un combat de bar lors de leur première rencontre en Thaïlande, et depuis ils travaillent ensemble. \nIl a une personnalité violente, et fera tout ce que son chef lui ordonne de faire.",
+     "LangGerman": "28 Jahre alt.\nEin armseliger amerikanischer Krimineller, der als Schläger in den Docks von Hongkong arbeitet. Der Chef hatte ihn in einer Kneipenschlägerei in Thailand, wo sie sich das erste Mal getroffen haben, vermöbelt. Seit damals sind sie Geschäftspartner.\nEr besitzt einen gewalttätigen Charakter und tut alles, was sein Boss verlangt.",
+     "LangItalian": "Johnson, 28 anni, è un criminale americano di poco conto che lavora come sicario al porto di Hong Kong. Il capo l'ha messo KO in una rissa in un bar, quando si sono conosciuti in Tailandia e da allora hanno sempre fatto affari assieme. \nÈ di indole violenta e farà qualunque cosa gli ordini il suo capo.",
+     "LangJapanese": "２８歳。香港の港で働く用心棒の悪党アメリカ人。タイの酒場でThe Chiefに喧嘩で負けて以来部下として働くようになった。The Chiefの命令を忠実に従う凶暴な性格の男。",
+     "LangKorean": "28세.\n별볼일 없는 미국인 범죄자가 홍콩의 부두에서 폭력배 노릇을 하고 있습니다. 치프와 그는 타일랜드의 술집에서 싸움으로 만났고 치프가 그를 때려 눕혔습니다. 이 때부터 둘은 동업자가 되었습니다. \n성격이 매우 포악하고, 보스의 명령이라면 무엇이든 하는 사람입니다.\n",
+     "LangRussian": "28-летний американец, мелкий преступник, головорез из гонконгских доков. Босс надрал ему задницу во время драки в баре, в Таиланде, так они познакомились и стали деловыми партнерами. У него крутой нрав, он сделает все, что ему прикажет Босс",
+     "LangSpanish": "Edad: 28 años.\nUn criminal americano de baja estofa, trabajando como matón en los muelles de Hong Kong. El Jefe le machacó en una pelea de bar cuando se encontraron en Tailandia, y desde entonces han sido socios. \nTiene una personalidad violenta, y hará cualquier cosa que su jefe ordene."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_johnson01",
+     "extension": "tex"
+    },
+    "always_available": null
+   },
+   {
+    "index": 9,
+    "name": "loming",
+    "name_key": "loming",
+    "name_labels": {
+     "LangEnglish": "Lo Ming",
+     "LangChineseSimpl": "罗明",
+     "LangChineseTrad": "羅明",
+     "LangFrench": "Lo Ming",
+     "LangGerman": "Lo Ming",
+     "LangItalian": "Lo Ming",
+     "LangJapanese": "Lo Ming",
+     "LangKorean": "로 밍",
+     "LangRussian": "Ло Минг",
+     "LangSpanish": "Lo Ming"
+    },
+    "skins": [
+     "lo ming a",
+     "lo ming b"
+    ],
+    "profile_text_key": "loming_profile",
+    "profile_text_labels": {
+     "LangEnglish": "24 years old.\nAnother disciple of the Burning Tiger school, Lo Ming is the right hand man of Sin Fu. He is a very strong fighter, but also too rash and easy to provoke. \nHe is not very smart, and likes to kick his opponents when they are on the ground, something that even his friend Sin Fu reproaches him for.",
+     "LangChineseSimpl": "24岁。罗明是火焰虎门派的徒弟，是秦福的左膀右臂。他武功高强，但行为鲁莽，容易被激怒。他不够聪明，喜欢脚踢倒下的对手，就连秦福有时都会责备他的做法。",
+     "LangChineseTrad": "24歲。羅明是火焰虎門派的徒弟，是秦福的左膀右臂。他武功高強，但行為魯莽，容易被激怒。他不夠聰明，喜歡腳踢倒下的對手，就連秦福有時都會責備他的做法。",
+     "LangFrench": "24 ans. Un autre disciple de l'école du Tigre Brûlant, Lo Ming est le bras droit de Sin Fu. C'est un guerrier très fort, mais il est également très instinctif et facile à provoquer. \nIl n'est pas très malin, et il aime frapper ses adversaires au sol, ce que même son ami Sin Fu lui reproche.",
+     "LangGerman": "24 Jahre alt.\nEin weiterer Anhänger der Schule des brennenden Tigers. Lo Ming ist die rechte Hand von Sin Fu. Er ist ein sehr starker Kämpfer, aber auch zu unüberlegt und leicht zu provozieren. \nEr ist nicht sehr schlau und liebt es, seine Gegner zu treten, wenn diese bereits am Boden liegen, was ihm sogar sein Freund Sin Fu Übel nimmt.",
+     "LangItalian": "Lo Ming, 24 anni, discepolo della scuola delle Tigri di Fuoco, è il braccio destro di Sin Fu. È un lottatore potente, ma è troppo impulsivo e suscettibile alle provocazioni. \nNon è molto intelligente e ama prendere a calci gli avversari quando sono al tappeto, cosa che persino il suo amico Sin Fu gli rimprovera.",
+     "LangJapanese": "２４歳。炎虎道場で修行するLo MingはSin Fu の片腕として働く。武術の腕はなかなかの物を持っているが怒りやすくてすぐに冷静さを失う。賢い方ではないうえ相手がダウンしてるときに蹴りを入れるのが好きなところはSin Fu からもよく思われていない理由。",
+     "LangKorean": "24세.\n버닝 타이거 학교의 또 다른 제자인 로 밍은 신 후의 오른팔입니다. 매우 강력한 파이터지만, 경솔하고 쉽게 흥분하곤 합니다. \n똑똑하지는 못하며, 바닥에 누워있는 상대를 발로 차기를 좋아해서 그의 친구인 신 후에게 비난을 받기도 합니다.\n",
+     "LangRussian": "24 лет. Ло Минг один из воспитанников школы \"Огненный тигр\" и правая рука Син Фу. Ло Минг сильный, но торопливый и вспыльчивый боец. Он не столь умен, он любит добивать противников ногами, когда те падают на землю. Даже его друг Син Фу не одобряет это.",
+     "LangSpanish": "Edad: 24 años.\nOtro discípulo de la escuela Tigre Ardiente, Lo Ming es la mano derecha de Sin Fu. Es un luchador muy fuerte, pero demasiado precipitado y fácil de provocar. \nNo es muy listo, y adora patear a sus enemigos cuando están en el suelo, algo que incluso su amigo Sin Fu le reprocha."
+    },
+    "profile_picture": {
+     "directory": "story/",
+     "basename": "bl_loming03",
+     "extension": "tex"
+    },
+    "always_available": null
+   }
+  ],
+  "item_count": 10,
+  "grid_binding": "NOT RECOVERED",
+  "grid_binding_reason": "blfightergrid selectedcell binds the runtime option fighters_gallery_current and no decoded resource binds characters.list uniques to the cells, so the 10 entries are an inventory only",
+  "selection": "NOT RECOVERED",
+  "selection_reason": "fighters_gallery_current is a runtime option/cursor, not stored in the .ui or any decoded list"
+ }
+}

@@ -49,6 +49,10 @@ const Controls = preload("res://scripts/prototype_controls.gd")
 ## Recovered Profile destination pages / About version+disclaimer / settings
 ## VIDEO-CONTROLS records.  Fail-closed if the artifact is missing.
 const RecoveredPages = preload("res://scripts/recovered_pages.gd")
+## Recovered Profile page BODIES: achievements rows, stats1-3 tables, art album
+## items and the fighter gallery grid/profile.  Fail-closed if its artifact is
+## missing.
+const ProfileBodies = preload("res://scripts/profile_bodies.gd")
 ## Recovered eight-item language dock (settingslanguage.ui + CApplication::Init
 ## AddLanguageTable index order).  Fail-closed if its artifact is missing.
 const LanguageDock = preload("res://scripts/language_dock.gd")
@@ -208,6 +212,12 @@ var language_applied: String = ""
 var language_status: String = ""
 ## Recovered Profile destination currently drawn ("profile_page:<key>").
 var profile_key: String = ""
+## Second path segment of a Profile screen: stats1/stats2/stats3 for the
+## statistics sub-menu, or the fighter index for the gallery profile page.
+var profile_sub: String = ""
+## Selection inside a recovered Profile body (achievement row, art picture or
+## fighter cell).
+var profile_index: int = 0
 var profile_record: Dictionary = {}
 
 var _art_root: Control
@@ -332,6 +342,8 @@ func _handle_art_input(event: InputEvent) -> bool:
 			_back_art()
 			return true
 		return false
+	if screen_id.begins_with("profile_page:"):
+		return _handle_profile_input(event)
 	if event.is_action_pressed(Controls.MENU_UP):
 		_move_art_selection(-1)
 	elif event.is_action_pressed(Controls.MENU_DOWN):
@@ -375,6 +387,50 @@ func _move_credits_selection(delta: int) -> void:
 	_show_art_screen("credits")
 
 
+## ------------------------------------------------- recovered Profile body input
+## Only the PROVEN body navigation takes extra keys: the statistics sub-menu
+## (statsmenu.ui blmenu options game_modes/battles/moves -> stats1/2/3) is the
+## only recovered body with declared options, so UP/DOWN + ENTER operate it.
+## Achievements / art / fighters bodies have no proven widget action beyond the
+## back button, so they take BACK only.
+func _handle_profile_input(event: InputEvent) -> bool:
+	if event.is_action_pressed(Controls.MENU_CANCEL) or _is_backspace(event):
+		_back_art()
+		return true
+	if profile_key == "statistics":
+		if event.is_action_pressed(Controls.MENU_UP):
+			_profile_move(-1)
+			return true
+		if event.is_action_pressed(Controls.MENU_DOWN):
+			_profile_move(1)
+			return true
+		if event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
+			_open_selected_stats_page()
+			return true
+	return false
+
+
+func _profile_move(delta: int) -> void:
+	var count: int = Array(ProfileBodies.stats_submenu().get("rows", [])).size()
+	if count <= 0:
+		return
+	status_text = ""
+	profile_index = clampi(profile_index + delta, 0, count - 1)
+	_show_art_screen(screen_id)
+
+
+func _open_selected_stats_page() -> void:
+	var subs: Array = Array(ProfileBodies.stats_submenu().get("rows", []))
+	if subs.is_empty():
+		return
+	profile_index = clampi(profile_index, 0, subs.size() - 1)
+	var state: String = String(Dictionary(subs[profile_index]).get("state", ""))
+	if state.is_empty():
+		return
+	status_text = ""
+	menu_state = "art_page"
+	_show_art_screen("profile_page:statistics:" + state)
+
 func _confirm_art(was_attack: bool) -> void:
 	var row: Dictionary = _selected_row()
 	if row.is_empty():
@@ -417,6 +473,8 @@ func _confirm_art(was_attack: bool) -> void:
 			else:
 				status_text = ""
 				profile_key = String(row.get("key", ""))
+				profile_sub = ""
+				profile_index = 0
 				menu_state = "art_page"
 				_show_art_screen("profile_page:" + profile_key)
 		"unavailable":
@@ -432,7 +490,11 @@ func _back_art() -> void:
 		_show_art_screen("settings")
 		return
 	if screen_id.begins_with("profile_page:"):
-		selection = _profile_row_index_for(String(screen_id.substr("profile_page:".length())))
+		# game.states binds backtomain -> playerprofile for statsmain/stats1-3 and
+		# rsk -> playerprofile for achievements/artpictures/fightersgallery, so a
+		# BACK always returns to Player Profile.
+		profile_sub = ""
+		selection = _profile_row_index_for(profile_key)
 		menu_state = "art_page"
 		_show_art_screen("player_profile")
 		return
@@ -780,7 +842,10 @@ func _show_art_screen(screen: String) -> void:
 		_refresh_status()
 		return
 	if screen.begins_with("profile_page:"):
-		profile_key = screen.substr("profile_page:".length())
+		var rest: String = screen.substr("profile_page:".length())
+		var parts: PackedStringArray = rest.split(":", false, 1)
+		profile_key = String(parts[0])
+		profile_sub = String(parts[1]) if parts.size() > 1 else ""
 		screen_id = screen
 		_clear_stage()
 		_build_profile_page(profile_key)
@@ -814,8 +879,9 @@ func _show_art_screen(screen: String) -> void:
 
 ## --------------------------------------------------- recovered Profile pages
 ## Draws the recovered destination for one playerprofile.ui row.  The destination
-## STATE and the decoded destination widgets are real; page BODIES that do not
-## decode stay explicitly NOT RECOVERED (never a guessed screen).
+## state, the decoded destination widgets and (since the profile-bodies phase)
+## the page BODIES that decode are real; fields the resources do not prove stay
+## explicitly NOT RECOVERED (never a guessed screen).
 func _build_profile_page(key: String) -> void:
 	profile_record = RecoveredPages.profile_page(key)
 	var backdrop: Texture2D = _background_texture("mainmenu")
@@ -828,38 +894,202 @@ func _build_profile_page(key: String) -> void:
 		_add_page_line("PROFILE PAGE " + STATUS_NOT_RECOVERED, 40)
 		_add_page_line("UI gaps artifact failed closed: " + RecoveredPages.error(), 60)
 		return
-	var label: String = RecoveredPages.localized(profile_record.get("labels", {}), Lang.language())
-	var dest: Dictionary = profile_record.get("destination", {})
-	_add_page_line(label.to_upper(), 8, 16)
-	_add_page_line("STATE: " + String(dest.get("state", "")), 32)
-	for ui_file: Variant in Array(dest.get("ui_files", [])):
-		_add_page_line("LAYOUT: " + String(ui_file), 48)
+	if not ProfileBodies.available():
+		_add_page_line("PROFILE PAGE " + STATUS_NOT_RECOVERED, 40)
+		_add_page_line("profile bodies failed closed: " + ProfileBodies.error(), 60)
+		return
 	match key:
-		"statistics":
-			# statsmenu.ui blmenu: three REAL decoded subrows (stats1/2/3).
-			var y: float = 84.0
-			for sub: Variant in Array(profile_record.get("subrows", [])):
-				var s: Dictionary = sub as Dictionary
-				var text: String = RecoveredPages.localized(
-					{"LangEnglish": String(s.get("label_key", ""))}, "LangEnglish")
-				_add_page_line("- " + text + " -> "
-					+ String(Dictionary(s.get("destination", {})).get("state", ""))
-					+ "  [" + STATUS_NOT_RECOVERED + "]", y, 11)
-				y += 20.0
-			_add_page_line("STATS PAGE CONTENT " + STATUS_NOT_RECOVERED
-				+ " (stats1/2/3.ui reserved-word variant)", 210, 10)
-		"art":
-			var album: Dictionary = _widget_rect(profile_record, "artpicture", "album")
-			_add_frame(album)
-			_add_page_line("ART ALBUM " + STATUS_NOT_RECOVERED, 150, 12)
-		"fighters":
-			var grid: Dictionary = _widget_rect(profile_record, "fightergalleryselect", "grid")
-			_add_frame(grid)
-			_add_page_line("FIGHTER GRID " + STATUS_NOT_RECOVERED, 150, 12)
 		"achievements":
-			_add_page_line("ACHIEVEMENTS PAGE " + STATUS_NOT_RECOVERED, 120, 12)
-			_add_page_line(String(profile_record.get("content_reason", "")), 150, 9)
-	_add_page_line("ESC/BACK: RETURN", 286, 10)
+			_build_achievements_body()
+		"statistics":
+			_build_statistics_menu()
+		"art":
+			_build_art_album_body()
+		"fighters":
+			_build_fighter_grid()
+		_:
+			_add_page_line("PROFILE PAGE " + STATUS_NOT_RECOVERED, 40)
+
+
+func _widget_rect_dict(widget: Dictionary) -> Rect2:
+	return Rect2(float(widget.get("x", 0)), float(widget.get("y", 0)),
+		float(widget.get("width", 0)), float(widget.get("height", 0)))
+
+
+func _add_label_in_rect(text: String, rect: Rect2, font_size: int, color: Color,
+		align_h: int = HORIZONTAL_ALIGNMENT_LEFT, label_name: String = "") -> Label:
+	var label: Label = _make_label(text, rect, font_size, color, false)
+	label.horizontal_alignment = align_h
+	if not label_name.is_empty():
+		label.name = label_name
+	_stage.add_child(label)
+	return label
+
+
+func _add_profile_back(rect: Rect2) -> void:
+	var outline: Control = RectOutline.new()
+	outline.name = "ProfileBackButton"
+	outline.position = rect.position
+	outline.size = rect.size
+	outline.line_color = Color(1.0, 0.92, 0.62, 0.6)
+	outline.line_width = 1.0
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(outline)
+	_add_label_in_rect("BACK", Rect2(rect.position, rect.size), 8,
+		Color(1.0, 0.92, 0.62, 0.8), HORIZONTAL_ALIGNMENT_CENTER)
+
+
+## --------------------------------------------------- achievements body
+## achievementstable.ui declares only title / box / statsview
+## (pagecount, selectedpage, visiblepage) / back(rsk) / pages(%d/%d).  No widget
+## and no game.states entry binds the 38 achievements.list entries to the
+## statsview, so the ROW BODY stays NOT RECOVERED; the decoded list is kept as
+## an evidence inventory only.
+func _build_achievements_body() -> void:
+	var data: Dictionary = ProfileBodies.achievements()
+	for widget: Variant in Array(data.get("layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		match String(w.get("type", "")):
+			"bllabel":
+				_add_label_in_rect(ProfileBodies.localized(
+					data.get("title_labels", {}), Lang.language()),
+					Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
+					12, COLOR_IDLE, HORIZONTAL_ALIGNMENT_LEFT, "AchievementsTitle")
+			"statsview", "picture":
+				_add_frame(w)
+			"blbutton":
+				_add_profile_back(rect)
+			"label":
+				_add_label_in_rect("PAGE " + STATUS_NOT_RECOVERED,
+					rect, 9, Color(1.0, 0.92, 0.62, 1.0),
+					HORIZONTAL_ALIGNMENT_CENTER, "AchievementsPage")
+	_add_page_line("STATSVIEW ROW BINDING " + STATUS_NOT_RECOVERED, 64, 9)
+	_add_page_line("%d decoded achievements.list entries (inventory only)" %
+		int(data.get("row_count", 0)), 82, 9)
+	_add_page_line("ESC/BACK: RETURN", 306, 8)
+
+
+## ------------------------------------------------------- statistics body
+func _build_statistics_menu() -> void:
+	var label: String = RecoveredPages.localized(
+		profile_record.get("labels", {}), Lang.language())
+	_add_page_line(label.to_upper(), 8, 16)
+	var subs: Array = Array(ProfileBodies.stats_submenu().get("rows", []))
+	profile_index = clampi(profile_index, 0, maxi(0, subs.size() - 1))
+	var y: float = 50.0
+	for index: int in range(subs.size()):
+		var s: Dictionary = subs[index]
+		var state: String = String(s.get("state", ""))
+		var key: String = String(s.get("label_key", ""))
+		var text: String = ProfileBodies.localized(s.get("labels", {}), Lang.language())
+		var prefix: String = "> " if index == profile_index else "  "
+		var color: Color = COLOR_SELECTED if index == profile_index else COLOR_IDLE
+		_add_label_in_rect(prefix + text + "   [" + key + " -> " + state + "]",
+			Rect2(24, y, DESIGN_W - 48, 18), 11, color,
+			HORIZONTAL_ALIGNMENT_LEFT, "StatsSubrow_%d" % index)
+		y += 20.0
+	if profile_sub.is_empty():
+		_add_page_line("ENTER: OPEN STATS PAGE   ESC/BACK: RETURN", 112, 8)
+		_add_page_line("STATS VALUES " + STATUS_NOT_RECOVERED
+			+ " (runtime `stats` datasource)", 300, 8)
+		return
+	var page: Dictionary = ProfileBodies.stats_page(profile_sub)
+	if page.is_empty():
+		_add_page_line("STATS PAGE " + STATUS_NOT_RECOVERED, 130, 10)
+		return
+	for widget: Variant in Array(page.get("layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		var name: String = String(w.get("name", ""))
+		if String(w.get("type", "")) == "staticrect":
+			_add_frame(w)
+		elif name.begins_with("title"):
+			var row: Dictionary = _stats_row_for_title(page, name)
+			_add_label_in_rect(ProfileBodies.localized(
+				row.get("title_labels", {}), Lang.language()),
+				Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
+				11, COLOR_IDLE, HORIZONTAL_ALIGNMENT_LEFT, "StatsTitle_" + name)
+		elif name.begins_with("value"):
+			var value_row: Dictionary = _stats_row_for_value(page, name)
+			var keys: Array = Array(value_row.get("value_stat_keys", []))
+			_add_label_in_rect(STATUS_NOT_RECOVERED + "  [" + ", ".join(keys) + "]",
+				Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
+				9, Color(1.0, 0.6, 0.4, 1.0),
+				HORIZONTAL_ALIGNMENT_LEFT, "StatsValue_" + name)
+	_add_page_line("STATS VALUES " + STATUS_NOT_RECOVERED
+		+ " (runtime `stats` datasource)", 300, 8)
+
+
+func _stats_row_for_title(page: Dictionary, widget_name: String) -> Dictionary:
+	for row: Variant in Array(page.get("rows", [])):
+		if String(Dictionary(row).get("title_widget", "")) == widget_name:
+			return Dictionary(row)
+	return {}
+
+
+func _stats_row_for_value(page: Dictionary, widget_name: String) -> Dictionary:
+	for row: Variant in Array(page.get("rows", [])):
+		if String(Dictionary(row).get("value_widget", "")) == widget_name:
+			return Dictionary(row)
+	return {}
+
+
+## ------------------------------------------------------------ art album body
+## artpicture.ui's pictureslider declares NO items and neither the .ui nor
+## game.states binds a picture list to it; the 18 artpictures.list refs are kept
+## as an evidence inventory only and are not drawn.
+func _build_art_album_body() -> void:
+	var data: Dictionary = ProfileBodies.artpictures()
+	for widget: Variant in Array(data.get("layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		match String(w.get("type", "")):
+			"staticrect":
+				var black: ColorRect = ColorRect.new()
+				black.name = "ArtBlackRect"
+				black.color = Color(0, 0, 0, 1)
+				black.position = rect.position
+				black.size = rect.size
+				black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				_stage.add_child(black)
+			"pictureslider", "picture":
+				_add_frame(w)
+			"blbutton":
+				_add_profile_back(rect)
+	_add_page_line("PICTURE " + STATUS_NOT_RECOVERED, 150, 12)
+	_add_page_line("PICTURESLIDER BINDING " + STATUS_NOT_RECOVERED, 172, 9)
+	_add_page_line("%d decoded artpictures.list refs (inventory only)" %
+		int(data.get("item_count", 0)), 190, 9)
+	_add_page_line("ESC/BACK: RETURN", 306, 8)
+
+
+## --------------------------------------------------------- fighter gallery
+## blfightergrid binds selectedcell to the runtime fighters_gallery_current
+## option; no decoded resource binds characters.list uniques to the grid cells,
+## so the grid body stays NOT RECOVERED and the 10 uniques are an inventory only.
+func _build_fighter_grid() -> void:
+	var data: Dictionary = ProfileBodies.fighters()
+	for widget: Variant in Array(data.get("layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		match String(w.get("type", "")):
+			"bllabel":
+				_add_label_in_rect(ProfileBodies.localized(
+					data.get("title_labels", {}), Lang.language()),
+					Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
+					12, COLOR_IDLE, HORIZONTAL_ALIGNMENT_LEFT, "FightersTitle")
+			"blfightergrid", "picture":
+				_add_frame(w)
+			"blbutton":
+				_add_profile_back(rect)
+	_add_page_line("FIGHTER GRID " + STATUS_NOT_RECOVERED, 150, 12)
+	_add_page_line("GRID MEMBERSHIP / ORDER " + STATUS_NOT_RECOVERED
+		+ " (fighters_gallery_current)", 172, 9)
+	_add_page_line("%d decoded characters.list uniques (inventory only)" %
+		int(data.get("item_count", 0)), 190, 9)
+	_add_page_line("ESC/BACK: RETURN", 306, 8)
+
 
 
 func _widget_rect(record: Dictionary, group: String, widget_name: String) -> Dictionary:
@@ -1307,6 +1537,70 @@ func profile_page_key() -> String:
 	return profile_key
 
 
+func profile_page_sub() -> String:
+	return profile_sub
+
+
+func profile_selection() -> int:
+	return profile_index
+
+
+func profile_bodies_available() -> bool:
+	return ProfileBodies.available()
+
+
+func profile_bodies_error() -> String:
+	return ProfileBodies.error()
+
+
+func achievements_body_info() -> Dictionary:
+	var data: Dictionary = ProfileBodies.achievements()
+	return {"row_count": ProfileBodies.achievement_rows().size(),
+		"page_format": String(data.get("page_format", "")),
+		"reached_state": String(data.get("reached_state", "")),
+		"page_capacity": String(data.get("page_capacity", "")),
+		"row_binding": String(data.get("row_binding", ""))}
+
+
+func stats_body_info() -> Dictionary:
+	var page: Dictionary = ProfileBodies.stats_page(profile_sub)
+	var rows: Array = Array(page.get("rows", []))
+	var titles: Array = []
+	var stat_keys: Array = []
+	for row: Variant in rows:
+		var r: Dictionary = row as Dictionary
+		titles.append(ProfileBodies.localized(r.get("title_labels", {}), Lang.language()))
+		for key: Variant in Array(r.get("value_stat_keys", [])):
+			stat_keys.append(String(key))
+	return {"sub": profile_sub, "row_count": rows.size(),
+		"titles": titles, "stat_keys": stat_keys,
+		"values": String(page.get("values", ""))}
+
+
+func art_album_info() -> Dictionary:
+	var data: Dictionary = ProfileBodies.artpictures()
+	var names: Array = []
+	for item: Variant in Array(data.get("items", [])):
+		names.append(String(Dictionary(item).get("basename", "")))
+	return {"item_count": names.size(), "basenames": names,
+		"picture_texture": String(data.get("picture_texture", "")),
+		"slider_binding": String(data.get("slider_binding", ""))}
+
+
+func fighter_gallery_info() -> Dictionary:
+	var data: Dictionary = ProfileBodies.fighters()
+	var names: Array = []
+	var keys: Array = []
+	for item: Variant in Array(data.get("items", [])):
+		var f: Dictionary = item as Dictionary
+		names.append(ProfileBodies.localized(f.get("name_labels", {}), Lang.language()))
+		keys.append(String(f.get("profile_text_key", "")))
+	return {"item_count": names.size(), "names": names,
+		"profile_text_keys": keys,
+		"selection": String(data.get("selection", "")),
+		"grid_binding": String(data.get("grid_binding", ""))}
+
+
 func about_version_display() -> String:
 	return RecoveredPages.about_version_text(Lang.language())
 
@@ -1331,6 +1625,8 @@ func show_profile_page(key: String) -> void:
 		_refresh_status()
 		return
 	profile_key = key
+	profile_sub = ""
+	profile_index = 0
 	menu_state = "art_page"
 	_show_art_screen("profile_page:" + key)
 

@@ -187,9 +187,19 @@ func _check_profile() -> void:
 	for needle: String in ["game_modes -> stats1", "battles -> stats2", "moves -> stats3"]:
 		_check(_any_contains(stexts, needle.replace("->", "->")),
 			"statistics shows recovered subrow " + needle)
-	_check(_any_contains(stexts, "STATS PAGE CONTENT NOT RECOVERED"),
-		"statistics page body is explicitly NOT RECOVERED")
+	# The stats1/2/3 bodies are recovered by the profile-bodies phase: ENTER
+	# opens stats1, the row titles are decoded .lang text, and the runtime
+	# stats values stay explicitly NOT RECOVERED.
+	await _confirm()
+	_check(String(menu.get("screen_id")) == "profile_page:statistics:stats1",
+		"ENTER opens the recovered stats1 body")
+	var s1: Dictionary = menu.call("stats_body_info")
+	_check(int(s1.get("row_count", 0)) == 5, "stats1 body has the 5 decoded rows")
+	_check(_any_contains(menu.call("label_texts"), "NOT RECOVERED"),
+		"stats1 values are explicitly NOT RECOVERED")
 	await _back()
+	_check(String(menu.get("screen_id")) == "player_profile",
+		"BACK from a stats body returns to Player Profile (backtomain)")
 
 
 func _check_about() -> void:
