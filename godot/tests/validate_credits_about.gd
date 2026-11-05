@@ -8,6 +8,8 @@ extends SceneTree
 
 const RecoveredPages = preload("res://scripts/recovered_pages.gd")
 const PortCreditsRoll = preload("res://scripts/credits_roll.gd")
+const CreditsText = preload("res://scripts/credits_text.gd")
+const CreditsRollView = preload("res://scripts/credits_roll_view.gd")
 
 var passed: int = 0
 var failed: int = 0
@@ -115,5 +117,51 @@ func _run() -> void:
 	_check(r5.end_action() == "END", "end action is the recovered END")
 	_check(PortCreditsRoll.new(PackedInt32Array(), 320).ended,
 		"zero-line roll ends immediately like Redraw")
+
+	# --- verbatim DLE/IG text + real view (runtime font measurement) -----
+	_check(CreditsText.available(), "credits text artifact loads")
+	_check(CreditsText.error() == "", "credits text artifact has no error")
+	_check(CreditsText.matches_layout("dle", "credits_dle_", 1, 125),
+		"DLE text range matches the decoded creditsdle.ui widget")
+	_check(CreditsText.matches_layout("ig", "credits_ig_", 1, 38),
+		"IG text range matches the decoded creditsindiagames.ui widget")
+	_check(not CreditsText.matches_layout("dle", "credits_dle_", 1, 124),
+		"a text/layout range mismatch fails closed")
+	_check(CreditsText.populated_count("dle", "LangEnglish") == 96,
+		"DLE English has 96 populated lines")
+	_check(CreditsText.populated_count("ig", "LangEnglish") == 26,
+		"IG English has 26 populated lines")
+	var dle_lines: PackedStringArray = CreditsText.lines("dle", "LangEnglish")
+	_check(dle_lines.size() == 125, "DLE sequence is exactly 1..125 lines")
+	_check(dle_lines[0].begins_with("\u00acC3") and dle_lines[0].contains("DIGITAL LEGENDS"),
+		"DLE line 1 keeps the verbatim control-coded title")
+	_check(dle_lines[1] == "", "absent key 002 is the native blank line")
+	_check(CreditsText.populated_count("dle", "LangChineseSimpl") == 96,
+		"DLE ChineseSimpl also has 96 populated lines")
+	_check(CreditsText.lines("dle", "LangChineseSimpl").size() == 125,
+		"Chinese DLE roll keeps the full 1..125 sequence")
+
+	var view = CreditsRollView.new()
+	var font: Font = ThemeDB.fallback_font
+	var first_three: PackedStringArray = PackedStringArray([dle_lines[0], dle_lines[1], dle_lines[2]])
+	_check(view.configure(first_three, 320, font, 16), "credit view configures from the runtime font")
+	var measured: int = int(ceil(font.get_height(16)))
+	_check(view.line_height_px() == measured, "line height equals the runtime font height")
+	_check(view.line_height_px() != 72, "line height is not the 72-byte TLine struct stride")
+	_check(view.offset_px() == -320, "credit view starts at the recovered -320")
+	_check(view.advance_ms(1000) == 0, "credit view seeds its 33 ms clock")
+	_check(view.advance_ms(1033) == 1, "credit view fires one 33 ms tick")
+	_check(view.offset_px() == -318, "first credit tick is +2")
+	_check(not view.clean_line(0).begins_with("\u00ac") and view.clean_line(0).contains("DIGITAL LEGENDS"),
+		"the view strips the engine colour control code, keeping the text verbatim")
+	view.free()
+
+	OS.set_environment("BRUCELEE_CREDITS_TEXT_PATH", "res://data/menu_art/does_not_exist.json")
+	CreditsText.reset_for_test()
+	_check(not CreditsText.available(), "missing credits text fails closed")
+	_check(CreditsText.lines("dle", "LangEnglish").is_empty(), "fail-closed text yields no lines")
+	OS.set_environment("BRUCELEE_CREDITS_TEXT_PATH", "")
+	CreditsText.reset_for_test()
+	_check(CreditsText.available(), "credits text recovers after the cache reset")
 
 	_finish()

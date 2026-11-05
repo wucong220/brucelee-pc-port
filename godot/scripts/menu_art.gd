@@ -52,6 +52,10 @@ const RecoveredPages = preload("res://scripts/recovered_pages.gd")
 ## Recovered eight-item language dock (settingslanguage.ui + CApplication::Init
 ## AddLanguageTable index order).  Fail-closed if its artifact is missing.
 const LanguageDock = preload("res://scripts/language_dock.gd")
+## Verbatim DLE / IndiaGames credit-roll text (ten Lang*.lang tables) and the
+## real CCreditsView-equivalent scrolling view.
+const CreditsText = preload("res://scripts/credits_text.gd")
+const CreditsRollView = preload("res://scripts/credits_roll_view.gd")
 
 const DESIGN_W := 480.0
 const DESIGN_H := 320.0
@@ -214,6 +218,10 @@ var _screens: Dictionary = {}
 var _texture_paths: Dictionary = {}
 var _textures: Dictionary = {}
 var _built_rects: Dictionary = {}
+## Active credit-roll view on creditsdle/creditsindiagames, or null when the
+## text/layout evidence is missing (the page then keeps the explicit marker).
+var _credits_roll: Control = null
+var _credits_roll_status: String = ""
 
 
 class RectOutline extends Control:
@@ -744,6 +752,8 @@ func _clear_stage() -> void:
 		_stage.remove_child(child)
 		child.queue_free()
 	_built_rects.clear()
+	_credits_roll = null
+	_credits_roll_status = ""
 
 
 func _background_texture(screen: String) -> Texture2D:
@@ -1057,23 +1067,79 @@ func _build_art_widget(screen: String, node: Dictionary) -> void:
 			_build_art_menu(screen, node, rect)
 			_built_rects[widget_name] = rect
 		"credits":
-			# The credit roll text lives in the localization archive, which is
-			# not decoded here. Show the recovered prefix/number range (data,
-			# not invented names) plus an explicit NOT RECOVERED marker.
 			var prefix: String = String(node.get("prefix", ""))
 			var first_number: int = int(node.get("first_number", 0))
 			var last_number: int = int(node.get("last_number", 0))
-			var caption: String = STATUS_NOT_RECOVERED
-			if not prefix.is_empty():
-				caption = "%s (%d-%d)\n%s" % [prefix, first_number, last_number,
-					STATUS_NOT_RECOVERED]
-			var scroll_label: Label = _make_label(
-				caption, rect, 16, Color(1.0, 0.85, 0.3, 1.0), true)
-			scroll_label.name = "Label_Credits"
-			_stage.add_child(scroll_label)
+			var roll_id: String = _credits_roll_id(screen)
+			var roll_view: Control = _make_credits_roll_view(
+				roll_id, prefix, first_number, last_number, rect)
+			if roll_view != null:
+				_stage.add_child(roll_view)
+				_credits_roll = roll_view
+			else:
+				# Fail closed: missing text or a layout/range mismatch keeps the
+				# explicit marker; no line is invented.
+				var caption: String = STATUS_NOT_RECOVERED
+				if not prefix.is_empty():
+					caption = "%s (%d-%d)\n%s" % [prefix, first_number, last_number,
+						STATUS_NOT_RECOVERED]
+				if not _credits_roll_status.is_empty():
+					caption += "\n" + _credits_roll_status
+				var scroll_label: Label = _make_label(
+					caption, rect, 16, Color(1.0, 0.85, 0.3, 1.0), true)
+				scroll_label.name = "Label_Credits"
+				_stage.add_child(scroll_label)
 			_built_rects[widget_name] = rect
 		_:
 			_fail("unsupported widget type '" + type + "' in " + screen)
+
+
+func _credits_roll_id(screen: String) -> String:
+	match screen:
+		"credits_dle":
+			return "dle"
+		"credits_ig":
+			return "ig"
+	return ""
+
+
+## Build the real scrolling view from verbatim text + the decoded .ui widget.
+## Returns null (and records `_credits_roll_status`) on any missing evidence.
+func _make_credits_roll_view(roll_id: String, prefix_value: String,
+		first_value: int, last_value: int, rect: Rect2) -> Control:
+	_credits_roll_status = ""
+	if roll_id.is_empty():
+		return null
+	if not CreditsText.available():
+		_credits_roll_status = "CREDITS TEXT " + STATUS_NOT_RECOVERED + ": " + CreditsText.error()
+		return null
+	if not CreditsText.matches_layout(roll_id, prefix_value, first_value, last_value):
+		_credits_roll_status = "CREDITS LAYOUT " + STATUS_NOT_RECOVERED + ": " + CreditsText.error()
+		return null
+	var lines: PackedStringArray = CreditsText.lines(roll_id, Lang.language())
+	if lines.is_empty():
+		_credits_roll_status = "CREDITS TEXT " + STATUS_NOT_RECOVERED + ": " + CreditsText.error()
+		return null
+	var font: Font = Lang.ui_font()
+	if font == null:
+		font = ThemeDB.fallback_font
+	var view: Control = CreditsRollView.new()
+	view.name = "CreditsRoll"
+	view.position = rect.position
+	view.size = rect.size
+	view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not view.configure(lines, int(rect.size.y), font, 16):
+		_credits_roll_status = "CREDITS ROLL " + STATUS_NOT_RECOVERED + ": " + view.configure_error()
+		view.queue_free()
+		return null
+	view.finished.connect(_on_credits_roll_finished)
+	return view
+
+
+## Native END action: when every line has scrolled past, leave the roll.
+func _on_credits_roll_finished() -> void:
+	if screen_id == "credits_dle" or screen_id == "credits_ig":
+		_back_art()
 
 
 func _file_reference(reference: Dictionary) -> Dictionary:
@@ -1159,13 +1225,69 @@ func option_labels() -> Array:
 
 
 ## Every label drawn on the current screen, in tree order. Used to assert the
-## explicit NOT RECOVERED areas (About version/disclaimer, credit rolls).
+## explicit NOT RECOVERED areas (About version/disclaimer, fail-closed rolls).
 func label_texts() -> Array:
 	var out: Array = []
 	for child: Node in _stage.get_children():
 		if child is Label:
 			out.append((child as Label).text)
 	return out
+
+
+## ------------------------------------------------ credit-roll test hooks
+func credits_roll_active() -> bool:
+	return _credits_roll != null and is_instance_valid(_credits_roll)
+
+
+func credits_roll_status() -> String:
+	return _credits_roll_status
+
+
+func credits_roll_line_count() -> int:
+	return int(_credits_roll.call("line_count")) if credits_roll_active() else 0
+
+
+func credits_roll_line_height() -> int:
+	return int(_credits_roll.call("line_height_px")) if credits_roll_active() else 0
+
+
+func credits_roll_view_height() -> int:
+	return int(_credits_roll.call("view_height_px")) if credits_roll_active() else 0
+
+
+func credits_roll_offset() -> int:
+	return int(_credits_roll.call("offset_px")) if credits_roll_active() else 0
+
+
+func credits_roll_ended() -> bool:
+	return bool(_credits_roll.call("ended")) if credits_roll_active() else false
+
+
+func credits_roll_raw_line(index: int) -> String:
+	return String(_credits_roll.call("raw_line", index)) if credits_roll_active() else ""
+
+
+func credits_roll_clean_line(index: int) -> String:
+	return String(_credits_roll.call("clean_line", index)) if credits_roll_active() else ""
+
+
+func credits_roll_advance_ms(now_ms: int) -> int:
+	return int(_credits_roll.call("advance_ms", now_ms)) if credits_roll_active() else 0
+
+
+func credits_roll_tick_steps(count: int) -> void:
+	if credits_roll_active():
+		_credits_roll.call("tick_steps", count)
+
+
+func credits_roll_set_process(enabled: bool) -> void:
+	if credits_roll_active():
+		_credits_roll.set_process(enabled)
+
+
+func credits_roll_reset_timing() -> void:
+	if credits_roll_active():
+		_credits_roll.call("reset_timing")
 
 
 ## ------------------------------------------------ recovered pages test hooks

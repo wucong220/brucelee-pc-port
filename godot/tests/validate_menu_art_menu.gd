@@ -267,9 +267,21 @@ func _check_pages() -> void:
 	await _confirm_row()
 	_check(String(menu.get("screen_id")) == "credits_dle",
 		"Credits DLE button opens the recovered creditsdle layout")
-	var texts: Array = menu.call("label_texts")
-	_check(_any_contains(texts, "NOT RECOVERED"),
-		"creditsdle marks the missing roll text as NOT RECOVERED")
+	menu.call("credits_roll_set_process", false)
+	menu.call("credits_roll_reset_timing")
+	_check(bool(menu.call("credits_roll_active")),
+		"creditsdle builds the real scrolling credit roll")
+	_check(int(menu.call("credits_roll_line_count")) == 125,
+		"creditsdle roll carries the full 1..125 line sequence")
+	_check(int(menu.call("credits_roll_view_height")) == 320,
+		"creditsdle roll uses the decoded 320 px viewport")
+	_check(int(menu.call("credits_roll_offset")) == -320,
+		"creditsdle roll starts at the recovered -height offset")
+	_check(int(menu.call("credits_roll_line_height")) > 0
+		and int(menu.call("credits_roll_line_height")) != 72,
+		"line height is measured from the runtime font, not the 72-byte TLine stride")
+	_check(String(menu.call("credits_roll_clean_line", 0)).contains("DIGITAL LEGENDS"),
+		"first DLE line is the verbatim decoded title")
 	await _back()
 	_check(String(menu.get("screen_id")) == "credits",
 		"BACK from the credit roll returns to the Credits page")
@@ -280,6 +292,14 @@ func _check_pages() -> void:
 	await _confirm_row()
 	_check(String(menu.get("screen_id")) == "credits_ig",
 		"Credits IndiaGames button opens the recovered creditsindiagames layout")
+	menu.call("credits_roll_set_process", false)
+	menu.call("credits_roll_reset_timing")
+	_check(bool(menu.call("credits_roll_active")),
+		"creditsindiagames builds the real scrolling credit roll")
+	_check(int(menu.call("credits_roll_line_count")) == 38,
+		"creditsindiagames roll carries the full 1..38 line sequence")
+	_check(String(menu.call("credits_roll_clean_line", 0)).contains("Indiagames"),
+		"first IG line is the verbatim decoded title")
 	await _back()
 	await _back()
 	_check(String(menu.get("screen_id")) == "mainmenu" and int(menu.get("selection")) == 3,
@@ -297,7 +317,7 @@ func _check_pages() -> void:
 		"about/disclaimer keeps the decoded rect")
 	_check(_rect(rects, "back").is_equal_approx(Rect2(2, 270, 48, 48)),
 		"about/back keeps the decoded rect")
-	texts = menu.call("label_texts")
+	var texts: Array = menu.call("label_texts")
 	_check(_any_contains(texts, "BRUCE LEE") and _any_contains(texts, "www.brucelee.com"),
 		"about disclaimer is the verbatim recovered .lang value")
 	_check(_any_contains(texts, "1.15.26"),

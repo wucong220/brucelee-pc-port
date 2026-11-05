@@ -219,8 +219,8 @@ func _check_credits(evidence_path: String) -> void:
 	await process_frame
 	_check(String(menu.get("screen_id")) == "credits_dle",
 		"credits DLE roll screen opens")
-	var texts: Array = menu.call("label_texts")
-	var has_nr: bool = false
-	for t: Variant in texts:
-		if String(t).contains(NR): has_nr = true
-	_check(has_nr, "credits roll still shows NOT RECOVERED (timing not shipped)")
+	menu.call("credits_roll_set_process", false)
+	_check(bool(menu.call("credits_roll_active")),
+		"credits roll is the real recovered scrolling view")
+	_check(int(menu.call("credits_roll_line_count")) == 125,
+		"credits DLE roll carries the full 1..125 line sequence")
