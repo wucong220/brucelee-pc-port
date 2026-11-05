@@ -66,7 +66,7 @@
 - Profile 子行、Settings VIDEO/CONTROLS、About 版本/免责声明、credits roll、Training VIDEO/CONTROLS、语言列表、locked-card cursor 等 UI 仍有缺口
 - 真实按键下对 Brick 的 `grab1 brick / endattack brick` 变体路径与 base API 的 93/130 victim hold 路径不同；需证明是原生行为或修运行时
 - SinFu / LoMing 少数族内 clip 无同骨架精确源，继续 fail-closed，不跨骨架借动画
-- `validate_action_cameras.gd` 的 victim 相机检查失败；此前曾观察到相同失败，具体是夹具还是运行时原因仍在复核
+- `validate_action_cameras.gd` 的 victim 相机检查此前因夹具硬编码 forset02 出现假失败；运行时 probe 已证明 Thai/Karate 均正确装载 authored ANM，测试夹具已按 set 恢复
 - 逐帧原版录像、GPU 像素级、真实手柄设备矩阵仍未验收
 
 ## 继续移植的当前主线

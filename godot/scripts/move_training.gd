@@ -1053,6 +1053,18 @@ func settings_not_recovered_rows() -> Array:
         "not_recovered_rows", []))
 
 
+## Recovered VIDEO/CONTROLS action destinations for the in-game (training)
+## settings state.  There is no settings.ui row emitting these actions, so they
+## are recorded NOT RECOVERED and are never rendered as invented rows; this hook
+## exposes the recovered destination states/UI files to the headless validator.
+func training_video_controls_destinations() -> Dictionary:
+    var out: Dictionary = {}
+    for row: Variant in settings_not_recovered_rows():
+        var r: Dictionary = row as Dictionary
+        out[String(r.get("action", ""))] = r.duplicate(true)
+    return out
+
+
 func _open_settings() -> void:
     ## gamepause.actions.settings = ingamesettingsmain (game.states).
     if not settings_available():

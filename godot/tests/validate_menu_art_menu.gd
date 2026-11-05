@@ -210,10 +210,16 @@ func _check_pages() -> void:
 	await _confirm_row()
 	_check(commands.size() == row_before,
 		"Player Profile sub-row emits no command")
-	_check(String(menu.get("status_text")).contains("NOT RECOVERED"),
-		"Player Profile sub-row fails closed with a NOT RECOVERED status")
+	_check(String(menu.call("profile_page_key")) == "achievements",
+		"Player Profile sub-row opens its recovered destination record")
+	_check(String(Dictionary(menu.call("profile_page_info")).get("destination", {}).get(
+		"state", "")) == "achievements",
+		"Player Profile destination = game.states achievements")
+	_check(_any_contains(Array(menu.call("label_texts")), "NOT RECOVERED"),
+		"destination page body stays explicitly NOT RECOVERED")
+	await _back()
 	_check(String(menu.get("screen_id")) == "player_profile",
-		"Player Profile sub-row stays on the recovered page")
+		"BACK from a destination returns to Player Profile")
 	await _back()
 	_check(String(menu.get("screen_id")) == "mainmenu" and int(menu.get("selection")) == 1,
 		"BACK from Player Profile returns to the mainmenu row")
@@ -292,8 +298,12 @@ func _check_pages() -> void:
 	_check(_rect(rects, "back").is_equal_approx(Rect2(2, 270, 48, 48)),
 		"about/back keeps the decoded rect")
 	texts = menu.call("label_texts")
-	_check(texts.count("NOT RECOVERED IN THIS BUILD") == 2,
-		"about version and disclaimer are both explicit NOT RECOVERED labels")
+	_check(_any_contains(texts, "BRUCE LEE") and _any_contains(texts, "www.brucelee.com"),
+		"about disclaimer is the verbatim recovered .lang value")
+	_check(_any_contains(texts, "NOT RECOVERED"),
+		"about version NUMBER stays explicitly NOT RECOVERED")
+	_check(String(menu.call("about_version_display")).contains("NOT RECOVERED"),
+		"about version hook returns the marker, never an invented number")
 	await _back()
 	_check(String(menu.get("screen_id")) == "mainmenu" and int(menu.get("selection")) == 4,
 		"BACK from About returns to the mainmenu row")

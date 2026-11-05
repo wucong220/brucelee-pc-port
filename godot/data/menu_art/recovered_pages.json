@@ -1,0 +1,677 @@
+{
+ "schema": "brucelee-recovered-pages/1",
+ "base_head": "0b3b5ff874a229a3371f494b1f93ddf4114bede1",
+ "generated_by": "tools/build_recovered_pages.py (read-only local evidence)",
+ "not_recovered_marker": "NOT RECOVERED",
+ "provenance": {
+  "language_tables": {
+   "LangEnglish": "93df59d357eb83bfdb4118245e202e086653147cb7f37dd6217bdc69ed33ae22",
+   "LangChineseSimpl": "81fcd925c0f3ab9b583a8953da2062a8ca0859b508097f1aebb91f1aa9134751",
+   "LangChineseTrad": "cbe227fde21aaf69faad4d8b60262b877cbb1b69b321002b1987f3a19083809d",
+   "LangFrench": "62e87ad8ce1c2c001c58c0ab15cb330b4f6a4ac97286481006fc33d1189c0c7b",
+   "LangGerman": "396ed4fd8d135653127700e71d305c5c2d94f23d68351904496a9384e5b93775",
+   "LangItalian": "7d01b71c9d718591d2606ea2d1c975bd1303606b816d1567264cf771975c9f6f",
+   "LangJapanese": "329bdd31b4544b05b3f7a62b1b9b331cf6c759ad54b2fd359c40322fbe964a11",
+   "LangKorean": "729b6cd43fb111e5f0b1a215473c43a20586e3dcfc8339c0b4f6450cdffa1c70",
+   "LangRussian": "b5b7907d09e47f49d4085ce6e9394c874393728a45855d71b1d5a967d10a0074",
+   "LangSpanish": "0688ab079c1cfd97a4512ad53933ea66bbc8d0687528a206b8bfd1909292ab7c"
+  },
+  "game_states_sha256": "d41c62a87f3a34086256ca4c7872c115c05a20aa0470f1f54cb4f44e7fb9408d"
+ },
+ "profile": {
+  "source": "gui/playerprofile.ui options + game.states playerprofile.actions",
+  "rows": [
+   {
+    "key": "achievements",
+    "label_key": "achievements",
+    "labels": {
+     "LangEnglish": "Achievements",
+     "LangChineseSimpl": "成就",
+     "LangChineseTrad": "成就",
+     "LangFrench": "Succès",
+     "LangGerman": "Auszeichnungen",
+     "LangItalian": "Obiettivi",
+     "LangJapanese": "実績",
+     "LangKorean": "클리어 내역",
+     "LangRussian": "Поощрения",
+     "LangSpanish": "Logros"
+    },
+    "action": "achievements",
+    "destination": {
+     "state": "achievements",
+     "ui_files": [
+      "gui/achievementstable.ui"
+     ],
+     "actions": {
+      "rsk": "playerprofile"
+     }
+    },
+    "content": "NOT RECOVERED",
+    "content_reason": "achievementstable.ui uses the CTX3 DATA reserved-word variant (reserved=1); no verified layout decode"
+   },
+   {
+    "key": "statistics",
+    "label_key": "statistics",
+    "labels": {
+     "LangEnglish": "Statistics",
+     "LangChineseSimpl": "统计",
+     "LangChineseTrad": "統計",
+     "LangFrench": "Statistiques",
+     "LangGerman": "Statistik",
+     "LangItalian": "Statistiche",
+     "LangJapanese": "ステータス",
+     "LangKorean": "통계",
+     "LangRussian": "Статистика",
+     "LangSpanish": "Estadísticas"
+    },
+    "action": "statistics",
+    "destination": {
+     "state": "statsmain",
+     "ui_files": [
+      "gui/statsback.ui",
+      "gui/statsmenu.ui"
+     ],
+     "actions": {
+      "stats1": "stats1",
+      "stats2": "stats2",
+      "stats3": "stats3",
+      "rsk": "playerprofile",
+      "backtomain": "playerprofile"
+     }
+    },
+    "content": "SUBPAGES NOT RECOVERED",
+    "subrows": [
+     {
+      "label_key": "game_modes",
+      "action": "stats1",
+      "destination": {
+       "state": "stats1",
+       "ui_files": [
+        "gui/statsback.ui",
+        "gui/statsmenu.ui",
+        "gui/stats1.ui"
+       ],
+       "actions": {
+        "stats2": "stats2",
+        "stats3": "stats3",
+        "rsk": "statsmain",
+        "backtomain": "playerprofile"
+       }
+      },
+      "content": "NOT RECOVERED",
+      "content_reason": "stats1/2/3.ui use the CTX3 DATA reserved-word variant; no verified layout decode"
+     },
+     {
+      "label_key": "battles",
+      "action": "stats2",
+      "destination": {
+       "state": "stats2",
+       "ui_files": [
+        "gui/statsback.ui",
+        "gui/statsmenu.ui",
+        "gui/stats2.ui"
+       ],
+       "actions": {
+        "stats1": "stats1",
+        "stats3": "stats3",
+        "rsk": "statsmain",
+        "backtomain": "playerprofile"
+       }
+      },
+      "content": "NOT RECOVERED",
+      "content_reason": "stats1/2/3.ui use the CTX3 DATA reserved-word variant; no verified layout decode"
+     },
+     {
+      "label_key": "moves",
+      "action": "stats3",
+      "destination": {
+       "state": "stats3",
+       "ui_files": [
+        "gui/statsback.ui",
+        "gui/statsmenu.ui",
+        "gui/stats3.ui"
+       ],
+       "actions": {
+        "stats1": "stats1",
+        "stats2": "stats2",
+        "rsk": "statsmain",
+        "backtomain": "playerprofile"
+       }
+      },
+      "content": "NOT RECOVERED",
+      "content_reason": "stats1/2/3.ui use the CTX3 DATA reserved-word variant; no verified layout decode"
+     }
+    ],
+    "statsmenu": {
+     "source": {
+      "path": "D:\\BruceLeeWork\\menu-art-20261104\\raw\\adreno_200\\gui\\statsmenu.ui",
+      "sha256": "bd1ec658e690db4e1506067bed6e42986650d8818e05c7ee56f99c960dba1388",
+      "bytes": 1249
+     },
+     "records": 74,
+     "strings": 37,
+     "fully_covered": false,
+     "widgets": [
+      {
+       "type": "bllabel",
+       "name": "title",
+       "x": 0,
+       "y": 5,
+       "width": 200,
+       "height": 40,
+       "datasources": {
+        "text": [
+         "translate",
+         "statistics"
+        ]
+       }
+      },
+      {
+       "type": "blmenu",
+       "name": "menu",
+       "x": 80,
+       "y": 2,
+       "width": 400,
+       "height": 180,
+       "options": [
+        [
+         "game_modes",
+         "stats1"
+        ],
+        [
+         "battles",
+         "stats2"
+        ],
+        [
+         "moves",
+         "stats3"
+        ]
+       ]
+      }
+     ]
+    },
+    "statsback": {
+     "source": {
+      "path": "D:\\BruceLeeWork\\menu-art-20261104\\raw\\adreno_200\\gui\\statsback.ui",
+      "sha256": "947bc2debd26be85eef5d4fd501db6ac69a4382f50bb96af0ce657a0ef717857",
+      "bytes": 1375
+     },
+     "records": 81,
+     "strings": 39,
+     "fully_covered": false,
+     "widgets": [
+      {
+       "type": "picture",
+       "name": "box",
+       "x": 0,
+       "y": 110,
+       "width": 480,
+       "height": 320,
+       "subrect_x": 0,
+       "subrect_y": 0,
+       "subrect_width": 480,
+       "subrect_height": 320,
+       "file_basename": "bl_textbox_tga7"
+      },
+      {
+       "type": "blbutton",
+       "name": "back",
+       "x": 2,
+       "y": 270,
+       "width": 48,
+       "height": 48,
+       "action": "backtomain",
+       "align": "center",
+       "file_basename": null
+      }
+     ]
+    }
+   },
+   {
+    "key": "art",
+    "label_key": "art",
+    "labels": {
+     "LangEnglish": "Art",
+     "LangChineseSimpl": "艺术",
+     "LangChineseTrad": "藝術",
+     "LangFrench": "Visuels",
+     "LangGerman": "Kunst",
+     "LangItalian": "Grafica",
+     "LangJapanese": "アート",
+     "LangKorean": "기술",
+     "LangRussian": "Искусство",
+     "LangSpanish": "Arte"
+    },
+    "action": "art",
+    "destination": {
+     "state": "artpictures",
+     "ui_files": [
+      "gui/artpicture.ui"
+     ],
+     "actions": {
+      "start": "setartpictures",
+      "previous": "previousartpicture",
+      "next": "nextartpicture",
+      "rsk": "playerprofile"
+     }
+    },
+    "content": "NOT RECOVERED",
+    "content_reason": "artpicture.ui pictureslider album has no inline items; the art pictures are not in the decoded set",
+    "artpicture": {
+     "source": {
+      "path": "D:\\BruceLeeWork\\menu-art-20261104\\raw\\adreno_200\\gui\\artpicture.ui",
+      "sha256": "18fd190f689e735cf9f4a34ff5d7992478c2754f63661d234acf55c4d98d0a6b",
+      "bytes": 1662
+     },
+     "records": 104,
+     "strings": 45,
+     "fully_covered": false,
+     "widgets": [
+      {
+       "type": "staticrect",
+       "name": "black_rect",
+       "x": 0,
+       "y": 0,
+       "width": 480,
+       "height": 320
+      },
+      {
+       "type": "pictureslider",
+       "name": "album",
+       "x": 0,
+       "y": 0,
+       "width": 480,
+       "height": 320
+      },
+      {
+       "type": "blbutton",
+       "name": "back",
+       "x": 2,
+       "y": 270,
+       "width": 48,
+       "height": 48,
+       "action": "rsk",
+       "align": "center",
+       "file_basename": null
+      }
+     ]
+    }
+   },
+   {
+    "key": "fighters",
+    "label_key": "fighters",
+    "labels": {
+     "LangEnglish": "Fighters",
+     "LangChineseSimpl": "武师",
+     "LangChineseTrad": "武師",
+     "LangFrench": "Combattants",
+     "LangGerman": "Kämpfer",
+     "LangItalian": "Lottatori",
+     "LangJapanese": "ファイター",
+     "LangKorean": "파이터",
+     "LangRussian": "Бойцы",
+     "LangSpanish": "Luchadores"
+    },
+    "action": "fighters",
+    "destination": {
+     "state": "fightersgallery",
+     "ui_files": [
+      "gui/fightergalleryselect.ui"
+     ],
+     "actions": {
+      "start": "setfightersgrid",
+      "profile": "fighterprofile",
+      "rsk": "playerprofile"
+     }
+    },
+    "content": "NOT RECOVERED",
+    "content_reason": "fightergalleryselect.ui blfightergrid resolves its cells from the runtime fighters_gallery_current query",
+    "fightergalleryselect": {
+     "source": {
+      "path": "D:\\BruceLeeWork\\menu-art-20261104\\raw\\adreno_200\\gui\\fightergalleryselect.ui",
+      "sha256": "8c8bd3c2ee4dbdf597505696512dabfe71e79355afa39f92beed77e6911db2e8",
+      "bytes": 1688
+     },
+     "records": 102,
+     "strings": 47,
+     "fully_covered": false,
+     "widgets": [
+      {
+       "type": "bllabel",
+       "name": "title",
+       "x": 0,
+       "y": 5,
+       "width": 300,
+       "height": 40,
+       "datasources": {
+        "text": [
+         "translate",
+         "fighters"
+        ]
+       }
+      },
+      {
+       "type": "blfightergrid",
+       "name": "grid",
+       "x": 20,
+       "y": 50,
+       "width": 440,
+       "height": 220,
+       "action": "profile",
+       "datasources": {
+        "selectedcell": [
+         "option",
+         "fighters_gallery_current"
+        ]
+       }
+      },
+      {
+       "type": "blbutton",
+       "name": "rsk",
+       "x": 2,
+       "y": 270,
+       "width": 48,
+       "height": 48,
+       "action": "rsk",
+       "align": "center",
+       "file_basename": null
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "about": {
+  "background_basename": "bl_gui_styleeditor",
+  "styleeditorbg": {
+   "source": {
+    "path": "D:\\BruceLeeWork\\menu-art-20261104\\raw\\adreno_200\\gui\\styleeditorbg.ui",
+    "sha256": "a3e815b1591765db33cd6d5a7548d9a6af0ca28322730f4c4739de410fee02ac",
+    "bytes": 703
+   },
+   "records": 34,
+   "strings": 22,
+   "fully_covered": false,
+   "widgets": [
+    {
+     "type": "picture",
+     "name": "picture",
+     "x": 0,
+     "y": 0,
+     "width": 480,
+     "height": 320,
+     "subrect_x": 0,
+     "subrect_y": 0,
+     "subrect_width": 480,
+     "subrect_height": 320,
+     "file_basename": "bl_gui_styleeditor"
+    }
+   ]
+  },
+  "version": {
+   "datasource": [
+    "gamemodes",
+    "gameversion"
+   ],
+   "template": {
+    "LangEnglish": "Bruce Lee Dragon Warrior %s",
+    "LangChineseSimpl": "龙战士李小龙%s",
+    "LangChineseTrad": "龍戰士李小龍%s",
+    "LangFrench": "Bruce Lee Dragon Warrior %s",
+    "LangGerman": "Bruce Lee Dragon Warrior %s",
+    "LangItalian": "Bruce Lee Dragon Warrior %s",
+    "LangJapanese": "Bruce Lee Dragon Warrior %s",
+    "LangKorean": "Bruce Lee Dragon Warrior %s",
+    "LangRussian": "Брюс Ли Воин Дракона %s",
+    "LangSpanish": "Bruce Lee Dragón Warrior %s"
+   },
+   "value": "NOT RECOVERED",
+   "reason": "live gamemodes.gameversion variable; the .lang \"version\" key is the \"%s\" format template only"
+  },
+  "disclaimer": {
+   "datasource": [
+    "translate",
+    "disclaimer"
+   ],
+   "labels": {
+    "LangEnglish": "BRUCE LEE® is a registered trademark of Bruce Lee Enterprises, LLC.  The Bruce Lee name, image, likeness and all related indicia are intellectual property of Bruce Lee Enterprises, LLC. All Rights Reserved.  \nwww.brucelee.com",
+    "LangChineseSimpl": "BRUCE LEE® 是 Bruce Lee Enterprises, LLC 之注册商标。李小龙的姓名、形象、造型及所有相关标记均是 Bruce Lee Enterprises, LLC 的知识产权。保留所有权利。\nwww.brucelee.com\n",
+    "LangChineseTrad": "BRUCE LEE® 是 Bruce Lee Enterprises, LLC 之註冊商標。李小龍的姓名、形象、造型及所有相關標記均是 Bruce Lee Enterprises, LLC 的知識產權。保留所有權利。\nwww.brucelee.com\n",
+    "LangFrench": "BRUCE LEE® est une marque déposée de Bruce Lee Enterprises, LLC. Le nom, l'image, les ressemblances et autres objets liés à Bruce Lee, sont la propriété intellectuelle de Bruce Lee Enterprises, LLC. Tous droits réservés. \nwww.brucelee.com",
+    "LangGerman": "BRUCE LEE® ist ein eingetragenes Warenzeichen der Bruce Lee Enterprises, LLC. Der Name Bruce Lee, das Bild, Portrait und alle zugehörigen Zeichen sind geistiges Eigentum der Bruce Lee Enterprises, LLC. Alle Rechte vorbehalten. \nwww.brucelee.com",
+    "LangItalian": "BRUCE LEE® è un marchio registrato di Bruce Lee Enterprises, LLC. Il nome, l'immagine e le sembianze di Bruce Lee e i relativi riferimenti sono proprietà intellettuale di Bruce Lee Enterprises, LLC. Tutti i diritti riservati. \nwww.brucelee.com",
+    "LangJapanese": "BRUCE LEE® is a registered trademark of Bruce Lee Enterprises, LLC.  The Bruce Lee name, image, likeness and all related indicia are intellectual property of Bruce Lee Enterprises, LLC. All Rights Reserved.  \nwww.brucelee.com",
+    "LangKorean": "BRUCE LEE®는 Bruce Lee Enterprises, LLC의 등록 상표입니다.  브루스 리 이름, 이미지, 유사 화상 및 모든 관련 표시는 Bruce Lee Enterprises, LLC의 지적 재산입니다. All Rights Reserved.  \n\nwww.brucelee.com",
+    "LangRussian": "BRUCE LEE® - зарегистрированная торговая марка компании Bruce Lee Enterprises, LLC.  Имя «Брюс Ли», изображения, образ и связанные с ним признаки являются интеллектуальной собственностью компании Bruce Lee Enterprises, LLC. Все права сохраняются.  \nwww.brucelee.com",
+    "LangSpanish": "BRUCE LEE® es una marca registrada de Bruce Lee Enterprises, LLC. El nombre de Bruce Lee, su imagen, apariencia y todo indicio relacionado son propiedades intelectuales de Bruce Lee Enterprises, LLC. Todos los derechos reservados. www.brucelee.com"
+   }
+  }
+ },
+ "settings_video_controls": {
+  "source": "game.states settingsmain.actions + decoded settings*.ui",
+  "video": {
+   "state": "settingsvideo",
+   "ui_files": [
+    "gui/settings.ui",
+    "gui/settingsvideo.ui"
+   ],
+   "widgets": [
+    {
+     "type": "label",
+     "name": "visibtitle",
+     "x": 60,
+     "y": 150,
+     "width": 240,
+     "height": 30,
+     "datasources": {
+      "text": [
+       "translate",
+       "control_visibility"
+      ]
+     },
+     "textcolor": [
+      255,
+      255,
+      255
+     ],
+     "align": "center",
+     "uppercase": "true"
+    },
+    {
+     "type": "sliderbar",
+     "name": "visibility",
+     "x": 60,
+     "y": 180,
+     "width": 240,
+     "height": 30,
+     "datasources": {
+      "value": [
+       "option",
+       "input_gui_alpha"
+      ]
+     }
+    },
+    {
+     "type": "blbutton",
+     "name": "visibdec",
+     "x": 10,
+     "y": 164,
+     "width": 64,
+     "height": 64,
+     "action": "visibilitydec",
+     "file_basename": "bl_gui_slider_less"
+    },
+    {
+     "type": "blbutton",
+     "name": "visibinc",
+     "x": 286,
+     "y": 164,
+     "width": 64,
+     "height": 64,
+     "action": "visibilityinc",
+     "file_basename": "bl_gui_slider_more"
+    },
+    {
+     "type": "blpicture",
+     "name": "samplebkg",
+     "x": 340,
+     "y": 130,
+     "width": 128,
+     "height": 128,
+     "file_basename": "bl_gui_visivibility_control_color_box"
+    },
+    {
+     "type": "blpicture",
+     "name": "samplebutton",
+     "x": 372,
+     "y": 162,
+     "width": 64,
+     "height": 64,
+     "datasources": {
+      "alpha": [
+       "option",
+       "input_gui_alpha"
+      ]
+     },
+     "file_basename": "bl_hud_hp_button_stand"
+    },
+    {
+     "type": "label",
+     "name": "tilttitle",
+     "x": 120,
+     "y": 220,
+     "width": 240,
+     "height": 30,
+     "datasources": {
+      "text": [
+       "translate",
+       "camera_tilt"
+      ]
+     },
+     "textcolor": [
+      255,
+      255,
+      255
+     ],
+     "align": "center",
+     "uppercase": "true"
+    },
+    {
+     "type": "labelmenu",
+     "name": "cameratilt",
+     "x": 40,
+     "y": 250,
+     "width": 400,
+     "height": 40,
+     "options": [
+      [
+       "ct_low",
+       ""
+      ],
+      [
+       "ct_medium",
+       ""
+      ],
+      [
+       "ct_high",
+       ""
+      ]
+     ],
+     "datasources": {
+      "selectedoption": [
+       "option",
+       "camera_tilt"
+      ]
+     },
+     "textcolor": [
+      0,
+      0,
+      0
+     ],
+     "align": "center",
+     "uppercase": "true"
+    }
+   ],
+   "labels": {
+    "LangEnglish": "Camera Tilt",
+    "LangChineseSimpl": "视角倾斜",
+    "LangChineseTrad": "視角傾斜",
+    "LangFrench": "Inclinaison caméra",
+    "LangGerman": "Kamerawinkel",
+    "LangItalian": "Inclinazione visuale",
+    "LangJapanese": "カメラの傾き",
+    "LangKorean": "카메라 틸트",
+    "LangRussian": "Наклон камеры",
+    "LangSpanish": "Giro de cámara"
+   },
+   "values": "NOT RECOVERED",
+   "values_reason": "input_gui_alpha/camera_tilt are live gamemodes variables; applying them changes camera/visibility"
+  },
+  "controls": {
+   "state": "settingscontrols",
+   "ui_files": [
+    "gui/settings.ui",
+    "gui/settingscontrols.ui"
+   ],
+   "widgets": [
+    {
+     "type": "bldock",
+     "name": "controls_dock",
+     "x": -50,
+     "y": 150,
+     "width": 580,
+     "height": 114,
+     "datasources": {
+      "validselectedoption": [
+       "option",
+       "input_layout"
+      ]
+     }
+    }
+   ],
+   "labels": {
+    "LangEnglish": "Controls",
+    "LangChineseSimpl": "控制",
+    "LangChineseTrad": "控制",
+    "LangFrench": "Contrôles",
+    "LangGerman": "Steuerung",
+    "LangItalian": "Comandi",
+    "LangJapanese": "コントロール",
+    "LangKorean": "컨트롤",
+    "LangRussian": "Управление",
+    "LangSpanish": "Controles"
+   },
+   "values": "NOT RECOVERED",
+   "values_reason": "settingscontrols.ui offers two decoded pad pictures but no control mapping"
+  },
+  "reachability": "NOT RECOVERED",
+  "reachability_reason": "the shipped settings.ui/settingsaudio.ui have NO widget whose action is video or controls; the state actions exist but no decoded row/button emits them, so no user path is invented"
+ },
+ "training_video_controls": {
+  "source": "game.states ingamesettingsmain.actions",
+  "video": {
+   "state": "ingamesettingsvideo",
+   "ui_files": [
+    "gui/darkbg.ui",
+    "gui/settings.ui",
+    "gui/settingsvideo.ui"
+   ]
+  },
+  "controls": {
+   "state": "ingamesettingscontrols",
+   "ui_files": [
+    "gui/darkbg.ui",
+    "gui/settings.ui",
+    "gui/settingscontrols.ui"
+   ]
+  },
+  "reachability": "NOT RECOVERED",
+  "reachability_reason": "settings.ui has no row emitting video/controls; recorded NOT RECOVERED in training_settings.json"
+ },
+ "credits": {
+  "status": "RECORDED ONLY",
+  "text_recovered": "DLE 125 / IG 38 verbatim lines",
+  "blocker": "NOT RECOVERED",
+  "blocker_reason": "scroll timing is not present in the decoded layouts"
+ }
+}

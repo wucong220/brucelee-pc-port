@@ -9,7 +9,10 @@ extends SceneTree
 ##   * grab1, grab2, endattack1, endattack2, special_kick_low_hit,
 ##     special_punch_high_hit, special_punch_low_hit (local player attacker)
 ##   * grabbed1, grabbed2 and the endattackcomp1 victim finisher (local player
-##     victim, clips resolved from the opponent's recovered set)
+##     victim; the fixture expects the authored camera ANM of the opponent's
+##     recovered set, see VICTIM_CONFIG_FAMILY below)
+##   * the recovered per-opponent victim selection (VICTIM_OPPONENT_SUFFIX /
+##     ENDATTACK_OPPONENT_ACTION) actually resolves those clips
 ##   * dummy = player / mirror = false (the camera side follows the player slot)
 ##   * mirror = true placement (CameraAnmPlayer dummy/mirror math)
 ##   * analytic fall-back when a mapped JSON is missing, when the map itself is
@@ -38,16 +41,51 @@ const ATTACKER_CASES: Array = [
 	{"kind": "special_punch_low_hit", "clip": "m01_sp_pnch_low", "frames": 178,
 		"exact_end": true},
 ]
-# victim cases: kind is the grab attack that put the local player in the state
-const VICTIM_CASES: Array = [
-	{"kind": "grab1_brick", "state": "grabbed1", "clip": "all_grabbed_01_forset02",
-		"frames": 47},
-	{"kind": "grab2_brick", "state": "grabbed2", "clip": "all_grabbed_02_forset02",
-		"frames": 98},
-]
-const VICTIM_COMP: Dictionary = {
-	"grab_kind": "grab1_brick", "attacker_kind": "endattack1",
-	"state": "endattackcomp1", "clip": "all_end_attack_01_forset02", "frames": 132,
+# Player-victim camera fixture (recovered, no invented cameras).
+#
+# Current226 resolves a player-victim clip from the OPPONENT's recovered set:
+# fighter.gd VICTIM_OPPONENT_SUFFIX -> "grabcompl1/2 <suffix>" and
+# ENDATTACK_OPPONENT_ACTION -> "<prefix> 1".  Those rows in
+# res://data/native_links.json name the archived animation, and the authored
+# camera ANM shipped under res://data/camera_anm/ belongs to that animation:
+# karate/Ken/Chief -> forset02 (47/98/132), thai/Brick/SmallBoy/Johnson ->
+# forset03 (90/78/93).  The old fixture hardcoded forset02 for every config;
+# with a thai opponent `_sample()` then broke on its first frame and reported
+# its own defaults (clip="", samples=0, anchor="none", mirror=true) even though
+# the live camera was anchored to the player and playing the forset03 ANM.
+# Expect the ANM of the set the fixture actually instantiates.
+const VICTIM_SET_FAMILIES: Dictionary = {
+	"karate": {
+		"grabbed1": {"kind": "grab1_brick", "clip": "all_grabbed_01_forset02",
+			"frames": 47, "set_action": "grabcompl1 ken"},
+		"grabbed2": {"kind": "grab2_brick", "clip": "all_grabbed_02_forset02",
+			"frames": 98, "set_action": "grabcompl2 ken"},
+		"endattackcomp1": {"clip": "all_end_attack_01_forset02",
+			"frames": 132, "set_action": "endattackcompkarate 1"},
+	},
+	"thai": {
+		"grabbed1": {"kind": "grab1_brick", "clip": "all_grabbed_01_forset03",
+			"frames": 90, "set_action": "grabcompl1 brick"},
+		"grabbed2": {"kind": "grab2_brick", "clip": "all_grabbed_02_forset03",
+			"frames": 78, "set_action": "grabcompl2 brick"},
+		"endattackcomp1": {"clip": "all_end_attack_01_forset03",
+			"frames": 93, "set_action": "endattackcompthai 1"},
+	},
+}
+# Config -> recovered set family, victim suffix and finisher prefix.  Only
+# karate/thai carry an authored endattackcomp camera; kungfu has none in the
+# recovered sets, so it is deliberately not a fixture here (fail closed).
+const VICTIM_CONFIG_FAMILY: Dictionary = {
+	"res://data/attack_config_ken.json": {
+		"family": "karate", "suffix": "ken", "prefix": "endattackcompkarate"},
+	"res://data/attack_config_chief.json": {
+		"family": "karate", "suffix": "ken", "prefix": "endattackcompkarate"},
+	"res://data/fighting_set_m03_mapped_attacks.json": {
+		"family": "thai", "suffix": "brick", "prefix": "endattackcompthai"},
+	"res://data/attack_config_smallboy.json": {
+		"family": "thai", "suffix": "brick", "prefix": "endattackcompthai"},
+	"res://data/attack_config_johnson.json": {
+		"family": "thai", "suffix": "brick", "prefix": "endattackcompthai"},
 }
 
 var _failures: Array[String] = []
@@ -310,6 +348,68 @@ func _recovered_return_frame(player: PortFighter) -> int:
 	return best
 
 
+func _victim_specs(config: String) -> Array[Dictionary]:
+	## Expected victim camera cases for this opponent config, from the recovered
+	## set rows.  Empty = no recovered authored victim camera set for this config.
+	var out: Array[Dictionary] = []
+	if not VICTIM_CONFIG_FAMILY.has(config):
+		return out
+	var fix: Dictionary = VICTIM_CONFIG_FAMILY[config]
+	var family: Dictionary = VICTIM_SET_FAMILIES[String(fix["family"])]
+	for state: String in ["grabbed1", "grabbed2", "endattackcomp1"]:
+		var spec: Dictionary = Dictionary(family[state]).duplicate(true)
+		spec["state"] = state
+		spec["exact_end"] = false
+		out.append(spec)
+	return out
+
+
+func _check_victim_fixture(config: String) -> bool:
+	## Tie the fixture's expected clips to shipped authored-camera evidence and
+	## to the recovered native selection.  No expected camera is accepted unless
+	## the shipped map, its set-action proof and the decoded ANM all agree.
+	_check("victim fixture has recovered camera evidence for the opponent config",
+		VICTIM_CONFIG_FAMILY.has(config), config)
+	if not VICTIM_CONFIG_FAMILY.has(config):
+		return false
+	var fix: Dictionary = VICTIM_CONFIG_FAMILY[config]
+	_check("victim suffix matches the recovered opponent token",
+		String(PortFighter.VICTIM_OPPONENT_SUFFIX.get(config, ""))
+			== String(fix["suffix"]),
+		"%s / %s" % [config, fix["suffix"]])
+	_check("endattack prefix matches the recovered opponent action",
+		String(PortFighter.ENDATTACK_OPPONENT_ACTION.get(config, ""))
+			== String(fix["prefix"]),
+		"%s / %s" % [config, fix["prefix"]])
+	var map_file: FileAccess = FileAccess.open(
+		CAMERA_DIR + "action_camera_map.json", FileAccess.READ)
+	var clips: Dictionary = {}
+	if map_file != null:
+		var parsed: Variant = JSON.parse_string(map_file.get_as_text())
+		if typeof(parsed) == TYPE_DICTIONARY:
+			clips = Dictionary(parsed).get("camera_clips", {})
+	for spec: Dictionary in _victim_specs(config):
+		var clip: String = String(spec["clip"])
+		var row: Dictionary = Dictionary(clips.get(clip, {}))
+		_check("victim fixture " + clip + " is an authored camera in the shipped map",
+			not row.is_empty() and String(row.get("camera", "")) == clip,
+			str(row))
+		_check("victim fixture " + clip + " map row proves the recovered set action",
+			Array(row.get("set_actions", [])).has(String(spec["set_action"])),
+			"%s / %s" % [spec["set_action"], row.get("set_actions", [])])
+		_check("victim fixture " + clip + " map frame count matches the recovered clip",
+			int(row.get("frames", -1)) == int(spec["frames"])
+				and FileAccess.file_exists(CAMERA_DIR + clip + ".json"),
+			str(row.get("frames", -1)))
+		var ref = _reference(clip)
+		var frames: int = -1
+		if ref != null:
+			frames = ref.frame_count()
+		_check("victim fixture " + clip + " decoded ANM frame count",
+			frames == int(spec["frames"]), str(frames))
+	return true
+
+
 func _run_attacker(scene: Node, spec: Dictionary) -> Dictionary:
 	_reset(scene)
 	var player: PortFighter = scene.get("player")
@@ -338,26 +438,35 @@ func _run_victim(scene: Node, spec: Dictionary) -> Dictionary:
 	var began: bool = player.begin_grabbed(String(spec["kind"]))
 	var clip: String = String(spec["clip"])
 	var frames: int = int(spec["frames"])
+	var selected: String = player.current_victim_animation()
+	_check("victim " + String(spec["state"]) + " native selection resolves " + clip,
+		selected == clip, selected)
 	scene._update_fight_camera(1.0 / 60.0)
 	var bundle: Dictionary = _sample(scene, clip, frames)
 	bundle["started"] = began
 	bundle["state"] = player.state
+	bundle["selected_clip"] = selected
 	bundle["expected_last"] = frames - 1
 	bundle["after"] = _settle_to_analytic(scene)
 	return bundle
 
 
-func _run_victim_comp(scene: Node) -> Dictionary:
+func _run_victim_comp(scene: Node, spec: Dictionary) -> Dictionary:
 	_reset(scene)
 	var player: PortFighter = scene.get("player")
-	var grabbed: bool = player.begin_grabbed(String(VICTIM_COMP["grab_kind"]))
-	var began: bool = player.begin_endattack_victim(String(VICTIM_COMP["attacker_kind"]))
-	var clip: String = String(VICTIM_COMP["clip"])
+	var grabbed: bool = player.begin_grabbed("grab1_brick")
+	var began: bool = player.begin_endattack_victim("endattack1")
+	var clip: String = String(spec["clip"])
+	var frames: int = int(spec["frames"])
+	var selected: String = player.current_victim_animation()
+	_check("victim endattackcomp1 native selection resolves " + clip,
+		selected == clip, selected)
 	scene._update_fight_camera(1.0 / 60.0)
-	var bundle: Dictionary = _sample(scene, clip, int(VICTIM_COMP["frames"]))
+	var bundle: Dictionary = _sample(scene, clip, frames)
 	bundle["started"] = grabbed and began
 	bundle["state"] = player.state
-	bundle["expected_last"] = int(VICTIM_COMP["frames"]) - 1
+	bundle["selected_clip"] = selected
+	bundle["expected_last"] = frames - 1
 	bundle["after"] = _settle_to_analytic(scene)
 	return bundle
 
@@ -703,16 +812,31 @@ func _run() -> void:
 			and float(after["err"]) < 0.002,
 			"clip=%s fov=%s err=%s" % [after["clip"], after["fov"], after["err"]])
 		_results["attacker_" + label] = bundle
-	for spec: Dictionary in VICTIM_CASES:
-		var bundle: Dictionary = _run_victim(scene, spec)
-		var label: String = String(spec["state"])
-		_check("victim " + label + " starts", bool(bundle.get("started", false)))
-		_check_sampled("victim " + label, spec, bundle)
-		_results["victim_" + label] = bundle
-	var comp_bundle: Dictionary = _run_victim_comp(scene)
-	_check("victim endattackcomp1 starts", bool(comp_bundle.get("started", false)))
-	_check_sampled("victim endattackcomp1", VICTIM_COMP, comp_bundle)
-	_results["victim_endattackcomp1"] = comp_bundle
+	var victim_config: String = String(
+		(scene.get("computer") as PortFighter).attack_config_path)
+	var victim_cases: Array[Dictionary] = _victim_specs(victim_config)
+	var fix_row: Dictionary = VICTIM_CONFIG_FAMILY.get(victim_config, {})
+	_results["victim_fixture"] = {
+		"config": victim_config, "family": String(fix_row.get("family", ""))}
+	_check_victim_fixture(victim_config)
+	if victim_cases.is_empty():
+		# No silent skip: a config without a recovered authored victim camera
+		# set is an unsupported fixture, not a pass.
+		_check("victim fixtures were run", false,
+			"no recovered authored victim camera set for " + victim_config)
+	else:
+		var comp_spec: Dictionary = victim_cases[2]
+		var grab_specs: Array[Dictionary] = [victim_cases[0], victim_cases[1]]
+		for spec: Dictionary in grab_specs:
+			var bundle: Dictionary = _run_victim(scene, spec)
+			var label: String = String(spec["state"])
+			_check("victim " + label + " starts", bool(bundle.get("started", false)))
+			_check_sampled("victim " + label, spec, bundle)
+			_results["victim_" + label] = bundle
+		var comp_bundle: Dictionary = _run_victim_comp(scene, comp_spec)
+		_check("victim endattackcomp1 starts", bool(comp_bundle.get("started", false)))
+		_check_sampled("victim endattackcomp1", comp_spec, comp_bundle)
+		_results["victim_endattackcomp1"] = comp_bundle
 
 	# The two long end-attack clips contain real one-frame camera cuts: prove
 	# the playback is per frame (a large one-frame step) and not interpolated.

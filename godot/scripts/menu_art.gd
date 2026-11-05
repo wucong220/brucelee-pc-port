@@ -46,6 +46,9 @@ const UI_DIR := "res://data/menu_art/ui/"
 const ART_ROOT := "res://ui/menu_art/"
 const ART_DIRS := ["menu", "menu_zdk", "mini", "background", "versus", "other"]
 const Controls = preload("res://scripts/prototype_controls.gd")
+## Recovered Profile destination pages / About version+disclaimer / settings
+## VIDEO-CONTROLS records.  Fail-closed if the artifact is missing.
+const RecoveredPages = preload("res://scripts/recovered_pages.gd")
 ## Recovered eight-item language dock (settingslanguage.ui + CApplication::Init
 ## AddLanguageTable index order).  Fail-closed if its artifact is missing.
 const LanguageDock = preload("res://scripts/language_dock.gd")
@@ -97,8 +100,8 @@ const SCREENS := {
 	},
 	"about": {
 		"layout": "about",
-		"background": "bl_gui_backgrond_mainmenu",
-		"background_basis": "CANDIDATE: about.ui has no background picture; opened from the main menu keeps the main-menu background",
+		"background": "bl_gui_styleeditor",
+		"background_basis": "RECOVERED: game.states about.ui = [styleeditorbg.ui, about.ui]; styleeditorbg.ui references gui/images/background/BL_GUI_styleeditor.tex",
 		"required": ["version", "disclaimer", "back"],
 	},
 	"credits_dle": {
@@ -144,10 +147,10 @@ const PLAY_ROWS := [
 ## of the decoded set; they stay visible and fail closed with the explicit status
 ## instead of opening a guessed screen.
 const PROFILE_ROWS := [
-	{"key": "achievements", "action": "unavailable"},
-	{"key": "statistics", "action": "unavailable"},
-	{"key": "art", "action": "unavailable"},
-	{"key": "fighters", "action": "unavailable"},
+	{"key": "achievements", "action": "profile_page"},
+	{"key": "statistics", "action": "profile_page"},
+	{"key": "art", "action": "profile_page"},
+	{"key": "fighters", "action": "profile_page"},
 ]
 
 ## Recovered settings.ui rows. The audio/languages sub-layouts are decoded but
@@ -199,6 +202,9 @@ var art_ready: bool = false
 var language_index: int = 0
 var language_applied: String = ""
 var language_status: String = ""
+## Recovered Profile destination currently drawn ("profile_page:<key>").
+var profile_key: String = ""
+var profile_record: Dictionary = {}
 
 var _art_root: Control
 var _ui_space: Control
@@ -393,6 +399,18 @@ func _confirm_art(was_attack: bool) -> void:
 				language_status = ""
 				menu_state = "art_page"
 				_show_art_screen("language_dock")
+		"profile_page":
+			# Recovered playerprofile.actions destination.  The destination state
+			# and the decoded destination widgets are drawn where they decode;
+			# page BODIES that do not decode stay explicitly NOT RECOVERED.
+			if not RecoveredPages.available():
+				status_text = STATUS_NOT_RECOVERED
+				_refresh_status()
+			else:
+				status_text = ""
+				profile_key = String(row.get("key", ""))
+				menu_state = "art_page"
+				_show_art_screen("profile_page:" + profile_key)
 		"unavailable":
 			status_text = STATUS_NOT_RECOVERED
 			_refresh_status()
@@ -404,6 +422,11 @@ func _back_art() -> void:
 		selection = 1  # settings.ui Languages row
 		menu_state = "art_page"
 		_show_art_screen("settings")
+		return
+	if screen_id.begins_with("profile_page:"):
+		selection = _profile_row_index_for(String(screen_id.substr("profile_page:".length())))
+		menu_state = "art_page"
+		_show_art_screen("player_profile")
 		return
 	match screen_id:
 		"playmenu":
@@ -464,6 +487,14 @@ func _main_row_index_for(screen: String) -> int:
 	for index: int in range(MAIN_ROWS.size()):
 		var row: Dictionary = MAIN_ROWS[index]
 		if String(row.get("screen", "")) == screen:
+			return index
+	return 0
+
+
+## Index of the Player Profile row for a destination key, or 0.
+func _profile_row_index_for(key: String) -> int:
+	for index: int in range(PROFILE_ROWS.size()):
+		if String(Dictionary(PROFILE_ROWS[index]).get("key", "")) == key:
 			return index
 	return 0
 
@@ -738,6 +769,13 @@ func _show_art_screen(screen: String) -> void:
 		_build_language_dock_screen()
 		_refresh_status()
 		return
+	if screen.begins_with("profile_page:"):
+		profile_key = screen.substr("profile_page:".length())
+		screen_id = screen
+		_clear_stage()
+		_build_profile_page(profile_key)
+		_refresh_status()
+		return
 	if not SCREENS.has(screen):
 		_fail("unknown screen " + screen)
 		return
@@ -762,6 +800,88 @@ func _show_art_screen(screen: String) -> void:
 	if screen == "credits":
 		_add_credits_selection()
 	_refresh_status()
+
+
+## --------------------------------------------------- recovered Profile pages
+## Draws the recovered destination for one playerprofile.ui row.  The destination
+## STATE and the decoded destination widgets are real; page BODIES that do not
+## decode stay explicitly NOT RECOVERED (never a guessed screen).
+func _build_profile_page(key: String) -> void:
+	profile_record = RecoveredPages.profile_page(key)
+	var backdrop: Texture2D = _background_texture("mainmenu")
+	if backdrop != null:
+		var picture: TextureRect = _make_texture_rect(
+			backdrop, Rect2(0, 0, DESIGN_W, DESIGN_H), false)
+		picture.name = "ProfileBackdrop"
+		_stage.add_child(picture)
+	if profile_record.is_empty():
+		_add_page_line("PROFILE PAGE " + STATUS_NOT_RECOVERED, 40)
+		_add_page_line("UI gaps artifact failed closed: " + RecoveredPages.error(), 60)
+		return
+	var label: String = RecoveredPages.localized(profile_record.get("labels", {}), Lang.language())
+	var dest: Dictionary = profile_record.get("destination", {})
+	_add_page_line(label.to_upper(), 8, 16)
+	_add_page_line("STATE: " + String(dest.get("state", "")), 32)
+	for ui_file: Variant in Array(dest.get("ui_files", [])):
+		_add_page_line("LAYOUT: " + String(ui_file), 48)
+	match key:
+		"statistics":
+			# statsmenu.ui blmenu: three REAL decoded subrows (stats1/2/3).
+			var y: float = 84.0
+			for sub: Variant in Array(profile_record.get("subrows", [])):
+				var s: Dictionary = sub as Dictionary
+				var text: String = RecoveredPages.localized(
+					{"LangEnglish": String(s.get("label_key", ""))}, "LangEnglish")
+				_add_page_line("- " + text + " -> "
+					+ String(Dictionary(s.get("destination", {})).get("state", ""))
+					+ "  [" + STATUS_NOT_RECOVERED + "]", y, 11)
+				y += 20.0
+			_add_page_line("STATS PAGE CONTENT " + STATUS_NOT_RECOVERED
+				+ " (stats1/2/3.ui reserved-word variant)", 210, 10)
+		"art":
+			var album: Dictionary = _widget_rect(profile_record, "artpicture", "album")
+			_add_frame(album)
+			_add_page_line("ART ALBUM " + STATUS_NOT_RECOVERED, 150, 12)
+		"fighters":
+			var grid: Dictionary = _widget_rect(profile_record, "fightergalleryselect", "grid")
+			_add_frame(grid)
+			_add_page_line("FIGHTER GRID " + STATUS_NOT_RECOVERED, 150, 12)
+		"achievements":
+			_add_page_line("ACHIEVEMENTS PAGE " + STATUS_NOT_RECOVERED, 120, 12)
+			_add_page_line(String(profile_record.get("content_reason", "")), 150, 9)
+	_add_page_line("ESC/BACK: RETURN", 286, 10)
+
+
+func _widget_rect(record: Dictionary, group: String, widget_name: String) -> Dictionary:
+	var group_data: Dictionary = record.get(group, {})
+	for widget: Variant in Array(group_data.get("widgets", [])):
+		var w: Dictionary = widget as Dictionary
+		if String(w.get("name", "")) == widget_name:
+			return w
+	return {}
+
+
+func _add_frame(widget: Dictionary) -> void:
+	if widget.is_empty():
+		return
+	var rect: Rect2 = Rect2(float(widget.get("x", 0)), float(widget.get("y", 0)),
+		float(widget.get("width", 0)), float(widget.get("height", 0)))
+	var outline: Control = RectOutline.new()
+	outline.name = "RecoveredFrame"
+	outline.position = rect.position
+	outline.size = rect.size
+	outline.line_color = Color(1.0, 1.0, 0.0, 1.0)
+	outline.line_width = 2.0
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(outline)
+
+
+func _add_page_line(text: String, y: float, size: int = 11) -> void:
+	var label: Label = _make_label(text, Rect2(12, y, DESIGN_W - 24, 18),
+		size, Color(1.0, 0.92, 0.62, 1.0), false)
+	label.name = "ProfileLine"
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_stage.add_child(label)
 
 
 ## ------------------------------------------------------- language dock screen
@@ -926,6 +1046,11 @@ func _build_art_widget(screen: String, node: Dictionary) -> void:
 			var label: Label = _make_label(text, rect, font_size, color,
 				String(node.get("align", "")) == "center")
 			label.name = "Label_" + widget_name
+			if screen == "about" and widget_name == "disclaimer":
+				# The recovered disclaimer is a multi-line paragraph; smaller font
+				# and autowrap are rendering only, not invented content.
+				label.add_theme_font_size_override("font_size", 10)
+				label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			_stage.add_child(label)
 			_built_rects[widget_name] = rect
 		"blmenu":
@@ -957,11 +1082,18 @@ func _file_reference(reference: Dictionary) -> Dictionary:
 
 func _label_text_for(screen: String, node: Dictionary) -> String:
 	var widget_name: String = String(node.get("name", ""))
-	# about.ui's version comes from a live `gameversion` variable and its
-	# disclaimer text is a localization value the MenuLang overlay does not
-	# cover. Neither string is in the decoded data, so both areas say so.
-	if screen == "about" and (widget_name == "version" or widget_name == "disclaimer"):
-		return STATUS_NOT_RECOVERED
+	# about.ui disclaimer IS recovered verbatim from the ten Lang*.lang tables;
+	# the version NUMBER is a live gamemodes.gameversion variable and is not in
+	# the local evidence, so the recovered "%s" template is filled with the
+	# explicit marker.  A closed artifact keeps the old whole-area marker.
+	if screen == "about" and widget_name == "version":
+		if not RecoveredPages.available():
+			return STATUS_NOT_RECOVERED
+		return RecoveredPages.about_version_text(Lang.language())
+	if screen == "about" and widget_name == "disclaimer":
+		if not RecoveredPages.available():
+			return STATUS_NOT_RECOVERED
+		return RecoveredPages.about_disclaimer(Lang.language())
 	var sources: Dictionary = node.get("datasources", {})
 	var text_source: Variant = sources.get("text")
 	if typeof(text_source) == TYPE_ARRAY and (text_source as Array).size() == 2:
@@ -1034,6 +1166,51 @@ func label_texts() -> Array:
 		if child is Label:
 			out.append((child as Label).text)
 	return out
+
+
+## ------------------------------------------------ recovered pages test hooks
+func recovered_pages_available() -> bool:
+	return RecoveredPages.available()
+
+
+func recovered_pages_error() -> String:
+	return RecoveredPages.error()
+
+
+func profile_page_info() -> Dictionary:
+	return profile_record.duplicate(true)
+
+
+func profile_page_key() -> String:
+	return profile_key
+
+
+func about_version_display() -> String:
+	return RecoveredPages.about_version_text(Lang.language())
+
+
+func about_disclaimer_display() -> String:
+	return RecoveredPages.about_disclaimer(Lang.language())
+
+
+func settings_video_controls() -> Dictionary:
+	return RecoveredPages.settings_video_controls()
+
+
+func training_video_controls() -> Dictionary:
+	return RecoveredPages.training_video_controls()
+
+
+## Explicit validator hook: open a recovered Profile destination without a guessed
+## input.  The user reaches it through the real playerprofile.ui rows.
+func show_profile_page(key: String) -> void:
+	if not RecoveredPages.available():
+		status_text = STATUS_NOT_RECOVERED
+		_refresh_status()
+		return
+	profile_key = key
+	menu_state = "art_page"
+	_show_art_screen("profile_page:" + key)
 
 
 ## --------------------------------------------------- language dock test hooks
