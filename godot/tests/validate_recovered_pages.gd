@@ -139,8 +139,8 @@ func _check_artifact() -> void:
 	_check(rows.size() == 4, "four recovered profile rows")
 	_check(RecoveredPages.about_background_basename() == "bl_gui_styleeditor",
 		"about background is the recovered styleeditorbg (BL_GUI_styleeditor)")
-	_check(String(RecoveredPages.about_version_text("LangEnglish")).contains(NR),
-		"about version number stays NOT RECOVERED")
+	_check(RecoveredPages.about_version_text("LangEnglish") == "Bruce Lee Dragon Warrior 1.15.26",
+		"about version number is the recovered 1.15.26")
 	_check(RecoveredPages.about_disclaimer("LangEnglish").begins_with("BRUCE LEE"),
 		"about disclaimer is the verbatim recovered .lang text")
 	var svc: Dictionary = RecoveredPages.settings_video_controls()
@@ -200,10 +200,10 @@ func _check_about() -> void:
 		"About draws the verbatim recovered disclaimer")
 	_check(_any_contains(texts, "www.brucelee.com"),
 		"About disclaimer includes the recovered URL")
-	_check(_any_contains(texts, NR),
-		"About labels the unrecovered version number")
-	_check(String(menu.call("about_version_display")).contains(NR),
-		"About version hook returns the explicit marker, never a number")
+	_check(not _any_contains(texts, NR),
+		"About no longer labels the version as NOT RECOVERED")
+	_check(String(menu.call("about_version_display")).contains("1.15.26"),
+		"About version hook returns the recovered 1.15.26")
 	_check(String(menu.call("about_disclaimer_display")).begins_with("BRUCE LEE"),
 		"About disclaimer hook returns the verbatim recovered text")
 	_check(not _any_contains(texts, "NOT RECOVERED IN THIS BUILD"),

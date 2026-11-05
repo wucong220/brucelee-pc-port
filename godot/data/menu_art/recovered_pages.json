@@ -425,8 +425,9 @@
     "LangRussian": "Брюс Ли Воин Дракона %s",
     "LangSpanish": "Bruce Lee Dragón Warrior %s"
    },
-   "value": "NOT RECOVERED",
-   "reason": "live gamemodes.gameversion variable; the .lang \"version\" key is the \"%s\" format template only"
+   "value": "RECOVERED",
+   "code_version": "1.15.26",
+   "reason": "RECOVERED from binary: BruceLee_GetCodeVersionString() = SPrintf(\"%d.%d.%d\",1,15,26) at ELF 0x00156750; BruceLee_GetCodeVersionNumber() = 0x2d06 = 11526; CBeatEmUpGameModes::CreateQuery maps \"gameVersion\" to query id 0x48 and QueryString case 0x48 substitutes it into the .lang version template"
   },
   "disclaimer": {
    "datasource": [
@@ -669,9 +670,21 @@
   "reachability_reason": "settings.ui has no row emitting video/controls; recorded NOT RECOVERED in training_settings.json"
  },
  "credits": {
-  "status": "RECORDED ONLY",
-  "text_recovered": "DLE 125 / IG 38 verbatim lines",
-  "blocker": "NOT RECOVERED",
-  "blocker_reason": "scroll timing is not present in the decoded layouts"
+  "status": "TIMING RECOVERED",
+  "text_recovered": "DLE 96/125 and IG 26/38 populated keys verbatim in the ten Lang*.lang tables",
+  "scroll": {
+   "tick_source": "CGuiSystem::Update -> CLayout::OnTick -> (*vptr+0x14) = CCreditsView::OnTick",
+   "tick_ms": 33,
+   "gate_ms": 32,
+   "max_backlog_ms": 198,
+   "per_tick_delta": "+1, plus +1 on alternating ticks (zero-initialised flip byte 0x80f69c) -> +2,+1,+2,+1",
+   "tline_stride_bytes": 72,
+   "line_top_field": "+0x40 cumulative line top",
+   "line_height_field": "+0x44 line height from font metrics",
+   "view_height_px": 320,
+   "initial_offset_px": -320,
+   "end_condition": "offset >= max(TLine.y+TLine.h) over every line; Redraw then RaiseAction(\"END\")",
+   "end_action": "END"
+  }
  }
 }

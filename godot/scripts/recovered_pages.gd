@@ -73,8 +73,11 @@ static func load_data() -> bool:
 			_error = "profile row has no recovered destination"
 			return false
 	var about: Dictionary = data.get("about", {})
-	if String(Dictionary(about.get("version", {})).get("value", "")) != NOT_RECOVERED:
-		_error = "about version is not marked NOT RECOVERED"
+	var version_record: Dictionary = Dictionary(about.get("version", {}))
+	var version_value: String = String(version_record.get("value", ""))
+	var code_version: String = String(version_record.get("code_version", ""))
+	if version_value != NOT_RECOVERED and code_version.is_empty():
+		_error = "about version is neither NOT RECOVERED nor backed by a recovered code version"
 		return false
 	if String(Dictionary(Dictionary(about.get("disclaimer", {})).get("labels", {})).get(
 			FALLBACK_LANGUAGE, "")).is_empty():
@@ -127,12 +130,11 @@ static func about_version_text(language: String) -> String:
 	if not available():
 		return NOT_RECOVERED
 	var version: Dictionary = Dictionary(_data.get("about", {})).get("version", {})
-	if String(version.get("value", "")) != NOT_RECOVERED:
-		return NOT_RECOVERED
 	var template: String = localized(version.get("template", {}), language)
-	if template.is_empty():
+	var code_version: String = String(version.get("code_version", ""))
+	if template.is_empty() or code_version.is_empty():
 		return NOT_RECOVERED
-	return template.replace("%s", "[NOT RECOVERED]")
+	return template.replace("%s", code_version)
 
 
 static func about_disclaimer(language: String) -> String:
@@ -159,3 +161,9 @@ static func credits() -> Dictionary:
 	if not available():
 		return {}
 	return Dictionary(_data.get("credits", {})).duplicate(true)
+
+
+static func credits_scroll() -> Dictionary:
+	if not available():
+		return {}
+	return Dictionary(Dictionary(_data.get("credits", {})).get("scroll", {})).duplicate(true)

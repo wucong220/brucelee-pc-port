@@ -199,9 +199,10 @@ func _check_credits(evidence_path: String) -> void:
 	_check(typeof(parsed) == TYPE_DICTIONARY, "credits evidence parses")
 	if typeof(parsed) == TYPE_DICTIONARY:
 		var ev: Dictionary = parsed as Dictionary
-		_check(String(Dictionary(ev.get("not_recovered", {})).get(
-			"absolute_timing", "")) == NR,
-			"credits absolute timing is recorded NOT RECOVERED")
+		_check(String(ev.get("status", "")) == "RECOVERED",
+			"credits scroll timing is recorded RECOVERED")
+		_check(int(Dictionary(ev.get("tick_source", {})).get("tick_ms", 0)) == 33,
+			"credits tick is the recovered 33 ms")
 		_check(String(Dictionary(ev.get("recovered_primitive", {})).get(
 			"per_tick_delta", "")).contains("+2,+1"),
 			"credits per-tick delta primitive is recorded")

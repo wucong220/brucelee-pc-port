@@ -300,10 +300,10 @@ func _check_pages() -> void:
 	texts = menu.call("label_texts")
 	_check(_any_contains(texts, "BRUCE LEE") and _any_contains(texts, "www.brucelee.com"),
 		"about disclaimer is the verbatim recovered .lang value")
-	_check(_any_contains(texts, "NOT RECOVERED"),
-		"about version NUMBER stays explicitly NOT RECOVERED")
-	_check(String(menu.call("about_version_display")).contains("NOT RECOVERED"),
-		"about version hook returns the marker, never an invented number")
+	_check(_any_contains(texts, "1.15.26"),
+		"about version NUMBER is the recovered 1.15.26")
+	_check(String(menu.call("about_version_display")).contains("1.15.26"),
+		"about version hook returns the recovered 1.15.26")
 	await _back()
 	_check(String(menu.get("screen_id")) == "mainmenu" and int(menu.get("selection")) == 4,
 		"BACK from About returns to the mainmenu row")
