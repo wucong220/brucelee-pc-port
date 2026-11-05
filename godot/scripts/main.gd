@@ -94,6 +94,19 @@ const HUD_ART_OPPONENT_NAMES: Dictionary = {
     "chief": "CHIEF",
     "loming": "LO MING",
 }
+## Named opponent skins that are a DIFFERENT decoded dock card / characters.list
+## row from the command default.  Decoded evidence: selectopponent.ui cards 9
+## and 14 are bl_thechief02_icon / bl_loming02_icon; characters.list has
+## chief b (id 9) and lo ming b (id 14).  The dock highlight, the VS portrait
+## and the lock check must all name that same row as the loaded model.
+const HUD_ART_OPPONENT_DOCK_SKINS: Dictionary = {
+    "chief": {"chief02_body": 9},
+    "loming": {"loming02_body": 14},
+}
+const HUD_ART_OPPONENT_NAMES_SKINS: Dictionary = {
+    "chief": {"chief02_body": "THE CHIEF 2"},
+    "loming": {"loming02_body": "LO MING 2"},
+}
 ## Opponent-selection entries emitted by the prototype menu. Each value is the
 ## BRUCELEE_OPPONENT_* configuration applied before main.tscn is reloaded:
 ##   glb              candidate GLB path ("" means the built-in placeholder)
@@ -2571,6 +2584,29 @@ func _setup_hud_art_menu() -> void:
     hud_art_menu_layer.add_child(hud_art_menu_overlay)
 
 
+func _active_opponent_skin() -> String:
+    return OS.get_environment("BRUCELEE_OPPONENT_SKIN").strip_edges()
+
+
+func _opponent_dock_index(command: String) -> int:
+    ## Command -> selectopponent.ui card index, variant-aware.  The default map
+    ## is the decoded name lookup; a named variant that is a different row moves
+    ## the highlight to that row's own decoded card.
+    var skin: String = _active_opponent_skin()
+    var variants: Variant = HUD_ART_OPPONENT_DOCK_SKINS.get(command)
+    if variants is Dictionary and Dictionary(variants).has(skin):
+        return int(Dictionary(variants)[skin])
+    return int(HUD_ART_OPPONENT_DOCK.get(command, 0))
+
+
+func _opponent_dock_name(command: String) -> String:
+    var skin: String = _active_opponent_skin()
+    var variants: Variant = HUD_ART_OPPONENT_NAMES_SKINS.get(command)
+    if variants is Dictionary and Dictionary(variants).has(skin):
+        return String(Dictionary(variants)[skin])
+    return String(HUD_ART_OPPONENT_NAMES.get(command, ""))
+
+
 func _on_menu_selection_changed(state: String, _index: int, command: String) -> void:
     ## Drives the decoded selectfighter.ui dock from the menu's real OPPONENTS
     ## submenu. While the dock owns the screen the text panel is hidden (the
@@ -2596,8 +2632,8 @@ func _on_menu_selection_changed(state: String, _index: int, command: String) -> 
         # BACK is not a fighter, so keep the last fighter highlight rather than
         # inventing a dock index for it.
         return
-    var dock_index: int = int(HUD_ART_OPPONENT_DOCK.get(command, 0))
-    var display_name: String = String(HUD_ART_OPPONENT_NAMES.get(command, ""))
+    var dock_index: int = _opponent_dock_index(command)
+    var display_name: String = _opponent_dock_name(command)
     var drawn: bool = bool(hud_art_menu_overlay.show_select_fighter(
         dock_index, gate, display_name))
     if not drawn:
@@ -2945,9 +2981,9 @@ func _request_opponent_switch(command: String) -> void:
         # actual selected opponent. The menu paused the tree, so the fight runs
         # frozen underneath while the screen is held; it is hidden again before
         # the reload enters the fight.
-        var display_name: String = String(
-            HUD_ART_OPPONENT_NAMES.get(command, "BRICK DAVIS")
-        )
+        var display_name: String = _opponent_dock_name(command)
+        if display_name.is_empty():
+            display_name = "BRICK DAVIS"
         hud_art_menu_overlay.show_vs_preview(HUD_ART_PLAYER_KEY, display_name)
         hud_art_menu_overlay.visible = true
         if prototype_menu != null:

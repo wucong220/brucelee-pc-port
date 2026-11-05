@@ -245,7 +245,10 @@ func fighter_command_locked(command: String) -> bool:
         return false
     if Array(fighter_gate.rows).is_empty():
         return true
-    return fighter_gate.is_locked_command(command)
+    # The lock check follows the named skin variant that will actually load, so
+    # chief02_body is checked against chief b (id 9) rather than chief a (id 8).
+    return fighter_gate.is_locked_command_skin(
+            command, OS.get_environment("BRUCELEE_OPPONENT_SKIN").strip_edges())
 
 ## The text OPPONENTS labels with the port-chrome (LOCKED) suffix on closed rows.
 ## The recovered screen has no text variant of the locked state (the dock draws the

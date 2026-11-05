@@ -88,6 +88,20 @@ const OPPONENT_CHARACTERS: Dictionary = {
 	"loming": "lo ming a",
 }
 
+## Named opponent skins that are a DIFFERENT characters.list row from the
+## command's default.  Decoded evidence, not a guess:
+##   * characters.list has chief a(id 8) / chief b(id 9) and
+##     lo ming a(id 13) / lo ming b(id 14);
+##   * selectopponent.ui cards 9 and 14 are bl_thechief02_icon /
+##     bl_loming02_icon (chief b / lo ming b);
+##   * CBeatEmUpGameModes::QueryString cases 5/6 evaluate validselectedoption
+##     with CCharacterList::IsAvailable(selected_index), i.e. the lock check is
+##     per dock card -- the exact character whose model will load.
+const COMMAND_SKIN_CHARACTERS: Dictionary = {
+	"chief": {"chief02_body": "chief b"},
+	"loming": {"loming02_body": "lo ming b"},
+}
+
 var error: String = ""
 var warning: String = ""
 var rows: Array = []                 # one entry per characters.list row
@@ -485,17 +499,42 @@ func state_for_command(command: String) -> Dictionary:
 	return (by_command[command] as Dictionary).duplicate(true)
 
 
+## The characters.list row a command selects for the active named skin.  This is
+## the row whose model is actually loaded, so the dock card and the lock check
+## must use it.  Unknown commands return "" and stay fail closed.
+func character_for_command_skin(command: String, skin_id: String) -> String:
+	var variants: Variant = COMMAND_SKIN_CHARACTERS.get(command)
+	if variants is Dictionary and Dictionary(variants).has(skin_id):
+		return String(Dictionary(variants)[skin_id])
+	if OPPONENT_CHARACTERS.has(command):
+		return String(OPPONENT_CHARACTERS[command])
+	return ""
+
+
+func state_for_command_skin(command: String, skin_id: String) -> Dictionary:
+	var name: String = character_for_command_skin(command, skin_id)
+	if name.is_empty():
+		return {}
+	return state_for_character_name(name)
+
+
 ## True only for an OPPONENTS entry whose recovered character grant is not
-## satisfied.  BACK and any non-opponent command are never locked here.
-func is_locked_command(command: String) -> bool:
+## satisfied, resolved against the named skin variant that will actually load.
+func is_locked_command_skin(command: String, skin_id: String) -> bool:
 	if not OPPONENT_CHARACTERS.has(command):
 		return false
 	if rows.is_empty():
 		return true
-	var state: Dictionary = state_for_command(command)
+	var state: Dictionary = state_for_command_skin(command, skin_id)
 	if state.is_empty():
 		return true
 	return not bool(state.get("available", false))
+
+
+## True only for an OPPONENTS entry whose recovered character grant is not
+## satisfied.  BACK and any non-opponent command are never locked here.
+func is_locked_command(command: String) -> bool:
+	return is_locked_command_skin(command, "")
 
 
 func is_available_command(command: String) -> bool:
