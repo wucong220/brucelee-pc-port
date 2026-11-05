@@ -300,6 +300,12 @@ func _resolve_menu_sfx_path(filename: String, label: String) -> String:
     if label != "accept" or sfx_path.is_empty():
         var root: String = OS.get_environment("BRUCELEE_MENU_SFX_ROOT")
         if root.is_empty():
+            # Self-contained package: audio/menu_sfx beside the executable.
+            var packaged_root: String = OS.get_executable_path().get_base_dir(
+                ).path_join("audio/menu_sfx")
+            if DirAccess.dir_exists_absolute(packaged_root):
+                root = packaged_root
+        if root.is_empty():
             var local_app_data: String = OS.get_environment("LOCALAPPDATA")
             if local_app_data.is_empty():
                 return ""
@@ -447,6 +453,12 @@ func _build_ui() -> void:
 
 func _load_background() -> void:
     background_path = OS.get_environment("BRUCELEE_MAINMENU_PATH")
+    if background_path.is_empty():
+        # Self-contained package: menu/mainmenu_default.png beside the exe.
+        var packaged_background: String = OS.get_executable_path(
+            ).get_base_dir().path_join("menu/mainmenu_default.png")
+        if FileAccess.file_exists(packaged_background):
+            background_path = packaged_background
     if background_path.is_empty():
         var local_app_data: String = OS.get_environment("LOCALAPPDATA")
         if local_app_data.is_empty():

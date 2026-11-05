@@ -101,6 +101,8 @@ static func voice_roots() -> Array[String]:
     var env_root: String = OS.get_environment(ENV_ROOT)
     if not env_root.is_empty():
         roots.append(env_root)
+    # Self-contained package: audio/voices/<voice_dir>/<file> beside the exe.
+    roots.append(OS.get_executable_path().get_base_dir())
     var local_app_data: String = OS.get_environment("LOCALAPPDATA")
     if not local_app_data.is_empty():
         roots.append(local_app_data.path_join(STAGING_DIR))
@@ -237,6 +239,12 @@ func resolve_path(file: String) -> String:
         var candidate: String = root.path_join("adreno_200").path_join(file)
         if FileAccess.file_exists(candidate):
             return candidate
+        # Packaged layout keeps the original set voice tree under audio/voices/.
+        var direct: String = root.path_join("audio/voices").path_join(
+            file.replace("sounds/voices/", "")
+        )
+        if FileAccess.file_exists(direct):
+            return direct
     return ""
 
 

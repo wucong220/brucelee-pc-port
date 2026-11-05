@@ -376,6 +376,12 @@ func _color8(values, fallback: Color) -> Color:
 func practice_background_path() -> String:
     var path := OS.get_environment("BRUCELEE_MAINMENU_PATH")
     if path.is_empty():
+        # Self-contained package: menu/mainmenu_default.png beside the exe.
+        var packaged := OS.get_executable_path().get_base_dir().path_join(
+            "menu/mainmenu_default.png")
+        if FileAccess.file_exists(packaged):
+            path = packaged
+    if path.is_empty():
         var local := OS.get_environment("LOCALAPPDATA")
         if local.is_empty():
             return ""

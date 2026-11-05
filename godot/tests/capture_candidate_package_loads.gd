@@ -87,7 +87,7 @@ func _run() -> void:
         _check(false, "manifest is missing: " + MANIFEST_PATH)
         return _finish()
     var cases: Array = Dictionary(manifest).get("candidates", [])
-    _check(cases.size() == 10, "manifest should list 10 candidates")
+    _check(cases.size() == 15, "manifest should list 15 candidates")
     print("CAPTURE_MANIFEST cases=%d" % cases.size())
     # Optional filter.  A candidate id runs exactly that one case (the test
     # driver uses one process per candidate: repeatedly importing ten 6-9 MB
@@ -288,29 +288,29 @@ func _save_screenshot(path: String) -> Dictionary:
 func _check_fail_closed(scene: Node) -> void:
     ## Unit-level proof of the fail-closed rules, on the live main.tscn script.
     var pin: String = "0".repeat(64)
-    var mismatch: Dictionary = scene.call(
-        "_resolve_package_model", "models/chief02_body.glb", pin
-    )
+    var mismatch: Dictionary = scene.call("_verified_package_model", {
+        "glb_package": "models/chief02_body.glb", "sha256": pin,
+    })
     _guard_results.append({
         "check": "sha256 mismatch fails closed",
-        "path": String(mismatch.get("path", "")),
+        "path": String(mismatch.get("glb", "")),
         "error": String(mismatch.get("error", "")),
     })
-    _check(String(mismatch.get("path", "")).is_empty()
+    _check(String(mismatch.get("glb", "")).is_empty()
             and not String(mismatch.get("error", "")).is_empty(),
             "a present package model with a wrong sha256 must fail closed")
 
-    var absent: Dictionary = scene.call(
-        "_resolve_package_model", "models/not_a_candidate.glb", pin
-    )
+    var absent: Dictionary = scene.call("_verified_package_model", {
+        "glb_package": "models/not_a_candidate.glb", "sha256": pin,
+    })
     _guard_results.append({
-        "check": "absent package model keeps the legacy fallback",
-        "path": String(absent.get("path", "")),
+        "check": "absent declared package model fails closed",
+        "path": String(absent.get("glb", "")),
         "error": String(absent.get("error", "")),
     })
-    _check(String(absent.get("path", "")).is_empty()
-            and String(absent.get("error", "")).is_empty(),
-            "an absent package model must report no path and no error")
+    _check(String(absent.get("glb", "")).is_empty()
+            and not String(absent.get("error", "")).is_empty(),
+            "a declared but missing package model must fail closed")
 
     OS.set_environment("BRUCELEE_OPPONENT_SKIN", "chief02_body")
     var chief_variant: Dictionary = scene.call(

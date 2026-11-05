@@ -10,7 +10,7 @@ extends SceneTree
 ##       --script res://tests/validate_candidate_package_manifest.gd
 ##
 ## Checks:
-##  - the manifest lists exactly the ten candidates and every package file
+##  - the manifest lists exactly the fifteen candidates and every package file
 ##    exists with the pinned byte size + SHA-256
 ##  - GLB JSON agrees with the manifest: skeleton SHA-256, mesh names, animation
 ##    count, embedded textures, and the expected idle clip is present
@@ -103,7 +103,7 @@ func _run() -> void:
     _check(int(data.get("schema", 0)) == 1, "manifest schema should be 1")
     _check(String(data.get("package_models_dir", "")) == models_dir,
             "manifest package_models_dir should match PACKAGE_MODELS_DIR")
-    _check(_cases.size() == 10, "manifest should list 10 candidates, got %d" % _cases.size())
+    _check(_cases.size() == 15, "manifest should list 15 candidates, got %d" % _cases.size())
     _check(_config is Dictionary and _config.size() == 9,
             "MENU_OPPONENT_CONFIG should keep its 9 opponents")
     _check(_player_skins is Dictionary and _player_skins.size() == 4,

@@ -321,6 +321,10 @@ func _launch_fight() -> void:
 	if opponent.is_empty() or not opponent_config.has(opponent):
 		_show_error("MODE CONFIG ERROR", "no port candidate for opponent: " + opponent)
 		return
+	var model_error: String = _package_model_error(battle_spec)
+	if not model_error.is_empty():
+		_show_error("MODE CONFIG ERROR", model_error)
+		return
 	_apply_match_loader_env(battle_spec)
 	_write_pending({"mode": current_mode, "settings": selection, "run": run})
 	battle_started_msec = Time.get_ticks_msec()
@@ -360,13 +364,56 @@ func _pack(parts: Array) -> PackedStringArray:
 	return packed
 
 
+func _package_candidate_glb(config: Dictionary) -> String:
+	var packaged: String = String(config.get("glb_package", ""))
+	if packaged.is_empty():
+		return String(config.get("glb", ""))
+	# A declared package model is selected ONLY through main.gd's SHA-rechecking
+	# authority; existence alone is never sufficient.
+	if main != null and main.has_method("_verified_package_model"):
+		var resolved: Dictionary = main.call("_verified_package_model", config)
+		if not String(resolved.get("error", "")).is_empty():
+			push_error("package opponent: " + String(resolved["error"]))
+			return ""
+		return String(resolved.get("glb", ""))
+	# No resolver means no authority to accept a package candidate.
+	return ""
+
+
+func _package_model_error(spec: Dictionary) -> String:
+	## Fail-closed precheck for a mode fight transition: a declared but missing or
+	## corrupt package model must block the launch instead of reloading the match
+	## with a silent placeholder opponent.
+	var opponent: String = String(spec.get("opponent", ""))
+	var config: Dictionary = opponent_config.get(opponent, {})
+	if String(config.get("glb_package", "")).is_empty():
+		return ""
+	if main == null or not main.has_method("_verified_package_model"):
+		return "no package model resolver is available"
+	var resolved: Dictionary = main.call("_verified_package_model", config)
+	return String(resolved.get("error", ""))
+
+
+func _package_texture_root(config: Dictionary) -> String:
+	var value: String = String(config.get("texture_root", "")).strip_edges()
+	if value.is_empty():
+		return ""
+	var normalized: String = value.replace("\\", "/")
+	if normalized.is_absolute_path() or normalized.begins_with("res://"):
+		return value
+	var root: String = OS.get_environment("BRUCELEE_PACKAGE_ROOT").strip_edges()
+	if root.is_empty():
+		root = OS.get_executable_path().get_base_dir()
+	return root.replace("\\", "/").path_join(normalized)
+
+
 func _apply_match_loader_env(spec: Dictionary) -> void:
 	OS.set_environment(ENV_GAME_MODE, current_mode)
 	OS.set_environment(ENV_MAIN_MENU, "0")
 	var opponent: String = String(spec.get("opponent", ""))
 	var config: Dictionary = opponent_config.get(opponent, {})
-	OS.set_environment("BRUCELEE_OPPONENT_GLB", String(config.get("glb", "")))
-	OS.set_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT", String(config.get("texture_root", "")))
+	OS.set_environment("BRUCELEE_OPPONENT_GLB", _package_candidate_glb(config))
+	OS.set_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT", _package_texture_root(config))
 	OS.set_environment("BRUCELEE_OPPONENT_CLIP_PREFIX", String(config.get("clip_prefix", "")))
 	OS.set_environment("BRUCELEE_OPPONENT_MASTER", String(config.get("master", "")))
 	OS.set_environment("BRUCELEE_OPPONENT_MATERIAL_PROFILE", String(config.get("material_profile", "body")))

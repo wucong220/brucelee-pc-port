@@ -768,6 +768,10 @@ func _launch_fight() -> void:
 		_show_error("BATTLE CONFIG ERROR",
 			"no recovered port candidate for opponent: " + String(spec.get("opponent", "")))
 		return
+	var model_error: String = _package_model_error(spec)
+	if not model_error.is_empty():
+		_show_error("BATTLE CONFIG ERROR", model_error)
+		return
 	apply_match_loader_env(spec)
 	battle_started_msec = Time.get_ticks_msec()
 	state.set_pending({
@@ -817,14 +821,56 @@ func _battle_banner(spec: Dictionary) -> String:
 	return _join(line1) + "\n" + _join(line2) + "\n" + _join(line3)
 
 
+func _package_candidate_glb(config: Dictionary) -> String:
+	var packaged: String = String(config.get("glb_package", ""))
+	if packaged.is_empty():
+		return String(config.get("glb", ""))
+	# A declared package model is selected ONLY through main.gd's SHA-rechecking
+	# authority; existence alone is never sufficient.
+	if main != null and main.has_method("_verified_package_model"):
+		var resolved: Dictionary = main.call("_verified_package_model", config)
+		if not String(resolved.get("error", "")).is_empty():
+			push_error("package opponent: " + String(resolved["error"]))
+			return ""
+		return String(resolved.get("glb", ""))
+	# No resolver means no authority to accept a package candidate.
+	return ""
+
+
+func _package_model_error(spec: Dictionary) -> String:
+	## Fail-closed precheck for a story battle: a declared but missing or corrupt
+	## package model must block the launch instead of reloading with a placeholder.
+	var candidate: String = String(spec.get("port_candidate", ""))
+	var config: Dictionary = opponent_config.get(candidate, {})
+	if String(config.get("glb_package", "")).is_empty():
+		return ""
+	if main == null or not main.has_method("_verified_package_model"):
+		return "no package model resolver is available"
+	var resolved: Dictionary = main.call("_verified_package_model", config)
+	return String(resolved.get("error", ""))
+
+
+func _package_texture_root(config: Dictionary) -> String:
+	var value: String = String(config.get("texture_root", "")).strip_edges()
+	if value.is_empty():
+		return ""
+	var normalized: String = value.replace("\\", "/")
+	if normalized.is_absolute_path() or normalized.begins_with("res://"):
+		return value
+	var root: String = OS.get_environment("BRUCELEE_PACKAGE_ROOT").strip_edges()
+	if root.is_empty():
+		root = OS.get_executable_path().get_base_dir()
+	return root.replace("\\", "/").path_join(normalized)
+
+
 func apply_match_loader_env(spec: Dictionary) -> void:
 	## Public so tests can check the exact environment handoff.
 	OS.set_environment(ENV_STORY_FLOW, "1")
 	OS.set_environment(ENV_MAIN_MENU, "0")
 	var candidate: String = String(spec.get("port_candidate", ""))
 	var config: Dictionary = opponent_config.get(candidate, {})
-	OS.set_environment("BRUCELEE_OPPONENT_GLB", String(config.get("glb", "")))
-	OS.set_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT", String(config.get("texture_root", "")))
+	OS.set_environment("BRUCELEE_OPPONENT_GLB", _package_candidate_glb(config))
+	OS.set_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT", _package_texture_root(config))
 	OS.set_environment("BRUCELEE_OPPONENT_CLIP_PREFIX", String(config.get("clip_prefix", "")))
 	OS.set_environment("BRUCELEE_OPPONENT_MASTER", String(config.get("master", "")))
 	OS.set_environment("BRUCELEE_OPPONENT_MATERIAL_PROFILE",

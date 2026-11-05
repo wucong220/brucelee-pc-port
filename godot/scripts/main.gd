@@ -35,6 +35,7 @@ const CameraAnm = preload("res://scripts/camera_anm_player.gd")
 const StoryFlow = preload("res://scripts/story_flow.gd")
 ## Opt-in Arcade / Survival / Time Attack modes (recovered game.states / gui).
 const GameModes = preload("res://scripts/game_modes.gd")
+const GameModesRulesScript = preload("res://scripts/game_modes_rules.gd")
 ## Recovered CBeatEmUpGame states 1/2 (attract intros), 6 (replay), 9
 ## (continue), 10 and 14.  States whose data is not recovered refuse to start.
 const NativeMatchStates = preload("res://scripts/native_match_states.gd")
@@ -112,11 +113,10 @@ const HUD_ART_OPPONENT_NAMES: Dictionary = {
 ## absolute path so old launchers keep working when the package model is absent.
 const MENU_OPPONENT_CONFIG: Dictionary = {
     "brick": {
-        "glb": "D:\\BruceLeeWork\\brick-full-20261103\\candidate\\brick_full_94_20261103.glb",
-        "texture_root": (
-            "D:\\BaiduSyncdisk\\AI项目\\李小龙\\private_assets\\appdata-msix\\"
-            + "BruceLee-PC-Port\\brick-textures-20261030"
-        ),
+        "glb": "",
+        "glb_package": "models\\brick_full_94_20261103.glb",
+        "sha256": "c5dd5ba63a4cf6a65a994809d1f43f159db0c33cc4cd4e0b400658f680a74318",
+        "texture_root": "models\\textures\\brick",
         "clip_prefix": "",
         "master": "",
         "material_profile": "body",
@@ -124,13 +124,10 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "large",
     },
     "sinfu": {
-        "glb": (
-            "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
-            + "sinfu_hair_two-skin_81_result_20261103.glb"
-        ),
+        "glb": "",
         "glb_package": "models\\sinfu_full_hair_intro.glb",
         "sha256": "c493296417a2e67248699ac7420b47581d29908fe26590bc351453ddd324c58f",
-        "texture_root": "D:\\BruceLeeWork\\sinfu-tex",
+        "texture_root": "",
         "clip_prefix": "m04",
         "master": "",
         "material_profile": "body",
@@ -138,13 +135,10 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "medium",
     },
     "master": {
-        "glb": (
-            "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
-            + "master_full_hair_80_result_20261103.glb"
-        ),
+        "glb": "",
         "glb_package": "models\\master_full_hair_intro.glb",
         "sha256": "0a958ee2e56f349a97e01a8febcac6c9c9fd351552e084d212e14a1fa3891b66",
-        "texture_root": "D:\\BruceLeeWork\\master-candidate-20261103\\textures",
+        "texture_root": "",
         "clip_prefix": "",
         "master": "1",
         "material_profile": "body",
@@ -152,11 +146,10 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "small",
     },
     "shenlo": {
-        "glb": (
-            "D:\\BruceLeeWork\\shenlo-20261103\\candidates\\"
-            + "shenlo_full_body_89_all_20261103.glb"
-        ),
-        "texture_root": "D:\\BruceLeeWork\\shenlo-20261103\\textures",
+        "glb": "",
+        "glb_package": "models\\shenlo_full_body_89_all_20261103.glb",
+        "sha256": "737c7dcbac2d53b0005be924ec659a4f4b1f690df9041ad883a51ef7e533dfda",
+        "texture_root": "models\\textures\\shenlo",
         "clip_prefix": "m04",
         "master": "",
         "material_profile": "body",
@@ -164,16 +157,10 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "medium",
     },
     "ken": {
-        "glb": (
-            "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\"
-            + "ken_all26_74_defeat_groundidle_20261103.glb"
-        ),
+        "glb": "",
         "glb_package": "models\\ken_all26_78.glb",
         "sha256": "3557043fc3ef7acd915620947a2bb9f5df54e406ef1fbeb081cfa1f3c514c166",
-        "texture_root": (
-            "D:\\BruceLeeWork\\character-integration-fixed-20261103\\"
-            + "assets\\ken-textures"
-        ),
+        "texture_root": "models\\textures\\ken",
         "clip_prefix": "m02",
         "master": "",
         "material_profile": "body_hair",
@@ -181,8 +168,10 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "medium",
     },
     "smallboy": {
-        "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\smallboy_full_body_hair_87_all_20261103.glb",
-        "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\smallboy",
+        "glb": "",
+        "glb_package": "models\\smallboy_full_body_hair_87_all_20261103.glb",
+        "sha256": "a70fa08f8bcb5a39663c1390a4bbb23a99c4f520241af72246baf2a53461ba24",
+        "texture_root": "models\\textures\\smallboy",
         "clip_prefix": "",
         "master": "",
         "material_profile": "body_hair",
@@ -190,8 +179,10 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "large",
     },
     "johnson": {
-        "glb": "D:\\BruceLeeWork\\remaining-characters-20261103\\candidates\\johnson_full_body_88_all_20261103.glb",
-        "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\johnson",
+        "glb": "",
+        "glb_package": "models\\johnson_full_body_88_all_20261103.glb",
+        "sha256": "883ce46bfb483fa14096c4f13caf700f421782b09d020496e6577ec1724f573c",
+        "texture_root": "models\\textures\\johnson",
         "clip_prefix": "",
         "master": "",
         "material_profile": "body",
@@ -199,10 +190,10 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         "skeleton": "large",
     },
     "chief": {
-        "glb": "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\chief01_full_body_hair_86_groundidle_20261103.glb",
+        "glb": "",
         "glb_package": "models\\chief01_body_hair.glb",
         "sha256": "df61ef3e906b5cd91b3fd3425ac57de879cd5e407dc185a2b98eb46a4101aa21",
-        "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\chief01",
+        "texture_root": "",
         "clip_prefix": "",
         "master": "",
         "material_profile": "body_hair",
@@ -215,7 +206,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
             "chief01_body_hair": {
                 "glb_package": "models\\chief01_body_hair.glb",
                 "sha256": "df61ef3e906b5cd91b3fd3425ac57de879cd5e407dc185a2b98eb46a4101aa21",
-                "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\chief01",
+                "texture_root": "",
                 "material_profile": "body_hair",
             },
             "chief02_body": {
@@ -227,10 +218,10 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
         },
     },
     "loming": {
-        "glb": "D:\\BruceLeeWork\\result-clip-fixes-20261103\\candidates\\loming01_full_body_hair_84_groundidle_20261103.glb",
+        "glb": "",
         "glb_package": "models\\loming01_body_hair.glb",
         "sha256": "76f13c2a82b55d164d8944396e1dc8f69883e15422df4fa4dae2169f37782117",
-        "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\loming01",
+        "texture_root": "",
         "clip_prefix": "",
         "master": "",
         "material_profile": "body_hair",
@@ -242,7 +233,7 @@ const MENU_OPPONENT_CONFIG: Dictionary = {
             "loming01_body_hair": {
                 "glb_package": "models\\loming01_body_hair.glb",
                 "sha256": "76f13c2a82b55d164d8944396e1dc8f69883e15422df4fa4dae2169f37782117",
-                "texture_root": "D:\\BruceLeeWork\\remaining-characters-20261103\\textures\\loming01",
+                "texture_root": "",
                 "material_profile": "body_hair",
             },
             "loming02_body": {
@@ -265,6 +256,13 @@ const PACKAGE_MODELS_DIR: String = "models"
 ## path; only this explicit flag, a path under <package root>/models/ and a
 ## verified sha256 let a packaged model through (see candidate_path_guard.gd).
 const PACKAGE_MODELS_OPT_IN_ENV: String = "BRUCELEE_ALLOW_PACKAGE_MODELS"
+## Self-contained package defaults.  When models/ exists beside the
+## executable and no legacy BRUCELEE_PLAYER_GLB / BRUCELEE_OPPONENT_GLB is
+## exported, boot resolves these verified bundled candidates instead of a
+## placeholder fighter.  Both are ordinary package models with a pinned
+## sha256; a missing or mismatched file still fails closed.
+const PACKAGE_DEFAULT_PLAYER_SKIN: String = "skin01"
+const PACKAGE_DEFAULT_OPPONENT: String = "brick"
 ## Verified player skins.  Only Bruce Lee's four body+hair variants qualify:
 ## they share the characters.list "bruce lee a..d" / m01 clip table and one
 ## source skeleton, and the packaged files are the verified candidates.  An
@@ -297,10 +295,7 @@ const PLAYER_SKIN_CONFIG: Dictionary = {
     },
 }
 ## Shared verified texture root for the four Bruce skins (body+hair PNGs).
-const PLAYER_SKIN_TEXTURE_ROOT: String = (
-    "D:\\BaiduSyncdisk\\AI项目\\李小龙\\private_assets\\appdata-msix\\"
-    + "BruceLee-PC-Port\\candidate-textures-verified-20261029"
-)
+const PLAYER_SKIN_TEXTURE_ROOT: String = ""
 # characters.list "skeleton" per fighting set, used for the size-class clip
 # versions (adreno_200/Animations.versions). Keyed by the same config path the
 # opponent already uses to identify its character, so a launcher that only sets
@@ -762,6 +757,7 @@ func _ready() -> void:
     rng.seed = 0xB17E
     _build_environment()
     var startup_environment: int = Time.get_ticks_msec()
+    _bootstrap_package_candidates()
     _build_fighters()
     var startup_fighters: int = Time.get_ticks_msec()
     _build_combat_audio()
@@ -886,7 +882,9 @@ func _run_export_self_test() -> void:
                 + player.candidate_load_error)
         get_tree().quit(1)
         return
-    if not player.candidate_textures_loaded:
+    var player_texture_root: String = _player_candidate_texture_root()
+    if (not player_texture_root.is_empty()
+            and not player.candidate_textures_loaded):
         push_error("EXPORT_SELF_TEST: candidate textures were not loaded: "
                 + player.candidate_texture_error)
         get_tree().quit(1)
@@ -954,6 +952,91 @@ func _run_export_self_test() -> void:
     if CandidatePathGuard.external_path_error(
             internal_path, "candidate path").is_empty():
         push_error("EXPORT_SELF_TEST: application-internal candidate path was accepted")
+        get_tree().quit(1)
+        return
+
+
+    # ---- self-contained package verification (models + mode data) ----------
+    var package_root: String = _package_root()
+    var models_root: String = package_root.path_join(PACKAGE_MODELS_DIR)
+    var models_present: bool = DirAccess.dir_exists_absolute(models_root)
+    var pin_failures: Array[String] = []
+    var pin_checked: Dictionary = {}
+    var checked_sources: Array = []
+    for config_key: Variant in MENU_OPPONENT_CONFIG:
+        var entry: Dictionary = Dictionary(MENU_OPPONENT_CONFIG[config_key])
+        checked_sources.append(entry)
+        var entry_skins: Variant = entry.get("skins")
+        if entry_skins is Dictionary:
+            for skin_key: Variant in Dictionary(entry_skins):
+                checked_sources.append(Dictionary(entry_skins)[skin_key])
+    for skin_id: Variant in PLAYER_SKIN_CONFIG:
+        checked_sources.append(Dictionary(PLAYER_SKIN_CONFIG[skin_id]))
+    for source_value: Variant in checked_sources:
+        var source: Dictionary = source_value
+        var relative: String = String(source.get("glb_package", ""))
+        if relative.is_empty():
+            continue
+        var absolute: String = package_root.path_join(relative)
+        var expected: String = String(source.get("sha256", "")).to_lower()
+        var actual: String = _sha256_file(absolute) if FileAccess.file_exists(absolute) else ""
+        pin_checked[relative] = {
+            "exists": FileAccess.file_exists(absolute),
+            "sha_match": actual == expected,
+        }
+        if actual != expected:
+            pin_failures.append(relative)
+    var absolute_config_paths: Array[String] = []
+    for config_key: Variant in MENU_OPPONENT_CONFIG:
+        var entry: Dictionary = Dictionary(MENU_OPPONENT_CONFIG[config_key])
+        if String(entry.get("glb", "")).contains(":"):
+            absolute_config_paths.append("glb:" + String(config_key))
+        if String(entry.get("texture_root", "")).contains(":"):
+            absolute_config_paths.append("texture_root:" + String(config_key))
+        var entry_skins: Variant = entry.get("skins")
+        if entry_skins is Dictionary:
+            for skin_key: Variant in Dictionary(entry_skins):
+                if String(Dictionary(entry_skins)[skin_key].get(
+                        "texture_root", "")).contains(":"):
+                    absolute_config_paths.append("skin_texture_root:" + String(skin_key))
+    if String(PLAYER_SKIN_TEXTURE_ROOT).contains(":"):
+        absolute_config_paths.append("PLAYER_SKIN_TEXTURE_ROOT")
+    var mode_rules: Dictionary = GameModesRulesScript.load_rules()
+    var res_mode_bytes: PackedByteArray = FileAccess.get_file_as_bytes(
+        "res://data/game_modes.json"
+    )
+    var side_mode_path: String = package_root.path_join("data/game_modes.json")
+    var side_mode_bytes: PackedByteArray = FileAccess.get_file_as_bytes(side_mode_path)
+    var mode_data_ok: bool = (
+        not mode_rules.is_empty()
+        and not side_mode_bytes.is_empty()
+        and res_mode_bytes == side_mode_bytes
+    )
+    var mode_guard_fail_closed: bool = GameModesRulesScript._parse_rules_file(
+        "res://data/__missing_game_modes__.json"
+    ).is_empty()
+    print("SELF_CONTAINED_VERIFY=" + JSON.stringify({
+        "package_root": package_root,
+        "models_dir_present": models_present,
+        "model_pins": pin_checked,
+        "pin_failures": pin_failures,
+        "absolute_config_paths": absolute_config_paths,
+        "mode_data_ok": mode_data_ok,
+        "mode_guard_fail_closed": mode_guard_fail_closed,
+        "default_player_skin_env": OS.get_environment("BRUCELEE_PLAYER_SKIN"),
+        "default_opponent_name_key": OS.get_environment("BRUCELEE_OPPONENT_NAME_KEY"),
+        "default_opponent_glb_is_package_model": _is_package_model_path(
+            OS.get_environment("BRUCELEE_OPPONENT_GLB")
+        ),
+        "player_candidate_loaded": player.candidate_loaded,
+        "opponent_candidate_loaded": computer.candidate_loaded,
+        "player_idle": player.candidate_animation_clip,
+        "opponent_idle": computer.candidate_animation_clip,
+    }))
+    if (not models_present or not pin_failures.is_empty()
+            or not absolute_config_paths.is_empty() or not mode_data_ok
+            or not mode_guard_fail_closed):
+        push_error("EXPORT_SELF_TEST: self-contained package verification failed")
         get_tree().quit(1)
         return
 
@@ -1915,6 +1998,77 @@ func _package_root() -> String:
     ).trim_suffix("/")
 
 
+func _package_models_present() -> bool:
+    ## True only when a models/ directory sits beside the executable (or at the
+    ## validator's BRUCELEE_PACKAGE_ROOT).  Editor/CI runs whose executable
+    ## directory has no models/ keep the previous placeholder behavior.
+    return DirAccess.dir_exists_absolute(
+        _package_root().path_join(PACKAGE_MODELS_DIR)
+    )
+
+
+func _resolve_package_texture_root(value: String) -> String:
+    ## Package-relative texture roots ("models\textures\brick") resolve against
+    ## the package root; absolute/res:// values pass through unchanged so a
+    ## launcher can still point at an external texture directory.  The packaged
+    ## candidate guard accepts the resolved path because it is package content
+    ## beside the exported executable.
+    var trimmed: String = value.strip_edges()
+    if trimmed.is_empty():
+        return ""
+    var normalized: String = trimmed.replace("\\", "/")
+    if normalized.is_absolute_path() or normalized.begins_with("res://"):
+        return trimmed
+    return _package_root().path_join(normalized)
+
+
+func _first_packaged_opponent_key() -> String:
+    ## First MENU_OPPONENT_CONFIG entry whose bundled model exists and matches
+    ## its sha256 pin.  PACKAGE_DEFAULT_OPPONENT wins when it is verified.
+    var preferred: String = PACKAGE_DEFAULT_OPPONENT.strip_edges()
+    if not preferred.is_empty() and MENU_OPPONENT_CONFIG.has(preferred):
+        var preferred_entry: Variant = MENU_OPPONENT_CONFIG[preferred]
+        if preferred_entry is Dictionary:
+            var preferred_resolved: Dictionary = _resolved_opponent_glb(
+                Dictionary(preferred_entry)
+            )
+            if (String(preferred_resolved["error"]).is_empty()
+                    and not String(preferred_resolved["glb"]).is_empty()):
+                return preferred
+    for key: Variant in MENU_OPPONENT_CONFIG:
+        var entry: Variant = MENU_OPPONENT_CONFIG[key]
+        if not entry is Dictionary:
+            continue
+        var resolved: Dictionary = _resolved_opponent_glb(Dictionary(entry))
+        # Only an actually verified package model counts: an empty legacy
+        # fallback string (or an error) must not select an opponent.
+        if (String(resolved["error"]).is_empty()
+                and _is_package_model_path(String(resolved["glb"]))):
+            return String(key)
+    return ""
+
+
+func _bootstrap_package_candidates() -> void:
+    ## Self-contained boot: fill the fighter environment from the bundled
+    ## package models when a launcher exported no absolute path override.
+    if not _package_models_present():
+        return
+    var player_glb: String = OS.get_environment("BRUCELEE_PLAYER_GLB").strip_edges()
+    var player_skin: String = OS.get_environment("BRUCELEE_PLAYER_SKIN").strip_edges()
+    if player_glb.is_empty() and player_skin.is_empty():
+        if PLAYER_SKIN_CONFIG.has(PACKAGE_DEFAULT_PLAYER_SKIN):
+            OS.set_environment("BRUCELEE_PLAYER_SKIN", PACKAGE_DEFAULT_PLAYER_SKIN)
+    if OS.get_environment("BRUCELEE_OPPONENT_GLB").strip_edges().is_empty():
+        var requested: String = OS.get_environment("BRUCELEE_OPPONENT_NAME_KEY").strip_edges()
+        var key: String = requested if not requested.is_empty() else _first_packaged_opponent_key()
+        if not key.is_empty() and MENU_OPPONENT_CONFIG.has(key):
+            var config: Dictionary = _selected_opponent_config(
+                Dictionary(MENU_OPPONENT_CONFIG[key])
+            )
+            if not config.is_empty():
+                _stage_opponent_environment(key, config)
+
+
 func _sha256_file(path: String) -> String:
     var file: FileAccess = FileAccess.open(path, FileAccess.READ)
     if file == null:
@@ -1958,6 +2112,43 @@ func _resolve_package_model(relative: String, expected_sha256: String) -> Dictio
     return {"path": absolute, "error": ""}
 
 
+func _verified_package_model(config: Dictionary) -> Dictionary:
+    ## Single authority for selecting a DECLARED packaged GLB.  It never trusts
+    ## existence: a present file is re-hashed and must equal the configured pin,
+    ## and its resolved path must stay inside the package root.  When the build
+    ## actually ships a package (models/ beside the exe or BRUCELEE_PACKAGE_ROOT)
+    ## a declared-but-missing or corrupt model fails closed.  When NO package is
+    ## present (plain editor/dev run) the legacy external `glb` fallback is kept
+    ## so placeholders still work; that fallback is guarded, not identity-pinned.
+    var packaged: String = String(config.get("glb_package", "")).strip_edges()
+    if packaged.is_empty():
+        return {"glb": String(config.get("glb", "")), "error": ""}
+    if not _package_models_present():
+        return {"glb": String(config.get("glb", "")), "error": ""}
+    var relative: String = packaged.replace("\\", "/")
+    if (relative.is_absolute_path() or relative.begins_with("res://")
+            or relative.begins_with("../") or relative.contains("/../")):
+        return {"glb": "", "error": "package model must be package-relative: " + packaged}
+    var absolute: String = _package_root().path_join(relative)
+    if not FileAccess.file_exists(absolute):
+        return {"glb": "", "error": "package model is missing: " + relative}
+    var expected: String = String(config.get("sha256", "")).strip_edges().to_lower()
+    if expected.is_empty():
+        return {"glb": "", "error": "package model has no pinned sha256: " + relative}
+    var actual: String = _sha256_file(absolute)
+    if actual.is_empty():
+        return {"glb": "", "error": "package model could not be hashed: " + relative}
+    if actual != expected:
+        return {"glb": "", "error": (
+            "package model sha256 mismatch: " + relative
+            + " actual=" + actual + " expected=" + expected
+        )}
+    var containment: String = CandidatePathGuard.package_asset_error(absolute)
+    if not containment.is_empty():
+        return {"glb": "", "error": "package model rejected: " + containment}
+    return {"glb": absolute, "error": ""}
+
+
 func _is_package_model_path(path: String) -> bool:
     var normalized: String = CandidatePathGuard.normalize_absolute_path(path).to_lower()
     var models_root: String = (
@@ -1982,14 +2173,11 @@ func _player_candidate_glb() -> String:
     if not entry is Dictionary:
         push_error("BRUCELEE_PLAYER_SKIN=%s is not a verified player skin" % skin_id)
         return ""
-    var resolved: Dictionary = _resolve_package_model(
-        String(Dictionary(entry).get("glb_package", "")),
-        String(Dictionary(entry).get("sha256", ""))
-    )
+    var resolved: Dictionary = _verified_package_model(Dictionary(entry))
     if not String(resolved["error"]).is_empty():
         push_error("player skin " + skin_id + ": " + String(resolved["error"]))
         return ""
-    var path: String = String(resolved["path"])
+    var path: String = String(resolved["glb"])
     if path.is_empty():
         push_error("player skin " + skin_id + " package model is missing")
         return ""
@@ -2000,7 +2188,7 @@ func _player_candidate_glb() -> String:
 func _player_candidate_texture_root() -> String:
     var explicit: String = OS.get_environment("BRUCELEE_PLAYER_TEXTURE_ROOT")
     if not explicit.is_empty():
-        return explicit
+        return _resolve_package_texture_root(explicit)
     if not OS.get_environment("BRUCELEE_PLAYER_SKIN").strip_edges().is_empty():
         return PLAYER_SKIN_TEXTURE_ROOT
     return ""
@@ -2026,8 +2214,11 @@ func _build_fighters() -> void:
     )
     if opponent_material_profile.is_empty():
         opponent_material_profile = "body"
+    var opponent_glb: String = OS.get_environment("BRUCELEE_OPPONENT_GLB")
+    if _is_package_model_path(opponent_glb):
+        OS.set_environment(PACKAGE_MODELS_OPT_IN_ENV, "1")
     computer.configure_candidate_asset(
-        OS.get_environment("BRUCELEE_OPPONENT_GLB"),
+        opponent_glb,
         OS.get_environment("BRUCELEE_OPPONENT_TEXTURE_ROOT"),
         _opponent_clips(),
         opponent_material_profile,
@@ -2800,19 +2991,11 @@ func _selected_opponent_config(config: Dictionary) -> Dictionary:
 
 
 func _resolved_opponent_glb(config: Dictionary) -> Dictionary:
-    ## Prefers the verified package model, keeps the previous absolute "glb" as
-    ## the fallback when the package file is absent, and returns a non-empty
-    ## error (fail closed) when a present package model fails its hash pin.
-    var packaged: String = String(config.get("glb_package", ""))
-    if not packaged.is_empty():
-        var resolved: Dictionary = _resolve_package_model(
-            packaged, String(config.get("sha256", ""))
-        )
-        if not String(resolved["error"]).is_empty():
-            return {"glb": "", "error": String(resolved["error"])}
-        if not String(resolved["path"]).is_empty():
-            return {"glb": String(resolved["path"]), "error": ""}
-    return {"glb": String(config.get("glb", "")), "error": ""}
+    ## Delegates to the single SHA-rechecking authority.  A declared package
+    ## model that is missing or corrupt returns a non-empty error (fail closed)
+    ## instead of silently handing back an unverified path.
+    var resolved: Dictionary = _verified_package_model(config)
+    return {"glb": String(resolved["glb"]), "error": String(resolved["error"])}
 
 
 func _stage_opponent_environment(command: String, config: Dictionary) -> bool:
@@ -2830,7 +3013,8 @@ func _stage_opponent_environment(command: String, config: Dictionary) -> bool:
     )
     OS.set_environment("BRUCELEE_OPPONENT_GLB", chosen_glb)
     OS.set_environment(
-        "BRUCELEE_OPPONENT_TEXTURE_ROOT", String(config.get("texture_root", ""))
+        "BRUCELEE_OPPONENT_TEXTURE_ROOT",
+        _resolve_package_texture_root(String(config.get("texture_root", "")))
     )
     OS.set_environment(
         "BRUCELEE_OPPONENT_CLIP_PREFIX", String(config.get("clip_prefix", ""))
