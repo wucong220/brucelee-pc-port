@@ -3605,9 +3605,17 @@ func _load_opponent_suffix_variants() -> void:
             "source_action": kind,
             "animation": animation,
             "animation_frame_count": frames,
-            "startup": float(startup),
-            "active": float(active),
-            "recovery": float(recovery),
+            # The recovered variant row stores phase lengths in source frames
+            # (they must sum to `frames`).  Every other attack table stores
+            # startup/active/recovery in seconds, and request_attack /
+            # _apply_attack_start_frame / _phase_attack_source_frame all treat
+            # them as seconds; keeping raw frames here made every variant's
+            # startup 30x too long (e.g. endattack brick = 17 s), so its
+            # `state == "active"` gate was never reached while the victim was
+            # still in the 90-frame grabbed hold.
+            "startup": float(startup) / SOURCE_FRAME_RATE,
+            "active": float(active) / SOURCE_FRAME_RATE,
+            "recovery": float(recovery) / SOURCE_FRAME_RATE,
             "damage": float(row.get("damage", 0.0)),
             "source_impact": Dictionary(source_impact),
             "multi_impacts": multi,

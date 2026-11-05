@@ -5,7 +5,7 @@
 ## 基线
 
 - 分支：`codex/training-hints`
-- HEAD：`ecd3585088f47b608834a5efbbfc3`
+- Current226 运行时代码基线：`ecd3585088f47b608834a5b5f2c47436a525ce8d`
 - 远端对比：本地 / 远端 `0 / 0`
 - 当前包：[DragonWarrior-Current226-20261103](<D:/BruceLeeWork/DragonWarrior-Current226-20261103>)
 - 启动入口：[BruceLee_Start.exe](<D:/BruceLeeWork/DragonWarrior-Current226-20261103/BruceLee_Start.exe>)
@@ -66,7 +66,7 @@
 - Profile 子行、Settings VIDEO/CONTROLS、About 版本/免责声明、credits roll、Training VIDEO/CONTROLS、语言列表、locked-card cursor 等 UI 仍有缺口
 - 真实按键下对 Brick 的 `grab1 brick / endattack brick` 变体路径与 base API 的 93/130 victim hold 路径不同；需证明是原生行为或修运行时
 - SinFu / LoMing 少数族内 clip 无同骨架精确源，继续 fail-closed，不跨骨架借动画
-- `validate_action_cameras.gd` 的 victim dummy 相机失败为既有测试夹具问题，不是 Current226 新增功能回归
+- `validate_action_cameras.gd` 的 victim 相机检查失败；此前曾观察到相同失败，具体是夹具还是运行时原因仍在复核
 - 逐帧原版录像、GPU 像素级、真实手柄设备矩阵仍未验收
 
 ## 继续移植的当前主线
