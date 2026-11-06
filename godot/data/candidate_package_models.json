@@ -322,15 +322,15 @@
       "expected_idle": "m01_idle_01",
       "texture_root": "",
       "package_models_dir": "models",
-      "bytes": 11106256,
-      "sha256": "e540d8dd6478416db65dd9bc30eec1fed32ee6bb9b48d7a3fd78b0acd5bc284f",
+      "bytes": 14579120,
+      "sha256": "721f701d994badb9e0a786374cfde14444e93c8724d585f3fec9cd7eeb32effe",
       "skeleton_sha256": "4a6d4532b42d6cbee3016b849befc2dc98c089e72fa4cfe291d9550f059412e3",
       "mesh_sha256": "0860e38296521c9be073d58daf772eda4538bcc8a8eea57dc334153f2ce7f86f",
       "mesh_names": [
         "bl_brucelee_01_body_hw_skhigh",
         "bl_brucelee_01_hair_hw_skhigh"
       ],
-      "animations": 97,
+      "animations": 121,
       "textures_embedded": true,
       "fallback_glb": "",
       "fallback_exists": false

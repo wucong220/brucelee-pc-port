@@ -288,7 +288,7 @@ const PACKAGE_DEFAULT_OPPONENT: String = "brick"
 const PLAYER_SKIN_CONFIG: Dictionary = {
     "skin01": {
         "glb_package": "models\\bruce_skin01.glb",
-        "sha256": "e540d8dd6478416db65dd9bc30eec1fed32ee6bb9b48d7a3fd78b0acd5bc284f",
+        "sha256": "721f701d994badb9e0a786374cfde14444e93c8724d585f3fec9cd7eeb32effe",
         "material_profile": "body_hair",
     },
     "skin02": {
