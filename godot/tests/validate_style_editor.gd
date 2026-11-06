@@ -310,11 +310,26 @@ func _check_navigation(catalog, store) -> void:
     )
     await _press(KEY_ENTER)
     check(
-        String(store.selections.get("special/hpunch", "")) == "hpunchmaster",
-        "ENTER saves the highlighted fighter"
+        String(store.selections.get("special/hpunch", "")) == "hpunchshenlo",
+        "locked ENTER does not change the saved selection"
     )
     check(
-        String(screen.saved_entry_id()) == "hpunchmaster",
+        String(screen.layout_report().get("status", "")).contains("LOCKED"),
+        "locked ENTER reports LOCKED"
+    )
+    await _press(KEY_LEFT)
+    await _press(KEY_LEFT)
+    check(
+        String(screen.current_entry().get("id", "")) == "hpunchbrucelee",
+        "cursor returns to the always-available default"
+    )
+    await _press(KEY_ENTER)
+    check(
+        String(store.selections.get("special/hpunch", "")) == "hpunchbrucelee",
+        "ENTER saves the always-available default"
+    )
+    check(
+        String(screen.saved_entry_id()) == "hpunchbrucelee",
         "saved selection is the highlighted entry"
     )
     var fighter_report: Dictionary = screen.layout_report()
@@ -336,8 +351,8 @@ func _check_navigation(catalog, store) -> void:
     await _press(KEY_ENTER)
     await _press(KEY_ENTER)
     check(screen.screen_name() == "fighter", "reopened fighter screen")
-    check(screen.fighter_cursor() == 2, "reopen starts on the saved entry")
-    check(String(screen.saved_entry_id()) == "hpunchmaster", "reopen restores saved id")
+    check(screen.fighter_cursor() == 0, "reopen starts on the saved entry")
+    check(String(screen.saved_entry_id()) == "hpunchbrucelee", "reopen restores saved id")
 
     await _press(KEY_H)
     check(screen.screen_name() == "help", "H opens the help screen")

@@ -17,13 +17,13 @@ extends SceneTree
 const BRUCE_PATH := "res://data/fighting_set_low_attacks.json"
 const SAVED_STYLE: Dictionary = {
     "special/hpunch": "hpunchbrick",
-    "special/hkick": "hkickbrick",
+
     "grabs/graba": "grababrick",
     "endmove/endmove": "endsmallboy",
 }
 const EXPECTED_SAVED: Array[String] = [
     "brucelee", "endsmallboy", "grababrick", "grabbbrucelee",
-    "hkickbrick", "hpunchbrick", "lkickbrucelee", "lpunchbrucelee",
+    "hkickbrucelee", "hpunchbrick", "lkickbrucelee", "lpunchbrucelee",
 ]
 
 var _failures: Array[String] = []
@@ -198,6 +198,12 @@ func _run() -> void:
         player_a.active_uniques() == _default_expected(), str(player_a.active_uniques()))
     # -------------------------------------------- write the explicit style file
     _check("saved style file written", _write_saved_style(), "")
+    # A saved style can only exist for a granted entry: grader the recovered
+    # story-EXP row that unlocks Brick's special moves (ids <= 9600), exactly
+    # like a profile that reached that threshold.
+    var granted: Array = scene_a.get("progress").sync_story_exp(9600)
+    _check("style unlock grant includes Brick hkick 23 and grab 57",
+        granted.has(23) and granted.has(57), str(granted))
     scene_a.queue_free()
     await process_frame
     # ------------------------------------------------------- scene B: VS wiring

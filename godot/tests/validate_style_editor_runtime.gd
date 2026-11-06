@@ -164,10 +164,15 @@ func _run() -> void:
     store.set_selection(catalog, "special/lkick", "lkickshenlo")
     scene.call("_apply_style_editor")
     report = editor.apply_report()
-    check(
-        String(report.get("results", {}).get("special/lkick", {}).get("status", "")) == "clip_not_loaded",
-        "a foreign clip is reported clip_not_loaded on the real fighter"
-    )
+    var locked_found: bool = false
+    for item: Variant in Array(report.get("locked_selections", [])):
+        if item is Dictionary:
+            var dropped: Dictionary = item
+            if String(dropped.get("group", "")) == "special/lkick" and String(dropped.get("entry", "")) == "lkickshenlo" and String(dropped.get("reason", "")) == "locked_or_unavailable":
+                locked_found = true
+    check(locked_found, "the locked foreign style is recorded as dropped")
+    check(not player.active_uniques().has("lkickshenlo"),
+          "the locked foreign style is absent from active uniques")
     slots = player.style_runtime_snapshot().get("slots", {})
     check(String(slots.get("special_kick_low_hit", "")) == "m01_sp_kick_low",
           "the refused foreign clip leaves special_kick_low_hit untouched",

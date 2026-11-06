@@ -52,6 +52,7 @@ const RecordsScreen = preload("res://scripts/progress_records_screen.gd")
 const StyleCatalog = preload("res://scripts/style_catalog.gd")
 const StyleSelectionStore = preload("res://scripts/style_selection_store.gd")
 const StyleEditorScreen = preload("res://scripts/style_editor_screen.gd")
+const StyleUnlockGate = preload("res://scripts/style_unlock_gate.gd")
 ## Opt-in opponent voice overlay (island opponent-voice-20261104). It is
 ## inert unless BRUCELEE_OPPONENT_VOICE=1, and it never replaces the Bruce
 ## cue table; see overlay/opponent_voice_cues.json for the recovered cues.
@@ -564,6 +565,10 @@ var records_screen: CanvasLayer = null
 var style_catalog: RefCounted = null
 var style_store: RefCounted = null
 var style_editor: CanvasLayer = null
+## Live unlock check for style entries (always_available or the live progress
+## service's Unlocker/CharacterList grants). A locked saved selection is dropped
+## back to the decoded default even when an older style_selections.json holds it.
+var style_unlock_gate: RefCounted = null
 ## Last apply_style_selections() report, kept even without the opt-in screen so
 ## Free Training / VS can be inspected headlessly.
 var player_style_report: Dictionary = {}
@@ -2749,6 +2754,8 @@ func _ensure_style_selection_store() -> bool:
     style_catalog = catalog
     style_store = StyleSelectionStore.new()
     style_store.load_selections(style_catalog)
+    style_unlock_gate = StyleUnlockGate.new()
+    style_unlock_gate.progress = progress
     return true
 
 
@@ -2859,9 +2866,19 @@ func _apply_style_editor() -> void:
     ## native style (and its unique IDs) too.
     if style_store == null or style_catalog == null or player == null:
         return
-    var report: Dictionary = player.apply_style_selections(
-        style_store.selections, style_catalog
-    )
+    var effective: Dictionary = style_store.selections.duplicate()
+    var dropped: Array = []
+    var defaults: Dictionary = style_catalog.defaults()
+    for group_key: String in style_catalog.groups_in_order():
+        var entry: Dictionary = style_catalog.entry(group_key, String(effective.get(group_key, "")))
+        if not entry.is_empty() and style_unlock_gate != null and bool(style_unlock_gate.state_for(entry).get("available", false)):
+            continue
+        dropped.append({"group": group_key, "entry": String(effective.get(group_key, "")), "reason": "locked_or_unavailable"})
+        effective[group_key] = String(defaults.get(group_key, ""))
+    var report: Dictionary = player.apply_style_selections(effective, style_catalog)
+    report["locked_selections"] = dropped
+    if not dropped.is_empty():
+        print("STYLE_LOCK_DROP ", JSON.stringify(dropped))
     report["file"] = style_store.save_path
     report["file_loaded"] = style_store.loaded_ok
     report["file_error"] = style_store.last_error

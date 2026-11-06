@@ -31,6 +31,7 @@ signal selection_saved(group_key: String, entry_id: String)
 
 const PrototypeControls = preload("res://scripts/prototype_controls.gd")
 const StyleClipMap = preload("res://scripts/style_clip_map.gd")
+const StyleUnlockGate = preload("res://scripts/style_unlock_gate.gd")
 const Lang = preload("res://scripts/menu_lang.gd")
 
 const LOGICAL_SIZE: Vector2 = Vector2(480.0, 320.0)
@@ -53,6 +54,10 @@ const COLOR_RED := Color(0.92, 0.42, 0.38)
 var player: Node = null
 var catalog = null
 var store = null
+## Live unlock provider check (always_available, or the entry's recovered
+## style_anim unlock id present in user://progress_save.json).  A locked entry
+## is never written to the selection store.
+var unlock_gate = null
 
 var _open: bool = false
 var _screen: String = "closed"
@@ -94,6 +99,11 @@ func configure(main_node: Node, player_node: Node, catalog_obj, store_obj) -> vo
     player = player_node
     catalog = catalog_obj
     store = store_obj
+    if unlock_gate == null:
+        unlock_gate = StyleUnlockGate.new()
+    else:
+        unlock_gate.refresh()
+    unlock_gate.progress = main_node.get("progress") if main_node != null else null
     if not is_inside_tree():
         return
     _refresh()
@@ -104,6 +114,9 @@ func configure(main_node: Node, player_node: Node, catalog_obj, store_obj) -> vo
 func open() -> void:
     if not is_inside_tree():
         return
+    # A story event / EXP threshold may have been granted since the last open.
+    if unlock_gate != null:
+        unlock_gate.refresh()
     _open = true
     visible = true
     _screen = "category"
@@ -285,6 +298,29 @@ func _move(step: int) -> void:
     _rebuild()
 
 
+func entry_unlock_state(entry: Dictionary) -> Dictionary:
+    ## Public read-only view for the editor status line and the unlock tests.
+    if unlock_gate == null:
+        return {"available": false, "reason": "unlock_gate_unavailable"}
+    return unlock_gate.state_for(entry)
+
+
+func unlock_gate_summary() -> Dictionary:
+    if unlock_gate == null:
+        return {"available": false, "reason": "unlock_gate_unavailable"}
+    return unlock_gate.summary()
+
+
+func _locked_status(entry: Dictionary) -> String:
+    var state: Dictionary = entry_unlock_state(entry)
+    var label: String = String(entry.get("alias", entry.get("id", "")))
+    var detail: String = String(state.get("reason", "locked"))
+    var unlock_id: int = int(state.get("unlock_id", -1))
+    if unlock_id >= 0:
+        detail += " id %d exp %d" % [unlock_id, int(state.get("exp", 0))]
+    return "LOCKED | %s (%s)" % [label, detail]
+
+
 func _move_fighter(step: int) -> void:
     if catalog == null or _group_key.is_empty():
         return
@@ -292,7 +328,16 @@ func _move_fighter(step: int) -> void:
     if count <= 0:
         return
     _fighter_cursor = wrapi(_fighter_cursor + step, 0, count)
-    _status = ""
+    var entry: Dictionary = current_entry()
+    if entry.is_empty():
+        _status = ""
+        _status_is_error = false
+    elif entry_unlock_state(entry).get("available", false):
+        _status = ""
+        _status_is_error = false
+    else:
+        _status = _locked_status(entry)
+        _status_is_error = true
     _rebuild()
 
 
@@ -351,6 +396,9 @@ func _show_fighter(group_key: String) -> void:
 func _save_current() -> void:
     var entry: Dictionary = current_entry()
     if entry.is_empty() or store == null or catalog == null:
+        return
+    if not bool(entry_unlock_state(entry).get("available", false)):
+        show_status(_locked_status(entry), true)
         return
     if not store.set_selection(catalog, _group_key, String(entry.get("id", ""))):
         show_status(String(store.last_error), true)
