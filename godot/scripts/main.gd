@@ -288,22 +288,22 @@ const PACKAGE_DEFAULT_OPPONENT: String = "brick"
 const PLAYER_SKIN_CONFIG: Dictionary = {
     "skin01": {
         "glb_package": "models\\bruce_skin01.glb",
-        "sha256": "721f701d994badb9e0a786374cfde14444e93c8724d585f3fec9cd7eeb32effe",
+        "sha256": "6014515278745d97c264dad48ecef9ae92304fc868f0d6e0f0ef6917f285dd14",
         "material_profile": "body_hair",
     },
     "skin02": {
         "glb_package": "models\\bruce_skin02.glb",
-        "sha256": "55c1ef7d69313425482e581d5672b599c1f2b7f58f426b731a8905a4d422f978",
+        "sha256": "6d70ed75d73a88a1b7e22fdbfd12473aa282c070e658c857e4daf8473e7b45ee",
         "material_profile": "body_hair",
     },
     "skin03": {
         "glb_package": "models\\bruce_skin03.glb",
-        "sha256": "91b999a02ac2b74ab724bebec670596b5059125033c9551fedcfcce6d61b1441",
+        "sha256": "34f5021698e1abde7d23eae74c510bea3a12f0c9fed37d99fa4ee606db0e2504",
         "material_profile": "body_hair",
     },
     "skin04": {
         "glb_package": "models\\bruce_skin04.glb",
-        "sha256": "0653aa627aebcbe41a7fcf45a19ab1e92585500d9125be79098f7377acf62bc5",
+        "sha256": "6821877a398f5591be3d001108ef03bfd01b829573e9937ae5b247aea2734d1e",
         "material_profile": "body_hair",
     },
 }

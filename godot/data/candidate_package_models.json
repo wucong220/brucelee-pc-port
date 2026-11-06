@@ -322,15 +322,15 @@
       "expected_idle": "m01_idle_01",
       "texture_root": "",
       "package_models_dir": "models",
-      "bytes": 14579120,
-      "sha256": "721f701d994badb9e0a786374cfde14444e93c8724d585f3fec9cd7eeb32effe",
+      "bytes": 12188652,
+      "sha256": "6014515278745d97c264dad48ecef9ae92304fc868f0d6e0f0ef6917f285dd14",
       "skeleton_sha256": "4a6d4532b42d6cbee3016b849befc2dc98c089e72fa4cfe291d9550f059412e3",
       "mesh_sha256": "0860e38296521c9be073d58daf772eda4538bcc8a8eea57dc334153f2ce7f86f",
       "mesh_names": [
         "bl_brucelee_01_body_hw_skhigh",
         "bl_brucelee_01_hair_hw_skhigh"
       ],
-      "animations": 121,
+      "animations": 104,
       "textures_embedded": true,
       "fallback_glb": "",
       "fallback_exists": false
@@ -350,15 +350,15 @@
       "expected_idle": "m01_idle_01",
       "texture_root": "",
       "package_models_dir": "models",
-      "bytes": 10959728,
-      "sha256": "55c1ef7d69313425482e581d5672b599c1f2b7f58f426b731a8905a4d422f978",
+      "bytes": 12042068,
+      "sha256": "6d70ed75d73a88a1b7e22fdbfd12473aa282c070e658c857e4daf8473e7b45ee",
       "skeleton_sha256": "4a6d4532b42d6cbee3016b849befc2dc98c089e72fa4cfe291d9550f059412e3",
       "mesh_sha256": "11c7e9442170aa9562e36257d48840a4da20f5a898da00d9fd280e02ee99c236",
       "mesh_names": [
         "bl_brucelee_02_body_hw_skhigh",
         "bl_brucelee_02_hair_hw_skhigh"
       ],
-      "animations": 97,
+      "animations": 104,
       "textures_embedded": true,
       "fallback_glb": "",
       "fallback_exists": false
@@ -378,15 +378,15 @@
       "expected_idle": "m01_idle_01",
       "texture_root": "",
       "package_models_dir": "models",
-      "bytes": 10409328,
-      "sha256": "91b999a02ac2b74ab724bebec670596b5059125033c9551fedcfcce6d61b1441",
+      "bytes": 11491388,
+      "sha256": "34f5021698e1abde7d23eae74c510bea3a12f0c9fed37d99fa4ee606db0e2504",
       "skeleton_sha256": "4a6d4532b42d6cbee3016b849befc2dc98c089e72fa4cfe291d9550f059412e3",
       "mesh_sha256": "34dd7cb9ff4778d587917b7eda4397e0f28a5f0f64fcef1efefc62c90d1dfa40",
       "mesh_names": [
         "bl_brucelee_03_body_hw_kinetic",
         "bl_brucelee_03_hair_hw_kinetic"
       ],
-      "animations": 97,
+      "animations": 104,
       "textures_embedded": true,
       "fallback_glb": "",
       "fallback_exists": false
@@ -406,15 +406,15 @@
       "expected_idle": "m01_idle_01",
       "texture_root": "",
       "package_models_dir": "models",
-      "bytes": 10577376,
-      "sha256": "0653aa627aebcbe41a7fcf45a19ab1e92585500d9125be79098f7377acf62bc5",
+      "bytes": 11659448,
+      "sha256": "6821877a398f5591be3d001108ef03bfd01b829573e9937ae5b247aea2734d1e",
       "skeleton_sha256": "4a6d4532b42d6cbee3016b849befc2dc98c089e72fa4cfe291d9550f059412e3",
       "mesh_sha256": "0319ecdf1bea28cc4b6bfea55a45880852c246ae1fab09f6ea0c86c66a0864b0",
       "mesh_names": [
         "bl_brucelee_04_body_hw_kinetic",
         "bl_brucelee_04_hair_hw_kinetic"
       ],
-      "animations": 97,
+      "animations": 104,
       "textures_embedded": true,
       "fallback_glb": "",
       "fallback_exists": false

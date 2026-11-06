@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$GodotExe = "godot",
     [switch]$Debug,
     [switch]$SelfTest,
@@ -386,7 +386,7 @@ if (-not [string]::IsNullOrWhiteSpace($RuntimeAssetRoot)) {
     if (-not (Test-Path -LiteralPath $RuntimeAssetRoot -PathType Container)) {
         throw "RuntimeAssetRoot does not exist: $RuntimeAssetRoot"
     }
-    foreach ($name in @('audio', 'menu', 'scene', 'ui')) {
+    foreach ($name in @('audio', 'menu', 'scene', 'ui', 'models')) {
         $source = Join-Path $RuntimeAssetRoot $name
         if (Test-Path -LiteralPath $source -PathType Container) {
             Copy-Item -LiteralPath $source -Destination $dist -Recurse -Force

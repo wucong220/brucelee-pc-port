@@ -36,9 +36,9 @@ extends SceneTree
 
 const CANDIDATES: Dictionary = {
     "bruce": {
-        "bytes": 12528732,
-        "sha256": "787869f618f5b8347c3d5f04a8155dd2bb95cca42b76e6d394b6336b963eb80e",
-        "animations": 121,
+        "bytes": 12188652,
+        "sha256": "6014515278745d97c264dad48ecef9ae92304fc868f0d6e0f0ef6917f285dd14",
+        "animations": 104,
     },
     "brick": {
         "bytes": 4986780,
