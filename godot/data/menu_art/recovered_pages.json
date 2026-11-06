@@ -605,8 +605,32 @@
     "LangRussian": "Наклон камеры",
     "LangSpanish": "Giro de cámara"
    },
-   "values": "NOT RECOVERED",
-   "values_reason": "input_gui_alpha/camera_tilt are live gamemodes variables; applying them changes camera/visibility"
+   "values": {
+    "opacity": {
+     "key": "input_gui_alpha",
+     "type": "CSettings TReal",
+     "default": 0.25,
+     "range": [0.0, 1.0],
+     "step": 0.1,
+     "clamp": "SettingsValue0to1Modify: clamp(current + delta, 0.0, 1.0)",
+     "widget_datasources": ["visibility.value", "samplebutton.alpha"],
+     "status": "RECOVERED"
+    },
+    "camera_tilt": {
+     "key": "camera_tilt",
+     "type": "CSettings TReal label index",
+     "default": 1.0,
+     "decoded_labels": [
+      {"label_key": "ct_low", "label_en": "No"},
+      {"label_key": "ct_medium", "label_en": "Low"},
+      {"label_key": "ct_high", "label_en": "High"}
+     ],
+     "widget_datasources": ["cameratilt.selectedoption"],
+     "mapping": "NOT PROVEN / NOT READY: the UI binds selectedoption to option/camera_tilt, but no local evidence proves the selected option index is stored as TReal 0/1/2, so label order -> native value is not claimed.",
+     "status": "DECODED UI BINDING; INDEX MAPPING NOT READY"
+    }
+   },
+   "values_source": "decoded settingsvideo.ui datasources + CApplication::Init default words + SettingsValue0to1Modify clamp + .lang ct_low/ct_medium/ct_high"
   },
   "controls": {
    "state": "settingscontrols",
@@ -642,9 +666,52 @@
     "LangRussian": "Управление",
     "LangSpanish": "Controles"
    },
-   "values": "NOT RECOVERED",
-   "values_reason": "settingscontrols.ui offers two decoded pad pictures but no control mapping"
+   "values": {
+    "input_layout": {
+     "key": "input_layout",
+     "type": "CSettings TReal dock index",
+     "default": 0.0,
+     "decoded_items": [
+      {"item_basename": "bl_fixed_pad", "label_key": "tactile_pad", "label_en": "Fixed Pad"},
+      {"item_basename": "bl_floating_pad", "label_key": "tactile_floating", "label_en": "Floating Pad"}
+     ],
+     "widget_datasources": ["controls_dock.validselectedoption"],
+     "mapping": "NOT PROVEN / NOT READY: CBruceLeeDock::ChangeSelectedOption reads the selectedoption TReal and converts it to an integer index, but the item-order -> input_layout index binding through CDock::LoadOptions/Init was not proven locally.",
+     "status": "DECODED UI BINDING; ITEM-ORDER MAPPING NOT READY"
+    }
+   },
+   "values_source": "decoded settingscontrols.ui items + validselectedoption datasource + CApplication::Init default word + .lang tactile_pad/tactile_floating; the actual control mapping is NOT RECOVERED"
   },
+  "defaults": {
+   "input_layout": 0.0,
+   "input_gui_alpha": 0.25,
+   "camera_tilt": 1.0,
+   "evidence": "krm::CApplication::Init SetDefaultTReal instruction words: input_layout @0x154254 word 0xe3a02000; input_gui_alpha @0x1542d8 word 0xe3a025fa (0.25f); camera_tilt @0x154524 word 0xe3a025fe (1.0f)"
+  },
+  "persistence": {
+   "provider": "option",
+   "store": "krm::CBruceLeeSettings : krm::gui::CSettings",
+   "file": "settings.dat under sal::GetAppWritePath()",
+   "format": "1FDKENONCTX3 (krm resource)",
+   "keys": ["input_gui_alpha", "camera_tilt", "input_layout"],
+   "write_policy": "Only the three option cells may be patched in place; never replace the 'option' provider dictionary and never touch other providers (Stats/Unlocker/story/characters/format/translate)."
+  },
+  "effects": {
+   "input_gui_alpha": {
+    "native": "CBeatEmUpMatch::UpdateControlMethod(unsigned) and ChangeControlMethod() read CHStrMgr 'input_gui_alpha' and pass it into the control-method update; VisibilityIncrease/Decrease (ELF 0x18d148/0x18d1d8) apply +/-0.1f (0x3dcccccd/0xbdcccccd) through SettingsValue0to1Modify (clamp [0,1]).",
+    "label_help": "settings_help_video: 'Opacity: Slide the finger along the line, or press + and - to change the transparency of the controls.'",
+    "status": "RECOVERED NATIVE CONSUMER; PC HUD opacity binding NOT RECOVERED"
+   },
+   "camera_tilt": {
+    "native": "UpdateGameVariables (ELF 0x187c74) reads CHStrMgr 'camera_tilt', multiplies by literal 0.1f (0x3dcccccd) and stores it to CBeatEmUpMatch field +0x3ec; CBeatEmUpMatch::LoadProcessBegin also reads it.",
+    "status": "RECOVERED NATIVE WRITE TARGET; PC camera visual effect NOT RECOVERED"
+   },
+   "input_layout": {
+    "native": "CBeatEmUpGameModes::GetCurrentInputLayout (ELF 0x15b964) reads CHStrMgr 'input_layout' and returns (unsigned)(float); UpdateGameVariables passes that value to CBeatEmUpMatch::UpdateControlMethod.",
+    "status": "RECOVERED NATIVE CONSUMER; PC control-scheme binding NOT RECOVERED"
+   }
+  },
+  "reachability_scope": "Negative reachability result for the shipped v1.15.26 data.zpak in local evidence only: 128 shipped .ui files (adreno_200/gui + gui/zdk) contain no widget action or menu option equal to video/controls; input.config virtual keys do not contain them; libdefault.so has no 'controls' literal and 'video' only inside renderer error text. Not a claim about other builds or versions.",
   "reachability": "NOT RECOVERED",
   "reachability_reason": "the shipped settings.ui/settingsaudio.ui have NO widget whose action is video or controls; the state actions exist but no decoded row/button emits them, so no user path is invented"
  },
