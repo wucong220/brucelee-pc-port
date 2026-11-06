@@ -1,14 +1,14 @@
 # 当前状态：2026-11-06
 
-> 本文件记录 Current246 的真实状态。根目录 [`README_zh.md`](../README_zh.md) 与 [`PHASES.md`](PHASES.md) 中早期章节保留 P0–P2/候选阶段历史，不再作为当前实现的唯一依据。
+> 本文件记录 Current247 的真实状态。根目录 [`README_zh.md`](../README_zh.md) 与 [`PHASES.md`](PHASES.md) 中早期章节保留 P0–P2/候选阶段历史，不再作为当前实现的唯一依据。
 
 ## 基线
 
 - 分支：`codex/training-hints`
-- 当前运行时代码 / HEAD：`34a0907cd0ca1634d8caa1f4b42334b9a4bece9a`
+- 当前运行时代码 / HEAD：`99570aae24afe3213d551fd0a92ee33b163f2c05`
 - 远端：本地 / 远端 `0 / 0`
-- 当前包：[DragonWarrior-Current246-20261103](<D:/BruceLeeWork/DragonWarrior-Current246-20261103>)
-- 入口：[BruceLee_Start.exe](<D:/BruceLeeWork/DragonWarrior-Current246-20261103/BruceLee_Start.exe>)
+- 当前包：[DragonWarrior-Current247-20261103](<D:/BruceLeeWork/DragonWarrior-Current247-20261103>)
+- 入口：[BruceLee_Start.exe](<D:/BruceLeeWork/DragonWarrior-Current247-20261103/BruceLee_Start.exe>)
 - 构建：Godot 4.7.2 stable，Windows x86_64 EXE + PCK，GL Compatibility
 - 测试约束：仅 `--headless`，不弹窗、不截图；原始 APK/ZPAK/SO/音频/模型仅本机私有，不进 Git
 
@@ -36,6 +36,7 @@
 | Native progress 默认启用 | 正常启动默认使用 `settings.dat`；旧 JSON 一次性迁移；`BRUCELEE_PROGRESS=0` / `BRUCELEE_NATIVE_PROGRESS=0` 可关闭 |
 | Art / fighters gallery | art 18 项按 artpictures.list 顺序；fighters 10 uniques、2 列 row-major、selectedcell 与 profile 跳转已恢复 |
 | Player tutorial style | 教程 `use_custom_style=false` 使用 Bruce 默认 8 个精确 unique IDs；关闭/切 Free Training 恢复保存 clip |
+| Player active unique | 默认使用原生 Bruce 8 IDs；显式风格（如 Brick `grababrick` / `endsmallboy`）才启用对手变体；不再按当前对手自动推断 |
 | Brick parry | 吸收后设置 `_parry_absorbed`，high parry 可进入 `parry_attack_brick` 并造成 10 伤害 |
 
 核心文件：
@@ -76,13 +77,14 @@
 | Parry endattack | 25 expected passes / 0 unexpected |
 | Native progress default | default_save 11 / restart 8 / migration 10+6 / language_seed 7 / opt_out 7，全 0 |
 | Gallery bindings | normal 35 / tamper_order 8 / tamper_demoted 8，全 0 |
-| Current246 package selftest | 15/15 SHA pins；launch exit 0 |
+| Current247 package selftest | 15/15 SHA pins；launch exit 0 |
 | Current245 mode-flow | Arcade/Survival/TimeAttack/Training 源码与 PCK 全部 exit 0，SCRIPT ERROR 0 |
-| Current246 tutorial style | special high/low PASS；grab 教程 Bruce 默认 20；退出恢复 saved style |
+| Current247 native uniques | default 8 IDs；default grab/endattack、special high/low、tutorial 均 exit 0 |
 
 ## 明确边界 / 待继续
 
-- Free Training 的 native active unique IDs 尚未接线；当前保存风格只影响 clip 映射，不能称为完整风格选择。
+- Free Training/VS 已加载保存风格并在 match start 应用；VS fighter0 的原生 boolean 仍未回溯，不能称完整 native 模式配置。
+- `styleeditor.list` 没有 Brick `grabs/grabb`、Brick `endmove` 条目，因此 `grabbbrick`/`endbrickdavis` 不可选；明确选中的大骨架终结技走 `endsmallboy`/`endjohnson` 的同一 `m03` 剪辑。
 - Native Stats/story/mode 写入仍需真实 Android `settings.dat`；当前没有样本，保持 NOT READY。
 - Stats 只接 TReal 子集。
 - Art/fighters 的 list 顺序、2 列布局、selectedcell/profile 跳转已证明；per-index unlock state、运行时原始像素仍未恢复，保持 fail-closed。
@@ -94,6 +96,6 @@
 
 ## 当前状态
 
-主玩法链已在 Current246 收口；教程 special/grab 已按 native `use_custom_style=false` 规则隔离。剩余未证明项保持 fail-closed，不以占位/猜测补全。
+主玩法链已在 Current247 收口；默认 Bruce 使用原生 8 个 active unique IDs，显式风格才启用对手变体。剩余未证明项保持 fail-closed，不以占位/猜测补全。
 
 后续继续遵守：只用原版/反编译证据，缺证据 fail-closed，不发明动作、相机、概率；全部 `--headless`。
