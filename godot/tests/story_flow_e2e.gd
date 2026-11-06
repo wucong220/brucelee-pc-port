@@ -270,7 +270,10 @@ func _run() -> void:
 	check("match result returns to the story flow", resolved, _screen())
 	flow = _flow()
 	guard = 0
-	while _screen() == "picture" and guard < 12:
+	# The recovered StoryLevelUpNotify / ExperienceUnlock notices now sit between
+	# the post-battle picture playback and the text rewards screen, so both the
+	# "picture" and "notice" screens must be confirmed here.
+	while (_screen() == "picture" or _screen() == "notice") and guard < 24:
 		flow.call("_accept")
 		guard += 1
 		await process_frame
