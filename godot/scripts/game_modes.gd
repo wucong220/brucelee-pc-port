@@ -745,7 +745,9 @@ func _input(event: InputEvent) -> void:
 		_cancel()
 	else:
 		return
-	get_viewport().set_input_as_handled()
+	var viewport: Viewport = get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
 
 
 func _move(step: int) -> void:
