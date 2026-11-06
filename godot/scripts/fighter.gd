@@ -6342,6 +6342,9 @@ func _link_text(link: Dictionary, key: String) -> String:
     return str(value)
 
 
+const TUTORIAL_DEFAULT_UNIQUES := ["brucelee", "hpunchbrucelee", "lpunchbrucelee", "hkickbrucelee", "lkickbrucelee", "grababrucelee", "grabbbrucelee", "endbrucelee"]
+var tutorial_default_uniques: bool = false
+
 func _native_link_unique_ok(link: Dictionary) -> bool:
     # Recovered unique links name the character-specific action variant
     # (grababrucelee / grababrick / endkengodall).  In brucelee.set that tag is
@@ -6351,6 +6354,11 @@ func _native_link_unique_ok(link: Dictionary) -> bool:
     # directly, so this branch only matters for the local player.
     var unique: Array = Array(link.get("unique", []))
     if unique.is_empty():
+        return true
+    if is_player and tutorial_default_uniques:
+        for value: Variant in unique:
+            if not TUTORIAL_DEFAULT_UNIQUES.has(String(value).to_lower()):
+                return false
         return true
     if is_player:
         var opponent_token: String = _opponent_suffix_token()
@@ -10106,6 +10114,31 @@ func style_runtime_snapshot() -> Dictionary:
         "slots": _candidate_clip_paths.duplicate(),
         "animations": animations,
     }
+
+
+var _tutorial_snapshot: Dictionary = {}
+
+
+func enter_tutorial_default_style() -> void:
+    ## Tutorial-only isolation: save the currently applied clip table, then run
+    ## on the character's own defaults while the lesson active.  Native tutorial
+    ## passes use_custom_style=false, which makes SetUniquesList take its
+    ## hardcoded index-0 branch instead of the saved style settings.
+    if tutorial_default_uniques:
+        return
+    _tutorial_snapshot = _candidate_clip_paths.duplicate()
+    _candidate_clip_paths = _style_base_clips.duplicate() \
+        if not _style_base_clips.is_empty() else _candidate_clip_paths.duplicate()
+    tutorial_default_uniques = true
+
+
+func exit_tutorial_default_style() -> void:
+    if not tutorial_default_uniques:
+        return
+    tutorial_default_uniques = false
+    if not _tutorial_snapshot.is_empty():
+        _candidate_clip_paths = _tutorial_snapshot
+        _tutorial_snapshot = {}
 
 
 func apply_style_selections(selections: Dictionary, catalog) -> Dictionary:

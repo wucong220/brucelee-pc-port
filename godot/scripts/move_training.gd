@@ -1363,6 +1363,8 @@ func open_select() -> void:
 
 
 func close() -> void:
+    if player != null:
+        player.exit_tutorial_default_style()
     state = "hidden"
     visible = false
     _notice.visible = false
@@ -1709,6 +1711,10 @@ func _start_step(index: int) -> void:
 func _prepare_step() -> void:
     if player == null or computer == null:
         return
+    if current_training.get("use_custom_style", true) == false:
+        player.enter_tutorial_default_style()
+    else:
+        player.exit_tutorial_default_style()
     player.set_physics_process(true)
     player.attack_root_motion_enabled = true
     player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
@@ -1731,6 +1737,7 @@ func _prepare_step() -> void:
 func _setup_dummy_stand() -> void:
     if player == null or computer == null:
         return
+    player.exit_tutorial_default_style()
     player.set_physics_process(true)
     player.reset_fighter(Vector3(-0.25, 1.20, 0.0))
     player.health = 9999.0
