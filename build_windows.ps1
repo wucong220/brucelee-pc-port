@@ -392,7 +392,7 @@ if (-not [string]::IsNullOrWhiteSpace($RuntimeAssetRoot)) {
             Copy-Item -LiteralPath $source -Destination $dist -Recurse -Force
         }
     }
-    foreach ($name in @('launch.ps1', 'DragonWarrior.cmd', 'DragonWarrior_TempleYardB.cmd', 'DragonWarrior_A_Direct.cmd', 'DragonWarrior_B_Direct.cmd', 'DragonWarrior_HallA_Direct.cmd', 'DragonWarrior_HarbourA_Direct.cmd', 'DragonWarrior_SquareB_Direct.cmd', 'README.txt')) {
+    foreach ($name in @('launch.ps1', 'BruceLee_Start.cs', 'BruceLee_Start.exe', 'DragonWarrior.cmd', 'DragonWarrior_TempleYardB.cmd', 'DragonWarrior_A_Direct.cmd', 'DragonWarrior_B_Direct.cmd', 'DragonWarrior_HallA_Direct.cmd', 'DragonWarrior_HarbourA_Direct.cmd', 'DragonWarrior_SquareB_Direct.cmd', 'README.txt')) {
         $source = Join-Path $RuntimeAssetRoot $name
         if (Test-Path -LiteralPath $source -PathType Leaf) {
             Copy-Item -LiteralPath $source -Destination (Join-Path $dist $name) -Force
