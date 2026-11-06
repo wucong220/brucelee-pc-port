@@ -1166,19 +1166,27 @@ const CATEGORY_TABLE_PATH: String = "res://data/native_action_categories.json"
 ## variants; every row is derived from the native set/link records and the
 ## animation must be playable by an existing candidate or the row fails closed.
 const OPPONENT_SUFFIX_VARIANTS_PATH: String = "res://data/opponent_suffix_variants.json"
-## characters.list matchup identity behind `unique` link tags.  brucelee.set
-## names the OPPONENT on a variant action (grababrick, endkengodall, ...), so the
-## local player matches unique tags against this token, not against itself.
-const OPPONENT_SUFFIX_TOKEN: Dictionary = {
-    "res://data/fighting_set_m03_mapped_attacks.json": "brick",
-    "res://data/attack_config_smallboy.json": "smallboy",
-    "res://data/attack_config_johnson.json": "johnson",
-    "res://data/attack_config_chief.json": "chief",
-    "res://data/attack_config_loming.json": "loming",
-    "res://data/attack_config_ken.json": "ken",
-    "res://data/attack_config_master.json": "master",
-    "res://data/attack_config_sinfu.json": "sinfu",
-    "res://data/attack_config_shenlo.json": "shenlo",
+## characters.list `uniques` array of every recovered character, in array
+## order.  CBeatEmUpGame::LoadFighter copies the labels into CFighter+0x120 and
+## CFighter::IsLinkAllowed @0x1b052c accepts a tagged row only when every tag is
+## an exact member of that fighter's list.  Only the Brucelee entry is rebuilt
+## by CStyleEditor::SetUniquesList from the seven selected style categories; the
+## other fighters keep their own single label.  Keys are the attack-config paths
+## the port loads per character.
+const CHARACTER_UNIQUE_LABELS: Dictionary = {
+    "res://data/fighting_set_low_attacks.json": [
+        "brucelee", "hpunchbrucelee", "lpunchbrucelee", "hkickbrucelee",
+        "lkickbrucelee", "endbrucelee", "grababrucelee", "grabbbrucelee",
+    ],
+    "res://data/fighting_set_m03_mapped_attacks.json": ["brickdavis"],
+    "res://data/attack_config_smallboy.json": ["smallboy"],
+    "res://data/attack_config_johnson.json": ["johnson"],
+    "res://data/attack_config_chief.json": ["chief"],
+    "res://data/attack_config_loming.json": ["loming"],
+    "res://data/attack_config_ken.json": ["kengodall"],
+    "res://data/attack_config_master.json": ["themaster"],
+    "res://data/attack_config_sinfu.json": ["sinfu"],
+    "res://data/attack_config_shenlo.json": ["shenlo"],
 }
 # Complete recovered candobasicattacks group coverage (84 members, 21 links).
 # Built read-only from brucelee.set by tools/build_candobasicattacks_members.py.
@@ -3474,6 +3482,7 @@ func _ready() -> void:
         candidate_visual_blending_enabled = true
     if not _load_attack_definitions():
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
+    _init_active_uniques()
     _load_native_links()
     _init_native_reaction_gate()
     _load_attack_root_motion()
@@ -3546,8 +3555,9 @@ func _load_attack_definitions() -> bool:
 ## row is merged into ATTACKS as an attack kind whose source_action is the native
 ## action name, so the existing native link scan / recovery / camera code treats
 ## it exactly like any other attack.  A row is only playable when a native entry
-## link exists for this opponent and an existing candidate owns the animation;
-## otherwise request_attack/_begin_chained_attack fail closed.
+## link exists and the row's recovered `unique` tag is in the fighter's active
+## unique list (i.e. the player explicitly selected that style); otherwise
+## request_attack/_begin_chained_attack fail closed.
 ## ---------------------------------------------------------------------------
 
 func _load_opponent_suffix_variants() -> void:
@@ -3594,6 +3604,19 @@ func _load_opponent_suffix_variants() -> void:
             _opponent_suffix_error = kind + ": invalid recovered phase frames"
             push_error("Opponent-suffix variant " + kind + " rejected: " + _opponent_suffix_error)
             continue
+        # The native entry link's `unique` tag is the ownership token that
+        # CFighter::IsLinkAllowed compares against the fighter's active list.
+        var variant_unique: String = ""
+        var entry_rows: Array = Array(row.get("entry", []))
+        if not entry_rows.is_empty() and entry_rows[0] is Dictionary:
+            var entry_tags: Array = Array(Dictionary(entry_rows[0]).get("unique", []))
+            if not entry_tags.is_empty():
+                variant_unique = String(entry_tags[0]).strip_edges().to_lower()
+        if variant_unique.is_empty():
+            _opponent_suffix_error = kind + ": entry link has no unique tag"
+            push_error("Opponent-suffix variant " + kind + " rejected: "
+                    + _opponent_suffix_error)
+            continue
         var source_impact: Variant = row.get("source_impact")
         if not source_impact is Dictionary:
             source_impact = {}
@@ -3622,6 +3645,7 @@ func _load_opponent_suffix_variants() -> void:
             "animation_radius": float(row.get("radius", 0.0)),
             "variant_family": family,
             "variant_suffix": String(row.get("suffix", "")),
+            "variant_unique": variant_unique,
             "variant_camera": String(row.get("camera", "")),
             "variant_grab_family": String(row.get("grab_family", "")),
             "variant_attack_config": String(row.get("attack_config", "")),
@@ -3633,19 +3657,15 @@ func _is_variant_attack(kind: String) -> bool:
     return _opponent_suffix_variants.has(kind)
 
 
-func _opponent_suffix_token() -> String:
-    if opponent == null or not is_instance_valid(opponent):
-        return ""
-    return String(OPPONENT_SUFFIX_TOKEN.get(opponent.attack_config_path, ""))
-
-
-func _variant_opponent_ok(kind: String) -> bool:
+func _variant_selected_ok(kind: String) -> bool:
+    ## Native ownership: a recovered opponent-suffix row is enterable only when
+    ## its own `unique` tag is an exact member of this fighter's active unique
+    ## list.  The current opponent is irrelevant; only an explicit style
+    ## selection puts another character's ID into Bruce's list.
     if not _is_variant_attack(kind):
         return false
-    var token: String = _opponent_suffix_token()
-    if token.is_empty():
-        return false
-    return String(ATTACKS[kind].get("variant_suffix", "")) == token
+    var tag: String = String(ATTACKS[kind].get("variant_unique", ""))
+    return not tag.is_empty() and _active_uniques.has(tag)
 
 
 func _variant_grab_family(kind: String) -> String:
@@ -5113,9 +5133,10 @@ func supports_attack(kind: String) -> bool:
     if not ATTACKS.has(kind):
         return false
     if _is_variant_attack(kind):
-        # A variant is enterable only for its recovered opponent and only when an
-        # existing candidate animation can play it (player or opponent clip).
-        if not _variant_opponent_ok(kind):
+        # A variant is enterable only when its recovered unique tag is in the
+        # explicit style selection and an existing candidate can play it
+        # (player or opponent clip).
+        if not _variant_selected_ok(kind):
             return false
         return _resolve_variant_clip(kind)
     if candidate_loaded and not _candidate_clip_paths.has(kind):
@@ -6342,36 +6363,114 @@ func _link_text(link: Dictionary, key: String) -> String:
     return str(value)
 
 
-const TUTORIAL_DEFAULT_UNIQUES := ["brucelee", "hpunchbrucelee", "lpunchbrucelee", "hkickbrucelee", "lkickbrucelee", "grababrucelee", "grabbbrucelee", "endbrucelee"]
+## Native active unique list (CFighter+0x120).
+##
+## krm::IBeatEmUpGameMode::SetFighterConfigFromCharacterList @0x20f418 fills the
+## config's unique vector from characters.list and calls
+## CStyleEditor::SetUniquesList @0x1e6518 for Brucelee only; LoadFighter
+## @0x18d9a0 copies it into the fighter.  IsLinkAllowed @0x1b052c is an exact
+## integer membership test: an empty link list always passes, an empty fighter
+## list refuses every tagged link.  There is no opponent-token substring rule.
+const STYLE_UNIQUE_GROUPS: Array[String] = [
+    "special/hpunch", "special/lpunch", "special/hkick", "special/lkick",
+    "grabs/graba", "grabs/grabb", "endmove/endmove",
+]
+## Proven default list: characters.list `uniques` of "bruce lee a" (= the
+## index-0 style entries CStyleEditor::ResetDefaultStyle selects).
+const DEFAULT_BRUCE_UNIQUES: Array[String] = [
+    "brucelee", "hpunchbrucelee", "lpunchbrucelee", "hkickbrucelee",
+    "lkickbrucelee", "endbrucelee", "grababrucelee", "grabbbrucelee",
+]
+const DEFAULT_UNIQUE_BY_GROUP: Dictionary = {
+    "special/hpunch": "hpunchbrucelee",
+    "special/lpunch": "lpunchbrucelee",
+    "special/hkick": "hkickbrucelee",
+    "special/lkick": "lkickbrucelee",
+    "grabs/graba": "grababrucelee",
+    "grabs/grabb": "grabbbrucelee",
+    "endmove/endmove": "endbrucelee",
+}
+## Tutorial lessons pass use_custom_style=false, so SetUniquesList takes its
+## hardcoded index-0 branch and the saved style selections are ignored.
 var tutorial_default_uniques: bool = false
+var _active_uniques: Dictionary = {}
+var _default_uniques: Dictionary = {}
+var _style_uniques: Dictionary = {}
+
+
+func _unique_set(values: Array) -> Dictionary:
+    var out: Dictionary = {}
+    for value: Variant in values:
+        var text: String = String(value).strip_edges().to_lower()
+        if not text.is_empty():
+            out[text] = true
+    return out
+
+
+func _init_active_uniques() -> void:
+    ## Character labels first.  For Brucelee apply_style_selections() then
+    ## rebuilds the seven style IDs, exactly like SetUniquesList.
+    _default_uniques = _unique_set(
+        Array(CHARACTER_UNIQUE_LABELS.get(attack_config_path, []))
+    )
+    _style_uniques = _default_uniques.duplicate()
+    _active_uniques = _default_uniques.duplicate()
+
+
+func active_uniques() -> Array:
+    var out: Array = _active_uniques.keys()
+    out.sort()
+    return out
+
+
+func style_uniques() -> Array:
+    var out: Array = _style_uniques.keys()
+    out.sort()
+    return out
+
+
+func set_style_uniques(values: Array) -> void:
+    ## The seven style-category IDs replace the character defaults (native
+    ## SetUniquesList clears the vector before appending).  While a
+    ## use_custom_style=false lesson runs, the default set stays active.
+    _style_uniques = _unique_set(values)
+    if not tutorial_default_uniques:
+        _active_uniques = _style_uniques.duplicate()
+
+
+func _selected_style_uniques(selections: Dictionary, catalog) -> Array:
+    ## SetUniquesList appends ["BruceLee"] and then one ID per category in the
+    ## recovered order: 4 special, 2 grabs, 1 endmove.  personality is not one
+    ## of the seven and therefore never joins the combat list.
+    var out: Array = ["brucelee"]
+    for group_key: String in STYLE_UNIQUE_GROUPS:
+        var unique: String = ""
+        var entry_id: String = String(selections.get(group_key, ""))
+        if catalog != null and not entry_id.is_empty():
+            var entry: Dictionary = catalog.entry(group_key, entry_id)
+            unique = String(entry.get("unique", "")).strip_edges().to_lower()
+        if unique.is_empty():
+            unique = String(DEFAULT_UNIQUE_BY_GROUP.get(group_key, ""))
+        if unique.is_empty():
+            # Unproven category: refuse the whole rebuild instead of keeping a
+            # partially invented list.
+            return []
+        out.append(unique)
+    return out
+
 
 func _native_link_unique_ok(link: Dictionary) -> bool:
-    # Recovered unique links name the character-specific action variant
-    # (grababrucelee / grababrick / endkengodall).  In brucelee.set that tag is
-    # the OPPONENT of the matchup, so the local player filters against the
-    # opponent's recovered token.  Other fighting sets keep the self-tag rule:
-    # their unique tags name their own character and the AI requests its kinds
-    # directly, so this branch only matters for the local player.
+    ## CFighter::IsLinkAllowed @0x1b052c: every tag of the row must be an exact
+    ## member of this fighter's active unique list.
     var unique: Array = Array(link.get("unique", []))
     if unique.is_empty():
         return true
-    if is_player and tutorial_default_uniques:
-        for value: Variant in unique:
-            if not TUTORIAL_DEFAULT_UNIQUES.has(String(value).to_lower()):
-                return false
-        return true
-    if is_player:
-        var opponent_token: String = _opponent_suffix_token()
-        if not opponent_token.is_empty():
-            for value: Variant in unique:
-                if String(value).to_lower().contains(opponent_token):
-                    return true
-            return false
-    var tag: String = String(attack_set_profile.get("link_tag", "brucelee"))
+    if _active_uniques.is_empty():
+        return false
     for value: Variant in unique:
-        if String(value).to_lower().contains(tag):
-            return true
-    return false
+        if not _active_uniques.has(String(value).strip_edges().to_lower()):
+            return false
+    return true
 
 
 func _build_variant_precedence() -> void:
@@ -6422,8 +6521,6 @@ func _defer_generic_link_for_variant(link: Dictionary) -> bool:
         return false
     var specific: Variant = _variant_precedence.get(int(link.get("order", -1)), null)
     if not specific is Array:
-        return false
-    if _opponent_suffix_token().is_empty():
         return false
     for other: Dictionary in specific:
         if not _native_link_unique_ok(other):
@@ -7408,11 +7505,12 @@ func request_attack(kind: String) -> bool:
     if guard_held or not ATTACKS.has(kind):
         return false
     if _is_variant_attack(kind):
-        # Variants are entered from their recovered native link, and only for the
-        # recovered opponent.  This guard also keeps direct callers honest.
-        if not _variant_opponent_ok(kind):
+        # Variants are entered from their recovered native link, and only when
+        # the explicit style selection put their unique tag into the active
+        # list.  This guard also keeps direct callers honest.
+        if not _variant_selected_ok(kind):
             push_warning(character_name + " " + kind
-                    + " refused: opponent does not own this variant")
+                    + " refused: style selection does not own this variant")
             return false
         if not _resolve_variant_clip(kind):
             push_warning(character_name + " " + kind + " refused: "
@@ -7852,7 +7950,7 @@ func _begin_chained_attack(
         # Opponent-suffix variants resolve their clip from the player candidate or
         # borrow the same archived animation from the opponent's already-loaded
         # candidate.  A row whose clip is missing on both fails closed here.
-        if not _variant_opponent_ok(kind) or not _resolve_variant_clip(kind):
+        if not _variant_selected_ok(kind) or not _resolve_variant_clip(kind):
             push_warning(character_name + " " + kind + " link refused: "
                     + String(_variant_clip_status.get(kind, {}).get("reason", "")))
             return false
@@ -10120,15 +10218,21 @@ var _tutorial_snapshot: Dictionary = {}
 
 
 func enter_tutorial_default_style() -> void:
-    ## Tutorial-only isolation: save the currently applied clip table, then run
-    ## on the character's own defaults while the lesson active.  Native tutorial
-    ## passes use_custom_style=false, which makes SetUniquesList take its
-    ## hardcoded index-0 branch instead of the saved style settings.
+    ## Tutorial lessons pass use_custom_style=false: SetUniquesList takes its
+    ## hardcoded index-0 branch, so the saved style (and its unique IDs) is
+    ## ignored until the lesson ends.  The clip table is snapshotted the same
+    ## way so a saved clip selection cannot leak into the lesson.
     if tutorial_default_uniques:
         return
     _tutorial_snapshot = _candidate_clip_paths.duplicate()
-    _candidate_clip_paths = _style_base_clips.duplicate() \
-        if not _style_base_clips.is_empty() else _candidate_clip_paths.duplicate()
+    # Reset only the style slots to the character's own table; the rest of the
+    # candidate clip map (movement, every attack kind, reactions) must stay
+    # intact or a tutorial lesson would lose unrelated clips.
+    for slot: String in _style_base_clips:
+        _candidate_clip_paths[slot] = _style_base_clips[slot]
+    if _default_uniques.is_empty():
+        _default_uniques = _unique_set(DEFAULT_BRUCE_UNIQUES)
+    _active_uniques = _default_uniques.duplicate()
     tutorial_default_uniques = true
 
 
@@ -10136,6 +10240,7 @@ func exit_tutorial_default_style() -> void:
     if not tutorial_default_uniques:
         return
     tutorial_default_uniques = false
+    _active_uniques = _style_uniques.duplicate()
     if not _tutorial_snapshot.is_empty():
         _candidate_clip_paths = _tutorial_snapshot
         _tutorial_snapshot = {}
@@ -10156,11 +10261,22 @@ func apply_style_selections(selections: Dictionary, catalog) -> Dictionary:
         "error": "",
         "animations_loaded": _candidate_animation != null,
     }
-    if _candidate_animation == null:
-        report["error"] = "candidate animation library is not loaded"
+    if tutorial_default_uniques:
+        # use_custom_style=false ignores CSettings entirely (SetUniquesList
+        # takes its index-0 branch); a late style apply must not leak in.
+        report["error"] = "tutorial default style is active"
         return report
     if catalog == null:
         report["error"] = "style catalog is unavailable"
+        return report
+    var selected: Array = _selected_style_uniques(selections, catalog)
+    if selected.is_empty():
+        report["error"] = "style unique list failed closed"
+        return report
+    set_style_uniques(selected)
+    report["uniques"] = active_uniques()
+    if _candidate_animation == null:
+        report["error"] = "candidate animation library is not loaded"
         return report
     for slot: String in StyleClipMap.ALL_PLAYER_SLOTS:
         if _candidate_clip_paths.has(slot) and not _style_base_clips.has(slot):

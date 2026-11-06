@@ -208,7 +208,7 @@ func _run() -> void:
 	print("ACTIVE_SET=" + JSON.stringify({
 		"scenario": scenario,
 		"tags": _player.get("_active_unique_tags"),
-		"token": _player._opponent_suffix_token(),
+		"token": _player.active_uniques(),
 	}))
 	var rows: Array = []
 	rows.append(_special(false, 32.0))

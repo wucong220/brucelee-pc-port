@@ -4,35 +4,32 @@ const PC = preload("res://scripts/prototype_controls.gd")
 ## InputEventKey presses and Input action state, not direct fighter method calls.
 ##
 ## Recovered native real-key/link path (adreno_200/set/brucelee.set, keyboard
-## sequence variant index 1 = fighter+0x1c = 1):
-##   stepright -> grab1miss   link order 6,   sequence [pressa], rage2thirds,
-##                            unique grababrucelee, input_reset true
-##   grab1miss -> grab1       link order 347, automatic, window [8, 9],
-##                            conditions grabdistance + oppposestand +
-##                            oppnotblocking
-##   stepleft  -> grab2miss   link order 7,   sequence [pressc], rage2thirds,
-##                            unique grabbbrucelee, input_reset true
-##   grab2miss -> grab2       link order 349, automatic, window [8, 9], same
-##                            conditions
+## sequence variant index 1 = fighter+0x1c = 1).  CFighter::IsLinkAllowed is an
+## exact membership test against the fighter's own active unique list, so the
+## Brick opponent does not select its rows:
+##   DEFAULT (8 characters.list uniques of Bruce Lee):
+##     stepright -> grab1miss   link order 6,   unique grababrucelee
+##     grab1miss -> grab1       link order 347, automatic, window [8, 9]
+##     stepleft  -> grab2miss   link order 7,   unique grabbbrucelee
+##     grab2miss -> grab2       link order 349, automatic, window [8, 9]
+##     candobasicattacks -> endattack1 order 34 (A), endattack2 order 35 (C)
+##   EXPLICIT {grabs/graba=grababrick, endmove=endsmallboy}:
+##     stepright -> grab1miss brick order 8 -> grab1 brick order 383
+##     candobasicattacks -> endattack smallboy order 44 (A); order 35 is refused
+##     because endbrucelee left the active list.
 ## grab1miss/grab2miss carry action.rage = -66, spent when the miss begins, so
 ## the holding step is not a one-frame shortcut to grab1/grab2: the miss plays
-## through the recovered [8, 9] window and only then does the automatic chain
-## hand over to the grab, which then connects the victim into grabbed1/grabbed2.
+## through the recovered window and only then does the automatic chain hand over
+## to the grab, which then connects the victim into grabbed1/grabbed2.
 ##
-## The real input path starts a grab MISS, not the grab itself, on the
-## documented "hold step toward + attack key" gesture.  This test pins that
-## native two-step path and then drives the recovered candobasicattacks
-## finisher links through the same real input path.  Everything is fail-closed:
-## any missing intermediate state aborts with exit 1.
-##
-## brucelee.set holds generic AND opponent-suffixed rows; the `unique` token
-## names the matchup OPPONENT.  Against the Brick opponent of this fixture the
-## native chain is stepright -> grab1miss brick (order 8) -> grab1 brick
-## (order 383) -> endattack brick (order 36, unique endbrickdavis).  The
-## generic rows (6/347/34) stay in the table, order 34 is deferred while the
-## specific variant applies, and order 35 (endattack2, unique endbrucelee) is
-## the mirror-only c-key link.  brucelee.set contains no "endattack2 brick",
-## so the second real-key path must fail closed at the finisher press.
+## This test pins that native two-step path and then drives the recovered
+## candobasicattacks finisher links through the same real input path.
+## Everything is fail-closed: any missing intermediate state aborts with exit 1.
+
+const BRICK_STYLE: Dictionary = {
+    "grabs/graba": "grababrick",
+    "endmove/endmove": "endsmallboy",
+}
 
 var match_scene: Node = null
 var player: PortFighter = null
@@ -61,21 +58,36 @@ func _endattack_kind(kind: String) -> bool:
             or kind.begins_with("endattack "))
 
 
+func _set_style(groups: Dictionary) -> bool:
+    var catalog = StyleCatalog.new()
+    if not catalog.load_catalog():
+        _fail("style catalog failed closed: " + catalog.error)
+        return false
+    var store = match_scene.get("style_store")
+    if store == null:
+        _fail("main did not create the saved style store")
+        return false
+    store.selections = catalog.defaults()
+    for group_key: String in groups:
+        store.selections[group_key] = groups[group_key]
+    match_scene._apply_style_editor()
+    return true
+
+
 func _assert_recovered_link_rows() -> void:
-    # Generic and Brick rows are both native table facts.
     var by_order: Dictionary = {}
     for link: Dictionary in player._native_links:
         by_order[int(link.get("order", -1))] = link
     var expected: Dictionary = {
         6: ["stepright", "grab1miss", "grababrucelee"],
+        7: ["stepleft", "grab2miss", "grabbbrucelee"],
         8: ["stepright", "grab1miss brick", "grababrick"],
-        17: ["stepleft", "grab2miss brick", "grabbbrick"],
         34: ["", "endattack1", ""],
         35: ["", "endattack2", "endbrucelee"],
         36: ["", "endattack brick", "endbrickdavis"],
         347: ["grab1miss", "grab1", "grababrucelee"],
+        349: ["grab2miss", "grab2", "grabbbrucelee"],
         383: ["grab1miss brick", "grab1 brick", "grababrick"],
-        385: ["grab2miss brick", "grab2 brick", "grabbbrick"],
     }
     for order: int in expected:
         var row: Array = expected[order]
@@ -88,14 +100,16 @@ func _assert_recovered_link_rows() -> void:
                 or tag != str(row[2])):
             _fail("recovered link order " + str(order) + " drifted: " + str(link))
             return
-    if player._opponent_suffix_token() != "brick":
-        _fail("expected a Brick opponent token, got " + player._opponent_suffix_token())
+    var default_expected: Array = PortFighter.DEFAULT_BRUCE_UNIQUES.duplicate()
+    default_expected.sort()
+    if player.active_uniques() != default_expected:
+        _fail("default active uniques are wrong: " + str(player.active_uniques()))
         return
-    if player._native_link_unique_ok(by_order.get(35, {})):
-        _fail("mirror-only order 35 unexpectedly passed the owner gate")
+    if player._native_link_unique_ok(by_order[8]):
+        _fail("default gate accepted the Brick order 8 row")
         return
-    if not player._native_link_unique_ok(by_order.get(36, {})):
-        _fail("Brick order 36 was refused by the owner gate")
+    if not player._native_link_unique_ok(by_order[6]):
+        _fail("default gate refused the Bruce order 6 row")
         return
 
 
@@ -112,11 +126,10 @@ func _pin(distance: float) -> void:
     player.facing = 1.0
 
 
-func _step_frames(distance: float, max_steps: int,
-        until: Callable) -> bool:
+func _step_frames(distance: float, max_steps: int, until: Callable) -> bool:
     # One 1/60 physics step advances the native frame clock ~0.5 source frames
-    # (frame = truncate(elapsed_ms * 0.03)); the [8, 9] automatic grab window is
-    # reached by ~step 15-16 and the grab contact by ~step 106.
+    # (frame = truncate(elapsed_ms * 0.03)); the automatic grab window is
+    # reached by ~step 16-22 and the grab contact by ~step 106.
     for step: int in range(max_steps):
         _pin(distance)
         player._physics_process(1.0 / 60.0)
@@ -153,8 +166,8 @@ func _run_grab(distance: float, step_action: String, step_key: Key,
         return false
 
     # 2) The documented attack key press must start the recovered step -> miss
-    #    link.  Against Brick these are orders 8 / 17 (orders 6 / 7 are the
-    #    generic grababrucelee / grabbbrucelee rows).
+    #    link.  The miss kind is the mapped ATTACKS entry ("grab1_miss") for the
+    #    default rows and the variant name for the explicit Brick row.
     match_scene._unhandled_input(_key(attack_key))
     if player.attack_kind != miss:
         _fail("real input " + str(step_action) + "+attack did not start "
@@ -162,15 +175,13 @@ func _run_grab(distance: float, step_action: String, step_key: Key,
         return false
     print("PASS real input started " + miss)
 
-    # 3) The miss must play through its recovered [8, 9] window and chain
-    #    automatically into the Brick grab (orders 383 / 385), which then holds
-    #    the victim. The miss spends its 66 rage on entry, so a one-step
-    #    shortcut cannot pass this.
+    # 3) The miss must play through its recovered window and chain automatically
+    #    into the grab, which then holds the victim. The miss spends its 66 rage
+    #    on entry, so a one-step shortcut cannot pass this.
     var chained := _step_frames(distance, 200, func() -> bool:
         return player.attack_kind == grab)
     if not chained:
-        _fail(miss + " did not chain to " + grab + " (native order "
-                + ("383" if grab == "grab1 brick" else "385") + "): " + player.attack_kind)
+        _fail(miss + " did not chain to " + grab + ": " + player.attack_kind)
         return false
     var held := _step_frames(distance, 200, func() -> bool:
         return victim.state in ["grabbed1", "grabbed2"])
@@ -186,8 +197,8 @@ func _run_grab(distance: float, step_action: String, step_key: Key,
     # 4) Release the step and hold the toward key (D), then press the
     #    recovered documented finisher key.  All endattack links need
     #    keystatus right pressed, so the real input status update must expose
-    #    it.  An empty `finisher` means the recovered table has no variant for
-    #    this opponent/key: the press must fail closed instead.
+    #    it.  An empty `finisher` means the selected style has no row for this
+    #    key: the press must fail closed instead.
     Input.action_release(step_action)
     Input.action_press(PC.MOVE_RIGHT)
     _sync_main_input_state()
@@ -196,14 +207,14 @@ func _run_grab(distance: float, step_action: String, step_key: Key,
     match_scene._unhandled_input(_key(finisher_key))
     if finisher.is_empty():
         if _endattack_kind(player.attack_kind):
-            _fail("mirror-only finisher fired against Brick: " + player.attack_kind)
+            _fail("removed finisher row fired: " + player.attack_kind)
             return false
         var refused := _step_frames(distance, 160, func() -> bool:
             return victim.state.begins_with("endattackcomp"))
         if refused:
             _fail("refused finisher still consumed the victim: " + victim.state)
             return false
-        print("PASS real input refused mirror-only finisher: attack="
+        print("PASS real input refused finisher: attack="
                 + player.attack_kind + " victim=" + victim.state)
         return true
     if player.attack_kind != finisher:
@@ -244,34 +255,56 @@ func _run() -> void:
 
     _assert_recovered_link_rows()
 
-    # Hold W (native stepright) and press J: main.gd maps the stepright gesture
-    # to the recovered Brick miss, whose automatic [8, 9] link chains into the
-    # Brick grab.  The A finisher is order 36 (unique endbrickdavis).
-    if not _run_grab(0.35, PC.MOVE_UP, KEY_W, KEY_J, "grab1miss brick",
-            "grab1 brick", "grabbed1", "endattack brick", "endattackcomp1", KEY_J):
+    # Default native: hold W (stepright) + J -> grab1miss -> grab1 -> grabbed1;
+    # the A finisher is order 34 (endattack1, empty unique).
+    if not _run_grab(0.35, PC.MOVE_UP, KEY_W, KEY_J, "grab1_miss",
+            "grab1", "grabbed1", "endattack1", "endattackcomp1", KEY_J):
         return
 
-    # Symmetric second real-key path: hold S and press L -> Brick grab2 miss ->
-    # grab2 brick.  There is no recovered "endattack2 brick" row (order 35 is
-    # mirror-only endbrucelee), so the L finisher press must fail closed.
-    my_release_all()
+    # Symmetric second real-key path: hold S + L -> grab2miss -> grab2 ->
+    # grabbed2; the C finisher is order 35 (endattack2, unique endbrucelee).
+    release_all()
     _reset_round()
-    if not _run_grab(0.35, PC.MOVE_DOWN, KEY_S, KEY_L, "grab2miss brick",
-            "grab2 brick", "grabbed2", "", "", KEY_L):
+    if not _run_grab(0.35, PC.MOVE_DOWN, KEY_S, KEY_L, "grab2_miss",
+            "grab2", "grabbed2", "endattack2", "endattackcomp2", KEY_L):
+        return
+
+    # Explicit Brick / big finisher style through the same real input path.
+    release_all()
+    _reset_round()
+    if not _set_style(BRICK_STYLE):
+        return
+    if not _run_grab(0.35, PC.MOVE_UP, KEY_W, KEY_J, "grab1miss brick",
+            "grab1 brick", "grabbed1", "endattack smallboy",
+            "endattackcomp1", KEY_J):
+        return
+    # endbrucelee left the active list with the explicit endmove selection, so
+    # the C press must fail closed (grab2 itself is still the Bruce row, as the
+    # style catalog has no Brick grabs/grabb entry).
+    release_all()
+    _reset_round()
+    if not _run_grab(0.35, PC.MOVE_DOWN, KEY_S, KEY_L, "grab2_miss",
+            "grab2", "grabbed2", "", "", KEY_L):
         return
 
     print("REAL_INPUT_GRAB_VALIDATION=" + JSON.stringify({
-        "grab1": "stepright+a -> grab1miss brick -> grab1 brick -> grabbed1 -> endattack brick -> endattackcomp1",
-        "grab2": "stepleft+c -> grab2miss brick -> grab2 brick -> grabbed2 -> (no endattack2 brick, fail closed)",
-        "generic_rows": [6, 34, 35, 347],
-        "brick_rows": [8, 17, 36, 383, 385],
+        "default": {
+            "grab1": "stepright+a -> grab1miss -> grab1 -> endattack1",
+            "grab2": "stepleft+c -> grab2miss -> grab2 -> endattack2",
+        },
+        "brick_style": {
+            "grab1": "stepright+a -> grab1miss brick -> grab1 brick -> endattack smallboy",
+            "grab2": "stepleft+c -> grab2miss -> grab2 -> c refused",
+        },
+        "default_rows": [6, 7, 34, 35, 347, 349],
+        "brick_rows": [8, 36, 44, 383],
         "keyboard_variant": 1,
-        "source": "brucelee.set links order 6/8/17 (miss entry) + 347/383/385 (auto [8,9]) + 34/35/36 (finisher)",
+        "source": "brucelee.set links order 6/7/8 (miss entry) + 347/349/383 (auto window) + 34/35/44 (finisher)",
     }))
     quit(0)
 
 
-func my_release_all() -> void:
+func release_all() -> void:
     Input.action_release(PC.MOVE_LEFT)
     Input.action_release(PC.MOVE_RIGHT)
     Input.action_release(PC.MOVE_UP)

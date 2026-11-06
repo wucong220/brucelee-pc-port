@@ -564,6 +564,9 @@ var records_screen: CanvasLayer = null
 var style_catalog: RefCounted = null
 var style_store: RefCounted = null
 var style_editor: CanvasLayer = null
+## Last apply_style_selections() report, kept even without the opt-in screen so
+## Free Training / VS can be inspected headlessly.
+var player_style_report: Dictionary = {}
 # Recovered attract/continue states (see native_match_states.gd).  Created in
 # _ready; null only before the scene is ready.
 var native_states: NativeMatchStates = null
@@ -822,10 +825,10 @@ func _ready() -> void:
     add_child(game_modes)
     game_modes.configure(self, MENU_OPPONENT_CONFIG)
     game_modes.progress = progress
-    # Opt-in Style Editor: decoded catalog + user:// selection file + screen.
-    # With the flag off nothing is created here and the menu has no extra row;
-    # the training menus create it lazily when their Style Editor option is
-    # selected, so all six recovered pause options work.
+    # Saved native style (CSettings style_*): loaded for every match so Free
+    # Training and VS honour an explicit selection even with the opt-in menu row
+    # off.  The editor screen itself stays opt-in.
+    _ensure_style_selection_store()
     if OS.get_environment("BRUCELEE_STYLE_EDITOR") == "1":
         _ensure_style_editor()
     # Recovered attract/continue states.  The module is always created, but both
@@ -2729,20 +2732,36 @@ func _on_records_closed() -> void:
         hud.visible = false
         get_tree().paused = true
 
+func _ensure_style_selection_store() -> bool:
+    ## The saved style is native player state (CSettings style_*), not a
+    ## property of the opt-in editor screen: Free Training and VS read it even
+    ## with the menu row off.  A missing/corrupt catalog fails closed to the
+    ## proven Bruce defaults (StyleSelectionStore also fails closed to the
+    ## catalog defaults), never to a partial or invented selection.
+    if style_catalog != null and style_store != null:
+        return true
+    var catalog = StyleCatalog.new()
+    if not catalog.load_catalog():
+        push_warning("Style Editor catalog failed closed: " + catalog.error)
+        style_catalog = null
+        style_store = null
+        return false
+    style_catalog = catalog
+    style_store = StyleSelectionStore.new()
+    style_store.load_selections(style_catalog)
+    return true
+
+
 func _ensure_style_editor() -> bool:
     ## The recovered training menus expose Style Editor (practice menu and the
     ## six-option pause), so the screen is created lazily even without the main
     ## menu's BRUCELEE_STYLE_EDITOR row.  Failure is reported, never faked.
     if style_editor != null:
         return true
-    style_catalog = StyleCatalog.new()
-    if not style_catalog.load_catalog():
-        push_warning("Style Editor catalog failed closed: " + style_catalog.error)
+    if not _ensure_style_selection_store():
         style_catalog = null
         style_store = null
         return false
-    style_store = StyleSelectionStore.new()
-    style_store.load_selections(style_catalog)
     style_editor = StyleEditorScreen.new()
     add_child(style_editor)
     style_editor.configure(self, player, style_catalog, style_store)
@@ -2835,8 +2854,10 @@ func _on_style_selection_saved(_group_key: String, _entry_id: String) -> void:
 
 func _apply_style_editor() -> void:
     ## Push the saved selections into the player. apply_style_selections()
-    ## itself fails closed and reports every group it did not apply.
-    if style_editor == null or style_store == null or style_catalog == null or player == null:
+    ## itself fails closed and reports every group it did not apply.  The store
+    ## exists without the opt-in screen, so VS / Free Training honour the saved
+    ## native style (and its unique IDs) too.
+    if style_store == null or style_catalog == null or player == null:
         return
     var report: Dictionary = player.apply_style_selections(
         style_store.selections, style_catalog
@@ -2844,7 +2865,9 @@ func _apply_style_editor() -> void:
     report["file"] = style_store.save_path
     report["file_loaded"] = style_store.loaded_ok
     report["file_error"] = style_store.last_error
-    style_editor.set_apply_report(report)
+    player_style_report = report
+    if style_editor != null:
+        style_editor.set_apply_report(report)
 
 func _on_style_try() -> void:
     ## try_style is the recovered "training" command: enter training only when
@@ -3123,6 +3146,10 @@ func end_training_session() -> void:
     done = false
     training_completed = false
     hud.visible = false
+    # A use_custom_style=false lesson must not leave the default unique list
+    # active after training: VS reads the saved style again from here on.
+    if player != null:
+        player.exit_tutorial_default_style()
     if get_tree() != null:
         get_tree().paused = false
     if player != null:

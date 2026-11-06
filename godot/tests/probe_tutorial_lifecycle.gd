@@ -101,6 +101,12 @@ func _special_gesture() -> Dictionary:
 	return {"kind": kind, "success": success, "clip": _player.candidate_animation_clip}
 
 
+func _default_uniques() -> Array:
+	var out: Array = PortFighter.DEFAULT_BRUCE_UNIQUES.duplicate()
+	out.sort()
+	return out
+
+
 func _run() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	if args.size() < 2:
@@ -152,10 +158,10 @@ func _run() -> void:
 	_check("tutorial uses Bruce default hkick clip", tutorial["hkick"] == "m01_kck_front_step", tutorial["hkick"])
 	_check("tutorial uses Bruce default grab1 clip", tutorial["grab1"] == "m01_grab_01", tutorial["grab1"])
 	_check("tutorial default IDs are the native eight",
-		_player.TUTORIAL_DEFAULT_UNIQUES.size() == 8
-		and _player.TUTORIAL_DEFAULT_UNIQUES.has("hkickbrucelee")
-		and _player.TUTORIAL_DEFAULT_UNIQUES.has("grababrucelee")
-		and _player.TUTORIAL_DEFAULT_UNIQUES.has("endbrucelee"), "")
+		_player.DEFAULT_BRUCE_UNIQUES.size() == 8
+		and _player.DEFAULT_BRUCE_UNIQUES.has("hkickbrucelee")
+		and _player.DEFAULT_BRUCE_UNIQUES.has("grababrucelee")
+		and _player.DEFAULT_BRUCE_UNIQUES.has("endbrucelee"), "")
 	var special: Dictionary = _special_gesture()
 	_check("tutorial special high reaches special_kick_high", String(special["kind"]) == "special_kick_high", String(special["kind"]))
 	_check("tutorial special high registers lesson success", float(special["success"]) >= 0.0, str(special["success"]))
@@ -173,12 +179,19 @@ func _run() -> void:
 	_training.close()
 	_check("second close restores saved clips", _clips()["hkick"] == styled["hkick"], _clips()["hkick"])
 
-	# Free training switches away from tutorial defaults.
+	# Free training switches away from tutorial defaults.  Main now applies the
+	# saved native style on every training/VS entry (even without the opt-in
+	# editor screen), and this run's saved style is the catalog default, so the
+	# manually emulated clips above are replaced by the default table again.
 	_training.enter_free_training()
 	_check("free training clears tutorial gate", not _player.tutorial_default_uniques, "")
 	var free_clips: Dictionary = _clips()
-	_check("free training keeps saved hkick clip", free_clips["hkick"] == styled["hkick"], free_clips["hkick"])
-	_check("free training keeps saved grab1 clip", free_clips["grab1"] == styled["grab1"], free_clips["grab1"])
+	_check("free training applies the saved (default) hkick clip",
+		free_clips["hkick"] == "m01_kck_front_step", free_clips["hkick"])
+	_check("free training applies the saved (default) grab1 clip",
+		free_clips["grab1"] == "m01_grab_01", free_clips["grab1"])
+	_check("free training restores the 8 default unique IDs",
+		_player.active_uniques() == _default_uniques(), str(_player.active_uniques()))
 	_training.close()
 	print("LIFE_RESULT=" + JSON.stringify({"failures": _failures, "styled": styled,
 		"tutorial": tutorial, "restored": restored, "free": free_clips,

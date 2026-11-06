@@ -1,12 +1,18 @@
 extends SceneTree
 ## Headless proof on the REAL res://scenes/main.tscn that the recovered
-## opponent-suffix attack variants of brucelee.set are implemented only where
-## native set/link data and existing candidate clips prove them, that the player
-## can enter them through their native links, that the opponent action cameras
-## arm only for those proven animations, and that everything else fails closed.
+## opponent-suffix attack variants of brucelee.set follow the native active
+## unique list: a row is enterable only when its recovered `unique` tag is an
+## exact member of the player's list.  The current opponent contributes nothing;
+## an explicit style selection (the style editor's own catalogued entries) is
+## the only way another character's ID enters the list.
 ##
 ## usage: --headless --path <proj> --script res://tests/validate_opponent_suffix_actions.gd -- \
 ##   <player.glb> <opponent.glb> <opponent_attack_config> <gametext_root> <suffix>
+##
+## Per suffix the test selects the catalogued style entries whose IDs are
+## available (grabs/graba has a Brick entry; grabs/grabb has Ken/SinFu; the
+## endmove group has no Brick entry, so Brick's big finisher is reached through
+## the catalogued endsmallboy row that carries m03_end_attack_01).
 
 const DATA_PATH := "res://data/opponent_suffix_variants.json"
 const CAMERA_DIR := "res://data/camera_anm/"
@@ -19,34 +25,56 @@ const EXPECTED_ROWS := 101
 
 const SCENARIOS := {
 	"ken": {
+		"style": {
+			"special/hpunch": "hpunchken", "special/lpunch": "lpunchken",
+			"special/hkick": "hkickken", "grabs/grabb": "grabbken",
+			"endmove/endmove": "endkengodall",
+		},
 		"stepback": ["specialpunchhigh ken", ""],
 		"group": ["endattack ken", "m02_end_attack_01"],
-		"chain": ["grab1 ken", "m02_grab_01"],
-		"chain_start": "grab1miss ken",
-		"chain_input": "up",
+		"chain": ["grab2 ken", "m02_grab_02"],
+		"chain_start": "grab2miss ken",
+		"chain_input": "down",
+		"chain_key": "c",
 		"victim": "all_grabbed_01_forset02",
+		"unselectable": ["grab1 ken", "endattack brick", "grab1 brick"],
 	},
 	"brick": {
+		"style": {
+			"special/hpunch": "hpunchbrick", "special/lpunch": "lpunchbrick",
+			"special/hkick": "hkickbrick", "grabs/graba": "grababrick",
+			"endmove/endmove": "endsmallboy",
+		},
 		"stepback": ["specialpunchhigh brick", ""],
-		"group": ["endattack brick", "m03_end_attack_01"],
+		"group": ["endattack smallboy", "m03_end_attack_01"],
 		"chain": ["grab1 brick", "m03_grab_01"],
 		"chain_start": "grab1miss brick",
 		"chain_input": "up",
+		"chain_key": "a",
 		"victim": "all_grabbed_01_forset03",
+		"unselectable": ["endattack brick", "grab2 brick", "endattack ken"],
 	},
 	"sinfu": {
+		"style": {
+			"special/hpunch": "hpunchsinfu",
+			"special/hkick": "hkicksinfu", "grabs/grabb": "grabbsinfu",
+			"endmove/endmove": "endsinfu",
+		},
 		"group": ["specialpunchhighhit sinfu", "m04_sp_pnch_high"],
 		"group_entry": "specialpunchhighmiss sinfu",
-		"chain": ["specialpunchhighhit sinfu", "m04_sp_pnch_high"],
-		"chain_start": "specialpunchhighmiss sinfu",
-		"chain_input": "",
+		"chain": ["grab2 sinfu", "m04_sp_pnch_low"],
+		"chain_start": "grab2miss sinfu",
+		"chain_input": "down",
+		"chain_key": "c",
 		"victim": "all_grabbed_01_forset04",
+		"unselectable": ["grab1 sinfu", "endattack brick", "endattack ken"],
 	},
 }
 
 var _failures: Array[String] = []
 var _checks: int = 0
 var _results: Dictionary = {}
+var _active_uniques: Array = []
 
 
 func _initialize() -> void:
@@ -96,6 +124,23 @@ func _freeze(scene: Node) -> void:
 	var computer = scene.get("computer")
 	player.set_physics_process(false)
 	computer.set_physics_process(false)
+
+
+func _set_style(scene: Node, groups: Dictionary) -> bool:
+	## The only path that puts another character's ID into Bruce's active list:
+	## main's saved style store (used by VS / Free Training) plus the fighter's
+	## explicit apply_style_selections.
+	var catalog = StyleCatalog.new()
+	if not catalog.load_catalog():
+		return false
+	var store = scene.get("style_store")
+	if store == null:
+		return false
+	store.selections = catalog.defaults()
+	for group_key: String in groups:
+		store.selections[group_key] = groups[group_key]
+	scene._apply_style_editor()
+	return true
 
 
 func _reset(scene: Node) -> void:
@@ -191,9 +236,16 @@ func _check_assets(scene: Node, suffix: String, config: String) -> void:
 	_check("computer loads the requested opponent set",
 		computer.attack_config_path == config,
 		"computer=%s expected=%s" % [computer.attack_config_path, config])
-	_check("opponent token resolves to the requested suffix",
-		player._opponent_suffix_token() == suffix,
-		"token=%s" % player._opponent_suffix_token())
+	var expected_label: String = {
+		"brick": "brickdavis", "ken": "kengodall", "sinfu": "sinfu",
+	}.get(suffix, suffix)
+	_check("computer uses its own characters.list unique label",
+		computer.active_uniques() == [expected_label],
+		"uniques=%s" % [computer.active_uniques()])
+	_active_uniques = player.active_uniques()
+	_check("player active uniques are the explicit selection plus BruceLee",
+		_active_uniques.has("brucelee") and _active_uniques.size() == 8,
+		"uniques=%s" % [_active_uniques])
 
 
 func _check_table_and_invariants(scene: Node, suffix: String) -> void:
@@ -219,36 +271,46 @@ func _check_table_and_invariants(scene: Node, suffix: String) -> void:
 			bad_kind.append(kind)
 		if not _row_proven(rows, String(kind)):
 			bad_kind.append(kind)
-	_check("every loaded kind is a proven, non-victim native variant",
+		if String(row.get("variant_unique", "")).is_empty():
+			bad_kind.append(kind)
+	_check("every loaded kind is a proven, non-victim native variant with a tag",
 		bad_kind.is_empty(), str(bad_kind))
+	# Exact membership: supports_attack(kind) must equal "its tag is selected".
+	var mismatched: Array = []
+	for kind: Variant in variant_map.keys():
+		var row: Dictionary = Dictionary(variant_map[kind])
+		var tag: String = String(row.get("variant_unique", ""))
+		var should: bool = _active_uniques.has(tag)
+		if player.supports_attack(String(kind)) != should:
+			mismatched.append("%s tag=%s expected=%s got=%s" % [
+				kind, tag, should, player.supports_attack(String(kind))])
+	_check("variant support is exactly active-unique membership",
+		mismatched.is_empty(), str(mismatched))
 	var foreign_started: Array = []
-	var foreign_supported: Array = []
 	for row_value: Variant in rows:
 		var row: Dictionary = Dictionary(row_value)
 		if String(row.get("family", "")) == "victim":
 			continue
-		if String(row.get("suffix", "")) == suffix:
-			continue
 		var kind: String = String(row.get("name", ""))
-		if player.supports_attack(kind):
-			foreign_supported.append(kind)
+		if not variant_map.has(kind):
+			continue
+		var tag: String = String(Dictionary(variant_map[kind]).get("variant_unique", ""))
+		if _active_uniques.has(tag):
+			continue
 		if player.request_attack(kind):
 			foreign_started.append(kind)
-	_check("no variant of a different opponent is supported",
-		foreign_supported.is_empty(), str(foreign_supported))
-	_check("no variant of a different opponent can start",
-		foreign_started.is_empty(), str(foreign_started))
-	var wrong: Array = []
+	_check("no unselected variant can start", foreign_started.is_empty(),
+		str(foreign_started))
+	# The selected set's own rows all report a resolved clip status.
+	var unloadable: Array = []
 	for kind: Variant in variant_map.keys():
 		if not player.supports_attack(String(kind)):
 			continue
-		var row: Dictionary = Dictionary(player._opponent_suffix_variants[kind])
-		if String(row.get("variant_suffix", "")) != suffix:
-			wrong.append(kind)
-		elif not _row_proven(rows, String(kind)):
-			wrong.append(kind)
-	_check("supported variants are exactly this opponent's proven rows",
-		wrong.is_empty(), str(wrong))
+		var status: Dictionary = player.variant_clip_status(String(kind))
+		if not bool(status.get("ok", false)):
+			unloadable.append(String(kind) + ":" + String(status.get("reason", "")))
+	_check("every selected variant resolves a candidate clip",
+		unloadable.is_empty(), str(unloadable))
 	_check("action without a native entry link is not an attack kind",
 		not player.ATTACKS.has("specialpunchhighimpact sinfu"), "")
 
@@ -361,20 +423,16 @@ func _check_group_scenario(scene: Node, kind: String, camera: String,
 
 
 func _check_chain_scenario(scene: Node, start_kind: String, kind: String,
-		camera: String, direction: String) -> void:
+		camera: String, direction: String, key: String) -> void:
 	_reset(scene)
 	var player = scene.get("player")
 	var computer = scene.get("computer")
-	if direction.is_empty():
-		_set_attack_frame(player, "high_punch2", 20)
-		player.set_key_status({"right": true})
-	else:
-		_set_movement(player, direction)
+	_set_movement(player, direction)
 	player.rage = 100.0
 	computer.state = "idle"
 	computer.state_time = 0.0
 	computer.global_position = Vector3(-1.25, 1.20, 0.0)
-	var started: bool = player.record_standing_combo_press("a")
+	var started: bool = player.record_standing_combo_press(key)
 	_check("native link starts " + start_kind,
 		started and player.attack_kind == start_kind, str(player.attack_kind))
 	var converted: bool = _advance_until(scene, player, kind)
@@ -420,51 +478,43 @@ func _check_victim_scenario(scene: Node, suffix: String, victim_clip: String) ->
 func _check_fail_closed(scene: Node, suffix: String, scenario: Dictionary) -> void:
 	var player = scene.get("player")
 	var computer = scene.get("computer")
-	var gate_kind: String = ""
-	var gate_direction: String = ""
-	if scenario.has("stepback"):
-		gate_kind = String(scenario["stepback"][0])
-		gate_direction = "left"
-	elif scenario.has("chain_start"):
-		gate_kind = String(scenario["chain_start"])
-		gate_direction = "up"
+	var gate_kind: String = String(scenario.get("chain_start", ""))
 	if not gate_kind.is_empty():
 		_reset(scene)
-		if gate_direction == "left":
-			_set_movement(player, "left")
-			player.set_key_status({"right": true})
-		else:
-			_set_movement(player, gate_direction)
+		_set_movement(player, String(scenario.get("chain_input", "up")))
 		player.rage = 0.0
-		player.record_standing_combo_press("a")
+		player.record_standing_combo_press(String(scenario.get("chain_key", "a")))
 		_check("rage gate refuses " + gate_kind + " below the recovered threshold",
 			player.attack_kind != gate_kind, str(player.attack_kind))
 	var group_kind: String = ""
 	if scenario.has("group"):
 		group_kind = String(scenario["group"][0])
-	if not group_kind.is_empty():
-		_reset(scene)
-		computer.state = "idle"  # pose stand, not stun
-		_set_attack_frame(player, "high_punch2", 35)
-		player.set_key_status({"right": true})
-		player.rage = 100.0
-		player.record_standing_combo_press("a")
-		_check("oppposestun gate refuses " + group_kind + " against a standing opponent",
-			player.attack_kind != group_kind, str(player.attack_kind))
-	var probe_kind: String = String(scenario.get("group", scenario.get("chain", ["", ""]))[0])
+	var probe_kind: String = group_kind if not group_kind.is_empty() \
+			else String(scenario.get("chain", ["", ""])[0])
 	if not probe_kind.is_empty():
+		# A selected variant whose clip no loaded candidate carries refuses.
 		_reset(scene)
 		var saved_anim = computer._candidate_animation
+		var saved_player_anim = player._candidate_animation
 		computer._candidate_animation = null
+		player._candidate_animation = null
 		player._variant_clip_status.erase(probe_kind)
 		player._candidate_clip_paths.erase(probe_kind)
 		var refused: bool = not player.request_attack(probe_kind)
 		var status: Dictionary = player.variant_clip_status(probe_kind)
 		computer._candidate_animation = saved_anim
+		player._candidate_animation = saved_player_anim
 		_check("missing candidate clip refuses " + probe_kind,
 			refused and not bool(status.get("ok", false)), str(status.get("reason", "")))
 		_check("refused variant reports no clip source",
 			String(status.get("source", "")) == "", str(status.get("source", "")))
+	# Rows that are not selected are refused outright, even for this opponent.
+	for kind_value: Variant in Array(scenario.get("unselectable", [])):
+		var kind: String = String(kind_value)
+		if not player.ATTACKS.has(kind):
+			continue
+		_check("unselected " + suffix + " row is not supported: " + kind,
+			not player.supports_attack(kind) and not player.request_attack(kind), kind)
 
 
 func _run() -> void:
@@ -486,6 +536,18 @@ func _run() -> void:
 		return
 	await process_frame
 	_freeze(scene)
+	# The explicit style selection is the only source of another character's
+	# unique IDs; the opponent set alone must not enable them.
+	var default_player = scene.get("player")
+	var default_uniques: Array = default_player.active_uniques()
+	var defaults_expected: Array = PortFighter.DEFAULT_BRUCE_UNIQUES.duplicate()
+	defaults_expected.sort()
+	_check("before the selection the player uses the 8 default IDs",
+		default_uniques == defaults_expected, str(default_uniques))
+	if not _set_style(scene, Dictionary(scenario["style"])):
+		push_error("explicit style selection failed")
+		quit(1)
+		return
 	_check_assets(scene, suffix, args[2])
 	_check_table_and_invariants(scene, suffix)
 	_check_camera_map(scene)
@@ -498,12 +560,14 @@ func _run() -> void:
 	if scenario.has("chain_start"):
 		_check_chain_scenario(scene, String(scenario["chain_start"]),
 			String(scenario["chain"][0]), String(scenario["chain"][1]),
-			String(scenario.get("chain_input", "")))
+			String(scenario.get("chain_input", "up")),
+			String(scenario.get("chain_key", "a")))
 	if scenario.has("victim"):
 		_check_victim_scenario(scene, suffix, String(scenario["victim"]))
 	_check_fail_closed(scene, suffix, scenario)
 	_results["checks"] = _checks
 	_results["failures"] = _failures
 	_results["suffix"] = suffix
+	_results["active_uniques"] = _active_uniques
 	print("OPPONENT_SUFFIX_ACTIONS_VALIDATION=" + JSON.stringify(_results))
 	quit(0 if _failures.is_empty() else 1)

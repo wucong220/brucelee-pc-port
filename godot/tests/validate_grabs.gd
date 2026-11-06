@@ -1,9 +1,9 @@
 extends SceneTree
-## Validate grab miss -> grab chains on the Bruce candidate through the recovered
-## native link path.
+## Validate the grab miss -> grab chains on the Bruce candidate through the
+## recovered native link path, under the native per-fighter active-unique list.
 ##
 ## The prototype used a pending combo queue drained by
-## _try_begin_pending_standing_combo.  That function is gone; the decompiled
+## _try_begin_pending_special_combo.  That function is gone; the decompiled
 ## model (krm::CFighter::UserControlUpdate) re-evaluates the native link table
 ## on every physics update, so this test drives the same recovered behaviour
 ## through the public API only:
@@ -12,27 +12,28 @@ extends SceneTree
 ##   victim state.
 ##
 ## Native facts exercised (adreno_200/set/brucelee.set, native_links.json,
-## keyboard variant 1).  The recovered table holds generic AND opponent-suffixed
-## rows; the `unique` token names the matchup OPPONENT, so the Brick opponent
-## of this fixture selects the Brick rows while generic rows stay in the table:
-##   stepright -> grab1miss       order 6,  unique grababrucelee (generic)
-##   stepright -> grab1miss brick order 8,  unique grababrick    (Brick)
-##   stepleft  -> grab2miss       order 7,  unique grabbbrucelee (generic)
-##   stepleft  -> grab2miss brick order 17, unique grabbbrick    (Brick)
-##   grab1miss -> grab1           order 347, automatic, window [8, 9],
-##                            conditions grabdistance + oppposestand +
-##                            oppnotblocking
-##   grab1miss brick -> grab1 brick order 383, automatic, same conditions
-##   grab2miss -> grab2           order 349
-##   grab2miss brick -> grab2 brick order 385
-##   miss actions consume 66 rage on entry
-##   generic grab impacts 6 + 5 + 9 = 20 (grab1) / 5 + 15 = 20 (grab2)
-##   Brick grab1 impacts 6 + 6 + 10 = 22, Brick grab2 damage 20
+## keyboard variant 1).  CFighter::IsLinkAllowed compares a row's `unique` tags
+## with the fighter's own active list; the Brick opponent does NOT add its IDs.
+##   DEFAULT (characters.list uniques of Bruce Lee):
+##     stepright -> grab1miss     order 6,   unique grababrucelee
+##     stepleft  -> grab2miss     order 7,   unique grabbbrucelee
+##     grab1miss -> grab1         order 347, automatic, window [8, 9]
+##     grab2miss -> grab2         order 349, automatic, window [8, 9]
+##   EXPLICIT Brick style (grabs/graba = grababrick):
+##     grababrick replaces grababrucelee in the seven category slots, so
+##     stepright -> grab1miss brick order 8  (unique grababrick)
+##     grab1miss brick -> grab1 brick order 383 (same unique, window [10, 11])
+##     The style catalog has no Brick grabs/grabb entry, so grab2 stays Bruce
+##     and every grabbbrick row (order 17/385) stays refused.
+## Conditions: grabdistance + oppposestand + oppnotblocking.
+## Miss actions consume 66 rage on entry.
+## Generic grab impacts 6 + 5 + 9 = 20 (grab1) / 5 + 15 = 20 (grab2);
+## Brick grab1 impacts 6 + 6 + 10 = 22.
 ## Damage totals below are read from the recovered ATTACKS row for the selected
 ## kind, not hardcoded, so a native-damage drift stays visible.
 ##
-## The opponent's skeleton class is "large" (thai set), so the Brick miss/grab
-## clips resolve to m02_grab_01_forbigguy / m03_grab_0x_forbigguy.
+## The opponent's skeleton class is "large" (thai set), so both the Bruce and
+## the Brick variants resolve their forbigguy size versions.
 
 const CANDIDATES: Dictionary = {
     "bruce": {
@@ -46,17 +47,29 @@ const CANDIDATES: Dictionary = {
         "animations": 94,
     },
 }
-const GRAB_CASES: Array = [
+const DEFAULT_CASES: Array = [
     # step direction, key, miss, grab, first impact, total damage, victim state,
-    # miss clip (size version), grab clip (size version), victim clip.
-    # The Brick opponent selects the recovered opponent-suffix rows.
+    # miss clip (size version), grab clip (size version), victim clip,
+    # grab source animation.
+    ["up", "a", "grab1miss", "grab1", 6.0, 20.0, "grabbed1",
+        "m02_grab_01_forbigguy", "m01_grab_01_forbigguy",
+        "all_grabbed_01_forset03", "m01_grab_01"],
+    ["down", "c", "grab2miss", "grab2", 5.0, 20.0, "grabbed2",
+        "m02_grab_01_forbigguy", "m01_grab_02_forbigguy",
+        "all_grabbed_02_forset03", "m01_grab_02"],
+]
+const BRICK_CASES: Array = [
     ["up", "a", "grab1miss brick", "grab1 brick", 6.0, 22.0, "grabbed1",
-        "m02_grab_01_forbigguy", "m03_grab_01_forbigguy", "all_grabbed_01_forset03"],
-    ["down", "c", "grab2miss brick", "grab2 brick", 5.0, 20.0, "grabbed2",
-        "m02_grab_01_forbigguy", "m03_grab_02_forbigguy", "all_grabbed_02_forset03"],
+        "m02_grab_01_forbigguy", "m03_grab_01_forbigguy",
+        "all_grabbed_01_forset03", "m03_grab_01"],
 ]
 const RAGE_BEFORE: float = 70.0
 const RAGE_COST: float = 66.0
+const BRICK_STYLE: Dictionary = {"grabs/graba": "grababrick"}
+
+var scene: Node = null
+var player: PortFighter = null
+var defender: PortFighter = null
 
 
 func _initialize() -> void:
@@ -78,15 +91,15 @@ func _run() -> void:
     OS.set_environment("BRUCELEE_MAIN_MENU", "0")
     OS.set_environment("BRUCELEE_PLAYER_GLB", args[0])
     OS.set_environment("BRUCELEE_OPPONENT_GLB", args[1])
-    var scene: Node = load("res://scenes/main.tscn").instantiate()
+    scene = load("res://scenes/main.tscn").instantiate()
     root.add_child(scene)
     current_scene = scene
     await process_frame
     await process_frame
     scene.set_process(false)
     scene.set_physics_process(false)
-    var player: PortFighter = scene.get("player")
-    var defender: PortFighter = scene.get("computer")
+    player = scene.get("player")
+    defender = scene.get("computer")
     player.set_physics_process(false)
     defender.set_physics_process(false)
     if not player.candidate_loaded:
@@ -103,43 +116,82 @@ func _run() -> void:
             push_error("Candidate is missing " + required)
             quit(1)
             return
-    # Keep generic and Brick link rows asserted separately (link-order coverage).
-    if not _assert_recovered_link_rows(player):
+
+    if not _assert_default_link_rows():
         quit(1)
         return
-    for case: Array in GRAB_CASES:
-        if not _validate_grab(scene, player, defender, case):
+    for case: Array in DEFAULT_CASES:
+        if not _validate_grab(case):
             quit(1)
             return
-    if not _validate_grab_range(scene, player, defender):
+    if not _validate_grab_range():
         quit(1)
         return
-    if not _validate_blocked_grab_rejects_chain(scene, player, defender):
+
+    # Explicit Brick style: only the selected ID may pass, and it replaces the
+    # Bruce grab-a entry instead of being added next to it.
+    if not _set_style(BRICK_STYLE):
         quit(1)
         return
-    if not _validate_below_rage_gate(scene, player, defender):
+    if not _assert_brick_link_rows():
         quit(1)
         return
+    for case: Array in BRICK_CASES:
+        if not _validate_grab(case):
+            quit(1)
+            return
+    # Brick has no selectable grabs/grabb entry: the still-selected Bruce
+    # grabbbrucelee keeps grab2 native and refuses the grabbbrick rows.
+    if not _validate_grab(DEFAULT_CASES[1]):
+        quit(1)
+        return
+
+    # These clear the defender's action-category table, so they run last.
+    if not _validate_blocked_grab_rejects_chain():
+        quit(1)
+        return
+    if not _validate_below_rage_gate():
+        quit(1)
+        return
+
     print("GRAB_VALIDATION=" + JSON.stringify({
-        "grabs": ["grab1miss brick->grab1 brick", "grab2miss brick->grab2 brick"],
-        "generic_rows": [6, 7, 347, 349],
-        "brick_rows": [8, 17, 383, 385],
+        "default_grabs": ["grab1miss->grab1", "grab2miss->grab2"],
+        "brick_style_grabs": ["grab1miss brick->grab1 brick"],
+        "default_rows": [6, 7, 347, 349],
+        "brick_rows": [8, 383],
         "bruce_bytes": CANDIDATES["bruce"]["bytes"],
         "bruce_sha256": CANDIDATES["bruce"]["sha256"],
         "brick_bytes": CANDIDATES["brick"]["bytes"],
         "brick_sha256": CANDIDATES["brick"]["sha256"],
-        "scope": "native links: the Brick opponent selects recovered orders "
-                + "8/17/383/385; generic 6/7/347/349 stay in the table; "
-                + "step -> grab miss (rage -66), automatic chain at frames 8-9 "
-                + "when in range and not blocking, victim enters grabbed1/2",
+        "scope": "native active uniques: the default set is the 8 characters.list "
+                + "IDs; the Brick opponent adds nothing. An explicit grabs/graba="
+                + "grababrick selection makes orders 8/383 the only grab-a rows; "
+                + "grab2 stays Bruce because no Brick grabb entry exists.",
     }))
     scene.queue_free()
     await process_frame
     quit(0)
 
 
-func _reset(scene: Node, player: PortFighter, defender: PortFighter,
-        distance: float) -> void:
+func _set_style(groups: Dictionary) -> bool:
+    ## Route the selection through main's store, exactly like VS / Free
+    ## Training: the test never pokes fighter internals.
+    var catalog = StyleCatalog.new()
+    if not catalog.load_catalog():
+        push_error("style catalog failed closed: " + catalog.error)
+        return false
+    var store = scene.get("style_store")
+    if store == null:
+        push_error("main did not create the saved style store")
+        return false
+    store.selections = catalog.defaults()
+    for group_key: String in groups:
+        store.selections[group_key] = groups[group_key]
+    scene._apply_style_editor()
+    return true
+
+
+func _reset(distance: float) -> void:
     scene._reset_match()
     player._clear_link_state()
     player.state = "idle"
@@ -157,27 +209,26 @@ func _reset(scene: Node, player: PortFighter, defender: PortFighter,
     player.set_held_directions({})
 
 
-func _pin(player: PortFighter, defender: PortFighter, distance: float) -> void:
+func _pin(distance: float) -> void:
     player.position = Vector3(0.0, 1.2, 0.0)
     defender.position = Vector3(distance, 1.2, 0.0)
 
 
-func _step(player: PortFighter, defender: PortFighter, distance: float) -> void:
+func _step(distance: float) -> void:
     # Two 1/60 steps per source frame: the frame clock truncates
     # (elapsed_ms * 0.03), so one 1/60 step does not advance a whole frame.
     for _half: int in range(2):
-        _pin(player, defender, distance)
+        _pin(distance)
         player._physics_process(1.0 / 60.0)
         defender._physics_process(1.0 / 60.0)
 
 
-func _start_miss(scene: Node, player: PortFighter, defender: PortFighter,
-        step_direction: String, key: String, distance: float) -> bool:
+func _start_miss(step_direction: String, key: String, distance: float) -> bool:
     # The recovered grab links start from the step actions, which the movement
     # layer reports while the matching direction is held: up -> stepright
     # (grab1miss), down -> stepleft (grab2miss).  The keyboard variant of both
     # links is a single press.
-    _reset(scene, player, defender, distance)
+    _reset(distance)
     player.set_held_directions({step_direction: true})
     if player._current_action_name() not in ["stepright", "stepleft"]:
         push_error("Held " + step_direction + " did not select a step action: "
@@ -186,8 +237,7 @@ func _start_miss(scene: Node, player: PortFighter, defender: PortFighter,
     return player.record_standing_combo_press(key)
 
 
-func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
-        case: Array) -> bool:
+func _validate_grab(case: Array) -> bool:
     var step_direction: String = case[0]
     var key: String = case[1]
     var miss: String = case[2]
@@ -208,11 +258,17 @@ func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
     var miss_clip: String = case[7]
     var grab_clip: String = case[8]
     var victim_clip: String = case[9]
-    if not _start_miss(scene, player, defender, step_direction, key, 0.3):
+    var grab_animation: String = case[10]
+    # The link row names the native action; the playable kind is its mapped
+    # ATTACKS entry ("grab1miss" -> "grab1_miss", variant rows keep their name).
+    var miss_kind: String = player.kind_for_action(miss)
+    if miss_kind.is_empty():
+        miss_kind = miss
+    if not _start_miss(step_direction, key, 0.3):
         push_error(miss + " did not start")
         return false
-    if player.attack_kind != miss:
-        push_error("Expected " + miss + ", got " + player.attack_kind)
+    if player.attack_kind != miss_kind:
+        push_error("Expected " + miss_kind + ", got " + player.attack_kind)
         return false
     if player.current_source_animation() != "m02_grab_01":
         push_error(miss + " requested " + player.current_source_animation())
@@ -226,7 +282,7 @@ func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
         push_error(miss + " did not consume 66 rage: " + str(player.rage))
         return false
     # The automatic chain opens on the recovered link window: [8, 9] for the
-    # generic grab1miss/grab2miss rows, [10, 11] for the Brick variant rows.
+    # default grab1miss/grab2miss rows, [10, 11] for the Brick grab1 row.
     var auto_link: Dictionary = {}
     for candidate: Dictionary in player._native_links:
         if (str(candidate.get("from", "")) == miss
@@ -239,14 +295,14 @@ func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
     # two-frame window plus one clock step.  This keeps the window assertion
     # strict without pinning an exact tick.
     for _frame: int in range(chain_frame - 1):
-        _step(player, defender, 0.3)
-    if player.attack_kind != miss:
+        _step(0.3)
+    if player.attack_kind != miss_kind:
         push_error(miss + " chained before its [%d, %d] window: " % [chain_frame, chain_frame + 1]
                 + player.attack_kind)
         return false
     var chained: bool = false
     for _frame: int in range(4):
-        _step(player, defender, 0.3)
+        _step(0.3)
         if player.attack_kind == target:
             chained = true
             break
@@ -254,8 +310,7 @@ func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
         push_error(miss + " did not chain to " + target + " around frame "
                 + str(chain_frame) + ": " + player.attack_kind)
         return false
-    if player.current_source_animation() != ("m03_grab_01" if target == "grab1 brick"
-            else "m03_grab_02"):
+    if player.current_source_animation() != grab_animation:
         push_error(target + " requested " + player.current_source_animation())
         return false
     player._animate_candidate()
@@ -269,7 +324,7 @@ func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
     var saw_grabbed: bool = false
     var saw_first_impact: bool = false
     for _frame: int in range(150):
-        _step(player, defender, 0.3)
+        _step(0.3)
         if (not saw_first_impact and defender.health
                 < PortFighter.MAX_HEALTH - 0.001):
             saw_first_impact = true
@@ -297,15 +352,14 @@ func _validate_grab(scene: Node, player: PortFighter, defender: PortFighter,
     return true
 
 
-func _validate_grab_range(scene: Node, player: PortFighter,
-        defender: PortFighter) -> bool:
+func _validate_grab_range() -> bool:
     # grab1miss -> grab1 requires grabdistance; beyond it the miss plays out and
     # returns to idle without grabbing or dealing damage.
-    if not _start_miss(scene, player, defender, "up", "a", 2.0):
+    if not _start_miss("up", "a", 2.0):
         push_error("Far grab miss did not start")
         return false
     for _frame: int in range(40):
-        _step(player, defender, 2.0)
+        _step(2.0)
     if player.attack_kind in ["grab1", "grab2", "grab1 brick", "grab2 brick"]:
         push_error("Grab chained out of range")
         return false
@@ -315,22 +369,21 @@ func _validate_grab_range(scene: Node, player: PortFighter,
     return true
 
 
-func _validate_blocked_grab_rejects_chain(scene: Node, player: PortFighter,
-        defender: PortFighter) -> bool:
+func _validate_blocked_grab_rejects_chain() -> bool:
     # oppnotblocking is a condition of the chain, so a guarding opponent keeps
     # the miss from becoming a grab.
-    if not _start_miss(scene, player, defender, "up", "a", 0.3):
+    if not _start_miss("up", "a", 0.3):
         push_error("Blocked grab miss did not start")
         return false
     defender.guard_held = true
     # Fail-closed blocking state: with no recovered action-category row the
     # native CFighter::IsBlocking probe reports true, so oppnotblocking is false
-    # for the whole Brick [10, 11] chain window.
+    # for the whole [8, 9] chain window.
     defender._native_action_categories.clear()
     for _frame: int in range(40):
         defender.guard_held = true
         defender._native_action_categories.clear()
-        _step(player, defender, 0.3)
+        _step(0.3)
     if player.attack_kind in ["grab1", "grab1 brick"]:
         push_error("Grab chained into a blocking opponent")
         return false
@@ -346,16 +399,16 @@ func _validate_blocked_grab_rejects_chain(scene: Node, player: PortFighter,
     return true
 
 
-func _validate_below_rage_gate(scene: Node, player: PortFighter,
-        defender: PortFighter) -> bool:
+func _validate_below_rage_gate() -> bool:
     # rage2thirds compares rage < 66, so 65 must not start the grab miss; the
     # same press falls through to the basic attack instead.
-    _reset(scene, player, defender, 0.3)
+    _reset(0.3)
     player.rage = 65.0
     player.set_held_directions({"up": true})
     player.record_standing_combo_press("a")
     if player.attack_kind in ["grab1_miss", "grab2_miss", "grab1", "grab2",
-            "grab1miss brick", "grab2miss brick", "grab1 brick", "grab2 brick"]:
+            "grab1miss", "grab2miss", "grab1miss brick", "grab2miss brick",
+            "grab1 brick", "grab2 brick"]:
         push_error("Grab started below the rage2thirds gate: " + player.attack_kind)
         return false
     if absf(player.rage - 65.0) > 0.001:
@@ -364,12 +417,21 @@ func _validate_below_rage_gate(scene: Node, player: PortFighter,
     return true
 
 
-func _assert_recovered_link_rows(player: PortFighter) -> bool:
-    # Generic and Brick rows are both table facts; assert them explicitly so a
-    # link-order regression cannot hide behind a passing runtime chain.
+func _by_order() -> Dictionary:
     var by_order: Dictionary = {}
     for link: Dictionary in player._native_links:
         by_order[int(link.get("order", -1))] = link
+    return by_order
+
+
+func _assert_default_link_rows() -> bool:
+    var default_expected: Array = PortFighter.DEFAULT_BRUCE_UNIQUES.duplicate()
+    default_expected.sort()
+    if player.active_uniques() != default_expected:
+        push_error("default active uniques are not the 8 native IDs: "
+                + str(player.active_uniques()))
+        return false
+    var by_order: Dictionary = _by_order()
     var expected: Dictionary = {
         6: ["stepright", "grab1miss", "grababrucelee"],
         7: ["stepleft", "grab2miss", "grabbbrucelee"],
@@ -391,15 +453,53 @@ func _assert_recovered_link_rows(player: PortFighter) -> bool:
                 or tag != str(row[2])):
             push_error("recovered link order " + str(order) + " drifted: " + str(link))
             return false
-    if player._opponent_suffix_token() != "brick":
-        push_error("expected a Brick opponent token, got "
-                + player._opponent_suffix_token())
+    # Native gate: the default set owns the Bruce rows and nothing else.
+    for order: int in [6, 7, 347, 349]:
+        if not player._native_link_unique_ok(by_order[order]):
+            push_error("default gate refused the Bruce row " + str(order))
+            return false
+    for order: int in [8, 17, 383, 385]:
+        if player._native_link_unique_ok(by_order[order]):
+            push_error("default gate accepted the Brick row " + str(order))
+            return false
+    return true
+
+
+func _assert_brick_link_rows() -> bool:
+    var expected: Array[String] = [
+        "brucelee", "hpunchbrucelee", "lpunchbrucelee", "hkickbrucelee",
+        "lkickbrucelee", "grababrick", "grabbbrucelee", "endbrucelee",
+    ]
+    expected.sort()
+    if player.active_uniques() != expected:
+        push_error("explicit Brick active uniques are wrong: "
+                + str(player.active_uniques()))
         return false
-    if player._native_link_unique_ok(by_order.get(6, {})):
-        push_error("generic order 6 unexpectedly passed the owner gate")
+    var by_order: Dictionary = _by_order()
+    if player._native_link_unique_ok(by_order[6]):
+        push_error("explicit Brick selection kept the generic order 6 row")
         return false
-    if not player._native_link_unique_ok(by_order.get(8, {})):
-        push_error("Brick order 8 was refused by the owner gate")
+    if player._native_link_unique_ok(by_order[347]):
+        push_error("explicit Brick selection kept the generic order 347 row")
+        return false
+    if not player._native_link_unique_ok(by_order[8]):
+        push_error("explicit Brick selection refused order 8")
+        return false
+    if not player._native_link_unique_ok(by_order[383]):
+        push_error("explicit Brick selection refused order 383")
+        return false
+    # grab-b group was not selected: both Brick and Bruce-b behaviour stay.
+    if not player._native_link_unique_ok(by_order[7]):
+        push_error("explicit Brick selection refused the native order 7 row")
+        return false
+    if not player._native_link_unique_ok(by_order[349]):
+        push_error("explicit Brick selection refused the native order 349 row")
+        return false
+    if player._native_link_unique_ok(by_order[17]):
+        push_error("unselectable grabbbrick order 17 was accepted")
+        return false
+    if player._native_link_unique_ok(by_order[385]):
+        push_error("unselectable grabbbrick order 385 was accepted")
         return false
     return true
 

@@ -3,9 +3,15 @@ extends SceneTree
 ##   * request_attack base path: grab1 -> endattack1 -> endattackcomp1 (93f)
 ##                              grab2 -> endattack2 -> endattackcomp2 (130f)
 ##   * raw native link route (record_standing_combo_press): stepright+A ->
-##       grab1miss brick -> grab1 brick -> (right+A) endattack brick ->
-##       endattackcomp1 (93f), then faceupko
+##       grab1miss -> grab1 -> (right+A) endattack1 -> endattackcomp1 (93f),
+##       then faceupko
 ##   * real keyboard route (Input actions + main.gd._unhandled_input): same
+##   * explicit {grabs/graba=grababrick, endmove=endsmallboy}: the raw route
+##       becomes grab1miss brick -> grab1 brick -> endattack smallboy (93f),
+##       the recovered big-skeleton finisher, only because the style selection
+##       put those IDs in the active unique list.
+## CFighter::IsLinkAllowed is an exact membership test: the Brick opponent does
+## not select any row on the default 8-ID Bruce list.
 ## Exit 0 only if every assertion passes; prints RAW_FINISHER_VALIDATION={...}
 
 const FPS: float = 30.0
@@ -14,6 +20,10 @@ const FR_TOL: float = 1.25
 const PP: Vector3 = Vector3(0.0, 1.2, 0.0)
 const VP: Vector3 = Vector3(0.35, 1.2, 0.0)
 const PC = preload("res://scripts/prototype_controls.gd")
+const BRICK_STYLE: Dictionary = {
+    "grabs/graba": "grababrick",
+    "endmove/endmove": "endsmallboy",
+}
 
 var scene: Node
 var player: PortFighter
@@ -68,6 +78,22 @@ func _reset() -> void:
     player.set_key_status({})
     player.set_held_directions({})
     _pin()
+
+
+func _set_style(groups: Dictionary) -> bool:
+    var catalog = StyleCatalog.new()
+    if not catalog.load_catalog():
+        push_error("style catalog failed closed: " + catalog.error)
+        return false
+    var store = scene.get("style_store")
+    if store == null:
+        push_error("main did not create the saved style store")
+        return false
+    store.selections = catalog.defaults()
+    for group_key: String in groups:
+        store.selections[group_key] = groups[group_key]
+    scene._apply_style_editor()
+    return true
 
 
 func _check(ok: bool, msg: String) -> void:
@@ -127,15 +153,27 @@ func _run_base(grab: String, fin: String, comp: String, want_frames: int) -> Dic
     return rec
 
 
-func _run_raw(mode: String, grab_state: String, comp: String, want_frames: int,
+func _run_raw(mode: String, grab_state: String, want_finisher: String,
+        want_finisher_clip: String, comp: String, want_frames: int,
         real_keys: bool) -> Dictionary:
     _reset()
     var rec: Dictionary = {"path": mode, "grab_state": grab_state}
+    var brick: bool = want_finisher.begins_with("endattack smallboy")
+    var grab2: bool = grab_state == "grabbed2"
+    var miss_kind: String = ("grab2_miss" if grab2 else "grab1_miss")
+    var grab_kind: String = "grab2" if grab2 else "grab1"
+    var want_grab_clip: String = ("m01_grab_02_forbigguy" if grab2
+            else "m01_grab_01_forbigguy")
+    var step_action: String = PC.MOVE_DOWN if grab2 else PC.MOVE_UP
+    var step_direction: String = "down" if grab2 else "up"
+    var step_key: Key = KEY_S if grab2 else KEY_W
+    var attack_key: Key = KEY_L if grab2 else KEY_J
+    if brick:
+        miss_kind = "grab1miss brick"
+        grab_kind = "grab1 brick"
+        want_grab_clip = "m03_grab_01_forbigguy"
     if real_keys:
-        # stepright (W) + A  -> grab1miss brick ; stepleft (S) + C -> grab2miss brick
-        var step_action: String = PC.MOVE_UP if grab_state == "grabbed1" else PC.MOVE_DOWN
-        var step_key: Key = KEY_W if grab_state == "grabbed1" else KEY_S
-        var attack_key: Key = KEY_J if grab_state == "grabbed1" else KEY_L
+        # hold the step and press the mapped attack key.
         Input.action_press(step_action)
         _sync()
         scene._unhandled_input(_key(step_key))
@@ -143,11 +181,12 @@ func _run_raw(mode: String, grab_state: String, comp: String, want_frames: int,
         _pin()
         scene._unhandled_input(_key(attack_key))
     else:
-        var dir: String = "up" if grab_state == "grabbed1" else "down"
-        player.set_held_directions({dir: true})
-        _check(player.record_standing_combo_press("a" if grab_state == "grabbed1" else "c"),
+        player.set_held_directions({step_direction: true})
+        _check(player.record_standing_combo_press("c" if grab2 else "a"),
                 "%s grab press refused" % mode)
     rec["grab_kind_after_press"] = player.attack_kind
+    _check(player.attack_kind == miss_kind,
+            "%s miss kind %s != %s" % [mode, player.attack_kind, miss_kind])
     var grabbed: bool = false
     for _i: int in range(400):
         _step()
@@ -155,6 +194,7 @@ func _run_raw(mode: String, grab_state: String, comp: String, want_frames: int,
             grabbed = true
             break
     rec["grab_kind_final"] = player.attack_kind
+    player._animate_candidate()
     rec["grab_clip"] = player.candidate_animation_clip
     rec["grab_hold_frames"] = victim.state_time * FPS
     _check(grabbed, "%s: victim not held in %s (state=%s kind=%s)"
@@ -163,32 +203,28 @@ func _run_raw(mode: String, grab_state: String, comp: String, want_frames: int,
         return rec
     # finisher: hold right (native keystatus right=pressed) + attack key
     if real_keys:
-        Input.action_release(PC.MOVE_UP)
-        Input.action_release(PC.MOVE_DOWN)
+        Input.action_release(step_action)
         Input.action_press(PC.MOVE_RIGHT)
         _sync()
         scene._unhandled_input(_key(KEY_D))
         _sync()
-        # endattack brick's recovered keyboard sequence is A with right held,
-        # for both grabbed1 and grabbed2 victims (single Brick finisher link).
-        scene._unhandled_input(_key(KEY_J))
+        scene._unhandled_input(_key(attack_key))
     else:
         player.set_held_directions({"right": true})
-        player.set_key_status({"right": true, "a": true})
-        _check(player.record_standing_combo_press("a"), "%s finisher press refused" % mode)
+        player.set_key_status({"right": true, "c": grab2, "a": not grab2})
+        _check(player.record_standing_combo_press("c" if grab2 else "a"),
+                "%s finisher press refused" % mode)
     rec["fin_kind"] = player.attack_kind
     player._animate_candidate()
     rec["fin_clip"] = player.candidate_animation_clip
-    var e: Dictionary = _hold_until(comp)
-    rec.merge(e)
-    _check(String(rec["fin_kind"]) == "endattack brick",
-            "%s finisher kind %s != endattack brick" % [mode, rec["fin_kind"]])
-    _check(String(rec["fin_clip"]) == "m03_end_attack_01_forbigguy",
-            "%s finisher clip %s != m03_end_attack_01_forbigguy" % [mode, rec["fin_clip"]])
-    var want_grab_clip: String = ("m03_grab_01_forbigguy" if grab_state == "grabbed1"
-            else "m03_grab_02_forbigguy")
+    _check(String(rec["fin_kind"]) == want_finisher,
+            "%s finisher kind %s != %s" % [mode, rec["fin_kind"], want_finisher])
+    _check(String(rec["fin_clip"]) == want_finisher_clip,
+            "%s finisher clip %s != %s" % [mode, rec["fin_clip"], want_finisher_clip])
     _check(String(rec["grab_clip"]) == want_grab_clip,
             "%s grab clip %s != %s" % [mode, rec["grab_clip"], want_grab_clip])
+    var e: Dictionary = _hold_until(comp)
+    rec.merge(e)
     _check(not e.is_empty(), "%s: victim never reached %s" % [mode, comp])
     if not e.is_empty():
         _check(String(e["clip"]) == ("all_end_attack_01_forset03" if comp == "endattackcomp1" else "all_end_attack_02_forset03"),
@@ -229,17 +265,34 @@ func _run() -> void:
                 if player._candidate_animation != null else -1),
         "victim_class": victim.skeleton_class_name(),
         "player_class": player.skeleton_class_name(),
+        "default_uniques": player.active_uniques(),
     }
     _check(player.candidate_loaded, "player candidate failed: " + player.candidate_load_error)
     _check(victim.candidate_loaded, "victim candidate failed: " + victim.candidate_load_error)
     _check(victim.skeleton_class_name() == "large", "victim skeleton class is not large")
+    var default_expected: Array = PortFighter.DEFAULT_BRUCE_UNIQUES.duplicate()
+    default_expected.sort()
+    _check(player.active_uniques() == default_expected,
+            "default active uniques are not native: " + str(player.active_uniques()))
     var recs: Dictionary = {}
     recs["base_grab1_endattack1"] = _run_base("grab1", "endattack1", "endattackcomp1", 93)
     recs["base_grab2_endattack2"] = _run_base("grab2", "endattack2", "endattackcomp2", 130)
-    recs["rawcombo_grab1"] = _run_raw("rawcombo", "grabbed1", "endattackcomp1", 93, false)
-    recs["rawcombo_grab2"] = _run_raw("rawcombo", "grabbed2", "endattackcomp2", 130, false)
-    recs["rawkeys_grab1"] = _run_raw("rawkeys", "grabbed1", "endattackcomp1", 93, true)
-    recs["rawkeys_grab2"] = _run_raw("rawkeys", "grabbed2", "endattackcomp2", 130, true)
+    recs["rawcombo_grab1"] = _run_raw("rawcombo", "grabbed1", "endattack1",
+            "m01_end_attack_01_forbigguy", "endattackcomp1", 93, false)
+    recs["rawcombo_grab2"] = _run_raw("rawcombo", "grabbed2", "endattack2",
+            "m01_end_attack_02_forbigguy", "endattackcomp2", 130, false)
+    recs["rawkeys_grab1"] = _run_raw("rawkeys", "grabbed1", "endattack1",
+            "m01_end_attack_01_forbigguy", "endattackcomp1", 93, true)
+    recs["rawkeys_grab2"] = _run_raw("rawkeys", "grabbed2", "endattack2",
+            "m01_end_attack_02_forbigguy", "endattackcomp2", 130, true)
+    # Explicit Brick / big finisher style: same raw route, only now enabled.
+    _reset()
+    if not _set_style(BRICK_STYLE):
+        failures.append("brick style selection failed")
+    else:
+        recs["brick_style_grab1"] = _run_raw("brick_style", "grabbed1",
+                "endattack smallboy", "m03_end_attack_01_forbigguy",
+                "endattackcomp1", 93, false)
     var result: Dictionary = {
         "info": info, "checks": checks, "records": recs,
         "failures": failures, "RESULT": "PASS" if failures.is_empty() else "FAIL",
