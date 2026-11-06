@@ -58,9 +58,28 @@ func _run() -> void:
 
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     computer.reset_fighter(Vector3(2.0, 1.20, 0.0))
-    await _press_button(JOY_BUTTON_A)
-    if player.state != "startup" or player.attack_kind != "punch":
-        push_error("Gamepad A did not start the a/punch action")
+    # A real joypad button event must travel through the InputMap action and the
+    # native link selection (record_standing_combo_press -> _try_follow_links).
+    # The test never calls request_attack() for this path; the native selector
+    # picks the first basic attack, which is the high_punch action.
+    var attack_event: InputEventJoypadButton = _button(JOY_BUTTON_A, true)
+    Input.parse_input_event(attack_event)
+    await process_frame
+    var routed_via_action: bool = Input.is_action_pressed(Controls.ATTACK_A)
+    await process_frame
+    var started_state: String = player.state
+    var started_kind: String = player.attack_kind
+    Input.parse_input_event(_button(JOY_BUTTON_A, false))
+    await process_frame
+    if not routed_via_action:
+        push_error("Gamepad A did not route through the ATTACK_A action")
+        quit(1)
+        return
+    if started_state != "startup" or started_kind != "high_punch":
+        push_error(
+            "Gamepad A did not start the native high_punch action "
+            + "(state=%s kind=%s)" % [started_state, started_kind]
+        )
         quit(1)
         return
 
@@ -107,16 +126,30 @@ func _run() -> void:
         quit(1)
         return
 
+    var training_before: bool = scene.get("training_mode")
     await _press_button(JOY_BUTTON_MISC1)
     var hud: PortHUD = scene.get("hud")
-    if not hud.center_message.text.begins_with("TRAINING NEEDS"):
-        push_error("Gamepad Misc1 did not route the training toggle")
+    var center: String = hud.center_message.text
+    var training_after: bool = scene.get("training_mode")
+    # MISC1 / L3 is the training toggle. With candidates present it enters
+    # training (message "TRAINING · ..." and training_mode true); without them
+    # it reports "TRAINING NEEDS ...". Both prove the joypad event reached the
+    # toggle handler. The old "TRAINING NEEDS" expectation was stale because the
+    # read-only package supplies candidate animations.
+    if not center.begins_with("TRAINING"):
+        push_error("Gamepad Misc1 did not route the training toggle (message=%s)" % center)
+        quit(1)
+        return
+    if training_after == training_before and not center.begins_with("TRAINING NEEDS"):
+        push_error("Gamepad Misc1 routed no training toggle side effect")
         quit(1)
         return
 
     print("CONTROLLER_INPUT_VALIDATION=" + JSON.stringify({
         "actions": Controls.ALL_ACTIONS.size(),
         "gamepad_attack": true,
+        "gamepad_attack_kind": "high_punch",
+        "gamepad_attack_via_action": true,
         "gamepad_guard": true,
         "gamepad_menu_navigation": true,
         "gamepad_movement_action": true,

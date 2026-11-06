@@ -2,13 +2,25 @@ extends SceneTree
 ## Round-flow regression for the ported CBeatEmUpGame state machine.
 ## A round knockout is produced by a real punch, then the test walks the
 ## native result phases (7/8 -> 15 -> intro 3 -> fight 4 -> 12/13 -> 15).
+##
+## The driver advances the REAL play clocks: every simulated frame steps the
+## scene, the player and the computer by 1/60 s, exactly as the engine does in
+## gameplay. An earlier revision stepped only the defender with the scene clock
+## disabled, so the KO result phases never advanced; that was a stale harness
+## expectation, not a gameplay defect. The round2 probe measured the real play
+## path at 4->7 @ frame 331, 7->15 @ 512 and player_rounds=1.
 
 const STATE_KO_WIN: int = 7
 const STATE_KO_LOSE: int = 8
 const STATE_ROUND_END: int = 15
 const STATE_FIGHT: int = 4
+const FRAME: float = 1.0 / 60.0
 var results: Dictionary = {}
 var failures: Array[String] = []
+var _trace: Array[int] = []
+var _trace_last: int = -1
+var _round1_path: Array[int] = []
+var _round1_rounds: int = -1
 
 
 func _initialize() -> void:
@@ -20,11 +32,31 @@ func _state(scene: Node) -> int:
     return value if typeof(value) == TYPE_INT else -1
 
 
-func _tick(scene: Node, seconds: float, step: float = 0.05) -> void:
+## One real physics frame of gameplay: scene + player + computer, all at dt.
+func _step_frame(scene: Node, dt: float) -> void:
+    scene._physics_process(dt)
+    var player: PortFighter = scene.get("player")
+    var computer: PortFighter = scene.get("computer")
+    if player != null:
+        player._physics_process(dt)
+    if computer != null:
+        computer._physics_process(dt)
+    _note_state(scene)
+
+
+## Record the match-state path so the 4 -> 7 -> 15 sequence is proven directly.
+func _note_state(scene: Node) -> void:
+    var st: int = _state(scene)
+    if st != _trace_last:
+        _trace.append(st)
+        _trace_last = st
+
+
+func _tick(scene: Node, seconds: float, step: float = 1.0 / 60.0) -> void:
     var remaining: float = seconds
     while remaining > 0.0:
         var dt: float = minf(remaining, step)
-        scene._physics_process(dt)
+        _step_frame(scene, dt)
         remaining -= dt
 
 
@@ -33,8 +65,8 @@ func _tick_until(scene: Node, target: int, max_seconds: float = 9.0) -> bool:
     while elapsed < max_seconds:
         if _state(scene) == target:
             return true
-        scene._physics_process(0.02)
-        elapsed += 0.02
+        _step_frame(scene, FRAME)
+        elapsed += FRAME
     return _state(scene) == target
 
 
@@ -51,14 +83,16 @@ func _real_ko(scene: Node, attacker: PortFighter, defender: PortFighter) -> bool
     )
     if not attacker.request_attack("punch"):
         return false
+    # Land the punch on the attacker's own clock.
     attacker._physics_process(float(attacker.ATTACKS["punch"]["startup"]) + 0.01)
     if defender.health > 0.0:
         return false
-    for _i: int in range(150):
-        if _state(scene) != STATE_FIGHT:
-            break
-        defender._physics_process(1.0 / 60.0)
-    return _state(scene) != STATE_FIGHT
+    # Then advance the real play clocks (scene + player + computer) until the
+    # KO result phase is entered; stepping only the defender never leaves 4.
+    var target: int = (
+        STATE_KO_WIN if attacker == scene.get("player") else STATE_KO_LOSE
+    )
+    return _tick_until(scene, target, 12.0)
 
 
 func _run() -> void:
@@ -86,6 +120,8 @@ func _run() -> void:
         quit(1)
         return
     scene._reset_match()
+    _trace_last = -1
+    _note_state(scene)
     var hud: PortHUD = scene.get("hud")
     var round_parent: Node = hud.round_label.get_parent()
     var round_in_row: bool = (
@@ -103,6 +139,7 @@ func _run() -> void:
     if (scene.player_rounds != 1 or scene.round_number != 1
             or not scene.done or _state(scene) != STATE_KO_WIN):
         failures.append("First player knockout did not score / enter state 7")
+    _round1_rounds = scene.player_rounds
     scene._on_ko(computer)
     if scene.player_rounds != 1:
         failures.append("Duplicate KO signal scored the round twice")
@@ -115,6 +152,15 @@ func _run() -> void:
     if not _tick_until(scene, STATE_ROUND_END):
         failures.append("State 7 did not reach state 15")
     _tick(scene, 0.1)
+    # Prove the real play path 4 -> 7 -> 15 and the single round point.
+    _round1_path = _trace.slice(0, 3)
+    if (_round1_path.size() < 3
+            or int(_round1_path[0]) != STATE_FIGHT
+            or int(_round1_path[1]) != STATE_KO_WIN
+            or int(_round1_path[2]) != STATE_ROUND_END):
+        failures.append("Round 1 did not follow 4->7->15 (saw %s)" % str(_trace))
+    if _round1_rounds != 1:
+        failures.append("Round 1 player_rounds was %d, expected 1" % _round1_rounds)
     if not _tick_until(scene, STATE_FIGHT):
         failures.append("Round 2 intro did not reach the fight state")
     if (scene.round_number != 2 or scene.player_rounds != 1
@@ -165,6 +211,8 @@ func _run() -> void:
     results["computer_rounds"] = scene.computer_rounds
     results["round"] = scene.round_number
     results["match_state"] = _state(scene)
+    results["round1_state_path"] = _round1_path
+    results["player_rounds_after_round1"] = _round1_rounds
     print("ROUND_FLOW_VALIDATION=" + JSON.stringify(results))
     scene.queue_free()
     await process_frame
