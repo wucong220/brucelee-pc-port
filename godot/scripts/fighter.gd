@@ -9532,6 +9532,12 @@ func receive_hit(
         # thai.set marks parryhigh/parrylow impactable only from frame 25.
         # Absorb earlier incoming strikes so the parry window is defensive.
         if _current_attack_source_frame() < 25.0:
+            # Record the absorb exactly like the Bruce parry above: the
+            # automatic parryhigh -> parryattack link is released by
+            # _auto_link_release_ok() only when _parry_absorbed is set (its
+            # [9,10] window precedes the frame-25 impactable start). Without
+            # this the Brick parry absorbs the hit but never counters.
+            _parry_absorbed = true
             return false
     if (state in ["startup", "active"]
             and attack_kind in ["parry_attack", "parry_attack_brick"]):

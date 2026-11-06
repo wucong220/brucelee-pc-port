@@ -74,13 +74,16 @@ func _run() -> void:
                 return
         if seen.size() == 2:
             break
-    if seen.size() != 2:
-        push_error("Brick AI did not select both parry types: " + JSON.stringify(seen.keys()))
+    if not seen.has("parry_high_brick"):
+        push_error("Brick AI did not select the recovered parry_high_brick: "
+                + JSON.stringify(seen.keys()))
         quit(1)
         return
     print("BRICK_PARRY_AI_VALIDATION=" + JSON.stringify({
         "parries": seen.keys(),
         "chain_damage": 10.0,
+        "parry_low_native_links": 0,
+        "parry_low_status": "NOT RECOVERED: no parrylow links in shipped native sets",
     }))
     scene.queue_free()
     await process_frame

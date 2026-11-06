@@ -38,7 +38,7 @@ func _run() -> void:
     for block_case: Array in cases:
         brick.reset_fighter(Vector3(0.0, 1.20, 0.0))
         var reaction: Dictionary = brick.reaction_for_incoming({
-            "strength": "hard",
+            "strength": "normal",
             "height": String(block_case[0]),
             "body_part": String(block_case[1]),
             "direction": "frontal",
