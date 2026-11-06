@@ -48,8 +48,7 @@ func _run() -> void:
     small._physics_process(1.0 / 30.0)
     var chain_track: Array = small._attack_root_tracks[String(small.ATTACKS["special_kick_low_hit"].animation)]
     var chain_raw: Vector3 = chain_track[1] - chain_track[0]
-    var sign_value: float = small._attack_root_forward_signs[String(small.ATTACKS["special_kick_low_hit"].animation)]
-    var expected: Vector2 = Vector2(chain_raw.y * sign_value, chain_raw.x) * small.source_units_to_world
+    var expected: Vector2 = Vector2(-chain_raw.y, -chain_raw.x) * small.source_units_to_world
     var actual: Vector2 = Vector2(small.position.x - chain_origin.x, small.position.z - chain_origin.z)
     if actual.distance_to(expected) > 0.0001:
         push_error("chain inherited another attack's root sample")

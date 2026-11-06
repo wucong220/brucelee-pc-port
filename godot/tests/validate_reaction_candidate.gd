@@ -24,6 +24,24 @@ func _run_check() -> void:
         push_error("Candidate GLB was not integrated: " + player.candidate_load_error)
         quit(1)
         return
+    if not expect_reactions:
+        # Legacy mode is the documented old-candidate contract: a GLB without
+        # the reaction clips must fall back to idle (docs/CANDIDATE_INTEGRATION.md).
+        # The fallback itself is the port's fail-closed path; a reaction-capable
+        # candidate belongs in with-reactions mode, where the selection is
+        # asserted. Refuse the mismatch here instead of reporting a "wrong clip".
+        var legacy_clips: Dictionary = player.get("_candidate_clip_paths")
+        for reaction_clip: String in [
+                "all_impct_light_frnt_low", "all_impct_light_frnt_mid",
+                "all_impct_light_frnt_high", "all_impct_hard_frnt_high",
+                "all_block_low", "all_block_mid", "all_block_high"]:
+            if legacy_clips.has(reaction_clip):
+                push_error(
+                    "legacy mode requires a candidate without reaction clips, found "
+                    + reaction_clip + " (use with-reactions for this GLB)"
+                )
+                quit(1)
+                return
     var animation: AnimationPlayer = player.get("_candidate_animation")
     animation.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
     var skeletons: Array[Node] = player.find_children("*", "Skeleton3D", true, false)

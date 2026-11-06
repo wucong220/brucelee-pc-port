@@ -20,8 +20,17 @@ class Idle3EvidenceTest(unittest.TestCase):
         self.assertEqual(clip.group(1), report["animation"])
         self.assertEqual(int(duration.group(1)), report["duration_frames"])
         self.assertEqual(report["animation_radius"], 40.0)
-        self.assertIn('attack_kind == "special_kick_high"', text)
-        self.assertIn('next_state = "idle3"', text)
+        links = json.loads(
+            (ROOT / "godot" / "data" / "native_links.json").read_text(encoding="utf-8")
+        )["links"]
+        matched = [
+            link for link in links
+            if str(link.get("from")) == "specialkickhigh"
+            and str(link.get("to")) == "idle3"
+            and [int(v) for v in link.get("time", [])] == [53, 57]
+        ]
+        self.assertEqual(len(matched), 1)
+        self.assertIn("_native_recovery_return", text)
         self.assertIn("IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP", text)
         self.assertIn(
             "IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, "

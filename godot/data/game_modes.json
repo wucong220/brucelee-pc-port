@@ -1,0 +1,203 @@
+{
+  "schema": "game-modes/1",
+  "provenance": {
+    "archive": "data.zpak",
+    "archive_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+    "libdefault_so_sha256": "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70",
+    "game_states": "adreno_200/game.states (gamemodes / startarcade / starttimeattack / startsurvival / arcadeoptions / timeattackoptions / survivaloptions)",
+    "gui": [
+      "adreno_200/gui/arcadeconfig.ui",
+      "adreno_200/gui/arcadesettings.ui",
+      "adreno_200/gui/survivalconfig.ui",
+      "adreno_200/gui/survivalsettings.ui",
+      "adreno_200/gui/timeattackconfig.ui",
+      "adreno_200/gui/timeattacksettings.ui"
+    ],
+    "story_event_source": "adreno_200/story/chapter1..5.story (survival_event / arcade_event / timeattack_event fields)",
+    "disassembly_sources": [
+      "D:/BruceLeeWork/ai-difficulty-20261103/analysis/verify_difficulty.py (RESULT: PASS)",
+      "D:/BruceLeeWork/ai-difficulty-20261103/evidence/mode_difficulty_blocks.txt",
+      "D:/BruceLeeWork/ghidra-out5/CBeatEmUpGameModes.c",
+      "libdefault.so @0x1e0d18 CBruceLeeArcadeMode::FightBaseScore",
+      "libdefault.so @0x1fec94 IBeatEmUpGameMode::GetNumRoundsFromSetting",
+      "libdefault.so @0x1fecdc IBeatEmUpGameMode::GetTimeFromSetting"
+    ],
+    "recovered_disassembly": {
+      "GetNumRoundsFromSetting": "float setting -> int: 0.0=>1, 1.0=>2, 2.0=>3, else=>4 (compared with vcmp #0 / vldr 1.0 / vldr 2.0; literals 0x1fecd4=1.0, 0x1fecd8=2.0)",
+      "GetTimeFromSetting": "float setting -> int seconds: 0.0=>30, 1.0=>60, 2.0=>90, 3.0=>0, else=>60 (0 means no timer / infinite countdown)",
+      "FightBaseScore": "score = 100 + 25 * trunc(GetTReal('arcade_difficulty')); disasm add r0,r0,r0,lsl#2 twice then add #0x64",
+      "difficulty_encode": "difficulty_byte = trunc(2 * setting); easy(0)=>0, medium(1)=>2, hard(2)=>4; stored at TMatchConfig+0xf8 (= TFighterConfig[slot 1]+0x54), read by CDecisionTree::MakeDecision as params_by_difficulty slot"
+    }
+  },
+  "difficulty": {
+    "options": ["easy", "medium", "hard"],
+    "ai_slot_by_index": [0, 2, 4],
+    "encode": "trunc(2*index)",
+    "status": "recovered"
+  },
+  "modes": {
+    "arcade": {
+      "label": "ARCADE",
+      "gui_settings": "arcadesettings.ui",
+      "gui_flow": "arcadeconfig.ui -> select_fighter + combat_settings",
+      "settings_schema": [
+        {"key": "rounds", "label": "ROUNDS", "options": [0, 1, 2, 3], "labels": ["1", "2", "3", "4"], "default": 2},
+        {"key": "time", "label": "TIME", "options": [0, 1, 2, 3], "labels": ["30", "60", "90", "inf"], "default": 1},
+        {"key": "difficulty", "label": "DIFFICULTY", "options": [0, 1, 2], "labels": ["EASY", "MEDIUM", "HARD"], "default": 1}
+      ],
+      "rules": {
+        "rounds": {
+          "status": "recovered",
+          "setting_key": "arcade_rounds",
+          "source": "IBeatEmUpGameMode::GetNumRoundsFromSetting @0x1fec94",
+          "map_by_index": {"0": 1, "1": 2, "2": 3, "3": 4},
+          "ui_option_art": ["bl_gui_1_on/off", "bl_gui_3_on/off", "bl_gui_5_on/off", "bl_gui_7_on/off"],
+          "note": "rule returns 1/2/3/4 by option index; the .ui button art is labelled 1/3/5/7. The disassembled function is authoritative for gameplay; the art enumeration is kept verbatim as a recovered discrepancy."
+        },
+        "time_limit": {
+          "status": "recovered",
+          "setting_key": "arcade_time",
+          "source": "IBeatEmUpGameMode::GetTimeFromSetting @0x1fecdc",
+          "map_by_index": {"0": 30, "1": 60, "2": 90, "3": 0},
+          "infinite_index": 3,
+          "unit": "seconds",
+          "note": "0 seconds is the recovered 'inf' option (no countdown)."
+        },
+        "difficulty": {
+          "status": "recovered",
+          "setting_key": "arcade_difficulty",
+          "source": "CBruceLeeArcadeMode::SetCurrentMatchConfig @0x1e1d38 (+0xf8 store)"
+        },
+        "score": {
+          "status": "recovered",
+          "formula": "100 + 25*difficulty_index",
+          "source": "CBruceLeeArcadeMode::FightBaseScore @0x1e0d18",
+          "unit": "points per fight won"
+        },
+        "lives": {
+          "status": "unrecovered",
+          "fail_closed": true,
+          "note": "No lives/credits/continues counter exists in CSettings, the *_settings.ui screens, or the mode SetCurrentMatchConfig blocks. A lost fight ends the run; no continue count is invented."
+        },
+        "max_fights": {
+          "status": "not_applicable_standalone",
+          "note": "maximum_fights is only authored on story survival_event subevents; it is not a standalone arcade setting."
+        },
+        "health_recovery": {
+          "status": "not_applicable_standalone",
+          "note": "health_recovery is only authored on story survival_event subevents; it is not a standalone arcade setting."
+        }
+      }
+    },
+    "survival": {
+      "label": "SURVIVAL",
+      "gui_settings": "survivalsettings.ui",
+      "gui_flow": "survivalconfig.ui -> select_fighter",
+      "settings_schema": [
+        {"key": "time", "label": "TIME", "options": [0, 1, 2, 3], "labels": ["30", "60", "90", "inf"], "default": 1},
+        {"key": "difficulty", "label": "DIFFICULTY", "options": [0, 1, 2], "labels": ["EASY", "MEDIUM", "HARD"], "default": 1}
+      ],
+      "rules": {
+        "time_limit": {
+          "status": "recovered",
+          "setting_key": "survival_time",
+          "source": "IBeatEmUpGameMode::GetTimeFromSetting @0x1fecdc",
+          "map_by_index": {"0": 30, "1": 60, "2": 90, "3": 0},
+          "infinite_index": 3,
+          "unit": "seconds",
+          "note": "per-fight round clock; 0 = no countdown."
+        },
+        "difficulty": {
+          "status": "recovered",
+          "setting_key": "survival_difficulty",
+          "source": "CBruceLeeSurvivalMode::SetCurrentMatchConfig @0x1f5fbc (+0xf8 store)"
+        },
+        "max_fights": {
+          "status": "unrecovered",
+          "fail_closed": true,
+          "note": "Standalone survival has no maximum_fights setting. The only authored values live on story survival_event subevents (2/3/5). The standalone mode does NOT invent a cap: the run ends on the first lost round (or when a supplied cap is reached)."
+        },
+        "health_recovery": {
+          "status": "unrecovered",
+          "fail_closed": true,
+          "note": "Standalone survival has no health_recovery setting. Story survival_event values are 10/15/20. The standalone mode applies NO between-fight heal rather than inventing one."
+        },
+        "score": {
+          "status": "unrecovered",
+          "fail_closed": true,
+          "note": "No survival score formula was recovered; the mode reports fights survived, not a fabricated score."
+        },
+        "lives": {
+          "status": "unrecovered",
+          "fail_closed": true,
+          "note": "No lives counter exists; a lost round ends the run."
+        }
+      }
+    },
+    "timeattack": {
+      "label": "TIME ATTACK",
+      "gui_settings": "timeattacksettings.ui",
+      "gui_flow": "timeattackconfig.ui -> select_fighter",
+      "settings_schema": [
+        {"key": "difficulty", "label": "DIFFICULTY", "options": [0, 1, 2], "labels": ["EASY", "MEDIUM", "HARD"], "default": 1},
+        {"key": "time_limit_preset", "label": "TIME LIMIT", "options": [-1, 80, 120], "labels": ["(unrecovered)", "80", "120"], "default": -1}
+      ],
+      "rules": {
+        "difficulty": {
+          "status": "recovered",
+          "setting_key": "timeattack_difficulty",
+          "source": "CBruceLeeTimeAttackMode::SetCurrentMatchConfig @0x1f71b0 (+0xf8 store)"
+        },
+        "time_limit": {
+          "status": "unrecovered_standalone",
+          "fail_closed": true,
+          "source": "timeattacksettings.ui exposes ONLY difficulty; time_limit is a per-event field in story timeattack_event subevents",
+          "recovered_presets": [80, 120],
+          "note": "The standalone total time limit is code-embedded and was NOT recovered, so it is not invented. The mode refuses to start without an explicit time limit; the two values 80/120 are offered because they are recovered verbatim from chapter story events."
+        },
+        "score": {"status": "unrecovered", "fail_closed": true, "note": "No time-attack score formula recovered; the mode reports opponents defeated."},
+        "lives": {"status": "unrecovered", "fail_closed": true, "note": "No lives counter exists."}
+      }
+    }
+  },
+  "story_event_values": {
+    "note": "Recovered verbatim from the decoded chapter*.story survival_event / timeattack_event / arcade_event subevents. Used only as documented evidence and as the Time Attack time-limit presets; not applied as standalone defaults.",
+    "survival": {
+      "maximum_fights": [2, 3, 5],
+      "health_recovery": [10, 15, 20],
+      "sources": [
+        {"chapter": "chapter1", "event": "survival", "maximum_fights": 2, "health_recovery": 15},
+        {"chapter": "chapter2", "event": "survival", "maximum_fights": 2, "health_recovery": 15},
+        {"chapter": "chapter3", "event": "survival", "maximum_fights": 3, "health_recovery": 15},
+        {"chapter": "chapter4", "event": "survival", "maximum_fights": 3, "health_recovery": 15},
+        {"chapter": "chapter4", "event": "survival", "maximum_fights": 2, "health_recovery": 10},
+        {"chapter": "chapter5", "event": "survival", "maximum_fights": 5, "health_recovery": 20}
+      ]
+    },
+    "timeattack": {
+      "time_limit": [80, 120],
+      "sources": [
+        {"chapter": "chapter1", "event": "time_attack", "time_limit": 80},
+        {"chapter": "chapter2", "event": "time_attack", "time_limit": 80},
+        {"chapter": "chapter3", "event": "time_attack", "time_limit": 80},
+        {"chapter": "chapter4", "event": "time_attack", "time_limit": 120},
+        {"chapter": "chapter5", "event": "time_attack", "time_limit": 80}
+      ]
+    },
+    "arcade": {
+      "rounds": [1, 2],
+      "time": [60],
+      "sources": [
+        {"chapter": "chapter1", "event": "tournament", "rounds": 2, "time": 60},
+        {"chapter": "chapter1", "event": "tournament", "rounds": 1, "time": 60},
+        {"chapter": "chapter2", "event": "tournament", "rounds": 2, "time": 60}
+      ]
+    }
+  },
+  "port_opponent_pool": [
+    "sinfu", "master", "ken", "shenlo", "smallboy", "johnson", "loming"
+  ],
+  "port_scene_pool": [
+    "templeyardb", "rooftopsb", "harbourb", "tournamenthallb", "squareb", "harboura"
+  ]
+}

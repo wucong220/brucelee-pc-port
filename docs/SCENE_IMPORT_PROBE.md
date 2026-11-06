@@ -1,0 +1,88 @@
+# Scene import probe (2026-11-03)
+
+Extracted a small scene resource to inspect the container and dependencies:
+
+`adreno_200/scene/BL_TempleYardA_NearObjects.scene`
+
+- File size: 2029 bytes
+- Header: `1FDKENONCTX3`
+- Contains scene object names such as `bl_scene02a_hw_prop_brick`, `scene`, `flags`, `position`, `rotation`
+- It is a CTX3/KDF scene object, not a ready glTF scene.
+
+No scene-to-glTF converter exists in `tools/` yet. A correct importer must:
+
+1. Parse the scene object graph and mesh references.
+2. Resolve the referenced `.mesh` resources with the existing mesh/Skl pipeline.
+3. Preserve node transforms and material/texture references.
+4. Decide how far objects (`*_FarObjects`) and FX scenes are merged for one arena.
+5. Only then replace the procedural arena.
+
+## 2026-11-03 parser progress
+
+`tools/kdf_object.py` now recognizes the one-byte zero prefix used by scene
+external-reference tables (object tables have no prefix). The sample parses to:
+
+- `scene` frame with 3 children
+- 3 `object` nodes
+- each object has one `mesh` visual
+- refs include
+  `scene/hw/bl_templeyarda_nearobjects/meshes/bl_scene02a_hw_prop_brick*.mesh`
+  and `shaders/scene.shd` / one `.tex`
+
+The node/visual graph is now recoverable. Mesh conversion and arena merge are
+still not implemented; no procedural scene has been replaced yet.
+
+## 2026-11-03 static mesh probe
+
+Extracted and converted one scene prop:
+
+`bl_scene02a_hw_prop_brick.Mesh`
+
+with `tools/character_to_gltf.py` (no Skl, static mesh):
+
+- 488 vertices
+- 507 triangles
+- 1 subset
+- output GLB `brick_prop.glb`
+- GLB size 14,340 bytes
+
+This proves scene `.mesh` resources can be fed through the existing static
+mesh converter. It does **not** yet prove scene transforms/material binding or
+arena composition; those are the next steps.
+
+## 2026-11-03 runtime scene result
+
+The current package loads the original `BL_TempleYardA` near/far scene:
+
+- 3 near props
+- 18 far props
+- 18 far textures
+- procedural floor/lines hidden
+- `skydome` is skipped in the current build; the background is `BG_COLOR`
+- startup profile: environment ~150 ms, fighters ~4,500 ms, audio ~2,900 ms,
+  total ~11,400 ms
+
+Verified by a live window screenshot, not only by counts.
+
+
+## 2026-11-03 far-scene graph
+
+`BL_TempleYardA_FarObjects.scene` now parses to:
+
+- 22 nodes
+- 39 external references
+- 19 visuals
+- nodes include `bl_scene02a_hw_grounda/b`, `fartemple`, `bigtemple`,
+  `redgate`, trees/rocks, `combatarea`, `skydome`, `bl_scene_sun`
+
+Its pose-transform table is a different layout. After allowing unused DATA
+sections and subset pose coverage, the sample now exposes **22 transforms**
+with source positions such as `[-1436.333, -233.141, 220.626]` and identity
+scales. The parser is permissive about non-pose sections; transform semantics
+still need per-node verification. Far-scene mesh conversion and merge are still
+pending.
+
+
+
+
+This is deliberately **not** implemented as a fake procedural stand-in. Current arena remains procedural until the mesh/reference graph is converted and verified.

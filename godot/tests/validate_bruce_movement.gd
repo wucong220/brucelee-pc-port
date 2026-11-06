@@ -20,13 +20,14 @@ func _run() -> void:
         quit(1)
         return
     var cases: Array[Dictionary] = [
-        {"axis": Vector2(-1.0, 0.0), "action": "moveleft", "clip": "m01_moverht"},
-        {"axis": Vector2(1.0, 0.0), "action": "moveright", "clip": "m01_movelft"},
-        {"axis": Vector2(0.0, -1.0), "action": "stepfwd", "clip": "m01_stepfwd"},
-        {"axis": Vector2(0.0, 1.0), "action": "stepback", "clip": "m01_stepbck"},
+        {"axis": Vector2(-1.0, 0.0), "held": {"left": true}, "action": "stepback", "clip": "m01_stepbck"},
+        {"axis": Vector2(1.0, 0.0), "held": {"right": true}, "action": "stepfwd", "clip": "m01_stepfwd"},
+        {"axis": Vector2(0.0, -1.0), "held": {"up": true}, "action": "stepright", "clip": "m01_steprht"},
+        {"axis": Vector2(0.0, 1.0), "held": {"down": true}, "action": "stepleft", "clip": "m01_steplft"},
     ]
     for case: Dictionary in cases:
         fighter.move_axis = case["axis"]
+        fighter.set_held_directions(case["held"])
         fighter._animate_candidate()
         if fighter.candidate_animation_clip != case["clip"]:
             push_error("movement clip mismatch for %s: %s" % [
@@ -43,13 +44,15 @@ func _run() -> void:
             return
     fighter.state = "idle3"
     fighter.move_axis = Vector2(-1.0, 0.0)
+    fighter.set_held_directions({"left": true})
     fighter._animate_candidate()
-    if fighter.candidate_animation_clip != "m01_moverht":
+    if fighter.candidate_animation_clip != "m01_stepbck":
         push_error("idle3 movement did not override idle3: " + fighter.candidate_animation_clip)
         quit(1)
         return
     fighter.state = "idle"
     fighter.move_axis = Vector2.ZERO
+    fighter.set_held_directions({})
     fighter._animate_candidate()
     if fighter.candidate_animation_clip != "m01_idle_01":
         push_error("idle clip did not restore: " + fighter.candidate_animation_clip)

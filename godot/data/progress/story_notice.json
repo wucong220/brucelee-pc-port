@@ -1,0 +1,672 @@
+{
+ "schema": "dragonwarrior-story-notice/1",
+ "note": "Recovered presentation for StoryLevelUp / LevelUpNotify / ExperienceUnlock. Layouts come from adreno_200/gui/levelup.ui and gui/unlock.ui; strings from the shipped .lang translations; trigger logic from libdefault.so. No text is invented.",
+ "source": {
+  "libdefault_so_sha256": "1da7a30cb8344484bfed7a4d9d578e128bff69f22f73833d95db563b353b2e70",
+  "levelup_ui": {
+   "path": "adreno_200/gui/levelup.ui",
+   "bytes": 2622,
+   "sha256": "cfdb71021a07250e246699367920a83cdb6edba6e4f64a52a876510a5bebd119",
+   "resource_id": "6533f6262c256a47839ce9dded80350b",
+   "container": {
+    "signature": "1FDKENONCTX3",
+    "reserved_word": 1,
+    "strings": 51,
+    "records": 212,
+    "sections": 0,
+    "payload_bytes": 9,
+    "tail_identity": "6533f6262c256a47839ce9dded80350b"
+   }
+  },
+  "unlock_ui": {
+   "path": "adreno_200/gui/unlock.ui",
+   "bytes": 3473,
+   "sha256": "c37571f60f5756b1f87daeed5dfb63ecff7572cab5bd0545e05a11a0fc36aff5",
+   "resource_id": "8449a35a2b4bdb39486f380cdf40594a",
+   "container": {
+    "signature": "1FDKENONCTX3",
+    "reserved_word": 0,
+    "strings": 65,
+    "records": 281,
+    "sections": 0,
+    "payload_bytes": 0,
+    "tail_identity": "8449a35a2b4bdb39486f380cdf40594a"
+   }
+  },
+  "level_thresholds_csv": "D:\\BruceLeeWork\\story-exp-20261104\\data\\level_thresholds.csv",
+  "translations": "D:\\BruceLeeWork\\story-lang-20261104\\lang_lookup_full.json"
+ },
+ "canvas": {
+  "width": 480,
+  "height": 360,
+  "note": "widget rects are in the .ui layout space; height inferred from max y+h (menu 270+80)"
+ },
+ "state_graph": {
+  "experienceunlock": {
+   "ui": {
+    "$file": "gui/unlock.ui"
+   },
+   "modules": [
+    "menubackground"
+   ],
+   "actions": {
+    "start": "playunlocksound",
+    "ok": "storychecknextunlock"
+   }
+  },
+  "levelupnotify": {
+   "ui": {
+    "$file": "gui/levelup.ui"
+   },
+   "modules": [
+    "menubackground"
+   ],
+   "actions": {
+    "start": "playlevelupsound",
+    "continue": "storychecknextunlock"
+   }
+  },
+  "storyunlock": {
+   "ui": {
+    "$file": "gui/unlock.ui"
+   },
+   "modules": [
+    "menubackground"
+   ],
+   "actions": {
+    "start": "playunlocksound",
+    "ok": "nextstorysubevent"
+   }
+  },
+  "storyachievement": {
+   "ui": {
+    "$file": "gui/achievementreached.ui"
+   },
+   "modules": [
+    "menubackground"
+   ],
+   "actions": {
+    "continue": "removependingachievement",
+    "removed": "checkpendingachievements",
+    "achievement": "storyachievement",
+    "noachievement": "storychecknextunlock"
+   }
+  },
+  "replayeventscore": {
+   "ui": [
+    {
+     "$file": "gui/darkbg.ui"
+    },
+    {
+     "$file": "gui/eventsummary.ui"
+    }
+   ],
+   "modules": [
+    "game"
+   ],
+   "actions": {
+    "continue": "storycheckfirstunlock"
+   }
+  }
+ },
+ "level_rule": {
+  "table": [
+   200,
+   500,
+   800,
+   1100,
+   1400,
+   1700,
+   2000,
+   2300,
+   2600,
+   2900,
+   3250,
+   3600,
+   3950,
+   4300,
+   4650,
+   5000,
+   5350,
+   5700,
+   6050,
+   6400,
+   6800,
+   7200,
+   7600,
+   8000,
+   8400,
+   8800,
+   9200,
+   9600,
+   10000,
+   10400,
+   10850,
+   11300,
+   11750,
+   12200,
+   12650,
+   13100,
+   13550,
+   14000,
+   14450,
+   14900,
+   15400,
+   15900,
+   16400,
+   16900,
+   17400,
+   17920,
+   18440,
+   18960,
+   19480,
+   20000
+  ],
+  "first_transition_index": 1,
+  "max_level": 50,
+  "saturate_sentinel": 999999999,
+  "new_game_level": 1,
+  "body_format": "Level %d",
+  "body_format_source": "levelup.ui 'level' label inline payload (0x5b9344 payload region) + gamemodes.storycurrentlevel",
+  "rule": "level starts at 1; while exp >= table[level] (1-based transition L->L+1 uses table[L]) level++."
+ },
+ "translations": {
+  "you_reached_level": {
+   "LangEnglish": "Level Up!",
+   "LangChineseSimpl": "升级！",
+   "LangChineseTrad": "升級！",
+   "LangFrench": "Niveau gagné !",
+   "LangGerman": "Level erhöht!",
+   "LangItalian": "Nuovo livello!",
+   "LangJapanese": "レベルアップ！",
+   "LangKorean": "레벨 업!",
+   "LangRussian": "Новый уровень!",
+   "LangSpanish": "¡Subida de nivel!"
+  },
+  "fighter_unlocked": {
+   "LangEnglish": "New Fighter unlocked!",
+   "LangChineseSimpl": "新武师已解锁！",
+   "LangChineseTrad": "新武師已解鎖!",
+   "LangFrench": "Nouveau combattant débloqué !",
+   "LangGerman": "Neuer Kämpfer freigeschaltet!",
+   "LangItalian": "Nuovo lottatore sbloccato!",
+   "LangJapanese": "新しいファイター解除！",
+   "LangKorean": "새 파이터가 등장했습니다!",
+   "LangRussian": "Открыт новый боец!",
+   "LangSpanish": "¡Nuevo luchador desbloqueado!"
+  },
+  "scenery_unlocked": {
+   "LangEnglish": "New location unlocked!",
+   "LangChineseSimpl": "新位置已解锁！",
+   "LangChineseTrad": "新位置已解鎖！",
+   "LangFrench": "Nouvel endroit débloqué !",
+   "LangGerman": "Neuer Ort freigeschaltet!",
+   "LangItalian": "Nuova zona sbloccata!",
+   "LangJapanese": "新しいエリアを解除！",
+   "LangKorean": "새 장소가 열렸습니다!",
+   "LangRussian": "Открыто новое место для поединков!",
+   "LangSpanish": "¡Nuevo escenario desbloqueado!"
+  },
+  "move_unlocked": {
+   "LangEnglish": "New move learned!",
+   "LangChineseSimpl": "学到新动作！",
+   "LangChineseTrad": "學到新動作！",
+   "LangFrench": "Nouveau coup débloqué !",
+   "LangGerman": "Neue Bewegung erlernt!",
+   "LangItalian": "Nuova mossa imparata!",
+   "LangJapanese": "新しい攻撃を覚えました！",
+   "LangKorean": "새 동작을 배웠습니다!",
+   "LangRussian": "Вы изучили новое движение!",
+   "LangSpanish": "¡Nuevo movimiento aprendido!"
+  },
+  "profile_unlocked": {
+   "LangEnglish": "New profile unlocked!",
+   "LangChineseSimpl": "新资料已解锁！",
+   "LangChineseTrad": "新資料已解鎖！",
+   "LangFrench": "Nouveau profil débloqué !",
+   "LangGerman": "Neues Profil freigeschaltet!",
+   "LangItalian": "Nuovo profilo sbloccato!",
+   "LangJapanese": "新しいプロフィールを解除！",
+   "LangKorean": "새 프로필이 열렸습니다!",
+   "LangRussian": "Открыт новый профиль!",
+   "LangSpanish": "¡Nuevo perfil desbloqueado!"
+  },
+  "art_unlocked": {
+   "LangEnglish": "New art unlocked!",
+   "LangChineseSimpl": "新艺术已解锁",
+   "LangChineseTrad": "新技巧已解鎖",
+   "LangFrench": "Nouvelle illustration débloquée !\n",
+   "LangGerman": "Neue Kunst freigeschaltet!",
+   "LangItalian": "Nuova arte sbloccata!",
+   "LangJapanese": "新しいアート解除！",
+   "LangKorean": "새 기술이 열렸습니다!",
+   "LangRussian": "Открыто новое изображение!",
+   "LangSpanish": "¡Nuevo arte desbloqueado!"
+  },
+  "continue": {
+   "LangEnglish": "Continue",
+   "LangChineseSimpl": "继续",
+   "LangChineseTrad": "繼續",
+   "LangFrench": "Continuer",
+   "LangGerman": "Fortsetzen",
+   "LangItalian": "Continua",
+   "LangJapanese": "次へ",
+   "LangKorean": "계속",
+   "LangRussian": "Продолжить",
+   "LangSpanish": "Continuar"
+  },
+  "ok": {
+   "LangEnglish": "OK",
+   "LangChineseSimpl": "确定",
+   "LangChineseTrad": "確定",
+   "LangFrench": "OK",
+   "LangGerman": "OK",
+   "LangItalian": "OK",
+   "LangJapanese": "OK",
+   "LangKorean": "확인",
+   "LangRussian": "OK",
+   "LangSpanish": "OK"
+  }
+ },
+ "item_type_title_key": {
+  "fighter": "fighter_unlocked",
+  "scenery": "scenery_unlocked",
+  "style_anim": "move_unlocked",
+  "fighter_profile": "profile_unlocked",
+  "art_picture": "art_unlocked"
+ },
+ "rodata_evidence": {
+  "region": "0x5b9344..0x5b93a3",
+  "text": "scenery/style_anim/fighter_profile/art_picture ... fighter_unlocked/scenery_unlocked/move_unlocked/profile_unlocked/art_unlocked"
+ },
+ "screens": {
+  "levelup": {
+   "ui": "gui/levelup.ui",
+   "role": "LevelUpNotify",
+   "sha256": "cfdb71021a07250e246699367920a83cdb6edba6e4f64a52a876510a5bebd119",
+   "widgets": [
+    {
+     "type": "staticrect",
+     "name": "black_rect",
+     "x": 0,
+     "y": 70,
+     "width": 480,
+     "height": 170,
+     "border": 0,
+     "hspring": "soft",
+     "vspring": "soft",
+     "bordercolor": [
+      0,
+      0,
+      0,
+      160
+     ],
+     "offscreen": {
+      "alpha": 0.0
+     }
+    },
+    {
+     "type": "staticrect",
+     "name": "yellow_line1",
+     "x": 0,
+     "y": 70,
+     "width": 480,
+     "height": 1,
+     "hspring": "soft",
+     "vspring": "soft",
+     "bordercolor": [
+      255,
+      255,
+      0
+     ],
+     "offscreen": {
+      "x": -480
+     }
+    },
+    {
+     "type": "label",
+     "name": "title",
+     "x": 40,
+     "y": 80,
+     "width": 400,
+     "height": 30,
+     "font": 1,
+     "uppercase": "true",
+     "align": "center",
+     "hspring": "soft",
+     "vspring": "soft",
+     "textcolor": [
+      255,
+      255,
+      0
+     ],
+     "offscreen": {
+      "x": -440
+     },
+     "datasources": {
+      "text": [
+       "translate",
+       "you_reached_level"
+      ]
+     }
+    },
+    {
+     "type": "label",
+     "name": "level",
+     "x": 40,
+     "y": 130,
+     "width": 400,
+     "height": 64,
+     "font": 2,
+     "uppercase": "true",
+     "align": "center",
+     "hspring": "soft",
+     "vspring": "soft",
+     "textcolor": [
+      255,
+      255,
+      255
+     ],
+     "offscreen": {
+      "alpha": 0.0
+     },
+     "datasources": {
+      "text": [
+       "format",
+       "Level %d",
+       [
+        "gamemodes",
+        "storycurrentlevel"
+       ]
+      ]
+     }
+    },
+    {
+     "type": "staticrect",
+     "name": "yellow_line2",
+     "x": 0,
+     "y": 240,
+     "width": 480,
+     "height": 1,
+     "hspring": "soft",
+     "vspring": "soft",
+     "bordercolor": [
+      255,
+      255,
+      0
+     ],
+     "offscreen": {
+      "x": 480
+     }
+    },
+    {
+     "type": "blmenu",
+     "name": "menu",
+     "x": 130,
+     "y": 270,
+     "width": 350,
+     "height": 80,
+     "font": 2,
+     "valign": "middle",
+     "focused": "true",
+     "hspring": "soft",
+     "vspring": "soft",
+     "progress": 1.0,
+     "border_offset": 160,
+     "offscreen": {
+      "progress": 0.0
+     },
+     "options": [
+      [
+       "continue",
+       "continue"
+      ]
+     ]
+    }
+   ],
+   "text": [
+    {
+     "widget": "title",
+     "kind": "translate",
+     "key": "you_reached_level"
+    },
+    {
+     "widget": "level",
+     "kind": "format",
+     "format": "Level %d",
+     "value": [
+      "gamemodes",
+      "storycurrentlevel"
+     ]
+    }
+   ],
+   "menu_option": "continue",
+   "sound": "sounds/menu_sfx/menu_punch_2.wav",
+   "start_action": "playlevelupsound",
+   "ok_action": "storychecknextunlock"
+  },
+  "unlock": {
+   "ui": "gui/unlock.ui",
+   "role": "ExperienceUnlock / StoryUnlock",
+   "sha256": "c37571f60f5756b1f87daeed5dfb63ecff7572cab5bd0545e05a11a0fc36aff5",
+   "widgets": [
+    {
+     "type": "staticrect",
+     "name": "black_rect",
+     "x": 0,
+     "y": 70,
+     "width": 480,
+     "height": 170,
+     "border": 0,
+     "hspring": "soft",
+     "vspring": "soft",
+     "bordercolor": [
+      0,
+      0,
+      0,
+      160
+     ],
+     "offscreen": {
+      "alpha": 0.0
+     }
+    },
+    {
+     "type": "staticrect",
+     "name": "yellow_line1",
+     "x": 0,
+     "y": 70,
+     "width": 480,
+     "height": 1,
+     "hspring": "soft",
+     "vspring": "soft",
+     "bordercolor": [
+      255,
+      255,
+      0
+     ],
+     "offscreen": {
+      "x": -480
+     }
+    },
+    {
+     "type": "label",
+     "name": "title",
+     "x": 40,
+     "y": 80,
+     "width": 400,
+     "height": 30,
+     "font": 1,
+     "uppercase": "true",
+     "align": "center",
+     "hspring": "soft",
+     "vspring": "soft",
+     "textcolor": [
+      255,
+      255,
+      0
+     ],
+     "offscreen": {
+      "x": -440
+     },
+     "datasources": {
+      "text": [
+       "unlocker",
+       "unlocktitle"
+      ]
+     }
+    },
+    {
+     "type": "blpicture",
+     "name": "icon",
+     "x": 240,
+     "y": 162,
+     "align": "center",
+     "valign": "middle",
+     "linerect": "true",
+     "scale": "true",
+     "center_hotspot": "true",
+     "alphablend": "true",
+     "hspring": "soft",
+     "vspring": "soft",
+     "linerectcolor": [
+      255,
+      255,
+      0
+     ],
+     "offscreen": {
+      "alpha": 0.0
+     },
+     "datasources": {
+      "width": [
+       "unlocker",
+       "unlockthumbnailwidth"
+      ],
+      "height": [
+       "unlocker",
+       "unlockthumbnailheight"
+      ],
+      "subrect_width": [
+       "unlocker",
+       "unlockthumbnailsubrectwidth"
+      ],
+      "subrect_height": [
+       "unlocker",
+       "unlockthumbnailsubrectheight"
+      ],
+      "file": [
+       "unlocker",
+       "unlockthumbnail"
+      ]
+     }
+    },
+    {
+     "type": "label",
+     "name": "title",
+     "x": 40,
+     "y": 210,
+     "width": 400,
+     "height": 30,
+     "font": 1,
+     "uppercase": "true",
+     "align": "center",
+     "hspring": "soft",
+     "vspring": "soft",
+     "textcolor": [
+      255,
+      255,
+      0
+     ],
+     "offscreen": {
+      "x": 520
+     },
+     "datasources": {
+      "text": [
+       "unlocker",
+       "itemname"
+      ]
+     }
+    },
+    {
+     "type": "staticrect",
+     "name": "yellow_line2",
+     "x": 0,
+     "y": 240,
+     "width": 480,
+     "height": 1,
+     "hspring": "soft",
+     "vspring": "soft",
+     "bordercolor": [
+      255,
+      255,
+      0
+     ],
+     "offscreen": {
+      "x": 480
+     }
+    },
+    {
+     "type": "blmenu",
+     "name": "menu",
+     "x": 130,
+     "y": 270,
+     "width": 350,
+     "height": 80,
+     "font": 2,
+     "valign": "middle",
+     "focused": "true",
+     "hspring": "soft",
+     "vspring": "soft",
+     "progress": 1.0,
+     "border_offset": 160,
+     "offscreen": {
+      "progress": 0.0
+     },
+     "options": [
+      [
+       "continue",
+       "ok"
+      ]
+     ]
+    }
+   ],
+   "title_source": [
+    "unlocker",
+    "unlocktitle"
+   ],
+   "itemname_source": [
+    "unlocker",
+    "itemname"
+   ],
+   "icon_source": {
+    "file": [
+     "unlocker",
+     "unlockthumbnail"
+    ],
+    "width": [
+     "unlocker",
+     "unlockthumbnailwidth"
+    ],
+    "height": [
+     "unlocker",
+     "unlockthumbnailheight"
+    ],
+    "subrect_width": [
+     "unlocker",
+     "unlockthumbnailsubrectwidth"
+    ],
+    "subrect_height": [
+     "unlocker",
+     "unlockthumbnailsubrectheight"
+    ]
+   },
+   "menu_option": "ok",
+   "sound": "sounds/menu_sfx/select_play_bl_shout.wav",
+   "start_action": "playunlocksound",
+   "ok_action": "storychecknextunlock"
+  }
+ },
+ "not_recovered": [
+  "Unlock thumbnail image (unlocker.unlockthumbnail) — the .tex is not decoded here; the notice shows the recovered title/item name and marks the icon NOT RECOVERED.",
+  "Exact CUnlocker::QueryString branch instruction per item_type; the item_type->title-key map is taken from the contiguous .rodata vocabulary/order at 0x5b9344."
+ ]
+}

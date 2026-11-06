@@ -28,7 +28,7 @@ func _run() -> void:
         var action: Dictionary = fighter.ATTACKS[key]
         var source_action: String = String(action.get("source_action", ""))
         if source_action.is_empty():
-            if key != "heavy":
+            if true:
                 failures.append(key + " has no source_action but is not heavy")
             continue
         if not raw.get("actions", {}).has(source_action):
@@ -58,7 +58,7 @@ func _run() -> void:
     print("ATTACK_ANIMATION_RADII_VALIDATION=" + JSON.stringify({
         "configured_actions": fighter.ATTACKS.size(),
         "checked_actions": checked,
-        "skipped": ["heavy"],
+        "skipped": [],
         "mismatches": [],
     }))
     fighter.queue_free()

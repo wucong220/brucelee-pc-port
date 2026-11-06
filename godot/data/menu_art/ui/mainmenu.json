@@ -1,0 +1,1038 @@
+{
+ "screen": "mainmenu.ui",
+ "source": {
+  "path": "adreno_200/gui/mainmenu.ui",
+  "bytes": 2234,
+  "sha256": "cfcbbe9a394e635f7eab0afc39c8fec4a96852664223f1ee051919927d404907",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 58,
+   "records": 152,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "95c1d86be421ed77bbf51a46bb073773"
+  }
+ },
+ "coverage": {
+  "record_count": 152,
+  "reached_records": 152,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "gui/images/menu/",
+   "basename": "bl_gui_logo_little",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 1,
+   "directory": "sounds/menu_sfx/",
+   "basename": "menu_punch_2",
+   "extension": "wav"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "picture",
+  "name",
+  "logo",
+  "x",
+  "y",
+  "width",
+  "height",
+  "scale",
+  "true",
+  "file",
+  "alphablend",
+  "hspring",
+  "soft",
+  "vspring",
+  "mantainaspectratio",
+  "animation",
+  "bezier",
+  "offscreen",
+  "alpha",
+  "bllabel",
+  "title",
+  "datasources",
+  "text",
+  "translate",
+  "main_menu",
+  "blmenu",
+  "menu",
+  "focused",
+  "valign",
+  "middle",
+  "font",
+  "progress",
+  "sound",
+  "options",
+  "play",
+  "player_profile",
+  "stats",
+  "settings",
+  "credits",
+  "about",
+  "quit",
+  "selectedoption",
+  "option",
+  "variable_mainmenu_selectedoption",
+  "springs",
+  "top",
+  "border",
+  "bottom",
+  "left",
+  "right",
+  "gui/images/menu/",
+  "bl_gui_logo_little",
+  "tex",
+  "sounds/menu_sfx/",
+  "menu_punch_2",
+  "wav"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "picture",
+    "name": "logo",
+    "x": 25,
+    "y": 180,
+    "width": 256,
+    "height": 128,
+    "scale": "true",
+    "file": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "gui/images/menu/",
+      "basename": "bl_gui_logo_little",
+      "extension": "tex"
+     }
+    },
+    "alphablend": "true",
+    "hspring": "soft",
+    "vspring": "soft",
+    "mantainaspectratio": "true",
+    "animation": {
+     "x": [
+      "bezier",
+      1000
+     ]
+    },
+    "offscreen": {
+     "alpha": 0
+    }
+   },
+   {
+    "type": "bllabel",
+    "name": "title",
+    "x": 0,
+    "y": 5,
+    "width": 200,
+    "height": 40,
+    "hspring": "soft",
+    "vspring": "soft",
+    "datasources": {
+     "text": [
+      "translate",
+      "main_menu"
+     ]
+    },
+    "offscreen": {
+     "x": -200
+    }
+   },
+   {
+    "type": "blmenu",
+    "name": "menu",
+    "x": 130,
+    "y": 50,
+    "width": 350,
+    "height": 220,
+    "focused": "true",
+    "valign": "middle",
+    "font": 2,
+    "progress": 1.0,
+    "hspring": "soft",
+    "vspring": "soft",
+    "sound": {
+     "$file": {
+      "ordinal": 1,
+      "directory": "sounds/menu_sfx/",
+      "basename": "menu_punch_2",
+      "extension": "wav"
+     }
+    },
+    "options": [
+     [
+      "play",
+      "play"
+     ],
+     [
+      "player_profile",
+      "stats"
+     ],
+     [
+      "settings",
+      "settings"
+     ],
+     [
+      "credits",
+      "credits"
+     ],
+     [
+      "about",
+      "about"
+     ],
+     [
+      "quit",
+      "quit"
+     ]
+    ],
+    "datasources": {
+     "selectedoption": [
+      "option",
+      "variable_mainmenu_selectedoption"
+     ]
+    },
+    "offscreen": {
+     "progress": 0.0
+    }
+   }
+  ],
+  "springs": [
+   {
+    "type": "soft",
+    "top": "border",
+    "bottom": "menu"
+   },
+   {
+    "type": "soft",
+    "top": "menu",
+    "bottom": "border"
+   },
+   {
+    "type": "soft",
+    "left": "border",
+    "right": "menu"
+   },
+   {
+    "type": "soft",
+    "left": "menu",
+    "right": "border"
+   }
+  ]
+ },
+ "layout": [
+  {
+   "type": "picture",
+   "name": "logo",
+   "x": 25,
+   "y": 180,
+   "width": 256,
+   "height": 128,
+   "scale": "true",
+   "file": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "gui/images/menu/",
+     "basename": "bl_gui_logo_little",
+     "extension": "tex"
+    }
+   },
+   "alphablend": "true",
+   "hspring": "soft",
+   "vspring": "soft",
+   "mantainaspectratio": "true",
+   "animation": {
+    "x": [
+     "bezier",
+     1000
+    ]
+   },
+   "offscreen": {
+    "alpha": 0
+   }
+  },
+  {
+   "type": "bllabel",
+   "name": "title",
+   "x": 0,
+   "y": 5,
+   "width": 200,
+   "height": 40,
+   "hspring": "soft",
+   "vspring": "soft",
+   "datasources": {
+    "text": [
+     "translate",
+     "main_menu"
+    ]
+   },
+   "offscreen": {
+    "x": -200
+   }
+  },
+  {
+   "type": "blmenu",
+   "name": "menu",
+   "x": 130,
+   "y": 50,
+   "width": 350,
+   "height": 220,
+   "focused": "true",
+   "valign": "middle",
+   "font": 2,
+   "progress": 1.0,
+   "hspring": "soft",
+   "vspring": "soft",
+   "sound": {
+    "$file": {
+     "ordinal": 1,
+     "directory": "sounds/menu_sfx/",
+     "basename": "menu_punch_2",
+     "extension": "wav"
+    }
+   },
+   "options": [
+    [
+     "play",
+     "play"
+    ],
+    [
+     "player_profile",
+     "stats"
+    ],
+    [
+     "settings",
+     "settings"
+    ],
+    [
+     "credits",
+     "credits"
+    ],
+    [
+     "about",
+     "about"
+    ],
+    [
+     "quit",
+     "quit"
+    ]
+   ],
+   "datasources": {
+    "selectedoption": [
+     "option",
+     "variable_mainmenu_selectedoption"
+    ]
+   },
+   "offscreen": {
+    "progress": 0.0
+   }
+  }
+ ],
+ "springs": [
+  {
+   "type": "soft",
+   "top": "border",
+   "bottom": "menu"
+  },
+  {
+   "type": "soft",
+   "top": "menu",
+   "bottom": "border"
+  },
+  {
+   "type": "soft",
+   "left": "border",
+   "right": "menu"
+  },
+  {
+   "type": "soft",
+   "left": "menu",
+   "right": "border"
+  }
+ ],
+ "annotated": {
+  "record": 0,
+  "offset": 1002,
+  "entries": [
+   [
+    "layout",
+    {
+     "record": 2,
+     "offset": 1018,
+     "elements": [
+      {
+       "record": 5,
+       "offset": 1042,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 9,
+          "offset": 1074,
+          "value": "picture"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 11,
+          "offset": 1090,
+          "value": "logo"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 13,
+          "offset": 1106,
+          "value": 25
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 15,
+          "offset": 1122,
+          "value": 180
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 17,
+          "offset": 1138,
+          "value": 256
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 19,
+          "offset": 1154,
+          "value": 128
+         }
+        ],
+        [
+         "scale",
+         {
+          "record": 21,
+          "offset": 1170,
+          "value": "true"
+         }
+        ],
+        [
+         "file",
+         {
+          "record": 23,
+          "offset": 1186,
+          "value": {
+           "$file": {
+            "ordinal": 0,
+            "directory": "gui/images/menu/",
+            "basename": "bl_gui_logo_little",
+            "extension": "tex"
+           }
+          }
+         }
+        ],
+        [
+         "alphablend",
+         {
+          "record": 25,
+          "offset": 1202,
+          "value": "true"
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 27,
+          "offset": 1218,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 29,
+          "offset": 1234,
+          "value": "soft"
+         }
+        ],
+        [
+         "mantainaspectratio",
+         {
+          "record": 31,
+          "offset": 1250,
+          "value": "true"
+         }
+        ],
+        [
+         "animation",
+         {
+          "record": 33,
+          "offset": 1266,
+          "entries": [
+           [
+            "x",
+            {
+             "record": 37,
+             "offset": 1298,
+             "elements": [
+              {
+               "record": 38,
+               "offset": 1306,
+               "value": "bezier"
+              },
+              {
+               "record": 39,
+               "offset": 1314,
+               "value": 1000
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 35,
+          "offset": 1282,
+          "entries": [
+           [
+            "alpha",
+            {
+             "record": 41,
+             "offset": 1330,
+             "value": 0
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      },
+      {
+       "record": 6,
+       "offset": 1050,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 43,
+          "offset": 1346,
+          "value": "bllabel"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 45,
+          "offset": 1362,
+          "value": "title"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 47,
+          "offset": 1378,
+          "value": 0
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 49,
+          "offset": 1394,
+          "value": 5
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 51,
+          "offset": 1410,
+          "value": 200
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 53,
+          "offset": 1426,
+          "value": 40
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 55,
+          "offset": 1442,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 57,
+          "offset": 1458,
+          "value": "soft"
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 59,
+          "offset": 1474,
+          "entries": [
+           [
+            "text",
+            {
+             "record": 63,
+             "offset": 1506,
+             "elements": [
+              {
+               "record": 64,
+               "offset": 1514,
+               "value": "translate"
+              },
+              {
+               "record": 65,
+               "offset": 1522,
+               "value": "main_menu"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 61,
+          "offset": 1490,
+          "entries": [
+           [
+            "x",
+            {
+             "record": 67,
+             "offset": 1538,
+             "value": -200
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      },
+      {
+       "record": 7,
+       "offset": 1058,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 69,
+          "offset": 1554,
+          "value": "blmenu"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 71,
+          "offset": 1570,
+          "value": "menu"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 73,
+          "offset": 1586,
+          "value": 130
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 75,
+          "offset": 1602,
+          "value": 50
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 77,
+          "offset": 1618,
+          "value": 350
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 79,
+          "offset": 1634,
+          "value": 220
+         }
+        ],
+        [
+         "focused",
+         {
+          "record": 81,
+          "offset": 1650,
+          "value": "true"
+         }
+        ],
+        [
+         "valign",
+         {
+          "record": 83,
+          "offset": 1666,
+          "value": "middle"
+         }
+        ],
+        [
+         "font",
+         {
+          "record": 85,
+          "offset": 1682,
+          "value": 2
+         }
+        ],
+        [
+         "progress",
+         {
+          "record": 87,
+          "offset": 1698,
+          "value": 1.0
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 89,
+          "offset": 1714,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 91,
+          "offset": 1730,
+          "value": "soft"
+         }
+        ],
+        [
+         "sound",
+         {
+          "record": 93,
+          "offset": 1746,
+          "value": {
+           "$file": {
+            "ordinal": 1,
+            "directory": "sounds/menu_sfx/",
+            "basename": "menu_punch_2",
+            "extension": "wav"
+           }
+          }
+         }
+        ],
+        [
+         "options",
+         {
+          "record": 95,
+          "offset": 1762,
+          "elements": [
+           {
+            "record": 100,
+            "offset": 1802,
+            "elements": [
+             {
+              "record": 106,
+              "offset": 1850,
+              "value": "play"
+             },
+             {
+              "record": 107,
+              "offset": 1858,
+              "value": "play"
+             }
+            ]
+           },
+           {
+            "record": 101,
+            "offset": 1810,
+            "elements": [
+             {
+              "record": 108,
+              "offset": 1866,
+              "value": "player_profile"
+             },
+             {
+              "record": 109,
+              "offset": 1874,
+              "value": "stats"
+             }
+            ]
+           },
+           {
+            "record": 102,
+            "offset": 1818,
+            "elements": [
+             {
+              "record": 110,
+              "offset": 1882,
+              "value": "settings"
+             },
+             {
+              "record": 111,
+              "offset": 1890,
+              "value": "settings"
+             }
+            ]
+           },
+           {
+            "record": 103,
+            "offset": 1826,
+            "elements": [
+             {
+              "record": 112,
+              "offset": 1898,
+              "value": "credits"
+             },
+             {
+              "record": 113,
+              "offset": 1906,
+              "value": "credits"
+             }
+            ]
+           },
+           {
+            "record": 104,
+            "offset": 1834,
+            "elements": [
+             {
+              "record": 114,
+              "offset": 1914,
+              "value": "about"
+             },
+             {
+              "record": 115,
+              "offset": 1922,
+              "value": "about"
+             }
+            ]
+           },
+           {
+            "record": 105,
+            "offset": 1842,
+            "elements": [
+             {
+              "record": 116,
+              "offset": 1930,
+              "value": "quit"
+             },
+             {
+              "record": 117,
+              "offset": 1938,
+              "value": "quit"
+             }
+            ]
+           }
+          ]
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 97,
+          "offset": 1778,
+          "entries": [
+           [
+            "selectedoption",
+            {
+             "record": 119,
+             "offset": 1954,
+             "elements": [
+              {
+               "record": 120,
+               "offset": 1962,
+               "value": "option"
+              },
+              {
+               "record": 121,
+               "offset": 1970,
+               "value": "variable_mainmenu_selectedoption"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 99,
+          "offset": 1794,
+          "entries": [
+           [
+            "progress",
+            {
+             "record": 123,
+             "offset": 1986,
+             "value": 0.0
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   [
+    "springs",
+    {
+     "record": 4,
+     "offset": 1034,
+     "elements": [
+      {
+       "record": 124,
+       "offset": 1994,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 129,
+          "offset": 2034,
+          "value": "soft"
+         }
+        ],
+        [
+         "top",
+         {
+          "record": 131,
+          "offset": 2050,
+          "value": "border"
+         }
+        ],
+        [
+         "bottom",
+         {
+          "record": 133,
+          "offset": 2066,
+          "value": "menu"
+         }
+        ]
+       ]
+      },
+      {
+       "record": 125,
+       "offset": 2002,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 135,
+          "offset": 2082,
+          "value": "soft"
+         }
+        ],
+        [
+         "top",
+         {
+          "record": 137,
+          "offset": 2098,
+          "value": "menu"
+         }
+        ],
+        [
+         "bottom",
+         {
+          "record": 139,
+          "offset": 2114,
+          "value": "border"
+         }
+        ]
+       ]
+      },
+      {
+       "record": 126,
+       "offset": 2010,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 141,
+          "offset": 2130,
+          "value": "soft"
+         }
+        ],
+        [
+         "left",
+         {
+          "record": 143,
+          "offset": 2146,
+          "value": "border"
+         }
+        ],
+        [
+         "right",
+         {
+          "record": 145,
+          "offset": 2162,
+          "value": "menu"
+         }
+        ]
+       ]
+      },
+      {
+       "record": 127,
+       "offset": 2018,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 147,
+          "offset": 2178,
+          "value": "soft"
+         }
+        ],
+        [
+         "left",
+         {
+          "record": 149,
+          "offset": 2194,
+          "value": "menu"
+         }
+        ],
+        [
+         "right",
+         {
+          "record": 151,
+          "offset": 2210,
+          "value": "border"
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  ]
+ }
+}

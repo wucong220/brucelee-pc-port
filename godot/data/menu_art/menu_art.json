@@ -1,0 +1,170 @@
+{
+ "schema": "brucelee-menu-art/1",
+ "source": {
+  "archive_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+  "characters_list": "adreno_200/characters.list",
+  "sceneries_list": "adreno_200/sceneries.list",
+  "selectfighter_ui": "adreno_200/gui/selectfighter.ui",
+  "selectscenery_ui": "adreno_200/gui/selectscenery.ui"
+ },
+ "fighters": [
+  {
+   "icon": "bl_brucelee_jacket_icon",
+   "character": "bruce lee a",
+   "translate_name": "brucelee_jacket",
+   "unique": "brucelee"
+  },
+  {
+   "icon": "bl_brucelee_base_icon",
+   "character": "bruce lee b",
+   "translate_name": "brucelee_base",
+   "unique": "brucelee"
+  },
+  {
+   "icon": "bl_brucelee_tank_icon",
+   "character": "bruce lee c",
+   "translate_name": "brucelee_tank",
+   "unique": "brucelee"
+  },
+  {
+   "icon": "bl_brucelee_kimono_icon",
+   "character": "bruce lee d",
+   "translate_name": "brucelee_kimono",
+   "unique": "brucelee"
+  },
+  {
+   "icon": "bl_shenlo_icon",
+   "character": "shen lo",
+   "translate_name": "shenlo",
+   "unique": "shenlo"
+  },
+  {
+   "icon": "bl_themaster_icon",
+   "character": "the master",
+   "translate_name": "themaster",
+   "unique": "themaster"
+  },
+  {
+   "icon": "bl_smallboy_icon",
+   "character": "smallboy",
+   "translate_name": "smallboy",
+   "unique": "smallboy"
+  },
+  {
+   "icon": "bl_sinfu_icon",
+   "character": "sin fu",
+   "translate_name": "sinfu",
+   "unique": "sinfu"
+  },
+  {
+   "icon": "bl_thechief01_icon",
+   "character": "chief a",
+   "translate_name": "chief01",
+   "unique": "chief"
+  },
+  {
+   "icon": "bl_thechief02_icon",
+   "character": "chief b",
+   "translate_name": "chief02",
+   "unique": "chief"
+  },
+  {
+   "icon": "bl_kengodall_icon",
+   "character": "ken godall",
+   "translate_name": "kengodall",
+   "unique": "kengodall"
+  },
+  {
+   "icon": "bl_brickdavis_icon",
+   "character": "brick davis",
+   "translate_name": "brickdavis",
+   "unique": "brickdavis"
+  },
+  {
+   "icon": "bl_johnson_icon",
+   "character": "johnson",
+   "translate_name": "johnson",
+   "unique": "johnson"
+  },
+  {
+   "icon": "bl_loming01_icon",
+   "character": "lo ming a",
+   "translate_name": "loming01",
+   "unique": "loming"
+  },
+  {
+   "icon": "bl_loming02_icon",
+   "character": "lo ming b",
+   "translate_name": "loming02",
+   "unique": "loming"
+  }
+ ],
+ "scenes": [
+  {
+   "name": "market",
+   "translate_name": "market_night",
+   "icon": "bl_scene01a_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "market b",
+   "translate_name": "market_day",
+   "icon": "bl_scene01b_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "temple yard",
+   "translate_name": "temple_day",
+   "icon": "bl_scene02a_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "temple yard b",
+   "translate_name": "temple_dusk",
+   "icon": "bl_scene02b_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "harbour",
+   "translate_name": "harbour_dawn",
+   "icon": "bl_scene03a_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "harbour b",
+   "translate_name": "harbour_day",
+   "icon": "bl_scene03b_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "tournament hall",
+   "translate_name": "thall_night",
+   "icon": "bl_scene04a_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "tournament hall b",
+   "translate_name": "thall_day",
+   "icon": "bl_scene04b_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "rooftops",
+   "translate_name": "rooftops_day",
+   "icon": "bl_scene05a_hw_icon",
+   "directory": "gui/images/mini/"
+  },
+  {
+   "name": "rooftops b",
+   "translate_name": "rooftops_dusk",
+   "icon": "bl_scene05b_hw_icon",
+   "directory": "gui/images/mini/"
+  }
+ ],
+ "counts": {
+  "fighters": 15,
+  "scenes": 10,
+  "uniques": 10,
+  "characters": 15
+ }
+}

@@ -1,0 +1,207 @@
+{
+  "schema": "unreachable_sfx_cues_v1",
+  "source": "adreno_200/set/brucelee.set `sounds[]` rows with is_voice=false and directory outside sounds/sfx",
+  "base_head": "1f31826e2043fa46aa4e8bdb2c68b53fabe9a7f0",
+  "source_zpak_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+  "brucelee_set_sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+  "row_count": 23,
+  "verbatim_fingerprint_sha256": "4b3013930a2063c02fab8cf2410e28e23aed2d848fa044da1f61d3f37b0cb356",
+  "library_manifest": "res://data/local_audio_library.json",
+  "fail_closed": "action_cues() adds these rows only; _play_sfx_cues() plays a row only if the explicit library resolved its exact WAV. A missing row/entry/file stays silent.",
+  "actions": {
+    "specialkickhigh smallboy": [
+      {
+        "file": "hit_light_2_bl.wav",
+        "frame": 3,
+        "volume": 0.7,
+        "unique": "",
+        "is_voice": false,
+        "directory": "sounds/voices/bruce_lee/attack_light/"
+      }
+    ],
+    "specialpunchhigh loming": [
+      {
+        "file": "hit_light_1_bl.wav",
+        "frame": 6,
+        "volume": 0.7,
+        "unique": "",
+        "is_voice": false,
+        "directory": "sounds/voices/bruce_lee/attack_light/"
+      }
+    ],
+    "grab2 master": [
+      {
+        "file": "hit_light_6_bl.wav",
+        "frame": 10,
+        "volume": 0.7,
+        "unique": "",
+        "is_voice": false,
+        "directory": "sounds/voices/bruce_lee/attack_light/"
+      }
+    ],
+    "grabcompl2 shenlo": [
+      {
+        "file": "hurt_light_male_ls_l_hurtpunch09_lo_ming.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "loming",
+        "is_voice": false,
+        "directory": "sounds/voices/lo_ming/light_pain/"
+      },
+      {
+        "file": "male_ls_j_painscream04_shen_lo.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "shenlo",
+        "is_voice": false,
+        "directory": "sounds/voices/shen_lo/heavy_pain/"
+      },
+      {
+        "file": "hurt_light_male_ls_f_sin_fu_b.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "sinfu",
+        "is_voice": false,
+        "directory": "sounds/voices/sin_fu/light_pain/"
+      },
+      {
+        "file": "master_pain_lt_3.wav",
+        "frame": 7,
+        "volume": 0.7,
+        "unique": "themaster",
+        "is_voice": false,
+        "directory": "sounds/voices/the_master/pain/"
+      },
+      {
+        "file": "hurt__lightmale_ls_g_hurtpunch10_brick_davies.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "brickdavis",
+        "is_voice": false,
+        "directory": "sounds/voices/brick_davies/light_pain/"
+      },
+      {
+        "file": "pain_light_2_bl.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "brucelee",
+        "is_voice": false,
+        "directory": "sounds/voices/bruce_lee/pain_light/"
+      },
+      {
+        "file": "hurt_light_male_ls_h_hurtgrunt05_the_cheif.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "chief",
+        "is_voice": false,
+        "directory": "sounds/voices/chief/pain_light/"
+      },
+      {
+        "file": "hurt_light_male_ls_d_hurtpunch02_johnson.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "johnson",
+        "is_voice": false,
+        "directory": "sounds/voices/johnson/light_pain/"
+      },
+      {
+        "file": "hurt_light_male_ls_c_hurtpunch05_ken.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "kengodall",
+        "is_voice": false,
+        "directory": "sounds/voices/ken_goodall/light_pain/"
+      },
+      {
+        "file": "hurt_light_male_ls_b_hurtpunch05_small_boy.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "smallboy",
+        "is_voice": false,
+        "directory": "sounds/voices/smallboy/pain_light/"
+      }
+    ],
+    "grabcompl2 loming": [
+      {
+        "file": "hurt_light_male_ls_l_hurtpunch09_lo_ming.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "loming",
+        "is_voice": false,
+        "directory": "sounds/voices/lo_ming/light_pain/"
+      },
+      {
+        "file": "male_ls_j_painscream04_shen_lo.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "shenlo",
+        "is_voice": false,
+        "directory": "sounds/voices/shen_lo/heavy_pain/"
+      },
+      {
+        "file": "hurt_light_male_ls_f_sin_fu_b.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "sinfu",
+        "is_voice": false,
+        "directory": "sounds/voices/sin_fu/light_pain/"
+      },
+      {
+        "file": "master_pain_lt_3.wav",
+        "frame": 7,
+        "volume": 0.7,
+        "unique": "themaster",
+        "is_voice": false,
+        "directory": "sounds/voices/the_master/pain/"
+      },
+      {
+        "file": "hurt__lightmale_ls_g_hurtpunch10_brick_davies.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "brickdavis",
+        "is_voice": false,
+        "directory": "sounds/voices/brick_davies/light_pain/"
+      },
+      {
+        "file": "pain_light_2_bl.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "brucelee",
+        "is_voice": false,
+        "directory": "sounds/voices/bruce_lee/pain_light/"
+      },
+      {
+        "file": "hurt_light_male_ls_h_hurtgrunt05_the_cheif.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "chief",
+        "is_voice": false,
+        "directory": "sounds/voices/chief/pain_light/"
+      },
+      {
+        "file": "hurt_light_male_ls_d_hurtpunch02_johnson.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "johnson",
+        "is_voice": false,
+        "directory": "sounds/voices/johnson/light_pain/"
+      },
+      {
+        "file": "hurt_light_male_ls_c_hurtpunch05_ken.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "kengodall",
+        "is_voice": false,
+        "directory": "sounds/voices/ken_goodall/light_pain/"
+      },
+      {
+        "file": "hurt_light_male_ls_b_hurtpunch05_small_boy.wav",
+        "frame": 7,
+        "volume": 1.0,
+        "unique": "smallboy",
+        "is_voice": false,
+        "directory": "sounds/voices/smallboy/pain_light/"
+      }
+    ]
+  }
+}

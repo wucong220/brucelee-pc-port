@@ -1,8 +1,8 @@
 # 2026-11-02 当前移植状态（续接用）
 
-- 当前分支：`codex/menu-sfx`
-- 当前主线：以 `git log -1` 为准；本文件记录时合并到 PR #233 后的 main。
-- 当前测试口径：Python 3.12 `unittest discover -s tests` 为 283 项、通过 282、跳过 1。
+- 当前分支：`codex/training-hints`
+- 当前主线：以 `git log -1` 为准；本文件记录时合并到 PR #252 后的 main。
+- 当前测试口径：Python 3.12 `unittest discover -s tests` 为 291 项、通过 290、跳过 1。
 - Windows 发行：用可写 `-BuildRoot`/`-GodotTempRoot` 构建后，
   `validate_windows_exe.ps1 -SkipBuild` 返回 `WINDOWS_EXE_VALIDATION=PASS`；
   PCK 内 `project.binary` 为 710 字节，EXE 自检确认 Bruce/Brick 候选、纹理、
@@ -27,10 +27,15 @@
   `endattack_brick` 收招（0 伤害）→ `endattackcomp1/2` → `faceupko`、
   方向移动/step、高/低/中格挡、轻/硬受击、高 KO、faceupko、扩展 AI 招式池。
 - 对局已接入：三局两胜、2 秒回合重置、HUD 回合比分、R 重开整场、训练不计分。
-- 主菜单新增 `MOVE TRAINING`：Bruce 27 项顺序招式训练、必须真实命中/吸收/收招才
-  推进、无跳过键、进入前可自选起点；进度不保存。每个攻击键都会进入实际攻击队列，
-  不再静默吞掉连段中间输入；目标连段排在队列末尾。目录和测试见
-  `docs/MOVE_TRAINING.md`。
+- 主菜单新增 `MOVE TRAINING`：Bruce 25 项顺序招式训练、必须真实命中/吸收/收招才
+  推进、无跳过键、进入前可自选起点；进度不保存。输入全部走原生 link 表
+  （`data/native_links.json`），没有 FIFO 队列、没有默认攻击回退。
+  目录和测试见 `docs/MOVE_TRAINING.md`。
+- 原生行动系统（第 1–29 轮）：输入序列/窗口/按键状态/条件/事件消费全部按
+  `native_links.json`；`grabdistance`、`facing`、`counter_time`、`impact` 属性、
+  受击/格挡反应、stun 链时长与顺序都来自反编译数据；`heavy`、`parry` 三次 Shift、
+  `_try_special_chain`、默认攻击回退等自创机制已删除。详见
+  `docs/NATIVE_ACTION_SYSTEM.md`、`docs/PROTOTYPE_GUESSES.md`。
 - 仍未接入：原版选角/关卡/存档、逐帧录像与 GPU 视觉对照。
 - knockdown 已由真实物理回归覆盖：致命轻击命中后
   `impactstun -> stun -> stun2 -> stunfall -> faceupko`。

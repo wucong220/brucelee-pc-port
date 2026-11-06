@@ -1,0 +1,189 @@
+{
+ "screen": "creditsindiagames.ui",
+ "source": {
+  "path": "adreno_200/gui/creditsindiagames.ui",
+  "bytes": 1375,
+  "sha256": "c2f07709919279824d5026b875f5c7f120a3fde79f727cab20c1c4146a148e39",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 35,
+   "records": 90,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "c8feaaf0e65e5778f7f4c37d51409e6d"
+  }
+ },
+ "coverage": {
+  "record_count": 90,
+  "reached_records": 90,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "gui/images/versus/",
+   "basename": "bl_versusscreen_background",
+   "extension": "tex"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "picture",
+  "name",
+  "x",
+  "y",
+  "width",
+  "height",
+  "alphablend",
+  "true",
+  "file",
+  "offscreen",
+  "alpha",
+  "scale",
+  "hspring",
+  "soft",
+  "vspring",
+  "subrect_x",
+  "subrect_y",
+  "subrect_width",
+  "subrect_height",
+  "credits",
+  "font",
+  "prefix",
+  "credits_ig_",
+  "first_number",
+  "last_number",
+  "blbutton",
+  "toucharea",
+  "action",
+  "touch",
+  "springs",
+  "gui/images/versus/",
+  "bl_versusscreen_background",
+  "tex"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "picture",
+    "name": "picture",
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 320,
+    "alphablend": "true",
+    "file": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "gui/images/versus/",
+      "basename": "bl_versusscreen_background",
+      "extension": "tex"
+     }
+    },
+    "offscreen": {
+     "alpha": 0.0
+    },
+    "scale": "true",
+    "hspring": "soft",
+    "vspring": "soft",
+    "subrect_x": 0,
+    "subrect_y": 0,
+    "subrect_width": 480,
+    "subrect_height": 320
+   },
+   {
+    "type": "credits",
+    "font": 0,
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 320,
+    "hspring": "soft",
+    "vspring": "soft",
+    "prefix": "credits_ig_",
+    "first_number": 1,
+    "last_number": 38,
+    "offscreen": {
+     "alpha": 0.0
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "toucharea",
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 320,
+    "action": "touch",
+    "vspring": "soft",
+    "hspring": "soft",
+    "offscreen": {
+     "alpha": 0.0
+    }
+   }
+  ],
+  "springs": []
+ },
+ "layout": [
+  {
+   "type": "picture",
+   "name": "picture",
+   "x": 0,
+   "y": 0,
+   "width": 480,
+   "height": 320,
+   "alphablend": "true",
+   "file": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "gui/images/versus/",
+     "basename": "bl_versusscreen_background",
+     "extension": "tex"
+    }
+   },
+   "offscreen": {
+    "alpha": 0.0
+   },
+   "scale": "true",
+   "hspring": "soft",
+   "vspring": "soft",
+   "subrect_x": 0,
+   "subrect_y": 0,
+   "subrect_width": 480,
+   "subrect_height": 320
+  },
+  {
+   "type": "credits",
+   "font": 0,
+   "x": 0,
+   "y": 0,
+   "width": 480,
+   "height": 320,
+   "hspring": "soft",
+   "vspring": "soft",
+   "prefix": "credits_ig_",
+   "first_number": 1,
+   "last_number": 38,
+   "offscreen": {
+    "alpha": 0.0
+   }
+  },
+  {
+   "type": "blbutton",
+   "name": "toucharea",
+   "x": 0,
+   "y": 0,
+   "width": 480,
+   "height": 320,
+   "action": "touch",
+   "vspring": "soft",
+   "hspring": "soft",
+   "offscreen": {
+    "alpha": 0.0
+   }
+  }
+ ],
+ "springs": []
+}

@@ -48,21 +48,25 @@ static func ensure_default_actions() -> void:
         return
     _register(MOVE_LEFT, 0.2, [
         _key(KEY_A),
+        _key(KEY_LEFT),
         _axis(JOY_AXIS_LEFT_X, -1.0),
         _button(JOY_BUTTON_DPAD_LEFT),
     ])
     _register(MOVE_RIGHT, 0.2, [
         _key(KEY_D),
+        _key(KEY_RIGHT),
         _axis(JOY_AXIS_LEFT_X, 1.0),
         _button(JOY_BUTTON_DPAD_RIGHT),
     ])
     _register(MOVE_UP, 0.2, [
         _key(KEY_W),
+        _key(KEY_UP),
         _axis(JOY_AXIS_LEFT_Y, -1.0),
         _button(JOY_BUTTON_DPAD_UP),
     ])
     _register(MOVE_DOWN, 0.2, [
         _key(KEY_S),
+        _key(KEY_DOWN),
         _axis(JOY_AXIS_LEFT_Y, 1.0),
         _button(JOY_BUTTON_DPAD_DOWN),
     ])

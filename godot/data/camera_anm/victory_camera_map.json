@@ -1,0 +1,135 @@
+{
+ "schema": 1,
+ "source": "characters.list animations.victory and the recovered camera sub-animation rule: X_camera.anm belongs to action X",
+ "camera_clips": {
+  "m01_victory_01": {
+   "camera": "m01_victory_01",
+   "file": "m01_victory_01.json",
+   "frames": 63,
+   "fps": 30.0,
+   "characters": [
+    "bruce lee a",
+    "bruce lee b",
+    "bruce lee c",
+    "bruce lee d"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m01_victory_02": {
+   "camera": "m01_victory_02",
+   "file": "m01_victory_02.json",
+   "frames": 134,
+   "fps": 30.0,
+   "characters": [
+    "bruce lee a",
+    "bruce lee b",
+    "bruce lee c",
+    "bruce lee d"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m02_e01_victory_01": {
+   "camera": "m02_e01_victory_01",
+   "file": "m02_e01_victory_01.json",
+   "frames": 51,
+   "fps": 30.0,
+   "characters": [
+    "ken godall"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m02_victory_01": {
+   "camera": "m02_victory_01",
+   "file": "m02_victory_01.json",
+   "frames": 106,
+   "fps": 30.0,
+   "characters": [
+    "chief a",
+    "chief b"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m03_victory_01": {
+   "camera": "m03_victory_01",
+   "file": "m03_victory_01.json",
+   "frames": 86,
+   "fps": 30.0,
+   "characters": [
+    "johnson"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m03_victory_02": {
+   "camera": "m03_victory_02",
+   "file": "m03_victory_02.json",
+   "frames": 99,
+   "fps": 30.0,
+   "characters": [
+    "brick davis"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m03_victory_03": {
+   "camera": "m03_victory_03",
+   "file": "m03_victory_03.json",
+   "frames": 108,
+   "fps": 30.0,
+   "characters": [
+    "smallboy"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m04_e01_victory_01": {
+   "camera": "m04_e01_victory_01",
+   "file": "m04_e01_victory_01.json",
+   "frames": 146,
+   "fps": 30.0,
+   "characters": [
+    "the master"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m04_e02_victory_01": {
+   "camera": "m04_e02_victory_01",
+   "file": "m04_e02_victory_01.json",
+   "frames": 64,
+   "fps": 30.0,
+   "characters": [
+    "sin fu"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m04_e03_victory_01": {
+   "camera": "m04_e03_victory_01",
+   "file": "m04_e03_victory_01.json",
+   "frames": 135,
+   "fps": 30.0,
+   "characters": [
+    "shen lo"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m04_victory_01": {
+   "camera": "m04_victory_01",
+   "file": "m04_victory_01.json",
+   "frames": 175,
+   "fps": 30.0,
+   "characters": [
+    "lo ming a",
+    "lo ming b"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  },
+  "m04_victory_02": {
+   "camera": "m04_victory_02",
+   "file": "m04_victory_02.json",
+   "frames": 70,
+   "fps": 30.0,
+   "characters": [
+    "lo ming a",
+    "lo ming b"
+   ],
+   "evidence": "adreno_200/characters.list animations.victory"
+  }
+ }
+}

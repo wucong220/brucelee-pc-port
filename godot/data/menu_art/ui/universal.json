@@ -1,0 +1,464 @@
+{
+ "screen": "universal.ui",
+ "source": {
+  "path": "adreno_200/gui/universal.ui",
+  "bytes": 1053,
+  "sha256": "eeff98c3ac90cf0c3fb728d9bccd2b159db696f0a9d51abb673d3f5a66d9cfdf",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 28,
+   "records": 68,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "64c2195be2bd5d752b7a0468c7b0938a"
+  }
+ },
+ "coverage": {
+  "record_count": 68,
+  "reached_records": 68,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "gui/images/logos/",
+   "basename": "universal",
+   "extension": "tex"
+  }
+ ],
+ "strings": [
+  "clear_color",
+  "layout",
+  "type",
+  "picture",
+  "name",
+  "logo",
+  "x",
+  "y",
+  "width",
+  "height",
+  "scale",
+  "true",
+  "alphablend",
+  "file",
+  "hspring",
+  "soft",
+  "vspring",
+  "mantainaspectratio",
+  "animation",
+  "none",
+  "blbutton",
+  "toucharea",
+  "action",
+  "touch",
+  "springs",
+  "gui/images/logos/",
+  "universal",
+  "tex"
+ ],
+ "root": {
+  "clear_color": [
+   0,
+   0,
+   0
+  ],
+  "layout": [
+   {
+    "type": "picture",
+    "name": "logo",
+    "x": -16,
+    "y": 32,
+    "width": 512,
+    "height": 256,
+    "scale": "true",
+    "alphablend": "true",
+    "file": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "gui/images/logos/",
+      "basename": "universal",
+      "extension": "tex"
+     }
+    },
+    "hspring": "soft",
+    "vspring": "soft",
+    "mantainaspectratio": "true",
+    "animation": {
+     "x": [
+      "none"
+     ],
+     "y": [
+      "none"
+     ],
+     "width": [
+      "none"
+     ],
+     "height": [
+      "none"
+     ]
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "toucharea",
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 320,
+    "action": "touch",
+    "hspring": "soft",
+    "vspring": "soft"
+   }
+  ],
+  "springs": []
+ },
+ "layout": [
+  {
+   "type": "picture",
+   "name": "logo",
+   "x": -16,
+   "y": 32,
+   "width": 512,
+   "height": 256,
+   "scale": "true",
+   "alphablend": "true",
+   "file": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "gui/images/logos/",
+     "basename": "universal",
+     "extension": "tex"
+    }
+   },
+   "hspring": "soft",
+   "vspring": "soft",
+   "mantainaspectratio": "true",
+   "animation": {
+    "x": [
+     "none"
+    ],
+    "y": [
+     "none"
+    ],
+    "width": [
+     "none"
+    ],
+    "height": [
+     "none"
+    ]
+   }
+  },
+  {
+   "type": "blbutton",
+   "name": "toucharea",
+   "x": 0,
+   "y": 0,
+   "width": 480,
+   "height": 320,
+   "action": "touch",
+   "hspring": "soft",
+   "vspring": "soft"
+  }
+ ],
+ "springs": [],
+ "annotated": {
+  "record": 0,
+  "offset": 493,
+  "entries": [
+   [
+    "clear_color",
+    {
+     "record": 2,
+     "offset": 509,
+     "elements": [
+      {
+       "record": 7,
+       "offset": 549,
+       "value": 0
+      },
+      {
+       "record": 8,
+       "offset": 557,
+       "value": 0
+      },
+      {
+       "record": 9,
+       "offset": 565,
+       "value": 0
+      }
+     ]
+    }
+   ],
+   [
+    "layout",
+    {
+     "record": 4,
+     "offset": 525,
+     "elements": [
+      {
+       "record": 10,
+       "offset": 573,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 13,
+          "offset": 597,
+          "value": "picture"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 15,
+          "offset": 613,
+          "value": "logo"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 17,
+          "offset": 629,
+          "value": -16
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 19,
+          "offset": 645,
+          "value": 32
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 21,
+          "offset": 661,
+          "value": 512
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 23,
+          "offset": 677,
+          "value": 256
+         }
+        ],
+        [
+         "scale",
+         {
+          "record": 25,
+          "offset": 693,
+          "value": "true"
+         }
+        ],
+        [
+         "alphablend",
+         {
+          "record": 27,
+          "offset": 709,
+          "value": "true"
+         }
+        ],
+        [
+         "file",
+         {
+          "record": 29,
+          "offset": 725,
+          "value": {
+           "$file": {
+            "ordinal": 0,
+            "directory": "gui/images/logos/",
+            "basename": "universal",
+            "extension": "tex"
+           }
+          }
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 31,
+          "offset": 741,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 33,
+          "offset": 757,
+          "value": "soft"
+         }
+        ],
+        [
+         "mantainaspectratio",
+         {
+          "record": 35,
+          "offset": 773,
+          "value": "true"
+         }
+        ],
+        [
+         "animation",
+         {
+          "record": 37,
+          "offset": 789,
+          "entries": [
+           [
+            "x",
+            {
+             "record": 39,
+             "offset": 805,
+             "elements": [
+              {
+               "record": 46,
+               "offset": 861,
+               "value": "none"
+              }
+             ]
+            }
+           ],
+           [
+            "y",
+            {
+             "record": 41,
+             "offset": 821,
+             "elements": [
+              {
+               "record": 47,
+               "offset": 869,
+               "value": "none"
+              }
+             ]
+            }
+           ],
+           [
+            "width",
+            {
+             "record": 43,
+             "offset": 837,
+             "elements": [
+              {
+               "record": 48,
+               "offset": 877,
+               "value": "none"
+              }
+             ]
+            }
+           ],
+           [
+            "height",
+            {
+             "record": 45,
+             "offset": 853,
+             "elements": [
+              {
+               "record": 49,
+               "offset": 885,
+               "value": "none"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      },
+      {
+       "record": 11,
+       "offset": 581,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 51,
+          "offset": 901,
+          "value": "blbutton"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 53,
+          "offset": 917,
+          "value": "toucharea"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 55,
+          "offset": 933,
+          "value": 0
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 57,
+          "offset": 949,
+          "value": 0
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 59,
+          "offset": 965,
+          "value": 480
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 61,
+          "offset": 981,
+          "value": 320
+         }
+        ],
+        [
+         "action",
+         {
+          "record": 63,
+          "offset": 997,
+          "value": "touch"
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 65,
+          "offset": 1013,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 67,
+          "offset": 1029,
+          "value": "soft"
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   [
+    "springs",
+    {
+     "record": 6,
+     "offset": 541,
+     "elements": []
+    }
+   ]
+  ]
+ }
+}

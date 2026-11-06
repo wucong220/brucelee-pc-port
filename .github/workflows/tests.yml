@@ -29,3 +29,26 @@ jobs:
       - name: Check build path safety
         shell: pwsh
         run: ./build_windows.ps1 -SelfTest
+
+  godot-parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.7.2
+        run: |
+          curl -L -o godot.zip "https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
+          unzip -q godot.zip -d godot-bin
+          chmod +x godot-bin/Godot_v4.7.2-stable_linux.x86_64
+      - name: Parse every GDScript
+        run: |
+          GODOT="godot-bin/Godot_v4.7.2-stable_linux.x86_64"
+          status=0
+          while IFS= read -r file; do
+            res="res://${file#godot/}"
+            if ! "$GODOT" --headless --path godot --check-only --script "$res" > /tmp/godot-parse.log 2>&1; then
+              echo "::error::GDScript parse failed: $res"
+              cat /tmp/godot-parse.log
+              status=1
+            fi
+          done < <(find godot/scripts godot/tests -name '*.gd' | sort)
+          exit $status

@@ -1,0 +1,897 @@
+{
+  "schema_version": 4,
+  "source_archive": "thai.set",
+  "frame_rate": 30.0,
+  "metadata": {
+    "character": "johnson",
+    "display_name": "Johnson",
+    "fighting_set": "adreno_200/set/thai.set",
+    "idle_action": "idle",
+    "idle_animation": "m03_idle_01",
+    "clip_variant": "m03",
+    "phase_rule": "startup/active/recovery from damage_time windows and ANM duration",
+    "derived_from": "data/fighting_set_m03_mapped_attacks.json",
+    "scope": "Attack rows recomputed from the archive thai.set for this character's own action variants; reaction profiles inherited from the same set.",
+    "missing_slots": []
+  },
+  "source_geometry": {
+    "source_height": 173.415954589844,
+    "world_height": 1.8,
+    "radius_scale": 1.0,
+    "idle_source_archive": "thai.set",
+    "animation_radii": {
+      "m02_grab_01": 45.0,
+      "m03_attack_to_floor": 35.0,
+      "m03_e01_kck_high_03": 25.0,
+      "m03_e01_pnch_high_03": 45.0,
+      "m03_end_attack_01": 75.0,
+      "m03_end_attack_02": 25.0,
+      "m03_grab_01": 45.0,
+      "m03_grab_02": 45.0,
+      "m03_idle_01": 43.0,
+      "m03_kck_high_01": 30.0,
+      "m03_kck_high_02": 30.0,
+      "m03_kck_high_03": 45.0,
+      "m03_kck_low_01": 50.0,
+      "m03_kck_low_02": 50.0,
+      "m03_kck_low_03": 50.0,
+      "m03_movefwd": 50.0,
+      "m03_parry_high": 40.0,
+      "m03_parry_low": 40.0,
+      "m03_pnch_high_01": 43.0,
+      "m03_pnch_high_02": 43.0,
+      "m03_pnch_high_03": 50.0,
+      "m03_pnch_low_01": 40.0,
+      "m03_pnch_low_02": 40.0,
+      "m03_pnch_low_03": 40.0,
+      "m03_sp_kck_high": 45.0,
+      "m03_sp_kck_low": 45.0,
+      "m03_sp_pnch_high": 45.0,
+      "m03_sp_pnch_low": 45.0
+    }
+  },
+  "reaction_profiles": {
+    "hit": {
+      "low": {
+        "source_action": "impactlightfrontlow",
+        "animation": "all_impct_light_frnt_low",
+        "animation_radius": 40.0,
+        "exit_start_frame": 13,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      "medium": {
+        "source_action": "impactlightfrontmid",
+        "animation": "all_impct_light_frnt_mid",
+        "animation_radius": 40.0,
+        "exit_start_frame": 14,
+        "animation_duration_frames": 16,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      "high": {
+        "source_action": "impactlightfronthigh",
+        "animation": "all_impct_light_frnt_high",
+        "animation_radius": 40.0,
+        "exit_start_frame": 13,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      }
+    },
+    "block": {
+      "low": {
+        "source_action": "lowblock",
+        "animation": "all_block_low",
+        "animation_radius": 40.0,
+        "exit_start_frame": 12,
+        "animation_duration_frames": 23,
+        "linking_frame": 14,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      "medium": {
+        "source_action": "midblock",
+        "animation": "all_block_mid",
+        "animation_radius": 40.0,
+        "exit_start_frame": 12,
+        "animation_duration_frames": 14,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      },
+      "high": {
+        "source_action": "highblock",
+        "animation": "m03_blck_high",
+        "animation_radius": 40.0,
+        "exit_start_frame": 12,
+        "animation_duration_frames": 17,
+        "linking_frame": 0,
+        "return_action": "idle",
+        "return_implemented": true,
+        "clip_implemented": false
+      }
+    }
+  },
+  "attacks": {
+    "punch": {
+      "source_action": "lowpunch3",
+      "animation": "m03_pnch_low_01",
+      "animation_radius": 40.0,
+      "animation_frame_count": 38,
+      "startup_frames": 8,
+      "active_frames": 4,
+      "recovery_frames": 26,
+      "damage": 7.0,
+      "source_impact": {
+        "attack_radius": 80.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "hard",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            8,
+            11
+          ]
+        ],
+        "impact_damage": [
+          7.0
+        ]
+      }
+    },
+    "kick": {
+      "source_action": "lowkick3",
+      "animation": "m03_kck_low_01",
+      "animation_radius": 50.0,
+      "animation_frame_count": 41,
+      "startup_frames": 9,
+      "active_frames": 3,
+      "recovery_frames": 29,
+      "damage": 7.0,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "hard",
+        "direction": "fromright"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            9,
+            11
+          ]
+        ],
+        "impact_damage": [
+          7.0
+        ]
+      }
+    },
+    "high_punch": {
+      "source_action": "highpunch1",
+      "animation": "m03_pnch_high_01",
+      "animation_radius": 43.0,
+      "animation_frame_count": 19,
+      "startup_frames": 6,
+      "active_frames": 3,
+      "recovery_frames": 10,
+      "damage": 5.0,
+      "source_impact": {
+        "attack_radius": 72.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            6,
+            8
+          ]
+        ],
+        "impact_damage": [
+          5.0
+        ]
+      }
+    },
+    "high_punch2": {
+      "source_action": "highpunch2",
+      "animation": "m03_pnch_high_02",
+      "animation_radius": 43.0,
+      "animation_frame_count": 31,
+      "startup_frames": 8,
+      "active_frames": 4,
+      "recovery_frames": 19,
+      "damage": 7.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "rarm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "fromleft"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            8,
+            11
+          ]
+        ],
+        "impact_damage": [
+          7.0
+        ]
+      }
+    },
+    "high_punch3": {
+      "source_action": "highpunch3",
+      "animation": "m03_pnch_high_03",
+      "animation_radius": 50.0,
+      "animation_frame_count": 35,
+      "startup_frames": 11,
+      "active_frames": 4,
+      "recovery_frames": 20,
+      "damage": 8.0,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "fromleft"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            11,
+            14
+          ]
+        ],
+        "impact_damage": [
+          8.0
+        ]
+      }
+    },
+    "low_punch": {
+      "source_action": "lowpunch1",
+      "animation": "m03_pnch_low_03",
+      "animation_radius": 40.0,
+      "animation_frame_count": 27,
+      "startup_frames": 9,
+      "active_frames": 4,
+      "recovery_frames": 14,
+      "damage": 6.0,
+      "source_impact": {
+        "attack_radius": 62.0,
+        "body_part": "rarm",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            9,
+            12
+          ]
+        ],
+        "impact_damage": [
+          6.0
+        ]
+      }
+    },
+    "low_punch2": {
+      "source_action": "lowpunch2",
+      "animation": "m03_pnch_low_02",
+      "animation_radius": 40.0,
+      "animation_frame_count": 35,
+      "startup_frames": 9,
+      "active_frames": 4,
+      "recovery_frames": 22,
+      "damage": 6.0,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            9,
+            12
+          ]
+        ],
+        "impact_damage": [
+          6.0
+        ]
+      }
+    },
+    "low_punch3": {
+      "source_action": "lowpunch3",
+      "animation": "m03_pnch_low_01",
+      "animation_radius": 40.0,
+      "animation_frame_count": 38,
+      "startup_frames": 8,
+      "active_frames": 4,
+      "recovery_frames": 26,
+      "damage": 7.0,
+      "source_impact": {
+        "attack_radius": 80.0,
+        "body_part": "larm",
+        "height": "medium",
+        "strength": "hard",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            8,
+            11
+          ]
+        ],
+        "impact_damage": [
+          7.0
+        ]
+      }
+    },
+    "high_kick": {
+      "source_action": "highkick1",
+      "animation": "m03_kck_high_01",
+      "animation_radius": 30.0,
+      "animation_frame_count": 44,
+      "startup_frames": 12,
+      "active_frames": 4,
+      "recovery_frames": 28,
+      "damage": 6.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            12,
+            15
+          ]
+        ],
+        "impact_damage": [
+          6.0
+        ]
+      }
+    },
+    "high_kick2": {
+      "source_action": "highkick2",
+      "animation": "m03_kck_high_02",
+      "animation_radius": 30.0,
+      "animation_frame_count": 49,
+      "startup_frames": 9,
+      "active_frames": 5,
+      "recovery_frames": 35,
+      "damage": 7.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            9,
+            13
+          ]
+        ],
+        "impact_damage": [
+          7.0
+        ]
+      }
+    },
+    "high_kick3": {
+      "source_action": "highkick3",
+      "animation": "m03_kck_high_03",
+      "animation_radius": 45.0,
+      "animation_frame_count": 47,
+      "startup_frames": 12,
+      "active_frames": 4,
+      "recovery_frames": 31,
+      "damage": 8.0,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "hard",
+        "direction": "fromright"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            12,
+            15
+          ]
+        ],
+        "impact_damage": [
+          8.0
+        ]
+      }
+    },
+    "low_kick": {
+      "source_action": "lowkick1",
+      "animation": "m03_kck_low_02",
+      "animation_radius": 50.0,
+      "animation_frame_count": 46,
+      "startup_frames": 6,
+      "active_frames": 5,
+      "recovery_frames": 35,
+      "damage": 5.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "lleg",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            6,
+            10
+          ]
+        ],
+        "impact_damage": [
+          5.0
+        ]
+      }
+    },
+    "low_kick2": {
+      "source_action": "lowkick2",
+      "animation": "m03_kck_low_03",
+      "animation_radius": 50.0,
+      "animation_frame_count": 37,
+      "startup_frames": 8,
+      "active_frames": 4,
+      "recovery_frames": 25,
+      "damage": 6.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "rleg",
+        "height": "medium",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            8,
+            11
+          ]
+        ],
+        "impact_damage": [
+          6.0
+        ]
+      }
+    },
+    "low_kick3": {
+      "source_action": "lowkick3",
+      "animation": "m03_kck_low_01",
+      "animation_radius": 50.0,
+      "animation_frame_count": 41,
+      "startup_frames": 9,
+      "active_frames": 3,
+      "recovery_frames": 29,
+      "damage": 7.0,
+      "source_impact": {
+        "attack_radius": 70.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "hard",
+        "direction": "fromright"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            9,
+            11
+          ]
+        ],
+        "impact_damage": [
+          7.0
+        ]
+      }
+    },
+    "special_kick_high_brick": {
+      "source_action": "specialkickhigh johnson",
+      "animation": "m03_e01_kck_high_03",
+      "animation_radius": 25.0,
+      "animation_frame_count": 30,
+      "startup_frames": 9,
+      "active_frames": 4,
+      "recovery_frames": 17,
+      "damage": 10.0,
+      "source_impact": {
+        "attack_radius": 80.0,
+        "body_part": "lleg",
+        "height": "high",
+        "strength": "brutal",
+        "direction": "fromright"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            9,
+            12
+          ]
+        ],
+        "impact_damage": [
+          10.0
+        ]
+      }
+    },
+    "special_kick_low_brick": {
+      "source_action": "specialkicklow johnson",
+      "animation": "m03_sp_kck_low",
+      "animation_radius": 25.0,
+      "animation_frame_count": 56,
+      "startup_frames": 13,
+      "active_frames": 4,
+      "recovery_frames": 39,
+      "damage": 9.0,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "rleg",
+        "height": "low",
+        "strength": "hard",
+        "direction": "fromleft"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            13,
+            16
+          ]
+        ],
+        "impact_damage": [
+          9.0
+        ]
+      }
+    },
+    "special_punch_high_brick": {
+      "source_action": "specialpunchhigh johnson",
+      "animation": "m03_e01_pnch_high_03",
+      "animation_radius": 45.0,
+      "animation_frame_count": 52,
+      "startup_frames": 11,
+      "active_frames": 5,
+      "recovery_frames": 36,
+      "damage": 8.0,
+      "source_impact": {
+        "attack_radius": 55.0,
+        "body_part": "rarm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            11,
+            15
+          ]
+        ],
+        "impact_damage": [
+          8.0
+        ]
+      }
+    },
+    "special_punch_low_brick": {
+      "source_action": "specialpunchlow johnson",
+      "animation": "m03_sp_pnch_low",
+      "animation_radius": 45.0,
+      "animation_frame_count": 44,
+      "startup_frames": 15,
+      "active_frames": 4,
+      "recovery_frames": 25,
+      "damage": 9.0,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "rarm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            15,
+            18
+          ]
+        ],
+        "impact_damage": [
+          9.0
+        ]
+      }
+    },
+    "parry_high_brick": {
+      "source_action": "parryhigh",
+      "animation": "m03_parry_high",
+      "animation_radius": 40.0,
+      "animation_frame_count": 43,
+      "startup_frames": 0,
+      "active_frames": 2,
+      "recovery_frames": 41,
+      "damage": 0.0,
+      "source_impact": {
+        "attack_radius": 0.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [],
+        "impact_damage": []
+      }
+    },
+    "parry_low_brick": {
+      "source_action": "parrylow",
+      "animation": "m03_parry_low",
+      "animation_radius": 40.0,
+      "animation_frame_count": 41,
+      "startup_frames": 0,
+      "active_frames": 2,
+      "recovery_frames": 39,
+      "damage": 0.0,
+      "source_impact": {
+        "attack_radius": 0.0,
+        "body_part": "larm",
+        "height": "low",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [],
+        "impact_damage": []
+      }
+    },
+    "parry_attack_brick": {
+      "source_action": "parryattack",
+      "animation": "m03_pnch_high_03",
+      "animation_radius": 25.0,
+      "animation_frame_count": 35,
+      "startup_frames": 10,
+      "active_frames": 5,
+      "recovery_frames": 20,
+      "damage": 10.0,
+      "source_impact": {
+        "attack_radius": 65.0,
+        "body_part": "rarm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            10,
+            14
+          ]
+        ],
+        "impact_damage": [
+          10.0
+        ]
+      }
+    },
+    "grab1_brick": {
+      "source_action": "grab1 johnson",
+      "animation": "m03_grab_01",
+      "animation_radius": 25.0,
+      "animation_frame_count": 90,
+      "startup_frames": 19,
+      "active_frames": 2,
+      "recovery_frames": 69,
+      "damage": 6.0,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            19,
+            20
+          ]
+        ],
+        "impact_damage": [
+          6.0
+        ]
+      }
+    },
+    "grab2_brick": {
+      "source_action": "grab2 johnson",
+      "animation": "m03_grab_02",
+      "animation_radius": 25.0,
+      "animation_frame_count": 78,
+      "startup_frames": 46,
+      "active_frames": 3,
+      "recovery_frames": 29,
+      "damage": 20.0,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "hard",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            46,
+            48
+          ]
+        ],
+        "impact_damage": [
+          20.0
+        ]
+      }
+    },
+    "attack_to_floor_brick": {
+      "source_action": "attacktofloor",
+      "animation": "m03_attack_to_floor",
+      "animation_radius": 35.0,
+      "animation_frame_count": 61,
+      "startup_frames": 11,
+      "active_frames": 5,
+      "recovery_frames": 45,
+      "damage": 6.0,
+      "source_impact": {
+        "attack_radius": 35.0,
+        "body_part": "lleg",
+        "height": "low",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            11,
+            15
+          ]
+        ],
+        "impact_damage": [
+          6.0
+        ]
+      }
+    },
+    "endattack_brick": {
+      "source_action": "endattack johnson",
+      "animation": "m03_end_attack_02",
+      "animation_radius": 25.0,
+      "animation_frame_count": 130,
+      "startup_frames": 18,
+      "active_frames": 1,
+      "recovery_frames": 111,
+      "damage": 0.0,
+      "source_impact": {
+        "attack_radius": 75.0,
+        "body_part": "rleg",
+        "height": "high",
+        "strength": "hard",
+        "direction": "fromleft"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            18,
+            18
+          ]
+        ],
+        "impact_damage": [
+          0.0
+        ]
+      }
+    },
+    "grab1_miss_brick": {
+      "source_action": "grab1miss johnson",
+      "animation": "m02_grab_01",
+      "animation_radius": 25.0,
+      "animation_frame_count": 47,
+      "startup_frames": 5,
+      "active_frames": 3,
+      "recovery_frames": 39,
+      "damage": 0.0,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            5,
+            7
+          ]
+        ],
+        "impact_damage": [
+          0.0
+        ]
+      }
+    },
+    "grab2_miss_brick": {
+      "source_action": "grab2miss johnson",
+      "animation": "m02_grab_01",
+      "animation_radius": 25.0,
+      "animation_frame_count": 47,
+      "startup_frames": 4,
+      "active_frames": 4,
+      "recovery_frames": 39,
+      "damage": 0.0,
+      "source_impact": {
+        "attack_radius": 45.0,
+        "body_part": "larm",
+        "height": "high",
+        "strength": "normal",
+        "direction": "frontal"
+      },
+      "evidence": {
+        "rule": "adreno_200/set/thai.set damage_time window + ANM duration",
+        "impact_windows": [
+          [
+            4,
+            7
+          ]
+        ],
+        "impact_damage": [
+          0.0
+        ]
+      }
+    }
+  },
+  "missing": []
+}

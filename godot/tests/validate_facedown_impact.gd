@@ -38,7 +38,7 @@ func _run() -> void:
     if not _check_low_impact(player, opponent):
         quit(1)
         return
-    if not _check_medium_stays_standing(player, opponent):
+    if not _check_medium_stays_down(player, opponent):
         quit(1)
         return
     if not _check_lethal_facedown_ko(player, opponent):
@@ -126,19 +126,27 @@ func _check_low_impact(player: PortFighter, opponent: PortFighter) -> bool:
     return true
 
 
-func _check_medium_stays_standing(player: PortFighter, opponent: PortFighter) -> bool:
+func _check_medium_stays_down(player: PortFighter, opponent: PortFighter) -> bool:
     if not _enter_facedown(player, opponent):
         return false
     if String(opponent.ATTACKS["punch"]["source_impact"]["height"]) == "low":
         push_error("Brick punch is low, so it cannot prove the medium exclusion")
         return false
+    var health_before: float = player.health
     if not _follow_up(player, opponent, "punch"):
         return false
     if player.state == "impactfacedown" or player.last_reaction_source_action == "impactfacedown":
         push_error("Medium hit entered impactfacedown")
         return false
-    if player.state != "hitstun" or player.last_reaction_source_action != "impacthardfrontmid":
-        push_error("Medium hit left the existing standing reaction")
+    # brucelee.set's facedownidle rows only answer `impact + oppattackheightlow`.
+    # A medium impact has no recovered link (and facedownidle carries no
+    # ReceiveDamage group), so the hit fails closed: no transition, no damage,
+    # no landed-hit record.
+    if (player.state != "facedownidle"
+            or not player.last_reaction_source_action.is_empty()
+            or absf(health_before - player.health) > 0.001
+            or opponent._attack_connected):
+        push_error("Medium hit invented a standing reaction instead of failing closed")
         return false
     return true
 
@@ -212,6 +220,7 @@ func _check_missing_facedown_clip_stays_standing_ko(player: PortFighter, opponen
 func _check_missing_clip(player: PortFighter, opponent: PortFighter) -> bool:
     if not _enter_facedown(player, opponent):
         return false
+    var health_before: float = player.health
     var saved: String = String(player._candidate_clip_paths["all_impct_facedwn"])
     player._candidate_clip_paths.erase("all_impct_facedwn")
     if not _follow_up(player, opponent, "kick"):
@@ -221,8 +230,13 @@ func _check_missing_clip(player: PortFighter, opponent: PortFighter) -> bool:
     if player.state == "impactfacedown":
         push_error("Missing all_impct_facedwn still entered impactfacedown")
         return false
-    if player.state != "hitstun" or player.last_reaction_source_action != "impacthardrightlow":
-        push_error("Missing ground clip did not keep the standing low reaction")
+    # The recovered row still names impactfacedown, but its clip is absent, so
+    # the hit must fail closed: no standing fallback and no landed-hit record.
+    if (player.state != "facedownidle"
+            or not player.last_reaction_source_action.is_empty()
+            or absf(health_before - player.health) > 0.001
+            or opponent._attack_connected):
+        push_error("Missing ground clip invented a standing reaction instead of failing closed")
         return false
     return true
 

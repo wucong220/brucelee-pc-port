@@ -14,6 +14,7 @@ SETUPS = {
     "source_low_kick2", "source_high_kick2", "source_high_punch3",
     "parry_high", "parry_low", "parry_attack",
     "endattack1", "endattack2", "target_down", "player_down", "player_faceup",
+    "stepback", "stepleft", "stepright",
 }
 
 
@@ -24,12 +25,12 @@ class MoveTrainingCatalogTest(unittest.TestCase):
         self.attacks = json.loads(PLAYER_CONFIG.read_text(encoding="utf-8"))["attacks"]
 
     def test_catalog_is_sequential_and_unique(self):
-        self.assertEqual(len(self.entries), 27)
+        self.assertEqual(len(self.entries), 25)
         ids = [entry["id"] for entry in self.entries]
         self.assertEqual(len(ids), len(set(ids)))
         groups = [entry["group"] for entry in self.entries]
         self.assertEqual(groups[0], "BASIC")
-        self.assertEqual(groups[-1], "BASIC")
+        self.assertEqual(groups[-1], "GROUND")
 
     def test_entries_have_valid_schema(self):
         for entry in self.entries:

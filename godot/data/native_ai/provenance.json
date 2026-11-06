@@ -1,0 +1,76 @@
+{
+ "tree": {
+  "source": "adreno_200/ai/standard.tree",
+  "sha256": "168bcd51f122e6563519d111f0f44b851decf89f4de05d1004a4ad4fa41bb5c9",
+  "node_count": 169
+ },
+ "characters_list": {
+  "source": "adreno_200/characters.list",
+  "sha256": "e41f46952e85f9257c3c3418f0c3eecaa111c22ea54633f62942f15f4d51f5b3",
+  "characters": 15
+ },
+ "sets": {
+  "brucelee.set": {
+   "sha256": "860b6dac1ae5043456fbf72b1cd93a5a1c76f036b3b995df5e57ce68b4d3762c",
+   "bytes": 322258
+  },
+  "Default.set": {
+   "sha256": "ce8e99e911e5f6c2da17d143662156028672fd3ac53ae57f9276367bcc543a39",
+   "bytes": 923
+  },
+  "karate.set": {
+   "sha256": "e70883723debce70788fae1208931d5684ff5f102de0d150ae44f33196bf3eaa",
+   "bytes": 152928
+  },
+  "kungfu.set": {
+   "sha256": "cca33460184109356c261f55ca13a0a52e3eb30ef3a1c1935e0340f54076b792",
+   "bytes": 208734
+  },
+  "thai.set": {
+   "sha256": "1afe220f7ef590fb136334a5efab251bd30dc90474101f6135f5ab5afbcee586",
+   "bytes": 178994
+  }
+ },
+ "tree_action_bases": [
+  "attacktofloor",
+  "facedownattack",
+  "facedowngetup",
+  "faceupattack",
+  "faceupgetup",
+  "faceupimpact",
+  "grab1",
+  "grab1miss",
+  "grab2",
+  "grab2miss",
+  "highblock",
+  "highblockbrutal",
+  "highblockhard",
+  "highkick1",
+  "highkick3",
+  "highpunch1",
+  "highpunch3",
+  "idle",
+  "idle2",
+  "idle3",
+  "lowblock",
+  "lowkick1",
+  "lowkick3",
+  "lowpunch1",
+  "lowpunch3",
+  "midblock",
+  "parryhigh",
+  "parrylow",
+  "skipback",
+  "specialkickhigh",
+  "specialkicklow",
+  "specialkicklowmiss",
+  "specialpunchhigh",
+  "specialpunchlow",
+  "specialpunchlowmiss",
+  "stepback",
+  "stepfwd",
+  "stepleft",
+  "stepright"
+ ],
+ "unmapped_tree_actions": []
+}

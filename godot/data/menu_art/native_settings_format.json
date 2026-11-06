@@ -1,0 +1,106 @@
+{
+  "schema": "brucelee-native-settings/1",
+  "generated_by": "native-save recovery (read-only decompilation of libdefault.so) + byte-exact codec validation",
+  "binary": {
+    "path": "D:/BruceLeeWork/tmp/libdefault.so",
+    "sha256": "1DA7A30CB8344484BFED7A4D9D578E128BFF69F22F73833D95DB563B353B2E70"
+  },
+  "status": "RECOVERED",
+  "file": {
+    "name": "settings.dat",
+    "location": "sal::GetAppWritePath()",
+    "evidence": "krm::CApplication::InitGameModules (ELF 0x152c84) builds CPath=GetAppWritePath() + CFileName(\"settings.dat\") then CGameDataManager::Load; krm::CApplication::End (ELF 0x14b300) does the same then CGameDataManager::Save."
+  },
+  "container": {
+    "signature": "1FDKENONCTX3",
+    "fields": [
+      "4 bytes '1FDK' (u32 0x4b444631)",
+      "4 bytes compression word; u32 0x4e4f4e45 ('NONE') on disk as bytes 45 4e 4f 4e",
+      "4 bytes 'CTX3'",
+      "u32 retained_tree_strings, u32 file_refs, u32 function_refs, u32 total_strings",
+      "total_strings x { u32 id = CRC32(text)+len, u32 len, utf8 text, 0x00 }",
+      "pad to 4",
+      "file_refs x 3 x u8/u16/u32 string ordinals (dir, base, ext); width by total_strings",
+      "function_refs x u32 string ordinal",
+      "'DATA'",
+      "u32 record_count, u32 bin_count, u32 typed_count, u32 bin_bytes, u32 typed_bytes",
+      "bin_count x u32 relative bin offsets; typed_count x u32 relative typed offsets",
+      "record_count x (u32 descriptor, u32 second)",
+      "bin payload; typed payload",
+      "16-byte MD5 of every preceding byte"
+    ],
+    "evidence": [
+      "krm::res::SaveRes(IOutputStream*,CRes const&,ECompressionType,bool) ELF 0x44cc04 writes '1FDK', compression word, IOWriter::SaveContext, 'DATA', five u32 header words, offset tables, records (local_4c<<3), payloads, then CMD5::GetHash 0x10 bytes.",
+      "krm::gui::CGameDataManager::Save(krt::io::CFileId) ELF 0x47e8cc calls res::SaveRes(stream,(CRes*)local_70,0x4e4f4e45,1) => compression NONE.",
+      "krm::gui::CGameDataManager::Load(krt::io::CFileId) ELF 0x47e6cc calls res::LoadRes then CResLock.",
+      "Byte-exact check: MD5 of a real game.states minus its last 16 bytes equals those 16 bytes."
+    ]
+  },
+  "cells": {
+    "0x30000000": "dict; low 21 bits = child count; second = first_key_record_index - self_index",
+    "0x40000000": "array; low 21 bits = element count; second = first_element_index - self_index",
+    "0x60000000": "HashString; second = compacted string-table ordinal (tree strings are interned first)",
+    "0x20000000": "float scalar (second = IEEE-754 bits); counted variants are NOT implemented",
+    "0x00000000": "int scalar; also used for integer dict keys",
+    "0x70000000": "resFileId; second = file-reference index",
+    "0x50000000": "StrData (inline string bytes in typed payload)",
+    "evidence": "krm::res::EditResRef::Binarize (ELF 0x41df98) type switch; krm::res::CResData::Enumerate (ELF 0x425980) dict/array recursion; krm::res::CBinarizeCollector::OnData (ELF 0x41eedc)."
+  },
+  "tree": {
+    "root": "dict of provider entries keyed by provider id, plus a final 'version' float",
+    "settings_provider_id": "option",
+    "settings_provider_evidence": "krm::CBruceLeeSettings::CBruceLeeSettings (ELF 0x167a5c) passes HashString \"option\" to gui::CSettings::CSettings.",
+    "version_value": 11526.0,
+    "version_evidence": "krm::BruceLee_GetCodeVersionNumber (ELF 0x1566e8) returns 0x2d06 (11526); CApplication::Init stores it in CGameDataManager+0x18 which CGameDataManager::Save(EditResRef) writes under the \"version\" key.",
+    "port_version_field": "The port has NO separate version field; it writes the same native 11526.0 so the native migration path (CBruceLeeSettings::UnSerialize) sees the current code version and does not overwrite `language`.",
+    "migration_thresholds": [10415.0, 10505.0],
+    "migration_evidence": "krm::CBruceLeeSettings::UnSerialize (ELF 0x167b9c) compares the incoming version against 10415.0/10505.0 and only then seeds style/language defaults.",
+    "options_defaults": {
+      "HUD": 0.0,
+      "input_layout": 0.0,
+      "input_gui_alpha": 0.25,
+      "sound_volume": 0.5,
+      "music_volume": 0.5,
+      "arcade_time": 1.0,
+      "versus_time": 1.0,
+      "survival_time": 1.0,
+      "camera_tilt": 1.0,
+      "language": "GetDefaultDisplayLanguage()",
+      "variable_mainmenu_selectedoption": 0.0,
+      "variable_playmenu_selectedoption": 0.0
+    },
+    "options_evidence": "krm::CApplication::Init (ELF 0x153a0c) ten CSettings::SetDefaultTReal calls (HUD 0x5b8004, input_layout 0x5b8008, input_gui_alpha 0x5b8018=0x3e800000, sound_volume 0x5b7e6c=0x3f000000, music_volume 0x5b7e7c=0x3f000000, arcade_time 0x5b8028=0x3f800000, versus_time 0x5b8034, survival_time 0x5b8040, camera_tilt 0x5b8050, language 0x5b7f24); krm::CApplication::ResetVariables (ELF 0x14a0e4) writes the two selectedoption variables."
+  },
+  "language": {
+    "key": "language",
+    "type": "CSettings TReal (float scalar)",
+    "value": "index into the recovered 8-item dock order (0 English,1 Spanish,2 German,3 Italian,4 French,5 Russian,6 ChineseSimpl,7 ChineseTrad)",
+    "apply": "krm::CApplication::InitGameModules reads CSettings::GetTReal(\"language\") and calls CTranslate::SetLanguage(int); krm::UpdateApplicationSettingsLanguage calls the same.",
+    "default_mapping": {
+      "en": 0, "es": 1, "de": 2, "it": 3, "fr": 4, "ru": 5, "zh-Hans": 6, "zh-Hant": 7
+    },
+    "default_evidence": "GetDefaultDisplayLanguage (ELF 0x147c30) StrCompare against en/es/fr/de/it/ru/zh-Hans/zh-Hant and returns 0/1/4/2/3/5/6/7 (the phone locale itself is a runtime value, matching native behaviour)."
+  },
+  "other_providers_in_same_file": {
+    "scope": "FORMAT RECOVERED, NOT WIRED in this patch. This patch only implements the `option.language` value. achievements/unlocks/stats are NOT claimed complete.",
+    "note": "CGameDataManager::Save(EditResRef) ELF 0x47dd14 serializes every registered IGameDataProvider as a dict child keyed by its provider id before adding 'version'.",
+    "provider_ids_found": ["option (CBruceLeeSettings/CSettings)", "Stats (CBeatEmUpStats)", "Unlocker (CUnlocker)", "story", "characters", "format", "translate"],
+    "progress_unlocks": "CUnlocker::Serialize/UnSerialize (ELF 0x16f840/0x1712c0) and CBeatEmUpStats::Serialize/UnSerialize (ELF 0x165be0/0x166050) use the same cells (dicts/arrays/ints/strings)."
+  },
+  "codec_validation": {
+    "method": "decode -> encode byte comparison against genuine extracted resources",
+    "byte_identical": [
+      "artpictures.list (1098 B, 61 records)",
+      "unlocks.list (3630 B, 365 records)",
+      "achievements.list (6880 B, 269 records)",
+      "fontsizes.Cfg (1965 B, 169 records)",
+      "characters.list (24346 B, 2361 records)",
+      "game.states (30118 B, 2485 records)"
+    ],
+    "not_implemented": "sceneries.list uses counted 0x2xxxxxxx typed float arrays stored in the bin payload; those are decoded fail-closed, not guessed. They do not occur in a settings/options file."
+  },
+  "locked_card_cursor": {
+    "status": "prerequisite found, not a save field",
+    "evidence": "CApplication::ResetVariables resets CSettings variables variable_mainmenu_selectedoption (0x5b7ce8) and variable_playmenu_selectedoption (0x5b7d0c); the dock/UI keeps its own cursor. No per-card locked-cursor value is serialized by CSettings/CUnlocker. A locked card's availability comes from CUnlocker flags/unlock lists, so persisting progress via CUnlocker is the prerequisite for restoring any cursor state."
+  }
+}

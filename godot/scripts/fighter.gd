@@ -6,12 +6,31 @@ signal combat_hit(attacker: PortFighter, defender: PortFighter, action: String, 
 signal combat_ko(fighter: PortFighter)
 signal attack_started(action: String)
 signal parry_succeeded(action: String)
+## Emitted when this fighter (the victim) starts the recovered endattackcomp
+## stage of an endattack finisher.  `slot_key` is the victim state
+## (endattackcomp1/2), `attacker_kind` the finisher that consumed it.  The
+## stage's own recovered `sounds[]` rows are timed from this instant.
+signal endattack_victim_started(slot_key: String, attacker_kind: String)
 
 const BASE_SPEED: float = 3.6
+## Recovered TFightResults counter classification (animation-category table).
+const FightStats = preload("res://scripts/fight_stats.gd")
+# Additive opt-in reaction gate; instantiated in _ready only when
+# BRUCELEE_NATIVE_REACTION=1. The default path never references it.
+const NativeReactionGate = preload("res://scripts/native_reaction_state.gd")
+const NativeConditions = preload("res://scripts/native_conditions.gd")
+## Authored canblock/canblock2 action time windows of the loaded fighting set.
+## Data only: no frame number in this port is a substitute for a missing group.
+const CanBlockWindows = preload("res://scripts/canblock_windows.gd")
+# Opt-in producer for the recovered 0x2c CFighter replay record. _ready only
+# instantiates it when BRUCELEE_REPLAY_RECORD=1; the default path never does.
+const ReplayRecorderScript = preload("res://scripts/replay_recorder.gd")
+const REPLAY_RECORD_ENV: String = "BRUCELEE_REPLAY_RECORD"
 const MAX_HEALTH: float = 100.0
 const CANDIDATE_SOURCE_MIN_Y: float = -0.09393310546875
 const CANDIDATE_SOURCE_HEIGHT: float = 173.415954589844
-const CANDIDATE_HEIGHT: float = 1.8
+const PC_TARGET_CHARACTER_HEIGHT: float = 1.8
+const CANDIDATE_HEIGHT: float = PC_TARGET_CHARACTER_HEIGHT
 const CANDIDATE_FLOOR_Y: float = 0.0
 const PLAYER_ORIGIN_HEIGHT: float = 1.2
 const CANDIDATE_CLIPS: Dictionary = {
@@ -27,7 +46,6 @@ const CANDIDATE_CLIPS: Dictionary = {
     "special_kick_high": "m01_kck_front_step",
     "high_punch2": "m01_pnch_high_02",
     "low_punch2": "m01_pnch_low_02",
-    "heavy": "m01_kick_high_01",
     "high_kick2": "m01_kick_high_02",
     "low_kick2": "m01_kick_low_02",
     "special_kick_low_miss": "m01_sp_kick_low_fail",
@@ -54,12 +72,19 @@ const CANDIDATE_CLIPS: Dictionary = {
     "stun_hard": "all_impct_hard_frnt_high",
     "stun_brutal": "all_impct_spectacular_lft",
     "move": "m01_movelft",
+    "movefwd": "m02_movefwd",
+    "moveback": "m01_movebck",
     "moveleft": "m01_moverht",
     "moveright": "m01_movelft",
     "stepfwd": "m01_stepfwd",
     "stepback": "m01_stepbck",
     "stepleft": "m01_steplft",
     "stepright": "m01_steprht",
+    # Native fast advance/retreat (training: "double tap left/right"). The
+    # candidate GLB ships m01_skipfwd/m01_skipbck; state is a real candidate
+    # clip, never a synthesised pose.
+    "skipfwd": "m01_skipfwd",
+    "skipback": "m01_skipbck",
 }
 const BRICK_CLIPS: Dictionary = {
     "idle": "m03_idle_01",
@@ -90,9 +115,17 @@ const BRICK_CLIPS: Dictionary = {
     "endattack_brick": "m03_end_attack_01",
     "grab1_miss_brick": "m02_grab_01",
     "grab2_miss_brick": "m02_grab_01",
+    "grabbed1": "all_grabbed_01_forset03",
+    "grabbed2": "all_grabbed_02_forset03",
+    "endattackcomp1": "all_end_attack_01_forset03",
+    "endattackcomp2": "all_end_attack_02_forset03",
     "m03_blck_high": "m03_blck_high",
     "all_block_low": "all_block_low",
     "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
     "move": "m03_movefwd",
     "moveleft": "m03_movelft",
     "moveright": "m03_moverht",
@@ -101,23 +134,684 @@ const BRICK_CLIPS: Dictionary = {
     "stepleft": "m03_steplft",
     "stepright": "m03_steprht",
 }
+# Candidate clip maps for the mapped set characters. Same shape as
+# BRICK_CLIPS: attack slots -> their set animation, plus the support keys the
+# state machine asks for. Generated from the fighting-set action tables.
+const MASTER_CLIPS: Dictionary = {
+    "idle": "m04_e01_idle_01",
+    "punch": "m04_pnch_low_03",
+    "kick": "m04_kck_low_02",
+    "high_punch": "m04_pnch_high_01",
+    "high_punch2": "m04_pnch_high_02",
+    "high_punch3": "m04_pnch_high_03",
+    "low_punch": "m04_pnch_low_01",
+    "low_punch2": "m04_pnch_low_02",
+    "low_punch3": "m04_pnch_low_03",
+    "high_kick": "m04_kck_high_01",
+    "high_kick2": "m04_kck_high_02",
+    "high_kick3": "m04_kck_high_03",
+    "low_kick": "m04_kck_low_03",
+    "low_kick2": "m04_kck_low_01",
+    "low_kick3": "m04_kck_low_02",
+    "special_kick_high": "m04_e01_kck_high_03",
+    "special_kick_low": "m04_e01_kck_low_03",
+    "special_punch_high": "m04_e01_pnch_high_03",
+    "special_punch_low": "m04_e01_pnch_low_03",
+    "parry_high": "m01_parry_high",
+    "parry_low": "m01_kick_low_02",
+    "parry_attack": "m04_pnch_high_02",
+    "grab1": "m04_sp_pnch_low",
+    "grab2": "m04_sp_kck_low",
+    "grab1_miss": "m04_sp_pnch_low",
+    "grab2_miss": "m04_sp_kck_low",
+    "attack_to_floor": "m01_attack_to_floor",
+    "endattack": "m04_end_attack_02",
+    "grabbed1": "all_sp_pnch_low_forset04",
+    "grabbed2": "all_sp_kck_low_forset04",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m04_movefwd",
+    "moveleft": "m04_movelft",
+    "moveright": "m04_moverht",
+    "stepfwd": "m04_stepfwd",
+    "stepback": "m04_stepbck",
+    "stepleft": "m04_steplft",
+    "stepright": "m04_steprht",
+}
+const SINFU_CLIPS: Dictionary = {
+    "idle": "m04_e02_idle_01",
+    "punch": "m04_pnch_low_03",
+    "kick": "m04_kck_low_02",
+    "high_punch": "m04_pnch_high_01",
+    "high_punch2": "m04_pnch_high_02",
+    "high_punch3": "m04_pnch_high_03",
+    "low_punch": "m04_pnch_low_01",
+    "low_punch2": "m04_pnch_low_02",
+    "low_punch3": "m04_pnch_low_03",
+    "high_kick": "m04_kck_high_01",
+    "high_kick2": "m04_kck_high_02",
+    "high_kick3": "m04_kck_high_03",
+    "low_kick": "m04_kck_low_03",
+    "low_kick2": "m04_kck_low_01",
+    "low_kick3": "m04_kck_low_02",
+    "special_kick_high": "m04_e02_kck_high_03",
+    "special_kick_low": "m04_e02_kck_low_03",
+    "special_punch_low": "m04_e02_pnch_low_03",
+    "parry_high": "m01_parry_high",
+    "parry_low": "m01_kick_low_02",
+    "parry_attack": "m04_pnch_high_02",
+    "grab1": "m04_grab_01",
+    "grab2": "m04_sp_kck_low",
+    "grab1_miss": "m02_grab_01",
+    "grab2_miss": "m04_sp_kck_low",
+    "attack_to_floor": "m01_attack_to_floor",
+    "endattack": "m04_end_attack_02",
+    "special_punch_high_miss": "m04_sp_pnch_high_fail",
+    "special_punch_high_hit": "m04_sp_pnch_high",
+    "grabbed1": "all_grabbed_01_forset04",
+    "grabbed2": "all_sp_kck_low_forset04",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m04_movefwd",
+    "moveleft": "m04_movelft",
+    "moveright": "m04_moverht",
+    "stepfwd": "m04_stepfwd",
+    "stepback": "m04_stepbck",
+    "stepleft": "m04_steplft",
+    "stepright": "m04_steprht",
+}
+const SHENLO_CLIPS: Dictionary = {
+    "idle": "m04_e03_idle_01",
+    "punch": "m04_pnch_low_03",
+    "kick": "m04_kck_low_02",
+    "high_punch": "m04_pnch_high_01",
+    "high_punch2": "m04_pnch_high_02",
+    "high_punch3": "m04_pnch_high_03",
+    "low_punch": "m04_pnch_low_01",
+    "low_punch2": "m04_pnch_low_02",
+    "low_punch3": "m04_pnch_low_03",
+    "high_kick": "m04_kck_high_01",
+    "high_kick2": "m04_kck_high_02",
+    "high_kick3": "m04_kck_high_03",
+    "low_kick": "m04_kck_low_03",
+    "low_kick2": "m04_kck_low_01",
+    "low_kick3": "m04_kck_low_02",
+    "special_kick_high": "m04_e03_kck_high_03",
+    "special_kick_low": "m04_e03_kck_low_03",
+    "special_punch_low": "m04_e03_pnch_low_03",
+    "special_punch_high": "m04_e03_pnch_high_03",
+    "parry_high": "m01_parry_high",
+    "parry_low": "m01_kick_low_02",
+    "parry_attack": "m04_pnch_high_02",
+    "grab1": "m04_grab_01",
+    "grab2": "m04_grab_02",
+    "grab1_miss": "m02_grab_01",
+    "grab2_miss": "m04_grab_02",
+    "attack_to_floor": "m01_attack_to_floor",
+    "endattack": "m04_end_attack_01",
+    "grabbed1": "all_grabbed_01_forset04",
+    "grabbed2": "all_grabbed_02_forset04",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m04_e03_movefwd",
+    "moveleft": "m04_movelft",
+    "moveright": "m04_moverht",
+    "stepfwd": "m04_stepfwd",
+    "stepback": "m04_stepbck",
+    "stepleft": "m04_e03_steplft",
+    "stepright": "m04_e03_steprht",
+}
+
+const KEN_CLIPS: Dictionary = {
+    "idle": "m02_idle_01",
+    "punch": "m02_pnch_low_03",
+    "kick": "m02_kck_low_03",
+    "high_punch": "m02_pnch_high_01",
+    "high_punch2": "m02_pnch_high_03",
+    "high_punch3": "m02_pnch_high_02",
+    "low_punch": "m02_pnch_low_01",
+    "low_punch2": "m02_pnch_low_02",
+    "low_punch3": "m02_pnch_low_03",
+    "high_kick": "m02_kck_high_01",
+    "high_kick2": "m02_kck_high_03",
+    "high_kick3": "m02_kck_high_02",
+    "low_kick": "m02_kck_low_01",
+    "low_kick2": "m02_kck_low_02",
+    "low_kick3": "m02_kck_low_03",
+    "special_kick_high": "m02_sp_kck_high",
+    "special_kick_low": "m02_sp_kck_low",
+    "special_punch_high": "m02_sp_pnch_high",
+    "special_punch_low": "m02_sp_pnch_low",
+    "parry_high": "m02_parry_high",
+    "parry_attack": "m02_pnch_low_03",
+    "grab1": "m02_grab_01",
+    "grab2": "m02_grab_02",
+    "grab1_miss": "m02_grab_01",
+    "grab2_miss": "m02_grab_01",
+    "attack_to_floor": "m02_attack_to_floor",
+    "endattack": "m02_end_attack_01",
+    "grabbed1": "all_grabbed_01_forset02",
+    "grabbed2": "all_grabbed_02_forset02",
+    "endattackcomp1": "all_end_attack_01_forset02",
+    "endattackcomp2": "all_end_attack_02_forset02",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m02_movefwd",
+    "moveleft": "m02_movelft",
+    "moveright": "m02_moverht",
+    "stepfwd": "m02_stepfwd",
+    "stepback": "m02_stepbck",
+    "stepleft": "m02_steplft",
+    "stepright": "m02_steprht",
+}
+
+const SMALLBOY_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m03_pnch_low_01", 38, 8, 4, 26, 7.0, 80.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m03_kck_low_01", 41, 9, 3, 29, 7.0, 70.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m03_pnch_high_01", 19, 6, 3, 10, 5.0, 72.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m03_pnch_high_02", 31, 8, 4, 19, 7.0, 65.0, "rarm", "high", "normal", "fromleft"],
+    "high_punch3": ["highpunch3", "m03_pnch_high_03", 35, 11, 4, 20, 8.0, 70.0, "larm", "high", "hard", "fromleft"],
+    "low_punch": ["lowpunch1", "m03_pnch_low_03", 27, 9, 4, 14, 6.0, 62.0, "rarm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m03_pnch_low_02", 35, 9, 4, 22, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m03_pnch_low_01", 38, 8, 4, 26, 7.0, 80.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m03_kck_high_01", 44, 12, 4, 28, 6.0, 65.0, "lleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m03_kck_high_02", 49, 9, 5, 35, 7.0, 65.0, "lleg", "high", "normal", "frontal"],
+    "high_kick3": ["highkick3", "m03_kck_high_03", 47, 12, 4, 31, 8.0, 70.0, "lleg", "high", "hard", "fromright"],
+    "low_kick": ["lowkick1", "m03_kck_low_02", 46, 6, 5, 35, 5.0, 65.0, "lleg", "medium", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m03_kck_low_03", 37, 8, 4, 25, 6.0, 65.0, "rleg", "medium", "normal", "frontal"],
+    "low_kick3": ["lowkick3", "m03_kck_low_01", 41, 9, 3, 29, 7.0, 70.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high_brick": ["specialkickhigh smallboy", "m03_e01_sp_kck_high_02", 38, 7, 5, 26, 10.0, 80.0, "rleg", "high", "hard", "fromabove"],
+    "special_kick_low_brick": ["specialkicklow smallboy", "m03_sp_kck_low", 56, 14, 4, 38, 9.0, 75.0, "rleg", "low", "hard", "fromleft"],
+    "special_punch_high_brick": ["specialpunchhigh smallboy", "m03_shoulder_charge", 53, 4, 5, 44, 10.0, 75.0, "larm", "high", "hard", "frontal"],
+    "special_punch_low_brick": ["specialpunchlow smallboy", "m03_sp_pnch_low", 44, 15, 4, 25, 9.0, 75.0, "rarm", "high", "hard", "frontal"],
+    "parry_high_brick": ["parryhigh", "m03_parry_high", 43, 0, 2, 41, 0.0, 0.0, "larm", "high", "normal", "frontal"],
+    "parry_low_brick": ["parrylow", "m03_parry_low", 41, 0, 2, 39, 0.0, 0.0, "larm", "low", "normal", "frontal"],
+    "parry_attack_brick": ["parryattack", "m03_pnch_high_03", 35, 10, 5, 20, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1_brick": ["grab1 smallboy", "m03_grab_01", 90, 19, 2, 69, 6.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_brick": ["grab2 smallboy", "m03_grab_02", 78, 46, 3, 29, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+    "attack_to_floor_brick": ["attacktofloor", "m03_attack_to_floor", 61, 11, 5, 45, 6.0, 35.0, "lleg", "low", "normal", "frontal"],
+    "endattack_brick": ["endattack smallboy", "m03_end_attack_01", 93, 15, 4, 74, 0.0, 75.0, "lleg", "high", "brutal", "fromleft"],
+    "grab1_miss_brick": ["grab1miss smallboy", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss_brick": ["grab2miss smallboy", "m02_grab_01", 47, 9, 3, 35, 0.0, 45.0, "larm", "low", "normal", "frontal"],
+}
+const SMALLBOY_ANIMATION_RADII_DATA: Dictionary = {
+    "m02_grab_01": 45.0,
+    "m03_attack_to_floor": 35.0,
+    "m03_e01_sp_kck_high_02": 25.0,
+    "m03_end_attack_01": 75.0,
+    "m03_grab_01": 45.0,
+    "m03_grab_02": 45.0,
+    "m03_idle_01": 43.0,
+    "m03_kck_high_01": 30.0,
+    "m03_kck_high_02": 30.0,
+    "m03_kck_high_03": 45.0,
+    "m03_kck_low_01": 50.0,
+    "m03_kck_low_02": 50.0,
+    "m03_kck_low_03": 50.0,
+    "m03_movefwd": 50.0,
+    "m03_parry_high": 40.0,
+    "m03_parry_low": 40.0,
+    "m03_pnch_high_01": 43.0,
+    "m03_pnch_high_02": 43.0,
+    "m03_pnch_high_03": 50.0,
+    "m03_pnch_low_01": 40.0,
+    "m03_pnch_low_02": 40.0,
+    "m03_pnch_low_03": 40.0,
+    "m03_shoulder_charge": 45.0,
+    "m03_sp_kck_high": 45.0,
+    "m03_sp_kck_low": 45.0,
+    "m03_sp_pnch_high": 45.0,
+    "m03_sp_pnch_low": 45.0,
+}
+const JOHNSON_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m03_pnch_low_01", 38, 8, 4, 26, 7.0, 80.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m03_kck_low_01", 41, 9, 3, 29, 7.0, 70.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m03_pnch_high_01", 19, 6, 3, 10, 5.0, 72.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m03_pnch_high_02", 31, 8, 4, 19, 7.0, 65.0, "rarm", "high", "normal", "fromleft"],
+    "high_punch3": ["highpunch3", "m03_pnch_high_03", 35, 11, 4, 20, 8.0, 70.0, "larm", "high", "hard", "fromleft"],
+    "low_punch": ["lowpunch1", "m03_pnch_low_03", 27, 9, 4, 14, 6.0, 62.0, "rarm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m03_pnch_low_02", 35, 9, 4, 22, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m03_pnch_low_01", 38, 8, 4, 26, 7.0, 80.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m03_kck_high_01", 44, 12, 4, 28, 6.0, 65.0, "lleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m03_kck_high_02", 49, 9, 5, 35, 7.0, 65.0, "lleg", "high", "normal", "frontal"],
+    "high_kick3": ["highkick3", "m03_kck_high_03", 47, 12, 4, 31, 8.0, 70.0, "lleg", "high", "hard", "fromright"],
+    "low_kick": ["lowkick1", "m03_kck_low_02", 46, 6, 5, 35, 5.0, 65.0, "lleg", "medium", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m03_kck_low_03", 37, 8, 4, 25, 6.0, 65.0, "rleg", "medium", "normal", "frontal"],
+    "low_kick3": ["lowkick3", "m03_kck_low_01", 41, 9, 3, 29, 7.0, 70.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high_brick": ["specialkickhigh johnson", "m03_e01_kck_high_03", 30, 9, 4, 17, 10.0, 80.0, "lleg", "high", "brutal", "fromright"],
+    "special_kick_low_brick": ["specialkicklow johnson", "m03_sp_kck_low", 56, 13, 4, 39, 9.0, 75.0, "rleg", "low", "hard", "fromleft"],
+    "special_punch_high_brick": ["specialpunchhigh johnson", "m03_e01_pnch_high_03", 52, 11, 5, 36, 8.0, 55.0, "rarm", "high", "hard", "frontal"],
+    "special_punch_low_brick": ["specialpunchlow johnson", "m03_sp_pnch_low", 44, 15, 4, 25, 9.0, 75.0, "rarm", "high", "hard", "frontal"],
+    "parry_high_brick": ["parryhigh", "m03_parry_high", 43, 0, 2, 41, 0.0, 0.0, "larm", "high", "normal", "frontal"],
+    "parry_low_brick": ["parrylow", "m03_parry_low", 41, 0, 2, 39, 0.0, 0.0, "larm", "low", "normal", "frontal"],
+    "parry_attack_brick": ["parryattack", "m03_pnch_high_03", 35, 10, 5, 20, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1_brick": ["grab1 johnson", "m03_grab_01", 90, 19, 2, 69, 6.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_brick": ["grab2 johnson", "m03_grab_02", 78, 46, 3, 29, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+    "attack_to_floor_brick": ["attacktofloor", "m03_attack_to_floor", 61, 11, 5, 45, 6.0, 35.0, "lleg", "low", "normal", "frontal"],
+    "endattack_brick": ["endattack johnson", "m03_end_attack_02", 130, 18, 1, 111, 0.0, 75.0, "rleg", "high", "hard", "fromleft"],
+    "grab1_miss_brick": ["grab1miss johnson", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss_brick": ["grab2miss johnson", "m02_grab_01", 47, 4, 4, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+}
+const JOHNSON_ANIMATION_RADII_DATA: Dictionary = {
+    "m02_grab_01": 45.0,
+    "m03_attack_to_floor": 35.0,
+    "m03_e01_kck_high_03": 25.0,
+    "m03_e01_pnch_high_03": 45.0,
+    "m03_end_attack_01": 75.0,
+    "m03_end_attack_02": 25.0,
+    "m03_grab_01": 45.0,
+    "m03_grab_02": 45.0,
+    "m03_idle_01": 43.0,
+    "m03_kck_high_01": 30.0,
+    "m03_kck_high_02": 30.0,
+    "m03_kck_high_03": 45.0,
+    "m03_kck_low_01": 50.0,
+    "m03_kck_low_02": 50.0,
+    "m03_kck_low_03": 50.0,
+    "m03_movefwd": 50.0,
+    "m03_parry_high": 40.0,
+    "m03_parry_low": 40.0,
+    "m03_pnch_high_01": 43.0,
+    "m03_pnch_high_02": 43.0,
+    "m03_pnch_high_03": 50.0,
+    "m03_pnch_low_01": 40.0,
+    "m03_pnch_low_02": 40.0,
+    "m03_pnch_low_03": 40.0,
+    "m03_sp_kck_high": 45.0,
+    "m03_sp_kck_low": 45.0,
+    "m03_sp_pnch_high": 45.0,
+    "m03_sp_pnch_low": 45.0,
+}
+const CHIEF_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m02_pnch_low_03", 57, 14, 7, 36, 7.0, 70.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m02_kck_low_03", 35, 9, 6, 20, 7.0, 110.0, "rleg", "low", "hard", "frontal"],
+    "high_punch": ["highpunch1", "m02_pnch_high_01", 40, 7, 3, 30, 5.0, 60.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m02_pnch_high_03", 46, 8, 4, 34, 6.0, 70.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m02_pnch_high_02", 20, 8, 4, 8, 7.0, 80.0, "larm", "high", "hard", "frontal"],
+    "low_punch": ["lowpunch1", "m02_pnch_low_01", 31, 7, 4, 20, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m02_pnch_low_02", 27, 7, 4, 16, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m02_pnch_low_03", 57, 14, 7, 36, 7.0, 70.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m02_kck_high_01", 50, 7, 6, 37, 5.0, 80.0, "lleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m02_kck_high_03", 52, 14, 5, 33, 6.0, 80.0, "lleg", "high", "normal", "frontal"],
+    "high_kick3": ["highkick3", "m02_kck_high_02", 50, 9, 4, 37, 8.0, 80.0, "lleg", "high", "hard", "frontal"],
+    "low_kick": ["lowkick1", "m02_kck_low_01", 26, 5, 4, 17, 4.0, 65.0, "lleg", "low", "normal", "fromright"],
+    "low_kick2": ["lowkick2", "m02_kck_low_02", 24, 8, 4, 12, 4.0, 65.0, "rleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m02_kck_low_03", 35, 9, 6, 20, 7.0, 110.0, "rleg", "low", "hard", "frontal"],
+    "special_kick_high": ["specialkickhigh chief", "m02_e01_kck_high_03", 32, 9, 8, 15, 12.0, 75.0, "rleg", "high", "hard", "frontal"],
+    "special_kick_low": ["specialkicklow chief", "m02_e01_kck_low_03", 40, 11, 5, 24, 10.0, 70.0, "lleg", "low", "hard", "frontal"],
+    "special_punch_high": ["specialpunchhigh chief", "m02_e01_pnch_high_03", 24, 8, 5, 11, 14.0, 45.0, "rarm", "high", "hard", "frontal"],
+    "special_punch_low": ["specialpunchlow chief", "m02_e01_pnch_low_03", 24, 9, 4, 11, 10.0, 75.0, "larm", "high", "hard", "frontal"],
+    "parry_high": ["parryhigh", "m02_parry_high", 19, 0, 2, 17, 0.0, 0.0, "larm", "high", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m02_pnch_low_03", 57, 14, 5, 38, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 chief", "m02_grab_01", 47, 32, 7, 8, 16.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab2": ["grab2 chief", "m02_grab_02", 98, 65, 6, 27, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab1_miss": ["grab1miss chief", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss chief", "m02_grab_01", 47, 4, 4, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m02_attack_to_floor", 34, 8, 5, 21, 6.0, 105.0, "rarm", "low", "normal", "frontal"],
+    "endattack": ["endattack chief", "m02_end_attack_02", 155, 17, 3, 135, 0.0, 75.0, "rleg", "high", "brutal", "fromleft"],
+}
+const CHIEF_ANIMATION_RADII_DATA: Dictionary = {
+    "all_block_high": 40.0,
+    "all_block_low": 40.0,
+    "all_block_mid": 40.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 40.0,
+    "all_impct_light_frnt_mid": 40.0,
+    "m02_attack_to_floor": 45.0,
+    "m02_e01_kck_high_03": 45.0,
+    "m02_e01_kck_low_03": 40.0,
+    "m02_e01_pnch_high_03": 45.0,
+    "m02_e01_pnch_low_03": 45.0,
+    "m02_end_attack_01": 25.0,
+    "m02_end_attack_02": 25.0,
+    "m02_grab_01": 25.0,
+    "m02_grab_02": 25.0,
+    "m02_idle_01": 55.0,
+    "m02_kck_high_01": 50.0,
+    "m02_kck_high_02": 40.0,
+    "m02_kck_high_03": 50.0,
+    "m02_kck_low_01": 50.0,
+    "m02_kck_low_02": 50.0,
+    "m02_kck_low_03": 70.0,
+    "m02_parry_high": 40.0,
+    "m02_pnch_high_01": 40.0,
+    "m02_pnch_high_02": 60.0,
+    "m02_pnch_high_03": 30.0,
+    "m02_pnch_low_01": 40.0,
+    "m02_pnch_low_02": 40.0,
+    "m02_pnch_low_03": 45.0,
+    "m02_sp_kck_high": 50.0,
+    "m02_sp_kck_low": 45.0,
+    "m02_sp_pnch_high": 30.0,
+    "m02_sp_pnch_low": 45.0,
+}
+const LOMING_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m04_pnch_high_01", 68, 6, 5, 57, 5.0, 75.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m04_pnch_high_02", 50, 6, 5, 39, 6.0, 65.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m04_pnch_high_03", 50, 15, 8, 27, 7.0, 75.0, "larm", "high", "hard", "fromabove"],
+    "low_punch": ["lowpunch1", "m04_pnch_low_01", 48, 5, 5, 38, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m04_pnch_low_02", 64, 8, 4, 52, 6.0, 85.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m04_kck_high_01", 53, 9, 6, 38, 5.0, 80.0, "rleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m04_kck_high_02", 43, 6, 6, 31, 6.0, 80.0, "rleg", "high", "normal", "fromright"],
+    "high_kick3": ["highkick3", "m04_kck_high_03", 60, 9, 5, 46, 7.0, 80.0, "lleg", "high", "hard", "fromleft"],
+    "low_kick": ["lowkick1", "m04_kck_low_03", 22, 6, 5, 11, 5.0, 70.0, "lleg", "low", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m04_kck_low_01", 34, 5, 5, 24, 5.0, 100.0, "lleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high": ["specialkickhigh loming", "m04_e02_kck_high_03", 85, 9, 6, 70, 13.0, 80.0, "lleg", "high", "hard", "frontal"],
+    "special_kick_low": ["specialkicklow loming", "m04_e02_kck_low_03", 76, 10, 4, 62, 6.0, 75.0, "rleg", "low", "normal", "fromleft"],
+    "special_punch_low": ["specialpunchlow loming", "m04_e02_pnch_low_03", 104, 11, 4, 89, 10.0, 75.0, "rarm", "medium", "hard", "frontal"],
+    "parry_high": ["parryhigh", "m01_parry_high", 62, 0, 2, 60, 0.0, 0.0, "larm", "high", "normal", "frontal"],
+    "parry_low": ["parrylow", "m01_kick_low_02", 27, 7, 4, 16, 0.0, 65.0, "rleg", "low", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m04_pnch_high_02", 50, 6, 5, 39, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 loming", "m04_grab_01", 103, 34, 11, 58, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab2": ["grab2 loming", "m04_grab_02", 45, 7, 3, 35, 5.0, 45.0, "larm", "high", "hard", "frontal"],
+    "grab1_miss": ["grab1miss loming", "m04_grab_01", 103, 5, 3, 95, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss loming", "m04_grab_02", 45, 4, 4, 37, 0.0, 50.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
+    "endattack": ["endattack loming", "m04_end_attack_01", 93, 17, 3, 73, 0.0, 75.0, "rleg", "high", "brutal", "fromleft"],
+    # Lo Ming's own recovered kungfu.set row: `specialpunchhigh loming` starts
+    # animation m04_e02_pnch_high_03 (96 frames at 30 fps, radius 55). It is a
+    # two-impact special (6 + 9 damage) and is the only special the set gives
+    # this character; the SinFu miss/hit pair is not borrowed for it.
+    "special_punch_high": ["specialpunchhigh loming", "m04_e02_pnch_high_03", 96, 7, 9, 80, 15.0, 80.0, "larm", "high", "normal", "fromleft"],
+}
+const LOMING_ANIMATION_RADII_DATA: Dictionary = {
+    "all_block_high": 60.0,
+    "all_block_low": 60.0,
+    "all_block_mid": 60.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 50.0,
+    "all_impct_light_frnt_mid": 40.0,
+    "m01_attack_to_floor": 45.0,
+    "m01_kick_low_02": 40.0,
+    "m01_parry_high": 40.0,
+    "m02_grab_01": 25.0,
+    "m04_e02_idle_01": 50.0,
+    "m04_e02_kck_high_03": 50.0,
+    "m04_e02_kck_low_03": 55.0,
+    "m04_e02_pnch_high_03": 55.0,
+    "m04_e02_pnch_low_03": 55.0,
+    "m04_end_attack_01": 25.0,
+    "m04_end_attack_02": 25.0,
+    "m04_grab_01": 25.0,
+    "m04_grab_02": 25.0,
+    "m04_kck_high_01": 50.0,
+    "m04_kck_high_02": 50.0,
+    "m04_kck_high_03": 40.0,
+    "m04_kck_low_01": 50.0,
+    "m04_kck_low_02": 50.0,
+    "m04_kck_low_03": 50.0,
+    "m04_pnch_high_01": 40.0,
+    "m04_pnch_high_02": 25.0,
+    "m04_pnch_high_03": 60.0,
+    "m04_pnch_low_01": 40.0,
+    "m04_pnch_low_02": 40.0,
+    "m04_pnch_low_03": 40.0,
+    "m04_sp_kck_low": 25.0,
+    "m04_sp_pnch_high": 25.0,
+    "m04_sp_pnch_high_fail": 40.0,
+}
 const SOURCE_FRAME_RATE: float = 30.0
+# Root-motion axis mapping is an isolated port adapter. EMPIRICAL means the
+# current mapping has passed the behavior tests; UNVERIFIED means the native
+# axis/sign semantics are not established. The raw ANM positions are never
+# modified by this classification.
+const ROOT_MOTION_MAPPING_STATUS: Dictionary = {
+    "m01_pnch_low_01": "EMPIRICAL",
+    "m03_pnch_low_01": "EMPIRICAL",
+    "m03_kck_low_01": "EMPIRICAL",
+}
 const SOURCE_CHARACTER_HEIGHT: float = CANDIDATE_SOURCE_HEIGHT
 const WORLD_CHARACTER_HEIGHT: float = CANDIDATE_HEIGHT
-const CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES: int = 6
-const CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES: int = 10
-const CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES: int = 6
 const CandidatePathGuard = preload("res://scripts/candidate_path_guard.gd")
 const CandidateMaterialLoader = preload("res://scripts/candidate_material_loader.gd")
 const CandidateBounds = preload("res://scripts/candidate_bounds.gd")
-const HEAVY_ATTACK: Dictionary = {
-    # No recovered fighting-set mapping for this prototype attack yet.
-    "startup": 0.33, "active": 0.10, "recovery": 0.42,
-    "range": 1.85, "damage": 19.0, "push": 0.55,
+## Direct-clip rules shared with the opt-in Style Editor. Nothing here is
+## applied unless apply_style_selections() is called with a saved selection.
+const StyleClipMap = preload("res://scripts/style_clip_map.gd")
+# SMALL BOY candidate clip table (generated from the set).
+const SMALLBOY_CLIPS: Dictionary = {
+    "idle": "m03_idle_01",
+    "punch": "m03_pnch_low_01",
+    "kick": "m03_kck_low_01",
+    "high_punch": "m03_pnch_high_01",
+    "high_punch2": "m03_pnch_high_02",
+    "high_punch3": "m03_pnch_high_03",
+    "low_punch": "m03_pnch_low_03",
+    "low_punch2": "m03_pnch_low_02",
+    "low_punch3": "m03_pnch_low_01",
+    "high_kick": "m03_kck_high_01",
+    "high_kick2": "m03_kck_high_02",
+    "high_kick3": "m03_kck_high_03",
+    "low_kick": "m03_kck_low_02",
+    "low_kick2": "m03_kck_low_03",
+    "low_kick3": "m03_kck_low_01",
+    "special_kick_high_brick": "m03_e01_sp_kck_high_02",
+    "special_kick_low_brick": "m03_sp_kck_low",
+    "special_punch_high_brick": "m03_shoulder_charge",
+    "special_punch_low_brick": "m03_sp_pnch_low",
+    "parry_high_brick": "m03_parry_high",
+    "parry_low_brick": "m03_parry_low",
+    "parry_attack_brick": "m03_pnch_high_03",
+    "grab1_brick": "m03_grab_01",
+    "grab2_brick": "m03_grab_02",
+    "attack_to_floor_brick": "m03_attack_to_floor",
+    "endattack_brick": "m03_end_attack_01",
+    "grab1_miss_brick": "m02_grab_01",
+    "grab2_miss_brick": "m02_grab_01",
+    "grabbed1": "all_grabbed_01_forset03",
+    "grabbed2": "all_grabbed_02_forset03",
+    "endattackcomp1": "all_end_attack_01_forset03",
+    "endattackcomp2": "all_end_attack_02_forset03",
+    "m03_blck_high": "m03_blck_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m03_movefwd",
+    "moveleft": "m03_movelft",
+    "moveright": "m03_moverht",
+    "stepfwd": "m03_stepfwd",
+    "stepback": "m03_stepbck",
+    "stepleft": "m03_steplft",
+    "stepright": "m03_steprht",
 }
+
+# JOHNSON candidate clip table (generated from the set).
+const JOHNSON_CLIPS: Dictionary = {
+    "idle": "m03_idle_01",
+    "punch": "m03_pnch_low_01",
+    "kick": "m03_kck_low_01",
+    "high_punch": "m03_pnch_high_01",
+    "high_punch2": "m03_pnch_high_02",
+    "high_punch3": "m03_pnch_high_03",
+    "low_punch": "m03_pnch_low_03",
+    "low_punch2": "m03_pnch_low_02",
+    "low_punch3": "m03_pnch_low_01",
+    "high_kick": "m03_kck_high_01",
+    "high_kick2": "m03_kck_high_02",
+    "high_kick3": "m03_kck_high_03",
+    "low_kick": "m03_kck_low_02",
+    "low_kick2": "m03_kck_low_03",
+    "low_kick3": "m03_kck_low_01",
+    "special_kick_high_brick": "m03_e01_kck_high_03",
+    "special_kick_low_brick": "m03_sp_kck_low",
+    "special_punch_high_brick": "m03_e01_pnch_high_03",
+    "special_punch_low_brick": "m03_sp_pnch_low",
+    "parry_high_brick": "m03_parry_high",
+    "parry_low_brick": "m03_parry_low",
+    "parry_attack_brick": "m03_pnch_high_03",
+    "grab1_brick": "m03_grab_01",
+    "grab2_brick": "m03_grab_02",
+    "attack_to_floor_brick": "m03_attack_to_floor",
+    "endattack_brick": "m03_end_attack_02",
+    "grab1_miss_brick": "m02_grab_01",
+    "grab2_miss_brick": "m02_grab_01",
+    "grabbed1": "all_grabbed_01_forset03",
+    "grabbed2": "all_grabbed_02_forset03",
+    "endattackcomp1": "all_end_attack_01_forset03",
+    "endattackcomp2": "all_end_attack_02_forset03",
+    "m03_blck_high": "m03_blck_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m03_movefwd",
+    "moveleft": "m03_movelft",
+    "moveright": "m03_moverht",
+    "stepfwd": "m03_stepfwd",
+    "stepback": "m03_stepbck",
+    "stepleft": "m03_steplft",
+    "stepright": "m03_steprht",
+}
+
+# THE CHIEF candidate clip table (generated from the set).
+const CHIEF_CLIPS: Dictionary = {
+    "idle": "m02_idle_01",
+    "punch": "m02_pnch_low_03",
+    "kick": "m02_kck_low_03",
+    "high_punch": "m02_pnch_high_01",
+    "high_punch2": "m02_pnch_high_03",
+    "high_punch3": "m02_pnch_high_02",
+    "low_punch": "m02_pnch_low_01",
+    "low_punch2": "m02_pnch_low_02",
+    "low_punch3": "m02_pnch_low_03",
+    "high_kick": "m02_kck_high_01",
+    "high_kick2": "m02_kck_high_03",
+    "high_kick3": "m02_kck_high_02",
+    "low_kick": "m02_kck_low_01",
+    "low_kick2": "m02_kck_low_02",
+    "low_kick3": "m02_kck_low_03",
+    "special_kick_high": "m02_e01_kck_high_03",
+    "special_kick_low": "m02_e01_kck_low_03",
+    "special_punch_high": "m02_e01_pnch_high_03",
+    "special_punch_low": "m02_e01_pnch_low_03",
+    "parry_high": "m02_parry_high",
+    "parry_attack": "m02_pnch_low_03",
+    "grab1": "m02_grab_01",
+    "grab2": "m02_grab_02",
+    "grab1_miss": "m02_grab_01",
+    "grab2_miss": "m02_grab_01",
+    "attack_to_floor": "m02_attack_to_floor",
+    "endattack": "m02_end_attack_02",
+    "grabbed1": "all_grabbed_01_forset02",
+    "grabbed2": "all_grabbed_02_forset02",
+    "endattackcomp1": "all_end_attack_01_forset02",
+    "endattackcomp2": "all_end_attack_02_forset02",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m02_movefwd",
+    "moveleft": "m02_movelft",
+    "moveright": "m02_moverht",
+    "stepfwd": "m02_stepfwd",
+    "stepback": "m02_stepbck",
+    "stepleft": "m02_steplft",
+    "stepright": "m02_steprht",
+}
+
+# LO MING candidate clip table (generated from the set).
+const LOMING_CLIPS: Dictionary = {
+    "idle": "m04_e02_idle_01",
+    "punch": "m04_pnch_low_03",
+    "kick": "m04_kck_low_02",
+    "high_punch": "m04_pnch_high_01",
+    "high_punch2": "m04_pnch_high_02",
+    "high_punch3": "m04_pnch_high_03",
+    "low_punch": "m04_pnch_low_01",
+    "low_punch2": "m04_pnch_low_02",
+    "low_punch3": "m04_pnch_low_03",
+    "high_kick": "m04_kck_high_01",
+    "high_kick2": "m04_kck_high_02",
+    "high_kick3": "m04_kck_high_03",
+    "low_kick": "m04_kck_low_03",
+    "low_kick2": "m04_kck_low_01",
+    "low_kick3": "m04_kck_low_02",
+    "special_kick_high": "m04_e02_kck_high_03",
+    "special_kick_low": "m04_e02_kck_low_03",
+    "special_punch_low": "m04_e02_pnch_low_03",
+    "parry_high": "m01_parry_high",
+    "parry_low": "m01_kick_low_02",
+    "parry_attack": "m04_pnch_high_02",
+    "grab1": "m04_grab_01",
+    "grab2": "m04_grab_02",
+    "grab1_miss": "m04_grab_01",
+    "grab2_miss": "m04_grab_02",
+    "attack_to_floor": "m01_attack_to_floor",
+    "endattack": "m04_end_attack_01",
+    "special_punch_high": "m04_e02_pnch_high_03",
+    "grabbed1": "all_grabbed_01_forset04",
+    "grabbed2": "all_grabbed_02_forset04",
+    "highblock": "all_block_high",
+    "all_block_low": "all_block_low",
+    "all_block_mid": "all_block_mid",
+    "stun": "all_stunned",
+    "stun_fall": "all_stunned_fall",
+    "stun_hard": "all_impct_hard_frnt_high",
+    "stun_brutal": "all_impct_spectacular_lft",
+    "move": "m04_movefwd",
+    "moveleft": "m04_movelft",
+    "moveright": "m04_moverht",
+    "stepfwd": "m04_stepfwd",
+    "stepback": "m04_stepbck",
+    "stepleft": "m04_steplft",
+    "stepright": "m04_steprht",
+}
+
 const ATTACK_CONFIG_PATH: String = "res://data/fighting_set_low_attacks.json"
 const BRICK_ATTACK_CONFIG_PATH: String = "res://data/fighting_set_m03_mapped_attacks.json"
+# Per-character mapped configs. adreno_200/characters.list assigns each
+# opponent a fighting set: "the master" and "sin fu" -> kungfu.set,
+# "ken godall" -> karate.set, "brick davis" -> thai.set. The two kungfu
+# characters share the set and differ only in the character-suffixed actions.
+const MASTER_ATTACK_CONFIG_PATH: String = "res://data/attack_config_master.json"
+const SINFU_ATTACK_CONFIG_PATH: String = "res://data/attack_config_sinfu.json"
+const SHENLO_ATTACK_CONFIG_PATH: String = "res://data/attack_config_shenlo.json"
+const SMALLBOY_ATTACK_CONFIG_PATH: String = "res://data/attack_config_smallboy.json"
+const JOHNSON_ATTACK_CONFIG_PATH: String = "res://data/attack_config_johnson.json"
+const CHIEF_ATTACK_CONFIG_PATH: String = "res://data/attack_config_chief.json"
+const LOMING_ATTACK_CONFIG_PATH: String = "res://data/attack_config_loming.json"
+const KEN_ATTACK_CONFIG_PATH: String = "res://data/attack_config_ken.json"
+const KUNGFU_NATIVE_LINKS_PATH: String = "res://data/native_links_kungfu.json"
+const KARATE_NATIVE_LINKS_PATH: String = "res://data/native_links_karate.json"
 const ATTACK_ROOT_MOTION_PATH: String = "res://data/attack_root_motion.json"
+const MOVEMENT_ROOT_MOTION_PATH: String = "res://data/movement_root_motion.json"
+const LOCOMOTION_STEP_TO_MOVE: Dictionary = {
+    "stepfwd": "movefwd", "stepback": "moveback",
+    "stepright": "moveright", "stepleft": "moveleft",
+}
+const LOCOMOTION_CHAIN_FRAME: float = 4.0
 const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_idle_01": 25.0,
     "m01_pnch_low_01": 40.0,
@@ -135,7 +829,7 @@ const SOURCE_ANIMATION_RADII_DATA: Dictionary = {
     "m01_kick_low_02": 50.0,
     "m01_sp_kick_low_fail": 25.0,
     "m01_sp_kick_low": 25.0,
-    "m01_sp_pnch_low_fail": 25.0,
+    "m01_sp_pnch_low_fail": 45.0,
     "m01_sp_pnch_low": 25.0,
     "m01_sp_pnch_high_fail": 40.0,
     "m01_sp_pnch_high": 25.0,
@@ -189,6 +883,223 @@ const BRICK_FACEDOWN_IMPACT_REACTION: Dictionary = {
     "clip_implemented": false,
 }
 const FACEDOWN_KO_RADIUS: float = 100.0
+# Per-config "fighting set profile". Bruce's own config (ATTACK_CONFIG_PATH) is
+# not listed: an empty profile means the brucelee.set rules. Every entry below
+# is recovered data from the set named in `source_archive`; the reaction exit
+# frames are the outgoing link windows of that set's impact/hard actions.
+const SET_ATTACK_PROFILES: Dictionary = {
+    "res://data/attack_config_shenlo.json": {
+        "source_archive": "kungfu.set",
+        "link_tag": "shenlo",
+        "native_links": KUNGFU_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 75.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+
+    "res://data/fighting_set_m03_mapped_attacks.json": {
+        "source_archive": "thai.set",
+        "link_tag": "brick",
+        "native_links": BRICK_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": BRICK_FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": BRICK_FACEDOWN_IMPACT_RADIUS,
+        "front_low_clip": BRICK_FRONT_LOW_CLIP,
+        "front_low_reaction": BRICK_FRONT_LOW_REACTION,
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 23,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": true,
+        "facedown_getup": false,
+    },
+    "res://data/attack_config_master.json": {
+        "source_archive": "kungfu.set",
+        "link_tag": "themaster",
+        "native_links": KUNGFU_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        # kungfu.set: impacthardfrontlow -> facedownidle [13,23]
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 75.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        # kungfu.set: impacthardfronthigh -> faceupidle [25,35]
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+    "res://data/attack_config_sinfu.json": {
+        "source_archive": "kungfu.set",
+        "link_tag": "sinfu",
+        "native_links": KUNGFU_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 75.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+    "res://data/attack_config_ken.json": {
+        "source_archive": "karate.set",
+        "link_tag": "ken",
+        "native_links": KARATE_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        # karate.set: impacthardfrontlow -> facedownidle [13,23]
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 80.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        # karate.set: impacthardfronthigh -> faceupidle [20,35]
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 80.0,
+            "exit_start_frame": 20,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+    "res://data/attack_config_smallboy.json": {
+        "source_archive": "thai.set",
+        "link_tag": "smallboy",
+        "native_links": BRICK_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": BRICK_FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": BRICK_FACEDOWN_IMPACT_RADIUS,
+        "front_low_clip": BRICK_FRONT_LOW_CLIP,
+        "front_low_reaction": BRICK_FRONT_LOW_REACTION,
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 23,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": true,
+        "facedown_getup": false,
+    },
+    "res://data/attack_config_johnson.json": {
+        "source_archive": "thai.set",
+        "link_tag": "johnson",
+        "native_links": BRICK_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": BRICK_FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": BRICK_FACEDOWN_IMPACT_RADIUS,
+        "front_low_clip": BRICK_FRONT_LOW_CLIP,
+        "front_low_reaction": BRICK_FRONT_LOW_REACTION,
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 23,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": true,
+        "facedown_getup": false,
+    },
+    "res://data/attack_config_chief.json": {
+        "source_archive": "karate.set",
+        "link_tag": "chief",
+        "native_links": KARATE_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        # karate.set: impacthardfrontlow -> facedownidle [13,23]
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 80.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        # karate.set: impacthardfronthigh -> faceupidle [20,35]
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 80.0,
+            "exit_start_frame": 20,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+    "res://data/attack_config_loming.json": {
+        "source_archive": "kungfu.set",
+        "link_tag": "loming",
+        "native_links": KUNGFU_NATIVE_LINKS_PATH,
+        "facedown_idle_clip": FACEDOWN_IDLE_CLIP,
+        "facedown_impact_radius": 80.0,
+        "front_low_clip": "all_impct_hard_frnt_low",
+        "front_low_reaction": {
+            "source_action": "impacthardfrontlow",
+            "animation": "all_impct_hard_frnt_low",
+            "animation_radius": 75.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 23,
+            "return_action": "facedownidle",
+        },
+        "front_high_reaction": {
+            "animation": "all_impct_hard_frnt_high",
+            "animation_radius": 70.0,
+            "exit_start_frame": 25,
+            "animation_duration_frames": 35,
+            "return_action": "faceupidle",
+        },
+        "facedown_low_impact": false,
+        "facedown_getup": true,
+    },
+}
 const FACEDOWN_ATTACK_CLIP: String = "all_getup_facedwn_attack"
 const FACEDOWN_ATTACK_DURATION_FRAMES: int = 35
 const FACEDOWN_ATTACK_EXIT_FRAME: int = 32
@@ -222,8 +1133,14 @@ const FACEUP_IMPACT_EXIT_FRAME: int = 11
 const FACEUP_KO_RADIUS: float = 100.0
 const ATTACK_TO_FLOOR_CLIP: String = "m01_attack_to_floor"
 const ATTACK_TO_FLOOR_DURATION_FRAMES: int = 90
-const ATTACK_TO_FLOOR_ENTRY_FRAME: int = 9
 const ATTACK_TO_FLOOR_EXIT_START_FRAME: int = 80
+## Recovered candobasicattacks group windows (tools/kdf_combo_group_inventory.py):
+## brucelee.set m01_attack_to_floor [45,90] and thai.set m03_attack_to_floor
+## [45,61].  The group window is when a candobasicattacks link may start, so the
+## action is cancellable from frame 45 even though its own exit link to idle2
+## only opens at frame 80 (Bruce) / 61 (Brick).  The prototype used 80 as the
+## cancel start, which is 35 frames late.
+const ATTACK_CANCEL_START_FRAMES: Dictionary = {"attacktofloor": 45}
 const ATTACK_TO_FLOOR_DAMAGE_START_FRAME: int = 18
 const ATTACK_TO_FLOOR_DAMAGE_END_FRAME: int = 23
 const ATTACK_TO_FLOOR_DAMAGE: float = 6.0
@@ -232,58 +1149,63 @@ const ATTACK_TO_FLOOR_IMPACT: Dictionary = {
     "strength": "normal", "height": "low", "direction": "frontal",
     "body_part": "lleg", "attack_radius": ATTACK_TO_FLOOR_RADIUS,
 }
-const ATTACK_TO_FLOOR_SEQUENCES: Array[Array] = [["b", "c", "c"], ["b", "d", "d"]]
-const STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.8
+# Link input follows the decompiled CFighter::UserControlUpdate model: events
+# stay in a queue with a consumed bit, and every physics update re-evaluates
+# each link against the current animation's frame window. There is no
+# wall-clock combo window and no FIFO of attacks.
+# CBeatEmUpGame::Update compares the last event's timestamp (+0x0c) + 500 with
+# the update time; the timestamp comes from krt::time::GetCurrentMili(), so the
+# lifetime is 500 milliseconds. Expiry marks the whole vector consumed.
+const LINK_EVENT_LIFETIME_MS: int = 500
+const NATIVE_LINKS_PATH: String = "res://data/native_links.json"
+const BRICK_NATIVE_LINKS_PATH: String = "res://data/native_links_brick.json"
+# Derived action -> animation category table (CFighter::IsBlocking gid_block).
+const CATEGORY_TABLE_PATH: String = "res://data/native_action_categories.json"
+## Recovered opponent-suffix actions of brucelee.set (endattack ken, grab1 brick,
+## specialpunchhighhit sinfu, ...).  Only Bruce's own set carries these matchup
+## variants; every row is derived from the native set/link records and the
+## animation must be playable by an existing candidate or the row fails closed.
+const OPPONENT_SUFFIX_VARIANTS_PATH: String = "res://data/opponent_suffix_variants.json"
+## characters.list `uniques` array of every recovered character, in array
+## order.  CBeatEmUpGame::LoadFighter copies the labels into CFighter+0x120 and
+## CFighter::IsLinkAllowed @0x1b052c accepts a tagged row only when every tag is
+## an exact member of that fighter's list.  Only the Brucelee entry is rebuilt
+## by CStyleEditor::SetUniquesList from the seven selected style categories; the
+## other fighters keep their own single label.  Keys are the attack-config paths
+## the port loads per character.
+const CHARACTER_UNIQUE_LABELS: Dictionary = {
+    "res://data/fighting_set_low_attacks.json": [
+        "brucelee", "hpunchbrucelee", "lpunchbrucelee", "hkickbrucelee",
+        "lkickbrucelee", "endbrucelee", "grababrucelee", "grabbbrucelee",
+    ],
+    "res://data/fighting_set_m03_mapped_attacks.json": ["brickdavis"],
+    "res://data/attack_config_smallboy.json": ["smallboy"],
+    "res://data/attack_config_johnson.json": ["johnson"],
+    "res://data/attack_config_chief.json": ["chief"],
+    "res://data/attack_config_loming.json": ["loming"],
+    "res://data/attack_config_ken.json": ["kengodall"],
+    "res://data/attack_config_master.json": ["themaster"],
+    "res://data/attack_config_sinfu.json": ["sinfu"],
+    "res://data/attack_config_shenlo.json": ["shenlo"],
+}
+# Complete recovered candobasicattacks group coverage (84 members, 21 links).
+# Built read-only from brucelee.set by tools/build_candobasicattacks_members.py.
+const CANDOBASICATTACKS_MEMBERS_PATH: String = "res://data/candobasicattacks_members.json"
+# Opt-in switch for the recovered reaction gate (NativeReactionState).
+const NATIVE_REACTION_ENV: String = "BRUCELEE_NATIVE_REACTION"
+# adreno_200/input.config: control_profile 0 is the touch layout (a/b only),
+# 1 is the ZDK keyboard layout (a/b/c/d). CBeatEmUpMatch::LoadFighter receives
+# the current input layout and writes it to fighter+0x1c, which
+# CLinkDescr::GetKeySequence(index) uses to pick one of the stored variants.
+# The PC port runs the keyboard layout, so variant 1 is the native sequence.
+const LINK_SEQUENCE_INDEX: int = 1
+# CFighter::CheckConditions @0x1b3db0 compares fighter+0x14c (rage) with
+# <100 / <0x42(66) / <0x21(33) for MaxRage/Rage2Thirds/RageThird.
 const RAGE_MAX: float = 100.0
-const RAGE_GAIN_PER_HIT: float = 10.0
-# Prototype meter: ragethird is 33, rage2thirds is 66. The native scale is unverified.
-const SPECIAL_RAGE_COSTS: Dictionary = {
-    "special_kick_high": 33.0,
-    "special_kick_low_miss": 66.0,
-    "special_punch_low_miss": 66.0,
-    "special_punch_high_miss": 66.0,
-    "grab1": 66.0,
-    "grab2": 66.0,
-    "grab1_miss_brick": 66.0,
-    "grab2_miss_brick": 66.0,
-    "grab1_miss": 66.0,
-    "grab2_miss": 66.0,
-    "special_kick_high_brick": 33.0,
-    "special_kick_low_brick": 33.0,
-    "special_punch_high_brick": 66.0,
-    "special_punch_low_brick": 66.0,
-    "parry_high_brick": 33.0,
-    "parry_low_brick": 30.0,
-    "grab1_brick": 66.0,
-    "grab2_brick": 66.0,
-}
-const SPECIAL_CHAIN_MISSES: Dictionary = {
-    "special_kick_low_miss": "special_kick_low_hit",
-    "special_punch_low_miss": "special_punch_low_hit",
-    "special_punch_high_miss": "special_punch_high_hit",
-    "parry_high": "parry_attack",
-    "grab1_miss": "grab1",
-    "grab2_miss": "grab2",
-    "grab1_miss_brick": "grab1_brick",
-    "grab2_miss_brick": "grab2_brick",
-}
-const SPECIAL_REQUIRES_STEPBACK: Dictionary = {
-    "special_kick_high": true,
-    "special_kick_low_miss": true,
-}
-const SPECIAL_CHAIN_WINDOW: Dictionary = {
-    "special_kick_low_miss": [14, 16],
-    "special_punch_low_miss": [8, 9],
-    "special_punch_high_miss": [6, 7],
-    "grab1_miss": [8, 9],
-    "grab2_miss": [8, 9],
-    "grab1_miss_brick": [10, 11],
-    "grab2_miss_brick": [10, 11],
-}
-# Recovered miss_return is [22,25]; choose its first frame as the PC
-# candidate exit while retaining the 33-frame source animation metadata.
-const SPECIAL_PUNCH_LOW_MISS_RETURN_FRAME: float = 22.0
-const PROTOTYPE_GRAB_DISTANCE: float = 0.7
+# PC arena footprint, derived from the original Temple Yard combatarea mesh:
+# 879.94 source units wide / 907.73 deep at 0.01038 world/source units.
+const ARENA_HALF_X: float = 4.55
+const ARENA_HALF_Z: float = 4.70
 const STUN_CLIP: String = "all_stunned"
 const STUN_FALL_CLIP: String = "all_stunned_fall"
 # Source windows: stun->stun2 and stun2->stunfall [55,61]; stunfall->faceupko [71,79].
@@ -296,6 +1218,11 @@ const GRAB_ATTACKS: Dictionary = {
 }
 # Victim state after a Brick grab hit; source grabcompl1/2 -> facedown/faceup.
 const GRAB_VICTIM_DATA: Dictionary = {
+    # Bruce grab attacks and Brick grab attacks share the universal victim
+    # clips; the victim candidate must contain them (63-victim for Bruce,
+    # and a Brick candidate with all_grabbed_* for Brick).
+    "grab1": ["grabbed1", 90, "facedownidle"],
+    "grab2": ["grabbed2", 78, "faceupidle"],
     "grab1_brick": ["grabbed1", 90, "facedownidle"],
     "grab2_brick": ["grabbed2", 78, "faceupidle"],
 }
@@ -304,10 +1231,143 @@ const ENDATTACK_VICTIM_DATA: Dictionary = {
     "grabbed1": ["endattackcomp1", 93],
     "grabbed2": ["endattackcomp2", 130],
 }
-const PARRY_RAGE_COSTS: Dictionary = {"parry_high": 33.0, "parry_low": 30.0}
-const ENDATTACK_ATTACKS: Dictionary = {"endattack1": true, "endattack2": true}
+# The native endattack1/2 links require oppposestun, not grabbed1/2: the
+# finisher converts a stunned victim into the corresponding endattackcomp.
+const ENDATTACK_VICTIM_STUN_DATA: Dictionary = {
+    "endattack1": ["endattackcomp1", 93],
+    "endattack2": ["endattackcomp2", 130],
+}
+# Recovered grabcompl/endattackcomp victim frame counts (30 fps), keyed by the
+# exact archived clip name. Derived read-only from the fighting sets inside
+# data.zpak: adreno_200/set/{brucelee,thai,karate,kungfu}.set -> the
+# grabcompl1/2 and endattackcomp* action binaries -> their ANM header duration.
+# See D:\BruceLeeWork\grab-timings-20261103\data\victim_grab_timings.json.
+#
+# GRAB_VICTIM_DATA / ENDATTACK_VICTIM_DATA above keep the Thai (forset03)
+# values as the static fallback for non-player victims. A player victim now
+# resolves its duration from the actual per-opponent clip below; a clip with
+# no recovered duration makes the grab/finisher fail closed rather than borrow
+# the Thai timing. kungfu (forset04) intentionally has no endattackcomp clip.
+const VICTIM_CLIP_FRAMES: Dictionary = {
+    # brucelee set (forset01)
+    "all_grabbed_01_forset01": 150,
+    "m02_grabbed_02_forset01": 180,
+    "all_end_attack_01_forset01": 377,
+    "all_end_attack_02_forset01": 235,
+    # karate set (forset02)
+    "all_grabbed_01_forset02": 47,
+    "all_grabbed_02_forset02": 98,
+    "all_end_attack_01_forset02": 132,
+    "all_end_attack_02_forset02": 155,
+    # thai set (forset03) - matches the legacy hardcoded fallback (90/78/93/130)
+    "all_grabbed_01_forset03": 90,
+    "all_grabbed_02_forset03": 78,
+    "all_end_attack_01_forset03": 93,
+    "all_end_attack_02_forset03": 130,
+    # kungfu set (forset04) - grab clips only; no endattackcomp clip exists
+    "all_grabbed_01_forset04": 103,
+    "all_grabbed_02_forset04": 45,
+    # kungfu special-grab variants referenced by the master/sinfu rows
+    "all_sp_pnch_low_forset04": 28,
+    "all_sp_kck_low_forset04": 55,
+}
+# Recovered exit destination of each victim clip, keyed by the exact archived
+# clip name. Read from the action's outgoing link `to` in
+# adreno_200/set/{brucelee,thai,karate,kungfu}.set: grabcompl* exits to
+# facedownidle/faceupidle, endattackcomp* exits to facedownko/faceupko. The
+# port previously hardcoded grab1->facedownidle / grab2->faceupidle and every
+# endattackcomp->faceupko, which is only correct for the Thai (forset03) set.
+# A clip with no recovered exit makes the grab/finisher fail closed instead of
+# borrowing another set's destination.
+const VICTIM_CLIP_EXIT: Dictionary = {
+    # brucelee set (forset01)
+    "all_grabbed_01_forset01": "faceupidle",
+    "m02_grabbed_02_forset01": "faceupidle",
+    "all_end_attack_01_forset01": "facedownko",
+    "all_end_attack_02_forset01": "facedownko",
+    # karate set (forset02)
+    "all_grabbed_01_forset02": "faceupidle",
+    "all_grabbed_02_forset02": "faceupidle",
+    "all_end_attack_01_forset02": "facedownko",
+    "all_end_attack_02_forset02": "faceupko",
+    # thai set (forset03)
+    "all_grabbed_01_forset03": "facedownidle",
+    "all_grabbed_02_forset03": "faceupidle",
+    "all_end_attack_01_forset03": "faceupko",
+    "all_end_attack_02_forset03": "faceupko",
+    # kungfu set (forset04)
+    "all_grabbed_01_forset04": "faceupidle",
+    "all_grabbed_02_forset04": "facedownidle",
+    "all_sp_pnch_low_forset04": "facedownidle",
+    "all_sp_kck_low_forset04": "facedownidle",
+}
+# "endattack" is the mapped-set finisher name (kungfu/karate); without it the
+# victim of a Ken/Master/SinFu finisher is never consumed and endattackcomp is
+# unreachable for those sets.
+const ENDATTACK_ATTACKS: Dictionary = {
+    "endattack1": true, "endattack2": true, "endattack": true,
+}
+# brucelee.set stores one grabbed victim action per attacker, e.g.
+# "grabcompl1 ken" -> all_grabbed_01_forset02. The victim candidate's static map
+# only carries the Thai (forset03) clip, so the grab resolves the opponent's set
+# from this table at runtime. Keyed by the attacker's config path.
+const VICTIM_OPPONENT_SUFFIX: Dictionary = {
+    "res://data/attack_config_smallboy.json": "brick",
+    "res://data/attack_config_johnson.json": "brick",
+    "res://data/attack_config_chief.json": "ken",
+    "res://data/attack_config_loming.json": "sinfu",
+    "res://data/fighting_set_m03_mapped_attacks.json": "brick",
+    "res://data/attack_config_master.json": "master",
+    "res://data/attack_config_sinfu.json": "sinfu",
+    "res://data/attack_config_shenlo.json": "shenlo",
+    "res://data/attack_config_ken.json": "ken",
+}
+# endattackcomp names its per-attacker actions by set family: only thai and
+# karate have one. kungfu has no endattackcomp action, so it must fail closed.
+const ENDATTACK_OPPONENT_ACTION: Dictionary = {
+    "res://data/attack_config_smallboy.json": "endattackcompthai",
+    "res://data/attack_config_johnson.json": "endattackcompthai",
+    "res://data/attack_config_chief.json": "endattackcompkarate",
+    "res://data/fighting_set_m03_mapped_attacks.json": "endattackcompthai",
+    "res://data/attack_config_ken.json": "endattackcompkarate",
+}
+# ---------------------------------------------------------------------------
+# Size-class animation versions (recovered).
+#
+# adreno_200/Animations.versions lists alternate clip files for one base clip:
+# {"binary": <base clip>, "versions": [{"my_skeleton"|"opp_skeleton": <class>,
+# "binary": <version clip>}]}. characters.list gives every fighter its class in
+# the "skeleton" field (small / medium / large). A version exists only for
+# small and large, so a medium fighter plays the base clip.
+#
+# The port plays the version the original table selects for the grab and grab
+# finisher slots. A required version that the loaded candidate lacks is never
+# replaced by the wrong-size clip: the grab/finisher fails closed instead.
+#
+# The same table also versions all_idle_face_down/up (ground idles, audience
+# "self") and m01_sp_pnch_high (the special high punch, audience "opponent").
+# Both are selected here as well: the ground idles by the downed fighter's own
+# class, the special high punch by the opponent's class.
+const SIZE_VARIANTS_PATH: String = "res://data/size_variants.json"
+const SIZE_CLASS_SMALL: String = "small"
+const SIZE_CLASS_MEDIUM: String = "medium"
+const SIZE_CLASS_LARGE: String = "large"
+# Attack slots whose original clips carry size versions. Kept explicit so the
+# resolved clip can only replace a slot that really has a recovered version.
+const SIZE_CLASS_ATTACKS: Dictionary = {
+    "grab1": true, "grab2": true,
+    "grab1_brick": true, "grab2_brick": true,
+    "grab1_miss": true, "grab2_miss": true,
+    "grab1_miss_brick": true, "grab2_miss_brick": true,
+    "endattack1": true, "endattack2": true,
+    "endattack": true, "endattack_brick": true,
+    # m01_sp_pnch_high also carries size versions (audience "opponent"); only
+    # the hit variant maps it, the miss/fail clip is unversioned.
+    "special_punch_high_hit": true,
+}
 const NON_CONTACT_ATTACKS: Dictionary = {
-    "endattack1": true, "endattack2": true, "parry_low": true,
+    "endattack1": true, "endattack2": true, "endattack": true,
+    "parry_low": true,
     "parry_high_brick": true, "parry_low_brick": true,
     "endattack_brick": true,
     "grab1_miss_brick": true, "grab2_miss_brick": true,
@@ -315,32 +1375,6 @@ const NON_CONTACT_ATTACKS: Dictionary = {
 # Each sequence is a list of simultaneous-token steps, matching the native
 # keysequence shape. Direction tokens (up/down/in/out) are produced by the PC
 # prototype input layer and are not recovered Android physical keys.
-const STANDING_COMBO_SEQUENCES: Array[Dictionary] = [
-    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch", "source_index": 90},
-    {"steps": [["a"], ["b"], ["b"]], "attack": "punch", "source_index": 88},
-    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick", "source_index": 89},
-    {"steps": [["b"], ["d"], ["d"]], "attack": "kick", "source_index": 87},
-    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3", "source_index": 84},
-    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3", "source_index": 85},
-    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "source_index": 86},
-    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3", "source_index": 83},
-    {"steps": [["out", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_high"},
-    {"steps": [["a"], ["a"], ["a"]], "attack": "high_punch2", "from_attack": "high_punch"},
-    {"steps": [["a"], ["b"], ["b"]], "attack": "low_punch2", "from_attack": "punch"},
-    {"steps": [["b"], ["c"], ["c"]], "attack": "high_kick2", "from_attack": "high_kick"},
-    {"steps": [["b"], ["d"], ["d"]], "attack": "low_kick2", "from_attack": "kick"},
-    {"steps": [["up", "a"], ["in", "a"], ["in", "a"]], "attack": "high_punch3", "from_attack": "high_punch2"},
-    {"steps": [["down", "a"], ["out", "b"], ["out", "a"]], "attack": "low_punch3", "from_attack": "low_punch2"},
-    {"steps": [["up", "b"], ["in", "c"], ["in", "c"]], "attack": "high_kick3", "from_attack": "high_kick2"},
-    {"steps": [["down", "b"], ["out", "d"], ["out", "d"]], "attack": "low_kick3", "from_attack": "low_kick2"},
-    {"steps": [["left", "b"], ["in", "c"], ["in", "c"]], "attack": "special_kick_low_miss", "from_attack": "punch"},
-    {"steps": [["down", "a"], ["out", "a"], ["out", "a"]], "attack": "special_punch_low_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
-    {"steps": [["up", "a"], ["up", "a"], ["up", "a"]], "attack": "special_punch_high_miss", "from_attack_in": ["high_punch3", "low_punch3", "low_kick3", "high_kick3"]},
-    {"steps": [["left", "a"], ["a"], ["a"]], "attack": "grab1_miss", "from_attack": "punch"},
-    {"steps": [["left", "b"], ["c"], ["c"]], "attack": "grab2_miss", "from_attack": "kick"},
-    {"steps": [["up", "in", "b"], ["a"], ["a"]], "attack": "endattack1", "source_record_index": 34, "from_attack_in": ["high_punch", "punch", "kick", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_high", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_low", "parry_attack", "grab1", "grab2"]},
-    {"steps": [["up", "in", "a"], ["c"], ["c"]], "attack": "endattack2", "source_record_index": 35, "from_attack_in": ["high_punch", "punch", "kick", "high_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_high", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "parry_high", "parry_low", "parry_attack", "grab1", "grab2"]},
-]
 const CANDOBASICATTACK_WINDOWS: Dictionary = {
     # idle/idle2 are recorded group memberships only. The transition path only
     # evaluates windows while the current attack is in startup/active/recovery,
@@ -676,11 +1710,6 @@ const BRUCE_ATTACK_METADATA: Dictionary = {
     },
 }
 
-enum AttackToFloorInputResult {
-    IGNORED,
-    BUFFERED,
-    STARTED,
-}
 
 enum AttackToFloorSequenceMatch {
     NO_MATCH,
@@ -711,13 +1740,6 @@ const SOURCE_ACTION_POSES: Dictionary = {
 # UserControlUpdate expires a whole input vector based on the last event's
 # +500 clock value. The clock unit is not proven, so this is an explicit PC
 # prototype lifetime and must not be presented as the original timing.
-const GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS: float = 0.5
-const GROUND_ATTACK_SEQUENCES: Array = [
-    ["a", "a", "a"],
-    ["a", "b", "b"],
-    ["b", "c", "c"],
-    ["b", "d", "d"],
-]
 const FACEDOWN_ATTACK_IMPACT: Dictionary = {
     "attack_radius": FACEDOWN_ATTACK_RADIUS,
     "body_part": "rarm",
@@ -951,6 +1973,484 @@ const THAI_REACTION_PROFILE_DATA: Dictionary = {
         },
     },
 }
+# Recovered per-character tables (see data/attack_config_*.json and
+# evidence/set_action_tables.md). The parser compares the JSON against
+# these rows so a config edit that drifts from the fighting set fails closed.
+const MASTER_ANIMATION_RADII_DATA: Dictionary = {
+    "all_block_high": 60.0,
+    "all_block_low": 60.0,
+    "all_block_mid": 60.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 50.0,
+    "all_impct_light_frnt_mid": 40.0,
+    "m01_attack_to_floor": 45.0,
+    "m01_kick_low_02": 40.0,
+    "m01_parry_high": 40.0,
+    "m04_e01_idle_01": 35.0,
+    "m04_e01_kck_high_03": 45.0,
+    "m04_e01_kck_low_03": 45.0,
+    "m04_e01_pnch_high_03": 65.0,
+    "m04_e01_pnch_low_03": 40.0,
+    "m04_end_attack_02": 25.0,
+    "m04_kck_high_01": 50.0,
+    "m04_kck_high_02": 50.0,
+    "m04_kck_high_03": 40.0,
+    "m04_kck_low_01": 50.0,
+    "m04_kck_low_02": 50.0,
+    "m04_kck_low_03": 50.0,
+    "m04_pnch_high_01": 40.0,
+    "m04_pnch_high_02": 25.0,
+    "m04_pnch_high_03": 60.0,
+    "m04_pnch_low_01": 40.0,
+    "m04_pnch_low_02": 40.0,
+    "m04_pnch_low_03": 40.0,
+    "m04_sp_kck_low": 25.0,
+    "m04_sp_pnch_low": 25.0,
+}
+const MASTER_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m04_pnch_high_01", 68, 6, 5, 57, 5.0, 75.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m04_pnch_high_02", 50, 6, 5, 39, 6.0, 65.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m04_pnch_high_03", 50, 15, 8, 27, 7.0, 75.0, "larm", "high", "hard", "fromabove"],
+    "low_punch": ["lowpunch1", "m04_pnch_low_01", 48, 5, 5, 38, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m04_pnch_low_02", 64, 8, 4, 52, 6.0, 85.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m04_kck_high_01", 53, 9, 6, 38, 5.0, 80.0, "rleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m04_kck_high_02", 43, 6, 6, 31, 6.0, 80.0, "rleg", "high", "normal", "fromright"],
+    "high_kick3": ["highkick3", "m04_kck_high_03", 60, 9, 5, 46, 7.0, 80.0, "lleg", "high", "hard", "fromleft"],
+    "low_kick": ["lowkick1", "m04_kck_low_03", 22, 6, 5, 11, 5.0, 70.0, "lleg", "low", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m04_kck_low_01", 34, 5, 5, 24, 5.0, 100.0, "lleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high": ["specialkickhigh master", "m04_e01_kck_high_03", 73, 14, 3, 56, 12.0, 95.0, "rleg", "high", "brutal", "fromright"],
+    "special_kick_low": ["specialkicklow master", "m04_e01_kck_low_03", 153, 15, 4, 134, 10.0, 90.0, "rleg", "low", "hard", "fromright"],
+    "special_punch_high": ["specialpunchhigh master", "m04_e01_pnch_high_03", 62, 7, 4, 51, 10.0, 135.0, "larm", "high", "hard", "frontal"],
+    "special_punch_low": ["specialpunchlow master", "m04_e01_pnch_low_03", 82, 4, 25, 53, 16.0, 65.0, "larm", "low", "normal", "frontal"],
+    "parry_high": ["parryhigh", "m01_parry_high", 62, 9, 2, 51, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_low": ["parrylow", "m01_kick_low_02", 27, 7, 4, 16, 0.0, 65.0, "rleg", "low", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m04_pnch_high_02", 50, 6, 5, 39, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 master", "m04_sp_pnch_low", 28, 7, 2, 19, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+    "grab2": ["grab2 master", "m04_sp_kck_low", 55, 12, 12, 31, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab1_miss": ["grab1miss master", "m04_sp_pnch_low", 28, 5, 3, 20, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss master", "m04_sp_kck_low", 55, 4, 4, 47, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
+    "endattack": ["endattack master", "m04_end_attack_02", 75, 37, 4, 34, 0.0, 75.0, "lleg", "high", "brutal", "fromleft"],
+}
+const MASTER_REACTION_PROFILE_DATA: Dictionary = {
+    "hit": {
+        "low": {
+            "source_action": "impactlightfrontlow",
+            "animation": "all_impct_light_frnt_low",
+            "animation_radius": 50.0,
+            "exit_start_frame": 14,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "impactlightfrontmid",
+            "animation": "all_impct_light_frnt_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 16,
+            "animation_duration_frames": 16,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "impactlightfronthigh",
+            "animation": "all_impct_light_frnt_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+    "block": {
+        "low": {
+            "source_action": "lowblock",
+            "animation": "all_block_low",
+            "animation_radius": 60.0,
+            "exit_start_frame": 10,
+            "animation_duration_frames": 23,
+            "linking_frame": 14,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "midblock",
+            "animation": "all_block_mid",
+            "animation_radius": 60.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "highblock",
+            "animation": "all_block_high",
+            "animation_radius": 60.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+}
+
+const SINFU_ANIMATION_RADII_DATA: Dictionary = {
+    "all_block_high": 60.0,
+    "all_block_low": 60.0,
+    "all_block_mid": 60.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 50.0,
+    "all_impct_light_frnt_mid": 40.0,
+    "m01_attack_to_floor": 45.0,
+    "m01_kick_low_02": 40.0,
+    "m01_parry_high": 40.0,
+    "m02_grab_01": 25.0,
+    "m04_e02_idle_01": 50.0,
+    "m04_e02_kck_high_03": 50.0,
+    "m04_e02_kck_low_03": 55.0,
+    "m04_e02_pnch_low_03": 55.0,
+    "m04_end_attack_02": 25.0,
+    "m04_grab_01": 25.0,
+    "m04_kck_high_01": 50.0,
+    "m04_kck_high_02": 50.0,
+    "m04_kck_high_03": 40.0,
+    "m04_kck_low_01": 50.0,
+    "m04_kck_low_02": 50.0,
+    "m04_kck_low_03": 50.0,
+    "m04_pnch_high_01": 40.0,
+    "m04_pnch_high_02": 25.0,
+    "m04_pnch_high_03": 60.0,
+    "m04_pnch_low_01": 40.0,
+    "m04_pnch_low_02": 40.0,
+    "m04_pnch_low_03": 40.0,
+    "m04_sp_kck_low": 25.0,
+    "m04_sp_pnch_high": 25.0,
+    "m04_sp_pnch_high_fail": 40.0,
+}
+const SHENLO_ANIMATION_RADII_DATA: Dictionary = {
+    "m01_attack_to_floor": 45.0,
+    "m01_kick_low_02": 40.0,
+    "m01_parry_high": 40.0,
+    "m02_grab_01": 25.0,
+    "m04_e02_kck_high_03": 50.0,
+    "m04_e02_kck_low_03": 55.0,
+    "m04_e02_pnch_low_03": 55.0,
+    "m04_e03_idle_01": 45.0,
+    "m04_e03_kck_high_03": 55.0,
+    "m04_e03_kck_low_03": 50.0,
+    "m04_e03_movebck": 40.0,
+    "m04_e03_movefwd": 40.0,
+    "m04_e03_pnch_high_03": 35.0,
+    "m04_e03_pnch_low_03": 40.0,
+    "m04_e03_steplft": 40.0,
+    "m04_e03_steprht": 40.0,
+    "m04_end_attack_01": 35.0,
+    "m04_end_attack_02": 25.0,
+    "m04_grab_01": 25.0,
+    "m04_grab_02": 25.0,
+    "m04_kck_high_01": 50.0,
+    "m04_kck_high_02": 50.0,
+    "m04_kck_high_03": 40.0,
+    "m04_kck_low_01": 50.0,
+    "m04_kck_low_02": 50.0,
+    "m04_kck_low_03": 50.0,
+    "m04_movebck": 40.0,
+    "m04_movefwd": 40.0,
+    "m04_movelft": 25.0,
+    "m04_moverht": 35.0,
+    "m04_pnch_high_01": 40.0,
+    "m04_pnch_high_02": 25.0,
+    "m04_pnch_high_03": 60.0,
+    "m04_pnch_low_01": 40.0,
+    "m04_pnch_low_02": 40.0,
+    "m04_pnch_low_03": 40.0,
+    "m04_sp_kck_low": 25.0,
+    "m04_sp_pnch_high": 25.0,
+    "m04_sp_pnch_high_fail": 40.0,
+    "m04_stepbck": 40.0,
+    "m04_stepfwd": 35.0,
+    "m04_steplft": 40.0,
+    "m04_steprht": 40.0,
+}
+const SHENLO_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m04_pnch_high_01", 68, 6, 5, 57, 5.0, 75.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m04_pnch_high_02", 50, 6, 5, 39, 6.0, 65.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m04_pnch_high_03", 50, 15, 8, 27, 7.0, 75.0, "larm", "high", "hard", "fromabove"],
+    "low_punch": ["lowpunch1", "m04_pnch_low_01", 48, 5, 5, 38, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m04_pnch_low_02", 64, 8, 4, 52, 6.0, 85.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m04_kck_high_01", 53, 9, 6, 38, 5.0, 80.0, "rleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m04_kck_high_02", 43, 6, 6, 31, 6.0, 80.0, "rleg", "high", "normal", "fromright"],
+    "high_kick3": ["highkick3", "m04_kck_high_03", 60, 9, 5, 46, 7.0, 80.0, "lleg", "high", "hard", "fromleft"],
+    "low_kick": ["lowkick1", "m04_kck_low_03", 22, 6, 5, 11, 5.0, 70.0, "lleg", "low", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m04_kck_low_01", 34, 5, 5, 24, 5.0, 100.0, "lleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high": ["specialkickhigh shenlo", "m04_e03_kck_high_03", 169, 9, 6, 154, 10.0, 80.0, "lleg", "high", "hard", "frontal"],
+    "special_kick_low": ["specialkicklow shenlo", "m04_e03_kck_low_03", 194, 10, 5, 179, 6.0, 70.0, "rleg", "low", "normal", "fromleft"],
+    "special_punch_low": ["specialpunchlow shenlo", "m04_e03_pnch_low_03", 83, 16, 5, 62, 7.0, 85.0, "rarm", "medium", "hard", "frontal"],
+    "parry_high": ["parryhigh", "m01_parry_high", 62, 9, 2, 51, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_low": ["parrylow", "m01_kick_low_02", 27, 7, 4, 16, 0.0, 65.0, "rleg", "low", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m04_pnch_high_02", 50, 6, 5, 39, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 shenlo", "m04_grab_01", 103, 35, 10, 58, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+    "grab2": ["grab2 shenlo", "m04_grab_02", 45, 7, 3, 35, 5.0, 45.0, "larm", "high", "hard", "frontal"],
+    "grab1_miss": ["grab1miss shenlo", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss shenlo", "m04_grab_02", 45, 4, 4, 37, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
+    "endattack": ["endattack shenlo", "m04_end_attack_01", 93, 17, 5, 71, 0.0, 80.0, "rleg", "high", "hard", "fromleft"],
+    "special_punch_high": ["specialpunchhigh shenlo", "m04_e03_pnch_high_03", 115, 14, 5, 96, 7.0, 75.0, "larm", "high", "hard", "fromleft"],
+}
+const SINFU_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "high_punch": ["highpunch1", "m04_pnch_high_01", 68, 6, 5, 57, 5.0, 75.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m04_pnch_high_02", 50, 6, 5, 39, 6.0, 65.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m04_pnch_high_03", 50, 15, 8, 27, 7.0, 75.0, "larm", "high", "hard", "fromabove"],
+    "low_punch": ["lowpunch1", "m04_pnch_low_01", 48, 5, 5, 38, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m04_pnch_low_02", 64, 8, 4, 52, 6.0, 85.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m04_pnch_low_03", 71, 10, 6, 55, 7.0, 85.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m04_kck_high_01", 53, 9, 6, 38, 5.0, 80.0, "rleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m04_kck_high_02", 43, 6, 6, 31, 6.0, 80.0, "rleg", "high", "normal", "fromright"],
+    "high_kick3": ["highkick3", "m04_kck_high_03", 60, 9, 5, 46, 7.0, 80.0, "lleg", "high", "hard", "fromleft"],
+    "low_kick": ["lowkick1", "m04_kck_low_03", 22, 6, 5, 11, 5.0, 70.0, "lleg", "low", "normal", "frontal"],
+    "low_kick2": ["lowkick2", "m04_kck_low_01", 34, 5, 5, 24, 5.0, 100.0, "lleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m04_kck_low_02", 34, 6, 4, 24, 7.0, 100.0, "lleg", "low", "hard", "fromright"],
+    "special_kick_high": ["specialkickhigh sinfu", "m04_e02_kck_high_03", 85, 9, 6, 70, 10.0, 55.0, "lleg", "high", "hard", "frontal"],
+    "special_kick_low": ["specialkicklow sinfu", "m04_e02_kck_low_03", 76, 10, 16, 50, 12.0, 75.0, "rleg", "low", "normal", "fromleft"],
+    "special_punch_low": ["specialpunchlow sinfu", "m04_e02_pnch_low_03", 104, 11, 4, 89, 10.0, 75.0, "rarm", "medium", "hard", "frontal"],
+    "parry_high": ["parryhigh", "m01_parry_high", 62, 9, 2, 51, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_low": ["parrylow", "m01_kick_low_02", 27, 7, 4, 16, 0.0, 65.0, "rleg", "low", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m04_pnch_high_02", 50, 6, 5, 39, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 sinfu", "m04_grab_01", 103, 34, 11, 58, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab2": ["grab2 sinfu", "m04_sp_kck_low", 55, 12, 12, 31, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab1_miss": ["grab1miss sinfu", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss sinfu", "m04_sp_kck_low", 55, 4, 4, 47, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m01_attack_to_floor", 90, 18, 5, 67, 6.0, 60.0, "lleg", "low", "normal", "frontal"],
+    "endattack": ["endattack sinfu", "m04_end_attack_02", 75, 37, 3, 35, 0.0, 75.0, "rleg", "high", "hard", "fromleft"],
+    "special_punch_high_miss": ["specialpunchhighmiss sinfu", "m04_sp_pnch_high_fail", 71, 10, 3, 58, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "special_punch_high_hit": ["specialpunchhighhit sinfu", "m04_sp_pnch_high", 50, 11, 12, 27, 20.0, 45.0, "larm", "high", "hard", "frontal"],
+}
+const SINFU_REACTION_PROFILE_DATA: Dictionary = {
+    "hit": {
+        "low": {
+            "source_action": "impactlightfrontlow",
+            "animation": "all_impct_light_frnt_low",
+            "animation_radius": 50.0,
+            "exit_start_frame": 14,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "impactlightfrontmid",
+            "animation": "all_impct_light_frnt_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 16,
+            "animation_duration_frames": 16,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "impactlightfronthigh",
+            "animation": "all_impct_light_frnt_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+    "block": {
+        "low": {
+            "source_action": "lowblock",
+            "animation": "all_block_low",
+            "animation_radius": 60.0,
+            "exit_start_frame": 10,
+            "animation_duration_frames": 23,
+            "linking_frame": 14,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "midblock",
+            "animation": "all_block_mid",
+            "animation_radius": 60.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "highblock",
+            "animation": "all_block_high",
+            "animation_radius": 60.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+}
+
+const KEN_ANIMATION_RADII_DATA: Dictionary = {
+    "all_block_high": 40.0,
+    "all_block_low": 40.0,
+    "all_block_mid": 40.0,
+    "all_impct_light_frnt_high": 40.0,
+    "all_impct_light_frnt_low": 40.0,
+    "all_impct_light_frnt_mid": 40.0,
+    "m02_attack_to_floor": 45.0,
+    "m02_end_attack_01": 25.0,
+    "m02_grab_01": 25.0,
+    "m02_grab_02": 25.0,
+    "m02_idle_01": 55.0,
+    "m02_kck_high_01": 50.0,
+    "m02_kck_high_02": 40.0,
+    "m02_kck_high_03": 50.0,
+    "m02_kck_low_01": 50.0,
+    "m02_kck_low_02": 50.0,
+    "m02_kck_low_03": 70.0,
+    "m02_parry_high": 40.0,
+    "m02_pnch_high_01": 40.0,
+    "m02_pnch_high_02": 60.0,
+    "m02_pnch_high_03": 30.0,
+    "m02_pnch_low_01": 40.0,
+    "m02_pnch_low_02": 40.0,
+    "m02_pnch_low_03": 45.0,
+    "m02_sp_kck_high": 50.0,
+    "m02_sp_kck_low": 45.0,
+    "m02_sp_pnch_high": 30.0,
+    "m02_sp_pnch_low": 45.0,
+}
+const KEN_ATTACK_DATA: Dictionary = {
+    "punch": ["lowpunch3", "m02_pnch_low_03", 57, 14, 7, 36, 7.0, 70.0, "larm", "medium", "hard", "frontal"],
+    "kick": ["lowkick3", "m02_kck_low_03", 35, 9, 6, 20, 7.0, 110.0, "rleg", "low", "hard", "frontal"],
+    "high_punch": ["highpunch1", "m02_pnch_high_01", 40, 7, 3, 30, 5.0, 60.0, "larm", "high", "normal", "frontal"],
+    "high_punch2": ["highpunch2", "m02_pnch_high_03", 46, 8, 4, 34, 6.0, 70.0, "rarm", "high", "normal", "frontal"],
+    "high_punch3": ["highpunch3", "m02_pnch_high_02", 20, 8, 4, 8, 7.0, 80.0, "larm", "high", "hard", "frontal"],
+    "low_punch": ["lowpunch1", "m02_pnch_low_01", 31, 7, 4, 20, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch2": ["lowpunch2", "m02_pnch_low_02", 27, 7, 4, 16, 6.0, 70.0, "larm", "medium", "normal", "frontal"],
+    "low_punch3": ["lowpunch3", "m02_pnch_low_03", 57, 14, 7, 36, 7.0, 70.0, "larm", "medium", "hard", "frontal"],
+    "high_kick": ["highkick1", "m02_kck_high_01", 50, 7, 6, 37, 5.0, 80.0, "lleg", "high", "normal", "frontal"],
+    "high_kick2": ["highkick2", "m02_kck_high_03", 52, 14, 5, 33, 6.0, 80.0, "lleg", "high", "normal", "frontal"],
+    "high_kick3": ["highkick3", "m02_kck_high_02", 50, 9, 4, 37, 8.0, 80.0, "lleg", "high", "hard", "frontal"],
+    "low_kick": ["lowkick1", "m02_kck_low_01", 26, 5, 4, 17, 4.0, 65.0, "lleg", "low", "normal", "fromright"],
+    "low_kick2": ["lowkick2", "m02_kck_low_02", 24, 8, 4, 12, 4.0, 65.0, "rleg", "low", "normal", "fromleft"],
+    "low_kick3": ["lowkick3", "m02_kck_low_03", 35, 9, 6, 20, 7.0, 110.0, "rleg", "low", "hard", "frontal"],
+    "special_kick_high": ["specialkickhigh ken", "m02_sp_kck_high", 48, 20, 4, 24, 13.0, 75.0, "rleg", "high", "hard", "frontal"],
+    "special_kick_low": ["specialkicklow ken", "m02_sp_kck_low", 60, 15, 7, 38, 12.0, 65.0, "rleg", "low", "hard", "frontal"],
+    "special_punch_high": ["specialpunchhigh ken", "m02_sp_pnch_high", 58, 9, 7, 42, 15.0, 80.0, "larm", "high", "hard", "frontal"],
+    "special_punch_low": ["specialpunchlow ken", "m02_sp_pnch_low", 47, 8, 15, 24, 14.0, 60.0, "larm", "medium", "normal", "frontal"],
+    "parry_high": ["parryhigh", "m02_parry_high", 19, 9, 2, 8, 0.0, 40.0, "larm", "high", "normal", "frontal"],
+    "parry_attack": ["parryattack", "m02_pnch_low_03", 57, 14, 5, 38, 10.0, 65.0, "rarm", "high", "hard", "frontal"],
+    "grab1": ["grab1 ken", "m02_grab_01", 47, 32, 7, 8, 16.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab2": ["grab2 ken", "m02_grab_02", 98, 65, 6, 27, 20.0, 45.0, "larm", "low", "hard", "frontal"],
+    "grab1_miss": ["grab1miss ken", "m02_grab_01", 47, 5, 3, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "grab2_miss": ["grab2miss ken", "m02_grab_01", 47, 4, 4, 39, 0.0, 45.0, "larm", "high", "normal", "frontal"],
+    "attack_to_floor": ["attacktofloor", "m02_attack_to_floor", 34, 8, 5, 21, 6.0, 105.0, "rarm", "low", "normal", "frontal"],
+    "endattack": ["endattack ken", "m02_end_attack_01", 132, 18, 1, 113, 0.0, 45.0, "rleg", "high", "hard", "fromleft"],
+}
+const KEN_REACTION_PROFILE_DATA: Dictionary = {
+    "hit": {
+        "low": {
+            "source_action": "impactlightfrontlow",
+            "animation": "all_impct_light_frnt_low",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "impactlightfrontmid",
+            "animation": "all_impct_light_frnt_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 14,
+            "animation_duration_frames": 16,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "impactlightfronthigh",
+            "animation": "all_impct_light_frnt_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 13,
+            "animation_duration_frames": 17,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+    "block": {
+        "low": {
+            "source_action": "lowblock",
+            "animation": "all_block_low",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 23,
+            "linking_frame": 14,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "medium": {
+            "source_action": "midblock",
+            "animation": "all_block_mid",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+        "high": {
+            "source_action": "highblock",
+            "animation": "all_block_high",
+            "animation_radius": 40.0,
+            "exit_start_frame": 12,
+            "animation_duration_frames": 14,
+            "linking_frame": 0,
+            "return_action": "idle",
+            "return_implemented": true,
+            "clip_implemented": false,
+        },
+    },
+}
+
+
 const BRUCE_EXACT_REACTION_DATA: Dictionary = {
     "hit": [
         {
@@ -1206,11 +2706,70 @@ const BRUCE_EXACT_REACTION_DATA: Dictionary = {
         },
     ],
 }
+## Recovered canblock rows.
+##
+## brucelee.set stores five block links in group `canblock` and the same five in
+## `canblock2` (data/native_links.json orders 92-101, from_group
+## canblock/canblock2).  Each row is `impact` plus the opponent's attack
+## strength (and, for a normal attack, its height) and names the animation the
+## defender plays:
+##
+##   orders 92 / 97   impact + normal + heightlow  -> lowblock
+##   orders 93 / 98   impact + normal + heighthigh -> highblock
+##   orders 94 / 99   impact + normal + heightmed  -> midblock
+##   orders 95 / 100  impact + hard   (no height)  -> highblockhard
+##   orders 96 / 101  impact + brutal (no height)  -> highblockbrutal
+##
+## Two facts follow from the rows themselves and are not port choices:
+##   1. the row is chosen by the *incoming* impact, never by the height the
+##      defender is holding, so the held high/mid/low guard must not gate the
+##      block - the defender switches to the row's animation instead;
+##   2. a block row means "no damage", because every target animation carries
+##      only `canblock*` groups and therefore fails CFighter::DamageReceiveCheck.
+## Rows whose strength/height the set never encodes do not exist, so an impact
+## carrying one of those values is fail-closed instead of given a made-up row.
+const CANBLOCK_ROWS: Array[Dictionary] = [
+    {"strength": "normal", "height": "low", "target": "lowblock", "orders": [92, 97]},
+    {"strength": "normal", "height": "high", "target": "highblock", "orders": [93, 98]},
+    {"strength": "normal", "height": "medium", "target": "midblock", "orders": [94, 99]},
+    {"strength": "hard", "height": "", "target": "highblockhard", "orders": [95, 100]},
+    {"strength": "brutal", "height": "", "target": "highblockbrutal", "orders": [96, 101]},
+]
+## Guard actions the fighter can hold, with the height band each one covers.
+## The hard/brutal rows are the high block family (their ANMs are
+## all_block_high_hard / all_block_high_brutal), so they cover `high`.
+const BLOCK_GUARD_HEIGHTS: Dictionary = {
+    "highblock": "high",
+    "midblock": "medium",
+    "lowblock": "low",
+    "highblockhard": "high",
+    "highblockbrutal": "high",
+}
+## Recovered direct-input guard row.
+##
+## Every block link in the four shipped sets (brucelee orders 92-101 and the
+## same ten rows in thai/karate/kungfu) carries exactly `left` + `pressed` in
+## all three layout variants.  No link carries `up`, `down`, `a`, `b`, `c`, `d`
+## or `f`, and no link maps any input token to highblock/midblock/lowblock: the
+## target is the row selected by the *incoming* impact.  The direct-input guard
+## therefore has one proven gesture (hold left) and no height token.
+##
+## The table is deliberately empty.  It is the fail-closed record of that
+## proof: a future export may add a token only when a native link really maps
+## it to a height band.  Nothing here may be filled from a port convention.
+const DIRECT_GUARD_STATUS: String = "left"
+const DIRECT_GUARD_HEIGHT_BY_TOKEN: Dictionary = {}
 var ATTACKS: Dictionary = {}
+## Clips captured before the first Style Editor override, so every re-apply
+## starts from the character's own table instead of stacking swaps.
+var _style_base_clips: Dictionary = {}
 var REACTION_PROFILES: Dictionary = {}
 var EXACT_REACTIONS: Dictionary = {}
 var attack_config_path: String = ATTACK_CONFIG_PATH
 var attack_config_error: String = ""
+# Resolved from SET_ATTACK_PROFILES for non-Bruce fighting sets; empty means
+# the brucelee.set rules.
+var attack_set_profile: Dictionary = {}
 var radius_scale: float = 1.0
 var source_units_to_world: float = WORLD_CHARACTER_HEIGHT / SOURCE_CHARACTER_HEIGHT
 var source_animation_radii: Dictionary = SOURCE_ANIMATION_RADII_DATA.duplicate(true)
@@ -1220,28 +2779,110 @@ var character_name: String = "Fighter"
 var is_player: bool = true
 var health: float = MAX_HEALTH
 var move_axis: Vector2 = Vector2.ZERO
+var _locomotion_action: String = ""
+var _locomotion_time: float = 0.0
+# Native fast advance/retreat (skipfwd/skipback) is a one-shot locomotion
+# action requested by training; it has no recovered root-motion track, so the
+# body is driven at a fixed speed for its short duration.
+var _skip_action: String = ""
+var _skip_time: float = 0.0
+var _skip_direction: Vector3 = Vector3.ZERO
+const SKIP_DURATION: float = 0.55
+const SKIP_SPEED_SCALE: float = 1.8
+var _movement_root_tracks: Dictionary = {}
+var _locomotion_root_prev: Vector3 = Vector3.ZERO
+var _locomotion_root_ready: bool = false
+var polar_movement_enabled: bool = false
+var training_step_lock: bool = false
+var held_directions: Dictionary = {}
 var guard_held: bool = false
+## Recovered guard selection held with `guard_held` (see CANBLOCK_ROWS):
+## `guard_block_action` is the native action name (highblock / midblock /
+## lowblock / highblockhard / highblockbrutal) and `guard_height` its height
+## band.  Both stay empty for the unqualified guard: the original's block-height
+## input mapping is not recovered, so direct-input callers never invent one.
+var guard_block_action: String = ""
+var guard_height: String = ""
 var opponent: PortFighter
 var state: String = "idle"
 var state_time: float = 0.0
+# BasicUpdate frame clock. Labels startup/active/recovery stay for callers,
+# but hits and the idle return follow the source frame when this is on.
+# Set BRUCELEE_FRAME_STATE_MACHINE=0 to restore the phase countdown.
+var frame_state_machine_enabled: bool = (
+    OS.get_environment("BRUCELEE_FRAME_STATE_MACHINE") != "0"
+)
+var _attack_clock_ms: float = 0.0
+var _attack_clock_start_frame: int = 0
+var _attack_clock_active: bool = false
+# Reaction clock drives hitstun/blockstun exits by the recovered return-link
+# frame instead of the fixed 0.30s/0.14s phase countdown.
+var _reaction_clock_ms: float = 0.0
+var _reaction_clock_start_frame: int = 0
+var _reaction_clock_active: bool = false
+var _reaction_return_action: String = ""
 var attack_kind: String = ""
 var attack_sequence: int = 0
+# CFighter animation-category record (CFighter+0x1a0 in the native object).
+# CFighter::SetAnimation 0x1a6e94 stores every category name carried by the
+# animation it starts; CFighter::GetAnmCategory 0x1a6d50 reads them back.  The
+# stored value is a presence flag, so this is the same 0/1 record that fills
+# TFightResults +0x04/+0x08/+0x0c.
+var anim_categories: Dictionary = {}
 var _attack_root_tracks: Dictionary = {}
-var _attack_root_forward_signs: Dictionary = {}
+var attack_root_motion_enabled: bool = true
 var _attack_root_sequence: int = -1
 var _attack_root_previous_frame: float = -1.0
 var _attack_root_previous_value: Vector3 = Vector3.ZERO
 var _attack_connected: bool = false
-var _ground_attack_input_history: Array[Dictionary] = []
-var _ground_attack_input_owner: String = ""
-var _standing_combo_input_history: Array[Dictionary] = []
-var _standing_combo_pending_attack: String = ""
-# A matched sequence belongs to the attack that was running when it completed.
-# The pending entry is only valid while that exact attack instance is still the
-# current one; native link priority and the member record's third field remain
-# unverified, so this binding is a prototype safety rule.
-var _standing_combo_pending_source_sequence: int = -1
-var _standing_combo_pending_source_kind: String = ""
+var _parry_absorbed: bool = false
+var _link_events: Array[Dictionary] = []
+# Link metadata exported from brucelee.set (link order, group windows,
+# keysequence, keystatus, conditions, time, entry/linking frames).
+var _native_actions: Dictionary = {}
+## Derived action -> CAnimationDescr category list of the loaded set (used by
+## CFighter::IsBlocking gid_block).  Empty means the category table failed to
+## load and every block-category query fails closed.
+var _native_action_categories: Dictionary = {}
+var _native_reactions: Dictionary = {"hit": [], "block": []}
+var _native_links: Array = []
+## Opponent-suffix attack kinds of the local player (recovered from brucelee.set).
+## Keyed by the native action name; only rows proven by a native entry link and
+## an existing candidate animation are present.
+var _opponent_suffix_variants: Dictionary = {}
+var _opponent_suffix_error: String = ""
+## Last clip resolution per variant kind: {status, clip, source, reason}.
+var _variant_clip_status: Dictionary = {}
+## Structural specific-vs-generic link pairs, computed once: generic link order
+## -> opponent-tagged variant links sharing from/group/steps/status.  Keeps the
+## per-step link scan O(k) instead of O(n^2) (victim-timing regression cost).
+var _variant_precedence: Dictionary = {}
+## Recovered canblock/canblock2 windows of `native_links*.json`, keyed by the
+## action that owns the window.  Null when no usable set export is loaded: every
+## block decision then fails closed.  Built from the same parsed JSON as
+## `_native_actions`, so the two tables can never disagree.
+var _canblock_windows: CanBlockWindows = null
+# Opt-in recovered reaction gate (see _init_native_reaction_gate). Off unless
+# BRUCELEE_NATIVE_REACTION=1, so the default reaction path is unaffected.
+var native_reaction_enabled: bool = false
+var _native_reaction_gate: NativeReactionGate = null
+var native_reaction_error: String = ""
+var last_native_reaction: Dictionary = {}
+var _native_pending_reaction: Dictionary = {}
+var _link_scan_action: String = ""
+var _link_scan_previous_frame: float = -1.0
+# Complete recovered candobasicattacks group coverage
+# (data/candobasicattacks_members.json, built by
+# tools/build_candobasicattacks_members.py).  Keyed by action name; each entry
+# carries the exact [start, end, third] member window and the ANM frame count.
+# Group links read these windows; when this table is missing or disagrees with
+# native_links.json every candobasicattacks group link fails closed.
+var _candobasicattacks_members: Dictionary = {}
+var _candobasicattacks_link_count: int = 0
+var _candobasicattacks_complete: bool = false
+var _candobasicattacks_error: String = ""
+var _action_to_attack: Dictionary = {}
+var _key_status: Dictionary = {}
 var last_reaction_group: String = ""
 var last_reaction_source_action: String = ""
 var last_reaction_animation: String = ""
@@ -1251,17 +2892,27 @@ var last_reaction_clip_implemented: bool = false
 var facing: float = 1.0
 var combo_hits: int = 0
 var rage: float = 0.0
-var _special_stepback_origin: bool = false
 var _multi_impact_applied: Array = []
 var _attack_hit_landed: bool = false
 var _grab_connected: bool = false
 var _endattack_victim_started: bool = false
-var _queued_attacks: Array[String] = []
 var _stun_impact_next_state: String = "stunfall"
-var _parry_press_times: Array = []
 var candidate_loaded: bool = false
 var candidate_load_error: String = ""
 var candidate_animation_clip: String = ""
+# Result presentation (CBeatEmUpGame::SetState 12/13/14). The winner plays the
+# result clip that characters.list already bound to this fighter when the match
+# configuration was built; the hidden loser is never given an animation in
+# SetState(12/13). The pools are the archive lists, not the loaded GLB's clip
+# names, because a candidate GLB can also carry other characters' result clips.
+var result_clip: String = ""
+var result_pose_active: bool = false
+var character_result_clips: Dictionary = {}
+var character_intro_clips: Array[String] = []
+var intro_clip_index: int = 0
+var result_clip_index_victory: int = 0
+var result_clip_index_defeat: int = 0
+var result_clip_gap_last: String = ""
 var candidate_visual_height: float = 0.0
 var candidate_textures_loaded: bool = false
 var candidate_texture_error: String = ""
@@ -1276,6 +2927,34 @@ var candidate_visual_blend_pending_seconds: float = 0.0
 var candidate_visual_blend_seconds_last: float = 0.0
 var candidate_visual_blend_source_action_last: String = ""
 var candidate_visual_blend_target_action_last: String = ""
+# Size-class selection state (adreno_200/Animations.versions). skeleton_class is
+# the fighter's characters.list "skeleton" value; the rest records the last
+# resolution so a test or the HUD can prove which version was chosen.
+var skeleton_class: String = SIZE_CLASS_MEDIUM
+var _size_variants: Dictionary = {}
+var size_variants_error: String = ""
+var size_variant_status_last: String = ""
+var size_variant_class_last: String = ""
+var size_variant_base_last: String = ""
+var size_variant_clip_last: String = ""
+var size_variant_error: String = ""
+# Ground-idle resolution state (all_idle_face_down/up, audience "self"). Kept
+# separate from the attack-slot state so both can be proven independently.
+var ground_idle_status_last: String = ""
+var ground_idle_class_last: String = ""
+var ground_idle_base_last: String = ""
+var ground_idle_clip_last: String = ""
+var ground_idle_error: String = ""
+# The archived animation name behind each resolved victim slot, so the
+# size-variant lookup uses the set's clip name instead of a candidate path.
+var _victim_selected_animation: Dictionary = {}
+# Recovered frame count for each resolved player-victim slot, taken from the
+# opponent set's actual clip. Absent means the grab/finisher fails closed.
+var _victim_selected_frames: Dictionary = {}
+var _victim_exit_states: Dictionary = {}
+# Base candidate path per grab/finisher slot, captured once the candidate clips
+# are mapped, so a version resolution can always be undone.
+var _size_variant_base_path: Dictionary = {}
 var _time: float = 0.0
 var _body: MeshInstance3D
 var _left_arm: MeshInstance3D
@@ -1292,6 +2971,21 @@ var _candidate_skeleton: Skeleton3D
 var _candidate_skeleton_parent: Node
 var _candidate_source_min_y: float = CANDIDATE_SOURCE_MIN_Y
 var _candidate_visual_scale: float = 1.0
+# Opt-in replay recorder (see _init_replay_recorder).  Off unless
+# BRUCELEE_REPLAY_RECORD=1, so the default path never records or allocates.
+var replay_record_enabled: bool = false
+var replay_recorder: ReplayRecorderScript = null
+var replay_record_error: String = ""
+# Headless/test hook: a value >= 0 replaces Time.get_ticks_msec() for the
+# record's +0x28 time, matching the native absolute GetCurrentMili() slot.
+var replay_record_clock_override_ms: int = -1
+# State 6 playback consumer (see apply_replay_record).  CBeatEmUpGame::Update
+# case 6 only calls CFighter::RecordReplayUpdate, so the recovered record is the
+# fighter's whole pose for that frame; replay_pose_lock keeps the ordinary
+# physics/control path from overwriting the restored position and rotation.
+var replay_pose_lock: bool = false
+var replay_playback_clip: String = ""
+var replay_playback_sample_ms: int = 0
 
 func configure(display_name: String, human: bool, tint: Color) -> void:
     character_name = display_name
@@ -1325,7 +3019,6 @@ func configure_attack_config(path: String) -> void:
 
 func _load_attack_root_motion() -> void:
     _attack_root_tracks.clear()
-    _attack_root_forward_signs.clear()
     var file: FileAccess = FileAccess.open(ATTACK_ROOT_MOTION_PATH, FileAccess.READ)
     if file == null:
         return
@@ -1347,12 +3040,71 @@ func _load_attack_root_motion() -> void:
         if points.size() >= 2:
             var key: String = String(source_action)
             _attack_root_tracks[key] = points
-            var sign: float = 1.0
-            for point: Vector3 in points:
-                if absf(point.y) > 0.000001:
-                    sign = 1.0 if point.y > 0.0 else -1.0
-                    break
-            _attack_root_forward_signs[key] = sign
+
+
+func _load_movement_root_motion() -> void:
+    _movement_root_tracks.clear()
+    var file: FileAccess = FileAccess.open(MOVEMENT_ROOT_MOTION_PATH, FileAccess.READ)
+    if file == null:
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        push_warning("Movement root-motion data is not an object; disabled")
+        return
+    for animation_name: Variant in parsed:
+        var entry: Variant = parsed[animation_name]
+        if not entry is Dictionary:
+            continue
+        var raw_values: Variant = entry.get("values")
+        if not raw_values is Array or Array(raw_values).size() < 2:
+            continue
+        var points: Array[Vector3] = []
+        for sample: Variant in raw_values:
+            if not sample is Array or sample.size() < 3:
+                continue
+            points.append(Vector3(
+                float(sample[0]), float(sample[1]), float(sample[2])
+            ))
+        if points.size() >= 2:
+            _movement_root_tracks[String(animation_name)] = points
+
+
+func _movement_root_clip_for_action(action: String) -> String:
+    if action.is_empty():
+        return ""
+    if candidate_clips.has(action):
+        return String(candidate_clips[action])
+    if _candidate_clip_paths.has(action):
+        return String(_candidate_clip_paths[action])
+    return action
+
+
+func _sample_movement_root(track: Array, frame: float) -> Vector3:
+    var bounded: float = clampf(frame, 0.0, float(track.size() - 1))
+    var left: int = int(floor(bounded))
+    var right: int = mini(left + 1, track.size() - 1)
+    var weight: float = bounded - float(left)
+    return track[left].lerp(track[right], weight)
+
+
+func _locomotion_root_delta() -> Vector3:
+    if _locomotion_action.is_empty():
+        _locomotion_root_ready = false
+        return Vector3.ZERO
+    var clip: String = _movement_root_clip_for_action(_locomotion_action)
+    if not _movement_root_tracks.has(clip):
+        _locomotion_root_ready = false
+        return Vector3.ZERO
+    var track: Array = _movement_root_tracks[clip]
+    var frame: float = _locomotion_time * SOURCE_FRAME_RATE
+    var point: Vector3 = _sample_movement_root(track, frame)
+    if not _locomotion_root_ready:
+        _locomotion_root_prev = point
+        _locomotion_root_ready = true
+        return Vector3.ZERO
+    var delta: Vector3 = point - _locomotion_root_prev
+    _locomotion_root_prev = point
+    return _root_motion_delta_to_pc_world(delta, clip)
 
 
 func _sample_attack_root(track: Array, frame: float) -> Vector3:
@@ -1379,6 +3131,8 @@ func _seed_attack_root_motion() -> void:
 
 
 func _apply_attack_root_motion() -> void:
+    if not attack_root_motion_enabled:
+        return
     if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
         return
     var animation_name: String = String(ATTACKS[attack_kind].get("animation", ""))
@@ -1398,22 +3152,329 @@ func _apply_attack_root_motion() -> void:
     var current: Vector3 = _sample_attack_root(track, frame)
     var delta: Vector3 = current - _attack_root_previous_value
     if delta.length_squared() > 0.0:
-        # Prototype only: per-clip first-Y sign maps signed raw Y to forward
-        # and raw X to lateral. Native axis/sign and final world mapping
-        # remain unverified.
-        var forward_sign: float = float(
-            _attack_root_forward_signs.get(animation_name, 1.0)
-        )
-        position.x = clampf(
-            position.x + facing * delta.y * forward_sign * source_units_to_world,
-            -6.8, 6.8
-        )
-        position.z = clampf(
-            position.z + facing * delta.x * source_units_to_world,
-            -3.0, 3.0
-        )
+        var motion: Vector3 = _root_motion_delta_to_pc_world(delta, animation_name)
+        position.x = clampf(position.x + motion.x, -ARENA_HALF_X, ARENA_HALF_X)
+        position.z = clampf(position.z + motion.z, -ARENA_HALF_Z, ARENA_HALF_Z)
     _attack_root_previous_frame = frame
     _attack_root_previous_value = current
+
+
+func root_motion_mapping_status(animation_name: String) -> String:
+    return String(ROOT_MOTION_MAPPING_STATUS.get(animation_name, "UNVERIFIED"))
+
+
+func _root_motion_delta_to_pc_world(delta: Vector3, animation_name: String) -> Vector3:
+    # The only place raw ANM positions are converted into PC world motion.
+    # Source movement tracks establish the axes: movefwd/stepfwd are -Y,
+    # moveback/stepback are +Y, steplft is +X and steprht is -X. Local +X is
+    # forward (toward the opponent) and local +Z is right, so source +X (left)
+    # maps to local -Z.
+    #
+    # Native krm::CFighter::UpdatePositionWithRootDisplacement (@0x1b1934)
+    # rotates the per-frame root delta by the fighter's CURRENT rotation; and
+    # krm::CFighter::FacingUpdate (@0x1b170c) has already aimed local +X at the
+    # opponent (rotation.y = atan2(-dz, dx)). So the delta must be rotated by
+    # the full facing yaw, NOT collapsed onto the world X axis. Using only the
+    # scalar "facing" sign matches native only while the fighter line lies
+    # along world X; at any other bearing it maps stepfwd onto world +/-X
+    # instead of the opponent direction, inverting forward/lateral control on
+    # screen (the camera keeps the fighter axis horizontal, so this shows up
+    # as left/right vs into/out-of-screen inversion).
+    var forward: Vector3
+    if absf(rotation.y) > 0.0001:
+        forward = Vector3(cos(rotation.y), 0.0, -sin(rotation.y))
+    else:
+        # No yaw has been applied yet (tests / pre-facing setup); honour the
+        # legacy facing scalar. In gameplay rotation.y is set every physics
+        # frame before root motion is applied, so this branch is not taken.
+        forward = Vector3(facing, 0.0, 0.0)
+    forward = forward.normalized()
+    var right: Vector3 = Vector3(forward.z, 0.0, -forward.x)
+    var world: Vector3 = forward * (-delta.y) + right * delta.x
+    return world * source_units_to_world
+
+
+func _load_size_variants() -> void:
+    ## Read the derived Animations.versions table once. A table that cannot be
+    ## read is a hard error: every grab/finisher then fails closed (the class
+    ## decision cannot be made), instead of silently playing base clips.
+    ## BRUCELEE_SIZE_VARIANTS overrides the path (tests, packaging).
+    _size_variants.clear()
+    size_variants_error = ""
+    var path: String = OS.get_environment("BRUCELEE_SIZE_VARIANTS")
+    if path.is_empty():
+        path = SIZE_VARIANTS_PATH
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        size_variants_error = "missing " + path
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        size_variants_error = "size variant table is not an object"
+        return
+    var table: Variant = Dictionary(parsed).get("variants")
+    if not table is Dictionary:
+        size_variants_error = "size variant table has no variants object"
+        return
+    for base: Variant in Dictionary(table):
+        var entry: Variant = Dictionary(table)[base]
+        if not entry is Dictionary:
+            continue
+        var audience: String = String(Dictionary(entry).get("audience", ""))
+        var versions: Variant = Dictionary(entry).get("versions")
+        if audience not in ["self", "opponent"] or not versions is Dictionary:
+            continue
+        var classes: Dictionary = {}
+        for size_class: Variant in Dictionary(versions):
+            var clip: String = String(Dictionary(versions)[size_class]).strip_edges()
+            if not clip.is_empty():
+                classes[String(size_class).strip_edges().to_lower()] = clip
+        if not classes.is_empty():
+            _size_variants[String(base)] = {
+                "audience": audience, "versions": classes,
+            }
+
+
+func set_skeleton_class(value: String) -> void:
+    ## characters.list "skeleton" value: small, medium or large. Anything else
+    ## is kept verbatim so size_variant_for can fail closed on it.
+    skeleton_class = value.strip_edges().to_lower()
+
+
+func skeleton_class_name() -> String:
+    var value: String = skeleton_class.strip_edges().to_lower()
+    if value in [SIZE_CLASS_SMALL, SIZE_CLASS_MEDIUM, SIZE_CLASS_LARGE]:
+        return value
+    return ""
+
+
+func size_variant_for(base_clip: String) -> Dictionary:
+    ## Resolve one archived base clip to the version its owner's class selects.
+    ## status: "base"     - no version exists, or the class is medium;
+    ##         "variant"  - the class version is loaded and can play;
+    ##         "unavailable" - a version is required but cannot be played.
+    var result: Dictionary = {
+        "status": "base", "clip": base_clip, "class": "", "reason": "",
+    }
+    var entry: Variant = _size_variants.get(base_clip)
+    if not entry is Dictionary:
+        return result
+    var audience: String = String(Dictionary(entry).get("audience", ""))
+    var owner: PortFighter = opponent if audience == "opponent" else self
+    if owner == null or not is_instance_valid(owner):
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": the size version is keyed by the "
+            + ("opponent" if audience == "opponent" else "own")
+            + " skeleton class and no such fighter is set"
+        )
+        return result
+    var klass: String = owner.skeleton_class_name()
+    result["class"] = klass
+    if klass.is_empty():
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": unknown skeleton class "
+            + JSON.stringify(owner.skeleton_class)
+        )
+        return result
+    var versions: Dictionary = Dictionary(entry)["versions"]
+    if klass == SIZE_CLASS_MEDIUM or not versions.has(klass):
+        # The original archive lists no version for this class: the base clip is
+        # the original choice, not a wrong-size substitute.
+        return result
+    var version_clip: String = String(versions[klass])
+    var matched: String = ""
+    if _candidate_animation != null:
+        matched = _find_animation_clip(_candidate_animation, version_clip)
+    if matched.is_empty():
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": " + klass + " version " + version_clip
+            + " is not in the loaded candidate"
+        )
+        return result
+    result["status"] = "variant"
+    result["clip"] = matched
+    return result
+
+
+func _size_variant_archived(base_clip: String) -> Dictionary:
+    ## Same rule as size_variant_for, but reports the archived clip name (the
+    ## version file name) instead of a candidate path. Ground-idle slots are
+    ## keyed in _candidate_clip_paths by archived name, so they need this form.
+    var result: Dictionary = {
+        "status": "base", "clip": base_clip, "class": "", "reason": "",
+    }
+    var entry: Variant = _size_variants.get(base_clip)
+    if not entry is Dictionary:
+        return result
+    var audience: String = String(Dictionary(entry).get("audience", ""))
+    var owner: PortFighter = opponent if audience == "opponent" else self
+    if owner == null or not is_instance_valid(owner):
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": the size version is keyed by the "
+            + ("opponent" if audience == "opponent" else "own")
+            + " skeleton class and no such fighter is set"
+        )
+        return result
+    var klass: String = owner.skeleton_class_name()
+    result["class"] = klass
+    if klass.is_empty():
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": unknown skeleton class "
+            + JSON.stringify(owner.skeleton_class)
+        )
+        return result
+    var versions: Dictionary = Dictionary(entry).get("versions", {})
+    if klass == SIZE_CLASS_MEDIUM or not versions.has(klass):
+        return result
+    var version_clip: String = String(versions[klass])
+    if not _candidate_clip_paths.has(version_clip):
+        result["status"] = "unavailable"
+        result["reason"] = (
+            base_clip + ": " + klass + " version " + version_clip
+            + " is not in the loaded candidate"
+        )
+        return result
+    result["status"] = "variant"
+    result["clip"] = version_clip
+    return result
+
+
+func _resolved_ground_idle(base_clip: String) -> String:
+    ## Pick the ground-idle clip for the fighter's own class. A required class
+    ## version that the candidate cannot play makes the idle unavailable: the
+    ## caller's _candidate_clip_paths.has() check then keeps the wrong-size base
+    ## clip from playing (fail closed). The decision is recorded for the tests.
+    ground_idle_base_last = base_clip
+    if not size_variants_error.is_empty():
+        ground_idle_status_last = "unavailable"
+        ground_idle_class_last = ""
+        ground_idle_clip_last = ""
+        ground_idle_error = (
+            size_variants_error + " (size class table unavailable)"
+        )
+        return ""
+    var resolved: Dictionary = _size_variant_archived(base_clip)
+    ground_idle_status_last = String(resolved.get("status", ""))
+    ground_idle_class_last = String(resolved.get("class", ""))
+    ground_idle_clip_last = String(resolved.get("clip", base_clip))
+    ground_idle_error = String(resolved.get("reason", ""))
+    if ground_idle_status_last == "unavailable":
+        return ""
+    if not candidate_loaded:
+        # Placeholder rig: no candidate clip exists to swap, so the base name is
+        # reported and the availability check simply finds nothing to play.
+        return base_clip
+    return String(resolved.get("clip", base_clip))
+
+
+func ground_idle_state() -> Dictionary:
+    ## Everything a test or the HUD needs to prove the ground-idle class choice.
+    return {
+        "skeleton_class": skeleton_class,
+        "status": ground_idle_status_last,
+        "class_used": ground_idle_class_last,
+        "base": ground_idle_base_last,
+        "clip": ground_idle_clip_last,
+        "error": ground_idle_error,
+        "playing": candidate_animation_clip,
+    }
+
+
+func size_variant_state() -> Dictionary:
+    ## Everything a test or the HUD needs to prove which clip was selected.
+    return {
+        "skeleton_class": skeleton_class,
+        "table_entries": _size_variants.size(),
+        "table_error": size_variants_error,
+        "status": size_variant_status_last,
+        "class_used": size_variant_class_last,
+        "base": size_variant_base_last,
+        "clip": size_variant_clip_last,
+        "error": size_variant_error,
+        "playing": candidate_animation_clip,
+    }
+
+
+func _size_variant_base_clip(action: String) -> String:
+    ## The archived animation name of an action, not the resolved candidate
+    ## path: the version table is keyed by archived file basenames.
+    var mapped: String = String(candidate_clips.get(action, ""))
+    if not mapped.is_empty():
+        return mapped
+    if ATTACKS.has(action):
+        return String(ATTACKS[action].get("animation", ""))
+    return ""
+
+
+func _snapshot_size_variant_base_paths() -> void:
+    ## Remember the base candidate path of every grab/finisher slot so a later
+    ## class resolution can always restore it; without this a resolved version
+    ## could survive into a different matchup.
+    _size_variant_base_path.clear()
+    for action: Variant in SIZE_CLASS_ATTACKS:
+        var key: String = String(action)
+        if _candidate_clip_paths.has(key):
+            _size_variant_base_path[key] = _candidate_clip_paths[key]
+
+
+func _prepare_size_variant(kind: String) -> bool:
+    ## Resolve the size version for one attack slot. Returns false when a
+    ## required version is unavailable (or the table itself is missing), which
+    ## must refuse the grab/finisher instead of playing the base clip.
+    if not SIZE_CLASS_ATTACKS.has(kind):
+        return true
+    var base_clip: String = _size_variant_base_clip(kind)
+    if base_clip.is_empty():
+        return true
+    if not candidate_loaded:
+        # No candidate clips are loaded, so there is no clip to choose from and
+        # no wrong-size clip to avoid: the placeholder rig plays no clip at all.
+        size_variant_status_last = "base"
+        size_variant_class_last = ""
+        size_variant_base_last = base_clip
+        size_variant_clip_last = base_clip
+        size_variant_error = ""
+        return true
+    return _apply_size_variant(kind, base_clip)
+
+
+func _apply_size_variant(slot: String, base_clip: String) -> bool:
+    ## Point slot at the size version of base_clip and record the decision.
+    ## Returns false when a required version is unavailable: the caller must
+    ## then refuse the grab/finisher instead of playing the base clip.
+    var base_path: String = String(_size_variant_base_path.get(slot, ""))
+    if not size_variants_error.is_empty():
+        # Without the recovered table the class decision cannot be made, so the
+        # grab/finisher fails closed rather than silently using the base clip.
+        size_variant_status_last = "unavailable"
+        size_variant_class_last = ""
+        size_variant_base_last = base_clip
+        size_variant_clip_last = base_clip
+        size_variant_error = size_variants_error + " (size class table unavailable)"
+        if not base_path.is_empty():
+            _candidate_clip_paths[slot] = base_path
+        return false
+    var resolved: Dictionary = size_variant_for(base_clip)
+    size_variant_status_last = String(resolved.get("status", ""))
+    size_variant_class_last = String(resolved.get("class", ""))
+    size_variant_base_last = base_clip
+    size_variant_clip_last = String(resolved.get("clip", base_clip))
+    size_variant_error = String(resolved.get("reason", ""))
+    if size_variant_status_last == "unavailable":
+        # Never leave a previously resolved version in the slot.
+        if not base_path.is_empty():
+            _candidate_clip_paths[slot] = base_path
+        return false
+    if size_variant_status_last == "variant":
+        _candidate_clip_paths[slot] = String(resolved["clip"])
+    elif not base_path.is_empty():
+        _candidate_clip_paths[slot] = base_path
+    return true
 
 
 func _ready() -> void:
@@ -1421,7 +3482,12 @@ func _ready() -> void:
         candidate_visual_blending_enabled = true
     if not _load_attack_definitions():
         push_error("Fighting-set attack config failed closed: " + attack_config_error)
+    _init_active_uniques()
+    _load_native_links()
+    _init_native_reaction_gate()
     _load_attack_root_motion()
+    _load_movement_root_motion()
+    _load_size_variants()
     collision_layer = 2
     collision_mask = 1 | 2
     var capsule: CapsuleShape3D = CapsuleShape3D.new()
@@ -1445,6 +3511,7 @@ func _ready() -> void:
     _add_mesh(foot, Vector3(-0.20, -0.86, 0.0), Color(0.16, 0.16, 0.16))
     _add_mesh(foot, Vector3(0.20, -0.86, 0.0), Color(0.16, 0.16, 0.16))
     _try_load_candidate_visual()
+    _init_replay_recorder()
 
 func _load_attack_definitions() -> bool:
     ATTACKS = {}
@@ -1454,6 +3521,7 @@ func _load_attack_definitions() -> bool:
     radius_scale = 1.0
     source_units_to_world = WORLD_CHARACTER_HEIGHT / SOURCE_CHARACTER_HEIGHT
     source_animation_radii = SOURCE_ANIMATION_RADII_DATA.duplicate(true)
+    attack_set_profile = SET_ATTACK_PROFILES.get(attack_config_path, {})
     if not FileAccess.file_exists(attack_config_path):
         attack_config_error = "missing " + attack_config_path
         return false
@@ -1473,9 +3541,257 @@ func _load_attack_definitions() -> bool:
     var loaded: Dictionary = _parse_attack_config(parsed)
     if loaded.is_empty():
         return false
-    loaded["heavy"] = HEAVY_ATTACK
     ATTACKS = loaded
+    _load_opponent_suffix_variants()
     return true
+
+
+
+## ---------------------------------------------------------------------------
+## Opponent-suffix variants (recovered from brucelee.set)
+##
+## The local player's own set carries conditional attack variants named for the
+## opponent (endattack ken, grab1 brick, specialpunchhighhit sinfu, ...).  Each
+## row is merged into ATTACKS as an attack kind whose source_action is the native
+## action name, so the existing native link scan / recovery / camera code treats
+## it exactly like any other attack.  A row is only playable when a native entry
+## link exists and the row's recovered `unique` tag is in the fighter's active
+## unique list (i.e. the player explicitly selected that style); otherwise
+## request_attack/_begin_chained_attack fail closed.
+## ---------------------------------------------------------------------------
+
+func _load_opponent_suffix_variants() -> void:
+    _opponent_suffix_variants.clear()
+    _variant_clip_status.clear()
+    _opponent_suffix_error = ""
+    # Only Bruce's own fighting set carries these matchup variants.
+    if attack_config_path != ATTACK_CONFIG_PATH or not attack_set_profile.is_empty():
+        return
+    var file: FileAccess = FileAccess.open(OPPONENT_SUFFIX_VARIANTS_PATH, FileAccess.READ)
+    if file == null:
+        _opponent_suffix_error = "missing " + OPPONENT_SUFFIX_VARIANTS_PATH
+        push_error("Opponent-suffix variant table missing: " + OPPONENT_SUFFIX_VARIANTS_PATH)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        _opponent_suffix_error = "invalid JSON"
+        push_error("Opponent-suffix variant table is invalid")
+        return
+    var rows: Variant = Dictionary(parsed).get("variants", [])
+    if not rows is Array:
+        _opponent_suffix_error = "variants is not an array"
+        return
+    for row_value: Variant in rows:
+        if not row_value is Dictionary:
+            continue
+        var row: Dictionary = row_value
+        var kind: String = String(row.get("name", ""))
+        var family: String = String(row.get("family", ""))
+        if kind.is_empty() or family == "victim" or ATTACKS.has(kind):
+            # Victim rows are served by the per-attacker victim selector.
+            continue
+        if not bool(row.get("entry_proven", false)):
+            # No recovered native entry link for this opponent: never expose it
+            # as an enterable kind (fail closed).
+            continue
+        var animation: String = String(row.get("animation", ""))
+        var frames: int = int(row.get("frames", 0))
+        var startup: int = int(row.get("startup", 0))
+        var active: int = int(row.get("active", 0))
+        var recovery: int = int(row.get("recovery", 0))
+        if (animation.is_empty() or frames <= 0 or startup < 0 or active <= 0
+                or recovery < 0 or startup + active + recovery != frames):
+            _opponent_suffix_error = kind + ": invalid recovered phase frames"
+            push_error("Opponent-suffix variant " + kind + " rejected: " + _opponent_suffix_error)
+            continue
+        # The native entry link's `unique` tag is the ownership token that
+        # CFighter::IsLinkAllowed compares against the fighter's active list.
+        var variant_unique: String = ""
+        var entry_rows: Array = Array(row.get("entry", []))
+        if not entry_rows.is_empty() and entry_rows[0] is Dictionary:
+            var entry_tags: Array = Array(Dictionary(entry_rows[0]).get("unique", []))
+            if not entry_tags.is_empty():
+                variant_unique = String(entry_tags[0]).strip_edges().to_lower()
+        if variant_unique.is_empty():
+            _opponent_suffix_error = kind + ": entry link has no unique tag"
+            push_error("Opponent-suffix variant " + kind + " rejected: "
+                    + _opponent_suffix_error)
+            continue
+        var source_impact: Variant = row.get("source_impact")
+        if not source_impact is Dictionary:
+            source_impact = {}
+        var multi: Array = []
+        for impact_value: Variant in Array(row.get("multi_impacts", [])):
+            if impact_value is Dictionary:
+                multi.append(Dictionary(impact_value))
+        ATTACKS[kind] = {
+            "source_action": kind,
+            "animation": animation,
+            "animation_frame_count": frames,
+            # The recovered variant row stores phase lengths in source frames
+            # (they must sum to `frames`).  Every other attack table stores
+            # startup/active/recovery in seconds, and request_attack /
+            # _apply_attack_start_frame / _phase_attack_source_frame all treat
+            # them as seconds; keeping raw frames here made every variant's
+            # startup 30x too long (e.g. endattack brick = 17 s), so its
+            # `state == "active"` gate was never reached while the victim was
+            # still in the 90-frame grabbed hold.
+            "startup": float(startup) / SOURCE_FRAME_RATE,
+            "active": float(active) / SOURCE_FRAME_RATE,
+            "recovery": float(recovery) / SOURCE_FRAME_RATE,
+            "damage": float(row.get("damage", 0.0)),
+            "source_impact": Dictionary(source_impact),
+            "multi_impacts": multi,
+            "animation_radius": float(row.get("radius", 0.0)),
+            "variant_family": family,
+            "variant_suffix": String(row.get("suffix", "")),
+            "variant_unique": variant_unique,
+            "variant_camera": String(row.get("camera", "")),
+            "variant_grab_family": String(row.get("grab_family", "")),
+            "variant_attack_config": String(row.get("attack_config", "")),
+        }
+        _opponent_suffix_variants[kind] = ATTACKS[kind]
+
+
+func _is_variant_attack(kind: String) -> bool:
+    return _opponent_suffix_variants.has(kind)
+
+
+func _variant_selected_ok(kind: String) -> bool:
+    ## Native ownership: a recovered opponent-suffix row is enterable only when
+    ## its own `unique` tag is an exact member of this fighter's active unique
+    ## list.  The current opponent is irrelevant; only an explicit style
+    ## selection puts another character's ID into Bruce's list.
+    if not _is_variant_attack(kind):
+        return false
+    var tag: String = String(ATTACKS[kind].get("variant_unique", ""))
+    return not tag.is_empty() and _active_uniques.has(tag)
+
+
+func _variant_grab_family(kind: String) -> String:
+    if not _is_variant_attack(kind):
+        return ""
+    return String(ATTACKS[kind].get("variant_grab_family", ""))
+
+
+func _variant_size_resolved(base: String) -> Dictionary:
+    ## Recovered Animations.versions decision for a variant animation.  Unlike
+    ## size_variant_for(), availability is *not* checked against the player's
+    ## candidate here: a required version may live in the opponent candidate and
+    ## is borrowed later.  Only the class decision is made from the recovered
+    ## table.
+    var entry: Variant = _size_variants.get(base)
+    if not entry is Dictionary:
+        return {"status": "base", "clip": base, "class": "", "reason": ""}
+    var audience: String = String(Dictionary(entry).get("audience", ""))
+    var owner: PortFighter = opponent if audience == "opponent" else self
+    if owner == null or not is_instance_valid(owner):
+        return {"status": "base", "clip": base, "class": "",
+                "reason": "no owner for size version"}
+    var klass: String = owner.skeleton_class_name()
+    var versions: Dictionary = Dictionary(entry).get("versions", {})
+    if klass == SIZE_CLASS_MEDIUM or klass.is_empty() or not versions.has(klass):
+        return {"status": "base", "clip": base, "class": klass, "reason": ""}
+    return {"status": "variant", "clip": String(versions[klass]), "class": klass,
+            "reason": ""}
+
+
+func _grab_victim_kind(kind: String) -> String:
+    ## begin_grabbed() takes grab1/grab2 (or a base mapped slot); a variant grab
+    ## resolves through the same hold data.
+    var family: String = _variant_grab_family(kind)
+    return family if not family.is_empty() else kind
+
+
+func _is_grab_attack(kind: String) -> bool:
+    return GRAB_ATTACKS.has(kind) or not _variant_grab_family(kind).is_empty()
+
+
+func _is_endattack_attack(kind: String) -> bool:
+    if ENDATTACK_ATTACKS.has(kind):
+        return true
+    return _is_variant_attack(kind) and String(ATTACKS[kind].get(
+            "variant_family", "")) == "endattack"
+
+
+func _resolve_variant_clip(kind: String) -> bool:
+    ## Resolve the variant's archived animation against the loaded candidates and
+    ## cache the playable clip under `kind`.  Order: the player's own candidate
+    ## (base or recovered size version), then the opponent's already-loaded
+    ## candidate.  No clip -> fail closed.
+    if not _is_variant_attack(kind):
+        return false
+    var cached: Variant = _variant_clip_status.get(kind)
+    if cached is Dictionary and bool(Dictionary(cached).get("ok", false)):
+        if _candidate_clip_paths.has(kind):
+            return true
+        var cached_clip: String = String(Dictionary(cached).get("clip", ""))
+        if (not cached_clip.is_empty() and _candidate_animation != null
+                and _candidate_animation.has_animation(cached_clip)):
+            _candidate_clip_paths[kind] = cached_clip
+            return true
+    var row: Dictionary = ATTACKS[kind]
+    var base: String = String(row.get("animation", ""))
+    var status: Dictionary = {
+        "ok": false, "clip": "", "source": "", "reason": "", "base": base,
+    }
+    var resolved: String = base
+    var size: Dictionary = _variant_size_resolved(base)
+    if String(size.get("status", "")) == "unavailable":
+        status["reason"] = "size variant unavailable: " + String(size.get("reason", ""))
+        _variant_clip_status[kind] = status
+        return false
+    if String(size.get("status", "")) == "variant":
+        resolved = String(size.get("clip", base))
+    status["resolved"] = resolved
+    var matched: String = ""
+    if _candidate_animation != null:
+        matched = _find_animation_clip(_candidate_animation, resolved)
+    if not matched.is_empty() and _candidate_clip_paths.has(matched):
+        _candidate_clip_paths[kind] = matched
+        status["ok"] = true
+        status["clip"] = matched
+        status["source"] = "player"
+        _variant_clip_status[kind] = status
+        return true
+    # Borrow the same archived animation from the opponent candidate that the
+    # matchup already loads.  Both candidates use the same source skeleton; the
+    # borrowed copy drops only tracks whose nodes do not exist on the player rig.
+    if (opponent != null and is_instance_valid(opponent)
+            and opponent._candidate_animation != null):
+        var opponent_match: String = opponent._find_animation_clip(
+                opponent._candidate_animation, resolved)
+        if not opponent_match.is_empty():
+            var borrowed: Animation = opponent._candidate_animation.get_animation(opponent_match)
+            if borrowed != null and _candidate_animation != null:
+                var key: String = resolved if not resolved.is_empty() else base
+                if not _candidate_animation.has_animation(key):
+                    var copy: Animation = borrowed.duplicate(true)
+                    _disable_candidate_character_position_tracks(copy)
+                    _prune_unresolvable_tracks(copy)
+                    var library: AnimationLibrary = _candidate_animation.get_animation_library("")
+                    if library == null:
+                        library = AnimationLibrary.new()
+                        _candidate_animation.add_animation_library("", library)
+                    if library != null:
+                        library.add_animation(key, copy)
+                if _candidate_animation.has_animation(key):
+                    _candidate_clip_paths[kind] = key
+                    status["ok"] = true
+                    status["clip"] = key
+                    status["source"] = "opponent"
+                    _variant_clip_status[kind] = status
+                    return true
+        status["reason"] = "no player or opponent candidate clip for " + resolved
+    else:
+        status["reason"] = "no opponent candidate loaded for " + resolved
+    _variant_clip_status[kind] = status
+    return false
+
+
+func variant_clip_status(kind: String) -> Dictionary:
+    ## Test/HUD view of the last variant clip decision.
+    return Dictionary(_variant_clip_status.get(kind, {})).duplicate(true)
 
 
 func _is_number(value: Variant) -> bool:
@@ -1484,8 +3800,52 @@ func _is_number(value: Variant) -> bool:
 
 func _parse_attack_config(config: Dictionary) -> Dictionary:
     var archive_value: Variant = config.get("source_archive", "")
-    if typeof(archive_value) == TYPE_STRING and String(archive_value) == "thai.set":
+    if (typeof(archive_value) == TYPE_STRING and String(archive_value) == "thai.set"
+            and (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+                 or attack_config_path.is_empty())):
         return _parse_thai_mapped_attack_config(config)
+    if attack_config_path == SMALLBOY_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "thai.set", SMALLBOY_ATTACK_DATA,
+            SMALLBOY_ANIMATION_RADII_DATA, THAI_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == JOHNSON_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "thai.set", JOHNSON_ATTACK_DATA,
+            JOHNSON_ANIMATION_RADII_DATA, THAI_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == CHIEF_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "karate.set", CHIEF_ATTACK_DATA,
+            CHIEF_ANIMATION_RADII_DATA, KEN_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == LOMING_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "kungfu.set", LOMING_ATTACK_DATA,
+            LOMING_ANIMATION_RADII_DATA, SINFU_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == MASTER_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "kungfu.set", MASTER_ATTACK_DATA,
+            MASTER_ANIMATION_RADII_DATA, MASTER_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == SINFU_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "kungfu.set", SINFU_ATTACK_DATA,
+            SINFU_ANIMATION_RADII_DATA, SINFU_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == SHENLO_ATTACK_CONFIG_PATH:
+        # ShenLo shares kungfu.set reactions with SinFu but owns the m04_e03_*
+        # attack and locomotion clips, so only the attack tables differ.
+        return _parse_set_mapped_attack_config(
+            config, "kungfu.set", SHENLO_ATTACK_DATA,
+            SHENLO_ANIMATION_RADII_DATA, SINFU_REACTION_PROFILE_DATA
+        )
+    if attack_config_path == KEN_ATTACK_CONFIG_PATH:
+        return _parse_set_mapped_attack_config(
+            config, "karate.set", KEN_ATTACK_DATA,
+            KEN_ANIMATION_RADII_DATA, KEN_REACTION_PROFILE_DATA
+        )
     var schema_value: Variant = config.get("schema_version")
     if not _is_number(schema_value) or float(schema_value) != 4.0:
         return _reject_attack_config("unsupported schema version")
@@ -1560,14 +3920,13 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         for key: String in [
                 "source_action", "animation", "animation_frame_count",
                 "startup_frames", "active_frames", "recovery_frames",
-                "damage", "prototype_push", "source_impact"]:
+                "damage", "source_impact"]:
             if not entry.has(key):
                 return _reject_attack_config(action + " lacks " + key)
         if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
                 or not _is_number(entry["recovery_frames"])
                 or not _is_number(entry["animation_frame_count"])
-                or not _is_number(entry["damage"])
-                or not _is_number(entry["prototype_push"])):
+                or not _is_number(entry["damage"])):
             return _reject_attack_config(action + " contains non-numeric values")
         var startup_frames: int = int(entry["startup_frames"])
         var active_frames: int = int(entry["active_frames"])
@@ -1597,8 +3956,7 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
         if frame_count != expected_frame_count:
             return _reject_attack_config(action + " animation frame count is not " + str(expected_frame_count))
         var damage: float = float(entry["damage"])
-        var push: float = float(entry["prototype_push"])
-        if (damage < 0.0 or push < 0.0
+        if (damage < 0.0
                 or absf(damage - float(expected["damage"])) > 0.001):
             return _reject_attack_config(action + " has invalid numeric values")
         var impact_value: Variant = entry["source_impact"]
@@ -1657,7 +4015,6 @@ func _parse_attack_config(config: Dictionary) -> Dictionary:
             "active": float(active_frames) / SOURCE_FRAME_RATE,
             "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
             "damage": damage,
-            "push": push,
             "source_action": String(entry["source_action"]),
             "animation": String(entry["animation"]),
             "animation_frame_count": frame_count,
@@ -1858,14 +4215,13 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
         for key: String in [
                 "source_action", "animation", "animation_frame_count",
                 "startup_frames", "active_frames", "recovery_frames",
-                "damage", "prototype_push", "source_impact"]:
+                "damage", "source_impact"]:
             if not entry.has(key):
                 return _reject_attack_config(action + " lacks " + key)
         if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
                 or not _is_number(entry["recovery_frames"])
                 or not _is_number(entry["animation_frame_count"])
-                or not _is_number(entry["damage"])
-                or not _is_number(entry["prototype_push"])):
+                or not _is_number(entry["damage"])):
             return _reject_attack_config(action + " contains non-numeric values")
         var startup_frames: int = int(entry["startup_frames"])
         var active_frames: int = int(entry["active_frames"])
@@ -1886,8 +4242,7 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
                 or startup_frames != int(expected[3])
                 or active_frames != int(expected[4])
                 or recovery_frames != int(expected[5])
-                or absf(float(entry["damage"]) - float(expected[6])) > 0.001
-                or absf(float(entry["prototype_push"])) > 0.001):
+                or absf(float(entry["damage"]) - float(expected[6])) > 0.001):
             return _reject_attack_config(action + " does not match recovered thai.set frames")
         var impact_value: Variant = entry["source_impact"]
         if not impact_value is Dictionary:
@@ -1908,11 +4263,204 @@ func _parse_thai_mapped_attack_config(config: Dictionary) -> Dictionary:
             "active": float(active_frames) / SOURCE_FRAME_RATE,
             "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
             "damage": float(entry["damage"]),
-            "push": float(entry["prototype_push"]),
             "source_action": String(entry["source_action"]),
             "animation": String(entry["animation"]),
             "animation_frame_count": frame_count,
             "source_impact": impact.duplicate(true),
+        }
+    radius_scale = loaded_radius_scale
+    source_units_to_world = world_height / source_height
+    source_animation_radii = loaded_radii
+    REACTION_PROFILES = loaded_reactions
+    EXACT_REACTIONS = {}
+    return result
+
+
+func _parse_set_mapped_attack_config(
+        config: Dictionary,
+        set_name: String,
+        attack_data: Dictionary,
+        radii_data: Dictionary,
+        reaction_data: Dictionary
+) -> Dictionary:
+    # Mapped fighting-set profile: the JSON may only restate what the recovered
+    # table holds, and every table row must be present. This is the same
+    # contract as _parse_thai_mapped_attack_config, generalised so kungfu.set
+    # (Master/SinFu) and karate.set (Ken) reuse it instead of Brick's table.
+    var schema_value: Variant = config.get("schema_version")
+    if not _is_number(schema_value) or float(schema_value) != 4.0:
+        return _reject_attack_config("unsupported schema version")
+    if (typeof(config.get("source_archive")) != TYPE_STRING
+            or String(config.get("source_archive")) != set_name):
+        return _reject_attack_config("unexpected source archive")
+    var frame_rate_value: Variant = config.get("frame_rate")
+    if (not _is_number(frame_rate_value)
+            or absf(float(frame_rate_value) - SOURCE_FRAME_RATE) > 0.001):
+        return _reject_attack_config("frame rate does not match the source")
+    var geometry_value: Variant = config.get("source_geometry")
+    if not geometry_value is Dictionary:
+        return _reject_attack_config("source_geometry is not an object")
+    var geometry: Dictionary = geometry_value
+    for key: String in [
+            "source_height", "world_height", "radius_scale",
+            "idle_source_archive", "animation_radii"]:
+        if not geometry.has(key):
+            return _reject_attack_config("source_geometry lacks " + key)
+    if (not _is_number(geometry["source_height"])
+            or not _is_number(geometry["world_height"])
+            or not _is_number(geometry["radius_scale"])):
+        return _reject_attack_config("source_geometry contains non-numeric scale values")
+    var source_height: float = float(geometry["source_height"])
+    var world_height: float = float(geometry["world_height"])
+    var loaded_radius_scale: float = float(geometry["radius_scale"])
+    if (typeof(geometry["idle_source_archive"]) != TYPE_STRING
+            or String(geometry["idle_source_archive"]) != set_name):
+        return _reject_attack_config("unexpected idle source archive")
+    if (source_height <= 0.0
+            or absf(source_height - SOURCE_CHARACTER_HEIGHT) > 0.001
+            or world_height <= 0.0
+            or absf(world_height - WORLD_CHARACTER_HEIGHT) > 0.001
+            or loaded_radius_scale <= 0.0
+            or absf(loaded_radius_scale - 1.0) > 0.001):
+        return _reject_attack_config("source_geometry has invalid or unexpected scale values")
+    var radii_value: Variant = geometry["animation_radii"]
+    if not radii_value is Dictionary:
+        return _reject_attack_config("animation_radii is not an object")
+    var radii: Dictionary = radii_value
+    var loaded_radii: Dictionary = {}
+    for animation: String in radii_data:
+        if not radii.has(animation) or not _is_number(radii[animation]):
+            return _reject_attack_config("animation_radii." + animation + " is missing or non-numeric")
+        var radius: float = float(radii[animation])
+        if radius <= 0.0 or absf(radius - float(radii_data[animation])) > 0.001:
+            return _reject_attack_config("animation_radii." + animation + " does not match " + set_name)
+        loaded_radii[animation] = radius
+    for animation: String in radii:
+        if not _is_number(radii[animation]) or float(radii[animation]) <= 0.0:
+            return _reject_attack_config("animation_radii." + animation + " is invalid")
+        loaded_radii[animation] = float(radii[animation])
+    var loaded_reactions: Dictionary = _parse_reaction_profiles(
+        config.get("reaction_profiles"), reaction_data
+    )
+    if loaded_reactions.is_empty():
+        return {}
+    var configured_attacks: Variant = config.get("attacks")
+    if not configured_attacks is Dictionary:
+        return _reject_attack_config("attacks is not an object")
+    var attacks: Dictionary = configured_attacks
+    for required_action: String in attack_data:
+        if not attacks.has(required_action):
+            return _reject_attack_config(set_name + " mapping lacks " + required_action)
+    var result: Dictionary = {}
+    for action: String in attacks.keys():
+        if not attack_data.has(action):
+            return _reject_attack_config(
+                set_name + " mapping contains an unknown action: " + action
+            )
+        var entry_value: Variant = attacks[action]
+        if not entry_value is Dictionary:
+            return _reject_attack_config(action + " is not an object")
+        var entry: Dictionary = entry_value
+        for key: String in [
+                "source_action", "animation", "animation_frame_count",
+                "startup_frames", "active_frames", "recovery_frames",
+                "damage", "source_impact"]:
+            if not entry.has(key):
+                return _reject_attack_config(action + " lacks " + key)
+        if (not _is_number(entry["startup_frames"]) or not _is_number(entry["active_frames"])
+                or not _is_number(entry["recovery_frames"])
+                or not _is_number(entry["animation_frame_count"])
+                or not _is_number(entry["damage"])):
+            return _reject_attack_config(action + " contains non-numeric values")
+        var startup_frames: int = int(entry["startup_frames"])
+        var active_frames: int = int(entry["active_frames"])
+        var recovery_frames: int = int(entry["recovery_frames"])
+        var frame_count: int = int(entry["animation_frame_count"])
+        if (float(entry["startup_frames"]) != float(startup_frames)
+                or float(entry["active_frames"]) != float(active_frames)
+                or float(entry["recovery_frames"]) != float(recovery_frames)
+                or float(entry["animation_frame_count"]) != float(frame_count)
+                or startup_frames < 0 or active_frames <= 0 or recovery_frames < 0
+                or startup_frames + active_frames + recovery_frames != frame_count):
+            return _reject_attack_config(action + " phase frames do not match the clip")
+        var expected: Array = attack_data.get(action, [])
+        if (String(entry["source_action"]) != String(expected[0])
+                or String(entry["animation"]) != String(expected[1])
+                or frame_count != int(expected[2])
+                or startup_frames != int(expected[3])
+                or active_frames != int(expected[4])
+                or recovery_frames != int(expected[5])
+                or absf(float(entry["damage"]) - float(expected[6])) > 0.001):
+            return _reject_attack_config(
+                action + " does not match recovered " + set_name + " frames"
+            )
+        var impact_value: Variant = entry["source_impact"]
+        if not impact_value is Dictionary:
+            return _reject_attack_config(action + " source_impact is not an object")
+        var impact: Dictionary = impact_value
+        for key: String in ["attack_radius", "body_part", "height", "strength", "direction"]:
+            if not impact.has(key):
+                return _reject_attack_config(action + " impact lacks " + key)
+        if (not _is_number(impact["attack_radius"])
+                or absf(float(impact["attack_radius"]) - float(expected[7])) > 0.001
+                or String(impact["body_part"]) != String(expected[8])
+                or String(impact["height"]) != String(expected[9])
+                or String(impact["strength"]) != String(expected[10])
+                or String(impact["direction"]) != String(expected[11])):
+            return _reject_attack_config(
+                action + " impact does not match recovered " + set_name + " data"
+            )
+        var multi_impacts: Array = []
+        if entry.has("multi_impacts"):
+            if not entry["multi_impacts"] is Array:
+                return _reject_attack_config(action + " multi_impacts is not an array")
+            for multi_value: Variant in entry["multi_impacts"]:
+                if not multi_value is Dictionary:
+                    return _reject_attack_config(action + " multi impact is not an object")
+                var multi_impact: Dictionary = multi_value
+                for key: String in [
+                        "damage", "damage_time", "attack_radius",
+                        "body_part", "height", "strength", "direction"]:
+                    if not multi_impact.has(key):
+                        return _reject_attack_config(action + " multi impact lacks " + key)
+                var timing_value: Variant = multi_impact["damage_time"]
+                if (not timing_value is Array or Array(timing_value).size() != 2
+                        or not _is_number(timing_value[0]) or not _is_number(timing_value[1])
+                        or float(timing_value[0]) < 0.0
+                        or float(timing_value[1]) < float(timing_value[0])
+                        or float(timing_value[1]) >= float(frame_count)):
+                    return _reject_attack_config(action + " multi impact timing is invalid")
+                if (not _is_number(multi_impact["damage"])
+                        or not _is_number(multi_impact["attack_radius"])):
+                    return _reject_attack_config(action + " multi impact values are non-numeric")
+                if String(multi_impact["body_part"]) not in ["larm", "rarm", "lleg", "rleg"]:
+                    return _reject_attack_config(action + " multi impact body part is invalid")
+                if String(multi_impact["height"]) not in ["high", "medium", "low"]:
+                    return _reject_attack_config(action + " multi impact height is invalid")
+                if String(multi_impact["strength"]) not in ["hard", "normal", "brutal"]:
+                    return _reject_attack_config(action + " multi impact strength is invalid")
+                if String(multi_impact["direction"]) not in ["frontal", "fromleft", "fromright", "fromabove"]:
+                    return _reject_attack_config(action + " multi impact direction is invalid")
+                multi_impacts.append(multi_impact.duplicate(true))
+            var window_start: int = int(multi_impacts[0]["damage_time"][0])
+            var window_end: int = int(multi_impacts[multi_impacts.size() - 1]["damage_time"][1])
+            if (window_start != startup_frames
+                    or window_end - window_start + 1 != active_frames):
+                return _reject_attack_config(
+                    action + " multi impact windows do not span the active phase"
+                )
+        var animation_radius: float = float(radii_data.get(String(entry["animation"]), -1.0))
+        result[action] = {
+            "startup": float(startup_frames) / SOURCE_FRAME_RATE,
+            "active": float(active_frames) / SOURCE_FRAME_RATE,
+            "recovery": float(recovery_frames) / SOURCE_FRAME_RATE,
+            "damage": float(entry["damage"]),
+            "source_action": String(entry["source_action"]),
+            "animation": String(entry["animation"]),
+            "animation_frame_count": frame_count,
+            "animation_radius": animation_radius,
+            "source_impact": impact.duplicate(true),
+            "multi_impacts": multi_impacts,
         }
     radius_scale = loaded_radius_scale
     source_units_to_world = world_height / source_height
@@ -2018,7 +4566,10 @@ func _try_load_candidate_visual() -> void:
     var state: GLTFState = GLTFState.new()
     var result: Error = document.append_from_file(path, state)
     if result != OK:
-        candidate_load_error = "GLB read failed with error %d" % result
+        candidate_load_error = (
+            "GLB read failed with error %d: %s (validate skin inverseBindMatrices "
+            + "count == joints count before exporting)"
+        ) % [result, path]
         _reset_candidate_derived_state()
         push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
@@ -2055,11 +4606,22 @@ func _try_load_candidate_visual() -> void:
         push_warning(character_name + " candidate GLB disabled: " + candidate_load_error)
         return
     var missing: Array[String] = []
+    # A mapped set candidate may ship only the character-specific clips (the
+    # Master candidate has no m04 base punch/kick yet). Such candidates still
+    # load; per-action availability stays gated by supports_attack().
+    var required_clips: Array[String] = ["idle", "punch", "kick"]
+    if not attack_set_profile.is_empty():
+        # A mapped set candidate may ship only some of the set's clips (the
+        # Master candidate has no m04 base punch/kick yet); those are optional.
+        required_clips = ["idle"]
     for action: String in ["idle", "punch", "kick"]:
+        if not candidate_clips.has(action):
+            continue
         var expected: String = candidate_clips[action]
         var matched: String = _find_animation_clip(_candidate_animation, expected)
         if matched.is_empty():
-            missing.append(expected)
+            if action in required_clips:
+                missing.append(expected)
         else:
             _candidate_clip_paths[action] = matched
     if not missing.is_empty():
@@ -2083,7 +4645,9 @@ func _try_load_candidate_visual() -> void:
             "move", "ko", "high_punch", "high_kick",
             "low_punch", "low_kick",
             "high_punch3", "low_punch3", "low_kick3", "high_kick3",
-            "special_kick_high",
+            "special_kick_high", "special_kick_low",
+            "special_punch_high", "special_punch_low",
+            "attack_to_floor", "endattack",
             "special_kick_high_brick", "special_kick_low_brick",
             "special_punch_high_brick", "special_punch_low_brick",
             "parry_high_brick", "parry_low_brick", "parry_attack_brick",
@@ -2095,9 +4659,9 @@ func _try_load_candidate_visual() -> void:
             "special_punch_high_miss", "special_punch_high_hit",
             "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2",
             "endattack1", "endattack2", "stun", "stun_fall",
-            "stun_hard", "stun_brutal", "heavy",
-            "move", "moveleft", "moveright", "stepfwd", "stepback",
-            "stepleft", "stepright"]:
+            "stun_hard", "stun_brutal",
+            "move", "movefwd", "moveback", "moveleft", "moveright", "stepfwd", "stepback",
+            "stepleft", "stepright", "skipfwd", "skipback"]:
         if not candidate_clips.has(action):
             continue
         var matched_optional: String = _find_animation_clip(
@@ -2105,6 +4669,31 @@ func _try_load_candidate_visual() -> void:
         )
         if not matched_optional.is_empty():
             _candidate_clip_paths[action] = matched_optional
+    # Candidate-provided reactions are separate from source-link flags. Never
+    # expose one through the generic animation table before its tracks pass the
+    # reaction safety check, including reactions selected by native links.
+    var reaction_names: Dictionary = {}
+    for group: String in REACTION_PROFILES:
+        for profile: Variant in Dictionary(REACTION_PROFILES[group]).values():
+            reaction_names[String(profile.get("animation", ""))] = true
+    for group: String in EXACT_REACTIONS:
+        for profile: Variant in EXACT_REACTIONS[group]:
+            reaction_names[String(profile.get("animation", ""))] = true
+    for group: String in _native_reactions:
+        for profile: Variant in _native_reactions[group]:
+            reaction_names[String(profile.get("animation", ""))] = true
+    for reaction_name: String in reaction_names:
+        var matched: String = _find_animation_clip(_candidate_animation, reaction_name)
+        _candidate_clip_paths.erase(reaction_name)
+        if not matched.is_empty() and _candidate_skeleton != null:
+            if _prepare_candidate_reaction(_candidate_animation.get_animation(matched)):
+                _candidate_clip_paths[reaction_name] = matched
+    for anim_name: String in _candidate_animation.get_animation_list():
+        var native_name: String = anim_name.get_file()
+        if reaction_names.has(native_name):
+            continue
+        if not _candidate_clip_paths.values().has(anim_name):
+            _candidate_clip_paths[anim_name] = anim_name
     # Reaction clips are optional so earlier three-clip local assets still work.
     for group: String in REACTION_PROFILE_DATA:
         for height: String in REACTION_PROFILE_DATA[group]:
@@ -2171,7 +4760,9 @@ func _try_load_candidate_visual() -> void:
         move.loop_mode = Animation.LOOP_LINEAR
     for looping_return: String in [
         IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP, FACEUP_IDLE_CLIP,
-        "move", "moveleft", "moveright", "stepfwd", "stepback",
+        "all_idle_face_down_forbigguy", "all_idle_face_up_forbigguy",
+        "all_idle_face_down_forsmallguy", "all_idle_face_up_forsmallguy",
+        "move", "movefwd", "moveback", "moveleft", "moveright", "stepfwd", "stepback",
         "stepleft", "stepright",
     ]:
         if not _candidate_clip_paths.has(looping_return):
@@ -2237,6 +4828,7 @@ func _try_load_candidate_visual() -> void:
     for visual: MeshInstance3D in _placeholder_visuals:
         visual.visible = false
     candidate_loaded = true
+    _snapshot_size_variant_base_paths()
     _play_candidate_action("idle")
 
 
@@ -2389,8 +4981,42 @@ func _disable_candidate_character_position_tracks(clip: Animation) -> void:
         ]:
             continue
         var target: Node = animation_root.get_node_or_null(clip.track_get_path(track))
-        if target == _candidate_character:
+        var path_text: String = String(clip.track_get_path(track))
+        # The GLB wraps the authored character under Z_up_to_glTF_Y_up/root,
+        # so resolving the absolute track path can miss the character node.
+        # Its position track carries the per-clip source translation (for
+        # m01_kck_front_step it drives the visible mesh down/forward) and must
+        # never move the visual by itself; gameplay uses attack_root_motion.
+        if target == _candidate_character or path_text == "character" \
+                or path_text.ends_with("/character"):
             clip.track_set_enabled(track, false)
+
+
+func _prune_unresolvable_tracks(clip: Animation) -> void:
+    ## A borrowed variant animation is authored on the same source skeleton, but
+    ## an opponent candidate may also carry tracks for its own mesh/accessory
+    ## nodes (for example bl_ken_goodall_01_body_hw_kinetic).  Those nodes do not
+    ## exist on the player rig; remove exactly those tracks so playback never
+    ## targets a missing node.  Skeleton bone tracks are kept.
+    if clip == null or _candidate_animation == null:
+        return
+    var animation_root: Node = _candidate_animation.get_node_or_null(
+        _candidate_animation.root_node
+    )
+    if animation_root == null:
+        return
+    for track: int in range(clip.get_track_count() - 1, -1, -1):
+        if clip.track_get_type(track) not in [
+                Animation.TYPE_POSITION_3D, Animation.TYPE_ROTATION_3D,
+                Animation.TYPE_SCALE_3D]:
+            continue
+        var path: NodePath = clip.track_get_path(track)
+        if path.get_subname_count() > 0:
+            if _candidate_skeleton != null and _candidate_skeleton.find_bone(
+                    String(path.get_subname(0))) >= 0:
+                continue
+        if animation_root.get_node_or_null(path) == null:
+            clip.remove_track(track)
 
 
 func _align_candidate_attack_timings() -> void:
@@ -2485,10 +5111,18 @@ func _play_candidate_action(action: String, start_frame: int = 0) -> void:
     candidate_visual_blend_seconds_last = blend_seconds if blend_applied else 0.0
     candidate_visual_blend_source_action_last = previous_action if blend_applied else ""
     candidate_visual_blend_target_action_last = action if blend_applied else ""
+    # The candidate idle clip contains a visible two-beat body sway. After a
+    # solitary attack the port would loop that sway and make every move look
+    # like a failed recoil. Hold the first idle pose instead.
+    _candidate_animation.speed_scale = (
+        0.0 if action in ["idle", "idle2", "idle3"] else 1.0
+    )
     if blend_applied:
         _candidate_animation.play(candidate_animation_clip, blend_seconds)
     else:
         _candidate_animation.play(candidate_animation_clip)
+    if action in ["idle", "idle2", "idle3"]:
+        _candidate_animation.seek(0.0, true)
     if start_frame > 0:
         _candidate_animation.seek(
             float(start_frame) / SOURCE_FRAME_RATE, true
@@ -2498,12 +5132,14 @@ func _play_candidate_action(action: String, start_frame: int = 0) -> void:
 func supports_attack(kind: String) -> bool:
     if not ATTACKS.has(kind):
         return false
+    if _is_variant_attack(kind):
+        # A variant is enterable only when its recovered unique tag is in the
+        # explicit style selection and an existing candidate can play it
+        # (player or opponent clip).
+        if not _variant_selected_ok(kind):
+            return false
+        return _resolve_variant_clip(kind)
     if candidate_loaded and not _candidate_clip_paths.has(kind):
-        # Heavy has no separate recovered animation; its visual path reuses kick.
-        if (kind == "heavy"
-                and attack_config_path != BRICK_ATTACK_CONFIG_PATH
-                and _candidate_clip_paths.has("kick")):
-            return true
         return false
     return true
 
@@ -2513,13 +5149,192 @@ func _uses_standing_idle_rules() -> bool:
     return state in ["idle", "idle2", "idle3"]
 
 
-func _can_block_current_hit() -> bool:
+## The recovered canblock row for an incoming impact, or {} when the set does
+## not encode that strength/height combination (see CANBLOCK_ROWS).
+static func canblock_row_for(strength: String, height: String) -> Dictionary:
+    for row: Dictionary in CANBLOCK_ROWS:
+        if String(row["strength"]) != strength:
+            continue
+        var row_height: String = String(row["height"])
+        if not row_height.is_empty() and row_height != height:
+            continue
+        return row
+    return {}
+
+
+## Height band covered by a recovered guard action ("" for anything else).
+static func block_guard_height(action: String) -> String:
+    return String(BLOCK_GUARD_HEIGHTS.get(action, ""))
+
+
+## Height band selected by one direct-input token, or "" when the shipped
+## native data has no recovered token -> height row.  The table is empty today.
+static func direct_guard_height_for(token: String) -> String:
+    return String(DIRECT_GUARD_HEIGHT_BY_TOKEN.get(token, ""))
+
+
+## Resolve the currently held native status tokens into a direct-input guard.
+##
+## `left` is the only proven guard token (all ten canblock/canblock2 rows in
+## every shipped set require exactly it).  Any other token - including the
+## vertical `up`/`down` and the attack `a`/`b`/`c`/`d`/`f` tokens - is *not* a
+## height selector: it is ignored for height and can never invent a high, mid
+## or low band.  With no `left` the decision fails closed (guard=false).
+##
+## The returned action/height stay empty while DIRECT_GUARD_HEIGHT_BY_TOKEN is
+## empty.  A future proven row can fill them without changing callers.
+static func direct_guard_input(tokens: Array) -> Dictionary:
+    var has_guard_token: bool = false
+    for value: Variant in tokens:
+        if String(value) == DIRECT_GUARD_STATUS:
+            has_guard_token = true
+            break
+    if not has_guard_token:
+        return {"guard": false, "action": "", "height": ""}
+    var height: String = direct_guard_height_for(DIRECT_GUARD_STATUS)
+    var action: String = ""
+    if not height.is_empty():
+        for candidate: String in BLOCK_GUARD_HEIGHTS:
+            if String(BLOCK_GUARD_HEIGHTS[candidate]) == height:
+                action = candidate
+                break
+    return {"guard": true, "action": action, "height": height}
+
+
+## ---------------------------------------------------------------------------
+## Recovered canblock/canblock2 action time windows.
+##
+## The five block rows (CANBLOCK_ROWS) are `from_group` links.  Native
+## TimeWindowCheck checks such a link against the *current animation's* own
+## canblock/canblock2 group window, inclusive of both endpoints; the link is
+## simply not followed outside it.  A guard held forever is not a native block
+## action, so the port gates every block/guard decision on the owning action's
+## authored window.  Windows are read exclusively from the loaded set export -
+## an action with no canblock group has no block window and fails closed, and
+## its `facing` duration is never used as a substitute.
+## ---------------------------------------------------------------------------
+
+
+## Authored canblock windows of one action of this fighter's set, or [] when
+## the set does not author one (fail closed).
+func canblock_windows_for_action(action: String) -> Array[Dictionary]:
+    if _canblock_windows == null:
+        return []
+    return _canblock_windows.windows_for(action)
+
+
+## True only when `frame` lies inside an authored canblock window of `action`.
+func canblock_window_open(action: String, frame: float) -> bool:
+    if _canblock_windows == null:
+        return false
+    return _canblock_windows.open(action, frame)
+
+
+## The authored window that authorises `frame`, or {} when it would fail closed.
+func canblock_containing_window(action: String, frame: float) -> Dictionary:
+    if _canblock_windows == null:
+        return {}
+    return _canblock_windows.containing_window(action, frame)
+
+
+## Provenance of the loaded window table (empty when none is loaded).
+func canblock_window_source() -> Dictionary:
+    if _canblock_windows == null:
+        return {}
+    return _canblock_windows.describe()
+
+
+## The action + source frame that own the current guard decision.
+##
+##   * blockstun/hitstun: the block/impact reaction action itself, so a chained
+##     block uses that block action's own [6,14] / [6,23] / ... window;
+##   * attacks: the attack's native source action (its canblock window, if any);
+##   * ground actions: the state name, which is also the native action name;
+##   * standing states: `_current_action_name()` (idle / idle2 / idle3 or the
+##     current step/move action), at the recovered reaction frame.
+func block_decision_context() -> Dictionary:
+    var action: String = ""
+    if state in ["hitstun", "blockstun"]:
+        action = _native_reaction_action()
+    elif state in ["startup", "active", "recovery"]:
+        action = _current_action_name()
+    elif state in [
+            "faceupattack", "facedownattack", "attacktofloor",
+            "faceupgetup", "facedowngetup", "faceupidle", "facedownidle",
+            "faceupko", "facedownko",
+        ]:
+        action = state
+    else:
+        action = _current_action_name()
+        if action.is_empty():
+            action = state
+    return {
+        "action": action,
+        "frame": maxf(_native_reaction_frame(), 0.0),
+        "state": state,
+    }
+
+
+## Whether the current guard decision is inside its native canblock window.
+## No window table, no owning action, no authored group, or a frame outside the
+## window all fail closed.
+func guard_window_open() -> bool:
+    if _canblock_windows == null:
+        return false
+    var context: Dictionary = block_decision_context()
+    return _canblock_windows.open(
+        String(context["action"]), float(context["frame"])
+    )
+
+
+## Chained block: a fighter already in a block animation can only re-block
+## inside that block action's own authored canblock window.  This replaces the
+## old unconditional "state == blockstun" block, which had no time window.
+func blockstun_window_open() -> bool:
+    if state != "blockstun" or _canblock_windows == null:
+        return false
+    return _canblock_windows.open(
+        _native_reaction_action(), maxf(_native_reaction_frame(), 0.0)
+    )
+
+
+func _can_block_current_hit(impact: Dictionary = {}) -> bool:
+    # Native TimeWindowCheck: the block decision is valid only inside the
+    # owning action's authored canblock/canblock2 window.  Outside it (or when
+    # the set authors no window) the decision fails closed: no block at all.
+    if not guard_window_open():
+        return false
     if _uses_standing_idle_rules():
-        return true
+        return _guard_covers_impact(impact)
     if state != "faceupattack":
         return false
-    var source_frame: float = state_time * SOURCE_FRAME_RATE
-    return source_frame + 0.0001 >= 27.0 and source_frame <= 38.0001
+    # Ground attack: faceupattack's own authored canblock window (brucelee.set
+    # [27,38]) replaces the hardcoded 27/38 numbers, so every fighting set uses
+    # its own recovered frames and a set without that group fails closed.
+    return true
+
+
+## Recovered block gate for the standing guard.  `_can_block_current_hit` has
+## already enforced the owning action's authored canblock time window, so this
+## second gate decides only *which* incoming impact a held guard answers.
+##
+## The held guard answers only "is a canblock action up?"; which impact it
+## covers is the opponent's business (CANBLOCK_ROWS is keyed on the incoming
+## strength/height).  The port therefore asks the row table whether this impact
+## has a block row at all.  Fallbacks:
+##   * an unqualified guard (guard_held set by direct input or by a caller that
+##     has no height - the original's block-height input mapping lives in
+##     adreno_200/input.config and is unrecovered) keeps the port's existing
+##     unconditional guard;
+##   * an impact record without a strength carries no recovered enum, so it is
+##     treated as missing metadata and keeps the same unconditional guard.
+func _guard_covers_impact(impact: Dictionary) -> bool:
+    if guard_block_action.is_empty():
+        return true
+    var strength: String = String(impact.get("strength", ""))
+    if strength.is_empty():
+        return true
+    return not canblock_row_for(strength, String(impact.get("height", ""))).is_empty()
 
 
 func _clear_reaction_tracking() -> void:
@@ -2547,13 +5362,15 @@ func _queue_candidate_visual_blend(seconds: float) -> void:
         candidate_visual_blend_pending_seconds = 0.0
 
 
-func _enter_locomotion_state(next_state: String) -> void:
+func _enter_locomotion_state(next_state: String, start_frame: int = 0) -> void:
     var previous_state: String = state
     state = next_state
-    state_time = 0.0
+    state_time = float(start_frame) / SOURCE_FRAME_RATE
     attack_kind = ""
-    _clear_ground_attack_input_history()
-    _clear_standing_combo_state()
+    _attack_clock_active = false
+    _reaction_clock_active = false
+    _reaction_return_action = ""
+    _clear_link_state()
     _clear_reaction_tracking()
     if (candidate_visual_blending_enabled
             and previous_state == "attacktofloor"
@@ -2562,8 +5379,10 @@ func _enter_locomotion_state(next_state: String) -> void:
             and _candidate_animation != null
             and _candidate_animation.is_playing()):
         _queue_candidate_visual_blend(
-            float(CANDIDATE_ATTACK_TO_FLOOR_RETURN_BLENDING_FRAMES)
-                    / SOURCE_FRAME_RATE
+            float(_native_link_blending_from(
+                        "attacktofloor", "idle2",
+                        0
+                    )) / SOURCE_FRAME_RATE
         )
     else:
         _restart_candidate_action()
@@ -2578,11 +5397,13 @@ func _verified_post_hit_return_state() -> String:
         last_reaction_clip_implemented
         and _candidate_clip_paths.has(last_reaction_animation)
     )
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+    if (bool(attack_set_profile.get("facedown_low_impact", false))
             and last_reaction_source_action == "impacthardfrontlow"
-            and last_reaction_animation == BRICK_FRONT_LOW_CLIP
+            and last_reaction_animation == String(
+                attack_set_profile.get("front_low_clip", BRICK_FRONT_LOW_CLIP)
+            )
             and reaction_clip_ready
-            and _candidate_clip_paths.has(BRICK_FACEDOWN_IDLE_CLIP)):
+            and _candidate_clip_paths.has(_facedown_idle_clip())):
         return "facedownidle"
     if (reaction_clip_ready
             and return_action == "idle2"
@@ -2590,14 +5411,32 @@ func _verified_post_hit_return_state() -> String:
         return "idle2"
     if (reaction_clip_ready
             and return_action == "facedownidle"
-            and _candidate_clip_paths.has(FACEDOWN_IDLE_CLIP)
+            and _candidate_clip_paths.has(_facedown_idle_clip())
             and _candidate_clip_paths.has(FACEDOWN_GETUP_CLIP)):
         return "facedownidle"
     if (reaction_clip_ready
             and return_action == "faceupidle"
-            and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)):
+            and _candidate_clip_paths.has(_faceup_idle_clip())):
+        return "faceupidle"
+    if (reaction_clip_ready
+            and last_reaction_source_action == AIR_HIT_TARGET
+            and (return_action.is_empty() or return_action == "faceupidle")
+            and _candidate_clip_paths.has(_faceup_idle_clip())):
+        # Recovered row 317: impacthardair -> faceupidle at [25,25].  The
+        # non-frame-clock reaction path has no gate return_action, so the
+        # target is read from the recovered row instead of falling to idle.
         return "faceupidle"
     return "idle"
+
+
+func _stun_step_seconds(source: String, target: String, fallback_frames: int) -> float:
+    # Duration of a stun state comes from its outgoing link window start.
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") == source and _link_text(link, "to") == target:
+            var window: Array = Array(link.get("time", []))
+            if not window.is_empty():
+                return float(window[0]) / SOURCE_FRAME_RATE
+    return float(fallback_frames) / SOURCE_FRAME_RATE
 
 
 func _advance_impactstun_state(delta: float) -> void:
@@ -2605,21 +5444,209 @@ func _advance_impactstun_state(delta: float) -> void:
     if state_time > 0.000001:
         return
     state = "stun"
-    state_time = float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+    state_time = _stun_step_seconds("stun", "stun2", STUN_DURATION_FRAMES)
 
 
 func _advance_stun_state(delta: float) -> void:
     state_time -= delta
     if state_time > 0.000001:
         return
-    if state == "stun":
-        state = "stun2"
-        state_time = float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
-    elif state == "stun2":
-        state = "stunfall"
-        state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
-    else:
-        _begin_faceup_ko(0.0)
+    # The next stun state comes from the current action's outgoing links:
+    # stun -> stun2 [55,61], stun2 -> stunfall [55,61], stunfall -> faceupko [71,79].
+    var from_state: String = state
+    for target: String in ["stun2", "stunfall", "faceupko"]:
+        if not _has_native_link(from_state, target):
+            continue
+        if target == "faceupko":
+            _begin_faceup_ko(0.0)
+            return
+        state = target
+        # SetAnimation restarts the animation at frame 0, so the remaining time
+        # belongs to the new state's own outgoing link, not to the link just
+        # followed. stunfall -> faceupko is [71,79]: stunfall lasts 71 frames
+        # even though stun2 -> stunfall starts at 55.
+        state_time = _stun_state_remaining_seconds(target)
+        return
+    _begin_faceup_ko(0.0)
+
+
+func _stun_state_remaining_seconds(source: String) -> float:
+    # Start of the state's own outgoing link window, in seconds. The stun chain
+    # is a sequence of links (284/285/286); the window start is the frame the
+    # next state becomes reachable, so it is the duration of the current one.
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != source:
+            continue
+        var target: String = _link_text(link, "to")
+        if target not in ["stun2", "stunfall", "faceupko", "facedownko"]:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() >= 2:
+            return float(window[0]) / SOURCE_FRAME_RATE
+    return float(STUN_DURATION_FRAMES) / SOURCE_FRAME_RATE
+
+
+func _stun_impact_reaction(impact: Dictionary) -> Dictionary:
+    # Recovered stun-impact entry. krm::CFighter::UserControlUpdate scans the
+    # stun actions' links in native order; the five `impactsfromstun` rows are
+    # 126 (normal) -> stunlighthighimpact, 128 (hard) -> stunhardimpact,
+    # 130 (normal) -> stunlightlowimpact, 132 (heightmed) -> stunmediumimpact,
+    # 134 (brutal) -> stunbrutalimpact. First match wins, so a normal hit takes
+    # row 126 whatever its height, and a hard hit takes row 128 before row 132.
+    #
+    # The caller has already established that this blow lands (impact record
+    # active, in reach, cursor unspent), so the rows are selected by their
+    # recovered attack-attribute conditions; the recovered state machine then
+    # continues through the target's own outgoing link.
+    if native_reaction_enabled and _native_reaction_gate != null:
+        var attributes: Dictionary = _stun_impact_attributes(impact)
+        var strength: String = String(attributes.get("strength", ""))
+        var height: String = String(attributes.get("height", ""))
+        if not strength.is_empty() or not height.is_empty():
+            var probe: Dictionary = {
+                "health": health,
+                "incoming_damage": 0.0,
+                "distance": 0.0,
+                "victim_radius": 0.0,
+                "attacker": {
+                    "impact_active": true,
+                    "height": height,
+                    "strength": strength,
+                    "direction": String(attributes.get("direction", "")),
+                    "radius": 0.0,
+                    "scale": 1.0,
+                    "last_index": 0,
+                    "cursor": 0,
+                    "damage": 0.0,
+                },
+            }
+            for link: Dictionary in _native_reaction_gate.links:
+                if _link_text(link, "from_group") != "impactsfromstun":
+                    continue
+                if not _stun_impact_row_matches(link, probe):
+                    continue
+                return _stun_impact_result(link)
+            # The recovered rows do not answer this impact: let the caller keep
+            # its documented source-driven fallback / refusal.
+            return {}
+    # Opt-out path (BRUCELEE_NATIVE_REACTION=0) or a gate that failed to load:
+    # the pre-recovery strength/height mapping, unchanged.
+    var strength: String = String(impact.get("strength", ""))
+    var height: String = String(impact.get("height", ""))
+    var wanted: String = ""
+    if height == "medium":
+        wanted = "stunmediumimpact"
+    elif strength == "hard":
+        wanted = "stunhardimpact"
+    elif strength == "brutal":
+        wanted = "stunbrutalimpact"
+    elif strength == "normal":
+        wanted = "stunlighthighimpact" if height == "high" else (
+            "stunlightlowimpact" if height == "low" else "stunmediumimpact")
+    if wanted.is_empty():
+        return {}
+    var row: Dictionary = _native_actions.get(wanted, {})
+    if row.is_empty() or String(row.get("pose", "")) != "stun":
+        return {}
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != wanted:
+            continue
+        var target: String = _link_text(link, "to")
+        if target not in ["faceupko", "facedownko", "stunfall"]:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.is_empty():
+            continue
+        return {
+            "target": wanted,
+            "animation": String(row.get("animation", "")),
+            "exit_frame": int(window[0]),
+            "next_state": target,
+        }
+    return {}
+
+
+func _stun_impact_attributes(impact: Dictionary) -> Dictionary:
+    # Strength/height/direction of the impact record that selected `impact`
+    # (the incoming reaction). Live contacts and EXACT_REACTIONS entries carry
+    # them directly; a fixture that only names the reaction action gets them
+    # from the first recovered `impactable` row that targets that action.
+    var strength: String = String(impact.get("strength", ""))
+    var height: String = String(impact.get("height", ""))
+    var direction: String = String(impact.get("direction", ""))
+    if not strength.is_empty() or not height.is_empty():
+        return {"strength": strength, "height": height, "direction": direction}
+    var source: String = String(impact.get("source_action", ""))
+    if source.is_empty():
+        return {}
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != source:
+            continue
+        if _link_text(link, "from_group") != "impactable":
+            continue
+        var conditions: Array = Array(link.get("conditions", []))
+        if not conditions.has("impact"):
+            continue
+        return {
+            "strength": _condition_attribute(conditions, "oppattackstrength"),
+            "height": _condition_attribute(conditions, "oppattackheight"),
+            "direction": _condition_attribute(conditions, "oppattackdir"),
+        }
+    return {}
+
+
+func _stun_impact_row_matches(link: Dictionary, probe: Dictionary) -> bool:
+    for condition: Variant in Array(link.get("conditions", [])):
+        if not _native_reaction_gate.condition_ok(String(condition), probe):
+            return false
+    return true
+
+
+func _stun_impact_result(link: Dictionary) -> Dictionary:
+    # Target action plus the frame its own outgoing stun/KO link starts.
+    var target: String = _link_text(link, "to")
+    if target.is_empty():
+        return {}
+    var row: Dictionary = _native_actions.get(target, {})
+    var animation: String = String(row.get("animation", ""))
+    if animation.is_empty():
+        return {}
+    for out: Dictionary in _native_links:
+        if _link_text(out, "from") != target:
+            continue
+        var next_state: String = _link_text(out, "to")
+        if next_state not in ["faceupko", "facedownko", "stunfall", "stun", "stun2"]:
+            continue
+        var window: Array = Array(out.get("time", []))
+        if window.size() < 2:
+            continue
+        return {
+            "target": target,
+            "animation": animation,
+            "exit_frame": int(window[0]),
+            "next_state": next_state,
+        }
+    return {}
+
+
+func _stun_impact_clip_alias(target: String) -> String:
+    # Port clip-map keys that already name these two stun ANMs (`stun_hard` ->
+    # all_impct_hard_frnt_high, `stun_brutal` -> all_impct_spectacular_lft in
+    # every CANDIDATE_CLIPS table). They are used only when a candidate
+    # registered the ANM under the friendly key rather than under its file name.
+    match target:
+        "stunhardimpact":
+            return "stun_hard"
+        "stunbrutalimpact":
+            return "stun_brutal"
+    return ""
+
+
+func _has_native_link(source: String, target: String) -> bool:
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") == source and _link_text(link, "to") == target:
+            return true
+    return false
 
 
 func _advance_stun_impact_state(delta: float) -> void:
@@ -2628,7 +5655,7 @@ func _advance_stun_impact_state(delta: float) -> void:
         return
     if _stun_impact_next_state == "stunfall":
         state = "stunfall"
-        state_time = float(STUN_FALL_DURATION_FRAMES) / SOURCE_FRAME_RATE
+        state_time = _stun_step_seconds("stunfall", "faceupko", STUN_FALL_DURATION_FRAMES)
     elif _stun_impact_next_state == "faceupko":
         _begin_faceup_ko(0.0)
     elif _stun_impact_next_state == "facedownko":
@@ -2650,7 +5677,7 @@ func _advance_return_state(delta: float) -> void:
     if state == "facedownidle":
         var before: float = state_time
         state_time += maxf(delta, 0.0)
-        if (attack_config_path != BRICK_ATTACK_CONFIG_PATH
+        if (bool(attack_set_profile.get("facedown_getup", true))
                 and _facedown_getup_requested(before, state_time)):
             _begin_facedown_getup()
             return
@@ -2682,7 +5709,7 @@ func _advance_return_state(delta: float) -> void:
                 )):
             _try_facedown_attack_contact()
         state_time = after
-        if _reached_source_frame(state_time, FACEDOWN_ATTACK_EXIT_FRAME):
+        if _reached_source_frame(state_time, _native_link_start_frame("facedownattack", FACEDOWN_ATTACK_EXIT_FRAME)):
             _enter_locomotion_state("idle")
         return
     if state == "impacttofloor":
@@ -2721,7 +5748,7 @@ func _advance_return_state(delta: float) -> void:
                     ATTACK_TO_FLOOR_DAMAGE_END_FRAME)):
             _try_attack_to_floor_contact()
         state_time = after
-        if _reached_source_frame(state_time, ATTACK_TO_FLOOR_EXIT_START_FRAME):
+        if _reached_source_frame(state_time, _native_link_start_frame("attacktofloor", ATTACK_TO_FLOOR_EXIT_START_FRAME)):
             # The recovered direct edge is idle2 [80,90]. Frame 80 is the
             # deterministic earliest-frame candidate; native timing is unverified.
             _enter_locomotion_state("idle2")
@@ -2738,7 +5765,7 @@ func _advance_return_state(delta: float) -> void:
                 )):
             _try_faceup_attack_contact()
         state_time = after
-        if _reached_source_frame(state_time, FACEUP_ATTACK_EXIT_FRAME):
+        if _reached_source_frame(state_time, _native_link_start_frame("faceupattack", FACEUP_ATTACK_EXIT_FRAME)):
             _enter_locomotion_state("idle")
         return
 
@@ -2798,7 +5825,6 @@ func _begin_facedown_getup() -> void:
     state = "facedowngetup"
     state_time = 0.0
     attack_kind = ""
-    _clear_ground_attack_input_history()
     _restart_candidate_action()
 
 
@@ -2806,7 +5832,6 @@ func _begin_faceup_getup() -> void:
     state = "faceupgetup"
     state_time = 0.0
     attack_kind = ""
-    _clear_ground_attack_input_history()
     _clear_reaction_tracking()
     _restart_candidate_action()
 
@@ -2814,7 +5839,7 @@ func _begin_faceup_getup() -> void:
 func _accepts_facedown_low_impact(impact_height: String, blocked: bool, damage: float) -> bool:
     return (
         state == "facedownidle"
-        and attack_config_path != BRICK_ATTACK_CONFIG_PATH
+        and not bool(attack_set_profile.get("facedown_low_impact", false))
         and not blocked
         and impact_height == "low"
         and health - damage > 0.0
@@ -2847,7 +5872,7 @@ func _accepts_impact_to_floor(
         and impact_height == "low"
         and health - damage > 0.0
         and _candidate_clip_paths.has(FACEUP_IMPACT_TO_FLOOR_CLIP)
-        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+        and _candidate_clip_paths.has(_faceup_idle_clip())
     )
 
 
@@ -2862,7 +5887,7 @@ func _accepts_faceup_low_impact(
         and impact_height == "low"
         and health - damage > 0.0
         and _candidate_clip_paths.has(FACEUP_IMPACT_CLIP)
-        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+        and _candidate_clip_paths.has(_faceup_idle_clip())
     )
 
 
@@ -2871,7 +5896,7 @@ func _accepts_faceup_ko(damage: float, blocked: bool) -> bool:
         state == "faceupidle"
         and not blocked
         and health - damage <= 0.0
-        and _candidate_clip_paths.has(FACEUP_IDLE_CLIP)
+        and _candidate_clip_paths.has(_faceup_idle_clip())
     )
 
 
@@ -2891,7 +5916,6 @@ func _begin_faceup_ko(amount: float) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     combo_hits = 0
     _clear_reaction_tracking()
     _restart_candidate_action()
@@ -2906,7 +5930,6 @@ func begin_impact_to_floor(amount: float) -> void:
     )
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     combo_hits = 0
     _clear_reaction_tracking()
     _restart_candidate_action()
@@ -2918,7 +5941,6 @@ func begin_facedown_impact(amount: float) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     combo_hits = 0
     last_reaction_group = "hit"
     last_reaction_source_action = "impactfacedown"
@@ -2937,7 +5959,6 @@ func begin_faceup_impact(amount: float) -> void:
     state_time = 0.0
     attack_kind = ""
     _attack_connected = false
-    _clear_ground_attack_input_history()
     combo_hits = 0
     last_reaction_group = "hit"
     last_reaction_source_action = "impactfaceup"
@@ -2947,197 +5968,208 @@ func begin_faceup_impact(amount: float) -> void:
     _restart_candidate_action()
 
 
-func record_virtual_press(virtual_key: String) -> bool:
-    # This is the PC prototype's abstract press path. The original Android
-    # physical-key mapping is not yet proven, so main.gd supplies a/b/c/d from
-    # explicit keyboard bindings and this method only reproduces the recovered
-    # three-item sequences as prototype input events.
-    if (state not in ["facedownidle", "faceupidle"]
-            or attack_config_path == BRICK_ATTACK_CONFIG_PATH):
-        _clear_ground_attack_input_history()
-        return false
-    if virtual_key not in ["a", "b", "c", "d"]:
-        return false
-    if state == "faceupidle":
-        var source_frame: float = state_time * SOURCE_FRAME_RATE
-        if source_frame < -0.0001 or source_frame > 45.0001:
-            _clear_ground_attack_input_history()
-            return false
-    _prune_ground_attack_input_history()
-    if _ground_attack_input_owner != state:
-        _clear_ground_attack_input_history()
-        _ground_attack_input_owner = state
-    _ground_attack_input_history.append({"key": virtual_key, "time": _time})
-    if not _matches_ground_attack_sequence():
-        return false
-    var attack_state: String = (
-        "facedownattack" if state == "facedownidle" else "faceupattack"
-    )
-    var attack_clip: String = (
-        FACEDOWN_ATTACK_CLIP if state == "facedownidle" else FACEUP_ATTACK_CLIP
-    )
-    if not _candidate_clip_paths.has(attack_clip):
-        return false
-    state = attack_state
-    state_time = 0.0
-    attack_kind = attack_state
-    attack_sequence += 1
-    _attack_connected = false
-    _clear_ground_attack_input_history()
-    _restart_candidate_action()
-    return true
-
-
 func record_standing_combo_press(
         virtual_key: String,
         modifiers: Array = []
 ) -> bool:
-    # Prototype-only sequence path for the recovered candobasicattacks links.
-    # Physical key status, exact key-event lifetime and link scheduling remain
-    # unverified. Only an attack with a recovered source window may buffer
-    # sequence input, so Heavy (no source window) never accumulates a match.
-    if not _accepts_standing_combo_input(virtual_key):
-        _clear_standing_combo_state()
+    # Decompiled model: a press becomes an event with a consumed bit. Links are
+    # re-evaluated against that event queue every physics update; no wall-clock
+    # combo window and no FIFO of attacks.
+    if not _accepts_link_input(virtual_key):
+        _clear_link_state()
         return false
-    _prune_standing_combo_input_history()
     var tokens: Array = [virtual_key]
     for modifier: Variant in modifiers:
         var token: String = String(modifier)
         if not tokens.has(token):
             tokens.append(token)
-    if tokens.has("b") and (tokens.has("out") or tokens.has("left")):
-        _special_stepback_origin = true
-    _standing_combo_input_history.append({"tokens": tokens, "time": _time})
-    var matched_attack: String = _matching_standing_combo_attack()
-    if matched_attack.is_empty():
-        return false
-    # Prototype priority: the most recently completed sequence replaces an
-    # earlier pending one. Native link priority is not recovered yet.
-    _standing_combo_pending_attack = matched_attack
-    _standing_combo_pending_source_sequence = attack_sequence
-    _standing_combo_pending_source_kind = attack_kind
-    _clear_standing_combo_input_history()
-    # Return true only when the combo target was actually queued or started.
-    # If rage/stepback/window validation rejected it, the caller must still
-    # receive a real fallback attack instead of swallowing the final press.
-    return _try_begin_pending_standing_combo()
+    _link_events.append({
+        "tokens": tokens,
+        "consumed": false,
+        "time_ms": int(_time * 1000.0),
+    })
+    return _try_follow_links()
 
 
-func record_parry_press(kind: String = "parry_high") -> bool:
-    if state not in ["idle", "idle2", "idle3"]:
-        _parry_press_times.clear()
+## Start the guard from a set of currently held native status tokens.
+##
+## This is the direct-input path: only the recovered `left` token raises the
+## guard, and the resolver above proves that no held token selects a height.
+## A token set without `left` fails closed (returns false and leaves the guard
+## untouched); callers must call end_guard() on release.
+func begin_guard_from_input(tokens: Array) -> bool:
+    var decision: Dictionary = direct_guard_input(tokens)
+    if not bool(decision.get("guard", false)):
         return false
-    _parry_press_times = _parry_press_times.filter(
-        func(value: float) -> bool: return _time - value <= 0.5)
-    _parry_press_times.append(_time)
-    if _parry_press_times.size() < 3:
-        return false
-    _parry_press_times.clear()
-    if not PARRY_RAGE_COSTS.has(kind) or not supports_attack(kind):
-        return false
-    var cost: float = float(PARRY_RAGE_COSTS[kind])
-    if rage < cost:
-        return false
-    rage -= cost
-    attack_kind = kind
-    attack_sequence += 1
-    _attack_connected = false
-    _attack_hit_landed = false
-    _grab_connected = false
-    _endattack_victim_started = false
-    _multi_impact_applied.clear()
-    state = "startup"
-    state_time = float(ATTACKS[kind]["startup"])
-    _restart_candidate_action()
+    guard_held = true
+    guard_block_action = String(decision.get("action", ""))
+    guard_height = String(decision.get("height", ""))
+    # Decompiled guard path rejects link input, so the event queue is dropped.
+    _clear_link_state()
     return true
 
 
 func begin_guard() -> void:
-    # Guard press must cancel a matched combo immediately. Waiting for the next
-    # physics frame loses a rapid press-and-release tap entirely.
+    # PC prototype guard key.  It is the port binding for the recovered
+    # hold-left gesture, so it goes through the same direct-input resolver and
+    # must never claim a high/mid/low height.
+    if begin_guard_from_input([DIRECT_GUARD_STATUS]):
+        return
+    # Keep the old unqualified fallback if the proven table is ever emptied or
+    # changed.  No height is invented here.
     guard_held = true
-    _clear_standing_combo_state()
-    _queued_attacks.clear()
+    guard_block_action = ""
+    guard_height = ""
+    _clear_link_state()
+
+
+## Hold one of the recovered block actions. The native AI tree names the action
+## (actionblockhigh/actionblockmedium/actionblocklow and the hard/brutal block
+## rows); the port keeps that selection so the block gate and the metadata-less
+## fallback reaction know which guard is up, instead of collapsing the native
+## high/mid/low decision into a single flag.
+func begin_block(action: String) -> bool:
+    if not BLOCK_GUARD_HEIGHTS.has(action):
+        return false
+    if not guard_held:
+        # Raising the guard rejects link input (same rule as begin_guard).
+        _clear_link_state()
+    guard_held = true
+    guard_block_action = action
+    guard_height = String(BLOCK_GUARD_HEIGHTS[action])
+    return true
 
 
 func end_guard() -> void:
     guard_held = false
-    _parry_press_times.clear()
+    guard_block_action = ""
+    guard_height = ""
 
 
-func _accepts_standing_combo_input(virtual_key: String) -> bool:
+func _accepts_link_input(virtual_key: String) -> bool:
     # Guard rejects attack requests, so it must also reject combo history.
     # Otherwise a press made while guarding becomes the first key of a later
     # sequence.
     if (guard_held
-            or attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            or virtual_key not in ["a", "b", "c", "d"]
-            or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]):
-        return false
-    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
+            or not attack_set_profile.is_empty()
+            or virtual_key not in [
+                "a", "b", "c", "d",
+                "up", "down", "left", "right", "in", "out",
+            ]
+            or state not in ["idle", "idle2", "idle3", "startup", "active", "recovery",
+                "facedownidle", "faceupidle"]):
         return false
     return true
 
 
-func _clear_standing_combo_input_history() -> void:
-    _standing_combo_input_history.clear()
-
-
-func _clear_standing_combo_state() -> void:
-    _special_stepback_origin = false
-    _clear_standing_combo_input_history()
-    _standing_combo_pending_attack = ""
-    _standing_combo_pending_source_sequence = -1
-    _standing_combo_pending_source_kind = ""
-
-
-func _prune_standing_combo_input_history() -> void:
-    if _standing_combo_input_history.is_empty():
+func _expire_link_events() -> void:
+    # CBeatEmUpGame::Update: last event timestamp + 500 < now -> mark the whole
+    # vector consumed (not deleted); pruning the consumed batch keeps the port's
+    # queue bounded and cannot change matching, because consumed events never
+    # match again.
+    if _link_events.is_empty():
         return
-    var first_time: float = float(_standing_combo_input_history.front()["time"])
-    if _time > first_time + STANDING_COMBO_INPUT_PROTOTYPE_WINDOW_SECONDS:
-        _clear_standing_combo_input_history()
+    var now_ms: int = int(_time * 1000.0)
+    var last_ms: int = int(_link_events.back().get("time_ms", now_ms))
+    if last_ms + LINK_EVENT_LIFETIME_MS >= now_ms:
+        return
+    _link_events.clear()
 
 
-func _matching_standing_combo_attack() -> String:
-    # Links in candobasicattacks are ordered; lower source_index wins when
-    # several sequences match. The few sequences without a recovered link
-    # carry a high fallback index and retain their declaration order.
-    var best_attack: String = ""
-    var best_index: int = 999999
-    for require_source: bool in [true, false]:
-        for entry: Dictionary in STANDING_COMBO_SEQUENCES:
-            var from_attack: String = String(entry.get("from_attack", ""))
-            var from_attack_in: Array = entry.get("from_attack_in", [])
-            if require_source:
-                if not from_attack.is_empty() and from_attack != attack_kind:
-                    continue
-                if not from_attack_in.is_empty() and not from_attack_in.has(attack_kind):
-                    continue
-                if from_attack.is_empty() and from_attack_in.is_empty():
-                    continue
-            if not require_source and (not from_attack.is_empty() or not from_attack_in.is_empty()):
-                continue
-            if require_source and not supports_attack(String(entry["attack"])):
-                continue
-            if not require_source and not from_attack.is_empty():
-                continue
-            var steps: Array = entry["steps"]
-            var required: int = steps.size() - 1
-            for event_index: int in range(_standing_combo_input_history.size() - 1, -1, -1):
-                var event: Dictionary = _standing_combo_input_history[event_index]
-                if not _event_satisfies_step(event, steps[required]):
-                    continue
-                required -= 1
-                if required < 0:
-                    var index: int = int(entry.get("source_index", 999999))
-                    if best_attack.is_empty() or index < best_index:
-                        best_attack = String(entry["attack"])
-                        best_index = index
-                    break
-        if not best_attack.is_empty():
-            return best_attack
+func _clear_link_events() -> void:
+    _link_events.clear()
+
+
+func _clear_link_state() -> void:
+    _clear_link_events()
+
+
+func _link_sequence_matches(entry: Dictionary) -> bool:
+    # krm::CFighter::InputSequenceCheck: scan events backwards, skip unconsumed
+    # matches only when the step matches, and skip every consumed event.
+    var steps: Array = entry["steps"]
+    if steps.is_empty():
+        return true
+    var has_key: bool = false
+    for step: Variant in steps:
+        if not Array(step).is_empty():
+            has_key = true
+            break
+    if not has_key:
+        return true
+    var required: int = steps.size() - 1
+    for event_index: int in range(_link_events.size() - 1, -1, -1):
+        var event: Dictionary = _link_events[event_index]
+        if bool(event["consumed"]):
+            continue
+        if not _event_satisfies_step(event, steps[required]):
+            continue
+        required -= 1
+        if required < 0:
+            return true
+    return false
+
+
+func _facing_window_ok() -> bool:
+    # CFighter::FacingUpdate only turns to the opponent while the current
+    # action's recovered facing window allows it (for example grab1 = [0,1]).
+    var action: String = _current_action_name()
+    if action.is_empty():
+        return true
+    var window: Variant = _native_actions.get(action, {}).get("facing")
+    if not window is Array or Array(window).size() < 2:
+        return true
+    var start: int = int(window[0])
+    var end: int = int(window[1])
+    if start > end:
+        return false
+    var frame: float = _current_attack_source_frame()
+    if frame < 0.0:
+        frame = 0.0
+    return frame + 0.0001 >= float(start) and frame <= float(end) + 0.0001
+
+
+func _current_action_name() -> String:
+    if ATTACKS.has(attack_kind):
+        var source_action: String = str(ATTACKS[attack_kind].get("source_action", ""))
+        if not source_action.is_empty():
+            return source_action
+    if state in ["facedownidle", "faceupidle"]:
+        return state
+    if _skip_time > 0.0 and not _skip_action.is_empty():
+        return _skip_action
+    if state in ["idle", "idle2", "idle3"]:
+        # Movement animations are native actions too: special_kick_high is a
+        # direct link from stepback, so the current action must report it.
+        var movement: String = _native_movement_action()
+        if not movement.is_empty():
+            return movement
+        return state
     return ""
+
+
+func note_animation_categories(kind: String) -> void:
+    ## CFighter::SetAnimation 0x1a6e94 records every category carried by the
+    ## animation it starts into the fighter record.  Membership comes only from
+    ## the recovered category table (FightStats); an action with no recovered
+    ## category records nothing.
+    var action: String = FightStats.action_for_kind(ATTACKS, kind)
+    for category: String in FightStats.categories_for_action(action):
+        anim_categories[category] = true
+
+
+func anim_category(category: String) -> int:
+    ## CFighter::GetAnmCategory 0x1a6d50: 1 when the category was recorded for
+    ## this fighter since the record was reset, else 0.
+    return 1 if bool(anim_categories.get(category, false)) else 0
+
+
+func reset_anim_categories() -> void:
+    ## CFighter::ResetAnimCategoriesRecord 0x1a1058.  The native record is
+    ## cleared from CBeatEmUpGame::SetInitialRoundValues 0x178d44 (reached only
+    ## from CBeatEmUpMatch::Restart 0x161df4 <- RestartFight), i.e. once per
+    ## match -- CBeatEmUpMatch::NextRound -> RestartValues does not clear it.
+    anim_categories.clear()
 
 
 func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
@@ -3151,26 +6183,160 @@ func _event_satisfies_step(event: Dictionary, step: Variant) -> bool:
     if not required_tokens.has("right"):
         effective.erase("right")
     if required_tokens.has("left") or required_tokens.has("right"):
-        # Absolute side steps take precedence over the facing-relative in/out
-        # token, which the same keyboard input also produces.
         effective.erase("in")
         effective.erase("out")
-    # A step must match the pressed token set exactly. Otherwise the plain
-    # a/a/a sequence would also consume up+a presses and shadow highpunch3.
-    if effective.size() != required_tokens.size():
+    if effective.size() > required_tokens.size():
         return false
     for token: Variant in required_tokens:
-        if not effective.has(String(token)):
-            return false
+        var token_text: String = String(token)
+        if not effective.has(token_text):
+            # Native InputStatusCheck also accepts a held direction; a press
+            # edge alone is not required for a directional step.
+            var held_token: String = token_text
+            if held_token.begins_with("press"):
+                held_token = held_token.substr(5)
+            var held_ok: bool = false
+            match held_token:
+                "down", "out":
+                    held_ok = bool(held_directions.get("down", false))
+                "up", "in":
+                    held_ok = bool(held_directions.get("up", false))
+                "left":
+                    held_ok = bool(held_directions.get("left", false))
+                "right":
+                    held_ok = bool(held_directions.get("right", false))
+            if not held_ok:
+                return false
     return true
 
 
 func _current_attack_source_frame() -> float:
     if state not in ["startup", "active", "recovery"] or not ATTACKS.has(attack_kind):
         return -1.0
-    if attack_kind == "heavy":
-        return -1.0
     var details: Dictionary = ATTACKS[attack_kind]
+    var phase_frame: float = _phase_attack_source_frame(details)
+    if frame_state_machine_enabled and _attack_clock_active:
+        # frame = truncate((now_ms - start_ms) * 0.03 * speed), clamped to the ANM.
+        var advanced: int = int(_attack_clock_ms * 0.03)
+        var frame: float = float(_attack_clock_start_frame + advanced)
+        # Manual tests and entry-frame callers mutate the phase timer directly;
+        # keep the larger of the two so neither path rewinds the source frame.
+        return minf(maxf(frame, phase_frame), float(details["animation_frame_count"]))
+    return phase_frame
+
+
+
+func _advance_frame_reaction(delta: float) -> void:
+    var exit_frame: float = float(maxi(last_reaction_exit_frame, 0))
+    var remaining: float = maxf(delta, 0.0)
+    var step: float = 1.0 / 120.0
+    var guard_steps: int = 0
+    while remaining > 0.0000001 and state in ["hitstun", "blockstun"]:
+        guard_steps += 1
+        if guard_steps > 4096:
+            push_warning("reaction frame step cap")
+            return
+        var tick: float = minf(remaining, step)
+        if tick <= 0.0:
+            return
+        remaining -= tick
+        _reaction_clock_ms += tick * 1000.0
+        var frame: float = minf(
+            float(_reaction_clock_start_frame) + float(int(_reaction_clock_ms * 0.03)),
+            exit_frame
+        )
+        state_time = maxf((exit_frame - frame) / SOURCE_FRAME_RATE, 0.0)
+        if frame + 0.0001 < exit_frame:
+            continue
+        var target_state: String = _reaction_return_target()
+        _enter_locomotion_state(target_state)
+        return
+
+
+func _reaction_return_target() -> String:
+    if _reaction_return_action.is_empty():
+        return _verified_post_hit_return_state()
+    var clip_key: String = _reaction_return_clip(_reaction_return_action)
+    if clip_key.is_empty() or _candidate_clip_paths.has(clip_key):
+        return _reaction_return_action
+    return _verified_post_hit_return_state()
+
+
+func _reaction_return_clip(target: String) -> String:
+    match target:
+        "idle":
+            return String(candidate_clips.get("idle", IDLE2_CLIP))
+        "idle2":
+            return IDLE2_CLIP
+        "idle3":
+            return IDLE3_CLIP
+        "facedownidle":
+            return _facedown_idle_clip()
+        "faceupidle":
+            return _faceup_idle_clip()
+        _:
+            return ""
+
+
+
+func _native_reaction_return_data(source_action: String) -> Dictionary:
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != source_action:
+            continue
+        var target: String = _link_text(link, "to")
+        if target not in ["idle", "idle2", "idle3", "faceupidle", "facedownidle"]:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() < 2:
+            continue
+        return {
+            "exit_start_frame": int(window[0]),
+            "animation_duration_frames": int(window[1]),
+            "return_action": target,
+        }
+    return {}
+
+
+func _native_healthzero_impact_entry(source_action: String) -> Dictionary:
+    ## Recovered healthzero -> impactstun entry.
+    ##
+    ## Rows 209-211 are the impactable `healthzero` rows that land in
+    ## impactstunhigh / impactstunlow; rows 287/288 then continue to `stun` at
+    ## [14,17]. A lethal hard hit instead targets impacthardfronthigh /
+    ## impacthardfrontlow (rows 212-214), whose own `healthzero` rows continue to
+    ## faceupko / facedownko, so it is excluded here and keeps its existing
+    ## branch. Only the recovered data answers; nothing is hard-coded per action.
+    if not native_reaction_enabled or _native_reaction_gate == null:
+        return {}
+    for link: Dictionary in _native_reaction_gate.links:
+        if _link_text(link, "from_group") != "impactable":
+            continue
+        if _link_text(link, "to") != source_action:
+            continue
+        if not Array(link.get("conditions", [])).has("healthzero"):
+            continue
+        var row: Dictionary = _native_actions.get(source_action, {})
+        var animation: String = String(row.get("animation", ""))
+        if animation.is_empty():
+            return {}
+        for out: Dictionary in _native_reaction_gate.links:
+            if _link_text(out, "from") != source_action:
+                continue
+            if _link_text(out, "to") != "stun":
+                continue
+            var window: Array = Array(out.get("time", []))
+            if window.size() < 2:
+                continue
+            return {
+                "animation": animation,
+                "exit_frame": int(window[0]),
+                "next_state": "stun",
+            }
+        return {}
+    return {}
+
+
+func _phase_attack_source_frame(details: Dictionary) -> float:
     var remaining_frames: float = state_time * SOURCE_FRAME_RATE
     if state == "startup":
         remaining_frames += (
@@ -3190,241 +6356,1126 @@ func _candobasicattack_window_contains_current_frame() -> bool:
             and frame <= float(window[1]) + 0.0001)
 
 
-func _try_begin_pending_standing_combo() -> bool:
-    if _standing_combo_pending_attack.is_empty():
-        return false
-    # The pending entry is bound to the attack that was current when the
-    # sequence completed. Ending that attack, switching to another one, being
-    # interrupted, or holding it in a Heavy attack cancels the entry instead of
-    # reusing the old input in a later attack.
-    if (state not in ["startup", "active", "recovery"]
-            or attack_kind == "heavy"
-            or attack_kind != _standing_combo_pending_source_kind
-            or attack_sequence != _standing_combo_pending_source_sequence):
-        _clear_standing_combo_state()
-        return false
-    var window_ready: bool = _candobasicattack_window_contains_current_frame()
-    # endmove is a prototype extension: its source link is from_group
-    # candobasicattacks and requires oppposestun; allow the endmove input
-    # while the actual unblocked hitstun overlap exists, even if the base
-    # action's recorded combo window starts later.
-    var endattack_window_override: bool = (
-        ENDATTACK_ATTACKS.has(_standing_combo_pending_attack)
-        and _attack_hit_landed
-        and opponent != null and is_instance_valid(opponent)
-        and opponent.state in ["hitstun", "stun", "stun2"]
+func _link_text(link: Dictionary, key: String) -> String:
+    var value: Variant = link.get(key)
+    if value == null:
+        return ""
+    return str(value)
+
+
+## Native active unique list (CFighter+0x120).
+##
+## krm::IBeatEmUpGameMode::SetFighterConfigFromCharacterList @0x20f418 fills the
+## config's unique vector from characters.list and calls
+## CStyleEditor::SetUniquesList @0x1e6518 for Brucelee only; LoadFighter
+## @0x18d9a0 copies it into the fighter.  IsLinkAllowed @0x1b052c is an exact
+## integer membership test: an empty link list always passes, an empty fighter
+## list refuses every tagged link.  There is no opponent-token substring rule.
+const STYLE_UNIQUE_GROUPS: Array[String] = [
+    "special/hpunch", "special/lpunch", "special/hkick", "special/lkick",
+    "grabs/graba", "grabs/grabb", "endmove/endmove",
+]
+## Proven default list: characters.list `uniques` of "bruce lee a" (= the
+## index-0 style entries CStyleEditor::ResetDefaultStyle selects).
+const DEFAULT_BRUCE_UNIQUES: Array[String] = [
+    "brucelee", "hpunchbrucelee", "lpunchbrucelee", "hkickbrucelee",
+    "lkickbrucelee", "endbrucelee", "grababrucelee", "grabbbrucelee",
+]
+const DEFAULT_UNIQUE_BY_GROUP: Dictionary = {
+    "special/hpunch": "hpunchbrucelee",
+    "special/lpunch": "lpunchbrucelee",
+    "special/hkick": "hkickbrucelee",
+    "special/lkick": "lkickbrucelee",
+    "grabs/graba": "grababrucelee",
+    "grabs/grabb": "grabbbrucelee",
+    "endmove/endmove": "endbrucelee",
+}
+## Tutorial lessons pass use_custom_style=false, so SetUniquesList takes its
+## hardcoded index-0 branch and the saved style selections are ignored.
+var tutorial_default_uniques: bool = false
+var _active_uniques: Dictionary = {}
+var _default_uniques: Dictionary = {}
+var _style_uniques: Dictionary = {}
+
+
+func _unique_set(values: Array) -> Dictionary:
+    var out: Dictionary = {}
+    for value: Variant in values:
+        var text: String = String(value).strip_edges().to_lower()
+        if not text.is_empty():
+            out[text] = true
+    return out
+
+
+func _init_active_uniques() -> void:
+    ## Character labels first.  For Brucelee apply_style_selections() then
+    ## rebuilds the seven style IDs, exactly like SetUniquesList.
+    _default_uniques = _unique_set(
+        Array(CHARACTER_UNIQUE_LABELS.get(attack_config_path, []))
     )
-    var special_cost: float = float(SPECIAL_RAGE_COSTS.get(
-            _standing_combo_pending_attack, 0.0))
-    if special_cost > 0.0 and rage < special_cost:
-        _clear_standing_combo_state()
-        return false
-    if (special_cost > 0.0
-            and SPECIAL_REQUIRES_STEPBACK.has(_standing_combo_pending_attack)
-            and not _special_stepback_origin):
-        _clear_standing_combo_state()
-        return false
-    if GRAB_ATTACKS.has(_standing_combo_pending_attack):
-        if not _attack_hit_landed:
-            _clear_standing_combo_state()
-            return false
-        if (opponent == null or not is_instance_valid(opponent)
-                or opponent.guard_held
-                or opponent.state not in ["idle", "idle2", "idle3", "hitstun"]):
-            _clear_standing_combo_state()
-            return false
-        var grab_distance: float = Vector2(
-            opponent.global_position.x - global_position.x,
-            opponent.global_position.z - global_position.z).length()
-        if grab_distance > PROTOTYPE_GRAB_DISTANCE:
-            _clear_standing_combo_state()
-            return false
-    if ENDATTACK_ATTACKS.has(_standing_combo_pending_attack):
-        if not (_grab_connected or _attack_hit_landed):
-            _clear_standing_combo_state()
-            return false
-        if (opponent == null or not is_instance_valid(opponent)
-                or opponent.guard_held
-                or opponent.state not in ["hitstun", "stun", "stun2"]):
-            _clear_standing_combo_state()
-            return false
-        var end_distance: float = Vector2(
-            opponent.global_position.x - global_position.x,
-            opponent.global_position.z - global_position.z).length()
-        if end_distance > PROTOTYPE_GRAB_DISTANCE:
-            _clear_standing_combo_state()
-            return false
-    if not supports_attack(_standing_combo_pending_attack):
-        _clear_standing_combo_state()
-        return false
-    if not window_ready and not endattack_window_override:
-        if _queued_attacks.is_empty():
-            _clear_standing_combo_state()
-            return false
-        # The input already matched, but the source window is not active yet.
-        # Queue the target behind the real intermediate attacks rather than
-        # dropping it or adding a fallback on top of it.
-        if special_cost > 0.0:
-            rage = maxf(0.0, rage - special_cost)
-        _queued_attacks.append(_standing_combo_pending_attack)
-        _clear_standing_combo_state()
+    _style_uniques = _default_uniques.duplicate()
+    _active_uniques = _default_uniques.duplicate()
+
+
+func active_uniques() -> Array:
+    var out: Array = _active_uniques.keys()
+    out.sort()
+    return out
+
+
+func style_uniques() -> Array:
+    var out: Array = _style_uniques.keys()
+    out.sort()
+    return out
+
+
+func set_style_uniques(values: Array) -> void:
+    ## The seven style-category IDs replace the character defaults (native
+    ## SetUniquesList clears the vector before appending).  While a
+    ## use_custom_style=false lesson runs, the default set stays active.
+    _style_uniques = _unique_set(values)
+    if not tutorial_default_uniques:
+        _active_uniques = _style_uniques.duplicate()
+
+
+func _selected_style_uniques(selections: Dictionary, catalog) -> Array:
+    ## SetUniquesList appends ["BruceLee"] and then one ID per category in the
+    ## recovered order: 4 special, 2 grabs, 1 endmove.  personality is not one
+    ## of the seven and therefore never joins the combat list.
+    var out: Array = ["brucelee"]
+    for group_key: String in STYLE_UNIQUE_GROUPS:
+        var unique: String = ""
+        var entry_id: String = String(selections.get(group_key, ""))
+        if catalog != null and not entry_id.is_empty():
+            var entry: Dictionary = catalog.entry(group_key, entry_id)
+            unique = String(entry.get("unique", "")).strip_edges().to_lower()
+        if unique.is_empty():
+            unique = String(DEFAULT_UNIQUE_BY_GROUP.get(group_key, ""))
+        if unique.is_empty():
+            # Unproven category: refuse the whole rebuild instead of keeping a
+            # partially invented list.
+            return []
+        out.append(unique)
+    return out
+
+
+func _native_link_unique_ok(link: Dictionary) -> bool:
+    ## CFighter::IsLinkAllowed @0x1b052c: every tag of the row must be an exact
+    ## member of this fighter's active unique list.
+    var unique: Array = Array(link.get("unique", []))
+    if unique.is_empty():
         return true
-    var next_attack: String = _standing_combo_pending_attack
-    if special_cost > 0.0:
-        rage = maxf(0.0, rage - special_cost)
-    if not _queued_attacks.is_empty():
-        # The intermediate attack keys were queued as real attacks. Put the
-        # combo target after them so every press produces a visible attack and
-        # the target remains the final hit.
-        _queued_attacks.append(next_attack)
-        _clear_standing_combo_state()
-        return true
-    var target_action: String = _candidate_action_for_attack(next_attack)
-    _clear_standing_combo_state()
-    state = "startup"
-    state_time = float(ATTACKS[next_attack]["startup"])
-    attack_kind = next_attack
-    attack_sequence += 1
-    _attack_connected = false
-    # Re-blending a clip into itself would keep the previous playback position:
-    # _play_candidate_action() returns early when the same action is still
-    # playing. Same-action transitions therefore restart from frame 0.
-    if (candidate_visual_blending_enabled
-            and target_action != _candidate_action
-            and _candidate_animation != null
-            and _candidate_animation.is_playing()):
-        _queue_candidate_visual_blend(2.0 / SOURCE_FRAME_RATE)
-    else:
-        _restart_candidate_action()
+    if _active_uniques.is_empty():
+        return false
+    for value: Variant in unique:
+        if not _active_uniques.has(String(value).strip_edges().to_lower()):
+            return false
     return true
+
+
+func _build_variant_precedence() -> void:
+    ## Precompute the structural specific-vs-generic link pairs once.  The old
+    ## per-step scan compared every link with every other link (396^2) and made
+    ## validate_victim_hold_timings.gd crawl; the hot path now looks up one small
+    ## candidate list per flagged generic link and only re-checks conditions.
+    _variant_precedence.clear()
+    var groups: Dictionary = {}
+    for link: Dictionary in _native_links:
+        var signature: String = JSON.stringify([
+            _link_text(link, "from"),
+            _link_text(link, "from_group"),
+            Array(link.get("steps", [])),
+            Array(link.get("status", [])),
+        ])
+        if not groups.has(signature):
+            groups[signature] = []
+        groups[signature].append(link)
+    for signature: Variant in groups:
+        var group: Array = groups[signature]
+        var specific: Array = []
+        for link: Dictionary in group:
+            if Array(link.get("unique", [])).is_empty():
+                continue
+            if _is_variant_attack(_link_text(link, "to")):
+                specific.append(link)
+        if specific.is_empty():
+            continue
+        for link: Dictionary in group:
+            if not Array(link.get("unique", [])).is_empty():
+                continue
+            var order: int = int(link.get("order", -1))
+            if order >= 0:
+                _variant_precedence[order] = specific
+                # Cheap per-link flag: the hot scan must not build Arrays for the
+                # ~380 links that have no opponent-specific counterpart.
+                link["_has_variant_specific"] = true
+
+
+func _defer_generic_link_for_variant(link: Dictionary) -> bool:
+    ## Specific-beats-generic ordering for the local player's matchup links.
+    ## Only defer when the recovered specific link would really apply now;
+    ## otherwise the generic link keeps its native position.
+    if not bool(link.get("_has_variant_specific", false)):
+        return false
+    if not is_player or not Array(link.get("unique", [])).is_empty():
+        return false
+    var specific: Variant = _variant_precedence.get(int(link.get("order", -1)), null)
+    if not specific is Array:
+        return false
+    for other: Dictionary in specific:
+        if not _native_link_unique_ok(other):
+            continue
+        if not _native_link_conditions_ok(other):
+            continue
+        return true
+    return false
+
+
+func _grab_finisher_link(link: Dictionary) -> bool:
+    ## Port bridge for the recovered candobasicattacks -> endattack1/2 links.
+    ## brucelee.set gives grab1/grab2 no group entry, so the native link table
+    ## cannot expose those links while a grab animation plays.  The only
+    ## recovered "held victim" window is the victim's grabbed1/2 state; use it
+    ## as the link window instead of inventing a frame range.  Everything else
+    ## stays native: the link's keyboard sequence, keystatus, oppposestun and
+    ## grabdistance checks are still evaluated by _try_follow_links.
+    if String(_link_text(link, "from_group")) != "candobasicattacks":
+        return false
+    if state not in ["startup", "active", "recovery"]:
+        return false
+    if not _is_grab_attack(attack_kind):
+        return false
+    if opponent == null or not is_instance_valid(opponent):
+        return false
+    if opponent.state not in ["grabbed1", "grabbed2"]:
+        return false
+    var target: String = String(_link_text(link, "to"))
+    if target in ["endattack1", "endattack2"]:
+        return true
+    # Recovered opponent-suffix finishers (endattack ken/brick/...) are the same
+    # candobasicattacks links; only a proven variant may be followed.
+    return _is_variant_attack(target) and String(ATTACKS[target].get(
+            "variant_family", "")) == "endattack"
+
+
+func _native_link_applies(link: Dictionary) -> bool:
+    var action: String = _current_action_name()
+    if action.is_empty():
+        return false
+    var source: String = _link_text(link, "from")
+    if not source.is_empty():
+        return source == action
+    var group: String = _link_text(link, "from_group")
+    if group.is_empty():
+        return false
+    if _grab_finisher_link(link):
+        return true
+    if group == "candobasicattacks" and _is_player_profile() \
+            and not _candobasicattacks_complete:
+        # The complete 84-member table failed to load or disagreed with the
+        # exported link metadata: run no group link on partial window data.
+        return false
+    var action_row: Dictionary = _native_actions.get(action, {})
+    var groups: Dictionary = action_row.get("groups", {})
+    return groups.has(group)
+
+
+func _native_link_window(link: Dictionary) -> Array:
+    return _native_link_window_for_action(link, _current_action_name())
+
+
+func _native_link_window_for_action(link: Dictionary, action: String) -> Array:
+    var source: String = _link_text(link, "from")
+    if not source.is_empty():
+        return Array(link.get("time", []))
+    if action == _current_action_name() and _grab_finisher_link(link):
+        return [0, int(ATTACKS[attack_kind].get("animation_frame_count", 0))]
+    var group: String = _link_text(link, "from_group")
+    if group == "candobasicattacks" and _is_player_profile():
+        # Authoritative recovered member window for the current action.
+        var member: Dictionary = _candobasicattacks_member(action)
+        if not member.is_empty():
+            return Array(member["window"])
+        return []
+    var action_row: Dictionary = _native_actions.get(action, {})
+    var groups: Dictionary = action_row.get("groups", {})
+    if not groups.has(group):
+        return []
+    var entry: Variant = groups[group]
+    if not entry is Array or entry.size() < 2:
+        return []
+    var window: Array = [int(entry[0]), int(entry[1])]
+    if entry.size() >= 3:
+        window.append(int(entry[2]))
+    return window
+
+
+func source_state_time_for_target(source_kind: String, target_action: String) -> float:
+    # Place the primed source animation at the start of the target link window
+    # so training and preview scenarios exercise a real link instead of a fixed
+    # 1.5 s recovery guess.
+    if not ATTACKS.has(source_kind):
+        return 0.0
+    var action: String = str(ATTACKS[source_kind].get("source_action", ""))
+    var target_native: String = target_action
+    if ATTACKS.has(target_action):
+        var target_source: String = str(ATTACKS[target_action].get("source_action", ""))
+        if not target_source.is_empty():
+            target_native = target_source
+    # If the target is reached from another action (for example a miss action
+    # followed by an automatic hit link), prime at the entry link instead.
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != target_native:
+            continue
+        var entry_source: String = _link_text(link, "from")
+        if not entry_source.is_empty() and not kind_for_action(entry_source).is_empty():
+            target_native = entry_source
+        break
+    var frame_count: float = float(ATTACKS[source_kind]["animation_frame_count"])
+    var best_entry_frame: float = -1.0
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != target_native:
+            continue
+        var applies: bool = false
+        var source: String = _link_text(link, "from")
+        if not source.is_empty():
+            applies = source == action
+        else:
+            var groups: Dictionary = _native_actions.get(action, {}).get("groups", {})
+            applies = groups.has(_link_text(link, "from_group"))
+        if not applies:
+            continue
+        var window: Array = _native_link_window_for_action(link, action)
+        if window.size() < 2:
+            continue
+        var frame: float = float(window[0]) + 1.0
+        if window.size() >= 3:
+            frame = maxf(frame, float(window[2]) + 1.0)
+        # A target can have several native entry links (for example lowkick3
+        # has a [17,27] basic-attack link and a [11,16] combo link). Prime at
+        # the earliest applicable entry, not merely the first link in order.
+        if best_entry_frame < 0.0 or frame < best_entry_frame:
+            best_entry_frame = frame
+    if best_entry_frame >= 0.0:
+        return maxf(
+            (frame_count - best_entry_frame) / SOURCE_FRAME_RATE,
+            1.0 / SOURCE_FRAME_RATE
+        )
+    return 0.0
+
+
+func link_requirements_for_target(target_kind: String) -> Dictionary:
+    # Held-key requirements declared by the native link that lands on this
+    # move (InputStatusCheck data). Used by training/preview scenarios.
+    var result: Dictionary = {}
+    var native_target: String = target_kind
+    if ATTACKS.has(target_kind):
+        var target_source: String = str(ATTACKS[target_kind].get("source_action", ""))
+        if not target_source.is_empty():
+            native_target = target_source
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != native_target:
+            continue
+        for pair_value: Variant in Array(link.get("status", [])):
+            var pair: Array = pair_value
+            if pair.size() >= 2:
+                result[str(pair[0])] = str(pair[1]) == "pressed"
+        return result
+    return result
+
+
+func _native_link_window_ok(link: Dictionary, previous_frame: float = -1.0) -> bool:
+    if state in ["idle", "idle2", "idle3", "facedownidle", "faceupidle"]:
+        # No attack frame clock runs in these states.  Direct links keep the
+        # previous behaviour; a candobasicattacks group link is only allowed
+        # when its recovered member window covers the whole action animation,
+        # which makes the native TimeWindowCheck equivalent to "always open".
+        # A member whose window is partial and has no computable frame fails
+        # closed instead of firing from an unknown frame.
+        if _link_text(link, "from_group") != "candobasicattacks" \
+                or not _is_player_profile():
+            return true
+        var member: Dictionary = _candobasicattacks_member(_current_action_name())
+        return _member_window_covers_animation(member)
+    var window: Array = _native_link_window(link)
+    if window.size() < 2:
+        return false
+    var frame: float = _current_attack_source_frame()
+    if frame < 0.0:
+        return false
+    var start: float = float(window[0])
+    var end: float = float(window[1])
+    if window.size() >= 3:
+        start = maxf(start, float(window[2]))
+    var linking_frame: int = int(link.get("linking_frame", 0))
+    if linking_frame > 0 and frame + 0.0001 < float(linking_frame):
+        return false
+    # A large physics delta can jump over a 2-3 frame automatic link window.
+    # Treat the interval [previous_frame, frame] as open if it overlaps the
+    # native window, instead of requiring the post-step frame to be inside it.
+    if previous_frame >= 0.0:
+        return (previous_frame <= end + 0.0001
+                and frame + 0.0001 >= start)
+    return frame + 0.0001 >= start and frame <= end + 0.0001
+
+
+func _member_window_covers_animation(member: Dictionary) -> bool:
+    ## True when the recovered member window spans the whole ANM: a link
+    ## evaluated without a frame clock is then in-window for every frame.
+    if member.is_empty():
+        return false
+    var window: Array = Array(member.get("window", []))
+    var frames: int = int(member.get("frames", 0))
+    if window.size() < 2 or frames <= 0:
+        return false
+    return int(window[0]) == 0 and int(window[1]) >= frames - 1
+
+
+func link_source_action_for_target(target_kind: String) -> String:
+    var native_target: String = target_kind
+    if ATTACKS.has(target_kind):
+        var target_source: String = str(ATTACKS[target_kind].get("source_action", ""))
+        if not target_source.is_empty():
+            native_target = target_source
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != native_target:
+            continue
+        return _link_text(link, "from")
+    return ""
+
+
+func kind_for_action(action: String) -> String:
+    return String(_action_to_attack.get(action, ""))
+
+
+func link_sequence_for_target(target_kind: String) -> Array[String]:
+    # Keys of the native link that lands on this move, in the variant selected
+    # by the active input layout.
+    var native_target: String = target_kind
+    if ATTACKS.has(target_kind):
+        var target_source: String = str(ATTACKS[target_kind].get("source_action", ""))
+        if not target_source.is_empty():
+            native_target = target_source
+    var result: Array[String] = []
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != native_target:
+            continue
+        for step: Variant in Array(link.get("steps", [])):
+            var tokens: Array = Array(step)
+            if not tokens.is_empty():
+                result.append(str(tokens[0]))
+        return result
+    return result
+
+
+func _native_link_status_ok(link: Dictionary) -> bool:
+    # status is the flat pair list of the selected key-status variant.
+    var status: Array = link.get("status", [])
+    for pair_value: Variant in status:
+        var pair: Array = pair_value
+        if pair.size() < 2:
+            continue
+        var token: String = str(pair[0])
+        if token == "impossible":
+            return false
+        var want_pressed: bool = str(pair[1]) == "pressed"
+        if bool(_key_status.get(token, false)) != want_pressed:
+            return false
+    return true
+
+
+func _opponent_distance() -> float:
+    if opponent == null or not is_instance_valid(opponent):
+        return 9999.0
+    return Vector2(
+        opponent.global_position.x - global_position.x,
+        opponent.global_position.z - global_position.z).length()
+
+
+func _native_animation_action() -> String:
+    ## Native action whose CAnimationDescr is the fighter's current animation.
+    ## CFighter::GetCurrentAnimation 0x1b043c == GetActiveSetAnimation(this,
+    ## this+0x2c); the recovery uses the exported row for that action.  hitstun
+    ## and blockstun keep the reaction action that owns the animation.
+    if state in ["hitstun", "blockstun"]:
+        var reaction_action: String = _native_reaction_action()
+        if not reaction_action.is_empty():
+            return reaction_action
+    var action: String = _current_action_name()
+    if action.is_empty() and _native_actions.has(state):
+        action = state
+    return action
+
+
+func _fighter_pose() -> String:
+    # CheckConditions pose tokens compare CFighter::GetCurrentAnimation()+0xac
+    # against gid_stand / gid_laying / gid_stun (sites 0x1a3f30/0x1a3eb4/
+    # 0x1a3e38).  The exported action row carries that exact animation pose, so
+    # it is authoritative whenever the action resolves.  The state map below is
+    # only the documented bridge for states whose animation has no exported
+    # action row (grabbed1/2 are played by the grabcompl clips, which the set
+    # exposes as grabcompl1/2, not as the victim's state name).
+    var action: String = _native_animation_action()
+    if not action.is_empty():
+        var pose: String = String(_native_actions.get(action, {}).get("pose", "")).to_lower()
+        if pose in ["stand", "laying", "stun", "crouch", "jump"]:
+            return pose
+    if state in ["grabbed1", "grabbed2"]:
+        return "stun"
+    if state in ["hitstun", "blockstun", "stun", "stun2", "stunfall",
+            "stunimpact", "impactstun"]:
+        return "stun"
+    if state in ["facedownidle", "facedownko", "facedowngetup", "facedownattack",
+            "impactfacedown", "impacttofloor", "faceupidle", "faceupko",
+            "faceupgetup", "faceupattack", "impactfaceup", "attacktofloor"]:
+        return "laying"
+    if state in ["idle", "idle2", "idle3"]:
+        return "stand"
+    return ""
+
+
+## Canonical probe for krm::CFighter::CheckConditions.  All values come from
+## recovered CFighter fields; the mapping is documented in
+## scripts/native_conditions.gd.  The evaluator is shared with the AI and the
+## reaction gate so a token can only have one meaning.
+func _native_condition_probe(prefer_next: bool = false) -> Dictionary:
+    var other: PortFighter = opponent
+    var probe: Dictionary = {
+        "self_pose": _fighter_pose(),
+        "self_radius": source_radius_for_current_animation(),
+        "self_health": health,
+        "self_rage": rage,
+        # Init clears +0x151/+0x152; no recovered writer sets them.
+        "self_rage_forced": false,
+        "self_dummy_health": false,
+        "distance": INF,
+        "incoming_damage": 0.0,
+        "counter_open": false,
+        "opponent_pose": "",
+        # Fail closed while the opponent is unknown: IsBlocking is true.
+        "opponent_blocking": true,
+        "opponent_scale": 1.0,
+        "opponent_radius": 0.0,
+        "opponent_attacking": false,
+        "opponent_active_impact": null,
+        "opponent_next_impact": null,
+        "opponent_processed": 0,
+        "opponent_about_to_grab": false,
+        "relative_facing_dot": _native_relative_facing_dot(),
+    }
+    if other == null or not is_instance_valid(other):
+        return probe
+    probe["distance"] = _opponent_distance() / maxf(source_units_to_world, 0.000001)
+    probe["opponent_pose"] = other._fighter_pose()
+    probe["opponent_blocking"] = other._native_is_blocking()
+    probe["opponent_radius"] = other.source_radius_for_current_animation()
+    probe["opponent_scale"] = other.radius_scale
+    probe["incoming_damage"] = other._native_attack_damage()
+    probe["counter_open"] = other._native_is_in_counter_time()
+    probe["opponent_about_to_grab"] = other._native_is_about_to_grab()
+    var frame: float = other._current_attack_source_frame()
+    var records: Array = other._native_attack_impact_records()
+    if frame >= 0.0 and not records.is_empty():
+        var selection: Dictionary = NativeConditions.impact_selection(records, frame)
+        var active_record: Variant = selection.get("active")
+        var next_record: Variant = selection.get("next")
+        if prefer_next and active_record == null:
+            # AIUpdate runs before the attacker's per-frame state advance in this
+            # port.  To choose a guard link before contact, the AI projection
+            # uses BasicUpdate's +0x168 record (first impact at/after this frame)
+            # when +0x164 is not active yet.  This is a port decision bridge, not
+            # a change to the link/reaction semantics.
+            active_record = next_record
+        probe["opponent_active_impact"] = active_record
+        probe["opponent_next_impact"] = next_record
+        probe["opponent_attacking"] = active_record != null
+        probe["opponent_processed"] = other._native_processed_impact_count()
+    return probe
+
+
+func _native_condition_ok(
+        condition: String, _link: Dictionary, prefer_next: bool = false
+) -> bool:
+    # Every recovered token is evaluated by NativeConditions; an unknown token
+    # returns false (fail closed) there.  `prefer_next` is the AI-only
+    # pre-contact projection documented in _native_condition_probe().
+    return NativeConditions.evaluate(condition, _native_condition_probe(prefer_next))
+
+
+## The opponent's current animation impact records, from BasicUpdate 0x1a8330.
+## Multi-impact attacks use the port's per-impact table; a single-impact attack
+## uses the exported native action's damage_time window.  A code-defined ground
+## attack with no exported action row falls back to its phase window.
+func _native_attack_impact_records() -> Array:
+    if not ATTACKS.has(attack_kind):
+        return []
+    var details: Dictionary = ATTACKS[attack_kind]
+    var multi: Variant = details.get("multi_impacts", [])
+    if multi is Array and not Array(multi).is_empty():
+        var rows: Array = []
+        for index in range(Array(multi).size()):
+            var item: Dictionary = Array(multi)[index]
+            var timing: Variant = item.get("damage_time", [0, 0])
+            rows.append({
+                "id": index,
+                "start": int(Array(timing)[0]) if timing is Array and Array(timing).size() >= 2 else 0,
+                "end": int(Array(timing)[1]) if timing is Array and Array(timing).size() >= 2 else 0,
+                "radius": float(item.get("attack_radius", 0.0)),
+                "height": String(item.get("height", "")),
+                "strength": String(item.get("strength", "")),
+                "direction": String(item.get("direction", "")),
+            })
+        return rows
+    var source: Variant = details.get("source_impact")
+    if not source is Dictionary or Dictionary(source).is_empty():
+        return []
+    var impact: Dictionary = source
+    var action_impact: Variant = _native_actions.get(
+        _current_action_name(), {}).get("impact", {})
+    var start: int = -1
+    var end: int = -1
+    if action_impact is Dictionary:
+        var timing: Variant = Dictionary(action_impact).get("damage_time")
+        if (timing is Array and Array(timing).size() >= 2
+                and _is_number(Array(timing)[0]) and _is_number(Array(timing)[1])):
+            start = int(Array(timing)[0])
+            end = int(Array(timing)[1])
+    if start < 0:
+        # Code-defined ground attacks (facedownattack/faceupattack/attacktofloor)
+        # have no set action row; use their recovered phase window.
+        start = int(round(float(details.get("startup", 0.0)) * SOURCE_FRAME_RATE))
+        var active_frames: int = int(round(float(details.get("active", 0.0)) * SOURCE_FRAME_RATE))
+        end = start + maxi(active_frames - 1, 0)
+    return [{
+        "id": 0,
+        "start": start,
+        "end": end,
+        "radius": float(impact.get("attack_radius", 0.0)),
+        "height": String(impact.get("height", "")),
+        "strength": String(impact.get("strength", "")),
+        "direction": String(impact.get("direction", "")),
+    }]
+
+
+## DamageReceiveCheck 0x1a5614 writes impact.id+1 to attacker+0x16C.  The port's
+## equivalent high-water is the number of applied impacts.
+func _native_processed_impact_count() -> int:
+    if not _multi_impact_applied.is_empty():
+        return _multi_impact_applied.size()
+    return 1 if _attack_hit_landed else 0
+
+
+## AttackDamage 0x1b0358: u32(impact+0xC * fighter+0x154), zero when <= 0.
+func _native_attack_damage() -> float:
+    if not ATTACKS.has(attack_kind):
+        return 0.0
+    return maxf(float(ATTACKS[attack_kind].get("damage", 0.0)), 0.0)
+
+
+## IsInCounterTime 0x1b0380: current animation +0xd8 <= frame(+0x34) <= +0xdc.
+## The exported action carries that pair as counter_time.
+func _native_is_in_counter_time() -> bool:
+    var action: String = _current_action_name()
+    var window: Variant = _native_actions.get(action, {}).get("counter_time")
+    if not window is Array or Array(window).size() < 2:
+        return false
+    var frame: float = _current_attack_source_frame()
+    if frame < 0.0:
+        return false
+    return (frame + 0.0001 >= float(Array(window)[0])
+            and frame <= float(Array(window)[1]) + 0.0001)
+
+
+## IsBlocking 0x1b3204: the current CAnimationDescr belongs to category
+## "block" (gid_block).  Categories are exported per action by
+## tools/build_action_categories.py from the recovered set files.  With no
+## category table the check fails closed as "blocking" so a grab cannot be
+## granted by missing data.
+func _native_is_blocking() -> bool:
+    if _native_action_categories.is_empty():
+        return true
+    var action: String = _native_animation_action()
+    var categories: Variant = _native_action_categories.get(action, [])
+    return categories is Array and Array(categories).has("block")
+
+
+## IsAboutToGrab 0x1b0a80 reads the animation +0xa4..+0xa8 window.  No exported
+## link carries oppabouttograb and the port has no recovered per-action grab
+## window, so the probe deliberately reports false (fail closed) instead of
+## guessing from state.
+func _native_is_about_to_grab() -> bool:
+    return false
+
+
+## CFighter+0xc4 relative facing dot used by oppinfront/oppinback.
+func _native_relative_facing_dot() -> float:
+    if opponent == null or not is_instance_valid(opponent):
+        return 1.0
+    var dx: float = opponent.global_position.x - global_position.x
+    var dz: float = opponent.global_position.z - global_position.z
+    if absf(dx) + absf(dz) < 0.000001:
+        return 1.0
+    return dx * facing
+
+
+func _native_link_conditions_ok(link: Dictionary) -> bool:
+    for condition: Variant in Array(link.get("conditions", [])):
+        if not _native_condition_ok(String(condition), link):
+            return false
+    return true
+
+
+func _native_target_kind(link: Dictionary) -> String:
+    var target_action: String = _link_text(link, "to")
+    if target_action == "attacktofloor":
+        return "attacktofloor"
+    return String(_action_to_attack.get(target_action, ""))
+
+
+func _consume_link_events(link: Dictionary) -> void:
+    # krm::CFighter::ConsumeEvents: mark the matched events consumed.
+    var steps: Array = link["steps"]
+    if steps.is_empty():
+        # Automatic follow-ups have no input step; nothing to consume.
+        return
+    var required: int = steps.size() - 1
+    for event_index: int in range(_link_events.size() - 1, -1, -1):
+        var event: Dictionary = _link_events[event_index]
+        # Decompiled ConsumeEvents scans from the end and writes +0x10 = 1 on
+        # string matches without checking its previous value.
+        if not _event_satisfies_step(event, steps[required]):
+            continue
+        event["consumed"] = true
+        required -= 1
+        if required < 0:
+            return
+
+
+func _auto_link_release_ok(link: Dictionary) -> bool:
+    # A small class of automatic links is gated by the source action's
+    # impactable window. parryhigh -> parryattack is the concrete case: the
+    # link is [9,10], but parryhigh only becomes impactable at frame 30, and
+    # the parry absorb must survive until then. Keep the native link shape but
+    # release it when the absorb happened or the impactable window opened.
+    var steps: Array = Array(link.get("steps", []))
+    if not steps.is_empty():
+        return true
+    var source: String = _link_text(link, "from")
+    if source.is_empty():
+        return true
+    var row: Dictionary = _native_actions.get(source, {})
+    if row.is_empty() or row.get("impact") != null:
+        return true
+    var groups: Variant = row.get("groups")
+    if not groups is Dictionary:
+        return true
+    var impactable: Variant = Dictionary(groups).get("impactable")
+    if not impactable is Array or Array(impactable).size() < 2:
+        return true
+    var window: Array = _native_link_window(link)
+    if window.size() < 2:
+        return true
+    var impactable_start: int = int(Array(impactable)[0])
+    if impactable_start <= int(window[1]):
+        return true
+    return _parry_absorbed or _current_attack_source_frame() >= float(impactable_start)
+
+
+func _try_follow_links() -> bool:
+    # krm::CFighter::UserControlUpdate: walk the current animation's links in
+    # native order. TimeWindowCheck + InputSequenceCheck + InputStatusCheck +
+    # CheckConditions, then FollowLink + ConsumeEvents.
+    if state not in ["idle", "idle2", "idle3", "startup", "active", "recovery",
+            "facedownidle", "faceupidle"]:
+        return false
+    if (native_reaction_enabled and _native_reaction_gate != null
+            and not _native_reaction_gate.can_follow()):
+        # CFighter::UserControlUpdate returns before the link loop while a
+        # FollowLink result is parked in +0xF0/+0xF4.
+        return false
+    _expire_link_events()
+    var scan_action: String = _current_action_name()
+    var scan_frame: float = _current_attack_source_frame()
+    if scan_action != _link_scan_action:
+        _link_scan_previous_frame = -1.0
+    var previous_scan_frame: float = _link_scan_previous_frame
+    _link_scan_action = scan_action
+    _link_scan_previous_frame = scan_frame
+    # A generic (untagged) link and an opponent-tagged variant link can share the
+    # same input and conditions.  Defer the generic one so the specific recovered
+    # matchup link is evaluated first; it still runs in the same scan.
+    var scan_links: Array = []
+    var deferred_generic: Array = []
+    for link: Dictionary in _native_links:
+        if bool(link.get("_has_variant_specific", false)) \
+                and _defer_generic_link_for_variant(link):
+            deferred_generic.append(link)
+        else:
+            scan_links.append(link)
+    for link: Dictionary in deferred_generic:
+        scan_links.append(link)
+    for link: Dictionary in scan_links:
+        if not _native_link_applies(link):
+            continue
+        if not _native_link_unique_ok(link):
+            continue
+        if not _native_link_window_ok(link, previous_scan_frame):
+            continue
+        if not _auto_link_release_ok(link):
+            continue
+        if not _link_sequence_matches(link):
+            continue
+        if not _native_link_status_ok(link):
+            continue
+        if not _native_link_conditions_ok(link):
+            continue
+        var ground_target: String = _link_text(link, "to")
+        if ground_target == "facedownattack" or ground_target == "faceupattack":
+            var ground_clip: String = (
+                FACEDOWN_ATTACK_CLIP if ground_target == "facedownattack"
+                else FACEUP_ATTACK_CLIP
+            )
+            if not _candidate_clip_paths.has(ground_clip):
+                continue
+            # The recovered ground links carry their own source window
+            # (faceupidle -> faceupattack [0,45], facedownidle ->
+            # facedownattack [0,45]).  _native_link_window_ok() deliberately
+            # skips window checks while an idle animation plays, so enforce the
+            # row's own window here: an out-of-window press must not start the
+            # ground attack.
+            if state in ["faceupidle", "facedownidle"]:
+                var ground_window: Array = Array(link.get("time", []))
+                if ground_window.size() < 2:
+                    continue
+                var ground_frame: float = state_time * SOURCE_FRAME_RATE
+                if (ground_frame + 0.0001 < float(ground_window[0])
+                        or ground_frame > float(ground_window[1]) + 0.0001):
+                    continue
+            _consume_link_events(link)
+            if _link_text(link, "input_reset") == "true":
+                _clear_link_events()
+            _begin_ground_attack(ground_target)
+            return true
+        var target: String = _native_target_kind(link)
+        if target.is_empty():
+            continue
+        var consume_all: bool = _link_text(link, "input_reset") == "true"
+        if target == "attacktofloor":
+            if (not _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP)
+                    or not _candidate_clip_paths.has(IDLE2_CLIP)):
+                continue
+            _consume_link_events(link)
+            if consume_all:
+                _clear_link_events()
+            _begin_attack_to_floor()
+            return true
+        if not ATTACKS.has(target):
+            continue
+        # Size-class versions are resolved before the link is consumed: a
+        # required but missing version must not swallow the input and must not
+        # start the chained grab/finisher with the wrong-size clip.
+        if not _prepare_size_variant(target):
+            continue
+        if not _begin_chained_attack(
+            target,
+            int(link.get("entry_frame", 0)),
+            int(link.get("blending", 0))
+        ):
+            continue
+        # The native link conditions (ragethird / rage2thirds) gate on the
+        # meter; the set has no per-link rage cost field, so do not spend here.
+        _consume_link_events(link)
+        if consume_all:
+            _clear_link_events()
+        return true
+    return false
+
+
+func _normalize_press_token(token: String) -> String:
+    match token:
+        "pressa":
+            return "a"
+        "pressb":
+            return "b"
+        "pressc":
+            return "c"
+        "pressd":
+            return "d"
+        "pressup":
+            return "up"
+        "pressdown":
+            return "down"
+        "pressleft":
+            return "left"
+        "pressright":
+            return "right"
+        "pressin":
+            return "in"
+        "pressout":
+            return "out"
+    return token
+
+
+func _load_native_action_categories(link_path: String) -> void:
+    ## Derived action -> animation category table for CFighter::IsBlocking.
+    ## Keyed by the same native_links file basename.  Any problem leaves the
+    ## table empty, and _native_is_blocking() then fails closed as "blocking".
+    _native_action_categories.clear()
+    var file_value: FileAccess = FileAccess.open(CATEGORY_TABLE_PATH, FileAccess.READ)
+    if file_value == null:
+        push_error("Native action categories missing: " + CATEGORY_TABLE_PATH)
+        return
+    var parsed: Variant = JSON.parse_string(file_value.get_as_text())
+    if not parsed is Dictionary:
+        push_error("Native action categories invalid")
+        return
+    var tables: Variant = Dictionary(parsed).get("tables", {})
+    if not tables is Dictionary:
+        return
+    var key: String = link_path.get_file()
+    var table: Variant = Dictionary(tables).get(key, {})
+    if table is Dictionary:
+        _native_action_categories = (table as Dictionary).duplicate(true)
+    if _native_action_categories.is_empty():
+        push_error("Native action categories has no table for " + key)
+
+
+func _load_native_links() -> void:
+    var path: String = String(
+        attack_set_profile.get("native_links", NATIVE_LINKS_PATH)
+    )
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        push_error("Native link metadata is missing: " + path)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        push_error("Native link metadata is invalid")
+        return
+    # The recovered block windows are the same exported group table, parsed once
+    # here so the guard gate and the link scan always read identical data.  A
+    # set export without usable action rows leaves the model null (fail closed).
+    var window_model: CanBlockWindows = CanBlockWindows.new()
+    if window_model.build(Dictionary(parsed), path):
+        _canblock_windows = window_model
+    else:
+        _canblock_windows = null
+        push_error("Native canblock windows failed closed: " + window_model.load_error)
+    _load_native_action_categories(path)
+    for action: Variant in parsed.get("actions", []):
+        if action is Dictionary:
+            _native_actions[str(action.get("name", ""))] = action
+    for link_value: Variant in parsed.get("links", []):
+        if not link_value is Dictionary:
+            continue
+        var link: Dictionary = link_value
+        var sequences: Array = Array(link.get("keysequence", []))
+        var variant: Array = []
+        if LINK_SEQUENCE_INDEX < sequences.size():
+            variant = Array(sequences[LINK_SEQUENCE_INDEX])
+        var steps: Array = []
+        for token: Variant in variant:
+            # Each key of the selected variant is one event; a two-key variant
+            # such as [in, a] is an ordered two-press sequence.
+            steps.append([_normalize_press_token(str(token))])
+        var status_variants: Array = Array(link.get("keystatus", []))
+        var status: Array = []
+        if LINK_SEQUENCE_INDEX < status_variants.size():
+            for pair_value: Variant in Array(status_variants[LINK_SEQUENCE_INDEX]):
+                var pair: Array = pair_value
+                if pair.size() >= 2:
+                    status.append([str(pair[0]), str(pair[1])])
+        link["steps"] = steps
+        link["status"] = status
+        _native_links.append(link)
+    for kind: String in ATTACKS:
+        var source_action: String = str(ATTACKS[kind].get("source_action", ""))
+        if not source_action.is_empty() and not _action_to_attack.has(source_action):
+            _action_to_attack[source_action] = kind
+    # These actions are code-defined in the port and have no low-attacks JSON
+    # source_action; their native action name is the attack kind itself.
+    for alias: String in ["facedownattack", "faceupattack", "attacktofloor"]:
+        if ATTACKS.has(alias) and not _action_to_attack.has(alias):
+            _action_to_attack[alias] = alias
+    _build_variant_precedence()
+    _load_candobasicattacks_members()
+    _build_native_reactions()
+
+
+func _load_candobasicattacks_members() -> void:
+    ## Load the complete recovered candobasicattacks table and prove it matches
+    ## the exported link metadata.  Any mismatch makes every candobasicattacks
+    ## group link fail closed instead of running on partial window data.
+    _candobasicattacks_members.clear()
+    _candobasicattacks_link_count = 0
+    _candobasicattacks_complete = false
+    _candobasicattacks_error = ""
+    var file: FileAccess = FileAccess.open(
+        CANDOBASICATTACKS_MEMBERS_PATH, FileAccess.READ
+    )
+    if file == null:
+        _candobasicattacks_error = "missing " + CANDOBASICATTACKS_MEMBERS_PATH
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        _candobasicattacks_error = "invalid JSON"
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    var document: Dictionary = parsed
+    if String(document.get("group", "")) != "candobasicattacks":
+        _candobasicattacks_error = "unexpected group name"
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    var source: Dictionary = document.get("source", {})
+    var link_source: Dictionary = _native_link_source()
+    if String(link_source.get("set_path", "")) != "adreno_200/set/brucelee.set":
+        # Only brucelee.set carries this recovered group table for the player.
+        # Opponent sets keep their own link data and are not gated here.
+        return
+    if (String(source.get("set_sha256", ""))
+            != String(link_source.get("set_sha256", ""))
+            or String(source.get("set_path", ""))
+            != String(link_source.get("set_path", ""))):
+        _candobasicattacks_error = "set identity does not match native_links.json"
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    var members: Array = document.get("members", [])
+    if members.size() != int(source.get("member_count", -1)):
+        _candobasicattacks_error = "member count disagrees with source"
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    for member_value: Variant in members:
+        if not member_value is Dictionary:
+            _candobasicattacks_error = "member row is not an object"
+            break
+        var member: Dictionary = member_value
+        var name: String = String(member.get("name", ""))
+        var window: Array = Array(member.get("window", []))
+        var frames: int = int(member.get("frames", 0))
+        if name.is_empty() or window.size() != 3 or frames <= 0:
+            _candobasicattacks_error = "invalid member row " + name
+            break
+        var action_row: Dictionary = _native_actions.get(name, {})
+        var native_window: Variant = action_row.get("groups", {}).get(
+            "candobasicattacks"
+        )
+        if not native_window is Array or Array(native_window).size() < 2:
+            _candobasicattacks_error = "native_links.json lacks the group window for " + name
+            break
+        if (int(Array(native_window)[0]) != int(window[0])
+                or int(Array(native_window)[1]) != int(window[1])):
+            _candobasicattacks_error = "window drift for " + name
+            break
+        _candobasicattacks_members[name] = {
+            "animation": String(member.get("animation", "")),
+            "frames": frames,
+            "pose": String(member.get("pose", "")),
+            "window": [int(window[0]), int(window[1]), int(window[2])],
+        }
+    var links: Array = document.get("links", [])
+    if _candobasicattacks_error.is_empty():
+        if links.size() != int(source.get("link_count", -1)):
+            _candobasicattacks_error = "link count disagrees with source"
+        else:
+            for link_value: Variant in links:
+                if not link_value is Dictionary:
+                    _candobasicattacks_error = "link row is not an object"
+                    break
+                var link: Dictionary = link_value
+                var index: int = int(link.get("source_index", -1))
+                var matched: bool = false
+                for native_link: Dictionary in _native_links:
+                    if int(native_link.get("order", -1)) != index:
+                        continue
+                    matched = String(native_link.get("to", "")) == String(link.get("to", ""))
+                    break
+                if not matched:
+                    _candobasicattacks_error = "link %d is missing from native_links.json" % index
+                    break
+            if _candobasicattacks_error.is_empty():
+                _candobasicattacks_link_count = links.size()
+    if not _candobasicattacks_error.is_empty():
+        _candobasicattacks_members.clear()
+        push_error("candobasicattacks coverage failed closed: " + _candobasicattacks_error)
+        return
+    _candobasicattacks_complete = true
+
+
+func _native_link_source() -> Dictionary:
+    var path: String = String(
+        attack_set_profile.get("native_links", NATIVE_LINKS_PATH)
+    )
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if file == null:
+        return {}
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        return {}
+    var source: Variant = Dictionary(parsed).get("source", {})
+    return source if source is Dictionary else {}
+
+
+func candobasicattacks_coverage() -> Dictionary:
+    ## Diagnostics for tests/tools: never fabricates coverage.
+    return {
+        "complete": _candobasicattacks_complete,
+        "error": _candobasicattacks_error,
+        "members": _candobasicattacks_members.size(),
+        "links": _candobasicattacks_link_count,
+    }
+
+
+func _candobasicattacks_member(action: String) -> Dictionary:
+    return _candobasicattacks_members.get(action, {})
+
+
+func _is_player_profile() -> bool:
+    # Bruce's own config is the only one with an empty fighting-set profile;
+    # every opponent config carries a SET_ATTACK_PROFILES entry.
+    return attack_set_profile.is_empty()
+
+
+func set_key_status(tokens: Dictionary) -> void:
+    _key_status = tokens
 
 
 func _candidate_action_for_attack(kind: String) -> String:
     match kind:
         "punch":
             return "punch"
-        "kick", "heavy":
+        "kick":
             return "kick"
         "high_punch", "high_kick", "low_punch", "low_kick", "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high", "high_punch2", "low_punch2", "high_kick2", "low_kick2", "special_kick_low_miss", "special_kick_low_hit", "special_punch_low_miss", "special_punch_low_hit", "special_punch_high_miss", "special_punch_high_hit", "special_kick_high_brick", "special_kick_low_brick", "special_punch_high_brick", "special_punch_low_brick", "parry_high_brick", "parry_low_brick", "parry_attack_brick", "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick", "grab1_miss_brick", "grab2_miss_brick", "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattack1", "endattack2":
             return kind
     return ""
 
 
-func _clear_ground_attack_input_history() -> void:
-    _ground_attack_input_history.clear()
-    _ground_attack_input_owner = ""
-
-
-func _prune_ground_attack_input_history() -> void:
-    if _ground_attack_input_history.is_empty():
-        return
-    var last_time: float = float(_ground_attack_input_history.back()["time"])
-    if _time > last_time + GROUND_ATTACK_INPUT_PROTOTYPE_WINDOW_SECONDS:
-        _clear_ground_attack_input_history()
-
-
-func try_attack_to_floor_press(
-        virtual_key: String
-) -> AttackToFloorInputResult:
-    # Prototype-only mapping for recovered b/c/d sequences. Native key status,
-    # source-frame clocks, link order and deferred third-value timing remain unverified.
-    if (state not in ["idle", "idle2", "idle3", "startup", "active", "recovery"]
-            or attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            or virtual_key not in ["b", "c", "d"]):
-        _clear_ground_attack_input_history()
-        return AttackToFloorInputResult.IGNORED
-    if state in ["startup", "active", "recovery"]:
-        # candobasicattacks links can select attacktofloor from a current
-        # group member window; Heavy has no recovered window and stays closed.
-        if (attack_kind == "heavy"
-                or not CANDOBASICATTACK_WINDOWS.has(attack_kind)
-                or not _candobasicattack_window_contains_current_frame()):
-            _clear_ground_attack_input_history()
-            return AttackToFloorInputResult.IGNORED
-    if (not _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP)
-            or not _candidate_clip_paths.has(IDLE2_CLIP)):
-        _clear_ground_attack_input_history()
-        return AttackToFloorInputResult.IGNORED
-    if opponent == null or not is_instance_valid(opponent) or opponent.current_source_pose() != "laying":
-        _clear_ground_attack_input_history()
-        return AttackToFloorInputResult.IGNORED
-    _prune_ground_attack_input_history()
-    var input_owner: String = (
-        "attacktofloor:attack:" + attack_kind + ":" + str(attack_sequence)
-        if state in ["startup", "active", "recovery"]
-        else "attacktofloor:" + state
-    )
-    if _ground_attack_input_owner != input_owner:
-        _clear_ground_attack_input_history()
-        _ground_attack_input_owner = input_owner
-    _ground_attack_input_history.append({"key": virtual_key, "time": _time})
-    var match_state: AttackToFloorSequenceMatch = _specific_sequence_match_state(
-        ATTACK_TO_FLOOR_SEQUENCES
-    )
-    if match_state == AttackToFloorSequenceMatch.COMPLETE:
-        _begin_attack_to_floor()
-        return AttackToFloorInputResult.STARTED
-    if match_state == AttackToFloorSequenceMatch.PREFIX:
-        return AttackToFloorInputResult.BUFFERED
-    # A non-prefix input discards the whole chain. A leading b can begin a new
-    # chain; c/d falls back to their ordinary input path.
-    _clear_ground_attack_input_history()
-    if virtual_key == "b":
-        _ground_attack_input_owner = input_owner
-        _ground_attack_input_history.append({"key": "b", "time": _time})
-        return AttackToFloorInputResult.BUFFERED
-    return AttackToFloorInputResult.IGNORED
-
-
-func _specific_sequence_match_state(sequences: Array) -> AttackToFloorSequenceMatch:
-    if _ground_attack_input_history.is_empty():
-        return AttackToFloorSequenceMatch.NO_MATCH
-    var observed: Array[String] = []
-    for event_value: Variant in _ground_attack_input_history:
-        if not event_value is Dictionary:
-            return AttackToFloorSequenceMatch.NO_MATCH
-        var event: Dictionary = event_value
-        observed.append(String(event.get("key", "")))
-    var has_prefix: bool = false
-    for sequence_value: Variant in sequences:
-        var sequence: Array = sequence_value
-        if observed.size() > sequence.size():
-            continue
-        var matches_prefix: bool = true
-        for index: int in range(observed.size()):
-            if observed[index] != String(sequence[index]):
-                matches_prefix = false
-                break
-        if not matches_prefix:
-            continue
-        if observed.size() == sequence.size():
-            return AttackToFloorSequenceMatch.COMPLETE
-        has_prefix = true
-    if has_prefix:
-        return AttackToFloorSequenceMatch.PREFIX
-    return AttackToFloorSequenceMatch.NO_MATCH
-
-
-func record_attack_to_floor_press(virtual_key: String) -> bool:
-    return try_attack_to_floor_press(virtual_key) == AttackToFloorInputResult.STARTED
+func _begin_ground_attack(attack_state: String) -> void:
+    # facedownidle/faceupidle -> facedownattack/faceupattack is a native direct
+    # link; the target is a ground state, not an ATTACKS entry.
+    state = attack_state
+    state_time = 0.0
+    attack_kind = attack_state
+    attack_sequence += 1
+    _attack_connected = false
+    _restart_candidate_action()
 
 
 func _begin_attack_to_floor() -> void:
     var previous_state: String = state
     state = "attacktofloor"
-    state_time = float(ATTACK_TO_FLOOR_ENTRY_FRAME) / SOURCE_FRAME_RATE
+    state_time = float(_native_entry_frame("attacktofloor", 0)) / SOURCE_FRAME_RATE
     attack_kind = "attacktofloor"
     attack_sequence += 1
     _attack_connected = false
-    _queued_attacks.clear()
     attack_started.emit("attacktofloor")
-    _clear_ground_attack_input_history()
     if (candidate_visual_blending_enabled
             and previous_state in ["idle", "idle2", "idle3"]
             and _candidate_animation != null
             and _candidate_animation.is_playing()):
         _queue_candidate_visual_blend(
-            float(CANDIDATE_ATTACK_TO_FLOOR_BLENDING_FRAMES) / SOURCE_FRAME_RATE
+            float(_native_link_blending_to("attacktofloor", 0)) / SOURCE_FRAME_RATE
         )
     else:
         _restart_candidate_action()
@@ -3438,7 +7489,8 @@ func _try_attack_to_floor_contact() -> void:
     var dz: float = opponent.global_position.z - global_position.z
     if Vector2(dx, dz).length() > attack_reach_world("attacktofloor", opponent) or dx * facing < -0.1:
         return
-    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var blocked: bool = (opponent.guard_held
+            and opponent._can_block_current_hit(ATTACK_TO_FLOOR_IMPACT))
     var reaction: Dictionary = opponent.reaction_for_incoming(ATTACK_TO_FLOOR_IMPACT, blocked)
     if not opponent.receive_hit(
         ATTACK_TO_FLOOR_DAMAGE, blocked, 0.0, facing, reaction
@@ -3449,124 +7501,236 @@ func _try_attack_to_floor_contact() -> void:
     combat_hit.emit(self, opponent, "attacktofloor", ATTACK_TO_FLOOR_DAMAGE, blocked)
 
 
-func _matches_ground_attack_sequence() -> bool:
-    # InputSequenceCheck scans the event vector backwards and skips entries
-    # that do not match the current required key. This is an ordered
-    # subsequence check, not an equality check against the last three presses.
-    for sequence_value: Variant in GROUND_ATTACK_SEQUENCES:
-        var sequence: Array = sequence_value
-        var required: int = sequence.size() - 1
-        for event_index: int in range(_ground_attack_input_history.size() - 1, -1, -1):
-            var event: Dictionary = _ground_attack_input_history[event_index]
-            if String(event["key"]) != String(sequence[required]):
-                continue
-            required -= 1
-            if required < 0:
-                return true
-    return false
-
-
 func request_attack(kind: String) -> bool:
     if guard_held or not ATTACKS.has(kind):
         return false
+    if _is_variant_attack(kind):
+        # Variants are entered from their recovered native link, and only when
+        # the explicit style selection put their unique tag into the active
+        # list.  This guard also keeps direct callers honest.
+        if not _variant_selected_ok(kind):
+            push_warning(character_name + " " + kind
+                    + " refused: style selection does not own this variant")
+            return false
+        if not _resolve_variant_clip(kind):
+            push_warning(character_name + " " + kind + " refused: "
+                    + String(_variant_clip_status.get(kind, {}).get("reason", "")))
+            return false
     if not _uses_standing_idle_rules():
         # The grab finisher starts from the tail of the grab attack while the
-        # victim is still held; other attacks still require a standing idle.
+        # victim is still held; other attacks still require a standing idle,
+        # except inside a recovered group cancel window (attacktofloor [45,..]).
         if not (kind == "endattack_brick"
                 and state in ["startup", "active", "recovery"]
                 and opponent != null and is_instance_valid(opponent)
                 and opponent.state in ["grabbed1", "grabbed2"]):
-            return false
+            if not attack_cancel_window_open():
+                return false
+    if not _prepare_size_variant(kind):
+        # The original selects the grab/finisher clip from the opponent's
+        # skeleton class. A required version the candidate cannot play is a
+        # refusal, never a fall back to the wrong-size base clip.
+        push_warning(character_name + " " + kind + " refused: " + size_variant_error)
+        return false
+    if candidate_loaded and not _candidate_clip_paths.has(kind):
+        # Fail closed: a recovered attack kind whose clip the candidate does not
+        # provide is refused outright.  The port never substitutes an idle clip
+        # or another fighting set's animation for it (e.g. Lo Ming's recovered
+        # `specialpunchhigh loming` clip m04_e02_pnch_high_03).
+        push_warning(character_name + " " + kind
+                + " refused: candidate has no clip for this attack kind")
+        return false
     attack_kind = kind
     attack_sequence += 1
+    note_animation_categories(kind)
     _attack_connected = false
+    _parry_absorbed = false
     _attack_hit_landed = false
     _grab_connected = false
     _endattack_victim_started = false
     _multi_impact_applied.clear()
+    _attack_clock_ms = 0.0
+    _attack_clock_start_frame = 0
+    _attack_clock_active = true
     state = "startup"
     state_time = float(ATTACKS[kind]["startup"])
     _seed_attack_root_motion()
     attack_started.emit(kind)
     return true
 
-func request_attack_or_queue(kind: String) -> bool:
-    if request_attack(kind):
-        return true
-    if (guard_held or state not in ["startup", "active", "recovery"]
-            or not ATTACKS.has(kind)):
-        return false
-    # A partial combo / attack during another attack must not be swallowed.
-    # Keep the base attack and let the state machine start it after the current
-    # recovery. A completed standing combo is queued by
-    # _try_begin_pending_standing_combo().
-    _queued_attacks.append(kind)
-    return true
 
-
-func _start_next_queued_attack() -> bool:
-    while not _queued_attacks.is_empty():
-        var kind: String = _queued_attacks.pop_front()
-        if request_attack(kind):
-            return true
-    return false
+func _polar_movement(speed: float) -> Vector3:
+    # WASD is expressed in the opponent-relative frame: the pole is the
+    # midpoint between both fighters, A/D change the radius and W/S change the
+    # angle around that pole. The camera sits on the perpendicular bisector.
+    if opponent == null or not is_instance_valid(opponent):
+        return Vector3(move_axis.x, 0.0, move_axis.y).normalized() * speed
+    if move_axis.length_squared() <= 0.000001:
+        return Vector3.ZERO
+    # Orbit the opponent, not the moving midpoint: the midpoint moves as
+    # only one fighter moves and would otherwise make the radius drift.
+    var center: Vector3 = opponent.global_position
+    var radial: Vector3 = global_position - center
+    radial.y = 0.0
+    if radial.length_squared() <= 0.000001:
+        return Vector3(move_axis.x, 0.0, move_axis.y).normalized() * speed
+    var radius: float = radial.length()
+    var away: Vector3 = radial / radius
+    var tangent: Vector3 = Vector3(-away.z, 0.0, away.x)
+    # A/D move along the fighter line (radial), W/S orbit around the midpoint
+    # (angular). D goes toward the opponent, A away; S goes down-screen and W
+    # up-screen. Scale tangential speed by radius so angular speed does not
+    # explode when the fighters are very close.
+    var radial_motion: Vector3 = away * (-move_axis.x) * speed
+    var angular_speed: float = speed * clampf(radius / 2.0, 0.0, 1.0)
+    var tangent_motion: Vector3 = tangent * (-move_axis.y) * angular_speed
+    return radial_motion + tangent_motion
 
 
 func _physics_process(delta: float) -> void:
+    if replay_pose_lock:
+        # SetState(6) / CBeatEmUpGame::Update case 6 runs only
+        # CFighter::RecordReplayUpdate for this fighter; BasicUpdate, control
+        # and the recording append do not run while the replay owns the pose.
+        return
     _time += delta
-    if opponent != null and is_instance_valid(opponent):
-        facing = 1.0 if opponent.global_position.x >= global_position.x else -1.0
-    # Turn the torso toward the opponent (local 'front' is +X).
-    rotation.y = 0.0 if facing > 0.0 else PI
+    if opponent != null and is_instance_valid(opponent) and _facing_window_ok():
+        var to_opponent: Vector3 = opponent.global_position - global_position
+        to_opponent.y = 0.0
+        if to_opponent.length_squared() > 0.000001:
+            facing = 1.0 if to_opponent.x >= 0.0 else -1.0
+            # Turn the torso toward the opponent in the whole ground plane,
+            # not just between +X and -X.
+            rotation.y = atan2(-to_opponent.z, to_opponent.x)
     if guard_held:
         # Raising guard between two presses must not keep a partial sequence or
         # a matched-but-unexecuted combo alive.
-        _clear_standing_combo_state()
+        _clear_link_state()
     _apply_attack_root_motion()
     _advance_timed_states(delta)
-    if (attack_kind == "endattack_brick" and state == "active"
+    if native_reaction_enabled:
+        # BasicUpdate executes the link parked in +0xF0/+0xF4, then clears it.
+        _advance_native_reaction_parking()
+    if ((attack_kind == "endattack_brick" or _is_endattack_attack(attack_kind))
+            and state == "active"
             and not _endattack_victim_started
             and opponent != null and is_instance_valid(opponent)
-            and opponent.state in ["grabbed1", "grabbed2"]):
-        if opponent.begin_endattack_victim():
+            and opponent.state in ["grabbed1", "grabbed2", "hitstun", "stun"]):
+        if opponent.begin_endattack_victim(attack_kind):
             _endattack_victim_started = true
-    _try_begin_pending_standing_combo()
+    _try_follow_links()
     if (state == "active" and ATTACKS.has(attack_kind)
             and not NON_CONTACT_ATTACKS.has(attack_kind)
             and Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty()
-            and not _attack_connected
-            and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
+            and not _attack_connected):
         _try_attack_contact()
     var motion: Vector3 = Vector3.ZERO
-    if _uses_standing_idle_rules() and not guard_held:
-        motion = Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED
-    elif _uses_standing_idle_rules() and guard_held:
-        motion = Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED * 0.25
-    velocity.x = motion.x
-    velocity.z = motion.z
-    if is_on_floor():
-        velocity.y = 0.0
+    _advance_locomotion_visual(delta)
+    var root_driven: bool = (
+        _uses_standing_idle_rules()
+        and not guard_held
+        and not _locomotion_action.is_empty()
+        and _movement_root_tracks.has(_movement_root_clip_for_action(_locomotion_action))
+    )
+    if root_driven:
+        var root_delta: Vector3 = _locomotion_root_delta()
+        global_position += root_delta
+        global_position.x = clampf(global_position.x, -ARENA_HALF_X, ARENA_HALF_X)
+        global_position.z = clampf(global_position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
+        velocity = root_delta / maxf(delta, 0.0001)
     else:
-        velocity.y -= 12.0 * delta
-    move_and_slide()
-    position.x = clampf(position.x, -6.8, 6.8)
-    position.z = clampf(position.z, -3.0, 3.0)
+        if _skip_time > 0.0:
+            motion = _skip_direction * BASE_SPEED * SKIP_SPEED_SCALE
+        elif _uses_standing_idle_rules() and not guard_held:
+            motion = (_polar_movement(BASE_SPEED) if polar_movement_enabled
+                    else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED)
+        elif _uses_standing_idle_rules() and guard_held:
+            motion = (_polar_movement(BASE_SPEED * 0.25) if polar_movement_enabled
+                    else Vector3(move_axis.x, 0.0, move_axis.y).normalized() * BASE_SPEED * 0.25)
+        velocity.x = motion.x
+        velocity.z = motion.z
+        if is_on_floor():
+            velocity.y = 0.0
+        else:
+            velocity.y -= 12.0 * delta
+        move_and_slide()
+        position.x = clampf(position.x, -ARENA_HALF_X, ARENA_HALF_X)
+        position.z = clampf(position.z, -ARENA_HALF_Z, ARENA_HALF_Z)
     _animate_visuals()
     _animate_candidate()
+    _record_replay_frame()
+
+func _advance_locomotion_visual(delta: float) -> void:
+    if not _uses_standing_idle_rules():
+        _locomotion_action = ""
+        _locomotion_time = 0.0
+        return
+    if _skip_time > 0.0:
+        _skip_time = maxf(_skip_time - delta, 0.0)
+        if _skip_time > 0.0:
+            _locomotion_action = _skip_action
+            _locomotion_time += delta
+            _locomotion_root_ready = false
+            return
+        _skip_action = ""
+    var base: String = _native_movement_action()
+    if base.is_empty():
+        _locomotion_action = ""
+        _locomotion_time = 0.0
+        return
+    var family_move: String = String(LOCOMOTION_STEP_TO_MOVE.get(base, ""))
+    if _locomotion_action.is_empty() or (
+            _locomotion_action != base
+            and _locomotion_action != family_move
+    ):
+        _locomotion_action = base
+        _locomotion_time = 0.0
+        _locomotion_root_ready = false
+    _locomotion_time += delta
+    if (_locomotion_action.begins_with("step")
+            and not family_move.is_empty()
+            and _candidate_clip_paths.has(family_move)
+            and _locomotion_time >= LOCOMOTION_CHAIN_FRAME / SOURCE_FRAME_RATE):
+        _locomotion_action = family_move
+        _locomotion_time = 0.0
+        _locomotion_root_ready = false
+    var active_clip: String = _movement_root_clip_for_action(_locomotion_action)
+    if _movement_root_tracks.has(active_clip):
+        var track: Array = _movement_root_tracks[active_clip]
+        var max_time: float = float(maxi(track.size() - 1, 1)) / SOURCE_FRAME_RATE
+        if _locomotion_time > max_time:
+            _locomotion_time = fmod(_locomotion_time, max_time)
+            _locomotion_root_ready = false
 
 func _advance_timed_states(delta: float) -> void:
+    if (frame_state_machine_enabled
+            and state in ["startup", "active", "recovery"]
+            and ATTACKS.has(attack_kind)):
+        _advance_frame_attack(delta)
+        return
+    if (frame_state_machine_enabled and _reaction_clock_active
+            and state in ["hitstun", "blockstun"]):
+        _advance_frame_reaction(delta)
+        return
     if state in ["grabbed1", "grabbed2"]:
         state_time -= delta
         if state_time <= 0.000001:
-            state = "facedownidle" if state == "grabbed1" else "faceupidle"
-            state_time = 0.0
-            attack_kind = ""
-            _restart_candidate_action()
+            if _attacker_grab_active():
+                # A held victim must not leave the hold while the attacker's
+                # recovered grab attack still has impacts to land. The countdown
+                # above is still the per-victim clip length; the clip simply
+                # holds its last frame until the grabber releases. Without this
+                # the later recovered grab multi-impacts (e.g. Bruce grab1's
+                # frame-121 hit) are dropped because the victim briefly sits in
+                # a ground idle that refuses hits.
+                state_time = 0.0
+                return
+            _exit_victim_hold(state)
         return
     if state in ["endattackcomp1", "endattackcomp2"]:
         state_time -= delta
         if state_time <= 0.000001:
-            _begin_faceup_ko(0.0)
+            _finish_endattack_comp(state)
         return
     if state == "impactstun":
         _advance_impactstun_state(delta)
@@ -3592,9 +7756,8 @@ func _advance_timed_states(delta: float) -> void:
             if not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty():
                 _try_multi_impact_contacts()
             elif (not _attack_connected
-                    and not SPECIAL_CHAIN_MISSES.has(attack_kind)):
+                    ):
                 _try_attack_contact()
-        _try_special_chain()
         if (state == "active"
                 and ATTACKS.has(attack_kind)
                 and not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty()
@@ -3607,18 +7770,6 @@ func _advance_timed_states(delta: float) -> void:
             state_time -= multi_frame_step
             _apply_attack_root_motion()
             continue
-        if state == "recovery" and attack_kind == "special_punch_low_miss":
-            var return_state_time: float = maxf(
-                (float(ATTACKS[attack_kind]["animation_frame_count"])
-                    - SPECIAL_PUNCH_LOW_MISS_RETURN_FRAME) / SOURCE_FRAME_RATE,
-                0.0
-            )
-            if state_time - remaining <= return_state_time + 0.000001:
-                remaining -= maxf(state_time - return_state_time, 0.0)
-                state_time = return_state_time
-                _apply_attack_root_motion()
-                _advance_state()
-                return
         if remaining < state_time:
             state_time -= remaining
             _apply_attack_root_motion()
@@ -3627,6 +7778,84 @@ func _advance_timed_states(delta: float) -> void:
         state_time = 0.0
         _apply_attack_root_motion()
         _advance_state()
+
+
+func _sync_attack_phase_from_frame() -> void:
+    if not ATTACKS.has(attack_kind):
+        return
+    var details: Dictionary = ATTACKS[attack_kind]
+    var frame: float = _current_attack_source_frame()
+    var startup_frames: float = float(details["startup"]) * SOURCE_FRAME_RATE
+    var active_frames: float = float(details["active"]) * SOURCE_FRAME_RATE
+    var total_frames: float = float(details["animation_frame_count"])
+    if frame < startup_frames:
+        state = "startup"
+        state_time = (startup_frames - frame) / SOURCE_FRAME_RATE
+    elif frame < startup_frames + active_frames:
+        state = "active"
+        state_time = (startup_frames + active_frames - frame) / SOURCE_FRAME_RATE
+    else:
+        state = "recovery"
+        state_time = maxf((total_frames - frame) / SOURCE_FRAME_RATE, 0.0)
+
+
+func _advance_frame_attack(delta: float) -> void:
+    # Visit every integer source frame, including when a physics step is large.
+    var remaining: float = maxf(delta, 0.0)
+    var step: float = 1.0 / 120.0
+    var guard_steps: int = 0
+    while remaining > 0.0000001 and state in ["startup", "active", "recovery"]:
+        guard_steps += 1
+        if guard_steps > 4096:
+            push_warning("frame attack step cap")
+            return
+        var tick: float = minf(remaining, step)
+        if tick <= 0.0:
+            return
+        remaining -= tick
+        var before: int = int(_current_attack_source_frame())
+        _attack_clock_ms += tick * 1000.0
+        var frame: float = _current_attack_source_frame()
+        _sync_attack_phase_from_frame()
+        if int(frame) != before:
+            if ATTACKS.has(attack_kind) and not NON_CONTACT_ATTACKS.has(attack_kind):
+                if not Array(ATTACKS[attack_kind].get("multi_impacts", [])).is_empty():
+                    _try_multi_impact_contacts()
+                elif not _attack_connected and state == "active":
+                    _try_attack_contact()
+            _apply_attack_root_motion()
+        var details: Dictionary = ATTACKS[attack_kind]
+        var total: float = float(details["animation_frame_count"])
+        var native_return: Dictionary = _native_recovery_return()
+        if not native_return.is_empty():
+            var target_state: String = String(native_return["state"])
+            if target_state == "idle2" and not _candidate_clip_paths.has(IDLE2_CLIP):
+                target_state = "idle"
+            elif target_state == "idle3" and not _candidate_clip_paths.has(IDLE3_CLIP):
+                target_state = "idle"
+            _enter_locomotion_state(
+                target_state,
+                int(native_return.get("entry_frame", 0))
+            )
+            return
+        if frame + 0.0001 >= total:
+            _enter_locomotion_state("idle")
+            return
+
+
+func _idle_return_start_frame(native_return: Dictionary) -> float:
+    var action: String = _current_action_name()
+    var target: String = String(native_return.get("state", ""))
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != action:
+            continue
+        if _link_text(link, "to") != target:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() >= 2:
+            return float(window[0])
+    return 9999.0
+
 
 func _try_multi_impact_contacts() -> void:
     var details: Dictionary = ATTACKS[attack_kind]
@@ -3646,74 +7875,231 @@ func _try_multi_impact_contacts() -> void:
         var distance: float = Vector2(dx, dz).length()
         var reach: float = (float(impact["attack_radius"]) * radius_scale
                 + opponent.source_radius_for_current_animation()) * source_units_to_world
-        if _multi_impact_applied.is_empty() and distance > reach:
+        # The frame clock judges every impact on its own window. The phase
+        # machine keeps the old "first hit chains the rest" shortcut.
+        if frame_state_machine_enabled:
+            if distance > reach:
+                continue
+            if dx * facing < -0.1 and not _is_grab_attack(attack_kind):
+                continue
+        elif _multi_impact_applied.is_empty() and distance > reach:
             continue
-        # Once the first impact lands, later impacts still belong to the same
-        # connected sequence. Block push or grab hold motion can move the
-        # target slightly outside the opening reach or behind the facing line;
-        # do not discard the remaining connected hits.
-        if (_multi_impact_applied.is_empty() and dx * facing < -0.1
-                and not GRAB_ATTACKS.has(attack_kind)):
+        elif (_multi_impact_applied.is_empty() and dx * facing < -0.1
+                and not _is_grab_attack(attack_kind)):
             continue
         var blocked: bool = opponent.guard_held and (
-            opponent._can_block_current_hit() or opponent.state == "blockstun")
+            opponent._can_block_current_hit(impact)
+            # A chained block is only valid inside the block animation's own
+            # authored canblock window; the old unconditional blockstun clause
+            # had no native window and blocked at every frame.
+            or opponent.blockstun_window_open())
         var reaction: Dictionary = opponent.reaction_for_incoming(impact, blocked)
+        if _is_grab_attack(attack_kind):
+            # A grab pulls the victim into the hold; the generic reaction root
+            # push would displace them (Master grab1 measured ~2.1 m). The grab
+            # state owns positioning once begin_grabbed runs.
+            reaction["grab_contact"] = true
         var damage: float = float(impact["damage"])
         _multi_impact_applied.append(index)
         if not opponent.receive_hit(damage, blocked, 0.0, facing, reaction):
             continue
         _attack_connected = true
+        if (not blocked and opponent.health > 0.0
+                and (GRAB_VICTIM_DATA.has(attack_kind)
+                     or not _variant_grab_family(attack_kind).is_empty())):
+            opponent.begin_grabbed(_grab_victim_kind(attack_kind))
         _register_landed_hit(damage, blocked)
         combat_hit.emit(self, opponent, attack_kind, damage, blocked)
 
 
-func _try_special_chain() -> void:
-    if attack_kind in ["parry_high", "parry_high_brick"]:
-        var parry_frame: float = _current_attack_source_frame()
-        if parry_frame + 0.0001 < 9.0 or parry_frame > 10.0001:
-            return
-        if (opponent == null or not is_instance_valid(opponent)
-                or opponent.state not in ["startup", "active"]):
-            return
-        var distance: float = Vector2(
-            opponent.global_position.x - global_position.x,
-            opponent.global_position.z - global_position.z).length()
-        var reach: float = opponent.attack_reach_world(opponent.attack_kind, self)
-        if reach <= 0.0 or distance > reach:
-            return
-        _begin_chained_attack("parry_attack" if attack_kind == "parry_high"
-                else "parry_attack_brick")
+func _apply_attack_start_frame(kind: String, start_frame: int) -> void:
+    # FollowLink entry_frame: the target animation starts at this source frame.
+    var details: Dictionary = ATTACKS.get(kind, {})
+    if details.is_empty():
         return
-    if not SPECIAL_CHAIN_MISSES.has(attack_kind):
-        return
-    var window: Array = SPECIAL_CHAIN_WINDOW[attack_kind]
-    var frame: float = _current_attack_source_frame()
-    if frame + 0.0001 < float(window[0]) or frame > float(window[1]) + 0.0001:
-        return
-    if (opponent == null or not is_instance_valid(opponent)
-            or opponent.guard_held
-            or opponent.state not in ["idle", "idle2", "idle3"]):
-        return
-    var distance: float = Vector2(
-        opponent.global_position.x - global_position.x,
-        opponent.global_position.z - global_position.z).length()
-    if distance > PROTOTYPE_GRAB_DISTANCE:
-        return
-    _begin_chained_attack(String(SPECIAL_CHAIN_MISSES[attack_kind]))
+    var fps: float = SOURCE_FRAME_RATE
+    var startup_frames: float = float(details.get("startup", 0.0)) * fps
+    var active_frames: float = float(details.get("active", 0.0)) * fps
+    var total_frames: float = float(details.get("animation_frame_count", 0))
+    var frame: float = clampf(float(start_frame), 0.0, maxf(total_frames - 1.0, 0.0))
+    _attack_clock_ms = 0.0
+    _attack_clock_start_frame = int(frame)
+    _attack_clock_active = true
+    if frame < startup_frames:
+        state = "startup"
+        state_time = (startup_frames - frame) / fps
+    elif frame < startup_frames + active_frames:
+        state = "active"
+        state_time = (startup_frames + active_frames - frame) / fps
+    else:
+        state = "recovery"
+        state_time = maxf((total_frames - frame) / fps, 0.0)
 
 
-func _begin_chained_attack(kind: String) -> void:
+func _begin_chained_attack(
+        kind: String, start_frame: int = 0, blend_frames: int = 0
+) -> bool:
+    # Native first links for the special moves are the miss/fail animations.
+    # They are not useful as playable moves; go straight to the hit variants.
+    if kind in ["special_kick_low_miss", "special_punch_low_miss",
+            "special_punch_high_miss"]:
+        var hit_kind: String = kind.replace("_miss", "_hit")
+        if ATTACKS.has(hit_kind):
+            kind = hit_kind
+    if _is_variant_attack(kind):
+        # Opponent-suffix variants resolve their clip from the player candidate or
+        # borrow the same archived animation from the opponent's already-loaded
+        # candidate.  A row whose clip is missing on both fails closed here.
+        if not _variant_selected_ok(kind) or not _resolve_variant_clip(kind):
+            push_warning(character_name + " " + kind + " link refused: "
+                    + String(_variant_clip_status.get(kind, {}).get("reason", "")))
+            return false
+        attack_kind = kind
+        note_animation_categories(kind)
+        var variant_rage_action: String = String(
+            ATTACKS.get(kind, {}).get("source_action", kind)
+        )
+        var variant_rage_cost: float = _action_rage_value(variant_rage_action)
+        if variant_rage_cost < 0.0:
+            rage = maxf(0.0, rage + variant_rage_cost)
+        attack_sequence += 1
+        _attack_connected = false
+        _parry_absorbed = false
+        _attack_hit_landed = false
+        _grab_connected = false
+        _endattack_victim_started = false
+        _multi_impact_applied.clear()
+        _apply_attack_start_frame(kind, start_frame)
+        _seed_attack_root_motion()
+        _restart_candidate_action()
+        if blend_frames > 0:
+            _queue_candidate_visual_blend(float(blend_frames) / SOURCE_FRAME_RATE)
+        attack_started.emit(kind)
+        return true
+    # A link target that is a grab/finisher must pass the same size-class gate as
+    # a requested attack, otherwise the link would play the base clip.
+    if not _prepare_size_variant(kind):
+        push_warning(character_name + " " + kind + " link refused: " + size_variant_error)
+        return false
+    if candidate_loaded and not _candidate_clip_paths.has(kind):
+        # Fail closed exactly like request_attack(): a recovered link whose target
+        # clip the loaded candidate does not provide is refused outright.  Without
+        # this guard the state machine would run while _animate_candidate keeps the
+        # previous clip, i.e. silently play the wrong visual.
+        push_warning(character_name + " " + kind
+                + " link refused: candidate has no clip for this attack kind")
+        return false
     attack_kind = kind
+    note_animation_categories(kind)
+    var rage_action: String = String(
+        ATTACKS.get(kind, {}).get("source_action", kind)
+    )
+    var rage_cost: float = _action_rage_value(rage_action)
+    if rage_cost < 0.0:
+        # Recovered special-move cost (for example -66 on the miss actions).
+        rage = maxf(0.0, rage + rage_cost)
     attack_sequence += 1
     _attack_connected = false
+    _parry_absorbed = false
     _attack_hit_landed = false
     _grab_connected = false
     _endattack_victim_started = false
-    state = "startup"
-    state_time = float(ATTACKS[kind]["startup"])
+    _multi_impact_applied.clear()
+    _apply_attack_start_frame(kind, start_frame)
     _seed_attack_root_motion()
     _restart_candidate_action()
+    if blend_frames > 0:
+        _queue_candidate_visual_blend(float(blend_frames) / SOURCE_FRAME_RATE)
     attack_started.emit(kind)
+    return true
+
+
+func _native_link_blending_to(target_action: String, fallback: int) -> int:
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != target_action:
+            continue
+        var blending: int = int(link.get("blending", 0))
+        if blending > 0:
+            return blending
+    return fallback
+
+
+func _native_link_blending_from(source_action: String, target_action: String, fallback: int) -> int:
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != source_action:
+            continue
+        if _link_text(link, "to") != target_action:
+            continue
+        var blending: int = int(link.get("blending", 0))
+        if blending > 0:
+            return blending
+    return fallback
+
+
+func _native_entry_frame(target_action: String, fallback: int) -> int:
+    # FollowLink entry_frame recorded on links that target this action.
+    for link: Dictionary in _native_links:
+        if _link_text(link, "to") != target_action:
+            continue
+        var entry_value: Variant = link.get("entry_frame")
+        if typeof(entry_value) == TYPE_INT or typeof(entry_value) == TYPE_FLOAT:
+            return int(entry_value)
+    return fallback
+
+
+func attack_cancel_window_start() -> int:
+    ## Native group-window start for the current action, or -1 when the action
+    ## has no recovered cancel window.  Frames are source frames at 30 fps.
+    var action: String = _current_action_name()
+    if action.is_empty():
+        return -1
+    if not ATTACK_CANCEL_START_FRAMES.has(action):
+        return -1
+    return int(ATTACK_CANCEL_START_FRAMES[action])
+
+
+func attack_cancel_window_open() -> bool:
+    var start: int = attack_cancel_window_start()
+    if start < 0:
+        return false
+    if not ATTACKS.has(attack_kind):
+        return false
+    var frame: float = state_time * SOURCE_FRAME_RATE
+    var duration: float = float(ATTACKS[attack_kind]["animation_frame_count"])
+    return frame + 0.0001 >= float(start) and frame <= duration + 0.0001
+
+
+func _native_link_start_frame(source_action: String, fallback: int) -> int:
+    # Window start of the action's outgoing link (return/exit frame).
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != source_action:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() >= 2:
+            return int(window[0])
+    return fallback
+
+
+func _native_recovery_return() -> Dictionary:
+    # The end-of-attack state comes from the current action's outgoing link to
+    # idle/idle2/idle3 (for example lowpunch3 -> idle2 [51,81], entry_frame 5).
+    var action: String = _current_action_name()
+    if action.is_empty():
+        return {}
+    var frame: float = _current_attack_source_frame()
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from") != action:
+            continue
+        var target: String = _link_text(link, "to")
+        if target not in ["idle", "idle2", "idle3"]:
+            continue
+        var window: Array = Array(link.get("time", []))
+        if window.size() >= 2 and frame + 0.0001 >= float(window[0]):
+            return {
+                "state": target,
+                "entry_frame": int(link.get("entry_frame", 0)),
+            }
+    return {}
 
 
 func _advance_state() -> void:
@@ -3725,27 +8111,19 @@ func _advance_state() -> void:
             state = "recovery"
             state_time = float(ATTACKS[attack_kind]["recovery"])
         "grabbed1", "grabbed2":
-            state = "facedownidle" if state == "grabbed1" else "faceupidle"
-            state_time = 0.0
-            attack_kind = ""
-            _restart_candidate_action()
+            _exit_victim_hold(state)
         "recovery", "hitstun", "blockstun":
-            var next_state: String = "idle"
-            if state == "recovery" and attack_kind == "special_punch_high_miss":
-                # Recovered miss_return targets idle2 [116,122]; keep idle
-                # as the fallback when the candidate lacks that clip.
-                if _candidate_clip_paths.has(IDLE2_CLIP):
-                    next_state = "idle2"
-            elif state == "recovery" and attack_kind == "special_kick_high":
-                # Recovered return targets idle3 [53,57]; keep idle as the
-                # fallback until a candidate supplies m01_idle_03.
-                if _candidate_clip_paths.has(IDLE3_CLIP):
-                    next_state = "idle3"
-            elif state != "recovery":
-                next_state = _verified_post_hit_return_state()
-            _enter_locomotion_state(next_state)
-            if _start_next_queued_attack():
-                _restart_candidate_action()
+            if state == "recovery":
+                var native_return: Dictionary = _native_recovery_return()
+                if not native_return.is_empty():
+                    _enter_locomotion_state(
+                        String(native_return["state"]),
+                        int(native_return.get("entry_frame", 0))
+                    )
+                    return
+                _enter_locomotion_state("idle")
+                return
+            _enter_locomotion_state(_verified_post_hit_return_state())
 
 
 func _try_facedown_attack_contact() -> void:
@@ -3762,7 +8140,8 @@ func _try_facedown_attack_contact() -> void:
         return
     if dx * facing < -0.1:
         return
-    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var blocked: bool = (opponent.guard_held
+            and opponent._can_block_current_hit(FACEDOWN_ATTACK_IMPACT))
     var reaction: Dictionary = opponent.reaction_for_incoming(
         FACEDOWN_ATTACK_IMPACT, blocked
     )
@@ -3791,7 +8170,8 @@ func _try_faceup_attack_contact() -> void:
         return
     if dx * facing < -0.1:
         return
-    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var blocked: bool = (opponent.guard_held
+            and opponent._can_block_current_hit(FACEUP_ATTACK_IMPACT))
     var reaction: Dictionary = opponent.reaction_for_incoming(
         FACEUP_ATTACK_IMPACT, blocked
     )
@@ -3808,13 +8188,159 @@ func _try_faceup_attack_contact() -> void:
     )
 
 
+func _action_rage_value(action: String) -> float:
+    # Positive action.rage values are recovered rage gain; negative values are
+    # special-move costs (for example -33 / -66).
+    var row: Dictionary = _native_actions.get(action, {})
+    var value: Variant = row.get("rage")
+    if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+        return float(value)
+    return 0.0
+
+
 func _register_landed_hit(damage: float, blocked: bool) -> void:
     combo_hits += 1
     if damage > 0.0 and not blocked:
         _attack_hit_landed = true
-        if GRAB_ATTACKS.has(attack_kind):
+        if _is_grab_attack(attack_kind):
             _grab_connected = true
-        rage = minf(RAGE_MAX, rage + RAGE_GAIN_PER_HIT)
+        var rage_gain: float = _action_rage_value(_current_action_name())
+        if rage_gain > 0.0:
+            rage = minf(RAGE_MAX, rage + rage_gain)
+
+
+func _attacker_set_suffix() -> String:
+    if opponent == null or not is_instance_valid(opponent):
+        return ""
+    return String(VICTIM_OPPONENT_SUFFIX.get(opponent.attack_config_path, ""))
+
+
+func _victim_clip_available(animation: String) -> String:
+    # Match the set's clip name against the victim's AnimationPlayer. The
+    # candidate may store a "<prefix>/<name>" variant, so return the playable
+    # name, or "" when the clip is absent. No substitute is guessed.
+    if animation.is_empty() or _candidate_animation == null:
+        return ""
+    var matched: String = _find_animation_clip(_candidate_animation, animation)
+    if matched.is_empty() or not _candidate_clip_paths.values().has(matched):
+        return ""
+    return matched
+
+
+func _select_grab_victim_clip(slot_key: String) -> bool:
+    # slot_key is grabbed1/grabbed2; the set action is grabcompl1/2 <attacker>.
+    var suffix: String = _attacker_set_suffix()
+    if suffix.is_empty():
+        return false
+    var action: String = (
+        "grabcompl" + slot_key.substr(slot_key.length() - 1) + " " + suffix
+    )
+    var row: Dictionary = _native_actions.get(action, {})
+    var animation: String = String(row.get("animation", ""))
+    var matched: String = _victim_clip_available(animation)
+    if matched.is_empty():
+        return false
+    # Fail closed: the victim holds the exact frame count recovered for this
+    # opponent set's clip; it never borrows the Thai duration.
+    var frames: int = int(VICTIM_CLIP_FRAMES.get(animation, -1))
+    if frames < 0:
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " frames for " + animation)
+        return false
+    # The recovered set link also names the state the victim exits to; it is not
+    # the old grab1->facedown / grab2->faceup hardcode.
+    var exit_state: String = String(VICTIM_CLIP_EXIT.get(animation, ""))
+    if exit_state.is_empty():
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " exit state for " + animation)
+        return false
+    _candidate_clip_paths[slot_key] = matched
+    _victim_selected_animation[slot_key] = animation
+    _victim_selected_frames[slot_key] = frames
+    _victim_exit_states[slot_key] = exit_state
+    return true
+
+
+func _select_endattack_victim_clip(slot_key: String) -> bool:
+    # slot_key is endattackcomp1/endattackcomp2. Only thai/karate carry a
+    # prefixed action; kungfu has none and therefore fails closed.
+    if opponent == null or not is_instance_valid(opponent):
+        return false
+    var prefix: String = String(
+        ENDATTACK_OPPONENT_ACTION.get(opponent.attack_config_path, "")
+    )
+    if prefix.is_empty():
+        return false
+    var action: String = prefix + " " + slot_key.substr(slot_key.length() - 1)
+    var row: Dictionary = _native_actions.get(action, {})
+    var animation: String = String(row.get("animation", ""))
+    var matched: String = _victim_clip_available(animation)
+    if matched.is_empty():
+        return false
+    var frames: int = int(VICTIM_CLIP_FRAMES.get(animation, -1))
+    if frames < 0:
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " frames for " + animation)
+        return false
+    # The recovered set link also names the state the victim exits to; it is not
+    # the old grab1->facedown / grab2->faceup hardcode.
+    var exit_state: String = String(VICTIM_CLIP_EXIT.get(animation, ""))
+    if exit_state.is_empty():
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " exit state for " + animation)
+        return false
+    _candidate_clip_paths[slot_key] = matched
+    _victim_selected_animation[slot_key] = animation
+    _victim_selected_frames[slot_key] = frames
+    _victim_exit_states[slot_key] = exit_state
+    return true
+
+
+func _select_non_player_victim_clip(slot_key: String) -> bool:
+    ## A non-player victim carries the slot -> archived clip row in its own
+    ## character clip map (KEN_CLIPS, BRICK_CLIPS, MASTER_CLIPS, ...). Resolve
+    ## the recovered per-set frame count and exit destination from that exact
+    ## clip; a missing map row or recovery field refuses the grab or finisher
+    ## instead of borrowing another set's timing.
+    var animation: String = String(candidate_clips.get(slot_key, ""))
+    if animation.is_empty():
+        return false
+    var frames: int = int(VICTIM_CLIP_FRAMES.get(animation, -1))
+    if frames < 0:
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " frames for " + animation)
+        return false
+    var exit_state: String = String(VICTIM_CLIP_EXIT.get(animation, ""))
+    if exit_state.is_empty():
+        push_warning(character_name + " " + slot_key + " refused: no recovered"
+                + " exit state for " + animation)
+        return false
+    _victim_selected_animation[slot_key] = animation
+    _victim_selected_frames[slot_key] = frames
+    _victim_exit_states[slot_key] = exit_state
+    return true
+
+
+func _apply_victim_size_variant(slot_key: String) -> bool:
+    ## The victim clips can carry their own size version (Animations.versions
+    ## "opp_skeleton" on a grabbed/endattackcomp clip). Resolve it against the
+    ## archived clip name the set selected and fail closed when it is missing.
+    var animation: String = String(
+        _victim_selected_animation.get(
+            slot_key, String(candidate_clips.get(slot_key, ""))
+        )
+    )
+    if animation.is_empty():
+        return true
+    if not candidate_loaded:
+        # Placeholder rig: no candidate clip exists to swap for a version.
+        return true
+    if not _apply_size_variant(slot_key, animation):
+        push_warning(
+            character_name + " " + slot_key + " refused: " + size_variant_error
+        )
+        return false
+    return true
 
 
 func begin_grabbed(kind: String) -> bool:
@@ -3822,36 +8348,112 @@ func begin_grabbed(kind: String) -> bool:
     if data.is_empty():
         return false
     var clip_key: String = String(data[0])
+    # Both victim roles now resolve the slot's archived clip, its recovered
+    # per-set frame count and its recovered exit state. The player reads the
+    # per-attacker action of his own set; a non-player victim reads its own
+    # character clip map. Either one fails closed instead of borrowing the
+    # static Thai (90/78) timing.
+    if is_player:
+        if not _select_grab_victim_clip(clip_key):
+            return false
+    elif not _select_non_player_victim_clip(clip_key):
+        return false
+    if not _victim_selected_frames.has(clip_key):
+        return false
     if not _candidate_clip_paths.has(clip_key):
         return false
+    if not _apply_victim_size_variant(clip_key):
+        return false
     state = clip_key
-    state_time = float(data[1]) / SOURCE_FRAME_RATE
+    state_time = float(int(_victim_selected_frames[clip_key])) / SOURCE_FRAME_RATE
     attack_kind = ""
     _attack_connected = false
     _restart_candidate_action()
     return true
 
 
-func begin_endattack_victim() -> bool:
+func begin_endattack_victim(attacker_kind: String = "") -> bool:
     var data: Array = ENDATTACK_VICTIM_DATA.get(state, [])
+    if data.is_empty() and state in ["hitstun", "stun"]:
+        data = ENDATTACK_VICTIM_STUN_DATA.get(attacker_kind, [])
     if data.is_empty():
         return false
     var clip_key: String = String(data[0])
+    # Same per-victim resolution as begin_grabbed: the finisher's recovered clip
+    # frames and exit destination come from the victim's own set, never from the
+    # static Thai 93/130 fallback. kungfu has no endattackcomp clip, so a
+    # Master/SinFu victim refuses the finisher.
+    if is_player:
+        if not _select_endattack_victim_clip(clip_key):
+            return false
+    elif not _select_non_player_victim_clip(clip_key):
+        return false
+    if not _victim_selected_frames.has(clip_key):
+        return false
     if not _candidate_clip_paths.has(clip_key):
         return false
+    if not _apply_victim_size_variant(clip_key):
+        return false
     state = clip_key
-    state_time = float(data[1]) / SOURCE_FRAME_RATE
+    state_time = float(int(_victim_selected_frames[clip_key])) / SOURCE_FRAME_RATE
     attack_kind = ""
     _attack_connected = false
     _restart_candidate_action()
+    # The victim clip starts here, so its recovered `sounds[]` frames are
+    # relative to this instant.  Listeners schedule the frame cues; nothing is
+    # played when the set has no rows for the clip (see SfxMusicMap).
+    endattack_victim_started.emit(clip_key, attacker_kind)
     return true
 
 
+func _attacker_grab_active() -> bool:
+    ## True while the attacker is still inside a recovered grab attack that owns
+    ## this victim's hold. A held victim must not exit to a ground idle between
+    ## the grab's multi-impacts, or the later recovered damage is lost.
+    if opponent == null or not is_instance_valid(opponent):
+        return false
+    return (opponent.attack_kind in GRAB_ATTACKS
+            and opponent.state in ["startup", "active", "recovery"])
+
+
+func _exit_victim_hold(slot_key: String) -> void:
+    ## Leave the hold to the exit state recovered from that set's grabcompl
+    ## link. begin_grabbed always records it (or refuses the hold); the legacy
+    ## slot fallback only covers a manually assigned victim state.
+    var exit_state: String = String(_victim_exit_states.get(slot_key, ""))
+    if exit_state.is_empty():
+        exit_state = "facedownidle" if slot_key == "grabbed1" else "faceupidle"
+    state = exit_state
+    state_time = 0.0
+    attack_kind = ""
+    _restart_candidate_action()
+
+
+func _finish_endattack_comp(slot_key: String) -> void:
+    ## endattackcomp exits to facedownko or faceupko exactly as the set's
+    ## endattackcomp link records (karate endattackcomp 1 -> facedownko, the
+    ## Thai/Karate endattackcomp 2 -> faceupko), not always faceupko.
+    var exit_state: String = String(_victim_exit_states.get(slot_key, "faceupko"))
+    if exit_state == "facedownko":
+        _begin_facedown_ko()
+    else:
+        _begin_faceup_ko(0.0)
+
+
 func _try_attack_contact() -> void:
+    if _attack_connected:
+        return
     if (opponent == null or not is_instance_valid(opponent)
             or opponent.state in ["ko", "facedownko"]):
         return
     var details: Dictionary = ATTACKS[attack_kind]
+    var damage: float = float(details["damage"])
+    # Recovered miss/parry actions carry damage 0; they must not put the
+    # opponent into hitstun or invalidate oppposestand before the follow-up
+    # link resolves.
+    if damage <= 0.0:
+        _attack_connected = true
+        return
     var dx: float = opponent.global_position.x - global_position.x
     var dz: float = opponent.global_position.z - global_position.z
     var distance: float = Vector2(dx, dz).length()
@@ -3859,11 +8461,15 @@ func _try_attack_contact() -> void:
         return
     if dx * facing < -0.1:
         return
-    var damage: float = float(details["damage"])
-    var blocked: bool = opponent.guard_held and opponent._can_block_current_hit()
+    var blocked: bool = (opponent.guard_held
+            and opponent._can_block_current_hit(
+                Dictionary(details.get("source_impact", {}))))
     var reaction: Dictionary = {}
     if details.has("source_impact"):
         reaction = opponent.reaction_for_incoming(details["source_impact"], blocked)
+    if _is_grab_attack(attack_kind):
+        # The hold owns victim placement; do not apply the generic hit push.
+        reaction["grab_contact"] = true
     var impact_height: String = ""
     if details.has("source_impact"):
         impact_height = String(details["source_impact"].get("height", ""))
@@ -3896,28 +8502,25 @@ func _try_attack_contact() -> void:
         opponent.begin_facedown_impact(damage)
     else:
         accepted = opponent.receive_hit(
-            damage, blocked, float(details["push"]), facing, reaction
+            damage, blocked, 0.0, facing, reaction
         )
     if not accepted:
         return
     _attack_connected = true
     _register_landed_hit(damage, blocked)
     combat_hit.emit(self, opponent, attack_kind, damage, blocked)
-    if not blocked and opponent.health > 0.0 and GRAB_VICTIM_DATA.has(attack_kind):
-        opponent.begin_grabbed(attack_kind)
+    if not blocked and opponent.health > 0.0 and (
+            GRAB_VICTIM_DATA.has(attack_kind)
+            or not _variant_grab_family(attack_kind).is_empty()):
+        opponent.begin_grabbed(_grab_victim_kind(attack_kind))
 
 
 func current_source_animation() -> String:
     if (state in ["hitstun", "blockstun"]
             and not last_reaction_animation.is_empty()):
         return last_reaction_animation
-    if (state in ["startup", "active", "recovery"]
-            and attack_kind != "heavy" and ATTACKS.has(attack_kind)):
+    if state in ["startup", "active", "recovery"] and ATTACKS.has(attack_kind):
         return String(ATTACKS[attack_kind]["animation"])
-    if state in ["startup", "active", "recovery"] and attack_kind == "heavy":
-        if _candidate_clip_paths.has("heavy"):
-            return String(candidate_clips.get("heavy", CANDIDATE_CLIPS["kick"]))
-        return String(candidate_clips.get("kick", CANDIDATE_CLIPS["kick"]))
     if state in ["stun", "stun2"]:
         return STUN_CLIP
     if state == "stunfall":
@@ -3925,7 +8528,7 @@ func current_source_animation() -> String:
     if state in ["stunimpact", "impactstun"] and not last_reaction_animation.is_empty():
         return last_reaction_animation
     if state in ["idle", "idle2", "idle3"]:
-        var movement_action: String = _movement_action()
+        var movement_action: String = _native_movement_action()
         if not movement_action.is_empty():
             return String(candidate_clips.get(movement_action, candidate_clips["idle"]))
     if state == "idle2":
@@ -3945,9 +8548,9 @@ func current_source_animation() -> String:
     if state == "impactfaceup":
         return FACEUP_IMPACT_CLIP
     if state == "faceupko":
-        return FACEUP_IDLE_CLIP
+        return _faceup_idle_clip()
     if state == "faceupidle":
-        return FACEUP_IDLE_CLIP
+        return _faceup_idle_clip()
     if state == "faceupgetup":
         return FACEUP_GETUP_CLIP
     if state == "faceupattack":
@@ -3957,11 +8560,77 @@ func current_source_animation() -> String:
     return _owner_idle_animation()
 
 
+func current_victim_animation() -> String:
+    ## Archived clip the grabbed/endattackcomp victim slot is playing.  The
+    ## player victim resolves the per-attacker set clip through the native
+    ## links; a non-player victim plays the candidate's universal clip.  ""
+    ## when no victim slot is active, so callers fail closed instead of timing
+    ## cues from a guessed clip.
+    if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
+        var base: String = String(_victim_selected_animation.get(state, ""))
+        if base.is_empty():
+            base = String(candidate_clips.get(state, ""))
+        return base
+    return ""
+
+
+func current_camera_animation() -> String:
+    ## Clip that owns an authored camera sub-animation for the current state.
+    ## CBeatEmUpGame::CameraUpdate (@0x188d88) reads it from
+    ## CFighter::GetCurrentAnimation(camera dummy), where the dummy is the
+    ## local player's fighter.  The state's recovered animation is the base;
+    ## the candidate clip is preferred only when it is that animation or its
+    ## recovered Animations.versions size version (the camera belongs to the
+    ## clip that is actually played).  grabbed1/grabbed2 and endattackcomp1/2
+    ## have no branch in current_source_animation(), so their victim slot clip
+    ## is reported here.
+    # Opponent-suffix variants own their camera per ACTION record, not per clip:
+    # two actions can share one clip with different cameras (grab2 master vs
+    # grab2 sinfu both play m04_sp_kck_low).  Report a stable action key so the
+    # action camera map can carry the exact recovered camera.
+    if state in ["startup", "active", "recovery"] and _is_variant_attack(attack_kind):
+        return "variant_action:" + attack_kind
+    var base: String = ""
+    if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
+        base = current_victim_animation()
+    else:
+        base = current_source_animation()
+    if base.is_empty():
+        return ""
+    if candidate_animation_clip == base:
+        return base
+    if not candidate_animation_clip.is_empty():
+        var resolved: Dictionary = size_variant_for(base)
+        if String(resolved.get("clip", "")) == candidate_animation_clip:
+            return candidate_animation_clip
+    return base
+
+
+func current_camera_frame() -> float:
+    ## 30 fps source frame of current_camera_animation(), or -1.0 when the
+    ## current state has no per-frame action clock for the camera to follow.
+    ## The decoded camera .anm is the camera sub-animation of the same action
+    ## .anm (every wired clip's frame count equals the action's recovered frame
+    ## count), so the action's own source frame is the camera frame.
+    if state in ["startup", "active", "recovery"] and ATTACKS.has(attack_kind):
+        return _current_attack_source_frame()
+    if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
+        var clip: String = current_camera_animation()
+        var frames: int = int(_victim_selected_frames.get(state, 0))
+        if frames <= 0:
+            frames = int(VICTIM_CLIP_FRAMES.get(clip, 0))
+        if frames <= 0:
+            return -1.0
+        # grabbed/endattackcomp state_time counts down from frames / 30 fps.
+        return clampf(float(frames) - state_time * SOURCE_FRAME_RATE, 0.0, float(frames))
+    return -1.0
+
+
 func current_source_pose() -> String:
     if not candidate_loaded or not SOURCE_ACTION_POSES.has(state):
         return ""
     # Only these actions currently have Brick-specific candidate mappings.
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
+    if (not attack_set_profile.is_empty()
             and state not in ["idle", "facedownidle", "impactfacedown"]):
         return ""
     var animation: String = current_source_animation()
@@ -3971,6 +8640,66 @@ func current_source_pose() -> String:
     if not _candidate_clip_paths.has(clip_key):
         return ""
     return String(SOURCE_ACTION_POSES[state])
+
+
+func set_held_directions(directions: Dictionary) -> void:
+    held_directions = directions.duplicate()
+
+
+func request_skip(action: String) -> bool:
+    ## Native fast advance/retreat from the training "double tap left/right"
+    ## instruction. Fail closed when the candidate GLB has no clip for it.
+    if action != "skipfwd" and action != "skipback":
+        return false
+    if state not in ["idle", "idle2", "idle3"]:
+        return false
+    if not _candidate_clip_paths.has(action):
+        return false
+    var toward: float = 1.0
+    if opponent != null and is_instance_valid(opponent):
+        toward = 1.0 if opponent.global_position.x >= global_position.x else -1.0
+    _skip_direction = Vector3(toward if action == "skipfwd" else -toward, 0.0, 0.0)
+    _skip_action = action
+    _skip_time = SKIP_DURATION
+    _locomotion_action = action
+    _locomotion_time = 0.0
+    _locomotion_root_ready = false
+    _animate_candidate()
+    return true
+
+
+func _native_movement_action() -> String:
+    # Native step links: left -> stepback, right -> stepfwd, in/up ->
+    # stepright, out/down -> stepleft. Held-key flags are used instead of the
+    # net movement vector so holding A (stepback) survives pressing D + L.
+    if not held_directions.is_empty():
+        # Native link status: left=stepback, right=stepfwd, in/up=stepright,
+        # out/down=stepleft. Vertical setup keys take priority when a second
+        # direction is pressed for a special command (S + D, W + A, ...).
+        if bool(held_directions.get("down", false)):
+            return "stepleft"
+        if bool(held_directions.get("up", false)):
+            return "stepright"
+        if bool(held_directions.get("left", false)):
+            return "stepback"
+        if bool(held_directions.get("right", false)):
+            return "stepfwd"
+    var x: float = move_axis.x
+    var y: float = move_axis.y
+    if absf(x) <= 0.001 and absf(y) <= 0.001:
+        return ""
+    # Fallback when a caller has not supplied held-key flags yet (tests and
+    # training setup): native axes are left=stepback, right=stepfwd,
+    # out/down=stepleft, in/up=stepright.
+    if absf(y) > 0.001:
+        var vertical: String = "stepleft" if y > 0.0 else "stepright"
+        if _native_actions.has(vertical):
+            return vertical
+        return _movement_action()
+    var horizontal: String = "stepback" if x < 0.0 else "stepfwd"
+    if _native_actions.has(horizontal):
+        return horizontal
+    return _movement_action()
 
 
 func _movement_action() -> String:
@@ -3997,17 +8726,28 @@ func _owner_idle_animation() -> String:
 
 
 func _facedown_idle_clip() -> String:
-    if attack_config_path == BRICK_ATTACK_CONFIG_PATH:
-        return BRICK_FACEDOWN_IDLE_CLIP
-    return FACEDOWN_IDLE_CLIP
+    ## all_idle_face_down is versioned by the owner's own skeleton class. A
+    ## required version the candidate lacks yields "" (fail closed); otherwise a
+    ## resolved class version wins, and the profile value remains the base.
+    var resolved: String = _resolved_ground_idle(FACEDOWN_IDLE_CLIP)
+    if resolved.is_empty() and ground_idle_status_last == "unavailable":
+        return ""
+    if not resolved.is_empty() and resolved != FACEDOWN_IDLE_CLIP:
+        return resolved
+    return String(attack_set_profile.get("facedown_idle_clip", FACEDOWN_IDLE_CLIP))
+
+
+func _faceup_idle_clip() -> String:
+    ## all_idle_face_up is versioned by the owner's own skeleton class.
+    return _resolved_ground_idle(FACEUP_IDLE_CLIP)
 
 
 func _stored_animation_radius(animation: String) -> float:
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            and animation == FACEDOWN_IMPACT_CLIP):
-        # thai.set action 92 uses radius 85. The Bruce set uses 80 for the
-        # same animation, so this value is character-config specific.
-        return BRICK_FACEDOWN_IMPACT_RADIUS
+    if (animation == FACEDOWN_IMPACT_CLIP
+            and attack_set_profile.has("facedown_impact_radius")):
+        # thai.set action 92 uses radius 85, kungfu.set/karate.set use 80 for
+        # the same animation, so this value is character-config specific.
+        return float(attack_set_profile["facedown_impact_radius"])
     if (state in ["stunimpact", "impactstun"]
             and STUN_IMPACT_SOURCE_RADII.has(animation)
             and _is_number(STUN_IMPACT_SOURCE_RADII[animation])):
@@ -4023,9 +8763,9 @@ func _stored_animation_radius(animation: String) -> float:
 
 
 func _profile_for_animation(animation: String) -> Dictionary:
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH
-            and animation == BRICK_FRONT_LOW_CLIP):
-        return BRICK_FRONT_LOW_REACTION
+    if (animation == String(attack_set_profile.get("front_low_clip", BRICK_FRONT_LOW_CLIP))
+            and attack_set_profile.has("front_low_reaction")):
+        return attack_set_profile["front_low_reaction"]
     for group_value: Variant in [REACTION_PROFILES, EXACT_REACTIONS]:
         if not group_value is Dictionary:
             continue
@@ -4054,19 +8794,24 @@ func source_radius_for_current_animation() -> float:
         # all_stunned_fall is shared with stunfall; the recovered impact action
         # uses radius 75 while stunfall uses 70.
         return 75.0 * radius_scale
-    if state in ["startup", "active", "recovery"] and attack_kind == "parry_attack":
-        # The recovered parryattack action uses radius 25 although its ANM is
-        # shared with m01_pnch_high_03 (60 in the generic animation table).
-        return 25.0 * radius_scale
-    if state in ["startup", "active", "recovery"] and attack_kind == "parry_low":
-        # The recovered parrylow action uses 40 although m01_kick_low_02's
-        # generic table entry is 50.
-        return 40.0 * radius_scale
-    if (state in ["startup", "active", "recovery"]
-            and attack_kind == "special_punch_low_miss"):
-        # The recovered specialpunchlowmiss action uses 45 although the shared
-        # m01_sp_pnch_low_fail table entry is 25.
-        return 45.0 * radius_scale
+    # These three overrides are brucelee.set values for actions whose ANM is
+    # shared with another clip. Mapped set configs load their own per-action
+    # radii from the set, so the overrides must not leak into them.
+    if attack_set_profile.is_empty():
+        if state in ["startup", "active", "recovery"] and attack_kind == "parry_attack":
+            # The recovered parryattack action uses radius 25 although its ANM is
+            # shared with m01_pnch_high_03 (60 in the generic animation table).
+            return 25.0 * radius_scale
+        if state in ["startup", "active", "recovery"] and attack_kind == "parry_low":
+            # The recovered parrylow action uses 40 although m01_kick_low_02's
+            # generic table entry is 50.
+            return 40.0 * radius_scale
+        if (state in ["startup", "active", "recovery"]
+                and attack_kind == "special_punch_low_miss"):
+            # The recovered specialpunchlowmiss action uses 45; the shared
+            # m01_sp_pnch_low_fail table entry also carries 45 in brucelee.set,
+            # so this override is now redundant but harmless.
+            return 45.0 * radius_scale
     var animation: String = current_source_animation()
     var radius: float = _stored_animation_radius(animation)
     if radius < 0.0:
@@ -4105,6 +8850,59 @@ func attack_reach_world(kind: String, target: PortFighter = null) -> float:
 
 
 func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
+    if native_reaction_enabled and _native_reaction_gate != null:
+        if impact.has("attack_radius"):
+            # The recovered scan is authoritative for a contact that describes
+            # a native impact record: first match wins; no match means no
+            # reaction (fail closed).  The one exception is a synthetic blocked
+            # contact with no recovered strength/height: the held guard action
+            # supplies the block reaction (there is no native row to match).
+            var native_reaction: Dictionary = _native_reaction_for_incoming(impact, blocked)
+            if not native_reaction.is_empty():
+                return native_reaction
+            if (blocked and String(impact.get("strength", "")).is_empty()
+                    and not guard_block_action.is_empty()):
+                var held_block: Dictionary = _reaction_for_block_action(guard_block_action)
+                if not held_block.is_empty():
+                    return held_block
+            return {}
+        # The recovered impact condition needs a native impact record radius.
+        # Legacy/synthetic callers that do not describe one keep the heuristic;
+        # every live contact path supplies attack_radius.
+        last_native_reaction = {
+            "enabled": true,
+            "result": "incomplete-impact-record",
+        }
+    if not blocked:
+        # Recovered `impactablefromair` / air-hit branch.  The gate above owns
+        # every live contact that describes a native impact record; this is the
+        # same recovered row scan for the opt-out heuristic and for callers that
+        # supply no `attack_radius`.  It returns {} when the victim is not in a
+        # recovered airborne window or no recovered air row answers.
+        var air_hit: Dictionary = _native_air_hit_reaction(impact)
+        if not air_hit.is_empty():
+            last_native_reaction = {
+                "enabled": native_reaction_enabled,
+                "result": "air-branch",
+                "action": _native_reaction_action(),
+                "resolved": String(air_hit.get("source_action", "")),
+            }
+            return air_hit
+    if blocked:
+        # Recovered block selection: a block row exists for the five strength/
+        # height combinations in CANBLOCK_ROWS, and _matching_exact_reaction
+        # then resolves the row's target action below. An impact without a
+        # recovered strength/height (synthetic contact) has no row, so the held
+        # guard action supplies the block reaction instead of nothing.
+        var block_row: Dictionary = canblock_row_for(
+            String(impact.get("strength", "")), String(impact.get("height", ""))
+        )
+        if block_row.is_empty() and not guard_block_action.is_empty():
+            var held_block: Dictionary = _reaction_for_block_action(
+                guard_block_action
+            )
+            if not held_block.is_empty():
+                return held_block
     if _is_brick_facedown_low_impact(impact, blocked):
         return BRICK_FACEDOWN_IMPACT_REACTION.duplicate(true)
     if (not blocked and String(impact.get("strength", "")) == "brutal"
@@ -4118,19 +8916,17 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
             "animation_duration_frames": 45,
             "linking_frame": 0,
         }
-    if (attack_config_path == BRICK_ATTACK_CONFIG_PATH and not blocked
+    if (attack_set_profile.has("front_high_reaction") and not blocked
             and String(impact.get("strength", "")) == "hard"
             and String(impact.get("height", "")) == "high"
             and String(impact.get("direction", "")) == "frontal"
             and _candidate_clip_paths.has("all_impct_hard_frnt_high")):
-        return {
-            "source_action": "impacthardfronthigh",
-            "animation": "all_impct_hard_frnt_high",
-            "exit_start_frame": 23,
-            "animation_duration_frames": 35,
-            "linking_frame": 0,
-            "return_action": "faceupidle",
-        }
+        var front_high: Dictionary = (
+            attack_set_profile["front_high_reaction"].duplicate(true)
+        )
+        front_high["source_action"] = "impacthardfronthigh"
+        front_high["linking_frame"] = 0
+        return front_high
     var exact: Dictionary = _matching_exact_reaction(impact, blocked)
     if not exact.is_empty():
         if (String(exact.get("source_action", "")) in [
@@ -4139,7 +8935,7 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
                     "impactlightleftlow", "impactlightrightlow",
                     "impacthardleftlow", "impacthardlefthigh", "impacthardabove",
                     "impacthardfrontlow",
-                ] and not _medium_lethal_impactable()):
+                ] and is_player and not _medium_lethal_impactable()):
             return {}
         return exact
     # Hard and brutal attacks have no light-height fallback for hits when the
@@ -4149,9 +8945,418 @@ func reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
     return _reaction_profile_for_impact(impact, blocked)
 
 
+## ---------------------------------------------------------------------------
+## Opt-in recovered reaction gate (NativeReactionState).
+##
+## BRUCELEE_NATIVE_REACTION=1 routes incoming-hit reaction selection through the
+## recovered canblock/impact/KO link scan instead of the heuristic above.  The
+## flag defaults off, so the existing path is untouched unless a caller opts in.
+##
+## No reaction data is invented here: the gate decides the target action from
+## the recovered link table, and the animation / exit frames are taken from the
+## port's existing recovered tables (EXACT_REACTIONS, REACTION_PROFILES,
+## _native_reactions, native_links.json actions) or the target's own outgoing
+## return link.  Unmapped targets fail closed.  The probe's port-side bridges
+## are documented where they are built.
+## ---------------------------------------------------------------------------
+
+## Recovered `impactablefromair` / air-hit branch.
+##
+## The shipped sets contain exactly one air reaction group: brucelee.set rows
+## 238-241 and thai.set rows 160-163, `from_group` `impactablefromair`, all
+## targeting `impacthardair` (`all_impct_hard_frnt_air`, pose `laying`, row 317
+## returns to `faceupidle` at [25,25]).  The group lives on the victim's
+## *current* action and its window is the airborne part of that action (for
+## example highkick3 `impactablefromair [0,16]` while its `impactable` window is
+## `[17,51]`).  The recovered gate already scans these rows in native order for
+## live contacts; this helper is the fallback selector's equivalent for the
+## opt-out path and for callers that do not describe a native impact record.
+##
+## Conditions are the recovered CheckConditions tokens the air rows carry
+## (`impact` and the opponent record's strength/height/direction fields); any
+## other token fails closed.  A matched row whose target has no recovered
+## animation also fails closed.
+const AIR_HIT_GROUP: String = "impactablefromair"
+const AIR_HIT_TARGET: String = "impacthardair"
+
+
+## True when the victim's current recovered action window says it is airborne.
+func _native_air_state() -> bool:
+    var action: String = _native_reaction_action()
+    if action.is_empty():
+        return false
+    var groups: Variant = _native_actions.get(action, {}).get("groups", {})
+    if not groups is Dictionary:
+        return false
+    var window: Variant = Dictionary(groups).get(AIR_HIT_GROUP)
+    if not window is Array or Array(window).size() < 2:
+        return false
+    var frame: float = _native_reaction_frame()
+    return (
+        frame + 0.0001 >= float(Array(window)[0])
+        and frame <= float(Array(window)[1]) + 0.0001
+    )
+
+
+func _native_air_condition_ok(condition: String, impact: Dictionary) -> bool:
+    # The air rows carry only `impact` plus the opponent-record fields.  A live
+    # contact is exactly the +0x164 record the caller supplies, so the same
+    # NativeConditions evaluator is used with a single active/next record.
+    var record: Dictionary = {
+        "id": 0,
+        "start": 0,
+        "end": 0,
+        "radius": float(impact.get("attack_radius", 0.0)),
+        "height": String(impact.get("height", "")),
+        "strength": String(impact.get("strength", "")),
+        "direction": String(impact.get("direction", "")),
+    }
+    var probe: Dictionary = {
+        "opponent_active_impact": record,
+        "opponent_next_impact": record,
+        "opponent_attacking": true,
+        "opponent_processed": 0,
+        "self_radius": 0.0,
+        "opponent_scale": 1.0,
+        "distance": 0.0,
+    }
+    return NativeConditions.evaluate(condition, probe)
+
+
+func _native_air_hit_reaction(impact: Dictionary) -> Dictionary:
+    if not _native_air_state():
+        return {}
+    if String(impact.get("strength", "")).is_empty():
+        return {}
+    for link: Dictionary in _native_links:
+        if _link_text(link, "from_group") != AIR_HIT_GROUP:
+            continue
+        var matched: bool = true
+        for condition: Variant in Array(link.get("conditions", [])):
+            if not _native_air_condition_ok(String(condition), impact):
+                matched = false
+                break
+        if not matched:
+            continue
+        var reaction: Dictionary = _native_gate_reaction(link, impact, false)
+        if reaction.is_empty():
+            return {}
+        reaction["air_branch"] = true
+        return reaction
+    return {}
+
+
+func _init_native_reaction_gate() -> void:
+    # The recovered gate is the default reaction selector for every contact
+    # that describes a native impact record. BRUCELEE_NATIVE_REACTION=0 is the
+    # opt-out: it keeps the pre-recovery heuristic and the old stun-impact
+    # mapping so a caller can compare, or run a candidate whose exported link
+    # table is not the one the gate expects.
+    native_reaction_enabled = OS.get_environment(NATIVE_REACTION_ENV) != "0"
+    if not native_reaction_enabled:
+        return
+    var gate: NativeReactionGate = NativeReactionGate.new()
+    gate.sequence_index = LINK_SEQUENCE_INDEX
+    var path: String = String(
+        attack_set_profile.get("native_links", NATIVE_LINKS_PATH)
+    )
+    if not gate.load_native_links(path):
+        # The gate is the default now, so a load failure must not be silent:
+        # every caller below falls back to the port's documented heuristic path
+        # and `native_reaction_error` reports why.
+        native_reaction_error = "native reaction gate failed closed: " + gate.load_error
+        push_error(native_reaction_error)
+        _native_reaction_gate = null
+        return
+    _native_reaction_gate = gate
+
+
+func _native_reaction_for_incoming(impact: Dictionary, blocked: bool) -> Dictionary:
+    if _native_reaction_gate == null:
+        return {}
+    var pending_before: bool = not _native_reaction_gate.can_follow()
+    var probe: Dictionary = _native_reaction_probe(impact, blocked)
+    var link: Dictionary = _native_reaction_gate.resolve(probe)
+    last_native_reaction = {
+        "enabled": true,
+        "action": String(probe.get("action", "")),
+        "frame": float(probe.get("frame", 0.0)),
+        "blocked": blocked,
+        "resolved": String(link.get("to", "")),
+        "order": int(link.get("order", -1)),
+        "result": (
+            "blocked-by-pending" if pending_before
+            else String(link.get("result", "no-matching-link"))
+        ),
+    }
+    if link.is_empty():
+        return {}
+    var follow: Dictionary = _native_reaction_gate.follow_link(
+        link,
+        float(probe.get("frame", 0.0))
+    )
+    var reaction: Dictionary = _native_gate_reaction(link, impact, blocked)
+    last_native_reaction["mapped"] = not reaction.is_empty()
+    if bool(follow.get("deferred", false)):
+        _native_pending_reaction = {
+            "reaction": reaction,
+            "blocked": blocked,
+            "link": link,
+        }
+        last_native_reaction["deferred"] = true
+        last_native_reaction["pending_frame"] = int(
+            _native_reaction_gate.pending_frame
+        )
+        # CFighter::FollowLink parked the link in +0xF0/+0xF4.  The port keeps
+        # applying damage at contact (its existing rule); the reaction clip is
+        # selected when BasicUpdate reaches the parked frame.
+        return {}
+    last_native_reaction["deferred"] = false
+    return reaction
+
+
+func _native_reaction_probe(impact: Dictionary, blocked: bool) -> Dictionary:
+    var attacker: PortFighter = opponent
+    var attacker_scale: float = radius_scale
+    var distance: float = 0.0
+    if attacker != null and is_instance_valid(attacker):
+        attacker_scale = attacker.radius_scale
+        var dx: float = attacker.global_position.x - global_position.x
+        var dz: float = attacker.global_position.z - global_position.z
+        distance = Vector2(dx, dz).length() / maxf(source_units_to_world, 0.000001)
+    # source_impact rows in the attack configs carry no "damage" field; the
+    # applied amount is the attacker's recovered ATTACKS entry for the action
+    # being played. Multi-impact rows already carry their own damage.
+    var incoming_damage: float = float(impact.get("damage", -1.0))
+    if incoming_damage < 0.0 and attacker != null and is_instance_valid(attacker):
+        if attacker.ATTACKS.has(attacker.attack_kind):
+            incoming_damage = float(
+                attacker.ATTACKS[attacker.attack_kind].get("damage", 0.0)
+            )
+    if incoming_damage < 0.0:
+        incoming_damage = 0.0
+    var record: Dictionary = {
+        "impact_active": true,
+        "height": String(impact.get("height", "")),
+        "strength": String(impact.get("strength", "")),
+        "direction": String(impact.get("direction", "")),
+        "radius": float(impact.get("attack_radius", 0.0)),
+        "scale": attacker_scale,
+        # The port resolves one contact per call and has no native +0x16C
+        # impact cursor; the record is modelled with one unspent impact.
+        "last_index": 0,
+        "cursor": 0,
+        "damage": incoming_damage,
+    }
+    var canonical_impact: Dictionary = {
+        "id": 0,
+        "start": 0,
+        "end": 0,
+        "radius": float(impact.get("attack_radius", 0.0)),
+        "height": String(impact.get("height", "")),
+        "strength": String(impact.get("strength", "")),
+        "direction": String(impact.get("direction", "")),
+    }
+    var canonical: Dictionary = {
+        "self_pose": _fighter_pose(),
+        "self_radius": source_radius_for_current_animation(),
+        "self_health": health,
+        "self_rage": rage,
+        "self_rage_forced": false,
+        "self_dummy_health": false,
+        "distance": distance,
+        "incoming_damage": incoming_damage,
+        "counter_open": (
+            attacker._native_is_in_counter_time()
+            if attacker != null and is_instance_valid(attacker) else false
+        ),
+        "opponent_pose": (
+            attacker._fighter_pose()
+            if attacker != null and is_instance_valid(attacker) else ""
+        ),
+        "opponent_blocking": (
+            attacker._native_is_blocking()
+            if attacker != null and is_instance_valid(attacker) else true
+        ),
+        "opponent_scale": attacker_scale,
+        "opponent_radius": (
+            attacker.source_radius_for_current_animation()
+            if attacker != null and is_instance_valid(attacker) else 0.0
+        ),
+        "opponent_attacking": true,
+        "opponent_active_impact": canonical_impact,
+        "opponent_next_impact": canonical_impact,
+        "opponent_processed": 0,
+        "opponent_about_to_grab": false,
+        "relative_facing_dot": _native_relative_facing_dot(),
+    }
+    return {
+        "action": _native_reaction_action(),
+        "frame": _native_reaction_frame(),
+        "health": health,
+        "incoming_damage": incoming_damage,
+        "distance": distance,
+        "victim_radius": source_radius_for_current_animation(),
+        # Every recovered block row carries the "left" status token.  The port's
+        # existing guard decision supplies that token; the original input.config
+        # mapping is not recovered, and this is the same bridge the module's own
+        # validation uses.
+        "status": {"left": blocked},
+        "attacker": record,
+        "native": canonical,
+    }
+
+
+func _native_reaction_action() -> String:
+    # Current animation action name for the recovery link scan.
+    if state in ["startup", "active", "recovery"] and ATTACKS.has(attack_kind):
+        return _current_action_name()
+    if state in ["hitstun", "blockstun"]:
+        if _native_actions.has(last_reaction_source_action):
+            return last_reaction_source_action
+        return ""
+    if state in ["idle", "idle2", "idle3", "facedownidle", "faceupidle",
+            "stun", "stun2", "stunfall"]:
+        var current: String = _current_action_name()
+        return current if not current.is_empty() else state
+    return ""
+
+
+func _native_reaction_frame() -> float:
+    if state in ["startup", "active", "recovery"] and ATTACKS.has(attack_kind):
+        return maxf(_current_attack_source_frame(), 0.0)
+    if state in ["hitstun", "blockstun"] and last_reaction_exit_frame >= 0:
+        return maxf(
+            float(last_reaction_exit_frame) - state_time * SOURCE_FRAME_RATE,
+            0.0
+        )
+    if state in ["stun", "stun2", "stunfall"]:
+        for target: String in ["stun2", "stunfall", "faceupko"]:
+            if _has_native_link(state, target):
+                var exit_frame: float = (
+                    _stun_step_seconds(state, target, STUN_DURATION_FRAMES)
+                    * SOURCE_FRAME_RATE
+                )
+                return maxf(exit_frame - state_time * SOURCE_FRAME_RATE, 0.0)
+        return maxf(state_time * SOURCE_FRAME_RATE, 0.0)
+    return maxf(state_time * SOURCE_FRAME_RATE, 0.0)
+
+
+func _native_gate_reaction(
+        link: Dictionary,
+        impact: Dictionary,
+        blocked: bool
+) -> Dictionary:
+    var target: String = String(link.get("to", ""))
+    if target.is_empty():
+        return {}
+    var group: String = "block" if target.contains("block") else "hit"
+    var entry: Dictionary = _native_reaction_entry_by_source(group, target)
+    if not entry.is_empty():
+        var mapped: Dictionary = entry.duplicate(true)
+        mapped["native_gate"] = true
+        mapped["native_link_order"] = int(link.get("order", -1))
+        return mapped
+    var row: Dictionary = _native_actions.get(target, {})
+    var animation: String = String(row.get("animation", ""))
+    if animation.is_empty():
+        return {}
+    var reaction: Dictionary = {
+        "source_action": target,
+        "animation": animation,
+        "entry_frame": int(link.get("entry_frame", 0)),
+        "linking_frame": int(link.get("linking_frame", 0)),
+        "native_gate": true,
+        "native_link_order": int(link.get("order", -1)),
+        "strength": String(impact.get("strength", "")),
+        "height": String(impact.get("height", "")),
+        "direction": String(impact.get("direction", "")),
+    }
+    var native_return: Dictionary = _native_reaction_return_data(target)
+    if not native_return.is_empty():
+        reaction["exit_start_frame"] = int(native_return["exit_start_frame"])
+        reaction["animation_duration_frames"] = int(
+            native_return.get("animation_duration_frames", 0)
+        )
+        reaction["return_action"] = String(native_return["return_action"])
+    return reaction
+
+
+func _native_reaction_entry_by_source(group: String, target: String) -> Dictionary:
+    var exact: Variant = EXACT_REACTIONS.get(group, [])
+    if exact is Array:
+        for entry: Variant in Array(exact):
+            if (entry is Dictionary
+                    and String(Dictionary(entry).get("source_action", "")) == target):
+                return Dictionary(entry)
+    var profiles: Variant = REACTION_PROFILES.get(group, {})
+    if profiles is Dictionary:
+        for key: Variant in Dictionary(profiles):
+            var profile: Variant = Dictionary(profiles)[key]
+            if (profile is Dictionary
+                    and String(Dictionary(profile).get("source_action", "")) == target):
+                return Dictionary(profile)
+    var native_entries: Variant = _native_reactions.get(group, [])
+    if native_entries is Array:
+        for entry: Variant in Array(native_entries):
+            if (entry is Dictionary
+                    and String(Dictionary(entry).get("source_action", "")) == target):
+                return Dictionary(entry)
+    return {}
+
+
+func _advance_native_reaction_parking(frame_override: float = -1.0) -> void:
+    if not native_reaction_enabled or _native_reaction_gate == null:
+        return
+    if _native_pending_reaction.is_empty():
+        return
+    var frame: float = (
+        frame_override if frame_override >= 0.0 else _native_reaction_frame()
+    )
+    var run: Dictionary = _native_reaction_gate.advance(frame)
+    if run.is_empty():
+        return
+    var pending: Dictionary = _native_pending_reaction
+    _native_pending_reaction = {}
+    last_native_reaction["executed_pending"] = true
+    last_native_reaction["executed_frame"] = frame
+    var reaction: Dictionary = Dictionary(pending.get("reaction", {}))
+    if reaction.is_empty():
+        return
+    _apply_native_parked_reaction(reaction, bool(pending.get("blocked", false)))
+
+
+func _apply_native_parked_reaction(reaction: Dictionary, blocked: bool) -> void:
+    # CFighter::BasicUpdate executes the parked animation change once the frame
+    # reaches +0xF4.  The port has no deferred animation queue, so executing the
+    # parked link updates the same reaction bookkeeping receive_hit() uses.
+    if state not in ["hitstun", "blockstun"]:
+        last_native_reaction["late_skipped_state"] = state
+        return
+    last_reaction_group = "block" if blocked else "hit"
+    last_reaction_source_action = String(reaction.get("source_action", ""))
+    last_reaction_animation = String(reaction.get("animation", ""))
+    last_reaction_exit_frame = int(reaction.get("exit_start_frame", -1))
+    last_reaction_entry_frame = int(reaction.get("entry_frame", 0))
+    var prepared: bool = _candidate_clip_paths.has(last_reaction_animation)
+    last_reaction_clip_implemented = (
+        bool(reaction.get("clip_implemented", false)) or prepared
+    )
+    if last_reaction_exit_frame >= 0:
+        state_time = float(maxi(
+            last_reaction_exit_frame - last_reaction_entry_frame,
+            0
+        )) / SOURCE_FRAME_RATE
+        if frame_state_machine_enabled and reaction.has("return_action"):
+            _reaction_clock_start_frame = last_reaction_entry_frame
+            _reaction_clock_ms = 0.0
+            _reaction_return_action = String(reaction["return_action"])
+            _reaction_clock_active = true
+
+
 func _is_brick_facedown_low_impact(impact: Dictionary, blocked: bool) -> bool:
     return (
-        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        bool(attack_set_profile.get("facedown_low_impact", false))
         and state == "facedownidle"
         and not blocked
         and String(impact.get("height", "")) == "low"
@@ -4160,7 +9365,7 @@ func _is_brick_facedown_low_impact(impact: Dictionary, blocked: bool) -> bool:
 
 func _is_brick_facedown_impact_reaction(reaction: Dictionary) -> bool:
     return (
-        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        bool(attack_set_profile.get("facedown_low_impact", false))
         and String(reaction.get("source_action", "")) == "impactfacedown"
         and String(reaction.get("animation", "")) == FACEDOWN_IMPACT_CLIP
     )
@@ -4177,20 +9382,132 @@ func _accepts_brick_faceup_candidate(damage: float, blocked: bool) -> bool:
     if state in ["startup", "active", "recovery"]:
         mapped_state = (attack_kind in ["punch", "kick"] and ATTACKS.has(attack_kind)
             and _candidate_clip_paths.has(attack_kind))
+    var front_low: String = String(
+        attack_set_profile.get("front_low_clip", BRICK_FRONT_LOW_CLIP)
+    )
     return (
-        attack_config_path == BRICK_ATTACK_CONFIG_PATH
+        bool(attack_set_profile.get("facedown_low_impact", false))
         and candidate_loaded
         and mapped_state
         and not blocked
         and health - damage > 0.0
-        and _candidate_clip_paths.has(BRICK_FRONT_LOW_CLIP)
-        and _candidate_clip_paths.has(BRICK_FACEDOWN_IDLE_CLIP)
+        and _candidate_clip_paths.has(front_low)
+        and _candidate_clip_paths.has(_facedown_idle_clip())
     )
+
+
+func _build_native_reactions() -> void:
+    # Reaction links target impact*/block* actions whose conditions encode the
+    # incoming impact. Only animations present in the candidate are used.
+    _native_reactions = {"hit": [], "block": []}
+    for link: Dictionary in _native_links:
+        var target: String = _link_text(link, "to")
+        if target.is_empty():
+            continue
+        var is_block: bool = target.contains("block")
+        var is_hit: bool = target.begins_with("impact")
+        if not is_block and not is_hit:
+            continue
+        var row: Dictionary = _native_actions.get(target, {})
+        var animation: String = String(row.get("animation", ""))
+        if animation.is_empty():
+            continue
+        var conditions: Array = Array(link.get("conditions", []))
+        if not conditions.has("impact"):
+            continue
+        var strength: String = _condition_attribute(conditions, "oppattackstrength")
+        var height: String = _condition_attribute(conditions, "oppattackheight")
+        var direction: String = _condition_attribute(conditions, "oppattackdir")
+        if strength.is_empty():
+            continue
+        var exit_start: int = -1
+        var duration: int = -1
+        var return_action: String = "idle"
+        for out: Dictionary in _native_links:
+            if _link_text(out, "from") != target:
+                continue
+            var out_target: String = _link_text(out, "to")
+            if out_target in ["idle", "idle2", "faceupidle", "facedownidle"]:
+                var window: Array = Array(out.get("time", []))
+                if window.size() >= 2:
+                    exit_start = int(window[0])
+                    duration = int(window[1])
+                    return_action = out_target
+                break
+        if exit_start < 0:
+            continue
+        var entry: Dictionary = {
+            "strength": strength,
+            "height": height,
+            "direction": direction,
+            "source_action": target,
+            "animation": animation,
+            "exit_start_frame": exit_start,
+            "animation_duration_frames": duration,
+            "linking_frame": 0,
+            "return_action": return_action,
+        }
+        var group: String = "block" if is_block else "hit"
+        var group_entries: Array = _native_reactions[group]
+        group_entries.append(entry)
+
+
+func _condition_attribute(conditions: Array, prefix: String) -> String:
+    for condition: Variant in conditions:
+        var text: String = String(condition)
+        if text.begins_with(prefix):
+            var suffix: String = text.substr(prefix.length())
+            if suffix == "med":
+                return "medium"
+            return suffix
+    return ""
+
+
+## Reaction row whose source action is `action`, i.e. the target of the recovered
+## canblock row (lowblock / midblock / highblock / highblockhard /
+## highblockbrutal). Returns {} when the loaded config and candidate provide no
+## reaction for it, so callers keep their existing priority order.
+func _reaction_for_block_action(action: String) -> Dictionary:
+    var entries: Array = []
+    var exact_value: Variant = EXACT_REACTIONS.get("block", [])
+    if exact_value is Array:
+        entries.append_array(Array(exact_value))
+    var native_value: Variant = _native_reactions.get("block", [])
+    if native_value is Array:
+        entries.append_array(Array(native_value))
+    for entry_value: Variant in entries:
+        if not entry_value is Dictionary:
+            continue
+        var entry: Dictionary = entry_value
+        if String(entry.get("source_action", "")) != action:
+            continue
+        if not entry.has("exit_start_frame") or not entry.has("animation"):
+            continue
+        var resolved: Dictionary = entry.duplicate(true)
+        resolved["entry_frame"] = int(resolved.get("entry_frame", 0))
+        return resolved
+    var profiles: Variant = REACTION_PROFILES.get("block", {})
+    if profiles is Dictionary:
+        for profile_value: Variant in Dictionary(profiles).values():
+            if (profile_value is Dictionary
+                    and String(Dictionary(profile_value).get("source_action", "")) == action
+                    and Dictionary(profile_value).has("exit_start_frame")):
+                return Dictionary(profile_value).duplicate(true)
+    return {}
 
 
 func _matching_exact_reaction(impact: Dictionary, blocked: bool) -> Dictionary:
     var group: String = "block" if blocked else "hit"
     var entries_value: Variant = EXACT_REACTIONS.get(group, [])
+    if _native_reactions.get(group, []).size() > 0:
+        var merged: Array = []
+        if entries_value is Array:
+            merged.append_array(entries_value)
+        for native_entry: Variant in _native_reactions[group]:
+            if native_entry is Dictionary and _candidate_clip_paths.has(
+                    String(Dictionary(native_entry).get("animation", ""))):
+                merged.append(native_entry)
+        entries_value = merged
     if not entries_value is Array:
         return {}
     var strength: String = String(impact.get("strength", ""))
@@ -4285,6 +9602,20 @@ func _medium_lethal_impactable() -> bool:
     return false
 
 
+func _action_impactable_start(kind: String) -> int:
+    # Start of the action's recovered impactable group window, or -1.
+    if not ATTACKS.has(kind):
+        return -1
+    var action: String = String(ATTACKS[kind].get("source_action", ""))
+    var groups: Variant = _native_actions.get(action, {}).get("groups")
+    if not groups is Dictionary:
+        return -1
+    var window: Variant = Dictionary(groups).get("impactable")
+    if not window is Array or Array(window).size() < 2:
+        return -1
+    return int(window[0])
+
+
 func receive_hit(
         amount: float,
         blocked: bool,
@@ -4292,12 +9623,14 @@ func receive_hit(
         direction: float,
         reaction: Dictionary = {}
 ) -> bool:
-    _parry_press_times.clear()
     if (state in ["startup", "active", "recovery"]
             and attack_kind in ["parry_high", "parry_low"]):
-        # Player parry mirrors the Brick parry windows; absorbing an incoming
-        # strike before frame 25 is the defensive success event.
-        if _current_attack_source_frame() < 25.0:
+        # parryhigh is impactable only from its recovered impactable start
+        # (brucelee.set: parryhigh [30,62]); before that the parry absorbs.
+        var impactable_start: int = _action_impactable_start(attack_kind)
+        var absorb_until: float = float(impactable_start) if impactable_start >= 0 else 25.0
+        if _current_attack_source_frame() < absorb_until:
+            _parry_absorbed = true
             parry_succeeded.emit(attack_kind)
             return false
     if (state in ["startup", "active", "recovery"]
@@ -4305,39 +9638,66 @@ func receive_hit(
         # thai.set marks parryhigh/parrylow impactable only from frame 25.
         # Absorb earlier incoming strikes so the parry window is defensive.
         if _current_attack_source_frame() < 25.0:
+            # Record the absorb exactly like the Bruce parry above: the
+            # automatic parryhigh -> parryattack link is released by
+            # _auto_link_release_ok() only when _parry_absorbed is set (its
+            # [9,10] window precedes the frame-25 impactable start). Without
+            # this the Brick parry absorbs the hit but never counters.
+            _parry_absorbed = true
             return false
     if (state in ["startup", "active"]
             and attack_kind in ["parry_attack", "parry_attack_brick"]):
         # The prototype counter owns the exchange once the parry chains.
         return false
-    # A real hit/block cancels queued attacks. Parry/counter returns above do
-    # not clear the queue, so their own follow-up inputs survive.
-    _queued_attacks.clear()
+    # A real hit/block cancels unconsumed link events. Parry/counter returns
+    # above do not clear them, so their own follow-up inputs survive.
+    _clear_link_state()
+    var grab_contact: bool = bool(reaction.get("grab_contact", false))
     # faceupgetup and faceupattack still keep unverified incoming hits
     # out of the standing hitstun/blockstun/KO paths until those links have
     # their own evidence-backed transitions.
     if state in ["stun", "stun2"] and not blocked:
         var stun_source: String = String(reaction.get("source_action", ""))
-        var stun_animation: String
-        var stun_exit_frame: int
+        var stun_animation: String = ""
+        var stun_exit_frame: int = 0
         var stun_next_state: String = "stunfall"
-        if stun_source == "impactlightfronthigh":
+        var native_stun: Dictionary = _stun_impact_reaction(reaction)
+        if not native_stun.is_empty():
+            # A recovered `impactsfromstun` row matched. Its target owns the
+            # exit frame and the continuation. The clip is the recovered
+            # animation name; when a candidate registers that ANM under the
+            # port's friendly key instead (stun_hard / stun_brutal), that
+            # existing key is used. Neither present means the hit is refused
+            # instead of falling back to a different clip.
+            var recovered_animation: String = String(native_stun["animation"])
+            if _candidate_clip_paths.has(recovered_animation):
+                stun_animation = recovered_animation
+            else:
+                var animation_alias: String = _stun_impact_clip_alias(
+                    String(native_stun["target"])
+                )
+                if (animation_alias.is_empty()
+                        or not _candidate_clip_paths.has(animation_alias)):
+                    return false
+                stun_animation = animation_alias
+            stun_exit_frame = int(native_stun["exit_frame"])
+            stun_next_state = String(native_stun["next_state"])
+        elif stun_source == "impactlightfronthigh":
             stun_animation = "all_impct_light_frnt_high"
-            stun_exit_frame = 13
+            stun_exit_frame = _native_link_start_frame("impactlightfronthigh", 0)
         elif stun_source == "impactlightfrontlow":
             stun_animation = "all_impct_light_frnt_low"
-            stun_exit_frame = 13
+            stun_exit_frame = _native_link_start_frame("impactlightfrontlow", 0)
         elif stun_source == "impactlightfrontmid":
             stun_animation = "all_impct_crotch"
-            # Source link 131 allows [15,20]; choose 15 for this PC candidate.
-            stun_exit_frame = 15
+            stun_exit_frame = _native_link_start_frame("impactlightfrontmid", 0)
         elif stun_source.begins_with("impacthard"):
             stun_animation = "stun_hard"
-            stun_exit_frame = 20
+            stun_exit_frame = _native_link_start_frame("impacthardfronthigh", 0)
             stun_next_state = "faceupko"
         elif stun_source == "stunbrutalimpact":
             stun_animation = "stun_brutal"
-            stun_exit_frame = 40
+            stun_exit_frame = _native_link_start_frame("stunbrutalimpact", 0)
             stun_next_state = "facedownko"
         else:
             return false
@@ -4350,10 +9710,10 @@ func receive_hit(
             # stun_brutal uses the spectacular-left source animation; use the
             # corresponding decoded reaction positions as a prototype input.
             stun_push_source = float(REACTION_ROOT_PUSH_SOURCE.get("impactbrutalleft", -1.0))
-        if stun_push_source >= 0.0:
+        if stun_push_source >= 0.0 and not grab_contact:
             position.x = clampf(
                 position.x + direction * stun_push_source * source_units_to_world,
-                -6.8, 6.8
+                -ARENA_HALF_X, ARENA_HALF_X
             )
         health = maxf(0.0, health - amount)
         state = "stunimpact"
@@ -4378,14 +9738,28 @@ func receive_hit(
         return false
     var state_before: String = state
     var medium_lethal_eligible: bool = _medium_lethal_impactable()
+    if (not reaction.has("exit_start_frame") and reaction.has("source_action")):
+        var native_return: Dictionary = _native_reaction_return_data(
+            String(reaction["source_action"])
+        )
+        if not native_return.is_empty():
+            reaction["exit_start_frame"] = int(native_return["exit_start_frame"])
+            reaction["animation_duration_frames"] = int(
+                native_return.get("animation_duration_frames", 0)
+            )
+            reaction["return_action"] = String(native_return["return_action"])
     var reaction_root_source: float = float(
         REACTION_ROOT_PUSH_SOURCE.get(String(reaction.get("source_action", "")), -1.0)
     )
-    if reaction_root_source >= 0.0:
-        # Different reactions use a matching raw position component as the
-        # prototype push input. Native axis/sign semantics and the final
-        # knockback mapping remain unverified.
+    if grab_contact:
+        # The grab state owns victim placement; no generic reaction push.
+        push = 0.0
+    elif reaction_root_source >= 0.0:
+        # The reaction's decoded root position component is the push input.
         push = reaction_root_source * source_units_to_world
+    else:
+        # No recovered reaction root: do not apply the invented prototype push.
+        push = 0.0
     var brick_facedown_impact: bool = (
         state_before == "facedownidle"
         and not blocked
@@ -4410,7 +9784,28 @@ func receive_hit(
         return true
     _attack_connected = false
     # Being hit cancels a sequence that matched during the interrupted attack.
-    _clear_standing_combo_state()
+    _clear_link_state()
+    # A downed fighter's recovered link table only answers the low impact row
+    # (facedownidle -> impactfacedown) and the healthzero row.  Any other
+    # impact resolves to no playable reaction: the hit still deals its damage,
+    # but it must not invent a standing hitstun/blockstun transition.
+    var downed_reaction_playable: bool = (
+        reaction.has("animation")
+        and _candidate_clip_paths.has(String(reaction["animation"]))
+    )
+    var downed_fail_closed: bool = (
+        state_before == "facedownidle"
+        and health - amount > 0.0
+        and (reaction.is_empty() or not downed_reaction_playable)
+    )
+    if downed_fail_closed:
+        # No recovered link answers this nonlethal impact, and any named
+        # reaction clip is absent.  facedownidle's recovered action carries no
+        # ReceiveDamage group either, so fail closed entirely: no damage, no
+        # state change and no landed-hit record (the same convention as the
+        # Brick ground test).  A lethal hit keeps the recovered healthzero edge
+        # below, which either enters facedownko or the standing ko fallback.
+        return false
     if blocked:
         health = maxf(0.0, health - amount * 0.12)
         state = "blockstun"
@@ -4438,17 +9833,34 @@ func receive_hit(
         last_reaction_exit_frame = -1
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = false
-    position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -6.8, 6.8)
+    _reaction_clock_active = false
+    _reaction_return_action = ""
+    # A reaction whose candidate clip is absent cannot be played.  Fail closed:
+    # do not run its return clock either, because that would walk the fighter
+    # into the reaction's post-hit state (for example idle2) even though the
+    # reaction itself never played.
+    var reaction_clip_ready: bool = (
+        reaction.has("animation")
+        and _candidate_clip_paths.has(String(reaction["animation"]))
+    )
+    if (frame_state_machine_enabled and state in ["hitstun", "blockstun"]
+            and reaction.has("return_action")
+            and reaction_clip_ready):
+        _reaction_clock_start_frame = last_reaction_entry_frame
+        _reaction_clock_ms = 0.0
+        _reaction_return_action = String(reaction["return_action"])
+        _reaction_clock_active = true
+    position.x = clampf(position.x + direction * push * (0.30 if blocked else 1.0), -ARENA_HALF_X, ARENA_HALF_X)
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("all_impct_hard_frnt_high")
             and last_reaction_source_action == "impacthardfronthigh"):
         # Source link 113: healthzero -> faceupko at [23,29].
         state = "stunimpact"
-        state_time = 23.0 / SOURCE_FRAME_RATE
+        state_time = float(_native_link_start_frame("impacthardfronthigh", 0)) / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_source_action = "impacthardfronthigh"
         last_reaction_animation = "all_impct_hard_frnt_high"
-        last_reaction_exit_frame = 23
+        last_reaction_exit_frame = _native_link_start_frame("impacthardfronthigh", 0)
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true
         _stun_impact_next_state = "faceupko"
@@ -4465,11 +9877,11 @@ func receive_hit(
         # Source links 213/214/228: hard medium/low frontal lethal hits use
         # impacthardfrontlow; link 289 then enters facedownko at [21,23].
         state = "stunimpact"
-        state_time = 21.0 / SOURCE_FRAME_RATE
+        state_time = float(_native_link_start_frame("impacthardfrontlow", 0)) / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_source_action = "impacthardfrontlow"
         last_reaction_animation = "all_impct_hard_frnt_low"
-        last_reaction_exit_frame = 21
+        last_reaction_exit_frame = _native_link_start_frame("impacthardfrontlow", 0)
         last_reaction_entry_frame = 0
         last_reaction_clip_implemented = true
         _stun_impact_next_state = "facedownko"
@@ -4487,6 +9899,27 @@ func receive_hit(
         ]
         else "all_impct_light_frnt_high"
     )
+    var recovered_stun_entry: Dictionary = _native_healthzero_impact_entry(stun_entry_source)
+    if (health <= 0.0 and not blocked
+            and _candidate_clip_paths.has("stun")
+            and not recovered_stun_entry.is_empty()
+            and _candidate_clip_paths.has(String(recovered_stun_entry["animation"]))):
+        # Recovered rows 209-211: a lethal normal hit enters impactstunhigh /
+        # impactstunlow and rows 287/288 continue to stun at [14,17]. The entry
+        # frame and the continuing state come from those rows, not from a copy
+        # of the clip table.
+        state = "impactstun"
+        state_time = float(recovered_stun_entry["exit_frame"]) / SOURCE_FRAME_RATE
+        combo_hits = 0
+        last_reaction_group = "hit"
+        last_reaction_source_action = "impactstun"
+        last_reaction_animation = String(recovered_stun_entry["animation"])
+        last_reaction_exit_frame = int(recovered_stun_entry["exit_frame"])
+        last_reaction_entry_frame = 0
+        last_reaction_clip_implemented = true
+        _stun_impact_next_state = String(recovered_stun_entry["next_state"])
+        _restart_candidate_action()
+        return true
     if (health <= 0.0 and not blocked
             and _candidate_clip_paths.has("stun")
             and _candidate_clip_paths.has(stun_entry_clip)
@@ -4498,12 +9931,12 @@ func receive_hit(
         # Source impactstun high/low links land at [14,17] before stun; this
         # prototype plays the matching impact reaction for 14 frames first.
         state = "impactstun"
-        state_time = float(STUN_IMPACT_ENTRY_FRAMES) / SOURCE_FRAME_RATE
+        state_time = float(_native_link_start_frame("impactstunhigh", STUN_IMPACT_ENTRY_FRAMES)) / SOURCE_FRAME_RATE
         combo_hits = 0
         last_reaction_group = "hit"
         last_reaction_source_action = "impactstun"
         last_reaction_animation = stun_entry_clip
-        last_reaction_exit_frame = STUN_IMPACT_ENTRY_FRAMES
+        last_reaction_exit_frame = _native_link_start_frame("impactstunhigh", STUN_IMPACT_ENTRY_FRAMES)
         last_reaction_clip_implemented = true
         _restart_candidate_action()
         return true
@@ -4525,8 +9958,10 @@ func receive_hit(
                 and _candidate_animation != null
                 and _candidate_animation.is_playing()):
             _queue_candidate_visual_blend(
-                float(CANDIDATE_BRICK_FACEDOWN_IMPACT_BLENDING_FRAMES)
-                        / SOURCE_FRAME_RATE
+                float(_native_link_blending_from(
+                    "facedownidle", "impactfacedown",
+                    0
+                )) / SOURCE_FRAME_RATE
             )
         else:
             _restart_candidate_action()
@@ -4541,18 +9976,386 @@ func receive_hit(
     return true
 
 
+# characters.list animations.intro / victory / defeat per character, in archive
+# order (adreno_200/characters.list). The native match configuration stores
+#   GetAnimation(charIndex, "intro",   zmathRandomGet() % GetAnimationNumVersions)
+#   GetAnimation(charIndex, "victory", zmathRandomGet() % GetAnimationNumVersions)
+#   GetAnimation(charIndex, "defeat",  0)
+# in TFighterConfig+0x58/+0x5c/+0x60, and CBeatEmUpGame::LoadFighterAnimations
+# loads those names.  The intro draw is preserved and used by the round-intro
+# camera and the attract-state camera; the victory draw selects the result
+# camera.  No pool entry is invented.
+const RESULT_CLIPS_BRUCELEE: Dictionary = {
+    "intro": ["m01_intro_01", "m01_intro_02", "m01_intro_03", "m01_intro_04"],
+    "victory": ["m01_victory_01", "m01_victory_02"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_BRICK: Dictionary = {
+    "intro": ["m03_intro_02"],
+    "victory": ["m03_victory_02"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_SINFU: Dictionary = {
+    "intro": ["m04_e02_intro_01"],
+    "victory": ["m04_e02_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_MASTER: Dictionary = {
+    "intro": ["m04_e01_intro_01"],
+    "victory": ["m04_e01_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_SHENLO: Dictionary = {
+    "intro": ["m04_e03_intro_01"],
+    "victory": ["m04_e03_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_KEN: Dictionary = {
+    "intro": ["m02_intro_02", "m02_intro_03"],
+    "victory": ["m02_e01_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_SMALLBOY: Dictionary = {
+    "intro": ["m03_intro_03"],
+    "victory": ["m03_victory_03"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_JOHNSON: Dictionary = {
+    "intro": ["m03_intro_01"],
+    "victory": ["m03_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_CHIEF: Dictionary = {
+    "intro": ["m02_e01_intro_01", "m02_e01_intro_02", "m02_intro_01"],
+    "victory": ["m02_victory_01"],
+    "defeat": ["m01_defeat_01"],
+}
+const RESULT_CLIPS_LOMING: Dictionary = {
+    "intro": ["m04_intro_01"],
+    "victory": ["m04_victory_01", "m04_victory_02"],
+    "defeat": ["m01_defeat_01"],
+}
+
+
+func configure_result_clips(pools: Dictionary) -> void:
+    ## characters.list animations.intro/victory/defeat for this character. Set
+    ## once before the fighter enters the tree; the result pose uses the pool
+    ## rather than the loaded GLB's animation list.
+    character_result_clips = pools.duplicate(true)
+    character_intro_clips.clear()
+    var intro_raw: Variant = character_result_clips.get("intro", [])
+    if intro_raw is Array:
+        for value: Variant in intro_raw:
+            character_intro_clips.append(String(value))
+    intro_clip_index = 0
+    result_clip_index_victory = 0
+    result_clip_index_defeat = 0
+
+
+func intro_clip_pool() -> Array[String]:
+    return character_intro_clips.duplicate()
+
+
+func select_intro_clip(intro_roll: int) -> void:
+    ## Port of the intro version choice in
+    ## IBeatEmUpGameMode::SetFighterConfigFromCharacterList (0x1ff418):
+    ## `version = zmathRandomGet() % GetAnimationNumVersions(...)`.
+    ## The draw is consumed once per fighter per match; the selected clip owns
+    ## the authored camera sub-animation.
+    intro_clip_index = 0
+    if not character_intro_clips.is_empty():
+        intro_clip_index = intro_roll % character_intro_clips.size()
+
+
+func selected_intro_clip() -> String:
+    if character_intro_clips.is_empty():
+        return ""
+    return character_intro_clips[clampi(intro_clip_index, 0, character_intro_clips.size() - 1)]
+
+
+func select_result_clips(victory_roll: int) -> void:
+    ## Port of the per-match version choice in
+    ## IBeatEmUpGameMode::SetFighterConfigFromCharacterList (0x1ff418):
+    ## `version = zmathRandomGet() % GetAnimationNumVersions(...)` for the
+    ## victory animation and the literal version 0 for the defeat animation.
+    ## The draw happens once per match, not per round and not at pose time.
+    var victory: Array[String] = result_clip_pool("victory")
+    result_clip_index_victory = 0
+    if not victory.is_empty():
+        result_clip_index_victory = victory_roll % victory.size()
+    result_clip_index_defeat = 0
+
+
+func result_clip_pool(kind: String) -> Array[String]:
+    var names: Array[String] = []
+    var raw: Variant = character_result_clips.get(kind)
+    if raw is Array:
+        for value: Variant in raw:
+            names.append(String(value))
+    return names
+
+
+func _selected_result_clip(kind: String) -> String:
+    var pool: Array[String] = result_clip_pool(kind)
+    if pool.is_empty():
+        return ""
+    var index: int = (
+        result_clip_index_victory if kind == "victory" else result_clip_index_defeat
+    )
+    return pool[clampi(index, 0, pool.size() - 1)]
+
+
+func result_clip_names(kind: String) -> Array[String]:
+    ## Candidate clips whose names contain "victory" or "defeat". These are
+    ## demo result animations (m01_victory_01, m03_victory_01, m01_defeat_01,
+    ## ...). They are not fighting-set actions, so they are only discovered
+    ## from the loaded GLB's animation list. They are used only to report an
+    ## asset gap: a candidate GLB can carry another character's result clip.
+    var wanted: String = "victory" if kind == "victory" else "defeat"
+    var names: Array[String] = []
+    for key: Variant in _candidate_clip_paths:
+        var path: String = String(_candidate_clip_paths[key])
+        if path.get_file().contains(wanted):
+            names.append(String(key))
+    names.sort()
+    return names
+
+
+func has_result_clip(kind: String) -> bool:
+    ## True when this fighter can present the result kind: either the clip
+    ## characters.list selected for it or, for a documented asset gap, any
+    ## loaded result clip.
+    var pool: Array[String] = result_clip_pool(kind)
+    for name: String in pool:
+        if _candidate_clip_paths.has(name):
+            return true
+    return not result_clip_names(kind).is_empty()
+
+
+func enter_result_pose(kind: String) -> bool:
+    ## Port of the winner-only clip switch in CBeatEmUpGame::SetState(12/13).
+    ## The native call passes only the category ("Victory"/"Defeat"); the clip
+    ## was fixed when the match configuration was built, so nothing here draws
+    ## a new index. Returns false when the character provides no result clip.
+    result_clip_gap_last = ""
+    var wanted: String = _selected_result_clip(kind)
+    if _candidate_animation == null:
+        result_clip = ""
+        result_pose_active = false
+        return false
+    if wanted.is_empty():
+        result_clip_gap_last = "no characters.list %s pool" % kind
+    elif _candidate_clip_paths.has(wanted):
+        result_clip = wanted
+    else:
+        # The candidate GLB does not carry this character's characters.list
+        # clip. Keep the pose visible with a loaded result clip and report the
+        # gap instead of silently presenting another character's animation.
+        var fallback: Array[String] = result_clip_names(kind)
+        result_clip_gap_last = (
+            "characters.list %s clip %s missing from GLB" % [kind, wanted]
+        )
+        if fallback.is_empty():
+            result_clip = ""
+            result_pose_active = false
+            return false
+        result_clip = fallback[0]
+    if not _candidate_clip_paths.has(result_clip):
+        result_clip = ""
+        result_pose_active = false
+        return false
+    var clip: Animation = _candidate_animation.get_animation(
+        _candidate_clip_paths[result_clip]
+    )
+    if clip != null:
+        clip.loop_mode = Animation.LOOP_NONE
+    state = "result"
+    state_time = 0.0
+    attack_kind = ""
+    move_axis = Vector2.ZERO
+    velocity = Vector3.ZERO
+    result_pose_active = true
+    _play_candidate_action(result_clip)
+    return true
+
+
+func result_clip_duration() -> float:
+    if result_clip.is_empty() or _candidate_animation == null:
+        return 0.0
+    if not _candidate_clip_paths.has(result_clip):
+        return 0.0
+    var clip: Animation = _candidate_animation.get_animation(
+        _candidate_clip_paths[result_clip]
+    )
+    if clip == null:
+        return 0.0
+    return clip.length
+
+
+func clear_result_pose() -> void:
+    result_clip = ""
+    result_pose_active = false
+    if state == "result":
+        state = "idle"
+        state_time = 0.0
+
+
+func style_runtime_snapshot() -> Dictionary:
+    ## Read-only view for the Style Editor's live status line. It never
+    ## changes a clip: the screen uses it to decide APPLIED vs NOT APPLIED.
+    var animations: Dictionary = {}
+    if _candidate_animation != null:
+        for animation_name in _candidate_animation.get_animation_list():
+            animations[String(animation_name)] = true
+    return {
+        "loaded": _candidate_animation != null,
+        "slots": _candidate_clip_paths.duplicate(),
+        "animations": animations,
+    }
+
+
+var _tutorial_snapshot: Dictionary = {}
+
+
+func enter_tutorial_default_style() -> void:
+    ## Tutorial lessons pass use_custom_style=false: SetUniquesList takes its
+    ## hardcoded index-0 branch, so the saved style (and its unique IDs) is
+    ## ignored until the lesson ends.  The clip table is snapshotted the same
+    ## way so a saved clip selection cannot leak into the lesson.
+    if tutorial_default_uniques:
+        return
+    _tutorial_snapshot = _candidate_clip_paths.duplicate()
+    # Reset only the style slots to the character's own table; the rest of the
+    # candidate clip map (movement, every attack kind, reactions) must stay
+    # intact or a tutorial lesson would lose unrelated clips.
+    for slot: String in _style_base_clips:
+        _candidate_clip_paths[slot] = _style_base_clips[slot]
+    if _default_uniques.is_empty():
+        _default_uniques = _unique_set(DEFAULT_BRUCE_UNIQUES)
+    _active_uniques = _default_uniques.duplicate()
+    tutorial_default_uniques = true
+
+
+func exit_tutorial_default_style() -> void:
+    if not tutorial_default_uniques:
+        return
+    tutorial_default_uniques = false
+    _active_uniques = _style_uniques.duplicate()
+    if not _tutorial_snapshot.is_empty():
+        _candidate_clip_paths = _tutorial_snapshot
+        _tutorial_snapshot = {}
+
+
+func apply_style_selections(selections: Dictionary, catalog) -> Dictionary:
+    ## Apply the opt-in Style Editor selections to THIS fighter.
+    ##
+    ## Only direct clip mappings (StyleClipMap.resolve) are applied; a style
+    ## without one, whose clip is not loaded, whose slot belongs to the
+    ## size-variant resolver, or whose character row is ambiguous is reported
+    ## and left untouched. The untouched clips are snapshotted on the first
+    ## call, so re-applying always starts from the character's own table.
+    var report: Dictionary = {
+        "results": {},
+        "applied": [],
+        "failed": [],
+        "error": "",
+        "animations_loaded": _candidate_animation != null,
+    }
+    if tutorial_default_uniques:
+        # use_custom_style=false ignores CSettings entirely (SetUniquesList
+        # takes its index-0 branch); a late style apply must not leak in.
+        report["error"] = "tutorial default style is active"
+        return report
+    if catalog == null:
+        report["error"] = "style catalog is unavailable"
+        return report
+    var selected: Array = _selected_style_uniques(selections, catalog)
+    if selected.is_empty():
+        report["error"] = "style unique list failed closed"
+        return report
+    set_style_uniques(selected)
+    report["uniques"] = active_uniques()
+    if _candidate_animation == null:
+        report["error"] = "candidate animation library is not loaded"
+        return report
+    for slot: String in StyleClipMap.ALL_PLAYER_SLOTS:
+        if _candidate_clip_paths.has(slot) and not _style_base_clips.has(slot):
+            _style_base_clips[slot] = _candidate_clip_paths[slot]
+    for slot: String in _style_base_clips:
+        _candidate_clip_paths[slot] = _style_base_clips[slot]
+    var snapshot: Dictionary = style_runtime_snapshot()
+    for group_key in StyleClipMap.GROUP_PLAYER_SLOTS.keys():
+        var entry_id: String = String(selections.get(group_key, ""))
+        if entry_id.is_empty():
+            continue
+        var entry: Dictionary = catalog.entry(group_key, entry_id)
+        if entry.is_empty():
+            var missing: Dictionary = {
+                "status": "unknown_entry",
+                "applied": false,
+                "clip": "",
+                "slot": "",
+                "reason": "style entry is not in the decoded catalog",
+            }
+            report["results"][group_key] = missing
+            report["failed"].append({"group": group_key, "status": "unknown_entry"})
+            continue
+        var result: Dictionary = StyleClipMap.resolve(
+            entry, snapshot["slots"], snapshot["animations"]
+        )
+        report["results"][group_key] = result
+        if bool(result.get("applied", false)):
+            var slot: String = String(result["slot"])
+            var clip: String = String(result["clip"])
+            _candidate_clip_paths[slot] = clip
+            if ATTACKS.has(slot) and typeof(ATTACKS[slot]) == TYPE_DICTIONARY:
+                ATTACKS[slot]["animation"] = clip
+            report["applied"].append(group_key)
+        else:
+            report["failed"].append({
+                "group": group_key,
+                "status": String(result.get("status", "")),
+                "reason": String(result.get("reason", "")),
+            })
+    return report
+
+
 func reset_fighter(start_position: Vector3) -> void:
     global_position = start_position
     velocity = Vector3.ZERO
     move_axis = Vector2.ZERO
+    _locomotion_action = ""
+    _locomotion_time = 0.0
+    _locomotion_root_ready = false
+    _skip_action = ""
+    _skip_time = 0.0
+    _skip_direction = Vector3.ZERO
     health = MAX_HEALTH
     state = "idle"
     state_time = 0.0
+    _attack_clock_ms = 0.0
+    _attack_clock_start_frame = 0
+    _attack_clock_active = false
+    _reaction_clock_ms = 0.0
+    _reaction_clock_start_frame = 0
+    _reaction_clock_active = false
+    _reaction_return_action = ""
+    result_clip = ""
+    result_pose_active = false
+    # A restarted fighter is never left inside a state-6 replay pose.
+    replay_pose_lock = false
+    replay_playback_clip = ""
+    replay_playback_sample_ms = 0
+    visible = true
     attack_kind = ""
     _attack_connected = false
-    _queued_attacks.clear()
-    _clear_ground_attack_input_history()
-    _clear_standing_combo_state()
+    _parry_absorbed = false
+    _clear_link_state()
+    _native_pending_reaction = {}
+    if _native_reaction_gate != null:
+        _native_reaction_gate.pending_link = {}
+        _native_reaction_gate.pending_frame = -1
+    last_native_reaction = {}
     last_reaction_group = ""
     last_reaction_source_action = ""
     last_reaction_animation = ""
@@ -4560,13 +10363,18 @@ func reset_fighter(start_position: Vector3) -> void:
     last_reaction_entry_frame = 0
     last_reaction_clip_implemented = false
     guard_held = false
+    guard_block_action = ""
+    guard_height = ""
     combo_hits = 0
     rage = 0.0
     _attack_hit_landed = false
     _grab_connected = false
     _endattack_victim_started = false
     _multi_impact_applied.clear()
-    _parry_press_times.clear()
+    if replay_recorder != null:
+        # A restarted fighter starts a new recording; the recovered 0x2c
+        # container held only the previous match.
+        replay_recorder.reset()
     if candidate_loaded:
         if _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
@@ -4612,26 +10420,16 @@ func _animate_candidate() -> void:
     )
     var requested: String = "idle"
     var start_frame: int = 0
-    if state in ["startup", "active", "recovery"]:
-        if attack_kind == "punch":
-            requested = "punch"
-        elif attack_kind == "heavy":
-            requested = "heavy" if _candidate_clip_paths.has("heavy") else "kick"
-        elif attack_kind == "kick":
-            requested = "kick"
-        elif attack_kind in ["high_punch", "high_kick", "low_punch", "low_kick",
-                "high_punch3", "low_punch3", "low_kick3", "high_kick3", "special_kick_high",
-                "special_kick_high_brick", "special_kick_low_brick",
-                "special_punch_high_brick", "special_punch_low_brick",
-                "parry_high_brick", "parry_low_brick", "parry_attack_brick",
-                "grab1_brick", "grab2_brick", "attack_to_floor_brick", "endattack_brick",
-                "grab1_miss_brick", "grab2_miss_brick",
-                "high_punch2", "low_punch2", "high_kick2", "low_kick2",
-                "special_kick_low_miss", "special_kick_low_hit",
-                "special_punch_low_miss", "special_punch_low_hit",
-                "special_punch_high_miss", "special_punch_high_hit",
-                "parry_high", "parry_low", "parry_attack", "grab1", "grab2", "grab1_miss", "grab2_miss", "grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2",
-                "endattack1", "endattack2"]:
+    if (state == "result" and not result_clip.is_empty()
+            and _candidate_clip_paths.has(result_clip)):
+        # SetState(12/13) winner-only victory / matched defeat clip.
+        requested = result_clip
+    elif state in ["startup", "active", "recovery"]:
+        # Any attack kind whose clip the candidate provides plays that clip.
+        # The previous explicit list only named the brucelee.set slots; mapped
+        # set configs (kungfu/karate) use their own slot names, so the check is
+        # the clip map itself.
+        if _candidate_clip_paths.has(attack_kind):
             requested = attack_kind
     elif state in ["grabbed1", "grabbed2"] and _candidate_clip_paths.has(state):
         requested = state
@@ -4650,8 +10448,8 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "ko" and _candidate_clip_paths.has("ko"):
         requested = "ko"
-    elif state in ["idle", "idle2", "idle3"] and not _movement_action().is_empty():
-        requested = _movement_action()
+    elif state in ["idle", "idle2", "idle3"] and not _native_movement_action().is_empty():
+        requested = _locomotion_action if not _locomotion_action.is_empty() else _native_movement_action()
     elif state == "idle2" and _candidate_clip_paths.has(IDLE2_CLIP):
         requested = IDLE2_CLIP
     elif state == "idle3" and _candidate_clip_paths.has(IDLE3_CLIP):
@@ -4676,10 +10474,10 @@ func _animate_candidate() -> void:
         requested = FACEUP_IMPACT_CLIP
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
-    elif state == "faceupko" and _candidate_clip_paths.has(FACEUP_IDLE_CLIP):
-        requested = FACEUP_IDLE_CLIP
-    elif state == "faceupidle" and _candidate_clip_paths.has(FACEUP_IDLE_CLIP):
-        requested = FACEUP_IDLE_CLIP
+    elif state == "faceupko" and _candidate_clip_paths.has(_faceup_idle_clip()):
+        requested = _faceup_idle_clip()
+    elif state == "faceupidle" and _candidate_clip_paths.has(_faceup_idle_clip()):
+        requested = _faceup_idle_clip()
     elif state == "faceupgetup" and _candidate_clip_paths.has(FACEUP_GETUP_CLIP):
         requested = FACEUP_GETUP_CLIP
     elif state == "faceupattack" and _candidate_clip_paths.has(FACEUP_ATTACK_CLIP):
@@ -4688,9 +10486,193 @@ func _animate_candidate() -> void:
             _candidate_character.position = _candidate_character_rest_position
     elif state == "attacktofloor" and _candidate_clip_paths.has(ATTACK_TO_FLOOR_CLIP):
         requested = ATTACK_TO_FLOOR_CLIP
-        start_frame = ATTACK_TO_FLOOR_ENTRY_FRAME
+        start_frame = _native_entry_frame("attacktofloor", 0)
         if _candidate_action != requested and _candidate_character != null:
             _candidate_character.position = _candidate_character_rest_position
     if requested == FACEUP_IMPACT_TO_FLOOR_CLIP:
         start_frame = int(state_time * SOURCE_FRAME_RATE + 0.0001)
     _play_candidate_action(requested, start_frame)
+
+
+## ---------------------------------------------------------------------------
+## Opt-in replay recorder (recovered CFighter 0x2c record producer).
+##
+## BRUCELEE_REPLAY_RECORD=1 attaches one ReplayRecorder to this fighter and
+## samples it at the end of every _physics_process, so the recovered state 6
+## consumer (NativeMatchStates.set_replay_buffers) can replay live data.
+## Flag off: _init_replay_recorder returns immediately, replay_recorder stays
+## null, and _record_replay_frame is a single false branch - no state changes.
+##
+## Native anchors: SetAnimation @ 0x1b6e94 (append + +0x16f gate),
+## GetActiveSetAnimation @ 0x1b00d0 and FollowLink @ 0x1b80dc (+0x135).
+## Nothing about the native TItem pointer or the +0x20 blend float is
+## reproduced; those fields are handled exactly as documented in
+## scripts/replay_recorder.gd (proven handle table, unknown handles refused).
+## ---------------------------------------------------------------------------
+
+## Handle table: every native animation name this fighter can play, taken from
+## its recovered clip tables (candidate slots + every reaction/impact animation
+## the state machine can request).  Sorted and de-duplicated, so the handle
+## values the recorder writes are stable for a given fighter configuration.
+func replay_animation_table() -> Array[String]:
+    var names: Dictionary = {}
+    for action: Variant in candidate_clips:
+        _note_clip_name(names, candidate_clips[action])
+    for slot: Variant in _candidate_clip_paths:
+        _note_clip_name(names, _candidate_clip_paths[slot])
+    _collect_animation_names(names, REACTION_PROFILES)
+    _collect_animation_names(names, EXACT_REACTIONS)
+    _collect_animation_names(names, _native_reactions)
+    # Recovered ground/stun/result clips the state machine can also request.
+    for clip: String in [
+        IDLE2_CLIP, IDLE3_CLIP, FACEDOWN_IDLE_CLIP, BRICK_FACEDOWN_IDLE_CLIP,
+        FACEDOWN_GETUP_CLIP, FACEDOWN_IMPACT_CLIP, FACEDOWN_ATTACK_CLIP,
+        FACEUP_IMPACT_TO_FLOOR_CLIP, FACEUP_IDLE_CLIP, FACEUP_GETUP_CLIP,
+        FACEUP_ATTACK_CLIP, FACEUP_IMPACT_CLIP, ATTACK_TO_FLOOR_CLIP,
+        STUN_CLIP, STUN_FALL_CLIP, BRICK_FRONT_LOW_CLIP,
+    ]:
+        _note_clip_name(names, clip)
+    return ReplayRecorderScript.table_from_names(names.keys())
+
+
+func _note_clip_name(names: Dictionary, value: Variant) -> void:
+    if typeof(value) == TYPE_STRING and not String(value).is_empty():
+        names[String(value)] = true
+
+
+## Recovered reaction tables are nested dictionaries/lists keyed by group; the
+## only clip-carrying keys are "animation" and "clip".
+func _collect_animation_names(names: Dictionary, value: Variant) -> void:
+    if typeof(value) == TYPE_DICTIONARY:
+        for key: Variant in value:
+            if String(key) == "animation" or String(key) == "clip":
+                _note_clip_name(names, value[key])
+            else:
+                _collect_animation_names(names, value[key])
+    elif typeof(value) == TYPE_ARRAY:
+        for entry: Variant in value:
+            _collect_animation_names(names, entry)
+
+
+## Animation identity written to record+0x1c.  The candidate AnimationPlayer
+## reports the clip it actually plays (a native name, possibly a recovered size
+## variant); without a loaded candidate the state's recovered source animation
+## is the only identity the port has.  An empty result fails closed.
+func replay_animation_name() -> String:
+    if not candidate_animation_clip.is_empty():
+        return candidate_animation_clip
+    if state in ["grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2"]:
+        # current_source_animation() has no victim branch; the recovered victim
+        # clip for these states is the clip-table entry keyed by the state name.
+        return String(candidate_clips.get(state, ""))
+    return current_source_animation()
+
+
+## Record+0x24: CFighter+0x135 selects the internal fighting-set animation
+## table (the grabbing partner's, fighter+0x7c) when non-zero.  FollowLink sets
+## it on the victim right before the victim SetAnimation, and the port plays
+## exactly those victim clips in these states.
+func replay_set_selector() -> int:
+    return 1 if state in [
+        "grabbed1", "grabbed2", "endattackcomp1", "endattackcomp2",
+    ] else 0
+
+
+## Record+0x28: the native slot is SetAnimation's absolute GetCurrentMili() ms.
+func replay_record_now_ms() -> int:
+    if replay_record_clock_override_ms >= 0:
+        return replay_record_clock_override_ms
+    return Time.get_ticks_msec()
+
+
+## SetState case 6 clears +0x16f on both fighters; callers entering the port's
+## replay state stop the append path with this.  Disabling never deletes the
+## records already captured.
+func set_replay_recording(value: bool) -> void:
+    if replay_recorder == null:
+        replay_record_enabled = false
+        return
+    replay_record_enabled = value
+    replay_recorder.enabled = value
+
+
+func _init_replay_recorder() -> void:
+    replay_record_enabled = OS.get_environment(REPLAY_RECORD_ENV) == "1"
+    if not replay_record_enabled:
+        return
+    var table: Array[String] = replay_animation_table()
+    if table.is_empty():
+        # The caller opted in, so fail closed and surface it instead of
+        # silently recording nothing.
+        replay_record_enabled = false
+        replay_record_error = "replay recorder has no recovered clip table"
+        push_error(replay_record_error)
+        return
+    replay_recorder = ReplayRecorderScript.new()
+    replay_recorder.configure(table)
+    replay_recorder.enabled = true
+
+
+func _record_replay_frame() -> void:
+    if not replay_record_enabled or replay_recorder == null:
+        return
+    replay_recorder.append_sample(
+        global_position,
+        global_transform.basis.get_rotation_quaternion(),
+        replay_animation_name(),
+        replay_set_selector(),
+        replay_record_now_ms(),
+    )
+
+
+## ---------------------------------------------------------------------------
+## Recovered state 6 playback consumer (CFighter::RecordReplayUpdate).
+##
+## Every recorded 0x2c frame is applied to the fighter by main.gd's state-6
+## driver, exactly like the native Update case 6 loop:
+##   position   +0x00 -> global_position
+##   rotation   +0x0c -> global_transform basis (the port only yaws, so the
+##                       recorded quaternion is a Y rotation)
+##   animation  +0x1c -> the recorded clip is played.  The native call also
+##                       passes the replay sample as SetAnimation's time; the
+##                       exact anmRoot::SetToSample phase between recorded
+##                       frames is NOT recovered, so the port starts a clip on
+##                       its first record and lets the AnimationPlayer advance at
+##                       the recovered state-6 0.5x rate instead of synthesising
+##                       a phase.
+##   +0x24      internal fighting-set selector: the recorded clip already names
+##              the victim/set variant the port has to play, so no separate port
+##              table is selected here (see replay_recorder.gd for the mapping).
+##   +0x20      SetAnimation's blend float: no recovered port equivalent; it is
+##              ignored on playback, as documented by the recorder.
+## ---------------------------------------------------------------------------
+func apply_replay_record(record: Dictionary, sample_ms: int) -> void:
+    replay_playback_sample_ms = int(sample_ms)
+    var position: Variant = record.get("position", null)
+    if position is Vector3:
+        global_position = position
+    var rotation_value: Variant = record.get("rotation", null)
+    if rotation_value is Quaternion:
+        var posed: Transform3D = global_transform
+        posed.basis = Basis(rotation_value)
+        global_transform = posed
+    var animation_name: String = String(record.get("animation", ""))
+    if animation_name.is_empty() or _candidate_animation == null:
+        return
+    if animation_name == replay_playback_clip:
+        return
+    if _candidate_animation.get_animation_list().find(StringName(animation_name)) < 0:
+        return
+    replay_playback_clip = animation_name
+    candidate_animation_clip = animation_name
+    _candidate_action = ""
+    _candidate_animation.speed_scale = ReplayBuffer.STATE6_SPEED_SCALE
+    _candidate_animation.play(animation_name)
+    _candidate_animation.seek(0.0, true)
+
+
+func replay_pose_reset() -> void:
+    ## SetState(6) re-entry does not stop the current animation; it re-seeks the
+    ## buffers.  Clear the applied-clip identity so the next record starts its
+    ## recorded clip from the beginning again.
+    replay_playback_clip = ""

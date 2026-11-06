@@ -1,0 +1,236 @@
+{
+ "schema": "brucelee-language-dock/1",
+ "base_head": "a1946821bf8b645f04b980e53f8ceb19f17a2eca",
+ "generated_by": "tools/build_language_dock.py (read-only local evidence)",
+ "not_recovered_marker": "NOT RECOVERED",
+ "source": {
+  "ui": {
+   "path": "D:\\BruceLeeWork\\menu-art-20261104\\raw\\adreno_200\\gui\\settingslanguage.ui",
+   "sha256": "500f03b09fa3f3960424676b1f3e576c5b5151561433a61de736b2513c6a9a5b",
+   "bytes": 1488
+  },
+  "ui_widget": {
+   "name": "languages",
+   "x": 0,
+   "y": 180,
+   "width": 480,
+   "height": 70,
+   "optionwidth": 128,
+   "optionheight": 85,
+   "linerect": "true",
+   "linerectcolor": [
+    255,
+    255,
+    0
+   ],
+   "wraparround": "false",
+   "separation": 16,
+   "valign": "middle",
+   "onmoveaction": "refresh",
+   "focused": "true",
+   "offscreen": {
+    "y": 400
+   }
+  },
+  "validselectedoption": [
+   "option",
+   "language"
+  ],
+  "native_language_tables": {
+   "path": "D:\\BruceLeeWork\\training-settings-dest-20261104\\evidence\\ghidra\\CApplication_Init.c",
+   "sha256": "38ab1d34d658793a903e894965e40e3e99341732f0fbbb98beff1d7dfad6bc27",
+   "pairs": [
+    {
+     "index": 0,
+     "lang_table": "LangEnglish"
+    },
+    {
+     "index": 1,
+     "lang_table": "LangSpanish"
+    },
+    {
+     "index": 2,
+     "lang_table": "LangGerman"
+    },
+    {
+     "index": 3,
+     "lang_table": "LangItalian"
+    },
+    {
+     "index": 4,
+     "lang_table": "LangFrench"
+    },
+    {
+     "index": 5,
+     "lang_table": "LangRussian"
+    },
+    {
+     "index": 6,
+     "lang_table": "LangChineseSimpl"
+    },
+    {
+     "index": 7,
+     "lang_table": "LangChineseTrad"
+    },
+    {
+     "index": 8,
+     "lang_table": "LangJapanese"
+    },
+    {
+     "index": 9,
+     "lang_table": "LangKorean"
+    }
+   ],
+   "note": "krm::CApplication::Init calls CTranslate::AddLanguageTable (index, Lang*.lang); the dock order equals index 0..7."
+  },
+  "game_states": {
+   "path": "D:\\BruceLeeWork\\training-settings-dest-20261104\\evidence\\game.states.json",
+   "sha256": "d41c62a87f3a34086256ca4c7872c115c05a20aa0470f1f54cb4f44e7fb9408d",
+   "settingslanguage_actions": {
+    "audio": "settingsaudio",
+    "video": "settingsvideo",
+    "controls": "settingscontrols",
+    "refresh": "updateapplicationsettingslanguage",
+    "rsk": "settingsmain",
+    "backtomain": "settingsbacktomain"
+   },
+   "ingamesettingslanguage_actions": {
+    "audio": "ingamesettingsaudio",
+    "video": "ingamesettingsvideo",
+    "controls": "ingamesettingscontrols",
+    "refresh": "updateapplicationsettingslanguage",
+    "rsk": "ingamesettingsmain",
+    "backtomain": "ingamesettingsbacktomain"
+   }
+  },
+  "language_tables": {
+   "LangEnglish": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangEnglish.lang",
+    "sha256": "93df59d357eb83bfdb4118245e202e086653147cb7f37dd6217bdc69ed33ae22",
+    "bytes": 83328
+   },
+   "LangSpanish": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangSpanish.lang",
+    "sha256": "0688ab079c1cfd97a4512ad53933ea66bbc8d0687528a206b8bfd1909292ab7c",
+    "bytes": 88972
+   },
+   "LangGerman": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangGerman.lang",
+    "sha256": "396ed4fd8d135653127700e71d305c5c2d94f23d68351904496a9384e5b93775",
+    "bytes": 91172
+   },
+   "LangItalian": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangItalian.lang",
+    "sha256": "7d01b71c9d718591d2606ea2d1c975bd1303606b816d1567264cf771975c9f6f",
+    "bytes": 86740
+   },
+   "LangFrench": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangFrench.lang",
+    "sha256": "62e87ad8ce1c2c001c58c0ab15cb330b4f6a4ac97286481006fc33d1189c0c7b",
+    "bytes": 93972
+   },
+   "LangRussian": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangRussian.lang",
+    "sha256": "b5b7907d09e47f49d4085ce6e9394c874393728a45855d71b1d5a967d10a0074",
+    "bytes": 127892
+   },
+   "LangChineseSimpl": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangChineseSimpl.lang",
+    "sha256": "81fcd925c0f3ab9b583a8953da2062a8ca0859b508097f1aebb91f1aa9134751",
+    "bytes": 78872
+   },
+   "LangChineseTrad": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangChineseTrad.lang",
+    "sha256": "cbe227fde21aaf69faad4d8b60262b877cbb1b69b321002b1987f3a19083809d",
+    "bytes": 79648
+   },
+   "LangJapanese": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangJapanese.lang",
+    "sha256": "329bdd31b4544b05b3f7a62b1b9b331cf6c759ad54b2fd359c40322fbe964a11",
+    "bytes": 91568
+   },
+   "LangKorean": {
+    "path": "D:\\BruceLeeWork\\remaining-characters-20261103\\archive\\adreno_200\\LangKorean.lang",
+    "sha256": "729b6cd43fb111e5f0b1a215473c43a20586e3dcfc8339c0b4f6450cdffa1c70",
+    "bytes": 91560
+   }
+  }
+ },
+ "items": [
+  {
+   "index": 0,
+   "flag_basename": "bl_english",
+   "lang_table": "LangEnglish",
+   "flag_file": "gui/images/flags/bl_english.tex"
+  },
+  {
+   "index": 1,
+   "flag_basename": "bl_spanish",
+   "lang_table": "LangSpanish",
+   "flag_file": "gui/images/flags/bl_spanish.tex"
+  },
+  {
+   "index": 2,
+   "flag_basename": "bl_german",
+   "lang_table": "LangGerman",
+   "flag_file": "gui/images/flags/bl_german.tex"
+  },
+  {
+   "index": 3,
+   "flag_basename": "bl_italian",
+   "lang_table": "LangItalian",
+   "flag_file": "gui/images/flags/bl_italian.tex"
+  },
+  {
+   "index": 4,
+   "flag_basename": "bl_french",
+   "lang_table": "LangFrench",
+   "flag_file": "gui/images/flags/bl_french.tex"
+  },
+  {
+   "index": 5,
+   "flag_basename": "bl_russian",
+   "lang_table": "LangRussian",
+   "flag_file": "gui/images/flags/bl_russian.tex"
+  },
+  {
+   "index": 6,
+   "flag_basename": "bl_chinese_simp",
+   "lang_table": "LangChineseSimpl",
+   "flag_file": "gui/images/flags/bl_chinese_simp.tex"
+  },
+  {
+   "index": 7,
+   "flag_basename": "bl_chinese_trad",
+   "lang_table": "LangChineseTrad",
+   "flag_file": "gui/images/flags/bl_chinese_trad.tex"
+  }
+ ],
+ "selectable_count": 8,
+ "registered_tables_outside_dock": [
+  "LangJapanese",
+  "LangKorean"
+ ],
+ "selection_semantics": {
+  "validselectedoption": [
+   "option",
+   "language"
+  ],
+  "onmoveaction": "refresh",
+  "onmove_destination": "updateapplicationsettingslanguage",
+  "native_apply": "krm::UpdateApplicationSettings reads CHStrMgr \"language\" and calls CTranslate::SetLanguage(int)",
+  "native_default": "krm::CApplication::Init sets language default = GetDefaultDisplayLanguage()",
+  "default_status": "NOT RECOVERED",
+  "default_reason": "GetDefaultDisplayLanguage() is the Android display locale; its value is a device runtime call and is not present in the archive. The port falls back to the existing BRUCELEE_LANG default (LangEnglish) and says so."
+ },
+ "persistence": {
+  "original_format": "NOT RECOVERED",
+  "reason": "no CSettings::Save / CHStrMgr serialization symbol or config resource exists in the local evidence; the recovered value is a CSettings TReal keyed \"language\" (default GetDefaultDisplayLanguage)",
+  "port_binding": "user://ui_gaps_language.json {\"language_index\": <0..7>, \"lang_table\": \"<LangXxx>\"}",
+  "port_binding_status": "PORT BINDING, NOT the original save format"
+ },
+ "labels": {
+  "display_names": "NOT RECOVERED",
+  "reason": "the ten Lang*.lang tables have no language-name keys; only the flag basenames and Lang table ids are recovered"
+ }
+}

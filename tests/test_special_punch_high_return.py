@@ -16,8 +16,17 @@ class SpecialPunchHighReturnTest(unittest.TestCase):
         self.assertEqual(miss["to"], "idle2")
         self.assertEqual([int(v) for v in miss["time"]], [116, 122])
         text = FIGHTER.read_text(encoding="utf-8")
-        self.assertIn('attack_kind == "special_punch_high_miss"', text)
-        self.assertIn("next_state = \"idle2\"", text)
+        links = json.loads(
+            (ROOT / "godot" / "data" / "native_links.json").read_text(encoding="utf-8")
+        )["links"]
+        matched = [
+            link for link in links
+            if str(link.get("from")) == "specialpunchhighmiss"
+            and str(link.get("to")) == "idle2"
+            and [int(v) for v in link.get("time", [])] == [116, 122]
+        ]
+        self.assertEqual(len(matched), 1)
+        self.assertIn("_native_recovery_return", text)
 
 
 if __name__ == "__main__":

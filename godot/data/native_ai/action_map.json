@@ -1,0 +1,170 @@
+{
+ "attacktofloor": [
+  "attack_to_floor",
+  "attack_to_floor_brick"
+ ],
+ "endattack": [
+  "endattack",
+  "endattack_brick"
+ ],
+ "endattack1": [
+  "endattack1",
+  "endattack_brick"
+ ],
+ "endattack2": [
+  "endattack2",
+  "endattack_brick"
+ ],
+ "facedownattack": [],
+ "facedowngetup": [
+  "__getup__"
+ ],
+ "faceupattack": [],
+ "faceupgetup": [
+  "__getup__"
+ ],
+ "faceupimpact": [
+  "__idle__"
+ ],
+ "grab1": [
+  "grab1",
+  "grab1_brick"
+ ],
+ "grab1miss": [
+  "grab1_miss",
+  "grab1_miss_brick"
+ ],
+ "grab2": [
+  "grab2",
+  "grab2_brick"
+ ],
+ "grab2miss": [
+  "grab2_miss",
+  "grab2_miss_brick"
+ ],
+ "highblock": [
+  "__block_high__"
+ ],
+ "highblockbrutal": [
+  "__block_high__"
+ ],
+ "highblockhard": [
+  "__block_high__"
+ ],
+ "highkick1": [
+  "high_kick",
+  "kick"
+ ],
+ "highkick2": [
+  "high_kick2"
+ ],
+ "highkick3": [
+  "high_kick3"
+ ],
+ "highpunch1": [
+  "high_punch",
+  "punch"
+ ],
+ "highpunch2": [
+  "high_punch2"
+ ],
+ "highpunch3": [
+  "high_punch3"
+ ],
+ "idle": [
+  "__idle__"
+ ],
+ "idle2": [
+  "__idle__"
+ ],
+ "idle3": [
+  "__idle__"
+ ],
+ "lowblock": [
+  "__block_low__"
+ ],
+ "lowkick1": [
+  "low_kick"
+ ],
+ "lowkick2": [
+  "low_kick2"
+ ],
+ "lowkick3": [
+  "low_kick3"
+ ],
+ "lowpunch1": [
+  "low_punch"
+ ],
+ "lowpunch2": [
+  "low_punch2"
+ ],
+ "lowpunch3": [
+  "low_punch3"
+ ],
+ "midblock": [
+  "__block_mid__"
+ ],
+ "moveback": [
+  "__move_back__"
+ ],
+ "movefwd": [
+  "__move_fwd__"
+ ],
+ "moveleft": [
+  "__move_left__"
+ ],
+ "moveright": [
+  "__move_right__"
+ ],
+ "parryhigh": [
+  "parry_high",
+  "parry_high_brick"
+ ],
+ "parrylow": [
+  "parry_low",
+  "parry_low_brick"
+ ],
+ "skipback": [
+  "__skip_back__"
+ ],
+ "skipfwd": [
+  "__skip_fwd__"
+ ],
+ "specialkickhigh": [
+  "special_kick_high",
+  "special_kick_high_brick"
+ ],
+ "specialkicklow": [
+  "special_kick_low",
+  "special_kick_low_hit",
+  "special_kick_low_brick"
+ ],
+ "specialkicklowmiss": [
+  "special_kick_low_miss"
+ ],
+ "specialpunchhigh": [
+  "special_punch_high",
+  "special_punch_high_hit",
+  "special_punch_high_brick"
+ ],
+ "specialpunchlow": [
+  "special_punch_low",
+  "special_punch_low_hit",
+  "special_punch_low_brick"
+ ],
+ "specialpunchlowmiss": [
+  "special_punch_low_miss"
+ ],
+ "stepback": [
+  "__step_back__"
+ ],
+ "stepfwd": [
+  "__step_fwd__"
+ ],
+ "stepleft": [
+  "__step_left__"
+ ],
+ "stepright": [
+  "__step_right__"
+ ]
+}

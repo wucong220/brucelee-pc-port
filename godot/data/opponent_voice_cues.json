@@ -1,0 +1,7000 @@
+{
+ "schema_version": 2,
+ "kind": "opponent_voice_overlay",
+ "generated_at": "2026-11-04T15:47:55+08:00",
+ "generated_by": "tools/build_frame_cues.py",
+ "frame_rate": 30.0,
+ "timing": {
+  "source_field": "adreno_200/set/<set>.set animations[<action>].sounds[].frame",
+  "unit": "native 30 fps source frame",
+  "seconds_per_frame": 0.03333333333333333,
+  "schedule": "delay = frame / 30 s from the action start",
+  "fallback": "a cue without frame data plays at action start (delay 0)",
+  "dedup": "identity = lower(file) | frame | unique, once per action instance",
+  "volume": "sounds[].volume, clamped to (0, 1] and scaled by the caller",
+  "unique": "sounds[].unique character token; empty is generic; accepted only when the archive uses that token for the voice dir"
+ },
+ "archive": {
+  "source": "D:\\BaiduSyncdisk\\AI项目\\李小龙\\private_assets\\source_packages\\BaiduNetdiskDownload\\data.zpak",
+  "sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c"
+ },
+ "provenance": {
+  "base_island": "D:\\BruceLeeWork\\opponent-voice-20261104",
+  "set_sounds": "reports/set_sounds_dump.json (adreno_200/set/*.set sounds[])",
+  "cue_table": "reports/cue_table.json",
+  "character_dirs": "reports/character_voice_dir_evidence.json",
+  "exact_paths": "reports/voice_inventory.json",
+  "port_slots": "godot/data/attack_config_*.json + fighting_set_m03_mapped_attacks.json",
+  "join_rule": "opponent id -> config -> source_action -> set.sounds[action] entry whose file equals the base cue file"
+ },
+ "voice_root_layout": "adreno_200/sounds/voices/<voice_dir>/<folder>/<file>",
+ "by_config": {
+  "data/fighting_set_m03_mapped_attacks.json": "brick",
+  "data/attack_config_sinfu.json": "sinfu",
+  "data/attack_config_master.json": "master",
+  "data/attack_config_shenlo.json": "shenlo",
+  "data/attack_config_ken.json": "ken",
+  "data/attack_config_smallboy.json": "smallboy",
+  "data/attack_config_johnson.json": "johnson",
+  "data/attack_config_chief.json": "chief",
+  "data/attack_config_loming.json": "loming"
+ },
+ "characters": {
+  "brick": {
+   "display_name": "brick davis",
+   "voice_dir": "brick_davies",
+   "unique_token": "brickdavis",
+   "unique_tokens": [
+    "brickdavis",
+    "kengodall"
+   ],
+   "unique_token_counts": {
+    "brickdavis": 29,
+    "kengodall": 1
+   },
+   "fighting_set": "adreno_200/set/thai.set",
+   "port_config": "data/fighting_set_m03_mapped_attacks.json",
+   "attack_slots": {
+    "attack_to_floor_brick": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack_brick": {
+     "source_action": "endattack brick",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 8,
+       "volume": 0.8500000238418579,
+       "unique": "brickdavis",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/brick_davies/special/M03_End_Attack_02avi_Brick_Davies_Rising Growl_to_Hit_2.wav",
+       "frame": 41,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab2_brick": {
+     "source_action": "grab2 brick",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/special/M03_Grab_02avi_Brick_Davies_RIsing_Growl_to_Knee_3.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 45,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick": {
+     "source_action": "highkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HITS_LIGHT_Male_LS_G_AttackGrunt10_Brick_Davies.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick2": {
+     "source_action": "highkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHT_Male_LS_G_HurtGrunt02_Brick_Davies.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch2": {
+     "source_action": "highpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HITS_LIGHT_Male_LS_G_AttackGrunt10_Brick_Davies.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "kick": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick2": {
+     "source_action": "lowkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt15_Brick_Davies.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick3": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HITS_LIGHT_Male_LS_G_AttackGrunt10_Brick_Davies.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt15_Brick_Davies.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "parry_attack_brick": {
+     "source_action": "parryattack",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HITS_LIGHT_Male_LS_G_AttackGrunt10_Brick_Davies.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high_brick": {
+     "source_action": "specialkickhigh brick",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/special/M03_SP_Kck_Highavi_Brick_Davies_Rising Growl_to_Hit_1st_Scream.wav",
+       "frame": 0,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/brick_davies/special/M03_SP_Kck_Highavi_Brick_Davies_Rising Growl_to_Hit_2nd_Scream.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_low_brick": {
+     "source_action": "specialkicklow brick",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_high_brick": {
+     "source_action": "specialpunchhigh brick",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low_brick": {
+     "source_action": "specialpunchlow brick",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHT_Male_LS_G_HurtGrunt02_Brick_Davies.wav",
+       "frame": 14,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHTMale_LS_G_HurtPunch10_Brick_Davies.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "brickdavis",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/brick_davies/heavy_pain/HURT_HEAVY_Male_LS_G_Death02_Brick_Davies.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHTMale_LS_G_HurtPunch10_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHTMale_LS_G_HurtPunch10_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/brick_davies/heavy_pain/HURT_HEAVY_Male_LS_G_Death02_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHTMale_LS_G_HurtPunch10_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHT_Male_LS_G_HurtGrunt02_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHT_Male_LS_G_HurtGrunt02_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "endattack brick": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 8,
+      "volume": 0.8500000238418579,
+      "unique": "brickdavis",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/brick_davies/special/M03_End_Attack_02avi_Brick_Davies_Rising Growl_to_Hit_2.wav",
+      "frame": 41,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt15_Brick_Davies.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "grab2 brick": [
+     {
+      "file": "sounds/voices/brick_davies/special/M03_Grab_02avi_Brick_Davies_RIsing_Growl_to_Knee_3.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 45,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "highkick1": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HITS_LIGHT_Male_LS_G_AttackGrunt10_Brick_Davies.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "highkick2": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHT_Male_LS_G_HurtGrunt02_Brick_Davies.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "highpunch2": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HITS_LIGHT_Male_LS_G_AttackGrunt10_Brick_Davies.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/brick_davies/heavy_pain/HURT_HEAVY_Male_LS_G_Death02_Brick_Davies.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHTMale_LS_G_HurtPunch10_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHTMale_LS_G_HurtPunch10_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/brick_davies/heavy_pain/HURT_HEAVY_Male_LS_G_Death02_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHTMale_LS_G_HurtPunch10_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHT_Male_LS_G_HurtGrunt02_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHT_Male_LS_G_HurtGrunt02_Brick_Davies.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "lowkick2": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt15_Brick_Davies.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "lowkick3": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HITS_LIGHT_Male_LS_G_AttackGrunt10_Brick_Davies.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt15_Brick_Davies.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "parryattack": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HITS_LIGHT_Male_LS_G_AttackGrunt10_Brick_Davies.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh brick": [
+     {
+      "file": "sounds/voices/brick_davies/special/M03_SP_Kck_Highavi_Brick_Davies_Rising Growl_to_Hit_1st_Scream.wav",
+      "frame": 0,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/brick_davies/special/M03_SP_Kck_Highavi_Brick_Davies_Rising Growl_to_Hit_2nd_Scream.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "specialkicklow brick": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhigh brick": [
+     {
+      "file": "sounds/voices/brick_davies/light_attack/HIT_LIGHT_Male_LS_G_AttackGrunt06_Brick_Davies.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow brick": [
+     {
+      "file": "sounds/voices/brick_davies/light_pain/HURT__LIGHT_Male_LS_G_HurtGrunt02_Brick_Davies.wav",
+      "frame": 14,
+      "volume": 0.8999999761581421,
+      "unique": "brickdavis",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1_brick",
+     "source_action": "grab1 brick",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab1_miss_brick",
+     "source_action": "grab1miss brick",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2_miss_brick",
+     "source_action": "grab2miss brick",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "low_kick",
+     "source_action": "lowkick1",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high_brick",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_low_brick",
+     "source_action": "parrylow",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  },
+  "chief": {
+   "display_name": "chief",
+   "voice_dir": "chief",
+   "unique_token": "chief",
+   "unique_tokens": [
+    "chief"
+   ],
+   "unique_token_counts": {
+    "chief": 34
+   },
+   "fighting_set": "adreno_200/set/karate.set",
+   "port_config": "data/attack_config_chief.json",
+   "attack_slots": {
+    "attack_to_floor": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack": {
+     "source_action": "endattack chief",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/special/BL_Chief_M02_End_Attack_02.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab1": {
+     "source_action": "grab1 chief",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+       "frame": 28,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick": {
+     "source_action": "highkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick2": {
+     "source_action": "highkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+       "frame": 7,
+       "volume": 0.75,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch2": {
+     "source_action": "highpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "kick": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+       "frame": 9,
+       "volume": 0.75,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick2": {
+     "source_action": "lowkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick3": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+       "frame": 9,
+       "volume": 0.75,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+       "frame": 13,
+       "volume": 0.75,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "parry_attack": {
+     "source_action": "parryattack",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+       "frame": 13,
+       "volume": 0.75,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+       "frame": 13,
+       "volume": 0.75,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high": {
+     "source_action": "specialkickhigh chief",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_low": {
+     "source_action": "specialkicklow chief",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_high": {
+     "source_action": "specialpunchhigh chief",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low": {
+     "source_action": "specialpunchlow chief",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "chief",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "grabcompl1 chief": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 32,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 ken": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 32,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 chief": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 ken": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/chief/pain_heavy/HURT_HEAVY_Male_LS_H_Death03_The_Cheif.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt08_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt08_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/chief/pain_heavy/HURT_HEAVY_Male_LS_H_Death03_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+      "frame": 9,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "endattack chief": [
+     {
+      "file": "sounds/voices/chief/special/BL_Chief_M02_End_Attack_02.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "endattackcomp 1": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 20,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "faceupattack": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "grab1 chief": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+      "frame": 28,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 chief": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 32,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 ken": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 32,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 chief": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 ken": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "highkick1": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "highkick2": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+      "frame": 7,
+      "volume": 0.75,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "highpunch2": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/chief/pain_heavy/HURT_HEAVY_Male_LS_H_Death03_The_Cheif.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt08_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt08_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/chief/pain_heavy/HURT_HEAVY_Male_LS_H_Death03_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/chief/pain_light/HURT_LIGHT_Male_LS_H_HurtGrunt05_The_Cheif.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "lowkick2": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "lowkick3": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+      "frame": 9,
+      "volume": 0.75,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+      "frame": 13,
+      "volume": 0.75,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "parryattack": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+      "frame": 13,
+      "volume": 0.75,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh chief": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "specialkicklow chief": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt07_The_Cheif.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhigh chief": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt03_The_Cheif.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow chief": [
+     {
+      "file": "sounds/voices/chief/attck_light/HIT_LIGHT_Male_LS_H_AttackGrunt02_The_Cheif.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "chief",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1_miss",
+     "source_action": "grab1miss chief",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2",
+     "source_action": "grab2 chief",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2_miss",
+     "source_action": "grab2miss chief",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "low_kick",
+     "source_action": "lowkick1",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  },
+  "johnson": {
+   "display_name": "johnson",
+   "voice_dir": "johnson",
+   "unique_token": "johnson",
+   "unique_tokens": [
+    "johnson"
+   ],
+   "unique_token_counts": {
+    "johnson": 30
+   },
+   "fighting_set": "adreno_200/set/thai.set",
+   "port_config": "data/attack_config_johnson.json",
+   "attack_slots": {
+    "attack_to_floor_brick": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack_brick": {
+     "source_action": "endattack johnson",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/johnson/special/M03_End_Attack_02.avi_Johnson_Upward_Growl_2.wav",
+       "frame": 74,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab2_brick": {
+     "source_action": "grab2 johnson",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/special/M03_Grab_02_Johnson_Upward_Growl_1.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 45,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick": {
+     "source_action": "highkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick2": {
+     "source_action": "highkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch2": {
+     "source_action": "highpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "kick": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick": {
+     "source_action": "lowkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick2": {
+     "source_action": "lowkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick3": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "parry_attack_brick": {
+     "source_action": "parryattack",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high_brick": {
+     "source_action": "specialkickhigh johnson",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/special/M03_Grab_02_Johnson_Upward_Growl_1.wav",
+       "frame": 0,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_low_brick": {
+     "source_action": "specialkicklow johnson",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_high_brick": {
+     "source_action": "specialpunchhigh johnson",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low_brick": {
+     "source_action": "specialpunchlow johnson",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+       "frame": 14,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtPunch02_Johnson.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "johnson",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/johnson/heavy_pain/HURT_HEAVY_Male_LS_D_PainScream07_Johnson.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtGrunt06_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtGrunt06_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/johnson/heavy_pain/HURT_HEAVY_Male_LS_D_PainScream07_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtPunch02_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtPunch02_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtPunch02_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "endattack johnson": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/johnson/special/M03_End_Attack_02.avi_Johnson_Upward_Growl_2.wav",
+      "frame": 74,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "grab2 johnson": [
+     {
+      "file": "sounds/voices/johnson/special/M03_Grab_02_Johnson_Upward_Growl_1.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 45,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "highkick1": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "highkick2": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "highpunch2": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/johnson/heavy_pain/HURT_HEAVY_Male_LS_D_PainScream07_Johnson.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtGrunt06_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtGrunt06_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/johnson/heavy_pain/HURT_HEAVY_Male_LS_D_PainScream07_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtPunch02_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtPunch02_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/johnson/light_pain/HURT_LIGHT_Male_LS_D_HurtPunch02_Johnson.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "lowkick1": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "lowkick2": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "lowkick3": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt08_Johnson.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "parryattack": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh johnson": [
+     {
+      "file": "sounds/voices/johnson/special/M03_Grab_02_Johnson_Upward_Growl_1.wav",
+      "frame": 0,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "specialkicklow johnson": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt10_Johnson.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhigh johnson": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow johnson": [
+     {
+      "file": "sounds/voices/johnson/light_attack/HIT_LIGHT_Male_LS_D_AttackGrunt09_Johnson.wav",
+      "frame": 14,
+      "volume": 0.8999999761581421,
+      "unique": "johnson",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1_brick",
+     "source_action": "grab1 johnson",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab1_miss_brick",
+     "source_action": "grab1miss johnson",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2_miss_brick",
+     "source_action": "grab2miss johnson",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high_brick",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_low_brick",
+     "source_action": "parrylow",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  },
+  "ken": {
+   "display_name": "ken godall",
+   "voice_dir": "ken_goodall",
+   "unique_token": "kengodall",
+   "unique_tokens": [
+    "kengodall"
+   ],
+   "unique_token_counts": {
+    "kengodall": 35
+   },
+   "fighting_set": "adreno_200/set/karate.set",
+   "port_config": "data/attack_config_ken.json",
+   "attack_slots": {
+    "attack_to_floor": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack": {
+     "source_action": "endattack ken",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+       "frame": 19,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 54,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab1": {
+     "source_action": "grab1 ken",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 28,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick2": {
+     "source_action": "highkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 7,
+       "volume": 0.75,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch2": {
+     "source_action": "highpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "kick": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+       "frame": 9,
+       "volume": 0.75,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick2": {
+     "source_action": "lowkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick3": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+       "frame": 9,
+       "volume": 0.75,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 13,
+       "volume": 0.75,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "parry_attack": {
+     "source_action": "parryattack",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 13,
+       "volume": 0.75,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 13,
+       "volume": 0.75,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high": {
+     "source_action": "specialkickhigh ken",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 21,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_low": {
+     "source_action": "specialkicklow ken",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+       "frame": 13,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_high": {
+     "source_action": "specialpunchhigh ken",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low": {
+     "source_action": "specialpunchlow ken",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+       "frame": 16,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtPunch05_Ken.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "kengodall",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "grabcompl1 chief": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 32,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 32,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 chief": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/ken_goodall/heavy_pain/HURT_HEAVY_Male_LS_C_PainScream02_Ken.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtPunch05_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtPunch05_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/ken_goodall/heavy_pain/HURT_HEAVY_Male_LS_C_PainScream02_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtPunch05_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+      "frame": 9,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "endattack ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+      "frame": 19,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 54,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "endattackcomp 1": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 20,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "faceupattack": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "grab1 ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 28,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 chief": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 32,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 32,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 chief": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "highkick2": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 7,
+      "volume": 0.75,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "highpunch2": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/ken_goodall/heavy_pain/HURT_HEAVY_Male_LS_C_PainScream02_Ken.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtPunch05_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtPunch05_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/ken_goodall/heavy_pain/HURT_HEAVY_Male_LS_C_PainScream02_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtPunch05_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/ken_goodall/light_pain/HURT_LIGHT_Male_LS_C_HurtGrunt04_Ken.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "lowkick2": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "lowkick3": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+      "frame": 9,
+      "volume": 0.75,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt02_Ken.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 13,
+      "volume": 0.75,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "parryattack": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 13,
+      "volume": 0.75,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 21,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "specialkicklow ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+      "frame": 13,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhigh ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow ken": [
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt03_Ken.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/ken_goodall/light_attack/HIT_LIGHT_Male_LS_C_AttackGrunt05_Ken.wav",
+      "frame": 16,
+      "volume": 0.8999999761581421,
+      "unique": "kengodall",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1_miss",
+     "source_action": "grab1miss ken",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2",
+     "source_action": "grab2 ken",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2_miss",
+     "source_action": "grab2miss ken",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "high_kick",
+     "source_action": "highkick1",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "low_kick",
+     "source_action": "lowkick1",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  },
+  "loming": {
+   "display_name": "lo ming a",
+   "voice_dir": "lo_ming",
+   "unique_token": "loming",
+   "unique_tokens": [
+    "loming"
+   ],
+   "unique_token_counts": {
+    "loming": 36
+   },
+   "fighting_set": "adreno_200/set/kungfu.set",
+   "port_config": "data/attack_config_loming.json",
+   "attack_slots": {
+    "attack_to_floor": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+       "frame": 17,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack": {
+     "source_action": "endattack loming",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_End_Attack_01avi_Lo_Ming_Shout.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab1_miss": {
+     "source_action": "grab1miss loming",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt04_Lo_Ming.wav",
+       "frame": 7,
+       "volume": 1.0,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab2_miss": {
+     "source_action": "grab2miss loming",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt06_Lo_Ming.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick": {
+     "source_action": "highkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt04_Lo_Ming.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick2": {
+     "source_action": "highkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt06_Lo_Ming.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_E02_Pnch_Low_03.avi_Lo_Ming_Scream.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt06_Lo_Ming.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch2": {
+     "source_action": "highpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_End_Attack_01avi_Lo_Ming_Shout.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "kick": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_E02_Kck_Low_03.avi_Lo_Ming_Scream.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick": {
+     "source_action": "lowkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick3": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_E02_Kck_Low_03.avi_Lo_Ming_Scream.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt06_Lo_Ming.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_E02_Pnch_Low_03.avi_Lo_Ming_Scream.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "parry_attack": {
+     "source_action": "parryattack",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_E02_Pnch_Low_03.avi_Lo_Ming_Scream.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high": {
+     "source_action": "specialkickhigh loming",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_E02_Kck_Low_03.avi_Lo_Ming_Scream.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low": {
+     "source_action": "specialpunchlow loming",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/special/M04_E02_Pnch_Low_03.avi_Lo_Ming_Scream.wav",
+       "frame": 17,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtPunch09_Lo_Ming.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "loming",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "grabcompl1 loming": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 master": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 shenlo": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 sinfu": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 loming": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 master": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtPunch09_Lo_Ming.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 shenlo": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 sinfu": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtPunch09_Lo_Ming.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtGrunt08_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtGrunt08_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtPunch09_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtGrunt08_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtGrunt08_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+      "frame": 17,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "endattack loming": [
+     {
+      "file": "sounds/voices/lo_ming/special/M04_End_Attack_01avi_Lo_Ming_Shout.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt04_Lo_Ming.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "faceupattack": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt04_Lo_Ming.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grab1miss loming": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt04_Lo_Ming.wav",
+      "frame": 7,
+      "volume": 1.0,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grab2miss loming": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt06_Lo_Ming.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 loming": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 master": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 shenlo": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 sinfu": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 loming": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 master": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtPunch09_Lo_Ming.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 shenlo": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 sinfu": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtPunch09_Lo_Ming.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "highkick1": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt04_Lo_Ming.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "highkick2": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt06_Lo_Ming.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/lo_ming/special/M04_E02_Pnch_Low_03.avi_Lo_Ming_Scream.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt06_Lo_Ming.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "highpunch2": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/lo_ming/special/M04_End_Attack_01avi_Lo_Ming_Shout.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtGrunt08_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtGrunt08_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/lo_ming/heavy_pain/HURT_LIGHT_Male_LS_L_HurtGrunt07_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtPunch09_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtGrunt08_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/lo_ming/light_pain/HURT_LIGHT_Male_LS_L_HurtGrunt08_Lo_Ming.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "lowkick1": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "lowkick3": [
+     {
+      "file": "sounds/voices/lo_ming/special/M04_E02_Kck_Low_03.avi_Lo_Ming_Scream.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt06_Lo_Ming.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/lo_ming/special/M04_E02_Pnch_Low_03.avi_Lo_Ming_Scream.wav",
+      "frame": 9,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "parryattack": [
+     {
+      "file": "sounds/voices/lo_ming/light_attack/HIT_LIGHT_Male_LS_L_AttackGrunt02_Lo_Ming.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh loming": [
+     {
+      "file": "sounds/voices/lo_ming/special/M04_E02_Kck_Low_03.avi_Lo_Ming_Scream.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhigh loming": [
+     {
+      "file": "sounds/voices/lo_ming/special/M04_E02_Pnch_High_03avi_Lo_Ming_Scream.wav",
+      "frame": 3,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow loming": [
+     {
+      "file": "sounds/voices/lo_ming/special/M04_E02_Pnch_Low_03.avi_Lo_Ming_Scream.wav",
+      "frame": 17,
+      "volume": 0.8999999761581421,
+      "unique": "loming",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1",
+     "source_action": "grab1 loming",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2",
+     "source_action": "grab2 loming",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "low_kick2",
+     "source_action": "lowkick2",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_low",
+     "source_action": "parrylow",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "special_kick_low",
+     "source_action": "specialkicklow loming",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "special_punch_high_hit",
+     "source_action": "specialpunchhighhit sinfu",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "special_punch_high_miss",
+     "source_action": "specialpunchhighmiss sinfu",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  },
+  "master": {
+   "display_name": "the master",
+   "voice_dir": "the_master",
+   "unique_token": "themaster",
+   "unique_tokens": [
+    "shenlo",
+    "themaster"
+   ],
+   "unique_token_counts": {
+    "shenlo": 1,
+    "themaster": 41
+   },
+   "fighting_set": "adreno_200/set/kungfu.set",
+   "port_config": "data/attack_config_master.json",
+   "attack_slots": {
+    "attack_to_floor": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_4.wav",
+       "frame": 17,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack": {
+     "source_action": "endattack master",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/special/M04_End_Attack_02.avi_HEEYYAHHH.wav",
+       "frame": 21,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab1": {
+     "source_action": "grab1 master",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_3.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab2": {
+     "source_action": "grab2 master",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/special/M04_Grab_02.avi_Master_2_of_2_ALT_LONG.wav",
+       "frame": 21,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick": {
+     "source_action": "highkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_8.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick2": {
+     "source_action": "highkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_7.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_7.wav",
+       "frame": 3,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_9a.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch2": {
+     "source_action": "highpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_3.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_3.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "kick": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_1.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick": {
+     "source_action": "lowkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_2.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick2": {
+     "source_action": "lowkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_4.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick3": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_1.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_8.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_7.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_4.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "parry_attack": {
+     "source_action": "parryattack",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_3.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_4.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high": {
+     "source_action": "specialkickhigh master",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_1.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_9a.wav",
+       "frame": 35,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_low": {
+     "source_action": "specialkicklow master",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_3.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_1.wav",
+       "frame": 118,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_high": {
+     "source_action": "specialpunchhigh master",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_5.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_7.wav",
+       "frame": 29,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low": {
+     "source_action": "specialpunchlow master",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_5.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_9a.wav",
+       "frame": 50,
+       "volume": 0.8999999761581421,
+       "unique": "themaster",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "grabcompl1 loming": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 master": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 shenlo": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 sinfu": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 loming": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_7.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 master": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Hvy_2.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 shenlo": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_7.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 sinfu": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Hvy_2.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Hvy_6.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_1.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_1.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Hvy_6.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_2.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_2.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_4.wav",
+      "frame": 17,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "endattack master": [
+     {
+      "file": "sounds/voices/the_master/special/M04_End_Attack_02.avi_HEEYYAHHH.wav",
+      "frame": 21,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_2.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "faceupattack": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_4.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grab1 master": [
+     {
+      "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_3.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grab2 master": [
+     {
+      "file": "sounds/voices/the_master/special/M04_Grab_02.avi_Master_2_of_2_ALT_LONG.wav",
+      "frame": 21,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 loming": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 master": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 shenlo": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 sinfu": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 loming": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_7.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 master": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Hvy_2.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 shenlo": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_7.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 sinfu": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Hvy_2.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "highkick1": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_8.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "highkick2": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_7.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_7.wav",
+      "frame": 3,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_9a.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "highpunch2": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_3.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_3.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Hvy_6.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_1.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_1.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Hvy_6.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_3.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_2.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/the_master/pain/Master_Pain_Lt_2.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "lowkick1": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_2.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "lowkick2": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_4.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "lowkick3": [
+     {
+      "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_1.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_8.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_7.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_4.wav",
+      "frame": 9,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "parryattack": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_3.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh master": [
+     {
+      "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_1.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_9a.wav",
+      "frame": 35,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "specialkicklow master": [
+     {
+      "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_3.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_1.wav",
+      "frame": 118,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhigh master": [
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_5.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_7.wav",
+      "frame": 29,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow master": [
+     {
+      "file": "sounds/voices/the_master/attack/heavy_attack/Master_Attack_Hvy_5.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/the_master/attack/light_attack/Master_Attack_Lt_9a.wav",
+      "frame": 50,
+      "volume": 0.8999999761581421,
+      "unique": "themaster",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1_miss",
+     "source_action": "grab1miss master",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2_miss",
+     "source_action": "grab2miss master",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_low",
+     "source_action": "parrylow",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  },
+  "shenlo": {
+   "display_name": "shen lo",
+   "voice_dir": "shen_lo",
+   "unique_token": "shenlo",
+   "unique_tokens": [
+    "shenlo"
+   ],
+   "unique_token_counts": {
+    "shenlo": 35
+   },
+   "fighting_set": "adreno_200/set/kungfu.set",
+   "port_config": "data/attack_config_shenlo.json",
+   "attack_slots": {
+    "attack_to_floor": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+       "frame": 17,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack": {
+     "source_action": "endattack shenlo",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/special/M04_End_Attack_02.avi_Scream.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick": {
+     "source_action": "highkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt02_Shen_Lo.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_High_03.avi_Scream.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch2": {
+     "source_action": "highpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt06_Shen_Lo.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "kick": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt06_Shen_Lo.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick": {
+     "source_action": "lowkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt02_Shen_Lo.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick2": {
+     "source_action": "lowkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick3": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt06_Shen_Lo.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt06_Shen_Lo.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_Low_03.avi_AttackGrunt.wav",
+       "frame": 4,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "parry_attack": {
+     "source_action": "parryattack",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_Low_03.avi_AttackGrunt.wav",
+       "frame": 4,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high": {
+     "source_action": "specialkickhigh shenlo",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_Low_03.avi_AttackGrunt.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+       "frame": 49,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_high": {
+     "source_action": "specialpunchhigh shenlo",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_High_03.avi_Scream.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low": {
+     "source_action": "specialpunchlow shenlo",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_Low_03.avi_AttackGrunt.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "shenlo",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "grabcompl1 loming": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 master": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 shenlo": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 sinfu": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 loming": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 master": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 shenlo": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 sinfu": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+      "frame": 17,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "endattack shenlo": [
+     {
+      "file": "sounds/voices/shen_lo/special/M04_End_Attack_02.avi_Scream.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt02_Shen_Lo.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "faceupattack": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt02_Shen_Lo.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 loming": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 master": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 shenlo": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 sinfu": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 loming": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 master": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 shenlo": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 sinfu": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "highkick1": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt02_Shen_Lo.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_High_03.avi_Scream.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "highpunch2": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt06_Shen_Lo.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/shen_lo/heavy_pain/Male_LS_J_PainScream04_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "lowkick1": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt02_Shen_Lo.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "lowkick2": [
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtPunch08_Shen_Lo.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "lowkick3": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt06_Shen_Lo.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt06_Shen_Lo.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_Low_03.avi_AttackGrunt.wav",
+      "frame": 4,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "parryattack": [
+     {
+      "file": "sounds/voices/shen_lo/light_attack/Male_LS_J_AttackGrunt08_Shen_Lo.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh shenlo": [
+     {
+      "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_Low_03.avi_AttackGrunt.wav",
+      "frame": 9,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/shen_lo/light_pain/Male_LS_J_HurtGrunt04_Shen_Lo.wav",
+      "frame": 49,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhigh shenlo": [
+     {
+      "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_High_03.avi_Scream.wav",
+      "frame": 9,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow shenlo": [
+     {
+      "file": "sounds/voices/shen_lo/special/M04_E03_Pnch_Low_03.avi_AttackGrunt.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "shenlo",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1",
+     "source_action": "grab1 shenlo",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab1_miss",
+     "source_action": "grab1miss shenlo",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2",
+     "source_action": "grab2 shenlo",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2_miss",
+     "source_action": "grab2miss shenlo",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "high_kick2",
+     "source_action": "highkick2",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_low",
+     "source_action": "parrylow",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "special_kick_low",
+     "source_action": "specialkicklow shenlo",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  },
+  "sinfu": {
+   "display_name": "sin fu",
+   "voice_dir": "sin_fu",
+   "unique_token": "sinfu",
+   "unique_tokens": [
+    "sinfu"
+   ],
+   "unique_token_counts": {
+    "sinfu": 35
+   },
+   "fighting_set": "adreno_200/set/kungfu.set",
+   "port_config": "data/attack_config_sinfu.json",
+   "attack_slots": {
+    "attack_to_floor": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+       "frame": 17,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack": {
+     "source_action": "endattack sinfu",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/special/M04_End_Attack_01.avi_Sin_Fu_Scream.wav",
+       "frame": 26,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab1_miss": {
+     "source_action": "grab1miss sinfu",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab2": {
+     "source_action": "grab2 sinfu",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+       "frame": 21,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick": {
+     "source_action": "highkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick2": {
+     "source_action": "highkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt04_Sin_Fu.wav",
+       "frame": 13,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick": {
+     "source_action": "lowkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt04_Sin_Fu.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high": {
+     "source_action": "specialkickhigh sinfu",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/special/M04_E02_Kck_High_03avi_and_M04_SP_Pnch_High.avi_Sin_Fu_Scream02.wav",
+       "frame": 4,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_low": {
+     "source_action": "specialkicklow sinfu",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/special/M04_SP_Kck_Lowavi__Sin_Fu_Scream.wav",
+       "frame": 9,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_high_hit": {
+     "source_action": "specialpunchhighhit sinfu",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/special/M04_E02_Pnch_High_03avi_Sin_Fu_Scream01.wav",
+       "frame": 6,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low": {
+     "source_action": "specialpunchlow sinfu",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/special/M04_E02_Kck_High_03avi_and_M04_SP_Pnch_High.avi_Sin_Fu_Scream02.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "sinfu",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "grabcompl1 loming": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_B.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 master": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_B.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 shenlo": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_B.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_B.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 loming": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_A.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 master": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 shenlo": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_A.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_A.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_A.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 17,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "endattack sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/special/M04_End_Attack_01.avi_Sin_Fu_Scream.wav",
+      "frame": 26,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "faceupattack": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grab1miss sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grab2 sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+      "frame": 21,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 loming": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_B.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 master": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_B.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 shenlo": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_B.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl1 sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_B.wav",
+      "frame": 38,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 loming": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_A.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 master": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 shenlo": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_A.wav",
+      "frame": 24,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "grabcompl2 sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 23,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "highkick1": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "highkick2": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt04_Sin_Fu.wav",
+      "frame": 13,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_A.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/sin_fu/heavy_pain/Male_LS_F_PainScream01_Sin_Fu_A.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu_B.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/sin_fu/light_pain/HURT_LIGHT_Male_LS_F_Sin_Fu.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "lowkick1": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt04_Sin_Fu.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt06_Sin_Fu.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/sin_fu/light_attack/HIT_LIGHT_Male_LS_F_AttackGrunt11_Sin_Fu.wav",
+      "frame": 9,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/special/M04_E02_Kck_High_03avi_and_M04_SP_Pnch_High.avi_Sin_Fu_Scream02.wav",
+      "frame": 4,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "specialkicklow sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/special/M04_SP_Kck_Lowavi__Sin_Fu_Scream.wav",
+      "frame": 9,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhighhit sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/special/M04_E02_Pnch_High_03avi_Sin_Fu_Scream01.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow sinfu": [
+     {
+      "file": "sounds/voices/sin_fu/special/M04_E02_Kck_High_03avi_and_M04_SP_Pnch_High.avi_Sin_Fu_Scream02.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "sinfu",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1",
+     "source_action": "grab1 sinfu",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2_miss",
+     "source_action": "grab2miss sinfu",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "high_punch2",
+     "source_action": "highpunch2",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "kick",
+     "source_action": "lowkick3",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "low_kick2",
+     "source_action": "lowkick2",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "low_kick3",
+     "source_action": "lowkick3",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_attack",
+     "source_action": "parryattack",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_low",
+     "source_action": "parrylow",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "special_punch_high_miss",
+     "source_action": "specialpunchhighmiss sinfu",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  },
+  "smallboy": {
+   "display_name": "smallboy",
+   "voice_dir": "smallboy",
+   "unique_token": "smallboy",
+   "unique_tokens": [
+    "smallboy"
+   ],
+   "unique_token_counts": {
+    "smallboy": 30
+   },
+   "fighting_set": "adreno_200/set/thai.set",
+   "port_config": "data/attack_config_smallboy.json",
+   "attack_slots": {
+    "attack_to_floor_brick": {
+     "source_action": "attacktofloor",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "endattack_brick": {
+     "source_action": "endattack smallboy",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+       "frame": 41,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "grab2_brick": {
+     "source_action": "grab2 smallboy",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/special/M03_Grab_02.avi_Small_Boy_Rising_Scream.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      },
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+       "frame": 45,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick": {
+     "source_action": "highkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick2": {
+     "source_action": "highkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_kick3": {
+     "source_action": "highkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtPunch05_Small_Boy.wav",
+       "frame": 11,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch": {
+     "source_action": "highpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch2": {
+     "source_action": "highpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "high_punch3": {
+     "source_action": "highpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "kick": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick": {
+     "source_action": "lowkick1",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+       "frame": 5,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick2": {
+     "source_action": "lowkick2",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_kick3": {
+     "source_action": "lowkick3",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch": {
+     "source_action": "lowpunch1",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch2": {
+     "source_action": "lowpunch2",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+       "frame": 8,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "low_punch3": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "parry_attack_brick": {
+     "source_action": "parryattack",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+       "frame": 10,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "punch": {
+     "source_action": "lowpunch3",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_high_brick": {
+     "source_action": "specialkickhigh smallboy",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+       "frame": 7,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_kick_low_brick": {
+     "source_action": "specialkicklow smallboy",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+       "frame": 12,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_high_brick": {
+     "source_action": "specialpunchhigh smallboy",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/special/M03_Victory_01.avi_Small_Boy_Shout_A.wav",
+       "frame": 0,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    },
+    "special_punch_low_brick": {
+     "source_action": "specialpunchlow smallboy",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+       "frame": 14,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "reaction_slots": {
+    "hit.medium": {
+     "source_action": "impactlightfrontmid",
+     "cues": [
+      {
+       "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtPunch05_Small_Boy.wav",
+       "frame": 1,
+       "volume": 0.8999999761581421,
+       "unique": "smallboy",
+       "is_voice": true
+      }
+     ]
+    }
+   },
+   "voiced_reaction_actions": {
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/smallboy/pain_heavy/HURT_HARD_Male_LS_B_Death01_Small_Boy.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtGrunt06_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtGrunt06_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/smallboy/pain_heavy/HURT_HARD_Male_LS_B_Death01_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtPunch05_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtGrunt06_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtGrunt06_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ]
+   },
+   "all_action_cues": {
+    "attacktofloor": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "endattack smallboy": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+      "frame": 41,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "facedownattack": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "grab2 smallboy": [
+     {
+      "file": "sounds/voices/smallboy/special/M03_Grab_02.avi_Small_Boy_Rising_Scream.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     },
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+      "frame": 45,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "highkick1": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "highkick2": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "highkick3": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtPunch05_Small_Boy.wav",
+      "frame": 11,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "highpunch1": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "highpunch2": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "highpunch3": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactbrutalmid": [
+     {
+      "file": "sounds/voices/smallboy/pain_heavy/HURT_HARD_Male_LS_B_Death01_Small_Boy.wav",
+      "frame": 6,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactfacedown": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtGrunt06_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactfaceup": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtGrunt06_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impacthardfrontmid": [
+     {
+      "file": "sounds/voices/smallboy/pain_heavy/HURT_HARD_Male_LS_B_Death01_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactlightfrontmid": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtPunch05_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactlightlefthigh": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtGrunt06_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "impactlightrighthigh": [
+     {
+      "file": "sounds/voices/smallboy/pain_light/HURT_LIGHT_Male_LS_B_HurtGrunt06_Small_Boy.wav",
+      "frame": 1,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "lowkick1": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+      "frame": 5,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "lowkick2": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "lowkick3": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "lowpunch1": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "lowpunch2": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+      "frame": 8,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "lowpunch3": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "parryattack": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+      "frame": 10,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "specialkickhigh smallboy": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt02_Small_Boy.wav",
+      "frame": 7,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "specialkicklow smallboy": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_AttackGrunt04_Small_Boy.wav",
+      "frame": 12,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "specialpunchhigh smallboy": [
+     {
+      "file": "sounds/voices/smallboy/special/M03_Victory_01.avi_Small_Boy_Shout_A.wav",
+      "frame": 0,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ],
+    "specialpunchlow smallboy": [
+     {
+      "file": "sounds/voices/smallboy/attack_light/HIT_LIGHT_Male_LS_B_HurtGrunt03_Small_Boy.wav",
+      "frame": 14,
+      "volume": 0.8999999761581421,
+      "unique": "smallboy",
+      "is_voice": true
+     }
+    ]
+   },
+   "unvoiced": [
+    {
+     "kind": "attack",
+     "slot": "grab1_brick",
+     "source_action": "grab1 smallboy",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab1_miss_brick",
+     "source_action": "grab1miss smallboy",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "grab2_miss_brick",
+     "source_action": "grab2miss smallboy",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_high_brick",
+     "source_action": "parryhigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "attack",
+     "slot": "parry_low_brick",
+     "source_action": "parrylow",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.high",
+     "source_action": "highblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.low",
+     "source_action": "lowblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "block.medium",
+     "source_action": "midblock",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.high",
+     "source_action": "impactlightfronthigh",
+     "reason": "archive action carries no voice for this character"
+    },
+    {
+     "kind": "reaction",
+     "slot": "hit.low",
+     "source_action": "impactlightfrontlow",
+     "reason": "archive action carries no voice for this character"
+    }
+   ]
+  }
+ },
+ "stats": {
+  "characters": 9,
+  "attack_slots": 186,
+  "reaction_slots": 9,
+  "all_action_slots": 290,
+  "attack_cue_rows": 203,
+  "reaction_cue_rows": 9,
+  "all_action_cue_rows": 307,
+  "distinct_voice_files": 89,
+  "delayed_cues": 513,
+  "immediate_cues": 6,
+  "unique_tagged_cues": 519,
+  "generic_cues": 0,
+  "deduped_rows": 0,
+  "unique_conflicts": 4,
+  "frame_alignment_violations": 0,
+  "max_frame": 118
+ }
+}

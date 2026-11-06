@@ -701,7 +701,8 @@ func _run_check() -> void:
 
     player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
     opponent.reset_fighter(Vector3(0.25, 1.2, 0.0))
-    _press_key(KEY_J)
+    # Native keyboard layout: K (b) is lowpunch1, J (a) is highpunch1.
+    _press_key(KEY_K)
     await process_frame
     if player.state != "startup" or player.attack_kind != "punch":
         push_error("J did not start a punch")
@@ -726,10 +727,11 @@ func _run_check() -> void:
     player.reset_fighter(Vector3(-0.25, 1.2, 0.0))
     opponent.reset_fighter(Vector3(0.25, 1.2, 0.0))
     opponent.guard_held = true
-    _press_key(KEY_K)
+    # Native keyboard layout: U (d) is lowkick1.
+    _press_key(KEY_U)
     await process_frame
     if player.state != "startup" or player.attack_kind != "kick":
-        push_error("K did not start a kick")
+        push_error("U did not start a kick")
         quit(1)
         return
     for frame in range(45):

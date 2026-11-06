@@ -170,7 +170,10 @@ func _run() -> void:
         return
     opponent.move_axis = Vector2(1.0, 0.0)
     opponent._animate_candidate()
-    if opponent.candidate_animation_clip != "m03_movefwd":
+    var expected_move: String = String(
+        opponent._candidate_clip_paths.get("moveright", "m03_movefwd")
+    )
+    if opponent.candidate_animation_clip != expected_move:
         push_error("Opponent movement did not select the Brick locomotion clip")
         quit(1)
         return

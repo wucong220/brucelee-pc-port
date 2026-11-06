@@ -29,6 +29,8 @@ _PIXEL_FORMATS = {
     'r8g8b8': {'kind': 'direct', 'stride': 3, 'descriptor_marker': 0x00640000},
     'r8g8b8a8': {'kind': 'direct', 'stride': 4},
     'atc_rgb': {'kind': 'atc_rgb', 'stride': 8},
+    'atc_rgba_interpolated': {'kind': 'atc_rgba_interpolated', 'stride': 16},
+    'atc_rgba_explicit': {'kind': 'atc_rgba_explicit', 'stride': 16},
 }
 
 
@@ -79,7 +81,7 @@ def _mip_dimensions(width: int, height: int, level: int) -> tuple[int, int]:
 
 def _mip_elements(width: int, height: int, level: int, pixel_format: str) -> int:
     level_width, level_height = _mip_dimensions(width, height, level)
-    if pixel_format == 'atc_rgb':
+    if pixel_format in ('atc_rgb', 'atc_rgba_interpolated', 'atc_rgba_explicit'):
         return ((level_width + 3) // 4) * ((level_height + 3) // 4)
     return level_width * level_height
 
@@ -123,7 +125,7 @@ def _validate_mip_layout(
                 raise TextureError(
                     'observed r8g8b8 profile requires exactly one mip descriptor'
                 )
-        elif mip_count != expected_levels:
+        elif mip_count != expected_levels and not (mip_count == 1 and group_count == 1):
             raise TextureError(
                 f'texture mips metadata declares {mip_count} levels; '
                 f'{width}x{height} requires {expected_levels}'
@@ -253,6 +255,87 @@ def _atc_rgb_palette(block: bytes) -> tuple[tuple[int, int, int], ...]:
     )
 
 
+def _decode_atc_rgba_explicit(encoded: bytes, width: int, height: int) -> bytes:
+    """Decode ATC RGBA explicit alpha: 8-byte ATC RGB + 16 explicit 4-bit alphas."""
+    blocks_wide = (width + 3) // 4
+    blocks_high = (height + 3) // 4
+    expected_bytes = blocks_wide * blocks_high * 16
+    if len(encoded) != expected_bytes:
+        raise TextureError(
+            f'ATC RGBA explicit payload has {len(encoded)} bytes; expected {expected_bytes}'
+        )
+    output = bytearray(width * height * 4)
+    source = 0
+    for block_y in range(blocks_high):
+        for block_x in range(blocks_wide):
+            block = encoded[source:source + 16]
+            palette = _atc_rgb_palette(block[8:16])
+            color_indexes = int.from_bytes(block[12:16], 'little')
+            alpha_bits = int.from_bytes(block[0:8], 'little')
+            for local_y in range(4):
+                target_y = block_y * 4 + local_y
+                if target_y >= height:
+                    continue
+                for local_x in range(4):
+                    target_x = block_x * 4 + local_x
+                    if target_x >= width:
+                        continue
+                    pixel_index = local_y * 4 + local_x
+                    alpha = ((alpha_bits >> (pixel_index * 4)) & 0xF) * 17
+                    red, green, blue = palette[(color_indexes >> (pixel_index * 2)) & 3]
+                    target = (target_y * width + target_x) * 4
+                    output[target:target + 4] = bytes((red, green, blue, 255))
+            source += 16
+    return bytes(output)
+
+
+def _decode_atc_rgba_interpolated(encoded: bytes, width: int, height: int) -> bytes:
+    """Decode ATC RGBA interpolated: 8-byte ATC RGB + BC3-style alpha block."""
+    blocks_wide = (width + 3) // 4
+    blocks_high = (height + 3) // 4
+    expected_bytes = blocks_wide * blocks_high * 16
+    if len(encoded) != expected_bytes:
+        raise TextureError(
+            f'ATC RGBA interpolated payload has {len(encoded)} bytes; expected {expected_bytes}'
+        )
+    output = bytearray(width * height * 4)
+    source = 0
+    for block_y in range(blocks_high):
+        for block_x in range(blocks_wide):
+            block = encoded[source:source + 16]
+            palette = _atc_rgb_palette(block[8:16])
+            color_indexes = int.from_bytes(block[12:16], 'little')
+            alpha0 = block[0]
+            alpha1 = block[1]
+            alpha_bits = int.from_bytes(block[2:8], 'little')
+            if alpha0 > alpha1:
+                alphas = [alpha0, alpha1] + [
+                    ((7 - index) * alpha0 + index * alpha1) // 7
+                    for index in range(1, 7)
+                ]
+            else:
+                alphas = [alpha0, alpha1] + [
+                    ((5 - index) * alpha0 + index * alpha1) // 5
+                    for index in range(1, 5)
+                ] + [0, 255]
+            for local_y in range(4):
+                target_y = block_y * 4 + local_y
+                if target_y >= height:
+                    continue
+                for local_x in range(4):
+                    target_x = block_x * 4 + local_x
+                    if target_x >= width:
+                        continue
+                    pixel_index = local_y * 4 + local_x
+                    index = (alpha_bits >> (3 * pixel_index)) & 7
+                    alpha = alphas[index]
+                    red, green, blue = palette[(color_indexes >> (pixel_index * 2)) & 3]
+                    target = (target_y * width + target_x) * 4
+                    output[target:target + 4] = bytes((red, green, blue, alpha))
+            source += 16
+    return bytes(output)
+
+
 def _decode_atc_rgb(encoded: bytes, width: int, height: int) -> bytes:
     """Decode a standard ATC RGB base level and clip partial edge blocks."""
     blocks_wide = (width + 3) // 4
@@ -340,6 +423,12 @@ def parse_texture(raw: bytes) -> dict:
     if pixel_format == 'atc_rgb':
         pixels = _decode_atc_rgb(base_payload, width, height)
         pixel_decoding = 'block_decoded'
+    elif pixel_format == 'atc_rgba_interpolated':
+        pixels = _decode_atc_rgba_interpolated(base_payload, width, height)
+        pixel_decoding = 'block_decoded'
+    elif pixel_format == 'atc_rgba_explicit':
+        pixels = _decode_atc_rgba_explicit(base_payload, width, height)
+        pixel_decoding = 'block_decoded'
     elif pixel_format == 'r8g8b8':
         pixels = _expand_rgb_to_rgba(base_payload)
         pixel_decoding = 'rgb_expanded'
@@ -362,7 +451,7 @@ def parse_texture(raw: bytes) -> dict:
         'output_pixel_format': 'r8g8b8a8',
         'pixel_decoding': pixel_decoding,
         **mip_layout,
-        'orientation': 'top_down' if pixel_format == 'r8g8b8' else 'bottom_up',
+        'orientation': 'top_down',
         'pixels': pixels,
     }
 

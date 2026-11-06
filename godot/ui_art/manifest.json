@@ -1,0 +1,267 @@
+{
+  "note": "Decoded from data.zpak via tools/tex_convert.py; no synthesised art.",
+  "hud": [
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_Inkbar.png",
+      "asset": "hud/bl_hud_inkbar.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_Lifebar_left.png",
+      "asset": "hud/bl_hud_lifebar_left.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_Lifebar_right.png",
+      "asset": "hud/bl_hud_lifebar_right.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_Lifebar_Orange_left.png",
+      "asset": "hud/bl_hud_lifebar_orange_left.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_Lifebar_Orange_right.png",
+      "asset": "hud/bl_hud_lifebar_orange_right.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_ChiBar_left.png",
+      "asset": "hud/bl_hud_chibar_left.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_ChiBar_right.png",
+      "asset": "hud/bl_hud_chibar_right.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_Round_red_left.png",
+      "asset": "hud/bl_hud_round_red_left.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/hud/BL_HUD_Round_yellow_left.png",
+      "asset": "hud/bl_hud_round_yellow_left.png"
+    }
+  ],
+  "mini": [
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_FighterLocked_icon.png",
+      "asset": "mini/bl_fighterlocked_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_BruceLee_Jacket_icon.png",
+      "asset": "mini/bl_brucelee_jacket_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_BruceLee_Base_icon.png",
+      "asset": "mini/bl_brucelee_base_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_BruceLee_Tank_icon.png",
+      "asset": "mini/bl_brucelee_tank_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_BruceLee_Kimono_icon.png",
+      "asset": "mini/bl_brucelee_kimono_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_ShenLo_icon.png",
+      "asset": "mini/bl_shenlo_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_TheMaster_icon.png",
+      "asset": "mini/bl_themaster_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_SmallBoy_icon.png",
+      "asset": "mini/bl_smallboy_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_SinFu_icon.png",
+      "asset": "mini/bl_sinfu_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_TheChief01_icon.png",
+      "asset": "mini/bl_thechief01_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_TheChief02_icon.png",
+      "asset": "mini/bl_thechief02_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_KenGodall_icon.png",
+      "asset": "mini/bl_kengodall_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_BrickDavis_icon.png",
+      "asset": "mini/bl_brickdavis_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_Johnson_icon.png",
+      "asset": "mini/bl_johnson_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_LoMing01_icon.png",
+      "asset": "mini/bl_loming01_icon.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/mini/BL_LoMing02_icon.png",
+      "asset": "mini/bl_loming02_icon.png"
+    }
+  ],
+  "versus": [
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_VersusScreen_Stains_Left.png",
+      "asset": "versus/bl_versusscreen_stains_left.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_VersusScreen_Stains_Right.png",
+      "asset": "versus/bl_versusscreen_stains_right.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_VersusScreen_VStext.png",
+      "asset": "versus/bl_versusscreen_vstext.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_VersusScreen_YingYang.png",
+      "asset": "versus/bl_versusscreen_yingyang.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_VersusScreen_background.png",
+      "asset": "versus/bl_versusscreen_background.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BrickDavis_A.png",
+      "asset": "versus/bl_versus_brickdavis_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BrickDavis_B.png",
+      "asset": "versus/bl_versus_brickdavis_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BruceLee_02_A.png",
+      "asset": "versus/bl_versus_brucelee_02_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BruceLee_02_B.png",
+      "asset": "versus/bl_versus_brucelee_02_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BruceLee_03_A.png",
+      "asset": "versus/bl_versus_brucelee_03_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BruceLee_03_B.png",
+      "asset": "versus/bl_versus_brucelee_03_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BruceLee_04_A.png",
+      "asset": "versus/bl_versus_brucelee_04_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BruceLee_04_B.png",
+      "asset": "versus/bl_versus_brucelee_04_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BruceLee_05_A.png",
+      "asset": "versus/bl_versus_brucelee_05_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_BruceLee_05_B.png",
+      "asset": "versus/bl_versus_brucelee_05_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_Johnson_A.png",
+      "asset": "versus/bl_versus_johnson_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_Johnson_B.png",
+      "asset": "versus/bl_versus_johnson_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_KenGoodall_A.png",
+      "asset": "versus/bl_versus_kengoodall_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_KenGoodall_B.png",
+      "asset": "versus/bl_versus_kengoodall_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_LoMing_02_A.png",
+      "asset": "versus/bl_versus_loming_02_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_LoMing_02_B.png",
+      "asset": "versus/bl_versus_loming_02_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_LoMing_A.png",
+      "asset": "versus/bl_versus_loming_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_LoMing_B.png",
+      "asset": "versus/bl_versus_loming_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_ShenLo_A.png",
+      "asset": "versus/bl_versus_shenlo_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_ShenLo_B.png",
+      "asset": "versus/bl_versus_shenlo_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_SinFu_A.png",
+      "asset": "versus/bl_versus_sinfu_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_SinFu_B.png",
+      "asset": "versus/bl_versus_sinfu_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_SmallBoy_A.png",
+      "asset": "versus/bl_versus_smallboy_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_SmallBoy_B.png",
+      "asset": "versus/bl_versus_smallboy_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_TheChief_02_A.png",
+      "asset": "versus/bl_versus_thechief_02_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_TheChief_02_B.png",
+      "asset": "versus/bl_versus_thechief_02_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_TheChief_A.png",
+      "asset": "versus/bl_versus_thechief_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_TheChief_B.png",
+      "asset": "versus/bl_versus_thechief_b.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_TheMaster_A.png",
+      "asset": "versus/bl_versus_themaster_a.png"
+    },
+    {
+      "source": "decoded_png/adreno_200/gui/images/versus/BL_Versus_TheMaster_B.png",
+      "asset": "versus/bl_versus_themaster_b.png"
+    }
+  ],
+  "selectfighter_items": [
+    "mini/bl_brucelee_jacket_icon.png",
+    "mini/bl_brucelee_base_icon.png",
+    "mini/bl_brucelee_tank_icon.png",
+    "mini/bl_brucelee_kimono_icon.png",
+    "mini/bl_shenlo_icon.png",
+    "mini/bl_themaster_icon.png",
+    "mini/bl_smallboy_icon.png",
+    "mini/bl_sinfu_icon.png",
+    "mini/bl_thechief01_icon.png",
+    "mini/bl_thechief02_icon.png",
+    "mini/bl_kengodall_icon.png",
+    "mini/bl_brickdavis_icon.png",
+    "mini/bl_johnson_icon.png",
+    "mini/bl_loming01_icon.png",
+    "mini/bl_loming02_icon.png"
+  ],
+  "selectfighter_locked": "mini/bl_fighterlocked_icon.png"
+}

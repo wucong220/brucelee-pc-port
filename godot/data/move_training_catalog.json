@@ -1,37 +1,280 @@
 {
-  "version": 1,
-  "entries": [
-    {"id": "punch", "label": "LOW PUNCH", "group": "BASIC", "input": "J", "setup": "idle", "actions": ["punch"], "success": "hit"},
-    {"id": "kick", "label": "LOW KICK", "group": "BASIC", "input": "K", "setup": "idle", "actions": ["kick"], "success": "hit"},
-    {"id": "high_punch", "label": "HIGH PUNCH (FINISHER)", "group": "BASIC", "input": "J J J from neutral", "setup": "idle", "actions": ["high_punch"], "success": "hit"},
-    {"id": "high_kick", "label": "HIGH KICK", "group": "BASIC", "input": "K L L", "setup": "idle", "actions": ["high_kick"], "success": "hit"},
-
-    {"id": "high_punch2", "label": "HIGH PUNCH 2 (FOLLOW-UP)", "group": "COMBO", "input": "J J J after HIGH PUNCH", "setup": "source_high_punch", "actions": ["high_punch2"], "success": "hit"},
-    {"id": "low_punch2", "label": "LOW PUNCH 2", "group": "COMBO", "input": "J K K after low punch", "setup": "source_punch", "actions": ["low_punch2"], "success": "hit"},
-    {"id": "high_kick2", "label": "HIGH KICK 2", "group": "COMBO", "input": "K L L after high kick", "setup": "source_high_kick", "actions": ["high_kick2"], "success": "hit"},
-    {"id": "low_kick2", "label": "LOW KICK 2", "group": "COMBO", "input": "K U U after low kick", "setup": "source_kick", "actions": ["low_kick2"], "success": "hit"},
-    {"id": "high_punch3", "label": "HIGH PUNCH 3", "group": "COMBO", "input": "UP+J, IN+J, IN+J", "setup": "source_high_punch2", "actions": ["high_punch3"], "success": "hit"},
-    {"id": "low_punch3", "label": "LOW PUNCH 3", "group": "COMBO", "input": "DOWN+J, OUT+K, OUT+J", "setup": "source_low_punch2", "actions": ["low_punch3"], "success": "hit"},
-    {"id": "low_kick3", "label": "LOW KICK 3", "group": "COMBO", "input": "DOWN+K, OUT+U, OUT+U", "setup": "source_low_kick2", "actions": ["low_kick3"], "success": "hit"},
-    {"id": "high_kick3", "label": "HIGH KICK 3", "group": "COMBO", "input": "UP+K, IN+L, IN+L", "setup": "source_high_kick2", "actions": ["high_kick3"], "success": "hit"},
-
-    {"id": "special_kick_high", "label": "SPECIAL HIGH KICK", "group": "SPECIAL", "input": "OUT+K, IN+L, IN+L", "setup": "source_punch", "actions": ["special_kick_high"], "success": "hit"},
-    {"id": "special_kick_low", "label": "SPECIAL LOW KICK", "group": "SPECIAL", "input": "LEFT+K, IN+L, IN+L", "setup": "source_punch", "actions": ["special_kick_low_hit"], "success": "hit"},
-    {"id": "special_punch_low", "label": "SPECIAL LOW PUNCH", "group": "SPECIAL", "input": "DOWN+J, OUT+J, OUT+J", "setup": "source_high_punch3", "actions": ["special_punch_low_hit"], "success": "hit"},
-    {"id": "special_punch_high", "label": "SPECIAL HIGH PUNCH", "group": "SPECIAL", "input": "UP+J three times", "setup": "source_high_punch3", "actions": ["special_punch_high_hit"], "success": "hit"},
-
-    {"id": "parry_high", "label": "PARRY HIGH", "group": "DEFENSE", "input": "GUARD x3 against high attack", "setup": "parry_high", "actions": ["parry_high"], "success": "parry"},
-    {"id": "parry_low", "label": "PARRY LOW", "group": "DEFENSE", "input": "GUARD x3 against low attack", "setup": "parry_low", "actions": ["parry_low"], "success": "parry"},
-    {"id": "parry_attack", "label": "PARRY COUNTER", "group": "DEFENSE", "input": "parry high, then attack", "setup": "parry_attack", "actions": ["parry_attack"], "success": "hit"},
-
-    {"id": "grab1", "label": "GRAB 1", "group": "GRAB", "input": "LEFT+J, J, J after punch", "setup": "source_punch", "actions": ["grab1"], "success": "hit"},
-    {"id": "grab2", "label": "GRAB 2", "group": "GRAB", "input": "LEFT+K, L, L after kick", "setup": "source_kick", "actions": ["grab2"], "success": "hit"},
-    {"id": "endattack1", "label": "END ATTACK 1", "group": "GRAB", "input": "UP+IN+K, J, J", "setup": "endattack1", "actions": ["endattack1"], "success": "started"},
-    {"id": "endattack2", "label": "END ATTACK 2", "group": "GRAB", "input": "UP+IN+J, L, L", "setup": "endattack2", "actions": ["endattack2"], "success": "started"},
-
-    {"id": "attacktofloor", "label": "ATTACK TO FLOOR", "group": "GROUND", "input": "K L L against downed target", "setup": "target_down", "actions": ["attacktofloor"], "success": "hit"},
-    {"id": "facedownattack", "label": "FACEDOWN ATTACK", "group": "GROUND", "input": "J J J while face-down", "setup": "player_down", "actions": ["facedownattack"], "success": "hit"},
-    {"id": "faceupattack", "label": "FACEUP ATTACK", "group": "GROUND", "input": "J J J while face-up", "setup": "player_faceup", "actions": ["faceupattack"], "success": "hit"},
-    {"id": "heavy", "label": "HEAVY KICK", "group": "BASIC", "input": "L", "setup": "idle", "actions": ["heavy"], "success": "hit"}
-  ]
+ "version": 1,
+ "entries": [
+  {
+   "id": "punch",
+   "label": "LOW PUNCH",
+   "group": "BASIC",
+   "input": "K",
+   "setup": "idle",
+   "actions": [
+    "punch"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "kick",
+   "label": "LOW KICK",
+   "group": "BASIC",
+   "input": "U",
+   "setup": "idle",
+   "actions": [
+    "kick"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "high_punch",
+   "label": "HIGH PUNCH (FINISHER)",
+   "group": "BASIC",
+   "input": "J",
+   "setup": "source_punch",
+   "actions": [
+    "high_punch"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "high_kick",
+   "label": "HIGH KICK",
+   "group": "BASIC",
+   "input": "L",
+   "setup": "source_kick",
+   "actions": [
+    "high_kick"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "high_punch2",
+   "label": "HIGH PUNCH 2 (FOLLOW-UP)",
+   "group": "COMBO",
+   "input": "J",
+   "setup": "source_high_punch",
+   "actions": [
+    "high_punch2"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "low_punch2",
+   "label": "LOW PUNCH 2",
+   "group": "COMBO",
+   "input": "K",
+   "setup": "source_punch",
+   "actions": [
+    "low_punch2"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "high_kick2",
+   "label": "HIGH KICK 2",
+   "group": "COMBO",
+   "input": "L",
+   "setup": "source_high_kick",
+   "actions": [
+    "high_kick2"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "low_kick2",
+   "label": "LOW KICK 2",
+   "group": "COMBO",
+   "input": "U",
+   "setup": "source_kick",
+   "actions": [
+    "low_kick2"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "high_punch3",
+   "label": "HIGH PUNCH 3",
+   "group": "COMBO",
+   "input": "W, J",
+   "setup": "source_high_punch2",
+   "actions": [
+    "high_punch3"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "low_punch3",
+   "label": "LOW PUNCH 3",
+   "group": "COMBO",
+   "input": "S, K",
+   "setup": "source_low_punch2",
+   "actions": [
+    "low_punch3"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "low_kick3",
+   "label": "LOW KICK 3",
+   "group": "COMBO",
+   "input": "S, U",
+   "setup": "source_low_kick2",
+   "actions": [
+    "low_kick3"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "high_kick3",
+   "label": "HIGH KICK 3",
+   "group": "COMBO",
+   "input": "W, L",
+   "setup": "source_high_kick2",
+   "actions": [
+    "high_kick3"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "special_kick_high",
+   "label": "SPECIAL HIGH KICK",
+   "group": "SPECIAL",
+   "input": "D, L",
+   "setup": "stepback",
+   "actions": [
+    "special_kick_high"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "special_kick_low",
+   "label": "SPECIAL LOW KICK",
+   "group": "SPECIAL",
+   "input": "D, U",
+   "setup": "stepleft",
+   "actions": [
+    "special_kick_low_hit"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "special_punch_low",
+   "label": "SPECIAL LOW PUNCH",
+   "group": "SPECIAL",
+   "input": "S, D, J",
+   "setup": "source_high_punch2",
+   "actions": [
+    "special_punch_low_hit"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "special_punch_high",
+   "label": "SPECIAL HIGH PUNCH",
+   "group": "SPECIAL",
+   "input": "A, D, J",
+   "setup": "source_high_punch2",
+   "actions": [
+    "special_punch_high_hit"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "parry_high",
+   "label": "PARRY HIGH",
+   "group": "DEFENSE",
+   "input": "S then D during counter, rage>=33",
+   "setup": "parry_high",
+   "actions": [
+    "parry_high"
+   ],
+   "success": "parry"
+  },
+  {
+   "id": "parry_attack",
+   "label": "PARRY COUNTER",
+   "group": "DEFENSE",
+   "input": "PARRY HIGH then auto at frames 9-10",
+   "setup": "parry_attack",
+   "actions": [
+    "parry_attack"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "grab1",
+   "label": "GRAB 1",
+   "group": "GRAB",
+   "input": "J",
+   "setup": "stepright",
+   "actions": [
+    "grab1"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "grab2",
+   "label": "GRAB 2",
+   "group": "GRAB",
+   "input": "L",
+   "setup": "stepleft",
+   "actions": [
+    "grab2"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "endattack1",
+   "label": "END ATTACK 1",
+   "group": "GRAB",
+   "input": "HOLD D + J while opponent is stunned",
+   "setup": "endattack1",
+   "actions": [
+    "endattack1"
+   ],
+   "success": "started"
+  },
+  {
+   "id": "endattack2",
+   "label": "END ATTACK 2",
+   "group": "GRAB",
+   "input": "HOLD D + L while opponent is stunned",
+   "setup": "endattack2",
+   "actions": [
+    "endattack2"
+   ],
+   "success": "started"
+  },
+  {
+   "id": "attacktofloor",
+   "label": "ATTACK TO FLOOR",
+   "group": "GROUND",
+   "input": "L",
+   "setup": "target_down",
+   "actions": [
+    "attacktofloor"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "facedownattack",
+   "label": "FACEDOWN ATTACK",
+   "group": "GROUND",
+   "input": "J",
+   "setup": "player_down",
+   "actions": [
+    "facedownattack"
+   ],
+   "success": "hit"
+  },
+  {
+   "id": "faceupattack",
+   "label": "FACEUP ATTACK",
+   "group": "GROUND",
+   "input": "J",
+   "setup": "player_faceup",
+   "actions": [
+    "faceupattack"
+   ],
+   "success": "hit"
+  }
+ ]
 }

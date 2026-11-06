@@ -32,15 +32,22 @@ def _inspect_external_references(raw: bytes, container: dict) -> dict:
         and gap[:3] == b'\0\0\0'
     )
     count = declared_count + int(leading_sentinel)
-    if len(gap) != count * 3:
+    table_offset = 0
+    if not leading_sentinel:
+        prefix = len(gap) - declared_count * 3
+        if prefix in (1, 2, 3) and gap[:prefix] == b'\0' * prefix:
+            # Scene CTX3 tables may have a short zero prefix before the triples.
+            table_offset = prefix
+    if len(gap) != table_offset + count * 3:
         raise KdfError(
-            f'object external reference table has {len(gap)} bytes; expected {count * 3}'
+            f'object external reference table has {len(gap)} bytes; expected '
+            f'{table_offset + count * 3}'
         )
     strings = container['strings']
     references = []
     for ordinal in range(count):
         path_index, basename_index, extension_index = gap[
-            ordinal * 3:(ordinal + 1) * 3]
+            table_offset + ordinal * 3:table_offset + (ordinal + 1) * 3]
         if leading_sentinel and ordinal == 0:
             references.append({
                 'ordinal': ordinal,
@@ -182,8 +189,8 @@ def _inspect_pose_transforms(raw: bytes, container: dict) -> list[dict]:
         record_ordinal += 6
     if not transforms:
         raise KdfError('no object pose transforms found')
-    if used_sections != set(range(container['offset_count'])):
-        raise KdfError('object pose sections do not consume every DATA section')
+    if not used_sections.issubset(set(range(container['offset_count']))):
+        raise KdfError('object pose sections reference an invalid DATA section')
     return transforms
 
 
@@ -309,7 +316,7 @@ def _parse_scene_tree(records: list[dict], strings: list[dict], transforms: list
         (item["position_section"], item["rotation_section"], item["scale_section"])
         for item in transforms
     }
-    if set(linked) != pose:
+    if transforms and not pose.issubset(set(linked)):
         raise KdfError("object scene nodes do not match pose transform sections")
     return {
         "scene_tree_status": "relative-dictionary",
@@ -321,7 +328,12 @@ def _parse_scene_tree(records: list[dict], strings: list[dict], transforms: list
 def inspect_object(raw: bytes) -> dict:
     container = parse_container(raw)
     external = _inspect_external_references(raw, container)
-    transforms = _inspect_pose_transforms(raw, container)
+    pose_error = ""
+    try:
+        transforms = _inspect_pose_transforms(raw, container)
+    except KdfError as error:
+        transforms = []
+        pose_error = str(error)
     scene = _parse_scene_tree(container["records"], container["strings"], transforms, external["references"])
     return {
         'sha256': hashlib.sha256(raw).hexdigest(),
@@ -335,6 +347,7 @@ def inspect_object(raw: bytes) -> dict:
         'external_reference_uses': external['uses'],
         'pose_transform_count': len(transforms),
         'pose_transforms': transforms,
+        'pose_transform_error': pose_error,
         **scene,
         'mesh_payload_status': 'external-resource',
         'transform_coordinate_space': 'unverified',

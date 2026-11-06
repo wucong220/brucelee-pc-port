@@ -1,11 +1,12 @@
 # Bruce Lee: Dragon Warrior → Windows 原生 PC 移植工程
 
-> **阶段：P0 取证 + P1 可玩的独立战斗原型 + P2 PAK 解析完成 + P3/P4 资源与战斗恢复进行中 + P5 菜单完成一部分 + P6 PC 输入与发行准备进行中**<br>
-> **当前不是原版游戏的完整移植**。原型使用程序生成的占位人物、擂台和自写战斗规则，不包含原始游戏资产，不包含从 ARM 二进制提取的源码。它能作为逐步接入原版资源和逆向玩法的 PC 工程基础。
+> **阶段：P0/P1/P2 已完成；P3/P4 资源与战斗主体已恢复并接入；P5 菜单/训练部分完成；P6 Windows 原生包、输入与发行准备继续收尾**<br>
+> **当前仍不是原版游戏的完整移植**。Current226 已使用本机私有恢复的原版派生资源、反编译规则和大量 headless 回归，但仍有自包含打包、角色名册、UI 与逐帧视觉/GPU 验收缺口；早期章节中“占位人物 / 占位规则 / 候选值未验证”等表述保留为 P0–P2 历史记录，不代表 Current226 当前状态。
 
 真实候选模型、纹理、动画和战斗状态的本地集成方式、测试命令与边界见
-[`docs/CANDIDATE_INTEGRATION.md`](docs/CANDIDATE_INTEGRATION.md)。当前续接基线见
-[`docs/CURRENT_STATUS_2026-11-02.md`](docs/CURRENT_STATUS_2026-11-02.md)。
+[`docs/CANDIDATE_INTEGRATION.md`](docs/CANDIDATE_INTEGRATION.md)。旧续接基线见
+[`docs/CURRENT_STATUS_2026-11-02.md`](docs/CURRENT_STATUS_2026-11-02.md)；**Current226 的当前状态以**
+[`docs/CURRENT_STATUS_2026-11-06.md`](docs/CURRENT_STATUS_2026-11-06.md) **为准**。
 
 > 本机初始化时，压缩包内的四个已解码二进制样本另存到 `%LOCALAPPDATA%\BruceLee-PC-Port\decoded_frames`，不放在同步目录或 Git 仓库中；原始 ZIP 保持不变。`.gitignore` 只控制 Git 跟踪，不控制文件同步软件。
 

@@ -194,8 +194,8 @@ func _check_unverified_exits_stay_closed(
 ) -> bool:
     if not _prepare_faceup_getup(player, opponent, 10.0):
         return false
-    if player.record_virtual_press("a"):
-        push_error("faceupgetup accepted a virtual press sequence")
+    if player.record_standing_combo_press("a"):
+        push_error("faceupgetup accepted an attack link press")
         return false
     if player.request_attack("punch") or player.request_attack("kick"):
         push_error("faceupgetup accepted a standing attack")

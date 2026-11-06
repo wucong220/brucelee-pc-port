@@ -73,7 +73,36 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
   因此检查允许跳过不匹配事件，也跳过对应字节非零的匹配事件。
   字节的写入和队列生命周期见下节；单凭这个函数不能证明最终招式触发。
 
-`tools/native_reaction_links.py` 校验这段序列检查的指令字和 ELF SHA-256。
+### `keysequence` 是“按索引选择的备选序列”，不是三步
+
+`CLinkDescr::GetKeySequence(unsigned int index)`（`0x1cf6d0`）的完整反编译只有一行：
+
+```c
+return this + param_1 * 0x14 + 0x30;
+```
+
+也就是说，每条 link 在 `+0x30` 起存了**多个 0x14 字节的备选序列**，由
+`CFighter +0x1c` 选择；`UserControlUpdate` 每次都传
+`*(uint *)(this + 0x1c)`。导出的 3 个 `keysequence` 项是**三种备选**，
+不是“三步连招”。
+
+- 在 `CFighter` 命名空间的 139 个反编译函数里，没有任何一处写
+  `this + 0x1c`；写入点在游戏层：`CBeatEmUpMatch::LoadFighter` 把当前
+  **输入布局**作为参数传给 `CBeatEmUpGame::LoadFighter`，后者在
+  `game + 0x40`（即 fighter0 的 `+0x1c`）写入该布局。
+- `adreno_200/input.config` 的 `control_profile` 证实了布局取值：
+  `default`（触屏）是 **0**，只有 a/b 两个攻击键；`zdk`（键盘）是 **1**，
+  有 a/b/c/d 四个攻击键（keyboard 70/69/18/17）。PC 端跑的是键盘布局，
+  因此选择索引 **1**。
+- 按索引 1 取序列：a→`highpunch1`、b→`lowpunch1`、c→`highkick1`、
+  d→`lowkick1`，四键完整对应；索引 0 会出现 a 同时命中 lowpunch1/
+  highpunch1、b 同时命中 lowkick1/highkick1 的冲突。
+- 当前移植已按索引 1 实现：每条 link 只取 `keysequence[1]` /
+  `keystatus[1]`，把该备选序列里的每个键当作一次事件（`[in, a]` 是
+  先“in”后“a”的两键序列）。
+
+`tools/export_input_profiles.py` 导出 `reports/input_profiles.json`，
+`tools/native_reaction_links.py` 校验序列检查的指令字和 ELF SHA-256。
 
 ## 事件标记与批量过期
 
@@ -92,16 +121,16 @@ Windows 物理按键映射、实际启用的配置或连续输入行为，也没
   `0x17c248–0x17c294` 对第二个队列做同样的静态检查：队列非空时，
   读取最后一个事件的 `+0x0c`，加 500；如果 Update 参数以无符号比较
   大于该结果，就把该队列全部事件的 `+0x10` 标记为 1。
-  它按最后一条事件批量标记，而不是逐条按年龄删除。时钟来源、单位、
-  整数回绕和原版运行时行为尚未闭合；不能把 500 直接写成毫秒。
+  它按最后一条事件批量标记，而不是逐条按年龄删除。
+  **单位已闭合**：`VirtualKeyEvent` 把 `krt::time::GetCurrentMili()` 的返回值
+  写进事件 `+0x0c`（`uVar2 = GetCurrentMili()`，随后作为 `param_4` 传入），
+  所以 `+500` 是 **500 毫秒**，不是帧。
 - 同一 `Update` 的 `0x17d5f8–0x17d614` 通过已解析的 PLT 将
   `this+0x744` 和 `this+0x76c` 分别传给 `UserControlUpdate` 的两个向量
   参数；这两个容器在角色语义上的具体分工仍需核实。其他控制路径和设备
   配置选择也还需核实。
-- PC 原型现在保留事件队列并复现从后向前跳过不匹配项的逆向有序子序列
-  匹配，因此 `a,b,c,b,b` 可以匹配 `abb`。由于原版 `+500` 的时钟单位
-  尚未闭合，原型单独采用 `0.5` 秒窗口并在 0.5 秒后按最后事件清空整个
-  队列；这个窗口只是 `PROTOTYPE`，不能当作原版时间或毫秒值。
+- 原型现在按同一模型实现：事件带 `time_ms`，最后一条事件 +500 ms 后整批
+  标记为已消费并修剪，不再使用 8 条上限，也不再使用墙上时钟窗口。
 
 这些写入及 `InputSequenceCheck` 对零值的要求支持该字节与输入消费或
 有效性有关；它同时参与匹配和批量失效，因此不能只命名为 `consumed`，

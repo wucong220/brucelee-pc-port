@@ -1,0 +1,73 @@
+{
+  "schema": "story_notice_audio_v1",
+  "baseline_head": "bd67409a048a406b77449b6e67ecfb94157f8f0c",
+  "source_package": "D:\\BruceLeeWork\\DragonWarrior-Current202-20261103\\audio\\menu_sfx",
+  "reference_inventory": "D:\\BruceLeeWork\\menu-sfx-full-20261104\\evidence\\menu_sfx_inventory.json",
+  "fail_closed": "Every required cue must exist, be a RIFF/WAVE file, match its recovered SHA-256, and decode to a non-empty AudioStreamWAV before any notice is shown. Unknown actions/paths fail closed; no fallback WAV is selected.",
+  "required_cues": {
+    "levelup_start": {
+      "transition": "notice state start / playlevelupsound",
+      "recovered_path": "sounds/Menu_SFX/Bonus_Jingle.wav",
+      "file": "Bonus_Jingle.wav",
+      "sha256": "838c4f00da0babea2cda1a4abe5e6e8a44f0187bc4ceb19ee8954a607fe81c47",
+      "native_symbol": "_Z16PlayLevelUpSoundv",
+      "native_address": "0x00190f84",
+      "string_vaddr": "0x005ba59c",
+      "evidence": "first 0x124144 call in PlayLevelUpSound constructs r1=0x005ba59c"
+    },
+    "unlock_start": {
+      "transition": "notice state start / playunlocksound",
+      "recovered_path": "sounds/Menu_SFX/Map_Selection_Flute.wav",
+      "file": "Map_Selection_Flute.wav",
+      "sha256": "b4d5a1a95f97b02cb603e02d96443c1fe613ad68edef0670c7d541615846a30f",
+      "native_symbol": "_Z15PlayUnlockSoundv",
+      "native_address": "0x00192210",
+      "string_vaddr": "0x005ba610",
+      "evidence": "first 0x124144 call in PlayUnlockSound constructs r1=0x005ba610"
+    },
+    "levelup_ok": {
+      "transition": "levelup.ui continue / blmenu.sound",
+      "recovered_path": "sounds/menu_sfx/menu_punch_2.wav",
+      "file": "Menu_Punch_2.wav",
+      "sha256": "e74d1e4311005f2ab82b9bdf0542649792b5fbf15df755385a95d20399fe3f46",
+      "ui": "gui/levelup.ui",
+      "ui_sha256": "cfdb71021a07250e246699367920a83cdb6edba6e4f64a52a876510a5bebd119",
+      "evidence": "decoded levelup.ui record 199 sound field"
+    },
+    "unlock_ok": {
+      "transition": "unlock.ui ok / blmenu.sound",
+      "recovered_path": "sounds/menu_sfx/select_play_bl_shout.wav",
+      "file": "Select_Play_Bl_Shout.wav",
+      "sha256": "3f054d5adef481b355a7a9a9854cef6696f608ec8c713973f68f58d9cd7d098a",
+      "ui": "gui/unlock.ui",
+      "ui_sha256": "c37571f60f5756b1f87daeed5dfb63ecff7572cab5bd0545e05a11a0fc36aff5",
+      "evidence": "decoded unlock.ui record 268 sound field"
+    }
+  },
+  "required_cue_order": [
+    "levelup_start",
+    "unlock_start",
+    "levelup_ok",
+    "unlock_ok"
+  ],
+  "start_action_cues": {
+    "playlevelupsound": "levelup_start",
+    "playunlocksound": "unlock_start"
+  },
+  "menu_sound_cues": {
+    "sounds/menu_sfx/menu_punch_2.wav": "levelup_ok",
+    "sounds/menu_sfx/select_play_bl_shout.wav": "unlock_ok"
+  },
+  "evidence_only": {
+    "event_select_start": {
+      "file": "New_Event_3_Drum_Hits.wav",
+      "recovered_path": "sounds/Menu_SFX/New_Event_3_Drum_Hits.wav",
+      "sha256": "72a938378a65fb6d15584be90fa1550d039bd7df442dc2593c51589163ea702a",
+      "native_symbol": "_Z20PlayEventSelectSoundv",
+      "native_address": "0x00192b48",
+      "string_vaddr": "0x005ba638",
+      "not_wired": true,
+      "reason": "No corresponding notice transition exists in this task; record only, do not play."
+    }
+  }
+}

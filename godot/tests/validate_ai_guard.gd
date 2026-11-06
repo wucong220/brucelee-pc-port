@@ -16,6 +16,7 @@ func _run() -> void:
     player.set_physics_process(false)
     opponent.set_physics_process(false)
     var rng: RandomNumberGenerator = scene.get("rng")
+    var native_ai: RefCounted = scene.get("native_ai")
     var guard_seed: int = -1
     for seed_value: int in range(1000):
         rng.seed = seed_value
@@ -32,6 +33,8 @@ func _run() -> void:
         opponent.position = Vector3(0.6, 1.2, 0.0)
         scene.ai_timer = 1000.0
         rng.seed = guard_seed
+        if native_ai != null:
+            native_ai._rng.seed = guard_seed
         if not player.request_attack("punch"):
             push_error("Could not start player attack")
             quit(1)
@@ -76,6 +79,8 @@ func _run() -> void:
     opponent.position = Vector3(3.0, 1.2, 0.0)
     scene.ai_timer = 1000.0
     rng.seed = guard_seed
+    if native_ai != null:
+        native_ai._rng.seed = guard_seed
     player.request_attack("punch")
     scene._think_ai(0.016)
     if opponent.guard_held or scene.ai_guard_sequence == player.attack_sequence:
@@ -116,6 +121,8 @@ func _run() -> void:
         opponent.position = Vector3(punch_reach + 0.005, 1.2, 0.0)
         scene.ai_timer = 1000.0
         rng.seed = guard_seed
+        if native_ai != null:
+            native_ai._rng.seed = guard_seed
         if not player.request_attack("punch"):
             push_error("Could not start frame-order attack")
             quit(1)

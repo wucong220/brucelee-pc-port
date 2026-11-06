@@ -1,0 +1,255 @@
+{
+ "schema": "brucelee-training-attack-tree/1",
+ "provenance": {
+  "archive": "data.zpak",
+  "archive_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+  "resource_path": "adreno_200/ai/training_attack.tree",
+  "resource_sha256": "04ebce218000f398611fc8aa861256ce1a80e69a55af67c5c4ada078efff91a2",
+  "resource_id": "c8e0a61b11673860cef8562079192dd5",
+  "pakd_offset": 29170469,
+  "decoded_bytes": 3366,
+  "records": 287,
+  "strings": 59
+ },
+ "nodes": {
+  "root": {
+   "condition": "my_animation",
+   "children": [
+    {
+     "case": "faceupidle",
+     "node": "getup"
+    },
+    {
+     "case": "default",
+     "node": "check_opp_pose"
+    }
+   ]
+  },
+  "check_opp_pose": {
+   "condition": "opp_pose",
+   "children": [
+    {
+     "case": "laying",
+     "node": "do_nothing"
+    },
+    {
+     "case": "default",
+     "node": "agressive_check_distance"
+    }
+   ]
+  },
+  "agressive_check_distance": {
+   "condition": "near",
+   "children": [
+    {
+     "case": "true",
+     "node": "do_attack"
+    },
+    {
+     "case": "false",
+     "node": "advance"
+    }
+   ]
+  },
+  "advance": {
+   "condition": "distance",
+   "children": [
+    {
+     "case": "far",
+     "action": "skipfwd"
+    },
+    {
+     "case": "medium",
+     "node": "walk_forward"
+    },
+    {
+     "case": "close",
+     "node": "do_attack"
+    }
+   ]
+  },
+  "walk_forward": {
+   "condition": "my_animation",
+   "children": [
+    {
+     "case": "stepfwd",
+     "action": "movefwd"
+    },
+    {
+     "case": "movefwd",
+     "action": "movefwd"
+    },
+    {
+     "case": "default",
+     "action": "stepfwd"
+    }
+   ]
+  },
+  "do_attack": {
+   "condition": "me_attacking",
+   "children": [
+    {
+     "case": "true",
+     "condition": "random_probability",
+     "param": 0.10000000149011612,
+     "children": [
+      {
+       "case": "true",
+       "node": "combo_continue"
+      },
+      {
+       "case": "false",
+       "node": "do_nothing"
+      }
+     ]
+    },
+    {
+     "case": "false",
+     "condition": "random_probability",
+     "param": 0.10000000149011612,
+     "children": [
+      {
+       "case": "true",
+       "node": "combo_level1"
+      },
+      {
+       "case": "false",
+       "node": "do_nothing"
+      }
+     ]
+    }
+   ]
+  },
+  "combo_level1": {
+   "condition": "random_number",
+   "param": 4.0,
+   "children": [
+    {
+     "case": "0",
+     "action": "highpunch1"
+    },
+    {
+     "case": "1",
+     "action": "lowpunch1"
+    },
+    {
+     "case": "2",
+     "action": "highkick1"
+    },
+    {
+     "case": "3",
+     "action": "lowkick1"
+    }
+   ]
+  },
+  "combo_level2": {
+   "condition": "random_number",
+   "param": 4.0,
+   "children": [
+    {
+     "case": "0",
+     "action": "highpunch2"
+    },
+    {
+     "case": "1",
+     "action": "lowpunch2"
+    },
+    {
+     "case": "2",
+     "action": "highkick2"
+    },
+    {
+     "case": "3",
+     "action": "lowkick2"
+    }
+   ]
+  },
+  "combo_level3": {
+   "condition": "random_number",
+   "param": 4.0,
+   "children": [
+    {
+     "case": "0",
+     "action": "highpunch3"
+    },
+    {
+     "case": "1",
+     "action": "lowpunch3"
+    },
+    {
+     "case": "2",
+     "action": "highkick3"
+    },
+    {
+     "case": "3",
+     "action": "lowkick3"
+    }
+   ]
+  },
+  "combo_continue": {
+   "condition": "my_animation",
+   "children": [
+    {
+     "case": "parry",
+     "node": "combo_level2"
+    },
+    {
+     "case": "highpunch1",
+     "node": "combo_level2"
+    },
+    {
+     "case": "lowpunch1",
+     "node": "combo_level2"
+    },
+    {
+     "case": "highkick1",
+     "node": "combo_level2"
+    },
+    {
+     "case": "lowkick1",
+     "node": "combo_level2"
+    },
+    {
+     "case": "highpunch2",
+     "node": "combo_level3"
+    },
+    {
+     "case": "lowpunch2",
+     "node": "combo_level3"
+    },
+    {
+     "case": "highkick2",
+     "node": "combo_level3"
+    },
+    {
+     "case": "lowkick2",
+     "node": "combo_level3"
+    },
+    {
+     "case": "default",
+     "node": "do_nothing"
+    }
+   ]
+  },
+  "getup": {
+   "action": "faceupgetup"
+  },
+  "do_nothing": {
+   "actions": [
+    "idle",
+    "idle 2",
+    "idle 3",
+    "idle 4"
+   ]
+  }
+ },
+ "checks": {
+  "node_set_matches_expected": true,
+  "references_match_expected": true,
+  "conditions_match_expected": true,
+  "actions_match_expected": true,
+  "all_nodes_reachable": true,
+  "random_probability": 0.1,
+  "random_number_cases": 4
+ }
+}

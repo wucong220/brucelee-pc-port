@@ -95,7 +95,9 @@ func _run() -> void:
             quit(1)
             return
         ko_seen[0] = false
-    # hard/medium satisfies overlapping source links; hard-first is a PC choice.
+    # hard/medium satisfies rows 128 (hard) and 132 (heightmed); the recovered
+    # scan order puts 128 first, so stunhardimpact wins and plays the stun-group
+    # animation all_impct_hard_frnt_high (candidate key "stun_hard").
     var hard_medium: Dictionary = player.reaction_for_incoming(
         {"strength": "hard", "height": "medium", "direction": "frontal"}, false
     )
@@ -107,7 +109,7 @@ func _run() -> void:
         quit(1)
         return
     if (player.state != "stunimpact" or player.health != 8.0
-            or player.last_reaction_animation != "stun_hard"):
+            or player.last_reaction_animation != "all_impct_hard_frnt_high"):
         push_error("hard/medium did not select the candidate hard reaction")
         quit(1)
         return

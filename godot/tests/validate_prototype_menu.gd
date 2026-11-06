@@ -71,14 +71,22 @@ func _run() -> void:
         push_error("External menu background did not load: " + menu.background_error)
         quit(1)
         return
-    Input.parse_input_event(_key(KEY_DOWN))
-    await process_frame
+    # The recovered ARCADE / SURVIVAL / TIME ATTACK rows were inserted ahead of
+    # GROUND TRAINING, so resolve the row by command name instead of one DOWN.
+    var nav_guard: int = 0
+    while menu.selected_command() != "training" and nav_guard <= menu.main_commands().size():
+        Input.parse_input_event(_key(KEY_DOWN))
+        await process_frame
+        nav_guard += 1
     if menu.selected_command() != "training":
         push_error("Main menu did not select ground training")
         quit(1)
         return
-    Input.parse_input_event(_key(KEY_UP))
-    await process_frame
+    nav_guard = 0
+    while menu.selected_command() != "fight" and nav_guard <= menu.main_commands().size():
+        Input.parse_input_event(_key(KEY_UP))
+        await process_frame
+        nav_guard += 1
     Input.parse_input_event(_key(KEY_J))
     await process_frame
     if menu.visible or scene.get("main_menu_active") or scene.get("training_mode"):
@@ -89,8 +97,10 @@ func _run() -> void:
         push_error("Tree remained paused after VS FIGHT")
         quit(1)
         return
-    if player.state != "idle":
-        push_error("Menu confirmation leaked into a gameplay attack")
+    # main.gd deliberately routes the confirming J into the fight input path so
+    # that a "J J J" confirm produces three punches; a started attack is expected.
+    if not (player.state in ["idle", "startup", "active", "recovery"]):
+        push_error("unexpected player state after the menu confirm: " + player.state)
         quit(1)
         return
     if menu.process_mode != Node.PROCESS_MODE_ALWAYS:
@@ -99,10 +109,9 @@ func _run() -> void:
         return
     player.set_physics_process(true)
     computer.set_physics_process(true)
-    if not player.request_attack("punch"):
-        push_error("Could not start a punch before pause validation")
-        quit(1)
-        return
+    # Advance one physics frame so the fighters carry a running state into the
+    # pause-freeze check; the confirming J may already be mid-attack.
+    await physics_frame
     scene._unhandled_input(_key(KEY_ESCAPE))
     await process_frame
     if not menu.visible or not scene.get("menu_paused") or menu.menu_state != "pause":
@@ -138,7 +147,8 @@ func _run() -> void:
         push_error("Resume left the scene tree paused")
         quit(1)
         return
-    await physics_frame
+    for _rf: int in 2:
+        await physics_frame
     if is_equal_approx(player.state_time, paused_state_time):
         push_error("Fighter gameplay did not resume after closing the pause menu")
         quit(1)
@@ -163,7 +173,10 @@ func _run() -> void:
         push_error("Pause menu did not return to the main menu")
         quit(1)
         return
-    menu.handle_key_event(_key(KEY_DOWN))
+    var tguard: int = 0
+    while menu.selected_command() != "training" and tguard <= menu.main_commands().size():
+        menu.handle_key_event(_key(KEY_DOWN))
+        tguard += 1
     menu.handle_key_event(_key(KEY_ENTER))
     await process_frame
     if menu.visible or not scene.get("training_mode") or scene.get("main_menu_active"):

@@ -1,0 +1,1081 @@
+{
+ "schema_version": 1,
+ "note": "Coverage of the training catalog against the exported native link table. from_group links use the current animation's group window; from links are direct links that require that source action to be current.",
+ "entries": [
+  {
+   "id": "punch",
+   "target_kind": "punch",
+   "target_action": "lowpunch1",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [
+       [
+        "down",
+        "pressed"
+       ]
+      ],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "kick",
+   "target_kind": "kick",
+   "target_action": "lowkick1",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [
+       [
+        "down",
+        "pressed"
+       ]
+      ],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "high_punch",
+   "target_kind": "high_punch",
+   "target_action": "highpunch1",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "high_kick",
+   "target_kind": "high_kick",
+   "target_action": "highkick1",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [
+       [
+        "down",
+        "released"
+       ]
+      ],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "high_punch2",
+   "target_kind": "high_punch2",
+   "target_action": "highpunch2",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "combolevel1",
+     "keysequence": [
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [
+       [
+        "down",
+        "released"
+       ]
+      ],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "low_punch2",
+   "target_kind": "low_punch2",
+   "target_action": "lowpunch2",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "combolevel1",
+     "keysequence": [
+      [
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [
+       [
+        "down",
+        "pressed"
+       ]
+      ],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "high_kick2",
+   "target_kind": "high_kick2",
+   "target_action": "highkick2",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "combolevel1",
+     "keysequence": [
+      [
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [
+       [
+        "down",
+        "released"
+       ]
+      ],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "low_kick2",
+   "target_kind": "low_kick2",
+   "target_action": "lowkick2",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "combolevel1",
+     "keysequence": [
+      [
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [
+       [
+        "down",
+        "pressed"
+       ]
+      ],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "high_punch3",
+   "target_kind": "high_punch3",
+   "target_action": "highpunch3",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressup",
+       "pressa"
+      ],
+      [
+       "pressin",
+       "pressa"
+      ],
+      [
+       "pressin",
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": null,
+     "from_group": "combolevel2",
+     "keysequence": [
+      [
+       "pressup",
+       "pressa"
+      ],
+      [
+       "pressin",
+       "pressa"
+      ],
+      [
+       "pressin",
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "low_punch3",
+   "target_kind": "low_punch3",
+   "target_action": "lowpunch3",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressdown",
+       "pressa"
+      ],
+      [
+       "pressout",
+       "pressb"
+      ],
+      [
+       "pressout",
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": null,
+     "from_group": "combolevel2",
+     "keysequence": [
+      [
+       "pressdown",
+       "pressa"
+      ],
+      [
+       "pressout",
+       "pressb"
+      ],
+      [
+       "pressout",
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "low_kick3",
+   "target_kind": "low_kick3",
+   "target_action": "lowkick3",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressdown",
+       "pressb"
+      ],
+      [
+       "pressout",
+       "pressd"
+      ],
+      [
+       "pressout",
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": null,
+     "from_group": "combolevel2",
+     "keysequence": [
+      [
+       "pressdown",
+       "pressb"
+      ],
+      [
+       "pressout",
+       "pressd"
+      ],
+      [
+       "pressout",
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "high_kick3",
+   "target_kind": "high_kick3",
+   "target_action": "highkick3",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressup",
+       "pressb"
+      ],
+      [
+       "pressin",
+       "pressc"
+      ],
+      [
+       "pressin",
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": null,
+     "from_group": "combolevel2",
+     "keysequence": [
+      [
+       "pressup",
+       "pressb"
+      ],
+      [
+       "pressin",
+       "pressc"
+      ],
+      [
+       "pressin",
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "special_kick_high",
+   "target_kind": "special_kick_high",
+   "target_action": "specialkickhigh",
+   "native_links": [
+    {
+     "from": "stepback",
+     "from_group": null,
+     "keysequence": [
+      [
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressright",
+       "pressc"
+      ],
+      [
+       "pressright",
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "ragethird"
+     ],
+     "time": [
+      0,
+      19
+     ]
+    }
+   ]
+  },
+  {
+   "id": "special_kick_low",
+   "target_kind": "special_kick_low_hit",
+   "target_action": "specialkicklowhit",
+   "native_links": [
+    {
+     "from": "specialkicklowmiss",
+     "from_group": null,
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "grabdistance",
+      "oppnotblocking",
+      "oppposestand"
+     ],
+     "time": [
+      14,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "id": "special_punch_low",
+   "target_kind": "special_punch_low_hit",
+   "target_action": "specialpunchlowhit",
+   "native_links": [
+    {
+     "from": "specialpunchlowmiss",
+     "from_group": null,
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "grabdistance",
+      "oppnotblocking",
+      "oppposestand"
+     ],
+     "time": [
+      8,
+      9
+     ]
+    }
+   ]
+  },
+  {
+   "id": "special_punch_high",
+   "target_kind": "special_punch_high_hit",
+   "target_action": "specialpunchhighhit",
+   "native_links": [
+    {
+     "from": "specialpunchhighmiss",
+     "from_group": null,
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "time": [
+      6,
+      7
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parry_high",
+   "target_kind": "parry_high",
+   "target_action": "parryhigh",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candocounter",
+     "keysequence": [
+      [
+       "pressdown",
+       "pressright"
+      ],
+      [
+       "pressdown",
+       "pressright"
+      ],
+      [
+       "pressdown",
+       "pressright"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "countertime",
+      "ragethird"
+     ],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "parry_low",
+   "target_kind": "parry_low",
+   "target_action": "parrylow",
+   "native_links": []
+  },
+  {
+   "id": "parry_attack",
+   "target_kind": "parry_attack",
+   "target_action": "parryattack",
+   "native_links": [
+    {
+     "from": "parryhigh",
+     "from_group": null,
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      9,
+      10
+     ]
+    }
+   ]
+  },
+  {
+   "id": "grab1",
+   "target_kind": "grab1",
+   "target_action": "grab1",
+   "native_links": [
+    {
+     "from": "grab1miss",
+     "from_group": null,
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "time": [
+      8,
+      9
+     ]
+    }
+   ]
+  },
+  {
+   "id": "grab2",
+   "target_kind": "grab2",
+   "target_action": "grab2",
+   "native_links": [
+    {
+     "from": "grab2miss",
+     "from_group": null,
+     "keysequence": [
+      [],
+      [],
+      []
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "grabdistance",
+      "oppposestand",
+      "oppnotblocking"
+     ],
+     "time": [
+      8,
+      9
+     ]
+    }
+   ]
+  },
+  {
+   "id": "endattack1",
+   "target_kind": "endattack1",
+   "target_action": "endattack1",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressb"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "conditions": [
+      "oppposestun",
+      "grabdistance"
+     ],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "endattack2",
+   "target_kind": "endattack2",
+   "target_action": "endattack2",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressup",
+       "pressright",
+       "pressa"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ],
+      [
+       [
+        "right",
+        "pressed"
+       ]
+      ]
+     ],
+     "conditions": [
+      "oppposestun",
+      "grabdistance"
+     ],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "attacktofloor",
+   "target_kind": "attacktofloor",
+   "target_action": "attacktofloor",
+   "native_links": [
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressb"
+      ],
+      [
+       "pressc"
+      ],
+      [
+       "pressc"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "oppposelaying"
+     ],
+     "time": [
+      0,
+      0
+     ]
+    },
+    {
+     "from": null,
+     "from_group": "candobasicattacks",
+     "keysequence": [
+      [
+       "pressb"
+      ],
+      [
+       "pressd"
+      ],
+      [
+       "pressd"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [
+      "oppposelaying"
+     ],
+     "time": [
+      0,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "facedownattack",
+   "target_kind": "facedownattack",
+   "target_action": "facedownattack",
+   "native_links": [
+    {
+     "from": "facedownidle",
+     "from_group": null,
+     "keysequence": [
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      45
+     ]
+    },
+    {
+     "from": "facedownidle",
+     "from_group": null,
+     "keysequence": [
+      [
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      45
+     ]
+    }
+   ]
+  },
+  {
+   "id": "faceupattack",
+   "target_kind": "faceupattack",
+   "target_action": "faceupattack",
+   "native_links": [
+    {
+     "from": "faceupidle",
+     "from_group": null,
+     "keysequence": [
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ],
+      [
+       "pressa"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      45
+     ]
+    },
+    {
+     "from": "faceupidle",
+     "from_group": null,
+     "keysequence": [
+      [
+       "pressa"
+      ],
+      [
+       "pressb"
+      ],
+      [
+       "pressb"
+      ]
+     ],
+     "keystatus": [
+      [],
+      [],
+      []
+     ],
+     "conditions": [],
+     "time": [
+      0,
+      45
+     ]
+    }
+   ]
+  },
+  {
+   "id": "heavy",
+   "target_kind": "heavy",
+   "target_action": "heavy",
+   "native_links": []
+  }
+ ]
+}

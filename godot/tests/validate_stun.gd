@@ -5,6 +5,23 @@ func _initialize() -> void:
     call_deferred("_run")
 
 
+func _advance_into_endmove_window(player: PortFighter) -> void:
+    # The recovered `candobasicattacks` window on highpunch1 is [17,101], and
+    # the candobasicattacks -> endattack1/2 rows are scannable only inside it.
+    # The setup above advances six frames (the high punch startup), and the
+    # combolevel1 rows [8,16] must be out of window before endattack1 can win,
+    # so step one source frame at a time until the reported frame reaches 17.
+    #
+    # Both endmove rows carry keystatus [["right","pressed"]] in the keyboard
+    # layout variant, which is the recovered InputStatusCheck condition: hold
+    # toward the opponent while recording the sequence.
+    player.set_key_status({"right": true})
+    var guard: int = 0
+    while player._current_attack_source_frame() < 17.0 and guard < 16:
+        player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
+        guard += 1
+
+
 func _run() -> void:
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if args.size() != 1:
@@ -355,8 +372,13 @@ func _run() -> void:
         return
     var stun_hard_available: bool = player._candidate_clip_paths.has("stun_hard")
     var stun_cases: Array[Dictionary] = [
-        {"source": "impactlightfrontlow", "animation": "all_impct_light_frnt_low", "accepted": true},
-        {"source": "impactlightfrontmid", "animation": "all_impct_crotch", "accepted": true},
+        # The five `impactsfromstun` rows are scanned in native order: 126
+        # (normal, no height condition) before 130 (normal) and 132
+        # (heightmed), so a normal hit takes stunlighthighimpact whatever its
+        # height. 128 (hard) comes before 132, so a hard hit takes
+        # stunhardimpact.
+        {"source": "impactlightfrontlow", "animation": "all_impct_light_frnt_high", "accepted": true},
+        {"source": "impactlightfrontmid", "animation": "all_impct_light_frnt_high", "accepted": true},
         # stunhardimpact is the recovered stun-group animation for any hard hit.
         {"source": "impacthardfrontlow", "animation": "stun_hard", "accepted": stun_hard_available},
         {"source": "impactbrutallow", "animation": "", "accepted": false},
@@ -392,7 +414,8 @@ func _run() -> void:
             push_error("rejected stunimpact changed state for " + String(case["source"]))
             quit(1)
             return
-    # Source link 131 offers [15,20]; the PC candidate selects frame 15.
+    # Row 126 (normal) -> stunlighthighimpact; its outgoing link 125 is
+    # [13,17], so the PC candidate exits at frame 13.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     player.state = "stun"
     player.state_time = 0.1
@@ -403,10 +426,15 @@ func _run() -> void:
         push_error("medium stunimpact fixture rejected")
         quit(1)
         return
-    for _i: int in range(14):
+    player._animate_candidate()
+    if player.candidate_animation_clip != String(clips["all_impct_light_frnt_high"]):
+        push_error("normal stunimpact did not play the recovered stunlighthighimpact clip")
+        quit(1)
+        return
+    for _i: int in range(12):
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stunimpact":
-        push_error("medium stunimpact ended before 15 frames")
+        push_error("normal stunimpact ended before 13 frames")
         quit(1)
         return
     # Repeated impact remains fail-closed in the current prototype.
@@ -423,10 +451,10 @@ func _run() -> void:
         return
     player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
     if player.state != "stunfall":
-        push_error("medium stunimpact did not end in stunfall on frame 15: " + player.state)
+        push_error("normal stunimpact did not end in stunfall on frame 13: " + player.state)
         quit(1)
         return
-    # Both stun states use real normal/medium dispatch and the 15-frame exit.
+    # Both stun states use the recovered normal row and the 13-frame exit.
     for origin: String in ["stun", "stun2"]:
         player.reset_fighter(Vector3.ZERO)
         player.state = origin
@@ -436,18 +464,18 @@ func _run() -> void:
             quit(1)
             return
         if (player.state != "stunimpact" or player.health != 8.0
-                or player.last_reaction_animation != "all_impct_crotch"):
+                or player.last_reaction_animation != "all_impct_light_frnt_high"):
             push_error("Normal medium dispatch mismatch from " + origin)
             quit(1)
             return
-        player._advance_timed_states(14.0 / PortFighter.SOURCE_FRAME_RATE)
+        player._advance_timed_states(12.0 / PortFighter.SOURCE_FRAME_RATE)
         if player.state != "stunimpact":
-            push_error("Medium stunimpact exited early from " + origin)
+            push_error("Normal stunimpact exited early from " + origin)
             quit(1)
             return
         player._advance_timed_states(1.0 / PortFighter.SOURCE_FRAME_RATE)
         if player.state != "stunfall":
-            push_error("Medium stunimpact missed frame-15 exit from " + origin)
+            push_error("Normal stunimpact missed frame-13 exit from " + origin)
             quit(1)
             return
     # Nonlethal normal medium must stay hitstun and preserve health.
@@ -472,16 +500,18 @@ func _run() -> void:
         push_error("Blocked medium entered an invalid state")
         quit(1)
         return
-    # Missing medium reaction clip must reject the hit without state or health changes.
-    var saved_crotch_clip: String = String(clips["all_impct_crotch"])
-    clips.erase("all_impct_crotch")
+    # Missing reaction clip for the recovered target (row 126 ->
+    # stunlighthighimpact -> all_impct_light_frnt_high) must reject the hit
+    # without changing state or health.
+    var saved_entry_clip: String = String(clips["all_impct_light_frnt_high"])
+    clips.erase("all_impct_light_frnt_high")
     player.reset_fighter(Vector3.ZERO)
     player.state = "stun"
     player.health = 10.0
-    var accepted_without_crotch: bool = player.receive_hit(2.0, false, 0.0, 1.0, medium_reaction)
-    clips["all_impct_crotch"] = saved_crotch_clip
-    if accepted_without_crotch or player.state != "stun" or player.health != 10.0:
-        push_error("Missing medium reaction clip changed stun state or health")
+    var accepted_without_entry_clip: bool = player.receive_hit(2.0, false, 0.0, 1.0, medium_reaction)
+    clips["all_impct_light_frnt_high"] = saved_entry_clip
+    if accepted_without_entry_clip or player.state != "stun" or player.health != 10.0:
+        push_error("Missing reaction clip changed stun state or health")
         quit(1)
         return
     # Empty reaction source must fail closed from both stun and stun2.
@@ -543,6 +573,7 @@ func _run() -> void:
         push_error("Stun endmove setup did not stun defender: " + defender.state)
         quit(1)
         return
+    _advance_into_endmove_window(player)
     player.record_standing_combo_press("b", ["up", "in"])
     player.record_standing_combo_press("a")
     player.record_standing_combo_press("a")
@@ -575,6 +606,7 @@ func _run() -> void:
         push_error("Stun endattack2 setup did not stun defender: " + defender.state)
         quit(1)
         return
+    _advance_into_endmove_window(player)
     player.record_standing_combo_press("a", ["up", "in"])
     player.record_standing_combo_press("c")
     player.record_standing_combo_press("c")
@@ -607,6 +639,7 @@ func _run() -> void:
         push_error("Endmove stun2 setup did not reach stun2: " + defender.state)
         quit(1)
         return
+    _advance_into_endmove_window(player)
     player.record_standing_combo_press("b", ["up", "in"])
     player.record_standing_combo_press("a")
     player.record_standing_combo_press("a")
@@ -639,6 +672,7 @@ func _run() -> void:
         push_error("Endmove stun2 setup did not reach stun2: " + defender.state)
         quit(1)
         return
+    _advance_into_endmove_window(player)
     player.record_standing_combo_press("a", ["up", "in"])
     player.record_standing_combo_press("c")
     player.record_standing_combo_press("c")
@@ -646,6 +680,7 @@ func _run() -> void:
         push_error("Stun2 opponent did not accept endattack2: " + player.attack_kind)
         quit(1)
         return
+    player.set_key_status({})
     # A real normal/medium punch uses the source impactstunlow link.
     player.reset_fighter(Vector3(-2.0, 1.20, 0.0))
     defender.reset_fighter(Vector3(-1.5, 1.20, 0.0))

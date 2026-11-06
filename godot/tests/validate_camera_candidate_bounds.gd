@@ -89,6 +89,7 @@ func _run() -> void:
                     ]:
                         bruce.global_position = pair[0]
                         brick.global_position = pair[1]
+                        scene._restart_fight_camera()
                         scene._update_fight_camera()
                         var target_position: Vector3 = pair[0] if fighter == bruce else pair[1]
                         for x: float in [bounds.position.x, bounds.end.x]:

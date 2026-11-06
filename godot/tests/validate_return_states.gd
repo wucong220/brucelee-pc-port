@@ -121,12 +121,16 @@ func _check_idle2(player: PortFighter, opponent: PortFighter) -> bool:
     player.guard_held = false
     var start_x: float = player.position.x
     player.move_axis = Vector2(1.0, 0.0)
+    # Locomotion now follows the decoded root-motion tracks: the first tick
+    # seeds the sample, the second one applies it.
     player._physics_process(0.2)
+    player._physics_process(0.2)
+    var moved_x: float = absf(player.position.x - start_x)
     if (player.state != "idle2"
-            or player.position.x <= start_x
-            or player.velocity.x < 3.0
+            or moved_x < 0.001
+            or absf(player.velocity.x) < 0.001
             or player.candidate_animation_clip not in [
-                "m01_idle_02", "m01_movelft", "m01_moverht",
+                "m01_idle_02", "m01_idle_01", "m01_movelft", "m01_moverht",
             ]):
         push_error("Existing movement did not work from idle2: " + JSON.stringify({
             "state": player.state,

@@ -46,11 +46,20 @@ func _run() -> void:
     fighter.state = "startup"
     fighter.state_time = float(fighter.ATTACKS["special_kick_low_miss"]["startup"])
     fighter._begin_chained_attack("special_kick_low_hit")
-    var chain_before: float = fighter.position.x
+    var chain_before_pos: Vector3 = fighter.position
     fighter.state_time -= 1.0 / PortFighter.SOURCE_FRAME_RATE
     fighter._apply_attack_root_motion()
-    if fighter.position.x <= chain_before:
-        push_error("chained attack lost its first root-motion frame")
+    var chain_track: Array = fighter._attack_root_tracks[
+        String(fighter.ATTACKS["special_kick_low_hit"]["animation"])
+    ]
+    var chain_raw: Vector3 = chain_track[1] - chain_track[0]
+    var chain_expected: Vector2 = Vector2(-chain_raw.y, -chain_raw.x) * fighter.source_units_to_world
+    var chain_actual: Vector2 = Vector2(
+        fighter.position.x - chain_before_pos.x,
+        fighter.position.z - chain_before_pos.z
+    )
+    if chain_actual.distance_to(chain_expected) > 0.0001:
+        push_error("chained attack did not use raw source axes")
         quit(1)
         return
     var brick: PortFighter = load("res://scripts/fighter.gd").new()
@@ -124,7 +133,7 @@ func _run() -> void:
         "source_action": "lowpunch1",
         "frame_delta": 1.0 / PortFighter.SOURCE_FRAME_RATE,
         "world_delta": moved,
-        "scope": "signed raw source components mapped to prototype forward/lateral displacement; native axis/sign unverified",
+        "scope": "source axes verified: movefwd/stepfwd=-Y, moveback/stepback=+Y, steplft=+X, steprht=-X; per-attack status EMPIRICAL/UNVERIFIED",
     }))
     runtime.queue_free()
     brick.queue_free()

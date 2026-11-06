@@ -1,0 +1,698 @@
+{
+ "schema": "dragonwarrior-achievements/1",
+ "source": {
+  "resource": "adreno_200/achievements.list",
+  "archive_sha256": "364b30a10991d6fdc48bb3e1655e19538caee75bd6ddf81962524647e4cab05c",
+  "decoded_sha256": "456eeba2ab422ff36aa586ed9156c3d6da2ec75d291a180eeeddc5d75223f62e",
+  "records": 269,
+  "achievements": 38,
+  "note": "269 CTX3 records encode one object: a 38-element achievements array {pending_icon, reached_icon, description}.",
+  "display_keys_note": "description_key is the exact `description` literal of each decoded achievements.list row; its .lang value is rendered by progress_records_screen.gd."
+ },
+ "icon_dir": "gui/images/menu/",
+ "icon_table": [
+  "bl_gui_achievement_arcade_easy_off.tex",
+  "bl_gui_achievement_arcade_easy_on",
+  "bl_gui_achievement_arcade_medium_off",
+  "bl_gui_achievement_arcade_medium_on",
+  "bl_gui_achievement_arcade_hard_off",
+  "bl_gui_achievement_arcade_hard_on",
+  "bl_gui_achievement_events_5_off",
+  "bl_gui_achievement_events_5_on",
+  "bl_gui_achievement_events_10_off",
+  "bl_gui_achievement_events_10_on",
+  "bl_gui_achievement_events_25_off",
+  "bl_gui_achievement_events_25_on",
+  "bl_gui_achievement_final_attacks_5_off",
+  "bl_gui_achievement_final_attacks_5_on",
+  "bl_gui_achievement_final_attacks_15_off",
+  "bl_gui_achievement_final_attacks_15_on",
+  "bl_gui_achievement_final_attacks_25_off",
+  "bl_gui_achievement_final_attacks_25_on",
+  "bl_gui_achievement_finish_chapter_1_off",
+  "bl_gui_achievement_finish_chapter_1_on",
+  "bl_gui_achievement_finish_chapter_2_off",
+  "bl_gui_achievement_finish_chapter_2_on",
+  "bl_gui_achievement_finish_chapter_3_off",
+  "bl_gui_achievement_finish_chapter_3_on",
+  "bl_gui_achievement_finish_chapter_4_off",
+  "bl_gui_achievement_finish_chapter_4_on",
+  "bl_gui_achievement_finish_chapter_5_off",
+  "bl_gui_achievement_finish_chapter_5_on",
+  "bl_gui_achievement_grabs_5_off",
+  "bl_gui_achievement_grabs_5_on",
+  "bl_gui_achievement_grabs_15_off",
+  "bl_gui_achievement_grabs_15_on",
+  "bl_gui_achievement_grabs_25_off",
+  "bl_gui_achievement_grabs_25_on",
+  "bl_gui_achievement_greats_5_off",
+  "bl_gui_achievement_greats_5_on",
+  "bl_gui_achievement_greats_15_off",
+  "bl_gui_achievement_greats_15_on",
+  "bl_gui_achievement_greats_25_off",
+  "bl_gui_achievement_greats_25_on",
+  "bl_gui_achievement_perfects_5_off",
+  "bl_gui_achievement_perfects_5_on",
+  "bl_gui_achievement_perfects_15_off",
+  "bl_gui_achievement_perfects_15_on",
+  "bl_gui_achievement_perfects_25_off",
+  "bl_gui_achievement_perfects_25_on",
+  "bl_gui_achievement_story_completed_easy_off",
+  "bl_gui_achievement_story_completed_easy_on",
+  "bl_gui_achievement_story_completed_medium_off",
+  "bl_gui_achievement_story_completed_medium_on",
+  "bl_gui_achievement_story_completed_hard_off",
+  "bl_gui_achievement_story_completed_hard_on",
+  "bl_gui_achievement_survival_5_off",
+  "bl_gui_achievement_survival_5_on",
+  "bl_gui_achievement_survival_10_off",
+  "bl_gui_achievement_survival_10_on",
+  "bl_gui_achievement_survival_20_off",
+  "bl_gui_achievement_survival_20_on",
+  "bl_gui_achievement_time_attack_beginer_off",
+  "bl_gui_achievement_time_attack_beginer_on",
+  "bl_gui_achievement_time_attack_easy_off",
+  "bl_gui_achievement_time_attack_easy_on",
+  "bl_gui_achievement_time_attack_medium_off",
+  "bl_gui_achievement_time_attack_medium_on",
+  "bl_gui_achievement_time_attack_hard_off",
+  "bl_gui_achievement_time_attack_hard_on",
+  "bl_gui_achievement_vs_1_off",
+  "bl_gui_achievement_vs_1_on",
+  "bl_gui_achievement_vs_5_off",
+  "bl_gui_achievement_vs_5_on",
+  "bl_gui_achievement_vs_15_off",
+  "bl_gui_achievement_vs_15_on",
+  "bl_gui_achievement_vs_25_off",
+  "bl_gui_achievement_vs_25_on",
+  "bl_gui_achievement_vs_50_off",
+  "bl_gui_achievement_vs_50_on"
+ ],
+ "achievements": [
+  {
+   "index": 0,
+   "id": "achv_arcade_easy",
+   "pending_icon_index": 0,
+   "reached_icon_index": 1,
+   "condition": {
+    "kind": "mode_clear",
+    "mode": "arcade",
+    "difficulty": "easy",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
+   },
+   "description_key": "achv_arcade_easy"
+  },
+  {
+   "index": 1,
+   "id": "achv_arcade_medium",
+   "pending_icon_index": 2,
+   "reached_icon_index": 3,
+   "condition": {
+    "kind": "mode_clear",
+    "mode": "arcade",
+    "difficulty": "medium",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
+   },
+   "description_key": "achv_arcade_medium"
+  },
+  {
+   "index": 2,
+   "id": "achv_arcade_hard",
+   "pending_icon_index": 4,
+   "reached_icon_index": 5,
+   "condition": {
+    "kind": "mode_clear",
+    "mode": "arcade",
+    "difficulty": "hard",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
+   },
+   "description_key": "achv_arcade_hard"
+  },
+  {
+   "index": 3,
+   "id": "achv_events_5",
+   "pending_icon_index": 6,
+   "reached_icon_index": 7,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "story_events_completed",
+    "threshold": 5,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_events_* literal adjacent to chapter_end in libdefault.so .rodata"
+   },
+   "description_key": "achv_events_5"
+  },
+  {
+   "index": 4,
+   "id": "achv_events_10",
+   "pending_icon_index": 8,
+   "reached_icon_index": 9,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "story_events_completed",
+    "threshold": 10,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_events_* literal adjacent to chapter_end in libdefault.so .rodata"
+   },
+   "description_key": "achv_events_10"
+  },
+  {
+   "index": 5,
+   "id": "achv_events_25",
+   "pending_icon_index": 10,
+   "reached_icon_index": 11,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "story_events_completed",
+    "threshold": 25,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_events_* literal adjacent to chapter_end in libdefault.so .rodata"
+   },
+   "description_key": "achv_events_25"
+  },
+  {
+   "index": 6,
+   "id": "achv_final_attacks_5",
+   "pending_icon_index": 12,
+   "reached_icon_index": 13,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_endmoves",
+    "threshold": 5,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; final attack = end move (number_of_endmoves literal)"
+   },
+   "description_key": "achv_final_attacks_5"
+  },
+  {
+   "index": 7,
+   "id": "achv_final_attacks_15",
+   "pending_icon_index": 14,
+   "reached_icon_index": 15,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_endmoves",
+    "threshold": 15,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; final attack = end move (number_of_endmoves literal)"
+   },
+   "description_key": "achv_final_attacks_15"
+  },
+  {
+   "index": 8,
+   "id": "achv_final_attacks_25",
+   "pending_icon_index": 16,
+   "reached_icon_index": 17,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_endmoves",
+    "threshold": 25,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; final attack = end move (number_of_endmoves literal)"
+   },
+   "description_key": "achv_final_attacks_25"
+  },
+  {
+   "index": 9,
+   "id": "achv_finish_chapter_1",
+   "pending_icon_index": 18,
+   "reached_icon_index": 19,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "story_chapters_completed",
+    "threshold": 1,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
+   },
+   "description_key": "achv_finish_chapter_1"
+  },
+  {
+   "index": 10,
+   "id": "achv_finish_chapter_2",
+   "pending_icon_index": 20,
+   "reached_icon_index": 21,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "story_chapters_completed",
+    "threshold": 2,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
+   },
+   "description_key": "achv_finish_chapter_2"
+  },
+  {
+   "index": 11,
+   "id": "achv_finish_chapter_3",
+   "pending_icon_index": 22,
+   "reached_icon_index": 23,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "story_chapters_completed",
+    "threshold": 3,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
+   },
+   "description_key": "achv_finish_chapter_3"
+  },
+  {
+   "index": 12,
+   "id": "achv_finish_chapter_4",
+   "pending_icon_index": 24,
+   "reached_icon_index": 25,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "story_chapters_completed",
+    "threshold": 4,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
+   },
+   "description_key": "achv_finish_chapter_4"
+  },
+  {
+   "index": 13,
+   "id": "achv_finish_chapter_5",
+   "pending_icon_index": 26,
+   "reached_icon_index": 27,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "story_chapters_completed",
+    "threshold": 5,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_finish_chapter_N literal in libdefault.so; N = chapter ordinal"
+   },
+   "description_key": "achv_finish_chapter_5"
+  },
+  {
+   "index": 14,
+   "id": "achv_grabs_5",
+   "pending_icon_index": 28,
+   "reached_icon_index": 29,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_grabs",
+    "threshold": 5,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables (cmp 5,15,25); counter number_of_grabs literal"
+   },
+   "description_key": "achv_grabs_5"
+  },
+  {
+   "index": 15,
+   "id": "achv_grabs_15",
+   "pending_icon_index": 30,
+   "reached_icon_index": 31,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_grabs",
+    "threshold": 15,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables (cmp 5,15,25); counter number_of_grabs literal"
+   },
+   "description_key": "achv_grabs_15"
+  },
+  {
+   "index": 16,
+   "id": "achv_grabs_25",
+   "pending_icon_index": 32,
+   "reached_icon_index": 33,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_grabs",
+    "threshold": 25,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables (cmp 5,15,25); counter number_of_grabs literal"
+   },
+   "description_key": "achv_grabs_25"
+  },
+  {
+   "index": 17,
+   "id": "achv_greats_5",
+   "pending_icon_index": 34,
+   "reached_icon_index": 35,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_greats",
+    "threshold": 5,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_greats literal"
+   },
+   "description_key": "achv_greats_5"
+  },
+  {
+   "index": 18,
+   "id": "achv_greats_15",
+   "pending_icon_index": 36,
+   "reached_icon_index": 37,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_greats",
+    "threshold": 15,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_greats literal"
+   },
+   "description_key": "achv_greats_15"
+  },
+  {
+   "index": 19,
+   "id": "achv_greats_25",
+   "pending_icon_index": 38,
+   "reached_icon_index": 39,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_greats",
+    "threshold": 25,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_greats literal"
+   },
+   "description_key": "achv_greats_25"
+  },
+  {
+   "index": 20,
+   "id": "achv_perfects_5",
+   "pending_icon_index": 40,
+   "reached_icon_index": 41,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_perfects",
+    "threshold": 5,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_perfects literal"
+   },
+   "description_key": "achv_perfects_5"
+  },
+  {
+   "index": 21,
+   "id": "achv_perfects_15",
+   "pending_icon_index": 42,
+   "reached_icon_index": 43,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_perfects",
+    "threshold": 15,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_perfects literal"
+   },
+   "description_key": "achv_perfects_15"
+  },
+  {
+   "index": 22,
+   "id": "achv_perfects_25",
+   "pending_icon_index": 44,
+   "reached_icon_index": 45,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "number_of_perfects",
+    "threshold": 25,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "threshold 5/15/25 from libdefault.so RegisterLastFightVariables; counter number_of_perfects literal"
+   },
+   "description_key": "achv_perfects_25"
+  },
+  {
+   "index": 23,
+   "id": "achv_story_completed_easy",
+   "pending_icon_index": 46,
+   "reached_icon_index": 47,
+   "condition": {
+    "kind": "story_complete",
+    "difficulty": "easy",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_story_completed_{easy,medium,hard} literal; difficulty from game_modes.json"
+   },
+   "description_key": "achv_story_completed_easy"
+  },
+  {
+   "index": 24,
+   "id": "achv_story_completed_medium",
+   "pending_icon_index": 48,
+   "reached_icon_index": 49,
+   "condition": {
+    "kind": "story_complete",
+    "difficulty": "medium",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_story_completed_{easy,medium,hard} literal; difficulty from game_modes.json"
+   },
+   "description_key": "achv_story_completed_medium"
+  },
+  {
+   "index": 25,
+   "id": "achv_story_completed_hard",
+   "pending_icon_index": 50,
+   "reached_icon_index": 51,
+   "condition": {
+    "kind": "story_complete",
+    "difficulty": "hard",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_story_completed_{easy,medium,hard} literal; difficulty from game_modes.json"
+   },
+   "description_key": "achv_story_completed_hard"
+  },
+  {
+   "index": 26,
+   "id": "achv_survival_5",
+   "pending_icon_index": 52,
+   "reached_icon_index": 53,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "survival_best_round",
+    "threshold": 5,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_survival_* literal next to survival_top/wins in libdefault.so .rodata"
+   },
+   "description_key": "achv_survival_5"
+  },
+  {
+   "index": 27,
+   "id": "achv_survival_10",
+   "pending_icon_index": 54,
+   "reached_icon_index": 55,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "survival_best_round",
+    "threshold": 10,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_survival_* literal next to survival_top/wins in libdefault.so .rodata"
+   },
+   "description_key": "achv_survival_10"
+  },
+  {
+   "index": 28,
+   "id": "achv_survival_20",
+   "pending_icon_index": 56,
+   "reached_icon_index": 57,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "survival_best_round",
+    "threshold": 20,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_survival_* literal next to survival_top/wins in libdefault.so .rodata"
+   },
+   "description_key": "achv_survival_20"
+  },
+  {
+   "index": 29,
+   "id": "achv_time_attack_beginner",
+   "pending_icon_index": 58,
+   "reached_icon_index": 59,
+   "condition": {
+    "kind": "mode_clear",
+    "mode": "time_attack",
+    "difficulty": "beginner",
+    "status": "unrecovered",
+    "threshold_forged": false,
+    "fail_closed": true,
+    "evidence": "achievement literal exists, but game_modes.json recovers only easy/medium/hard for Time Attack; 'beginner' tier not forged -> never auto-award"
+   },
+   "description_key": "achv_time_attack_beginner"
+  },
+  {
+   "index": 30,
+   "id": "achv_time_attack_easy",
+   "pending_icon_index": 60,
+   "reached_icon_index": 61,
+   "condition": {
+    "kind": "mode_clear",
+    "mode": "time_attack",
+    "difficulty": "easy",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
+   },
+   "description_key": "achv_time_attack_easy"
+  },
+  {
+   "index": 31,
+   "id": "achv_time_attack_medium",
+   "pending_icon_index": 62,
+   "reached_icon_index": 63,
+   "condition": {
+    "kind": "mode_clear",
+    "mode": "time_attack",
+    "difficulty": "medium",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
+   },
+   "description_key": "achv_time_attack_medium"
+  },
+  {
+   "index": 32,
+   "id": "achv_time_attack_hard",
+   "pending_icon_index": 64,
+   "reached_icon_index": 65,
+   "condition": {
+    "kind": "mode_clear",
+    "mode": "time_attack",
+    "difficulty": "hard",
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "mode difficulty tier from game_modes.json; literal in libdefault.so"
+   },
+   "description_key": "achv_time_attack_hard"
+  },
+  {
+   "index": 33,
+   "id": "achv_versus_1",
+   "pending_icon_index": 66,
+   "reached_icon_index": 67,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "versus_wins",
+    "threshold": 1,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
+   },
+   "description_key": "achv_versus_1"
+  },
+  {
+   "index": 34,
+   "id": "achv_versus_5",
+   "pending_icon_index": 68,
+   "reached_icon_index": 69,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "versus_wins",
+    "threshold": 5,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
+   },
+   "description_key": "achv_versus_5"
+  },
+  {
+   "index": 35,
+   "id": "achv_versus_15",
+   "pending_icon_index": 70,
+   "reached_icon_index": 71,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "versus_wins",
+    "threshold": 15,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
+   },
+   "description_key": "achv_versus_15"
+  },
+  {
+   "index": 36,
+   "id": "achv_versus_25",
+   "pending_icon_index": 72,
+   "reached_icon_index": 73,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "versus_wins",
+    "threshold": 25,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
+   },
+   "description_key": "achv_versus_25"
+  },
+  {
+   "index": 37,
+   "id": "achv_versus_50",
+   "pending_icon_index": 74,
+   "reached_icon_index": 75,
+   "condition": {
+    "kind": "counter_threshold",
+    "counter": "versus_wins",
+    "threshold": 50,
+    "status": "recovered",
+    "threshold_forged": true,
+    "fail_closed": false,
+    "evidence": "achv_versus_* literal in libdefault.so; threshold in name"
+   },
+   "description_key": "achv_versus_50"
+  }
+ ]
+}

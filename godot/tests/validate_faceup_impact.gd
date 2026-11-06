@@ -476,7 +476,7 @@ func _check_faceup_ko(
             or player.state_time
                 >= float(PortFighter.FACEUP_IDLE_DURATION_FRAMES)
                     / PortFighter.SOURCE_FRAME_RATE
-            or player.record_virtual_press("a")):
+            or player.record_standing_combo_press("a")):
         push_error("faceupko did not loop without getup or input exits")
         return false
     return true
@@ -643,18 +643,32 @@ func _check_faceup_idle_has_no_unverified_exits(player: PortFighter) -> bool:
     player.state = "faceupidle"
     player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
     player.move_axis = Vector2(0.0, 1.0)
-    if player.record_virtual_press("a"):
-        push_error("faceupidle accepted the facedown attack input sequence")
+    # The recovered faceupidle rows are: single a/b/c/d -> faceupattack,
+    # left/right status -> faceupgetup, impact + low -> impactfaceup, and
+    # healthzero -> faceupko.  No vertical/direction-token exit exists.
+    if player.record_standing_combo_press("up"):
+        push_error("faceupidle accepted an unmapped direction press")
         return false
     if player.request_attack("punch") or player.request_attack("kick"):
         push_error("faceupidle accepted a standing attack")
         return false
     player._advance_timed_states(5.0 / PortFighter.SOURCE_FRAME_RATE)
     player._animate_candidate()
-    return (
-        player.state == "faceupidle"
-        and _clip_is(player.candidate_animation_clip, PortFighter.FACEUP_IDLE_CLIP)
-    )
+    if (player.state != "faceupidle"
+            or not _clip_is(
+                player.candidate_animation_clip, PortFighter.FACEUP_IDLE_CLIP
+            )):
+        push_error("faceupidle left its looping idle without a recovered link")
+        return false
+    # The single-key row is the only attack entry; it must enter the recovered
+    # faceupattack state, not a standing fallback.
+    player.state = "faceupidle"
+    player.state_time = 10.0 / PortFighter.SOURCE_FRAME_RATE
+    player.move_axis = Vector2.ZERO
+    if not player.record_standing_combo_press("a"):
+        push_error("faceupidle did not follow its recovered single-key attack row")
+        return false
+    return player.state == "faceupattack"
 
 
 func _character_tracks_disabled(player: PortFighter, animation_name: String) -> bool:

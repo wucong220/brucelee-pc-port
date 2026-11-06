@@ -1,0 +1,917 @@
+{
+ "screen": "playmenu.ui",
+ "source": {
+  "path": "adreno_200/gui/playmenu.ui",
+  "bytes": 2127,
+  "sha256": "0412418db6c04c97228882b853ba8f592526539df4ce746b09638d7671fae430",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 60,
+   "records": 128,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "d94dd2f2c15b49aa29f83c219d877059"
+  }
+ },
+ "coverage": {
+  "record_count": 128,
+  "reached_records": 128,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "sounds/menu_sfx/",
+   "basename": "menu_punch_2",
+   "extension": "wav"
+  },
+  {
+   "ordinal": 1,
+   "directory": "gui/images/menu/",
+   "basename": "bl_gui_back_button_stand",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 2,
+   "directory": "sounds/menu_sfx/",
+   "basename": "back_bl_shout_short",
+   "extension": "wav"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "bllabel",
+  "name",
+  "title",
+  "x",
+  "y",
+  "width",
+  "height",
+  "hspring",
+  "soft",
+  "vspring",
+  "datasources",
+  "text",
+  "translate",
+  "play_menu",
+  "offscreen",
+  "blmenu",
+  "playmenu",
+  "focused",
+  "true",
+  "valign",
+  "middle",
+  "font",
+  "progress",
+  "sound",
+  "options",
+  "story_mode",
+  "story",
+  "arcade",
+  "time_attack",
+  "timeattack",
+  "versus",
+  "survival",
+  "practice_style",
+  "training",
+  "selectedoption",
+  "option",
+  "variable_playmenu_selectedoption",
+  "blbutton",
+  "lsk",
+  "align",
+  "center",
+  "alphablend",
+  "action",
+  "rsk",
+  "file",
+  "subrect_x",
+  "subrect_y",
+  "subrect_width",
+  "subrect_height",
+  "alpha",
+  "springs",
+  "sounds/menu_sfx/",
+  "menu_punch_2",
+  "wav",
+  "gui/images/menu/",
+  "bl_gui_back_button_stand",
+  "tex",
+  "back_bl_shout_short"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "bllabel",
+    "name": "title",
+    "x": 0,
+    "y": 5,
+    "width": 200,
+    "height": 40,
+    "hspring": "soft",
+    "vspring": "soft",
+    "datasources": {
+     "text": [
+      "translate",
+      "play_menu"
+     ]
+    },
+    "offscreen": {
+     "x": -200
+    }
+   },
+   {
+    "type": "blmenu",
+    "name": "playmenu",
+    "x": 80,
+    "y": 50,
+    "width": 400,
+    "height": 250,
+    "focused": "true",
+    "valign": "middle",
+    "font": 2,
+    "progress": 1.0,
+    "hspring": "soft",
+    "vspring": "soft",
+    "sound": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "sounds/menu_sfx/",
+      "basename": "menu_punch_2",
+      "extension": "wav"
+     }
+    },
+    "options": [
+     [
+      "story_mode",
+      "story"
+     ],
+     [
+      "arcade",
+      "arcade"
+     ],
+     [
+      "time_attack",
+      "timeattack"
+     ],
+     [
+      "versus",
+      "versus"
+     ],
+     [
+      "survival",
+      "survival"
+     ],
+     [
+      "practice_style",
+      "training"
+     ]
+    ],
+    "datasources": {
+     "selectedoption": [
+      "option",
+      "variable_playmenu_selectedoption"
+     ]
+    },
+    "offscreen": {
+     "progress": 0.0
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "lsk",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "align": "center",
+    "valign": "middle",
+    "alphablend": "true",
+    "action": "rsk",
+    "file": {
+     "file": {
+      "$file": {
+       "ordinal": 1,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_back_button_stand",
+       "extension": "tex"
+      }
+     },
+     "subrect_x": 8,
+     "subrect_y": 8,
+     "subrect_width": 48,
+     "subrect_height": 48
+    },
+    "sound": {
+     "$file": {
+      "ordinal": 2,
+      "directory": "sounds/menu_sfx/",
+      "basename": "back_bl_shout_short",
+      "extension": "wav"
+     }
+    },
+    "offscreen": {
+     "alpha": 0.0
+    }
+   }
+  ],
+  "springs": []
+ },
+ "layout": [
+  {
+   "type": "bllabel",
+   "name": "title",
+   "x": 0,
+   "y": 5,
+   "width": 200,
+   "height": 40,
+   "hspring": "soft",
+   "vspring": "soft",
+   "datasources": {
+    "text": [
+     "translate",
+     "play_menu"
+    ]
+   },
+   "offscreen": {
+    "x": -200
+   }
+  },
+  {
+   "type": "blmenu",
+   "name": "playmenu",
+   "x": 80,
+   "y": 50,
+   "width": 400,
+   "height": 250,
+   "focused": "true",
+   "valign": "middle",
+   "font": 2,
+   "progress": 1.0,
+   "hspring": "soft",
+   "vspring": "soft",
+   "sound": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "sounds/menu_sfx/",
+     "basename": "menu_punch_2",
+     "extension": "wav"
+    }
+   },
+   "options": [
+    [
+     "story_mode",
+     "story"
+    ],
+    [
+     "arcade",
+     "arcade"
+    ],
+    [
+     "time_attack",
+     "timeattack"
+    ],
+    [
+     "versus",
+     "versus"
+    ],
+    [
+     "survival",
+     "survival"
+    ],
+    [
+     "practice_style",
+     "training"
+    ]
+   ],
+   "datasources": {
+    "selectedoption": [
+     "option",
+     "variable_playmenu_selectedoption"
+    ]
+   },
+   "offscreen": {
+    "progress": 0.0
+   }
+  },
+  {
+   "type": "blbutton",
+   "name": "lsk",
+   "x": 2,
+   "y": 270,
+   "width": 48,
+   "height": 48,
+   "align": "center",
+   "valign": "middle",
+   "alphablend": "true",
+   "action": "rsk",
+   "file": {
+    "file": {
+     "$file": {
+      "ordinal": 1,
+      "directory": "gui/images/menu/",
+      "basename": "bl_gui_back_button_stand",
+      "extension": "tex"
+     }
+    },
+    "subrect_x": 8,
+    "subrect_y": 8,
+    "subrect_width": 48,
+    "subrect_height": 48
+   },
+   "sound": {
+    "$file": {
+     "ordinal": 2,
+     "directory": "sounds/menu_sfx/",
+     "basename": "back_bl_shout_short",
+     "extension": "wav"
+    }
+   },
+   "offscreen": {
+    "alpha": 0.0
+   }
+  }
+ ],
+ "springs": [],
+ "annotated": {
+  "record": 0,
+  "offset": 1087,
+  "entries": [
+   [
+    "layout",
+    {
+     "record": 2,
+     "offset": 1103,
+     "elements": [
+      {
+       "record": 5,
+       "offset": 1127,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 9,
+          "offset": 1159,
+          "value": "bllabel"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 11,
+          "offset": 1175,
+          "value": "title"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 13,
+          "offset": 1191,
+          "value": 0
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 15,
+          "offset": 1207,
+          "value": 5
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 17,
+          "offset": 1223,
+          "value": 200
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 19,
+          "offset": 1239,
+          "value": 40
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 21,
+          "offset": 1255,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 23,
+          "offset": 1271,
+          "value": "soft"
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 25,
+          "offset": 1287,
+          "entries": [
+           [
+            "text",
+            {
+             "record": 29,
+             "offset": 1319,
+             "elements": [
+              {
+               "record": 30,
+               "offset": 1327,
+               "value": "translate"
+              },
+              {
+               "record": 31,
+               "offset": 1335,
+               "value": "play_menu"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 27,
+          "offset": 1303,
+          "entries": [
+           [
+            "x",
+            {
+             "record": 33,
+             "offset": 1351,
+             "value": -200
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      },
+      {
+       "record": 6,
+       "offset": 1135,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 35,
+          "offset": 1367,
+          "value": "blmenu"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 37,
+          "offset": 1383,
+          "value": "playmenu"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 39,
+          "offset": 1399,
+          "value": 80
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 41,
+          "offset": 1415,
+          "value": 50
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 43,
+          "offset": 1431,
+          "value": 400
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 45,
+          "offset": 1447,
+          "value": 250
+         }
+        ],
+        [
+         "focused",
+         {
+          "record": 47,
+          "offset": 1463,
+          "value": "true"
+         }
+        ],
+        [
+         "valign",
+         {
+          "record": 49,
+          "offset": 1479,
+          "value": "middle"
+         }
+        ],
+        [
+         "font",
+         {
+          "record": 51,
+          "offset": 1495,
+          "value": 2
+         }
+        ],
+        [
+         "progress",
+         {
+          "record": 53,
+          "offset": 1511,
+          "value": 1.0
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 55,
+          "offset": 1527,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 57,
+          "offset": 1543,
+          "value": "soft"
+         }
+        ],
+        [
+         "sound",
+         {
+          "record": 59,
+          "offset": 1559,
+          "value": {
+           "$file": {
+            "ordinal": 0,
+            "directory": "sounds/menu_sfx/",
+            "basename": "menu_punch_2",
+            "extension": "wav"
+           }
+          }
+         }
+        ],
+        [
+         "options",
+         {
+          "record": 61,
+          "offset": 1575,
+          "elements": [
+           {
+            "record": 66,
+            "offset": 1615,
+            "elements": [
+             {
+              "record": 72,
+              "offset": 1663,
+              "value": "story_mode"
+             },
+             {
+              "record": 73,
+              "offset": 1671,
+              "value": "story"
+             }
+            ]
+           },
+           {
+            "record": 67,
+            "offset": 1623,
+            "elements": [
+             {
+              "record": 74,
+              "offset": 1679,
+              "value": "arcade"
+             },
+             {
+              "record": 75,
+              "offset": 1687,
+              "value": "arcade"
+             }
+            ]
+           },
+           {
+            "record": 68,
+            "offset": 1631,
+            "elements": [
+             {
+              "record": 76,
+              "offset": 1695,
+              "value": "time_attack"
+             },
+             {
+              "record": 77,
+              "offset": 1703,
+              "value": "timeattack"
+             }
+            ]
+           },
+           {
+            "record": 69,
+            "offset": 1639,
+            "elements": [
+             {
+              "record": 78,
+              "offset": 1711,
+              "value": "versus"
+             },
+             {
+              "record": 79,
+              "offset": 1719,
+              "value": "versus"
+             }
+            ]
+           },
+           {
+            "record": 70,
+            "offset": 1647,
+            "elements": [
+             {
+              "record": 80,
+              "offset": 1727,
+              "value": "survival"
+             },
+             {
+              "record": 81,
+              "offset": 1735,
+              "value": "survival"
+             }
+            ]
+           },
+           {
+            "record": 71,
+            "offset": 1655,
+            "elements": [
+             {
+              "record": 82,
+              "offset": 1743,
+              "value": "practice_style"
+             },
+             {
+              "record": 83,
+              "offset": 1751,
+              "value": "training"
+             }
+            ]
+           }
+          ]
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 63,
+          "offset": 1591,
+          "entries": [
+           [
+            "selectedoption",
+            {
+             "record": 85,
+             "offset": 1767,
+             "elements": [
+              {
+               "record": 86,
+               "offset": 1775,
+               "value": "option"
+              },
+              {
+               "record": 87,
+               "offset": 1783,
+               "value": "variable_playmenu_selectedoption"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 65,
+          "offset": 1607,
+          "entries": [
+           [
+            "progress",
+            {
+             "record": 89,
+             "offset": 1799,
+             "value": 0.0
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      },
+      {
+       "record": 7,
+       "offset": 1143,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 91,
+          "offset": 1815,
+          "value": "blbutton"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 93,
+          "offset": 1831,
+          "value": "lsk"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 95,
+          "offset": 1847,
+          "value": 2
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 97,
+          "offset": 1863,
+          "value": 270
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 99,
+          "offset": 1879,
+          "value": 48
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 101,
+          "offset": 1895,
+          "value": 48
+         }
+        ],
+        [
+         "align",
+         {
+          "record": 103,
+          "offset": 1911,
+          "value": "center"
+         }
+        ],
+        [
+         "valign",
+         {
+          "record": 105,
+          "offset": 1927,
+          "value": "middle"
+         }
+        ],
+        [
+         "alphablend",
+         {
+          "record": 107,
+          "offset": 1943,
+          "value": "true"
+         }
+        ],
+        [
+         "action",
+         {
+          "record": 109,
+          "offset": 1959,
+          "value": "rsk"
+         }
+        ],
+        [
+         "file",
+         {
+          "record": 111,
+          "offset": 1975,
+          "entries": [
+           [
+            "file",
+            {
+             "record": 117,
+             "offset": 2023,
+             "value": {
+              "$file": {
+               "ordinal": 1,
+               "directory": "gui/images/menu/",
+               "basename": "bl_gui_back_button_stand",
+               "extension": "tex"
+              }
+             }
+            }
+           ],
+           [
+            "subrect_x",
+            {
+             "record": 119,
+             "offset": 2039,
+             "value": 8
+            }
+           ],
+           [
+            "subrect_y",
+            {
+             "record": 121,
+             "offset": 2055,
+             "value": 8
+            }
+           ],
+           [
+            "subrect_width",
+            {
+             "record": 123,
+             "offset": 2071,
+             "value": 48
+            }
+           ],
+           [
+            "subrect_height",
+            {
+             "record": 125,
+             "offset": 2087,
+             "value": 48
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "sound",
+         {
+          "record": 113,
+          "offset": 1991,
+          "value": {
+           "$file": {
+            "ordinal": 2,
+            "directory": "sounds/menu_sfx/",
+            "basename": "back_bl_shout_short",
+            "extension": "wav"
+           }
+          }
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 115,
+          "offset": 2007,
+          "entries": [
+           [
+            "alpha",
+            {
+             "record": 127,
+             "offset": 2103,
+             "value": 0.0
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   [
+    "springs",
+    {
+     "record": 4,
+     "offset": 1119,
+     "elements": []
+    }
+   ]
+  ]
+ }
+}

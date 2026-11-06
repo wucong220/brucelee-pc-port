@@ -1,0 +1,1924 @@
+extends "res://scripts/prototype_menu.gd"
+class_name PortMenuArt
+## Opt-in original-art front menu (BRUCELEE_MENU_ART=1).
+##
+## The text menu (prototype_menu.gd) stays in the inheritance chain unchanged:
+## this subclass replaces the MAIN, PLAY and the four recovered main-menu
+## sub-pages (Player Profile / Settings / Credits / About) with the recovered
+## 480x320 artwork, and keeps the base class for the pause / records / style
+## editor hooks main.gd already calls.
+##
+## Everything drawn comes from the recovered archive resources decoded by the
+## isolated menu-art-20261104 / menu-pages-20261104 runs:
+##   * widget positions/sizes/types : adreno_200/gui/<screen>.ui (CTX3), decoded
+##     into res://data/menu_art/ui/<screen>.json;
+##   * pictures                     : adreno_200/gui/images/... .tex, decoded
+##     into res://ui/menu_art/menu/... , .../background/... , .../versus/... and
+##     .../other/...;
+##   * dock order and names         : characters.list / sceneries.list, checked
+##     into res://data/menu_art/menu_art.json (shipped for provenance; none of
+##     the rendered menu screens has a dock).
+##
+## Data that the archive does not provide is never guessed: rows that would
+## open a screen with no decoded layout/values show the explicit
+## "NOT RECOVERED IN THIS BUILD" status, and the About version/disclaimer and
+## the Credit roll text are drawn with that same explicit marker.
+##
+## Text labels stay the existing MenuLang overlay. A key the table does not
+## cover is shown as a readable placeholder, never as invented game text.
+##
+## The layout coordinate space is 480x320. That size is not assumed: title.ui
+## and universal.ui both place a full-screen touch button at (0,0,480,320), and
+## every decoded menu background stores its visible art exactly in a 480x320
+## rectangle at (0,0) of a 512x512 texture.
+##
+## Commands are the ones the text menu already emits (fight / arcade / survival /
+## timeattack / training / quit), so no mode start logic is duplicated here. The
+## one exception is STORY MODE: the port has no menu command for it, so this
+## screen sets the same BRUCELEE_STORY_FLOW environment the story flow already
+## uses and reloads the scene, exactly like the opponent/scene menu switches.
+##
+## A missing layout, a missing referenced texture or a geometry/name mismatch
+## fails closed (the overlay never draws a guessed substitute; it reports the
+## error and stays hidden).
+
+const UI_DIR := "res://data/menu_art/ui/"
+const ART_ROOT := "res://ui/menu_art/"
+const ART_DIRS := ["menu", "menu_zdk", "mini", "background", "versus", "other"]
+const Controls = preload("res://scripts/prototype_controls.gd")
+## Recovered Profile destination pages / About version+disclaimer / settings
+## VIDEO-CONTROLS records.  Fail-closed if the artifact is missing.
+const RecoveredPages = preload("res://scripts/recovered_pages.gd")
+## Recovered Profile page BODIES: achievements rows, stats1-3 tables, art album
+## items and the fighter gallery grid/profile.  Fail-closed if its artifact is
+## missing.
+const ProfileBodies = preload("res://scripts/profile_bodies.gd")
+## Recovered eight-item language dock (settingslanguage.ui + CApplication::Init
+## AddLanguageTable index order).  Fail-closed if its artifact is missing.
+const LanguageDock = preload("res://scripts/language_dock.gd")
+## Verbatim DLE / IndiaGames credit-roll text (ten Lang*.lang tables) and the
+## real CCreditsView-equivalent scrolling view.
+const CreditsText = preload("res://scripts/credits_text.gd")
+const CreditsRollView = preload("res://scripts/credits_roll_view.gd")
+## Guard for the optional LOCAL-ONLY artwork roots (never inside the repository).
+const PathGuard = preload("res://scripts/candidate_path_guard.gd")
+
+const DESIGN_W := 480.0
+const DESIGN_H := 320.0
+
+const COLOR_SELECTED := Color(1.0, 1.0, 0.0, 1.0)
+const COLOR_IDLE := Color(1.0, 1.0, 1.0, 1.0)
+const STATUS_NOT_RECOVERED := "NOT RECOVERED IN THIS BUILD"
+
+## screen id -> layout file, background texture, required widget names.
+##
+## "player_profile", "settings" and "about" are opened from the main menu and
+## their .ui files contain no background picture, so the main-menu background is
+## kept as a CANDIDATE (recorded in reports/menu_pages_validation.json). The two
+## credit screens carry their own full-screen picture, so their backdrop entry is
+## empty and the decoded layout draws the background itself.
+const SCREENS := {
+	"mainmenu": {
+		"layout": "mainmenu",
+		"background": "bl_gui_backgrond_mainmenu",
+		"background_basis": "name match: gui/mainmenu.ui <-> gui/images/background/BL_GUI_backgrond_mainmenu.tex",
+		"required": ["logo", "title", "menu"],
+	},
+	"playmenu": {
+		"layout": "playmenu",
+		"background": "bl_gui_backgrond_playmenu",
+		"background_basis": "name match: gui/playmenu.ui <-> gui/images/background/BL_GUI_backgrond_playmenu.tex",
+		"required": ["title", "playmenu", "lsk"],
+	},
+	"player_profile": {
+		"layout": "playerprofile",
+		"background": "bl_gui_backgrond_mainmenu",
+		"background_basis": "CANDIDATE: playerprofile.ui has no background picture; opened from the main menu keeps the main-menu background",
+		"required": ["title", "menu", "back"],
+	},
+	"settings": {
+		"layout": "settings",
+		"background": "bl_gui_backgrond_mainmenu",
+		"background_basis": "CANDIDATE: settings.ui has no background picture; opened from the main menu keeps the main-menu background",
+		"required": ["title", "menu", "box", "lsk"],
+	},
+	"credits": {
+		"layout": "creditsselect",
+		"background": "",
+		"background_basis": "creditsselect.ui draws its own full-screen picture gui/images/versus/BL_VersusScreen_background.tex at (0,0,480,320)",
+		"required": ["picture", "title", "lsk"],
+	},
+	"about": {
+		"layout": "about",
+		"background": "bl_gui_styleeditor",
+		"background_basis": "RECOVERED: game.states about.ui = [styleeditorbg.ui, about.ui]; styleeditorbg.ui references gui/images/background/BL_GUI_styleeditor.tex",
+		"required": ["version", "disclaimer", "back"],
+	},
+	"credits_dle": {
+		"layout": "creditsdle",
+		"background": "",
+		"background_basis": "creditsdle.ui draws its own full-screen picture gui/images/versus/BL_VersusScreen_background.tex at (0,0,480,320)",
+		"required": ["picture"],
+	},
+	"credits_ig": {
+		"layout": "creditsindiagames",
+		"background": "",
+		"background_basis": "creditsindiagames.ui draws its own full-screen picture gui/images/versus/BL_VersusScreen_background.tex at (0,0,480,320)",
+		"required": ["picture"],
+	},
+}
+
+## Recovered mainmenu.ui options, in decoded order. Play opens the recovered
+## play menu, the four middle rows open the recovered sub-page layouts, and Quit
+## emits the existing quit command.
+const MAIN_ROWS := [
+	{"key": "play", "action": "play"},
+	{"key": "player_profile", "action": "screen", "screen": "player_profile"},
+	{"key": "settings", "action": "screen", "screen": "settings"},
+	{"key": "credits", "action": "screen", "screen": "credits"},
+	{"key": "about", "action": "screen", "screen": "about"},
+	{"key": "quit", "action": "command", "command": "quit"},
+]
+
+## Recovered playmenu.ui options, in decoded order. Every option is wired to the
+## start the current port already has; STORY MODE goes through the existing
+## BRUCELEE_STORY_FLOW launch because no menu command exists for it.
+const PLAY_ROWS := [
+	{"key": "story_mode", "action": "story"},
+	{"key": "arcade", "action": "command", "command": "arcade"},
+	{"key": "time_attack", "action": "command", "command": "timeattack"},
+	{"key": "versus", "action": "command", "command": "fight"},
+	{"key": "survival", "action": "command", "command": "survival"},
+	{"key": "practice_style", "action": "command", "command": "training"},
+]
+
+## Recovered playerprofile.ui rows. Each would continue into a further screen
+## (achievements / statistics / art / fighters) whose layout or data is not part
+## of the decoded set; they stay visible and fail closed with the explicit status
+## instead of opening a guessed screen.
+const PROFILE_ROWS := [
+	{"key": "achievements", "action": "profile_page"},
+	{"key": "statistics", "action": "profile_page"},
+	{"key": "art", "action": "profile_page"},
+	{"key": "fighters", "action": "profile_page"},
+]
+
+## Recovered settings.ui rows. The audio/languages sub-layouts are decoded but
+## their values (slider state, language selection) are not part of this task, so
+## the rows fail closed with the explicit status.
+const SETTINGS_ROWS := [
+	{"key": "audio", "action": "unavailable"},
+	{"key": "languages", "action": "language"},
+]
+
+## Recovered creditsselect.ui options. The select page is the two logo buttons
+## (not a text menu); the two credit rolls exist as decoded layouts but their
+## scroll text is not recovered, so those screens show NOT RECOVERED.
+const CREDIT_ROWS := [
+	{"key": "dle", "action": "screen", "screen": "credits_dle"},
+	{"key": "indiagames", "action": "screen", "screen": "credits_ig"},
+]
+
+## Recovered creditsselect.ui selection geometry: the invisible dle/indiagames
+## hit buttons sit on these logo pictures.
+const CREDIT_LOGO_WIDGETS := ["dlepicture", "indiagamespicture"]
+
+## Readable placeholders for recovered keys the MenuLang table does not cover.
+## These are labels, never game behaviour; the recovered translation wins the
+## moment the table gains the key.
+const PLACEHOLDER_LABELS := {
+	"player_profile": "Player Profile",
+	"credits": "Credits",
+	"about": "About",
+	"achievements": "Achievements",
+	"statistics": "Statistics",
+	"art": "Art",
+	"fighters": "Fighters",
+	"audio": "Audio",
+	"languages": "Languages",
+	"dle": "Digital Legends",
+	"indiagames": "IndiaGames",
+	"story_mode": "Story Mode",
+	"practice_style": "Practice Style",
+	"play_menu": "Play Menu",
+}
+
+var screen_id: String = ""
+var selection: int = 0
+var status_text: String = ""
+var last_error: String = ""
+var art_ready: bool = false
+## Recovered language dock state (only used on the language_dock screen).
+var language_index: int = 0
+var language_applied: String = ""
+var language_status: String = ""
+## Recovered Profile destination currently drawn ("profile_page:<key>").
+var profile_key: String = ""
+## Second path segment of a Profile screen: stats1/stats2/stats3 for the
+## statistics sub-menu, or the fighter index for the gallery profile page.
+var profile_sub: String = ""
+## Selection inside a recovered Profile body (achievement row, art picture or
+## fighter cell).
+var profile_index: int = 0
+var profile_record: Dictionary = {}
+## Keyed page reset: entering a different Profile body starts at index 0 so a
+## book/fighter cursor can never leak into another page's selection.
+var _profile_key_seen: String = ""
+
+var _art_root: Control
+var _ui_space: Control
+var _stage: Control
+var _status_label: Label
+var _screens: Dictionary = {}
+var _texture_paths: Dictionary = {}
+var _textures: Dictionary = {}
+var _built_rects: Dictionary = {}
+## Active credit-roll view on creditsdle/creditsindiagames, or null when the
+## text/layout evidence is missing (the page then keeps the explicit marker).
+var _credits_roll: Control = null
+var _credits_roll_status: String = ""
+
+
+class RectOutline extends Control:
+	var line_color: Color = Color(1.0, 1.0, 0.0, 1.0)
+	var line_width: float = 2.0
+
+	func _draw() -> void:
+		draw_rect(Rect2(Vector2.ZERO, size), line_color, false, line_width)
+
+
+# The base _ready builds the text menu (kept for pause / errors); the art
+# overlay is built afterwards and shown only while an art screen owns the menu.
+func _ready() -> void:
+	# Restore the persisted language BEFORE any recovered label is built, so a
+	# restart shows the last selected language.  A missing/invalid save leaves
+	# the existing BRUCELEE_LANG default untouched.
+	LanguageDock.apply_saved()
+	super._ready()
+	_texture_paths = _index_textures()
+	if _texture_paths.is_empty():
+		_fail("no decoded textures found under " + ART_ROOT)
+		return
+	if not _load_screens():
+		return
+	_build_art()
+	art_ready = true
+	hide_menu()
+
+
+# ------------------------------------------------------------ base overrides
+
+func show_main_menu() -> void:
+	menu_state = "art_main"
+	selected_index = 0
+	selection = 0
+	status_text = ""
+	visible = true
+	_art_visible(true)
+	_show_art_screen("mainmenu")
+
+
+func show_pause_menu() -> void:
+	# Pause is not part of the recovered main-menu art; keep the existing text
+	# pause menu exactly as it is.
+	super.show_pause_menu()
+	_art_visible(false)
+	screen_id = ""
+
+
+func hide_menu() -> void:
+	super.hide_menu()
+	if _art_root != null:
+		_art_root.visible = false
+	screen_id = ""
+
+
+func show_error(value: String) -> void:
+	super.show_error(value)
+	if _is_art_menu():
+		status_text = value
+		_refresh_status()
+
+
+func selected_command() -> String:
+	if _is_art_menu():
+		var row: Dictionary = _selected_row()
+		if row.is_empty():
+			return ""
+		if String(row.get("action", "")) == "command":
+			return String(row.get("command", ""))
+		return ""
+	return super.selected_command()
+
+
+func handle_input_event(event: InputEvent) -> bool:
+	if not visible:
+		return false
+	if _is_art_menu():
+		return _handle_art_input(event)
+	return super.handle_input_event(event)
+
+
+## True while any recovered-art screen (main, play, or one of the sub-pages) owns
+## the menu. The base text menu handles every other state (pause / records /
+## style editor).
+func _is_art_menu() -> bool:
+	return menu_state == "art_main" or menu_state == "art_play" \
+		or menu_state == "art_page"
+
+
+# ---------------------------------------------------------------- art input
+
+func _handle_art_input(event: InputEvent) -> bool:
+	if not Controls.is_press_edge(event):
+		return false
+	var was_attack: bool = event.is_action_pressed(Controls.ATTACK_A)
+	if screen_id == "language_dock":
+		if event.is_action_pressed(Controls.MOVE_LEFT):
+			_move_language(-1)
+			return true
+		if event.is_action_pressed(Controls.MOVE_RIGHT):
+			_move_language(1)
+			return true
+		if event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
+			_confirm_language()
+			return true
+		if event.is_action_pressed(Controls.MENU_CANCEL) or _is_backspace(event):
+			_back_art()
+			return true
+		return false
+	if screen_id.begins_with("profile_page:"):
+		return _handle_profile_input(event)
+	if event.is_action_pressed(Controls.MENU_UP):
+		_move_art_selection(-1)
+	elif event.is_action_pressed(Controls.MENU_DOWN):
+		_move_art_selection(1)
+	elif screen_id == "credits" and event.is_action_pressed(Controls.MOVE_LEFT):
+		_move_credits_selection(-1)
+	elif screen_id == "credits" and event.is_action_pressed(Controls.MOVE_RIGHT):
+		_move_credits_selection(1)
+	elif event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
+		_confirm_art(was_attack)
+	elif event.is_action_pressed(Controls.MENU_CANCEL) or _is_backspace(event):
+		_back_art()
+	else:
+		return false
+	return true
+
+
+func _is_space(event: InputEvent) -> bool:
+	return event is InputEventKey and (event as InputEventKey).keycode == KEY_SPACE
+
+
+func _is_backspace(event: InputEvent) -> bool:
+	return event is InputEventKey and (event as InputEventKey).keycode == KEY_BACKSPACE
+
+
+func _move_art_selection(delta: int) -> void:
+	var rows: Array = _rows_for(screen_id)
+	if rows.is_empty():
+		return
+	status_text = ""
+	selection = clampi(selection + delta, 0, rows.size() - 1)
+	_show_art_screen(screen_id)
+
+
+## The recovered creditsselect.ui uses LEFT/RIGHT between its two logo buttons.
+func _move_credits_selection(delta: int) -> void:
+	if screen_id != "credits":
+		return
+	status_text = ""
+	selection = clampi(selection + delta, 0, CREDIT_ROWS.size() - 1)
+	_show_art_screen("credits")
+
+
+## ------------------------------------------------- recovered Profile body input
+## Proven body navigation only:
+##   * statistics — statsmenu.ui blmenu options game_modes/battles/moves -> ENTER opens
+##     stats1/2/3;
+##   * art — the pictureslider is a 1-D cursor; LEFT/RIGHT step one picture
+##     (CPictureSlider::LoadPicture(n) is per-index; the original key codes are not
+##     decoded, so UP/DOWN are a documented PORT alias for the same step);
+##   * fighters — CBruceLeeFighterGrid::OnKeyPress moves cell 0x10 by +/-1 and by
+##     +/-numcolumns and clamps to [0, GetNumUniques()-1]; ENTER raises the grid's
+##     `profile` action and opens the fightergalleryprofile.ui body for that cell.
+## Achievements still has no proven body action beyond BACK.
+func _handle_profile_input(event: InputEvent) -> bool:
+	if event.is_action_pressed(Controls.MENU_CANCEL) or _is_backspace(event):
+		if profile_key == "fighters" and not profile_sub.is_empty():
+			profile_sub = ""
+			status_text = ""
+			_show_art_screen("profile_page:fighters")
+			return true
+		_back_art()
+		return true
+	if profile_key == "statistics":
+		if event.is_action_pressed(Controls.MENU_UP):
+			_profile_move(-1)
+			return true
+		if event.is_action_pressed(Controls.MENU_DOWN):
+			_profile_move(1)
+			return true
+		if event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
+			_open_selected_stats_page()
+			return true
+		return false
+	if profile_key == "art":
+		if event.is_action_pressed(Controls.MOVE_LEFT) or event.is_action_pressed(Controls.MENU_UP):
+			_profile_move_art(-1)
+			return true
+		if event.is_action_pressed(Controls.MOVE_RIGHT) or event.is_action_pressed(Controls.MENU_DOWN):
+			_profile_move_art(1)
+			return true
+		return false
+	if profile_key == "fighters" and profile_sub.is_empty():
+		var columns: int = maxi(1, ProfileBodies.grid_columns())
+		if event.is_action_pressed(Controls.MOVE_LEFT):
+			_profile_move_fighter(-1)
+			return true
+		if event.is_action_pressed(Controls.MOVE_RIGHT):
+			_profile_move_fighter(1)
+			return true
+		if event.is_action_pressed(Controls.MENU_UP):
+			_profile_move_fighter(-columns)
+			return true
+		if event.is_action_pressed(Controls.MENU_DOWN):
+			_profile_move_fighter(columns)
+			return true
+		if event.is_action_pressed(Controls.MENU_ACCEPT) or _is_space(event):
+			_open_selected_fighter_profile()
+			return true
+		return false
+	return false
+
+
+func _profile_move_art(delta: int) -> void:
+	var count: int = ProfileBodies.art_items().size()
+	if count <= 0:
+		return
+	status_text = ""
+	profile_index = clampi(profile_index + delta, 0, count - 1)
+	_show_art_screen(screen_id)
+
+
+func _profile_move_fighter(delta: int) -> void:
+	var count: int = ProfileBodies.fighter_items().size()
+	if count <= 0:
+		return
+	status_text = ""
+	profile_index = clampi(profile_index + delta, 0, count - 1)
+	_show_art_screen(screen_id)
+
+
+## Raises the grid's decoded `profile` action for the selected cell.  The original
+## gates this on CCharacterList::IsUniqueProfileAvailable(index); the per-unique
+## availability table lives in the save file and is NOT recovered here, so the
+## page opens and states that limitation instead of inventing availability.
+func _open_selected_fighter_profile() -> void:
+	var count: int = ProfileBodies.fighter_items().size()
+	if count <= 0:
+		return
+	profile_index = clampi(profile_index, 0, count - 1)
+	status_text = ""
+	menu_state = "art_page"
+	_show_art_screen("profile_page:fighters:%d" % profile_index)
+
+
+func _profile_move(delta: int) -> void:
+	var count: int = Array(ProfileBodies.stats_submenu().get("rows", [])).size()
+	if count <= 0:
+		return
+	status_text = ""
+	profile_index = clampi(profile_index + delta, 0, count - 1)
+	_show_art_screen(screen_id)
+
+
+func _open_selected_stats_page() -> void:
+	var subs: Array = Array(ProfileBodies.stats_submenu().get("rows", []))
+	if subs.is_empty():
+		return
+	profile_index = clampi(profile_index, 0, subs.size() - 1)
+	var state: String = String(Dictionary(subs[profile_index]).get("state", ""))
+	if state.is_empty():
+		return
+	status_text = ""
+	menu_state = "art_page"
+	_show_art_screen("profile_page:statistics:" + state)
+
+func _confirm_art(was_attack: bool) -> void:
+	var row: Dictionary = _selected_row()
+	if row.is_empty():
+		return
+	match String(row.get("action", "")):
+		"play":
+			status_text = ""
+			selection = 0
+			menu_state = "art_play"
+			_show_art_screen("playmenu")
+		"screen":
+			status_text = ""
+			selection = 0
+			menu_state = "art_page"
+			_show_art_screen(String(row.get("screen", "")))
+		"command":
+			last_accept_was_attack = was_attack
+			command_requested.emit(String(row.get("command", "")))
+		"story":
+			_launch_story()
+		"language":
+			# Recovered settingsmain.actions.lang -> settingslanguage; the dock's
+			# eight items are decoded and its selection persists (PORT binding).
+			if not LanguageDock.available():
+				status_text = STATUS_NOT_RECOVERED
+				_refresh_status()
+			else:
+				status_text = ""
+				language_index = LanguageDock.current_index()
+				language_status = ""
+				menu_state = "art_page"
+				_show_art_screen("language_dock")
+		"profile_page":
+			# Recovered playerprofile.actions destination.  The destination state
+			# and the decoded destination widgets are drawn where they decode;
+			# page BODIES that do not decode stay explicitly NOT RECOVERED.
+			if not RecoveredPages.available():
+				status_text = STATUS_NOT_RECOVERED
+				_refresh_status()
+			else:
+				status_text = ""
+				profile_key = String(row.get("key", ""))
+				profile_sub = ""
+				profile_index = 0
+				menu_state = "art_page"
+				_show_art_screen("profile_page:" + profile_key)
+		"unavailable":
+			status_text = STATUS_NOT_RECOVERED
+			_refresh_status()
+
+
+func _back_art() -> void:
+	status_text = ""
+	if screen_id == "language_dock":
+		selection = 1  # settings.ui Languages row
+		menu_state = "art_page"
+		_show_art_screen("settings")
+		return
+	if screen_id.begins_with("profile_page:"):
+		# game.states binds backtomain -> playerprofile for statsmain/stats1-3 and
+		# rsk -> playerprofile for achievements/artpictures/fightersgallery, so a
+		# BACK always returns to Player Profile.
+		profile_sub = ""
+		selection = _profile_row_index_for(profile_key)
+		menu_state = "art_page"
+		_show_art_screen("player_profile")
+		return
+	match screen_id:
+		"playmenu":
+			selection = 0
+			menu_state = "art_main"
+			_show_art_screen("mainmenu")
+		"player_profile", "settings", "credits", "about":
+			# Return to the main-menu row that opened this page.
+			selection = _main_row_index_for(screen_id)
+			menu_state = "art_main"
+			_show_art_screen("mainmenu")
+		"credits_dle", "credits_ig":
+			selection = 0
+			menu_state = "art_page"
+			_show_art_screen("credits")
+		_:
+			# At the recovered main menu BACK is a no-op, matching the text menu.
+			pass
+
+
+func _launch_story() -> void:
+	## The port has no "story" menu command. The story flow is already an
+	## opt-in launch selected by BRUCELEE_STORY_FLOW=1, so set that same
+	## environment (and leave the main menu) and reload the scene. This mirrors
+	## the opponent/scene switch paths in main.gd; it does not start a mode here.
+	OS.set_environment("BRUCELEE_STORY_FLOW", "1")
+	OS.set_environment("BRUCELEE_MAIN_MENU", "0")
+	hide_menu()
+	get_tree().paused = false
+	get_tree().call_deferred("reload_current_scene")
+
+
+func _selected_row() -> Dictionary:
+	var rows: Array = _rows_for(screen_id)
+	if selection < 0 or selection >= rows.size():
+		return {}
+	return rows[selection]
+
+
+func _rows_for(key: String) -> Array:
+	match key:
+		"mainmenu":
+			return MAIN_ROWS
+		"playmenu":
+			return PLAY_ROWS
+		"player_profile":
+			return PROFILE_ROWS
+		"settings":
+			return SETTINGS_ROWS
+		"credits":
+			return CREDIT_ROWS
+		_:
+			return []
+
+
+## Index of the main-menu row whose action opens `screen`, or 0.
+func _main_row_index_for(screen: String) -> int:
+	for index: int in range(MAIN_ROWS.size()):
+		var row: Dictionary = MAIN_ROWS[index]
+		if String(row.get("screen", "")) == screen:
+			return index
+	return 0
+
+
+## Index of the Player Profile row for a destination key, or 0.
+func _profile_row_index_for(key: String) -> int:
+	for index: int in range(PROFILE_ROWS.size()):
+		if String(Dictionary(PROFILE_ROWS[index]).get("key", "")) == key:
+			return index
+	return 0
+
+
+## Recovered widget node by name on the current screen, or {}.
+func _screen_node(screen: String, widget_name: String) -> Dictionary:
+	for node: Variant in (_screens[screen]["layout"] as Array):
+		if String((node as Dictionary).get("name", "")) == widget_name:
+			return node as Dictionary
+	return {}
+
+
+# ---------------------------------------------------------------- art build
+
+func _index_textures() -> Dictionary:
+	var index: Dictionary = {}
+	var roots: Array[String] = [ART_ROOT]
+	# Exported packages keep the decoded PNGs beside the executable because the
+	# original artwork is local-only and intentionally not committed.  Source
+	# runs still use res:// directly.
+	var local_root: String = OS.get_executable_path().get_base_dir().path_join("ui/menu_art") + "/"
+	if DirAccess.dir_exists_absolute(local_root):
+		roots.append(local_root)
+	for art_root: String in roots:
+		for directory: Variant in ART_DIRS:
+			var folder: String = String(directory)
+			var path: String = art_root + folder
+			var names: PackedStringArray = DirAccess.get_files_at(path)
+			for name: String in names:
+				if not name.to_lower().ends_with(".png"):
+					continue
+				var stem: String = name.get_basename().to_lower()
+				index[folder + "/" + stem] = path.path_join(name)
+	return index
+
+
+## Texture key for a recovered file reference:
+## {'directory': 'gui/images/menu/', 'basename': 'bl_gui_logo_little', ...}
+func _file_key(reference: Dictionary) -> String:
+	var directory: String = String(reference.get("directory", ""))
+	var folder: String = ""
+	match directory:
+		"gui/images/menu/":
+			folder = "menu"
+		"gui/images/menu/zdk/":
+			folder = "menu_zdk"
+		"gui/images/mini/":
+			folder = "mini"
+		"gui/images/background/":
+			folder = "background"
+		"gui/images/versus/":
+			folder = "versus"
+		"gui/images/other/":
+			folder = "other"
+		_:
+			_fail("unmapped texture directory '" + directory + "'")
+			return ""
+	return folder + "/" + String(reference.get("basename", "")).to_lower()
+
+
+func _texture(key: String) -> Texture2D:
+	if _textures.has(key):
+		return _textures[key] as Texture2D
+	if not _texture_paths.has(key):
+		_fail("missing texture " + key + " (referenced by a recovered layout)")
+		return null
+	var image: Image = Image.load_from_file(String(_texture_paths[key]))
+	if image == null or image.is_empty():
+		_fail("cannot decode texture " + key)
+		return null
+	var texture: Texture2D = ImageTexture.create_from_image(image)
+	_textures[key] = texture
+	return texture
+
+
+func _load_screens() -> bool:
+	for screen: Variant in SCREENS:
+		var path: String = UI_DIR + String(SCREENS[screen]["layout"]) + ".json"
+		if not FileAccess.file_exists(path):
+			_fail("missing layout " + path)
+			return false
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if typeof(parsed) != TYPE_DICTIONARY:
+			_fail("layout is not a JSON object: " + path)
+			return false
+		var layout: Variant = (parsed as Dictionary).get("layout")
+		if typeof(layout) != TYPE_ARRAY or (layout as Array).is_empty():
+			_fail("layout has no widgets: " + path)
+			return false
+		var names: Dictionary = {}
+		var widget_index: int = 0
+		for node: Variant in layout:
+			if typeof(node) != TYPE_DICTIONARY:
+				_fail("layout widget is not an object: " + path)
+				return false
+			# creditsdle.ui / creditsindiagames.ui carry the scroll-text widget
+			# without a `name` key. It is not used for lookup, so give it a
+			# synthetic id instead of rejecting a faithfully decoded layout.
+			if not (node as Dictionary).has("name") \
+					or String((node as Dictionary).get("name", "")).is_empty():
+				(node as Dictionary)["name"] = "__unnamed_%d" % widget_index
+			for field: String in ["name", "type", "x", "y", "width", "height"]:
+				if not (node as Dictionary).has(field):
+					_fail("layout widget misses " + field + ": " + path)
+					return false
+				var value_type: int = typeof((node as Dictionary)[field])
+				if field != "name" and field != "type" \
+						and value_type != TYPE_INT and value_type != TYPE_FLOAT:
+					_fail("layout widget has non-numeric " + field + ": " + path)
+					return false
+			if names.has(String(node["name"])):
+				_fail("duplicate widget name in " + path)
+				return false
+			names[String(node["name"])] = true
+			widget_index += 1
+		for required: Variant in SCREENS[screen]["required"]:
+			if not names.has(String(required)):
+				_fail("layout " + path + " misses required widget " + String(required))
+				return false
+		_screens[screen] = parsed
+	return true
+
+
+func _build_art() -> void:
+	_art_root = Control.new()
+	_art_root.name = "MenuArt"
+	_art_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_art_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_art_root)
+
+	var letterbox: ColorRect = ColorRect.new()
+	letterbox.name = "Letterbox"
+	letterbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	letterbox.color = Color(0, 0, 0, 1)
+	letterbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_art_root.add_child(letterbox)
+
+	_ui_space = Control.new()
+	_ui_space.name = "UISpace"
+	_ui_space.size = Vector2(DESIGN_W, DESIGN_H)
+	_ui_space.clip_contents = true
+	_ui_space.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_art_root.add_child(_ui_space)
+
+	_stage = Control.new()
+	_stage.name = "Stage"
+	_stage.size = Vector2(DESIGN_W, DESIGN_H)
+	_stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui_space.add_child(_stage)
+
+	_status_label = Label.new()
+	_status_label.name = "Status"
+	_status_label.visible = false
+	_status_label.position = Vector2(8, DESIGN_H - 20)
+	_status_label.size = Vector2(DESIGN_W - 16, 18)
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_label.add_theme_font_size_override("font_size", 11)
+	_status_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	Lang.apply_font(_status_label)
+	_ui_space.add_child(_status_label)
+
+	get_viewport().size_changed.connect(_layout_ui_space)
+	_layout_ui_space()
+
+
+func _art_visible(value: bool) -> void:
+	if _art_root != null:
+		_art_root.visible = value
+	if screen_root != null:
+		screen_root.visible = not value
+
+
+func _layout_ui_space() -> void:
+	if _ui_space == null:
+		return
+	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	var scale_factor: float = minf(viewport_size.x / DESIGN_W, viewport_size.y / DESIGN_H)
+	_ui_space.scale = Vector2(scale_factor, scale_factor)
+	_ui_space.position = Vector2(
+		(viewport_size.x - DESIGN_W * scale_factor) * 0.5,
+		(viewport_size.y - DESIGN_H * scale_factor) * 0.5)
+
+
+func _fail(message: String) -> void:
+	last_error = message
+	push_error("menu_art: " + message)
+	printerr("menu_art: FAIL CLOSED: " + message)
+	_art_visible(false)
+
+
+func _refresh_status() -> void:
+	if _status_label == null:
+		return
+	_status_label.text = status_text
+	_status_label.visible = not status_text.is_empty()
+
+
+# ---------------------------------------------------------------- art widgets
+
+func _rect_of(node: Dictionary) -> Rect2:
+	return Rect2(float(node["x"]), float(node["y"]),
+		float(node["width"]), float(node["height"]))
+
+
+## Recovered translation when the table has the key, else a readable
+## placeholder. Never an invented game string.
+func _text_for(key: String) -> String:
+	if Lang.has_key(key):
+		return Lang.text(key)
+	if PLACEHOLDER_LABELS.has(key):
+		return String(PLACEHOLDER_LABELS[key])
+	return key.replace("_", " ").capitalize()
+
+
+func _make_label(text: String, rect: Rect2, font_size: int,
+		color: Color, centered: bool) -> Label:
+	var label: Label = Label.new()
+	label.text = text
+	label.position = rect.position
+	label.size = rect.size
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	if centered:
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	Lang.apply_font(label)
+	return label
+
+
+func _make_texture_rect(texture: Texture2D, rect: Rect2, keep_aspect: bool) -> TextureRect:
+	var node: TextureRect = TextureRect.new()
+	node.texture = texture
+	node.position = rect.position
+	node.size = rect.size
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	node.stretch_mode = (TextureRect.STRETCH_KEEP_ASPECT_CENTERED if keep_aspect
+		else TextureRect.STRETCH_SCALE)
+	return node
+
+
+func _clear_stage() -> void:
+	for child: Node in _stage.get_children():
+		_stage.remove_child(child)
+		child.queue_free()
+	_built_rects.clear()
+	_credits_roll = null
+	_credits_roll_status = ""
+
+
+func _background_texture(screen: String) -> Texture2D:
+	var basename: String = String(SCREENS[screen]["background"])
+	var texture: Texture2D = _texture("background/" + basename.to_lower())
+	if texture == null:
+		return null
+	if texture.get_width() < int(DESIGN_W) or texture.get_height() < int(DESIGN_H):
+		_fail("background " + basename + " is smaller than the 480x320 art rectangle")
+		return null
+	# Every decoded menu background stores its visible art exactly at (0,0) in a
+	# 480x320 rectangle (verified over all 10 backgrounds).
+	var atlas: AtlasTexture = AtlasTexture.new()
+	atlas.atlas = texture
+	atlas.region = Rect2(0, 0, DESIGN_W, DESIGN_H)
+	return atlas
+
+
+func _show_art_screen(screen: String) -> void:
+	if screen == "language_dock":
+		screen_id = screen
+		_clear_stage()
+		_build_language_dock_screen()
+		_refresh_status()
+		return
+	if screen.begins_with("profile_page:"):
+		var rest: String = screen.substr("profile_page:".length())
+		var parts: PackedStringArray = rest.split(":", false, 1)
+		profile_key = String(parts[0])
+		profile_sub = String(parts[1]) if parts.size() > 1 else ""
+		if profile_key != _profile_key_seen:
+			profile_index = 0
+			_profile_key_seen = profile_key
+		screen_id = screen
+		_clear_stage()
+		_build_profile_page(profile_key)
+		_refresh_status()
+		return
+	if not SCREENS.has(screen):
+		_fail("unknown screen " + screen)
+		return
+	screen_id = screen
+	_clear_stage()
+	# The credit screens draw their own full-screen recovered picture; every
+	# other screen has a name-matched (or documented CANDIDATE) backdrop.
+	var screen_data: Dictionary = SCREENS[screen] as Dictionary
+	var basename: String = String(screen_data.get("background", ""))
+	if not basename.is_empty():
+		var background: Texture2D = _background_texture(screen)
+		if background == null:
+			return
+		var backdrop: TextureRect = _make_texture_rect(
+			background, Rect2(0, 0, DESIGN_W, DESIGN_H), false)
+		backdrop.name = "Background"
+		_stage.add_child(backdrop)
+
+	for node: Variant in (_screens[screen]["layout"] as Array):
+		_build_art_widget(screen, node as Dictionary)
+
+	if screen == "credits":
+		_add_credits_selection()
+	_refresh_status()
+
+
+## --------------------------------------------------- recovered Profile pages
+## Draws the recovered destination for one playerprofile.ui row.  The destination
+## state, the decoded destination widgets and (since the profile-bodies phase)
+## the page BODIES that decode are real; fields the resources do not prove stay
+## explicitly NOT RECOVERED (never a guessed screen).
+func _build_profile_page(key: String) -> void:
+	profile_record = RecoveredPages.profile_page(key)
+	var backdrop: Texture2D = _background_texture("mainmenu")
+	if backdrop != null:
+		var picture: TextureRect = _make_texture_rect(
+			backdrop, Rect2(0, 0, DESIGN_W, DESIGN_H), false)
+		picture.name = "ProfileBackdrop"
+		_stage.add_child(picture)
+	if profile_record.is_empty():
+		_add_page_line("PROFILE PAGE " + STATUS_NOT_RECOVERED, 40)
+		_add_page_line("UI gaps artifact failed closed: " + RecoveredPages.error(), 60)
+		return
+	if not ProfileBodies.available():
+		_add_page_line("PROFILE PAGE " + STATUS_NOT_RECOVERED, 40)
+		_add_page_line("profile bodies failed closed: " + ProfileBodies.error(), 60)
+		return
+	match key:
+		"achievements":
+			_build_achievements_body()
+		"statistics":
+			_build_statistics_menu()
+		"art":
+			_build_art_album_body()
+		"fighters":
+			if profile_sub.is_empty():
+				_build_fighter_grid()
+			else:
+				_build_fighter_profile_body()
+		_:
+			_add_page_line("PROFILE PAGE " + STATUS_NOT_RECOVERED, 40)
+
+
+func _widget_rect_dict(widget: Dictionary) -> Rect2:
+	return Rect2(float(widget.get("x", 0)), float(widget.get("y", 0)),
+		float(widget.get("width", 0)), float(widget.get("height", 0)))
+
+
+func _add_label_in_rect(text: String, rect: Rect2, font_size: int, color: Color,
+		align_h: int = HORIZONTAL_ALIGNMENT_LEFT, label_name: String = "") -> Label:
+	var label: Label = _make_label(text, rect, font_size, color, false)
+	label.horizontal_alignment = align_h
+	if not label_name.is_empty():
+		label.name = label_name
+	_stage.add_child(label)
+	return label
+
+
+func _add_profile_back(rect: Rect2) -> void:
+	var outline: Control = RectOutline.new()
+	outline.name = "ProfileBackButton"
+	outline.position = rect.position
+	outline.size = rect.size
+	outline.line_color = Color(1.0, 0.92, 0.62, 0.6)
+	outline.line_width = 1.0
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(outline)
+	_add_label_in_rect("BACK", Rect2(rect.position, rect.size), 8,
+		Color(1.0, 0.92, 0.62, 0.8), HORIZONTAL_ALIGNMENT_CENTER)
+
+
+## --------------------------------------------------- achievements body
+## achievementstable.ui declares only title / box / statsview
+## (pagecount, selectedpage, visiblepage) / back(rsk) / pages(%d/%d).  No widget
+## and no game.states entry binds the 38 achievements.list entries to the
+## statsview, so the ROW BODY stays NOT RECOVERED; the decoded list is kept as
+## an evidence inventory only.
+func _build_achievements_body() -> void:
+	var data: Dictionary = ProfileBodies.achievements()
+	for widget: Variant in Array(data.get("layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		match String(w.get("type", "")):
+			"bllabel":
+				_add_label_in_rect(ProfileBodies.localized(
+					data.get("title_labels", {}), Lang.language()),
+					Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
+					12, COLOR_IDLE, HORIZONTAL_ALIGNMENT_LEFT, "AchievementsTitle")
+			"statsview", "picture":
+				_add_frame(w)
+			"blbutton":
+				_add_profile_back(rect)
+			"label":
+				_add_label_in_rect("PAGE " + STATUS_NOT_RECOVERED,
+					rect, 9, Color(1.0, 0.92, 0.62, 1.0),
+					HORIZONTAL_ALIGNMENT_CENTER, "AchievementsPage")
+	_add_page_line("STATSVIEW ROW BINDING " + STATUS_NOT_RECOVERED, 64, 9)
+	_add_page_line("%d decoded achievements.list entries (inventory only)" %
+		int(data.get("row_count", 0)), 82, 9)
+	_add_page_line("ESC/BACK: RETURN", 306, 8)
+
+
+## ------------------------------------------------------- statistics body
+func _build_statistics_menu() -> void:
+	var label: String = RecoveredPages.localized(
+		profile_record.get("labels", {}), Lang.language())
+	_add_page_line(label.to_upper(), 8, 16)
+	var subs: Array = Array(ProfileBodies.stats_submenu().get("rows", []))
+	profile_index = clampi(profile_index, 0, maxi(0, subs.size() - 1))
+	var y: float = 50.0
+	for index: int in range(subs.size()):
+		var s: Dictionary = subs[index]
+		var state: String = String(s.get("state", ""))
+		var key: String = String(s.get("label_key", ""))
+		var text: String = ProfileBodies.localized(s.get("labels", {}), Lang.language())
+		var prefix: String = "> " if index == profile_index else "  "
+		var color: Color = COLOR_SELECTED if index == profile_index else COLOR_IDLE
+		_add_label_in_rect(prefix + text + "   [" + key + " -> " + state + "]",
+			Rect2(24, y, DESIGN_W - 48, 18), 11, color,
+			HORIZONTAL_ALIGNMENT_LEFT, "StatsSubrow_%d" % index)
+		y += 20.0
+	if profile_sub.is_empty():
+		_add_page_line("ENTER: OPEN STATS PAGE   ESC/BACK: RETURN", 112, 8)
+		_add_page_line("STATS VALUES " + STATUS_NOT_RECOVERED
+			+ " (runtime `stats` datasource)", 300, 8)
+		return
+	var page: Dictionary = ProfileBodies.stats_page(profile_sub)
+	if page.is_empty():
+		_add_page_line("STATS PAGE " + STATUS_NOT_RECOVERED, 130, 10)
+		return
+	for widget: Variant in Array(page.get("layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		var name: String = String(w.get("name", ""))
+		if String(w.get("type", "")) == "staticrect":
+			_add_frame(w)
+		elif name.begins_with("title"):
+			var row: Dictionary = _stats_row_for_title(page, name)
+			_add_label_in_rect(ProfileBodies.localized(
+				row.get("title_labels", {}), Lang.language()),
+				Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
+				11, COLOR_IDLE, HORIZONTAL_ALIGNMENT_LEFT, "StatsTitle_" + name)
+		elif name.begins_with("value"):
+			var value_row: Dictionary = _stats_row_for_value(page, name)
+			var keys: Array = Array(value_row.get("value_stat_keys", []))
+			_add_label_in_rect(STATUS_NOT_RECOVERED + "  [" + ", ".join(keys) + "]",
+				Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
+				9, Color(1.0, 0.6, 0.4, 1.0),
+				HORIZONTAL_ALIGNMENT_LEFT, "StatsValue_" + name)
+	_add_page_line("STATS VALUES " + STATUS_NOT_RECOVERED
+		+ " (runtime `stats` datasource)", 300, 8)
+
+
+func _stats_row_for_title(page: Dictionary, widget_name: String) -> Dictionary:
+	for row: Variant in Array(page.get("rows", [])):
+		if String(Dictionary(row).get("title_widget", "")) == widget_name:
+			return Dictionary(row)
+	return {}
+
+
+func _stats_row_for_value(page: Dictionary, widget_name: String) -> Dictionary:
+	for row: Variant in Array(page.get("rows", [])):
+		if String(Dictionary(row).get("value_widget", "")) == widget_name:
+			return Dictionary(row)
+	return {}
+
+
+## ------------------------------------------------------------ art album body
+## PROVEN binding (2026-11-06): CUnlocker::SetArtPicturesToSlider (ELF 0x16f130)
+## walks artpictures.list index 0..17 and calls CPictureSlider::AddPicture
+## (0x219038, append), so album index == artpictures.list array position; the
+## runtime artwork is loaded per index by CPictureSlider::LoadPicture (0x218798).
+## SetArtPictures (0x19d268) addresses the slider as artpicture.ui's "album".
+## What is NOT recovered: the per-index unlock state (CUnlocker save flags) and
+## the original artwork pixels (local-only, never shipped).
+func _build_art_album_body() -> void:
+	var data: Dictionary = ProfileBodies.artpictures()
+	for widget: Variant in Array(data.get("layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		match String(w.get("type", "")):
+			"staticrect":
+				var black: ColorRect = ColorRect.new()
+				black.name = "ArtBlackRect"
+				black.color = Color(0, 0, 0, 1)
+				black.position = rect.position
+				black.size = rect.size
+				black.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				_stage.add_child(black)
+			"pictureslider", "picture":
+				var album_rect: Rect2 = _widget_rect_dict(
+					Dictionary(data.get("album_widget", w)))
+				var item: Dictionary = ProfileBodies.art_item(profile_index)
+				var texture: Texture2D = _art_picture_texture(
+					String(item.get("basename", "")))
+				if texture != null:
+					var picture: TextureRect = _make_texture_rect(
+						texture, album_rect, true)
+					picture.name = "ArtAlbumPicture"
+					_stage.add_child(picture)
+				else:
+					_add_frame(w)
+					_add_page_line("PICTURE " + STATUS_NOT_RECOVERED, 150, 12)
+			"blbutton":
+				_add_profile_back(rect)
+	var items: Array = ProfileBodies.art_items()
+	if items.is_empty():
+		_add_page_line("ALBUM " + STATUS_NOT_RECOVERED, 150, 12)
+		_add_page_line("profile bodies failed closed: " + ProfileBodies.error(), 172, 9)
+		return
+	profile_index = clampi(profile_index, 0, items.size() - 1)
+	var current: Dictionary = Dictionary(items[profile_index])
+	var index_text: String = "%d/%d  %s.%s" % [profile_index + 1, items.size(),
+		String(current.get("basename", "")), String(current.get("extension", ""))]
+	_add_label_in_rect("ALBUM " + index_text, Rect2(12, 148, DESIGN_W - 24, 18),
+		10, COLOR_SELECTED, HORIZONTAL_ALIGNMENT_LEFT, "ArtAlbumIndex")
+	_add_page_line("PICTURE %d OF %d  (artpictures.list order, PROVEN)" % [
+		profile_index + 1, items.size()], 168, 9)
+	_add_page_line("SLIDER: CUnlocker::SetArtPicturesToSlider -> AddPicture", 186, 8)
+	_add_page_line("ARTWORK PIXELS LOCAL-ONLY; UNLOCK STATE " + STATUS_NOT_RECOVERED,
+		204, 8)
+	_add_page_line("LEFT/RIGHT: PICTURE   ESC/BACK: RETURN", 306, 8)
+
+
+## --------------------------------------------------------- fighter gallery
+## PROVEN bindings (2026-11-06):
+##   * membership/order: CBruceLeeFighterGrid::Redraw (0x247b90) draws
+##     CCharacterList::GetUniqueName(i) for i in 0..GetNumUniques()-1, i.e. the
+##     characters.list `uniques` array in array order (10 entries);
+##   * layout: cell i at (col = i % numcolumns, row = i / numcolumns) with the
+##     control property defaults numcolumns 2.0 / columnseparation 32 / rowheight 0
+##     that the decoded fightergalleryselect.ui does not override;
+##   * cursor: selectedcell == the `fighters_gallery_current` option
+##     (blfightergrid datasources); Confirm raises the grid's "profile" action.
+## What is NOT recovered: per-unique profile availability from the save file.
+func _build_fighter_grid() -> void:
+	var data: Dictionary = ProfileBodies.fighters()
+	for widget: Variant in Array(data.get("layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		match String(w.get("type", "")):
+			"bllabel":
+				_add_label_in_rect(ProfileBodies.localized(
+					data.get("title_labels", {}), Lang.language()),
+					Rect2(rect.position, Vector2(rect.size.x, maxf(rect.size.y, 18.0))),
+					12, COLOR_IDLE, HORIZONTAL_ALIGNMENT_LEFT, "FightersTitle")
+			"blfightergrid":
+				_add_frame(w)
+			"blbutton":
+				_add_profile_back(rect)
+	var items: Array = ProfileBodies.fighter_items()
+	if items.is_empty():
+		_add_page_line("FIGHTER GRID " + STATUS_NOT_RECOVERED, 150, 12)
+		_add_page_line("profile bodies failed closed: " + ProfileBodies.error(), 172, 9)
+		return
+	var grid_rect: Rect2 = _widget_rect_dict(
+		Dictionary(data.get("grid_widget", {})))
+	var columns: int = maxi(1, ProfileBodies.grid_columns())
+	profile_index = clampi(profile_index, 0, items.size() - 1)
+	var rows: int = maxi(1, items.size() / columns)
+	var hsep: float = ProfileBodies.grid_columnseparation()
+	var vsep: float = ProfileBodies.grid_rowheight()
+	var cell_w: float = (grid_rect.size.x - hsep * (columns - 1)) / float(columns)
+	var cell_h: float = (grid_rect.size.y - vsep * (rows - 1)) / float(rows)
+	for index: int in range(items.size()):
+		var item: Dictionary = Dictionary(items[index])
+		var col: int = index % columns
+		var row: int = index / columns
+		var cell: Rect2 = Rect2(
+			grid_rect.position + Vector2(col * (cell_w + hsep), row * (cell_h + vsep)),
+			Vector2(cell_w, cell_h))
+		var outline: Control = RectOutline.new()
+		outline.name = "FighterCell%d" % index
+		outline.position = cell.position
+		outline.size = cell.size
+		outline.line_color = (COLOR_SELECTED if index == profile_index
+			else Color(1.0, 1.0, 1.0, 0.35))
+		outline.line_width = (2.0 if index == profile_index else 1.0)
+		outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_stage.add_child(outline)
+		_add_label_in_rect(ProfileBodies.localized(
+			item.get("name_labels", {}), Lang.language()), cell,
+			10, (COLOR_SELECTED if index == profile_index else COLOR_IDLE),
+			HORIZONTAL_ALIGNMENT_CENTER, "FighterCellLabel%d" % index)
+	_add_page_line("CELL %d/%d  %s  (characters.list uniques, PROVEN)" % [
+		profile_index + 1, items.size(),
+		String(Dictionary(items[profile_index]).get("name", ""))], 276, 9)
+	_add_page_line("COLUMNS %d (property default)  ESC/BACK: RETURN" % columns,
+		306, 8)
+
+
+## fightergalleryprofile.ui body: the SAME unique index as the grid selection.
+## CCharacterList::QueryString (0x1aef28) resolves name / profile_text_tag /
+## profile_picture for the unique at `fighters_gallery_current`.
+func _build_fighter_profile_body() -> void:
+	var data: Dictionary = ProfileBodies.fighters()
+	var items: Array = ProfileBodies.fighter_items()
+	var index: int = profile_sub.to_int()
+	if items.is_empty() or index < 0 or index >= items.size():
+		_add_page_line("FIGHTER PROFILE " + STATUS_NOT_RECOVERED, 150, 12)
+		return
+	var item: Dictionary = Dictionary(items[index])
+	for widget: Variant in Array(data.get("profile_layout", [])):
+		var w: Dictionary = widget as Dictionary
+		var rect: Rect2 = _widget_rect_dict(w)
+		match String(w.get("type", "")):
+			"staticrect":
+				var back: ColorRect = ColorRect.new()
+				back.name = "FighterPhotoBackground"
+				back.color = Color(1, 1, 1, 1)
+				back.position = rect.position
+				back.size = rect.size
+				back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				_stage.add_child(back)
+			"blpicture":
+				var picture_ref: Dictionary = Dictionary(item.get("profile_picture", {}))
+				var texture: Texture2D = _profile_picture_texture(
+					String(picture_ref.get("basename", "")))
+				if texture != null:
+					var photo: TextureRect = _make_texture_rect(texture, rect, true)
+					photo.name = "FighterProfilePhoto"
+					_stage.add_child(photo)
+				else:
+					_add_frame(w)
+					_add_page_line_in_rect("PHOTO " + STATUS_NOT_RECOVERED, rect, 9)
+			"bllabel":
+				_add_label_in_rect(ProfileBodies.localized(
+					item.get("name_labels", {}), Lang.language()),
+					rect, 16, COLOR_SELECTED, HORIZONTAL_ALIGNMENT_RIGHT,
+					"FighterProfileName")
+			"textbox":
+				var text: String = ProfileBodies.localized(
+					item.get("profile_text_labels", {}), Lang.language())
+				var label: Label = _make_label(text, rect, 9, COLOR_IDLE, false)
+				label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				label.name = "FighterProfileText"
+				_stage.add_child(label)
+			"blbutton":
+				_add_profile_back(rect)
+	_add_page_line("PROFILE PICTURE PIXELS LOCAL-ONLY; UNLOCK STATE "
+		+ STATUS_NOT_RECOVERED, 306, 8)
+
+
+func _add_page_line_in_rect(text: String, rect: Rect2, size: int) -> void:
+	var label: Label = _make_label(text, rect, size, Color(1.0, 0.6, 0.3, 1.0), true)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.name = "ProfileLineInRect"
+	_stage.add_child(label)
+
+
+## Optional LOCAL-ONLY artwork: `BRUCELEE_ART_PREVIEW_ROOT` must point at a
+## directory outside the repository that holds `<basename>.png` files decoded from
+## the user's own .tex (format proven: 512x512 r8g8b8).  Nothing is bundled.
+func _art_picture_texture(basename: String) -> Texture2D:
+	return _local_png_texture("BRUCELEE_ART_PREVIEW_ROOT", basename)
+
+
+func _profile_picture_texture(basename: String) -> Texture2D:
+	return _local_png_texture("BRUCELEE_PROFILE_PICTURE_ROOT", basename)
+
+
+func _local_png_texture(env_name: String, basename: String) -> Texture2D:
+	if basename.is_empty():
+		return null
+	var root: String = OS.get_environment(env_name)
+	if root.is_empty():
+		return null
+	var path: String = root.path_join(basename + ".png")
+	if not PathGuard.external_path_error(path, env_name).is_empty():
+		return null
+	if not FileAccess.file_exists(path):
+		return null
+	var image: Image = Image.new()
+	if image.load(path) != OK:
+		return null
+	return ImageTexture.create_from_image(image)
+
+
+
+func _widget_rect(record: Dictionary, group: String, widget_name: String) -> Dictionary:
+	var group_data: Dictionary = record.get(group, {})
+	for widget: Variant in Array(group_data.get("widgets", [])):
+		var w: Dictionary = widget as Dictionary
+		if String(w.get("name", "")) == widget_name:
+			return w
+	return {}
+
+
+func _add_frame(widget: Dictionary) -> void:
+	if widget.is_empty():
+		return
+	var rect: Rect2 = Rect2(float(widget.get("x", 0)), float(widget.get("y", 0)),
+		float(widget.get("width", 0)), float(widget.get("height", 0)))
+	var outline: Control = RectOutline.new()
+	outline.name = "RecoveredFrame"
+	outline.position = rect.position
+	outline.size = rect.size
+	outline.line_color = Color(1.0, 1.0, 0.0, 1.0)
+	outline.line_width = 2.0
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(outline)
+
+
+func _add_page_line(text: String, y: float, size: int = 11) -> void:
+	var label: Label = _make_label(text, Rect2(12, y, DESIGN_W - 24, 18),
+		size, Color(1.0, 0.92, 0.62, 1.0), false)
+	label.name = "ProfileLine"
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_stage.add_child(label)
+
+
+## ------------------------------------------------------- language dock screen
+## Draws the recovered eight-item settingslanguage.ui dock as a port grid (the
+## decoded optionwidth/optionheight/separation/wraparround are recorded in the
+## artifact; the original flag art was not decoded locally, so each cell is
+## labelled with its recovered Lang table id, never an invented display name).
+func _build_language_dock_screen() -> void:
+	var backdrop: Texture2D = _background_texture("settings")
+	if backdrop != null:
+		var picture: TextureRect = _make_texture_rect(
+			backdrop, Rect2(0, 0, DESIGN_W, DESIGN_H), false)
+		picture.name = "LanguageBackdrop"
+		_stage.add_child(picture)
+	var items: Array = LanguageDock.items()
+	if items.is_empty():
+		var fail_label: Label = _make_label(
+			"LANGUAGE DOCK " + STATUS_NOT_RECOVERED,
+			Rect2(12, 120, DESIGN_W - 24, 40), 12, Color(1.0, 0.6, 0.3, 1.0), true)
+		fail_label.name = "LanguageFailClosed"
+		_stage.add_child(fail_label)
+		return
+	language_index = clampi(language_index, 0, items.size() - 1)
+	var title: Label = _make_label(
+		"LANGUAGES", Rect2(0, 8, DESIGN_W, 24), 16, Color(1.0, 0.85, 0.3, 1.0), true)
+	title.name = "LanguageTitle"
+	_stage.add_child(title)
+	# Recovered dock cell geometry is recorded in the artifact; the flag art was
+	# not decoded locally, so cells use compact port widths.
+	var cell_w: float = 108.0
+	var cell_h: float = 28.0
+	var gap: float = 6.0
+	var total_w: float = float(items.size()) * cell_w + float(items.size() - 1) * gap
+	var start_x: float = (DESIGN_W - total_w) * 0.5
+	var row_y: float = 130.0
+	for index: int in range(items.size()):
+		var item: Dictionary = items[index] as Dictionary
+		var rect: Rect2 = Rect2(start_x + float(index) * (cell_w + gap), row_y,
+			cell_w, cell_h)
+		var selected: bool = index == language_index
+		var text: String = String(item.get("lang_table", ""))
+		if selected:
+			text = "> " + text + " <"
+		var cell: Label = _make_label(text, rect, 9,
+			Color(1.0, 1.0, 0.0, 1.0) if selected else Color(0.9, 0.9, 0.9, 1.0), true)
+		cell.name = "LanguageCell_%d" % index
+		_stage.add_child(cell)
+	var detail: String = "%d/%d  %s" % [language_index + 1, items.size(),
+		String(Dictionary(items[language_index]).get("lang_table", ""))]
+	detail += "\nLEFT/RIGHT choose   ENTER apply+save   ESC back"
+	detail += "\nDISPLAY NAMES " + LanguageDock.labels_status()
+	if not language_status.is_empty():
+		detail += "\n" + language_status
+	var status: Label = _make_label(detail, Rect2(8, 190, DESIGN_W - 16, 90),
+		10, Color(0.95, 0.9, 0.75, 1.0), true)
+	status.name = "LanguageStatus"
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_stage.add_child(status)
+
+
+func _move_language(delta: int) -> void:
+	var count: int = LanguageDock.items().size()
+	if count <= 0:
+		return
+	# Recovered wraparround=false: clamp at both ends (never wrap).
+	language_index = clampi(language_index + delta, 0, count - 1)
+	language_status = ""
+	_show_art_screen("language_dock")
+
+
+func _confirm_language() -> void:
+	var table: String = LanguageDock.apply_index(language_index)
+	if table.is_empty():
+		language_status = "LANGUAGE APPLY " + STATUS_NOT_RECOVERED
+		_show_art_screen("language_dock")
+		return
+	var saved: bool = LanguageDock.save_index(language_index)
+	language_applied = table
+	language_status = "APPLIED " + table + (" (SAVED)" if saved else " (SAVE FAILED)")
+	_show_art_screen("language_dock")
+
+
+## creditsselect.ui has no blmenu: the recovered focus is one of the two logo
+## buttons. Draw the recovered focus colour around the selected logo picture.
+func _add_credits_selection() -> void:
+	var index: int = clampi(selection, 0, CREDIT_LOGO_WIDGETS.size() - 1)
+	var node: Dictionary = _screen_node("credits", String(CREDIT_LOGO_WIDGETS[index]))
+	if node.is_empty():
+		return
+	var outline: Control = RectOutline.new()
+	outline.name = "CreditsSelection"
+	outline.position = _rect_of(node).position
+	outline.size = _rect_of(node).size
+	outline.line_color = Color8(255, 255, 0)
+	outline.line_width = 2.0
+	outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stage.add_child(outline)
+
+
+func _build_art_widget(screen: String, node: Dictionary) -> void:
+	var rect: Rect2 = _rect_of(node)
+	var type: String = String(node["type"])
+	var widget_name: String = String(node["name"])
+	match type:
+		"picture":
+			var texture: Texture2D = _texture(
+				_file_key(_file_reference(node["file"] as Dictionary)))
+			if texture == null:
+				return
+			# A recovered picture may crop its texture through the authored
+			# subrect (the credit background and the settings box both use
+			# (0,0,480,320) out of a 512x512 atlas).
+			var draw_texture: Texture2D = texture
+			if node.has("subrect_width"):
+				var atlas: AtlasTexture = AtlasTexture.new()
+				atlas.atlas = texture
+				atlas.region = Rect2(
+					float(node.get("subrect_x", 0)),
+					float(node.get("subrect_y", 0)),
+					float(node["subrect_width"]),
+					float(node["subrect_height"]))
+				draw_texture = atlas
+			var picture: TextureRect = _make_texture_rect(draw_texture, rect,
+				String(node.get("mantainaspectratio", "false")) == "true")
+			picture.name = "Picture_" + widget_name
+			_stage.add_child(picture)
+			_built_rects[widget_name] = rect
+		"blbutton":
+			# creditsselect.ui's dle/indiagames buttons are invisible hit areas
+			# on top of the logo pictures; they carry no `file`.
+			if not node.has("file"):
+				_built_rects[widget_name] = rect
+				return
+			var file_node: Dictionary = node["file"]
+			var reference: Dictionary = file_node["file"]
+			var texture: Texture2D = _texture(_file_key(_file_reference(reference)))
+			if texture == null:
+				return
+			var atlas: AtlasTexture = AtlasTexture.new()
+			atlas.atlas = texture
+			if file_node.has("subrect_width"):
+				atlas.region = Rect2(
+					float(file_node.get("subrect_x", 0)),
+					float(file_node.get("subrect_y", 0)),
+					float(file_node["subrect_width"]),
+					float(file_node["subrect_height"]))
+			else:
+				atlas.region = Rect2(0, 0, texture.get_width(), texture.get_height())
+			var button: TextureRect = _make_texture_rect(atlas, rect, false)
+			button.name = "Button_" + widget_name
+			_stage.add_child(button)
+			_built_rects[widget_name] = rect
+		"bllabel", "label":
+			var text: String = _label_text_for(screen, node)
+			var color: Color = Color(1, 1, 1, 1)
+			if node.has("textcolor"):
+				var rgb: Array = node["textcolor"]
+				color = Color8(int(rgb[0]), int(rgb[1]), int(rgb[2]))
+			if String(node.get("uppercase", "false")) == "true":
+				text = text.to_upper()
+			var font_size: int = clampi(int(round(rect.size.y * 0.55)), 8, 28)
+			var label: Label = _make_label(text, rect, font_size, color,
+				String(node.get("align", "")) == "center")
+			label.name = "Label_" + widget_name
+			if screen == "about" and widget_name == "disclaimer":
+				# The recovered disclaimer is a multi-line paragraph; smaller font
+				# and autowrap are rendering only, not invented content.
+				label.add_theme_font_size_override("font_size", 10)
+				label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			_stage.add_child(label)
+			_built_rects[widget_name] = rect
+		"blmenu":
+			_build_art_menu(screen, node, rect)
+			_built_rects[widget_name] = rect
+		"credits":
+			var prefix: String = String(node.get("prefix", ""))
+			var first_number: int = int(node.get("first_number", 0))
+			var last_number: int = int(node.get("last_number", 0))
+			var roll_id: String = _credits_roll_id(screen)
+			var roll_view: Control = _make_credits_roll_view(
+				roll_id, prefix, first_number, last_number, rect)
+			if roll_view != null:
+				_stage.add_child(roll_view)
+				_credits_roll = roll_view
+			else:
+				# Fail closed: missing text or a layout/range mismatch keeps the
+				# explicit marker; no line is invented.
+				var caption: String = STATUS_NOT_RECOVERED
+				if not prefix.is_empty():
+					caption = "%s (%d-%d)\n%s" % [prefix, first_number, last_number,
+						STATUS_NOT_RECOVERED]
+				if not _credits_roll_status.is_empty():
+					caption += "\n" + _credits_roll_status
+				var scroll_label: Label = _make_label(
+					caption, rect, 16, Color(1.0, 0.85, 0.3, 1.0), true)
+				scroll_label.name = "Label_Credits"
+				_stage.add_child(scroll_label)
+			_built_rects[widget_name] = rect
+		_:
+			_fail("unsupported widget type '" + type + "' in " + screen)
+
+
+func _credits_roll_id(screen: String) -> String:
+	match screen:
+		"credits_dle":
+			return "dle"
+		"credits_ig":
+			return "ig"
+	return ""
+
+
+## Build the real scrolling view from verbatim text + the decoded .ui widget.
+## Returns null (and records `_credits_roll_status`) on any missing evidence.
+func _make_credits_roll_view(roll_id: String, prefix_value: String,
+		first_value: int, last_value: int, rect: Rect2) -> Control:
+	_credits_roll_status = ""
+	if roll_id.is_empty():
+		return null
+	if not CreditsText.available():
+		_credits_roll_status = "CREDITS TEXT " + STATUS_NOT_RECOVERED + ": " + CreditsText.error()
+		return null
+	if not CreditsText.matches_layout(roll_id, prefix_value, first_value, last_value):
+		_credits_roll_status = "CREDITS LAYOUT " + STATUS_NOT_RECOVERED + ": " + CreditsText.error()
+		return null
+	var lines: PackedStringArray = CreditsText.lines(roll_id, Lang.language())
+	if lines.is_empty():
+		_credits_roll_status = "CREDITS TEXT " + STATUS_NOT_RECOVERED + ": " + CreditsText.error()
+		return null
+	var font: Font = Lang.ui_font()
+	if font == null:
+		font = ThemeDB.fallback_font
+	var view: Control = CreditsRollView.new()
+	view.name = "CreditsRoll"
+	view.position = rect.position
+	view.size = rect.size
+	view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not view.configure(lines, int(rect.size.y), font, 16):
+		_credits_roll_status = "CREDITS ROLL " + STATUS_NOT_RECOVERED + ": " + view.configure_error()
+		view.queue_free()
+		return null
+	view.finished.connect(_on_credits_roll_finished)
+	return view
+
+
+## Native END action: when every line has scrolled past, leave the roll.
+func _on_credits_roll_finished() -> void:
+	if screen_id == "credits_dle" or screen_id == "credits_ig":
+		_back_art()
+
+
+func _file_reference(reference: Dictionary) -> Dictionary:
+	return reference["$file"] as Dictionary
+
+
+func _label_text_for(screen: String, node: Dictionary) -> String:
+	var widget_name: String = String(node.get("name", ""))
+	# about.ui disclaimer IS recovered verbatim from the ten Lang*.lang tables;
+	# the version NUMBER is a live gamemodes.gameversion variable and is not in
+	# the local evidence, so the recovered "%s" template is filled with the
+	# explicit marker.  A closed artifact keeps the old whole-area marker.
+	if screen == "about" and widget_name == "version":
+		if not RecoveredPages.available():
+			return STATUS_NOT_RECOVERED
+		return RecoveredPages.about_version_text(Lang.language())
+	if screen == "about" and widget_name == "disclaimer":
+		if not RecoveredPages.available():
+			return STATUS_NOT_RECOVERED
+		return RecoveredPages.about_disclaimer(Lang.language())
+	var sources: Dictionary = node.get("datasources", {})
+	var text_source: Variant = sources.get("text")
+	if typeof(text_source) == TYPE_ARRAY and (text_source as Array).size() == 2:
+		var kind: String = String((text_source as Array)[0])
+		var value: String = String((text_source as Array)[1])
+		if kind == "translate":
+			return _text_for(value)
+		if kind == "gamemodes" and value == "gameversion":
+			return STATUS_NOT_RECOVERED
+		_fail("unsupported label datasource '" + kind + "' in " + screen)
+		return ""
+	_fail("label " + String(node.get("name", "?")) + " has no text datasource")
+	return ""
+
+
+func _build_art_menu(screen: String, node: Dictionary, rect: Rect2) -> void:
+	var rows: Array = _rows_for(screen)
+	if rows.is_empty():
+		_fail("blmenu without rows in " + screen)
+		return
+	var count: int = rows.size()
+	var row_height: float = minf(rect.size.y / float(count), 40.0)
+	var font_size: int = clampi(int(round(row_height * 0.45)), 10, 20)
+	var start_y: float = rect.position.y
+	if String(node.get("valign", "")) == "middle":
+		start_y += (rect.size.y - row_height * float(count)) * 0.5
+	var text_left: float = 0.0
+	var text_width: float = rect.size.x
+	if String(node.get("align", "")) != "center":
+		# The list's text column is anchored to the menu rect's left edge with a
+		# fixed inset, so the highlight never changes a row's position.
+		text_left = 12.0
+		text_width = rect.size.x - 24.0
+	selection = clampi(selection, 0, count - 1)
+	for index: int in range(count):
+		var row_data: Dictionary = rows[index]
+		var key: String = String(row_data["key"])
+		var row: Rect2 = Rect2(
+			rect.position.x + text_left, start_y + row_height * float(index),
+			text_width, row_height)
+		var color: Color = COLOR_SELECTED if index == selection else COLOR_IDLE
+		var label: Label = _make_label(_text_for(key), row, font_size, color, false)
+		label.name = "Option_" + key
+		_stage.add_child(label)
+
+
+# ------------------------------------------------------------------- report
+
+## Geometry of every built widget for the current screen, keyed by recovered
+## widget name. Used by tests/validate_menu_art_menu.gd.
+func built_rects() -> Dictionary:
+	return _built_rects.duplicate()
+
+
+## Labels currently drawn, in order, so a test can check the recovered text
+## without reading pixels.
+func option_labels() -> Array:
+	var out: Array = []
+	for child: Node in _stage.get_children():
+		if String(child.name).begins_with("Option_"):
+			out.append((child as Label).text)
+	return out
+
+
+## Every label drawn on the current screen, in tree order. Used to assert the
+## explicit NOT RECOVERED areas (About version/disclaimer, fail-closed rolls).
+func label_texts() -> Array:
+	var out: Array = []
+	for child: Node in _stage.get_children():
+		if child is Label:
+			out.append((child as Label).text)
+	return out
+
+
+## ------------------------------------------------ credit-roll test hooks
+func credits_roll_active() -> bool:
+	return _credits_roll != null and is_instance_valid(_credits_roll)
+
+
+func credits_roll_status() -> String:
+	return _credits_roll_status
+
+
+func credits_roll_line_count() -> int:
+	return int(_credits_roll.call("line_count")) if credits_roll_active() else 0
+
+
+func credits_roll_line_height() -> int:
+	return int(_credits_roll.call("line_height_px")) if credits_roll_active() else 0
+
+
+func credits_roll_view_height() -> int:
+	return int(_credits_roll.call("view_height_px")) if credits_roll_active() else 0
+
+
+func credits_roll_offset() -> int:
+	return int(_credits_roll.call("offset_px")) if credits_roll_active() else 0
+
+
+func credits_roll_ended() -> bool:
+	return bool(_credits_roll.call("ended")) if credits_roll_active() else false
+
+
+func credits_roll_raw_line(index: int) -> String:
+	return String(_credits_roll.call("raw_line", index)) if credits_roll_active() else ""
+
+
+func credits_roll_clean_line(index: int) -> String:
+	return String(_credits_roll.call("clean_line", index)) if credits_roll_active() else ""
+
+
+func credits_roll_advance_ms(now_ms: int) -> int:
+	return int(_credits_roll.call("advance_ms", now_ms)) if credits_roll_active() else 0
+
+
+func credits_roll_tick_steps(count: int) -> void:
+	if credits_roll_active():
+		_credits_roll.call("tick_steps", count)
+
+
+func credits_roll_set_process(enabled: bool) -> void:
+	if credits_roll_active():
+		_credits_roll.set_process(enabled)
+
+
+func credits_roll_reset_timing() -> void:
+	if credits_roll_active():
+		_credits_roll.call("reset_timing")
+
+
+## ------------------------------------------------ recovered pages test hooks
+func recovered_pages_available() -> bool:
+	return RecoveredPages.available()
+
+
+func recovered_pages_error() -> String:
+	return RecoveredPages.error()
+
+
+func profile_page_info() -> Dictionary:
+	return profile_record.duplicate(true)
+
+
+func profile_page_key() -> String:
+	return profile_key
+
+
+func profile_page_sub() -> String:
+	return profile_sub
+
+
+func profile_selection() -> int:
+	return profile_index
+
+
+func profile_bodies_available() -> bool:
+	return ProfileBodies.available()
+
+
+func profile_bodies_error() -> String:
+	return ProfileBodies.error()
+
+
+func achievements_body_info() -> Dictionary:
+	var data: Dictionary = ProfileBodies.achievements()
+	return {"row_count": ProfileBodies.achievement_rows().size(),
+		"page_format": String(data.get("page_format", "")),
+		"reached_state": String(data.get("reached_state", "")),
+		"page_capacity": String(data.get("page_capacity", "")),
+		"row_binding": String(data.get("row_binding", ""))}
+
+
+func stats_body_info() -> Dictionary:
+	var page: Dictionary = ProfileBodies.stats_page(profile_sub)
+	var rows: Array = Array(page.get("rows", []))
+	var titles: Array = []
+	var stat_keys: Array = []
+	for row: Variant in rows:
+		var r: Dictionary = row as Dictionary
+		titles.append(ProfileBodies.localized(r.get("title_labels", {}), Lang.language()))
+		for key: Variant in Array(r.get("value_stat_keys", [])):
+			stat_keys.append(String(key))
+	return {"sub": profile_sub, "row_count": rows.size(),
+		"titles": titles, "stat_keys": stat_keys,
+		"values": String(page.get("values", ""))}
+
+
+func art_album_info() -> Dictionary:
+	var data: Dictionary = ProfileBodies.artpictures()
+	var names: Array = []
+	for item: Variant in Array(data.get("items", [])):
+		names.append(String(Dictionary(item).get("basename", "")))
+	var current: Dictionary = ProfileBodies.art_item(profile_index)
+	return {"item_count": names.size(), "basenames": names,
+		"selection": profile_index,
+		"current": String(current.get("basename", "")),
+		"picture_texture": String(data.get("picture_texture", "")),
+		"slider_binding": String(data.get("slider_binding", "")),
+		"slider_evidence": String(data.get("slider_binding_evidence", ""))}
+
+
+func fighter_gallery_info() -> Dictionary:
+	var data: Dictionary = ProfileBodies.fighters()
+	var names: Array = []
+	var keys: Array = []
+	for item: Variant in Array(data.get("items", [])):
+		var f: Dictionary = item as Dictionary
+		names.append(ProfileBodies.localized(f.get("name_labels", {}), Lang.language()))
+		keys.append(String(f.get("profile_text_key", "")))
+	var current: Dictionary = ProfileBodies.fighter_item(profile_index)
+	return {"item_count": names.size(), "names": names,
+		"profile_text_keys": keys,
+		"selection": profile_index,
+		"selected_name_key": String(current.get("name", "")),
+		"columns": ProfileBodies.grid_columns(),
+		"selectedcell_option": String(data.get("selectedcell_option", "")),
+		"selection_binding": String(data.get("selection", "")),
+		"grid_binding": String(data.get("grid_binding", "")),
+		"grid_evidence": String(data.get("grid_binding_evidence", ""))}
+
+
+func fighter_profile_info() -> Dictionary:
+	var index: int = profile_sub.to_int()
+	var item: Dictionary = ProfileBodies.fighter_item(index)
+	return {"index": index,
+		"name_key": String(item.get("name", "")),
+		"display_name": ProfileBodies.localized(item.get("name_labels", {}),
+			Lang.language()),
+		"profile_text_key": String(item.get("profile_text_key", "")),
+		"profile_text": ProfileBodies.localized(item.get("profile_text_labels", {}),
+			Lang.language()),
+		"profile_picture": Dictionary(item.get("profile_picture", {})),
+		"profile_binding": String(ProfileBodies.fighters().get("profile_binding", ""))}
+
+
+func about_version_display() -> String:
+	return RecoveredPages.about_version_text(Lang.language())
+
+
+func about_disclaimer_display() -> String:
+	return RecoveredPages.about_disclaimer(Lang.language())
+
+
+func settings_video_controls() -> Dictionary:
+	return RecoveredPages.settings_video_controls()
+
+
+func training_video_controls() -> Dictionary:
+	return RecoveredPages.training_video_controls()
+
+
+## Explicit validator hook: open a recovered Profile destination without a guessed
+## input.  The user reaches it through the real playerprofile.ui rows.
+func show_profile_page(key: String) -> void:
+	if not RecoveredPages.available():
+		status_text = STATUS_NOT_RECOVERED
+		_refresh_status()
+		return
+	profile_key = key
+	profile_sub = ""
+	profile_index = 0
+	menu_state = "art_page"
+	_show_art_screen("profile_page:" + key)
+
+
+## --------------------------------------------------- language dock test hooks
+func language_dock_items() -> Array:
+	return LanguageDock.items()
+
+
+func language_selection() -> int:
+	return language_index
+
+
+func language_applied_table() -> String:
+	return language_applied
+
+
+func language_status_text() -> String:
+	return language_status
+
+
+func language_save_path() -> String:
+	return LanguageDock.save_path()
+
+
+## Explicitly opens the recovered language dock (validator hook; the user reaches
+## it through main menu -> Settings -> Languages).
+func show_language_dock() -> void:
+	if not LanguageDock.available():
+		status_text = STATUS_NOT_RECOVERED
+		_refresh_status()
+		return
+	language_index = LanguageDock.current_index()
+	language_status = ""
+	menu_state = "art_page"
+	_show_art_screen("language_dock")

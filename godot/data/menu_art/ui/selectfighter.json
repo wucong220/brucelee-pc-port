@@ -1,0 +1,1278 @@
+{
+ "screen": "selectfighter.ui",
+ "source": {
+  "path": "adreno_200/gui/selectfighter.ui",
+  "bytes": 2409,
+  "sha256": "5cb97c99e763ba1a785ea5e81f83439668f35d80e3233192612741429326fb67",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 67,
+   "records": 124,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "404997bca583886ba1a7f80c50c0afaa"
+  }
+ },
+ "coverage": {
+  "record_count": 124,
+  "reached_records": 124,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "sounds/menu_sfx/",
+   "basename": "story_page_flip_short_version",
+   "extension": "wav"
+  },
+  {
+   "ordinal": 1,
+   "directory": "gui/images/mini/",
+   "basename": "bl_fighterlocked_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 2,
+   "directory": "gui/images/mini/",
+   "basename": "bl_brucelee_jacket_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 3,
+   "directory": "gui/images/mini/",
+   "basename": "bl_brucelee_base_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 4,
+   "directory": "gui/images/mini/",
+   "basename": "bl_brucelee_tank_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 5,
+   "directory": "gui/images/mini/",
+   "basename": "bl_brucelee_kimono_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 6,
+   "directory": "gui/images/mini/",
+   "basename": "bl_shenlo_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 7,
+   "directory": "gui/images/mini/",
+   "basename": "bl_themaster_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 8,
+   "directory": "gui/images/mini/",
+   "basename": "bl_smallboy_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 9,
+   "directory": "gui/images/mini/",
+   "basename": "bl_sinfu_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 10,
+   "directory": "gui/images/mini/",
+   "basename": "bl_thechief01_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 11,
+   "directory": "gui/images/mini/",
+   "basename": "bl_thechief02_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 12,
+   "directory": "gui/images/mini/",
+   "basename": "bl_kengodall_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 13,
+   "directory": "gui/images/mini/",
+   "basename": "bl_brickdavis_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 14,
+   "directory": "gui/images/mini/",
+   "basename": "bl_johnson_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 15,
+   "directory": "gui/images/mini/",
+   "basename": "bl_loming01_icon",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 16,
+   "directory": "gui/images/mini/",
+   "basename": "bl_loming02_icon",
+   "extension": "tex"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "label",
+  "name",
+  "fighter_name",
+  "x",
+  "y",
+  "width",
+  "height",
+  "font",
+  "textcolor",
+  "effect",
+  "none",
+  "uppercase",
+  "true",
+  "align",
+  "center",
+  "hspring",
+  "soft",
+  "vspring",
+  "datasources",
+  "text",
+  "gamemodes",
+  "selectedfightername",
+  "offscreen",
+  "bldock",
+  "fighters",
+  "optionwidth",
+  "optionheight",
+  "linerect",
+  "linerectcolor",
+  "wraparround",
+  "false",
+  "separation",
+  "valign",
+  "middle",
+  "sound",
+  "lockedpicture",
+  "items",
+  "validselectedoption",
+  "selectedfighter",
+  "springs",
+  "hard",
+  "left",
+  "border",
+  "right",
+  "sounds/menu_sfx/",
+  "story_page_flip_short_version",
+  "wav",
+  "gui/images/mini/",
+  "bl_fighterlocked_icon",
+  "tex",
+  "bl_brucelee_jacket_icon",
+  "bl_brucelee_base_icon",
+  "bl_brucelee_tank_icon",
+  "bl_brucelee_kimono_icon",
+  "bl_shenlo_icon",
+  "bl_themaster_icon",
+  "bl_smallboy_icon",
+  "bl_sinfu_icon",
+  "bl_thechief01_icon",
+  "bl_thechief02_icon",
+  "bl_kengodall_icon",
+  "bl_brickdavis_icon",
+  "bl_johnson_icon",
+  "bl_loming01_icon",
+  "bl_loming02_icon"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "label",
+    "name": "fighter_name",
+    "x": 100,
+    "y": 155,
+    "width": 280,
+    "height": 20,
+    "font": 0,
+    "textcolor": [
+     255,
+     255,
+     0
+    ],
+    "effect": "none",
+    "uppercase": "true",
+    "align": "center",
+    "hspring": "soft",
+    "vspring": "soft",
+    "datasources": {
+     "text": [
+      "gamemodes",
+      "selectedfightername"
+     ]
+    },
+    "offscreen": {
+     "y": 375
+    }
+   },
+   {
+    "type": "bldock",
+    "name": "fighters",
+    "x": 96,
+    "y": 180,
+    "width": 320,
+    "height": 70,
+    "optionwidth": 100,
+    "optionheight": 70,
+    "linerect": "true",
+    "linerectcolor": [
+     255,
+     255,
+     0
+    ],
+    "wraparround": "false",
+    "separation": -16,
+    "valign": "middle",
+    "hspring": "soft",
+    "vspring": "soft",
+    "sound": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "sounds/menu_sfx/",
+      "basename": "story_page_flip_short_version",
+      "extension": "wav"
+     }
+    },
+    "lockedpicture": {
+     "$file": {
+      "ordinal": 1,
+      "directory": "gui/images/mini/",
+      "basename": "bl_fighterlocked_icon",
+      "extension": "tex"
+     }
+    },
+    "items": [
+     {
+      "$file": {
+       "ordinal": 2,
+       "directory": "gui/images/mini/",
+       "basename": "bl_brucelee_jacket_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 3,
+       "directory": "gui/images/mini/",
+       "basename": "bl_brucelee_base_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 4,
+       "directory": "gui/images/mini/",
+       "basename": "bl_brucelee_tank_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 5,
+       "directory": "gui/images/mini/",
+       "basename": "bl_brucelee_kimono_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 6,
+       "directory": "gui/images/mini/",
+       "basename": "bl_shenlo_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 7,
+       "directory": "gui/images/mini/",
+       "basename": "bl_themaster_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 8,
+       "directory": "gui/images/mini/",
+       "basename": "bl_smallboy_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 9,
+       "directory": "gui/images/mini/",
+       "basename": "bl_sinfu_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 10,
+       "directory": "gui/images/mini/",
+       "basename": "bl_thechief01_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 11,
+       "directory": "gui/images/mini/",
+       "basename": "bl_thechief02_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 12,
+       "directory": "gui/images/mini/",
+       "basename": "bl_kengodall_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 13,
+       "directory": "gui/images/mini/",
+       "basename": "bl_brickdavis_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 14,
+       "directory": "gui/images/mini/",
+       "basename": "bl_johnson_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 15,
+       "directory": "gui/images/mini/",
+       "basename": "bl_loming01_icon",
+       "extension": "tex"
+      }
+     },
+     {
+      "$file": {
+       "ordinal": 16,
+       "directory": "gui/images/mini/",
+       "basename": "bl_loming02_icon",
+       "extension": "tex"
+      }
+     }
+    ],
+    "datasources": {
+     "validselectedoption": [
+      "gamemodes",
+      "selectedfighter"
+     ]
+    },
+    "offscreen": {
+     "y": 400
+    }
+   }
+  ],
+  "springs": [
+   {
+    "type": "hard",
+    "left": "border",
+    "right": "fighters"
+   },
+   {
+    "type": "hard",
+    "left": "fighters",
+    "right": "border"
+   }
+  ]
+ },
+ "layout": [
+  {
+   "type": "label",
+   "name": "fighter_name",
+   "x": 100,
+   "y": 155,
+   "width": 280,
+   "height": 20,
+   "font": 0,
+   "textcolor": [
+    255,
+    255,
+    0
+   ],
+   "effect": "none",
+   "uppercase": "true",
+   "align": "center",
+   "hspring": "soft",
+   "vspring": "soft",
+   "datasources": {
+    "text": [
+     "gamemodes",
+     "selectedfightername"
+    ]
+   },
+   "offscreen": {
+    "y": 375
+   }
+  },
+  {
+   "type": "bldock",
+   "name": "fighters",
+   "x": 96,
+   "y": 180,
+   "width": 320,
+   "height": 70,
+   "optionwidth": 100,
+   "optionheight": 70,
+   "linerect": "true",
+   "linerectcolor": [
+    255,
+    255,
+    0
+   ],
+   "wraparround": "false",
+   "separation": -16,
+   "valign": "middle",
+   "hspring": "soft",
+   "vspring": "soft",
+   "sound": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "sounds/menu_sfx/",
+     "basename": "story_page_flip_short_version",
+     "extension": "wav"
+    }
+   },
+   "lockedpicture": {
+    "$file": {
+     "ordinal": 1,
+     "directory": "gui/images/mini/",
+     "basename": "bl_fighterlocked_icon",
+     "extension": "tex"
+    }
+   },
+   "items": [
+    {
+     "$file": {
+      "ordinal": 2,
+      "directory": "gui/images/mini/",
+      "basename": "bl_brucelee_jacket_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 3,
+      "directory": "gui/images/mini/",
+      "basename": "bl_brucelee_base_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 4,
+      "directory": "gui/images/mini/",
+      "basename": "bl_brucelee_tank_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 5,
+      "directory": "gui/images/mini/",
+      "basename": "bl_brucelee_kimono_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 6,
+      "directory": "gui/images/mini/",
+      "basename": "bl_shenlo_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 7,
+      "directory": "gui/images/mini/",
+      "basename": "bl_themaster_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 8,
+      "directory": "gui/images/mini/",
+      "basename": "bl_smallboy_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 9,
+      "directory": "gui/images/mini/",
+      "basename": "bl_sinfu_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 10,
+      "directory": "gui/images/mini/",
+      "basename": "bl_thechief01_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 11,
+      "directory": "gui/images/mini/",
+      "basename": "bl_thechief02_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 12,
+      "directory": "gui/images/mini/",
+      "basename": "bl_kengodall_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 13,
+      "directory": "gui/images/mini/",
+      "basename": "bl_brickdavis_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 14,
+      "directory": "gui/images/mini/",
+      "basename": "bl_johnson_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 15,
+      "directory": "gui/images/mini/",
+      "basename": "bl_loming01_icon",
+      "extension": "tex"
+     }
+    },
+    {
+     "$file": {
+      "ordinal": 16,
+      "directory": "gui/images/mini/",
+      "basename": "bl_loming02_icon",
+      "extension": "tex"
+     }
+    }
+   ],
+   "datasources": {
+    "validselectedoption": [
+     "gamemodes",
+     "selectedfighter"
+    ]
+   },
+   "offscreen": {
+    "y": 400
+   }
+  }
+ ],
+ "springs": [
+  {
+   "type": "hard",
+   "left": "border",
+   "right": "fighters"
+  },
+  {
+   "type": "hard",
+   "left": "fighters",
+   "right": "border"
+  }
+ ],
+ "annotated": {
+  "record": 0,
+  "offset": 1401,
+  "entries": [
+   [
+    "layout",
+    {
+     "record": 2,
+     "offset": 1417,
+     "elements": [
+      {
+       "record": 5,
+       "offset": 1441,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 8,
+          "offset": 1465,
+          "value": "label"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 10,
+          "offset": 1481,
+          "value": "fighter_name"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 12,
+          "offset": 1497,
+          "value": 100
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 14,
+          "offset": 1513,
+          "value": 155
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 16,
+          "offset": 1529,
+          "value": 280
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 18,
+          "offset": 1545,
+          "value": 20
+         }
+        ],
+        [
+         "font",
+         {
+          "record": 20,
+          "offset": 1561,
+          "value": 0
+         }
+        ],
+        [
+         "textcolor",
+         {
+          "record": 22,
+          "offset": 1577,
+          "elements": [
+           {
+            "record": 37,
+            "offset": 1697,
+            "value": 255
+           },
+           {
+            "record": 38,
+            "offset": 1705,
+            "value": 255
+           },
+           {
+            "record": 39,
+            "offset": 1713,
+            "value": 0
+           }
+          ]
+         }
+        ],
+        [
+         "effect",
+         {
+          "record": 24,
+          "offset": 1593,
+          "value": "none"
+         }
+        ],
+        [
+         "uppercase",
+         {
+          "record": 26,
+          "offset": 1609,
+          "value": "true"
+         }
+        ],
+        [
+         "align",
+         {
+          "record": 28,
+          "offset": 1625,
+          "value": "center"
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 30,
+          "offset": 1641,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 32,
+          "offset": 1657,
+          "value": "soft"
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 34,
+          "offset": 1673,
+          "entries": [
+           [
+            "text",
+            {
+             "record": 41,
+             "offset": 1729,
+             "elements": [
+              {
+               "record": 42,
+               "offset": 1737,
+               "value": "gamemodes"
+              },
+              {
+               "record": 43,
+               "offset": 1745,
+               "value": "selectedfightername"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 36,
+          "offset": 1689,
+          "entries": [
+           [
+            "y",
+            {
+             "record": 45,
+             "offset": 1761,
+             "value": 375
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      },
+      {
+       "record": 6,
+       "offset": 1449,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 47,
+          "offset": 1777,
+          "value": "bldock"
+         }
+        ],
+        [
+         "name",
+         {
+          "record": 49,
+          "offset": 1793,
+          "value": "fighters"
+         }
+        ],
+        [
+         "x",
+         {
+          "record": 51,
+          "offset": 1809,
+          "value": 96
+         }
+        ],
+        [
+         "y",
+         {
+          "record": 53,
+          "offset": 1825,
+          "value": 180
+         }
+        ],
+        [
+         "width",
+         {
+          "record": 55,
+          "offset": 1841,
+          "value": 320
+         }
+        ],
+        [
+         "height",
+         {
+          "record": 57,
+          "offset": 1857,
+          "value": 70
+         }
+        ],
+        [
+         "optionwidth",
+         {
+          "record": 59,
+          "offset": 1873,
+          "value": 100
+         }
+        ],
+        [
+         "optionheight",
+         {
+          "record": 61,
+          "offset": 1889,
+          "value": 70
+         }
+        ],
+        [
+         "linerect",
+         {
+          "record": 63,
+          "offset": 1905,
+          "value": "true"
+         }
+        ],
+        [
+         "linerectcolor",
+         {
+          "record": 65,
+          "offset": 1921,
+          "elements": [
+           {
+            "record": 86,
+            "offset": 2089,
+            "value": 255
+           },
+           {
+            "record": 87,
+            "offset": 2097,
+            "value": 255
+           },
+           {
+            "record": 88,
+            "offset": 2105,
+            "value": 0
+           }
+          ]
+         }
+        ],
+        [
+         "wraparround",
+         {
+          "record": 67,
+          "offset": 1937,
+          "value": "false"
+         }
+        ],
+        [
+         "separation",
+         {
+          "record": 69,
+          "offset": 1953,
+          "value": -16
+         }
+        ],
+        [
+         "valign",
+         {
+          "record": 71,
+          "offset": 1969,
+          "value": "middle"
+         }
+        ],
+        [
+         "hspring",
+         {
+          "record": 73,
+          "offset": 1985,
+          "value": "soft"
+         }
+        ],
+        [
+         "vspring",
+         {
+          "record": 75,
+          "offset": 2001,
+          "value": "soft"
+         }
+        ],
+        [
+         "sound",
+         {
+          "record": 77,
+          "offset": 2017,
+          "value": {
+           "$file": {
+            "ordinal": 0,
+            "directory": "sounds/menu_sfx/",
+            "basename": "story_page_flip_short_version",
+            "extension": "wav"
+           }
+          }
+         }
+        ],
+        [
+         "lockedpicture",
+         {
+          "record": 79,
+          "offset": 2033,
+          "value": {
+           "$file": {
+            "ordinal": 1,
+            "directory": "gui/images/mini/",
+            "basename": "bl_fighterlocked_icon",
+            "extension": "tex"
+           }
+          }
+         }
+        ],
+        [
+         "items",
+         {
+          "record": 81,
+          "offset": 2049,
+          "elements": [
+           {
+            "record": 89,
+            "offset": 2113,
+            "value": {
+             "$file": {
+              "ordinal": 2,
+              "directory": "gui/images/mini/",
+              "basename": "bl_brucelee_jacket_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 90,
+            "offset": 2121,
+            "value": {
+             "$file": {
+              "ordinal": 3,
+              "directory": "gui/images/mini/",
+              "basename": "bl_brucelee_base_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 91,
+            "offset": 2129,
+            "value": {
+             "$file": {
+              "ordinal": 4,
+              "directory": "gui/images/mini/",
+              "basename": "bl_brucelee_tank_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 92,
+            "offset": 2137,
+            "value": {
+             "$file": {
+              "ordinal": 5,
+              "directory": "gui/images/mini/",
+              "basename": "bl_brucelee_kimono_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 93,
+            "offset": 2145,
+            "value": {
+             "$file": {
+              "ordinal": 6,
+              "directory": "gui/images/mini/",
+              "basename": "bl_shenlo_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 94,
+            "offset": 2153,
+            "value": {
+             "$file": {
+              "ordinal": 7,
+              "directory": "gui/images/mini/",
+              "basename": "bl_themaster_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 95,
+            "offset": 2161,
+            "value": {
+             "$file": {
+              "ordinal": 8,
+              "directory": "gui/images/mini/",
+              "basename": "bl_smallboy_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 96,
+            "offset": 2169,
+            "value": {
+             "$file": {
+              "ordinal": 9,
+              "directory": "gui/images/mini/",
+              "basename": "bl_sinfu_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 97,
+            "offset": 2177,
+            "value": {
+             "$file": {
+              "ordinal": 10,
+              "directory": "gui/images/mini/",
+              "basename": "bl_thechief01_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 98,
+            "offset": 2185,
+            "value": {
+             "$file": {
+              "ordinal": 11,
+              "directory": "gui/images/mini/",
+              "basename": "bl_thechief02_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 99,
+            "offset": 2193,
+            "value": {
+             "$file": {
+              "ordinal": 12,
+              "directory": "gui/images/mini/",
+              "basename": "bl_kengodall_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 100,
+            "offset": 2201,
+            "value": {
+             "$file": {
+              "ordinal": 13,
+              "directory": "gui/images/mini/",
+              "basename": "bl_brickdavis_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 101,
+            "offset": 2209,
+            "value": {
+             "$file": {
+              "ordinal": 14,
+              "directory": "gui/images/mini/",
+              "basename": "bl_johnson_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 102,
+            "offset": 2217,
+            "value": {
+             "$file": {
+              "ordinal": 15,
+              "directory": "gui/images/mini/",
+              "basename": "bl_loming01_icon",
+              "extension": "tex"
+             }
+            }
+           },
+           {
+            "record": 103,
+            "offset": 2225,
+            "value": {
+             "$file": {
+              "ordinal": 16,
+              "directory": "gui/images/mini/",
+              "basename": "bl_loming02_icon",
+              "extension": "tex"
+             }
+            }
+           }
+          ]
+         }
+        ],
+        [
+         "datasources",
+         {
+          "record": 83,
+          "offset": 2065,
+          "entries": [
+           [
+            "validselectedoption",
+            {
+             "record": 105,
+             "offset": 2241,
+             "elements": [
+              {
+               "record": 106,
+               "offset": 2249,
+               "value": "gamemodes"
+              },
+              {
+               "record": 107,
+               "offset": 2257,
+               "value": "selectedfighter"
+              }
+             ]
+            }
+           ]
+          ]
+         }
+        ],
+        [
+         "offscreen",
+         {
+          "record": 85,
+          "offset": 2081,
+          "entries": [
+           [
+            "y",
+            {
+             "record": 109,
+             "offset": 2273,
+             "value": 400
+            }
+           ]
+          ]
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ],
+   [
+    "springs",
+    {
+     "record": 4,
+     "offset": 1433,
+     "elements": [
+      {
+       "record": 110,
+       "offset": 2281,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 113,
+          "offset": 2305,
+          "value": "hard"
+         }
+        ],
+        [
+         "left",
+         {
+          "record": 115,
+          "offset": 2321,
+          "value": "border"
+         }
+        ],
+        [
+         "right",
+         {
+          "record": 117,
+          "offset": 2337,
+          "value": "fighters"
+         }
+        ]
+       ]
+      },
+      {
+       "record": 111,
+       "offset": 2289,
+       "entries": [
+        [
+         "type",
+         {
+          "record": 119,
+          "offset": 2353,
+          "value": "hard"
+         }
+        ],
+        [
+         "left",
+         {
+          "record": 121,
+          "offset": 2369,
+          "value": "fighters"
+         }
+        ],
+        [
+         "right",
+         {
+          "record": 123,
+          "offset": 2385,
+          "value": "border"
+         }
+        ]
+       ]
+      }
+     ]
+    }
+   ]
+  ]
+ }
+}

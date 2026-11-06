@@ -1,0 +1,515 @@
+{
+ "screen": "creditsselect.ui",
+ "source": {
+  "path": "adreno_200/gui/creditsselect.ui",
+  "bytes": 3251,
+  "sha256": "02c98c80211ad297c057200ad716f6abb1d62b2232e121b16087748824006e28",
+  "container": {
+   "signature": "1FDKENONCTX3",
+   "strings": 61,
+   "records": 261,
+   "sections": 0,
+   "payload_bytes": 0,
+   "tail_identity": "2ad08a1c6f84c88226e0aba225229e70"
+  }
+ },
+ "coverage": {
+  "record_count": 261,
+  "reached_records": 261,
+  "unreached_records": [],
+  "fully_covered": true
+ },
+ "file_references": [
+  {
+   "ordinal": 0,
+   "directory": "gui/images/versus/",
+   "basename": "bl_versusscreen_background",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 1,
+   "directory": "gui/images/other/",
+   "basename": "logo_dle_128x128",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 2,
+   "directory": "gui/images/other/",
+   "basename": "logo_ig_128x128",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 3,
+   "directory": "gui/images/menu/",
+   "basename": "bl_gui_back_button_stand",
+   "extension": "tex"
+  },
+  {
+   "ordinal": 4,
+   "directory": "sounds/menu_sfx/",
+   "basename": "back_bl_shout_short",
+   "extension": "wav"
+  }
+ ],
+ "strings": [
+  "layout",
+  "type",
+  "picture",
+  "name",
+  "x",
+  "y",
+  "width",
+  "height",
+  "alphablend",
+  "true",
+  "file",
+  "offscreen",
+  "alpha",
+  "scale",
+  "hspring",
+  "soft",
+  "vspring",
+  "subrect_x",
+  "subrect_y",
+  "subrect_width",
+  "subrect_height",
+  "bllabel",
+  "title",
+  "datasources",
+  "text",
+  "translate",
+  "credits",
+  "dlepicture",
+  "mantainaspectratio",
+  "blbutton",
+  "dle",
+  "action",
+  "focused",
+  "lineiffocused",
+  "coloriffocused",
+  "animation",
+  "none",
+  "indiagamespicture",
+  "indiagames",
+  "lsk",
+  "align",
+  "center",
+  "valign",
+  "middle",
+  "rsk",
+  "sound",
+  "springs",
+  "navigation",
+  "left",
+  "right",
+  "gui/images/versus/",
+  "bl_versusscreen_background",
+  "tex",
+  "gui/images/other/",
+  "logo_dle_128x128",
+  "logo_ig_128x128",
+  "gui/images/menu/",
+  "bl_gui_back_button_stand",
+  "sounds/menu_sfx/",
+  "back_bl_shout_short",
+  "wav"
+ ],
+ "root": {
+  "layout": [
+   {
+    "type": "picture",
+    "name": "picture",
+    "x": 0,
+    "y": 0,
+    "width": 480,
+    "height": 320,
+    "alphablend": "true",
+    "file": {
+     "$file": {
+      "ordinal": 0,
+      "directory": "gui/images/versus/",
+      "basename": "bl_versusscreen_background",
+      "extension": "tex"
+     }
+    },
+    "offscreen": {
+     "alpha": 0.0
+    },
+    "scale": "true",
+    "hspring": "soft",
+    "vspring": "soft",
+    "subrect_x": 0,
+    "subrect_y": 0,
+    "subrect_width": 480,
+    "subrect_height": 320
+   },
+   {
+    "type": "bllabel",
+    "name": "title",
+    "x": 0,
+    "y": 5,
+    "width": 200,
+    "height": 40,
+    "hspring": "soft",
+    "vspring": "soft",
+    "datasources": {
+     "text": [
+      "translate",
+      "credits"
+     ]
+    },
+    "offscreen": {
+     "x": -200
+    }
+   },
+   {
+    "type": "picture",
+    "name": "dlepicture",
+    "x": 80,
+    "y": 96,
+    "width": 128,
+    "height": 128,
+    "hspring": "soft",
+    "vspring": "soft",
+    "scale": "true",
+    "alphablend": "true",
+    "mantainaspectratio": "true",
+    "file": {
+     "$file": {
+      "ordinal": 1,
+      "directory": "gui/images/other/",
+      "basename": "logo_dle_128x128",
+      "extension": "tex"
+     }
+    },
+    "offscreen": {
+     "x": -128,
+     "alpha": 0.0
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "dle",
+    "x": 88,
+    "y": 96,
+    "width": 110,
+    "height": 128,
+    "hspring": "soft",
+    "vspring": "soft",
+    "scale": "true",
+    "alphablend": "true",
+    "action": "dle",
+    "focused": "true",
+    "lineiffocused": "true",
+    "coloriffocused": [
+     255,
+     255,
+     0
+    ],
+    "animation": {
+     "width": "none"
+    },
+    "offscreen": {
+     "x": -128,
+     "alpha": 0.0
+    }
+   },
+   {
+    "type": "picture",
+    "name": "indiagamespicture",
+    "x": 272,
+    "y": 96,
+    "width": 128,
+    "height": 128,
+    "hspring": "soft",
+    "vspring": "soft",
+    "scale": "true",
+    "alphablend": "true",
+    "mantainaspectratio": "true",
+    "file": {
+     "$file": {
+      "ordinal": 2,
+      "directory": "gui/images/other/",
+      "basename": "logo_ig_128x128",
+      "extension": "tex"
+     }
+    },
+    "animation": {
+     "width": "none"
+    },
+    "offscreen": {
+     "x": 480,
+     "alpha": 0.0
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "indiagames",
+    "x": 280,
+    "y": 96,
+    "width": 110,
+    "height": 128,
+    "hspring": "soft",
+    "vspring": "soft",
+    "scale": "true",
+    "alphablend": "true",
+    "action": "indiagames",
+    "lineiffocused": "true",
+    "coloriffocused": [
+     255,
+     255,
+     0
+    ],
+    "animation": {
+     "width": "none"
+    },
+    "offscreen": {
+     "x": 480,
+     "alpha": 0.0
+    }
+   },
+   {
+    "type": "blbutton",
+    "name": "lsk",
+    "x": 2,
+    "y": 270,
+    "width": 48,
+    "height": 48,
+    "align": "center",
+    "valign": "middle",
+    "alphablend": "true",
+    "action": "rsk",
+    "file": {
+     "file": {
+      "$file": {
+       "ordinal": 3,
+       "directory": "gui/images/menu/",
+       "basename": "bl_gui_back_button_stand",
+       "extension": "tex"
+      }
+     },
+     "subrect_x": 8,
+     "subrect_y": 8,
+     "subrect_width": 48,
+     "subrect_height": 48
+    },
+    "sound": {
+     "$file": {
+      "ordinal": 4,
+      "directory": "sounds/menu_sfx/",
+      "basename": "back_bl_shout_short",
+      "extension": "wav"
+     }
+    },
+    "offscreen": {
+     "alpha": 0.0
+    }
+   }
+  ],
+  "springs": [
+   {
+    "type": "navigation",
+    "left": "dle",
+    "right": "indiagames"
+   }
+  ]
+ },
+ "layout": [
+  {
+   "type": "picture",
+   "name": "picture",
+   "x": 0,
+   "y": 0,
+   "width": 480,
+   "height": 320,
+   "alphablend": "true",
+   "file": {
+    "$file": {
+     "ordinal": 0,
+     "directory": "gui/images/versus/",
+     "basename": "bl_versusscreen_background",
+     "extension": "tex"
+    }
+   },
+   "offscreen": {
+    "alpha": 0.0
+   },
+   "scale": "true",
+   "hspring": "soft",
+   "vspring": "soft",
+   "subrect_x": 0,
+   "subrect_y": 0,
+   "subrect_width": 480,
+   "subrect_height": 320
+  },
+  {
+   "type": "bllabel",
+   "name": "title",
+   "x": 0,
+   "y": 5,
+   "width": 200,
+   "height": 40,
+   "hspring": "soft",
+   "vspring": "soft",
+   "datasources": {
+    "text": [
+     "translate",
+     "credits"
+    ]
+   },
+   "offscreen": {
+    "x": -200
+   }
+  },
+  {
+   "type": "picture",
+   "name": "dlepicture",
+   "x": 80,
+   "y": 96,
+   "width": 128,
+   "height": 128,
+   "hspring": "soft",
+   "vspring": "soft",
+   "scale": "true",
+   "alphablend": "true",
+   "mantainaspectratio": "true",
+   "file": {
+    "$file": {
+     "ordinal": 1,
+     "directory": "gui/images/other/",
+     "basename": "logo_dle_128x128",
+     "extension": "tex"
+    }
+   },
+   "offscreen": {
+    "x": -128,
+    "alpha": 0.0
+   }
+  },
+  {
+   "type": "blbutton",
+   "name": "dle",
+   "x": 88,
+   "y": 96,
+   "width": 110,
+   "height": 128,
+   "hspring": "soft",
+   "vspring": "soft",
+   "scale": "true",
+   "alphablend": "true",
+   "action": "dle",
+   "focused": "true",
+   "lineiffocused": "true",
+   "coloriffocused": [
+    255,
+    255,
+    0
+   ],
+   "animation": {
+    "width": "none"
+   },
+   "offscreen": {
+    "x": -128,
+    "alpha": 0.0
+   }
+  },
+  {
+   "type": "picture",
+   "name": "indiagamespicture",
+   "x": 272,
+   "y": 96,
+   "width": 128,
+   "height": 128,
+   "hspring": "soft",
+   "vspring": "soft",
+   "scale": "true",
+   "alphablend": "true",
+   "mantainaspectratio": "true",
+   "file": {
+    "$file": {
+     "ordinal": 2,
+     "directory": "gui/images/other/",
+     "basename": "logo_ig_128x128",
+     "extension": "tex"
+    }
+   },
+   "animation": {
+    "width": "none"
+   },
+   "offscreen": {
+    "x": 480,
+    "alpha": 0.0
+   }
+  },
+  {
+   "type": "blbutton",
+   "name": "indiagames",
+   "x": 280,
+   "y": 96,
+   "width": 110,
+   "height": 128,
+   "hspring": "soft",
+   "vspring": "soft",
+   "scale": "true",
+   "alphablend": "true",
+   "action": "indiagames",
+   "lineiffocused": "true",
+   "coloriffocused": [
+    255,
+    255,
+    0
+   ],
+   "animation": {
+    "width": "none"
+   },
+   "offscreen": {
+    "x": 480,
+    "alpha": 0.0
+   }
+  },
+  {
+   "type": "blbutton",
+   "name": "lsk",
+   "x": 2,
+   "y": 270,
+   "width": 48,
+   "height": 48,
+   "align": "center",
+   "valign": "middle",
+   "alphablend": "true",
+   "action": "rsk",
+   "file": {
+    "file": {
+     "$file": {
+      "ordinal": 3,
+      "directory": "gui/images/menu/",
+      "basename": "bl_gui_back_button_stand",
+      "extension": "tex"
+     }
+    },
+    "subrect_x": 8,
+    "subrect_y": 8,
+    "subrect_width": 48,
+    "subrect_height": 48
+   },
+   "sound": {
+    "$file": {
+     "ordinal": 4,
+     "directory": "sounds/menu_sfx/",
+     "basename": "back_bl_shout_short",
+     "extension": "wav"
+    }
+   },
+   "offscreen": {
+    "alpha": 0.0
+   }
+  }
+ ],
+ "springs": [
+  {
+   "type": "navigation",
+   "left": "dle",
+   "right": "indiagames"
+  }
+ ]
+}
